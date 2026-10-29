@@ -1,0 +1,2695 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - درجات حرارة التربة</title>
+
+    <!-- إضافة Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- إضافة Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- إضافة ملف CSS المحسن -->
+    <link rel="stylesheet" href="soil-send.css" />
+
+    <style>
+      :root {
+        --primary-color: #8b4513;
+        --secondary-color: #654321;
+        --accent-color: #a0522d;
+        --whatsapp-color: #25d366;
+        --test-color: #6f42c1;
+        --success-color: #28a745;
+      }
+
+      body {
+        font-family: "Segoe UI", "Cairo", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f5dc 0%, #f8f9fa 100%);
+        min-height: 100vh;
+        padding: 20px;
+        margin: 0;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-right: 280px; /* مساحة للقائمة الجانبية على اليمين */
+      }
+
+      @media (max-width: 992px) {
+        .container {
+          padding-right: 0;
+          padding-top: 70px;
+        }
+      }
+
+      .main-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(139, 69, 19, 0.15);
+        overflow: hidden;
+        margin-top: 20px;
+      }
+
+      .main-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+        padding: 25px;
+        text-align: center;
+        position: relative;
+      }
+
+      .main-header h2 {
+        margin: 0;
+        font-weight: 700;
+      }
+
+      .user-info-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--secondary-color);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(139, 69, 19, 0.1);
+      }
+
+      .form-section {
+        padding: 30px;
+      }
+
+      .section-title {
+        color: var(--secondary-color);
+        font-weight: 700;
+        margin-bottom: 25px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid var(--accent-color);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .form-label {
+        font-weight: 600;
+        color: var(--secondary-color);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ===== [FIXED] تصحيح نهائي لمشكلة الخلفية السوداء ===== */
+      .form-control,
+      .form-select,
+      .form-textarea {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+        width: 100%;
+        background-color: #ffffff !important;
+        color: #212529 !important;
+      }
+
+      .form-control:focus,
+      .form-select:focus,
+      .form-textarea:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.25rem rgba(160, 82, 45, 0.25);
+        background-color: #ffffff !important;
+        color: #212529 !important;
+      }
+
+      .form-textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      /* ===== [FIXED] إصلاح حقول درجة الحرارة ===== */
+      .temperature-input-wrapper {
+        position: relative;
+        background-color: transparent !important;
+      }
+
+      .temperature-input-wrapper .form-control {
+        padding-left: 40px !important;
+        direction: ltr;
+        text-align: center;
+        font-family: "Courier New", monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        background-color: #ffffff !important;
+        color: #212529 !important;
+        border: 2px solid #dee2e6 !important;
+      }
+
+      .temperature-input-wrapper .form-control:focus {
+        background-color: #ffffff !important;
+        border-color: var(--accent-color) !important;
+        color: #212529 !important;
+      }
+
+      .sign-indicator {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--secondary-color) !important;
+        background-color: transparent !important;
+        z-index: 5;
+      }
+
+      /* حل مشكلة التعبئة التلقائية */
+      .temperature-input-wrapper .form-control:-webkit-autofill,
+      .temperature-input-wrapper .form-control:-webkit-autofill:hover,
+      .temperature-input-wrapper .form-control:-webkit-autofill:focus,
+      .temperature-input-wrapper .form-control:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px white inset !important;
+        -webkit-text-fill-color: #212529 !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
+
+      .sign-buttons-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+      }
+
+      .sign-btn {
+        padding: 8px 15px;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        flex: 1;
+        min-width: 100px;
+        background-color: white !important;
+      }
+
+      .sign-btn.negative {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+      }
+
+      .sign-btn.positive {
+        background: linear-gradient(135deg, #28a745, #218838);
+        color: white;
+      }
+
+      .sign-btn.hash {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        color: white;
+      }
+
+      .sign-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      /* ===== إحصائيات المحطة الشاملة - تنسيقات محسنة ===== */
+      .station-stats {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.5s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .station-stats h5 {
+        color: white;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+      }
+
+      .station-stats h5 i {
+        margin-right: 8px;
+        font-size: 1rem;
+        color: #3498db;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px 8px;
+        text-align: center;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .stat-item:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-item.complete {
+        background: rgba(46, 204, 113, 0.15);
+        border-color: rgba(46, 204, 113, 0.3);
+      }
+
+      .stat-item.warning {
+        background: rgba(241, 196, 15, 0.15);
+        border-color: rgba(241, 196, 15, 0.3);
+      }
+
+      .stat-item.danger {
+        background: rgba(231, 76, 60, 0.15);
+        border-color: rgba(231, 76, 60, 0.3);
+      }
+
+      .stat-icon {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+        display: block;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stat-icon.complete i {
+        color: #2ecc71;
+      }
+
+      .stat-icon.warning i {
+        color: #f1c40f;
+      }
+
+      .stat-icon.danger i {
+        color: #e74c3c;
+      }
+
+      .stat-icon.normal i {
+        color: #3498db;
+      }
+
+      .stat-values {
+        margin-bottom: 5px;
+      }
+
+      .stat-count {
+        font-size: 1.6rem;
+        font-weight: bold;
+        display: block;
+        line-height: 1.2;
+        color: white;
+      }
+
+      .stat-limit {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        margin-top: 2px;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        margin-bottom: 5px;
+        display: block;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .progress-bar {
+        height: 100%;
+        border-radius: 2px;
+        transition: width 0.5s ease;
+      }
+
+      .stats-summary {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 15px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .summary-text {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+        opacity: 0.9;
+      }
+
+      .summary-percentage {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+        line-height: 1;
+        color: white;
+      }
+
+      .summary-percentage.complete {
+        color: #2ecc71;
+      }
+
+      .summary-percentage.warning {
+        color: #f1c40f;
+      }
+
+      .summary-percentage.danger {
+        color: #e74c3c;
+      }
+
+      .summary-percentage.normal {
+        color: #3498db;
+      }
+
+      .stats-message {
+        padding: 8px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+      }
+
+      .stats-message.success {
+        background: rgba(46, 204, 113, 0.15);
+        border: 1px solid rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+      }
+
+      .stats-message.warning {
+        background: rgba(241, 196, 15, 0.15);
+        border: 1px solid rgba(241, 196, 15, 0.2);
+        color: #f1c40f;
+      }
+
+      .stats-message.info {
+        background: rgba(52, 152, 219, 0.15);
+        border: 1px solid rgba(52, 152, 219, 0.2);
+        color: #3498db;
+      }
+
+      .refresh-stats-btn {
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .refresh-stats-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-1px);
+      }
+
+      .refresh-stats-btn i {
+        margin-right: 5px;
+        font-size: 0.8rem;
+      }
+
+      .stats-loading {
+        text-align: center;
+        padding: 10px;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
+      }
+
+      .stats-loading .spinner-border {
+        width: 0.9rem;
+        height: 0.9rem;
+        margin-right: 6px;
+        color: white;
+      }
+
+      /* ===== تحسين عرض بيانات المستخدم ===== */
+      .user-data-display {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-right: 4px solid var(--primary-color);
+      }
+
+      .user-data-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+
+      .user-data-item i {
+        color: var(--primary-color);
+        width: 20px;
+        text-align: center;
+      }
+
+      .user-data-item small {
+        color: #6c757d;
+        font-size: 0.85rem;
+      }
+
+      .user-data-item div:last-child {
+        font-weight: 500;
+        color: #2c3e50;
+      }
+
+      /* ===== تحسينات أخرى ===== */
+      .confirmation-check {
+        background: #e8f4fd;
+        border: 2px solid #b8daff;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+
+      .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .form-check-input:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 0.25rem rgba(139, 69, 19, 0.25);
+      }
+
+      /* أزرار العمل الرئيسية في الأسفل */
+      .action-buttons-container {
+        position: fixed;
+        bottom: 0;
+        right: 280px;
+        left: 0;
+        background: linear-gradient(
+          to top,
+          rgba(255, 255, 255, 0.95) 0%,
+          white 100%
+        );
+        padding: 20px;
+        box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        transition: all 0.3s ease;
+      }
+
+      @media (max-width: 992px) {
+        .action-buttons-container {
+          right: 0;
+          flex-direction: column;
+          padding: 15px;
+          gap: 10px;
+        }
+      }
+
+      .action-btn {
+        flex: 1;
+        max-width: 300px;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 12px;
+        border: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+      }
+
+      .submit-btn {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--accent-color)
+        );
+        color: white;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(139, 69, 19, 0.3);
+        background: linear-gradient(135deg, #6b3410, #8b4513);
+      }
+
+      .whatsapp-btn {
+        background: linear-gradient(135deg, var(--whatsapp-color), #128c7e);
+        color: white;
+      }
+
+      .whatsapp-btn:hover:not(:disabled) {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(37, 211, 102, 0.3);
+        background: linear-gradient(135deg, #1da851, #128c7e);
+      }
+
+      .whatsapp-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .test-data-btn {
+        background: linear-gradient(135deg, var(--test-color), #5a32a3);
+        color: white;
+      }
+
+      .test-data-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(111, 66, 193, 0.3);
+        background: linear-gradient(135deg, #5a32a3, #4a2b8c);
+      }
+
+      /* طبقة التحميل */
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        display: none;
+      }
+
+      /* الإشعارات */
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        border-right: 5px solid var(--primary-color);
+        z-index: 9998;
+        display: none;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+      }
+
+      .success-notification {
+        border-right: 5px solid var(--success-color);
+        background: #d4edda;
+        color: #155724;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* القائمة الجانبية على اليمين */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 260px;
+        height: 100vh;
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: -3px 0 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .sidebar-header {
+        text-align: center;
+        padding: 25px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .sidebar-logo {
+        width: 70px;
+        height: 70px;
+        background: white;
+        border-radius: 50%;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-logo i {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+      }
+
+      .sidebar-header h4 {
+        font-size: 1.2rem;
+        margin: 0;
+        font-weight: 600;
+      }
+
+      .sidebar-header p {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin: 5px 0 0;
+      }
+
+      .nav-link {
+        color: white !important;
+        padding: 12px 20px;
+        margin: 2px 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+      }
+
+      .nav-link:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateX(-5px);
+      }
+
+      .nav-link.active {
+        background: var(--primary-color);
+        box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+      }
+
+      .nav-link i {
+        width: 20px;
+        text-align: center;
+      }
+
+      .sidebar-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.1);
+        margin: 15px 20px;
+      }
+
+      .sidebar-footer {
+        padding: 20px;
+        margin-top: auto;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .logout-btn {
+        color: #e74c3c !important;
+        background: rgba(231, 76, 60, 0.1);
+        border: 1px solid rgba(231, 76, 60, 0.3);
+      }
+
+      .logout-btn:hover {
+        background: rgba(231, 76, 60, 0.2);
+      }
+
+      /* الأزرار العائمة للجوال */
+      .mobile-floating-buttons {
+        display: none;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1001;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .mobile-floating-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+      }
+
+      .mobile-floating-btn:hover {
+        transform: scale(1.1);
+      }
+
+      .mobile-floating-btn.sidebar-btn {
+        background: var(--primary-color);
+      }
+
+      @media (max-width: 992px) {
+        .sidebar {
+          transform: translateX(100%);
+          transition: transform 0.3s ease;
+          width: 280px;
+        }
+
+        .sidebar.active {
+          transform: translateX(0);
+        }
+
+        .container {
+          padding-right: 0;
+        }
+
+        .mobile-floating-buttons {
+          display: flex;
+        }
+
+        .user-info-badge {
+          position: relative;
+          top: 0;
+          right: 0;
+          margin-bottom: 15px;
+          justify-content: center;
+          background: linear-gradient(
+            135deg,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(255, 255, 255, 0.8) 100%
+          );
+        }
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+          padding-bottom: 180px; /* مساحة للأزرار في الأسفل */
+        }
+
+        .form-section {
+          padding: 20px;
+        }
+
+        .sign-btn {
+          min-width: 80px;
+          padding: 6px 12px;
+          font-size: 0.9rem;
+        }
+
+        .action-btn {
+          padding: 12px 20px;
+          font-size: 1rem;
+          max-width: 100%;
+        }
+
+        .mobile-floating-buttons {
+          right: 15px;
+          bottom: 15px;
+        }
+
+        .mobile-floating-btn {
+          width: 55px;
+          height: 55px;
+          font-size: 1.3rem;
+        }
+
+        /* تحسينات الإحصائيات على الجوال */
+        .station-stats {
+          padding: 12px;
+          margin: 10px -10px;
+          border-radius: 8px;
+        }
+
+        .stats-grid {
+          grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+          gap: 8px;
+        }
+
+        .stat-item {
+          padding: 10px 6px;
+        }
+
+        .stat-count {
+          font-size: 1.4rem;
+        }
+
+        .stat-label {
+          font-size: 0.75rem;
+        }
+
+        .summary-percentage {
+          font-size: 1.5rem;
+        }
+      }
+
+      /* أنيميشن لزر واتساب */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .whatsapp-btn.pulse {
+        animation: pulse 2s infinite;
+      }
+
+      /* تصميم النجاح */
+      .success-message {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border: 2px solid #c3e6cb;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+        text-align: center;
+        display: none;
+      }
+
+      .success-message i {
+        font-size: 3rem;
+        color: var(--success-color);
+        margin-bottom: 15px;
+      }
+
+      .success-message h5 {
+        color: var(--success-color);
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      /* Footer حقوق النشر */
+      .page-footer {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--secondary-color) 100%
+        );
+        color: white;
+        padding: 20px 0;
+        margin-top: 40px;
+        border-radius: 10px 10px 0 0;
+        text-align: center;
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .footer-content div {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .copyright {
+        text-align: right;
+        font-weight: 500;
+      }
+
+      .center-text {
+        text-align: center;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .programmer {
+        text-align: left;
+        font-weight: 500;
+      }
+
+      .programmer i {
+        color: #ffc107;
+      }
+
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .copyright,
+        .center-text,
+        .programmer {
+          text-align: center;
+        }
+      }
+
+      /* ===== [ADDED] حل نهائي إضافي للخلفية السوداء ===== */
+      .form-control.bg-white {
+        background-color: #ffffff !important;
+        background-image: none !important;
+      }
+
+      input[type="text"] {
+        background-color: #ffffff !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- القائمة الجانبية المصححة -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="fas fa-temperature-half"></i>
+        </div>
+        <h4>نظام إدارة البيانات الجوية</h4>
+        <p>درجات حرارة التربة</p>
+      </div>
+
+      <!-- القائمة الرئيسية -->
+      <div class="sidebar-menu mt-3">
+        <!-- الرئيسية - تصحيح المسار -->
+        <a href="/main.html" class="nav-link">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>الرئيسية</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <h6 class="text-muted px-3 mb-2">النشرات الجوية</h6>
+
+        <!-- النشرات الساعية - المسار الصحيح -->
+        <a
+          href="/pages/hourly/hourly_send/hourly_reports.html"
+          class="nav-link"
+        >
+          <i class="fas fa-clock"></i>
+          <span>النشرات الساعية</span>
+        </a>
+
+        <!-- المناخ الساعي - المسار الصحيح -->
+        <a
+          href="/pages/h_climate/h_climate_send/h_climate_send.html"
+          class="nav-link"
+        >
+          <i class="fas fa-wind"></i>
+          <span>المناخ الساعي</span>
+        </a>
+
+        <!-- النشرات اليومية - المسار الصحيح -->
+        <a href="/pages/daily/daily_send/daily.html" class="nav-link">
+          <i class="fas fa-calendar-day"></i>
+          <span>النشرات اليومية</span>
+        </a>
+
+        <!-- النشرات المطرية - المسار الصحيح -->
+        <a href="/pages/rain/rain_send/rainfall_reports.html" class="nav-link">
+          <i class="fas fa-cloud-rain"></i>
+          <span>النشرات المطرية</span>
+        </a>
+
+        <!-- حرارة التربة - الصفحة الحالية -->
+        <a href="#" class="nav-link active">
+          <i class="fas fa-mountain"></i>
+          <span>حرارة التربة</span>
+        </a>
+
+        <!-- النشرات الزراعية - المسار الصحيح -->
+        <a
+          href="/pages/arg/send-argicultural/agricultural_reports.html"
+          class="nav-link"
+        >
+          <i class="fas fa-seedling"></i>
+          <span>النشرات الزراعية</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <h6 class="text-muted px-3 mb-2">الدعم والصيانة</h6>
+
+        <!-- أعطال الرصد - المسار الصحيح -->
+        <a href="/pages/fix/fix.html" class="nav-link">
+          <i class="fas fa-tools"></i>
+          <span>أعطال الرصد</span>
+        </a>
+
+        <!-- أعطال الاتصالات - المسار الصحيح -->
+        <a href="/pages/fix/fix-tel.html" class="nav-link">
+          <i class="fas fa-phone-alt"></i>
+          <span>أعطال الاتصالات</span>
+        </a>
+
+        <!-- أعطال البرامج - المسار الصحيح -->
+        <a href="/pages/fix/it.html" class="nav-link">
+          <i class="fas fa-laptop-code"></i>
+          <span>أعطال البرامج</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <h6 class="text-muted px-3 mb-2">الظواهر الجوية</h6>
+
+        <!-- الظواهر الجوية - المسار الصحيح -->
+        <a
+          href="/pages/weather_phenomena/weather_phenomena.html"
+          class="nav-link"
+        >
+          <i class="fas fa-bolt"></i>
+          <span>الظواهر الجوية</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- معلومات المستخدم -->
+        <div
+          class="user-info-badge"
+          id="sidebarUserInfo"
+          style="
+            margin: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+          "
+        >
+          <div class="d-flex align-items-center">
+            <i class="fas fa-user-circle me-2"></i>
+            <div style="font-size: 0.85rem">
+              <div id="sidebarUserName" style="font-weight: 500">-</div>
+              <div
+                id="sidebarUserStation"
+                style="font-size: 0.75rem; opacity: 0.8"
+              >
+                -
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- زر تسجيل الخروج -->
+        <div class="sidebar-footer">
+          <button
+            class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center gap-2 logout-btn"
+            id="logoutBtn"
+          >
+            <i class="fas fa-sign-out-alt"></i>
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- الأزرار العائمة للجوال -->
+    <div class="mobile-floating-buttons">
+      <button
+        class="mobile-floating-btn sidebar-btn"
+        id="mobileSidebarBtn"
+        title="القائمة الجانبية"
+      >
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+
+    <!-- طبقة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="d-flex flex-column align-items-center">
+        <div
+          class="spinner-border text-light mb-3"
+          style="width: 3rem; height: 3rem"
+          role="status"
+        >
+          <span class="visually-hidden">جاري الإرسال...</span>
+        </div>
+        <h5 class="text-light mb-2" id="loadingText">جاري إرسال البيانات...</h5>
+      </div>
+    </div>
+
+    <!-- الإشعارات -->
+    <div class="notification" id="notification"></div>
+
+    <!-- رسالة النجاح -->
+    <div class="success-message" id="successMessage">
+      <i class="fas fa-check-circle"></i>
+      <h5>تم إرسال البيانات بنجاح! ✅</h5>
+      <p>تم حفظ بيانات درجات حرارة التربة في قاعدة البيانات بنجاح.</p>
+      <div class="mt-3">
+        <small class="text-muted">
+          <i class="fas fa-info-circle me-1"></i>
+          يمكنك الآن مشاركة التقرير عبر واتساب
+        </small>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="main-card">
+        <!-- الهيدر -->
+        <div class="main-header">
+          <div class="user-info-badge" id="userInfoBadge">
+            <i class="fas fa-user-circle"></i>
+            <span>جاري تحميل بيانات المستخدم...</span>
+          </div>
+
+          <h2>
+            <i class="fas fa-temperature-half me-2"></i>نظام درجات حرارة التربة
+          </h2>
+          <p class="mb-0 mt-2 opacity-90">
+            إدخال قراءات درجات حرارة التربة على أعماق مختلفة
+          </p>
+        </div>
+
+        <!-- إحصائيات المحطة الشاملة - محدثة -->
+        <div class="station-stats" id="stationStats">
+          <h5><i class="fas fa-chart-pie me-2"></i>إحصائيات المحطة الشاملة</h5>
+          <div class="stats-loading" id="statsLoading">
+            <div
+              class="spinner-border spinner-border-sm text-light"
+              role="status"
+            >
+              <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <span class="ms-2">جاري تحديث الإحصائيات...</span>
+          </div>
+          <div class="stats-grid" id="statsGrid" style="display: none">
+            <div class="stat-item" id="stat-hourly">
+              <div class="stat-icon normal"><i class="fas fa-clock"></i></div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-hourly">0</span>
+                <span class="stat-limit">/24 يومياً</span>
+              </div>
+              <div class="stat-label">النشرات الساعية</div>
+            </div>
+
+            <div class="stat-item" id="stat-soil">
+              <div class="stat-icon normal">
+                <i class="fas fa-seedling"></i>
+              </div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-soil">0</span>
+                <span class="stat-limit">/4 يومياً</span>
+              </div>
+              <div class="stat-label">نشرات التربة</div>
+            </div>
+
+            <div class="stat-item" id="stat-agri">
+              <div class="stat-icon normal"><i class="fas fa-leaf"></i></div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-agri">0</span>
+                <span class="stat-limit">/1 يومياً</span>
+              </div>
+              <div class="stat-label">النشرات الزراعية</div>
+            </div>
+
+            <div class="stat-item" id="stat-climate">
+              <div class="stat-icon normal">
+                <i class="fas fa-cloud-sun"></i>
+              </div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-climate">0</span>
+                <span class="stat-limit">/4 يومياً</span>
+              </div>
+              <div class="stat-label">النشرات المناخية</div>
+            </div>
+
+            <div class="stat-item" id="stat-daily">
+              <div class="stat-icon normal">
+                <i class="fas fa-calendar-day"></i>
+              </div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-daily">0</span>
+                <span class="stat-limit">/3 يومياً</span>
+              </div>
+              <div class="stat-label">النشرات اليومية</div>
+            </div>
+
+            <div class="stat-item" id="stat-rain">
+              <div class="stat-icon normal">
+                <i class="fas fa-cloud-showers-heavy"></i>
+              </div>
+              <div class="stat-values">
+                <span class="stat-count" id="count-rain">0</span>
+                <span class="stat-limit">/1 يومياً</span>
+              </div>
+              <div class="stat-label">النشرات المطرية</div>
+            </div>
+          </div>
+
+          <div class="stats-summary" id="statsSummary" style="display: none">
+            <div class="summary-text">إجمالي إكمال التقارير اليومية</div>
+            <div class="summary-percentage normal" id="totalPercentage">0%</div>
+            <button class="refresh-stats-btn" id="refreshStatsBtn">
+              <i class="fas fa-sync-alt"></i>تحديث الإحصائيات
+            </button>
+          </div>
+
+          <div class="stats-message" id="statsMessage"></div>
+        </div>
+
+        <!-- عرض بيانات المستخدم -->
+        <div class="form-section">
+          <div class="user-data-display" id="userDataDisplay">
+            <h6 class="section-title mb-3">
+              <i class="fas fa-user-tie"></i>معلومات المرسل
+            </h6>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="user-data-item">
+                  <i class="fas fa-user"></i>
+                  <div>
+                    <small class="text-muted">الاسم الثلاثي</small>
+                    <div id="displayUserName">-</div>
+                  </div>
+                </div>
+                <div class="user-data-item">
+                  <i class="fas fa-id-badge"></i>
+                  <div>
+                    <small class="text-muted">الصفة الوظيفية</small>
+                    <div id="displayUserRole">-</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="user-data-item">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <div>
+                    <small class="text-muted">محطة العمل</small>
+                    <div id="displayUserStation">-</div>
+                  </div>
+                </div>
+                <div class="user-data-item">
+                  <i class="fas fa-calendar-day"></i>
+                  <div>
+                    <small class="text-muted">تاريخ الإدخال</small>
+                    <div id="displayCurrentDate">-</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- نموذج الإدخال -->
+          <form id="soilTempForm">
+            <!-- المعلومات الأساسية -->
+            <div class="mb-4">
+              <h4 class="section-title">
+                <i class="fas fa-info-circle"></i>المعلومات الأساسية
+              </h4>
+
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="utcTime" class="form-label">
+                    <i class="fas fa-globe"></i>التوقيت العالمي المكافئ (UTC)
+                  </label>
+                  <select class="form-select" id="utcTime" required>
+                    <option value="" selected disabled>
+                      اختر الوقت العالمي (UTC)
+                    </option>
+                    <option value="00">00:00 UTC</option>
+                    <option value="06">06:00 UTC</option>
+                    <option value="12">12:00 UTC</option>
+                    <option value="18">18:00 UTC</option>
+                  </select>
+                  <div class="form-text text-muted mt-1">
+                    <i class="fas fa-info-circle"></i> يتم إدخال التوقيت العالمي
+                    فقط (UTC+0)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- درجات حرارة التربة -->
+            <div class="mb-4">
+              <h4 class="section-title">
+                <i class="fas fa-thermometer-half"></i>درجات حرارة التربة
+                <small class="text-muted ms-2"
+                  >(النطاق: -20.0 إلى +50.0 درجة مئوية)</small
+                >
+              </h4>
+
+              <!-- درجة حرارة تربة على عمق 5سم -->
+              <div class="mb-4">
+                <label for="soilTemp5cm" class="form-label">
+                  <i class="fas fa-temperature-high"></i>درجة حرارة تربة على عمق
+                  5سم (سْ)
+                </label>
+                <div class="temperature-input-wrapper">
+                  <input
+                    type="text"
+                    class="form-control temperature-input bg-white"
+                    id="soilTemp5cm"
+                    placeholder="±dd.d أو #"
+                    maxlength="5"
+                    required
+                  />
+                  <span class="sign-indicator">±</span>
+                </div>
+                <div class="sign-buttons-group">
+                  <button
+                    type="button"
+                    class="btn sign-btn negative"
+                    data-target="soilTemp5cm"
+                    data-value="-"
+                  >
+                    <i class="fas fa-minus"></i> سالب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn positive"
+                    data-target="soilTemp5cm"
+                    data-value="+"
+                  >
+                    <i class="fas fa-plus"></i> موجب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn hash"
+                    data-target="soilTemp5cm"
+                    data-value="#"
+                  >
+                    <i class="fas fa-hashtag"></i> # (لا بيانات)
+                  </button>
+                </div>
+              </div>
+
+              <!-- درجة حرارة تربة على عمق 10سم -->
+              <div class="mb-4">
+                <label for="soilTemp10cm" class="form-label">
+                  <i class="fas fa-temperature-high"></i>درجة حرارة تربة على عمق
+                  10سم (سْ)
+                </label>
+                <div class="temperature-input-wrapper">
+                  <input
+                    type="text"
+                    class="form-control temperature-input bg-white"
+                    id="soilTemp10cm"
+                    placeholder="±dd.d أو #"
+                    maxlength="5"
+                    required
+                  />
+                  <span class="sign-indicator">±</span>
+                </div>
+                <div class="sign-buttons-group">
+                  <button
+                    type="button"
+                    class="btn sign-btn negative"
+                    data-target="soilTemp10cm"
+                    data-value="-"
+                  >
+                    <i class="fas fa-minus"></i> سالب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn positive"
+                    data-target="soilTemp10cm"
+                    data-value="+"
+                  >
+                    <i class="fas fa-plus"></i> موجب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn hash"
+                    data-target="soilTemp10cm"
+                    data-value="#"
+                  >
+                    <i class="fas fa-hashtag"></i> # (لا بيانات)
+                  </button>
+                </div>
+              </div>
+
+              <!-- درجة حرارة تربة على عمق 20سم -->
+              <div class="mb-4">
+                <label for="soilTemp20cm" class="form-label">
+                  <i class="fas fa-temperature-high"></i>درجة حرارة تربة على عمق
+                  20سم (سْ)
+                </label>
+                <div class="temperature-input-wrapper">
+                  <input
+                    type="text"
+                    class="form-control temperature-input bg-white"
+                    id="soilTemp20cm"
+                    placeholder="±dd.d أو #"
+                    maxlength="5"
+                    required
+                  />
+                  <span class="sign-indicator">±</span>
+                </div>
+                <div class="sign-buttons-group">
+                  <button
+                    type="button"
+                    class="btn sign-btn negative"
+                    data-target="soilTemp20cm"
+                    data-value="-"
+                  >
+                    <i class="fas fa-minus"></i> سالب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn positive"
+                    data-target="soilTemp20cm"
+                    data-value="+"
+                  >
+                    <i class="fas fa-plus"></i> موجب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn hash"
+                    data-target="soilTemp20cm"
+                    data-value="#"
+                  >
+                    <i class="fas fa-hashtag"></i> # (لا بيانات)
+                  </button>
+                </div>
+              </div>
+
+              <!-- درجة حرارة تربة على عمق 50سم -->
+              <div class="mb-4">
+                <label for="soilTemp50cm" class="form-label">
+                  <i class="fas fa-temperature-high"></i>درجة حرارة تربة على عمق
+                  50سم (سْ)
+                </label>
+                <div class="temperature-input-wrapper">
+                  <input
+                    type="text"
+                    class="form-control temperature-input bg-white"
+                    id="soilTemp50cm"
+                    placeholder="±dd.d أو #"
+                    maxlength="5"
+                    required
+                  />
+                  <span class="sign-indicator">±</span>
+                </div>
+                <div class="sign-buttons-group">
+                  <button
+                    type="button"
+                    class="btn sign-btn negative"
+                    data-target="soilTemp50cm"
+                    data-value="-"
+                  >
+                    <i class="fas fa-minus"></i> سالب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn positive"
+                    data-target="soilTemp50cm"
+                    data-value="+"
+                  >
+                    <i class="fas fa-plus"></i> موجب
+                  </button>
+                  <button
+                    type="button"
+                    class="btn sign-btn hash"
+                    data-target="soilTemp50cm"
+                    data-value="#"
+                  >
+                    <i class="fas fa-hashtag"></i> # (لا بيانات)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ملاحظات الراصد -->
+            <div class="mb-4">
+              <h4 class="section-title">
+                <i class="fas fa-sticky-note"></i>ملاحظات الراصد
+              </h4>
+
+              <div class="mb-3">
+                <label for="observerNotes" class="form-label">
+                  <i class="fas fa-edit"></i>ملاحظات إضافية (اختياري)
+                </label>
+                <textarea
+                  class="form-control form-textarea"
+                  id="observerNotes"
+                  placeholder="يمكنك إضافة أي ملاحظات أو تعليقات إضافية هنا..."
+                  rows="3"
+                  maxlength="500"
+                ></textarea>
+                <div class="form-text text-muted mt-1">
+                  <i class="fas fa-info-circle"></i> الحد الأقصى 500 حرف
+                  <span id="notesCounter" class="float-start">0/500</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- تأكيد المسؤولية فقط -->
+            <div class="mb-4">
+              <h4 class="section-title">
+                <i class="fas fa-check-circle"></i>تأكيد المسؤولية
+              </h4>
+
+              <div class="confirmation-check">
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="responsibilityConfirmed"
+                    required
+                  />
+                  <label
+                    class="form-check-label fw-bold"
+                    for="responsibilityConfirmed"
+                  >
+                    <i class="fas fa-shield-alt me-2"></i>
+                    أتعهد وأقر بأن البيانات المقدمة صحيحة ودقيقة، وأتحمل
+                    المسؤولية الكاملة عنها
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- أزرار العمل الثابتة في الأسفل -->
+    <div class="action-buttons-container">
+      <button type="button" class="action-btn test-data-btn" id="testDataBtn">
+        <i class="fas fa-flask me-2"></i>إدخال بيانات تجريبية
+      </button>
+
+      <button
+        type="button"
+        class="action-btn whatsapp-btn"
+        id="whatsappBtn"
+        disabled
+      >
+        <i class="fab fa-whatsapp me-2"></i>مشاركة عبر واتساب
+      </button>
+
+      <button
+        type="submit"
+        class="action-btn submit-btn"
+        id="submitBtn"
+        form="soilTempForm"
+      >
+        <i class="fas fa-paper-plane me-2"></i>إرسال إلى قاعدة البيانات
+      </button>
+    </div>
+
+    <!-- Footer حقوق النشر -->
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+
+    <!-- إضافة مكتبات JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/protect.js"></script>
+
+    <script>
+      // تهيئة Supabase
+      const supabaseUrl = "https://vktcvkwqszehgmhqjrkb.supabase.co";
+      const supabaseKey =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o";
+
+      const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+      // بيانات النظام
+      let currentUserData = null;
+      let lastSavedData = null;
+
+      // ==================== إصلاح نهائي للخلفية السوداء ====================
+      function fixInputBackgrounds() {
+        console.log("🔧 إصلاح خلفيات حقول الإدخال...");
+
+        // إصلاح جميع حقول درجة الحرارة
+        const tempInputs = document.querySelectorAll(".temperature-input");
+        tempInputs.forEach((input) => {
+          input.style.backgroundColor = "#ffffff";
+          input.style.color = "#212529";
+          input.style.border = "2px solid #dee2e6";
+          input.classList.add("bg-white");
+        });
+
+        // إصلاح مؤشرات الإشارة
+        const indicators = document.querySelectorAll(".sign-indicator");
+        indicators.forEach((indicator) => {
+          indicator.style.backgroundColor = "transparent";
+          indicator.style.color = "#654321";
+        });
+
+        // إصلاح جميع حقول الإدخال الأخرى
+        const allInputs = document.querySelectorAll(
+          ".form-control, .form-select, .form-textarea",
+        );
+        allInputs.forEach((input) => {
+          if (input.style.backgroundColor !== "rgb(255, 255, 255)") {
+            input.style.backgroundColor = "#ffffff";
+            input.style.color = "#212529";
+          }
+        });
+
+        console.log("✅ تم إصلاح خلفيات حقول الإدخال");
+      }
+
+      // ==================== إدارة بيانات المستخدم ====================
+      function loadUserData() {
+        console.log("👤 جاري تحميل بيانات المستخدم...");
+
+        const dataSources = [
+          localStorage.getItem("soilUserData"),
+          localStorage.getItem("soilTransferData"),
+          localStorage.getItem("currentUser"),
+        ];
+
+        let userData = null;
+
+        for (const source of dataSources) {
+          if (!source) continue;
+
+          try {
+            userData = JSON.parse(source);
+            if (userData && (userData.email || userData.id)) {
+              console.log(
+                "✅ تم تحميل بيانات المستخدم:",
+                userData.email || userData.id,
+              );
+              displayUserInfo(userData);
+              currentUserData = userData;
+              return true;
+            }
+          } catch (e) {
+            console.error("❌ خطأ في تحليل بيانات:", e);
+          }
+        }
+
+        if (userData) {
+          currentUserData = userData;
+          displayUserInfo(userData);
+          return true;
+        } else {
+          console.error("❌ لم يتم العثور على بيانات المستخدم");
+          showNotification(
+            "❌ لم يتم العثور على بيانات المستخدم. يرجى تسجيل الدخول مرة أخرى.",
+            "error",
+          );
+
+          setTimeout(() => {
+            window.location.href = "../../../index.html";
+          }, 3000);
+          return false;
+        }
+      }
+
+      function displayUserInfo(userData) {
+        // عرض التاريخ الحالي
+        const now = new Date();
+        const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        document.getElementById("displayCurrentDate").textContent = currentDate;
+
+        // عرض البيانات في الشارة
+        const userInfoBadge = document.getElementById("userInfoBadge");
+        if (userInfoBadge) {
+          const fullName =
+            `${userData.first_name || ""} ${userData.father_name || ""} ${userData.last_name || ""}`.trim();
+          userInfoBadge.innerHTML = `
+                    <i class="fas fa-user-circle"></i>
+                    <span>${fullName || "مستخدم النظام"}</span>
+                `;
+        }
+
+        // عرض البيانات التفصيلية
+        const displayUserName = document.getElementById("displayUserName");
+        const displayUserStation =
+          document.getElementById("displayUserStation");
+        const displayUserRole = document.getElementById("displayUserRole");
+
+        if (displayUserName) {
+          const fullName =
+            `${userData.first_name || ""} ${userData.father_name || ""} ${userData.last_name || ""}`.trim();
+          displayUserName.textContent = fullName || "غير معروف";
+        }
+
+        if (displayUserStation) {
+          displayUserStation.textContent = userData.station || "غير معروفة";
+        }
+
+        if (displayUserRole) {
+          displayUserRole.textContent = userData.role || "غير معروفة";
+        }
+      }
+
+      // ==================== إحصائيات المحطة الشاملة - محدثة ====================
+      async function loadAllStationStatistics() {
+        const stationName = currentUserData?.station;
+
+        if (!stationName) {
+          console.log("⚠️ لم يتم تحديد محطة للمستخدم");
+          return;
+        }
+
+        try {
+          console.log(`📊 جلب إحصائيات محطة: ${stationName}`);
+
+          // الحصول على تاريخ اليوم
+          const now = new Date();
+          const today = now.toISOString().split("T")[0];
+          const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0];
+
+          console.log("📅 التاريخ:", { today, tomorrow });
+
+          // جلب البيانات بشكل متوازي لسرعة الأداء
+          const [hourly, soil, agri, climate, daily, rain] = await Promise.all([
+            supabaseClient
+              .from("hourly_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station_name", stationName)
+              .gte("created_at", `${today}T00:00:00.000Z`)
+              .lt("created_at", `${tomorrow}T00:00:00.000Z`),
+            supabaseClient
+              .from("soil_temperatures")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName)
+              .eq("observation_date", today),
+            supabaseClient
+              .from("agricultural_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName)
+              .eq("report_date", today),
+            supabaseClient
+              .from("climate_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("user_station", stationName)
+              .eq("report_date", today),
+            supabaseClient
+              .from("daily_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName)
+              .eq("report_date", today),
+            supabaseClient
+              .from("rainfall_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("observer_station", stationName)
+              .gte("observation_date", today)
+              .lt("observation_date", tomorrow),
+          ]);
+
+          console.log("📈 نتائج الإحصائيات:", {
+            hourly: hourly.count || 0,
+            soil: soil.count || 0,
+            agri: agri.count || 0,
+            climate: climate.count || 0,
+            daily: daily.count || 0,
+            rain: rain.count || 0,
+          });
+
+          // تحديث الأرقام في الواجهة
+          const countElements = {
+            "count-hourly": hourly.count || 0,
+            "count-soil": soil.count || 0,
+            "count-agri": agri.count || 0,
+            "count-climate": climate.count || 0,
+            "count-daily": daily.count || 0,
+            "count-rain": rain.count || 0,
+          };
+
+          for (const [elementId, count] of Object.entries(countElements)) {
+            const element = document.getElementById(elementId);
+            if (element) {
+              element.textContent = count;
+
+              // تحديث لون العنصر حسب العدد
+              const statItem = element.closest(".stat-item");
+              if (statItem) {
+                // تحديد الحدود القصوى لكل نوع
+                const maxCounts = {
+                  "count-hourly": 24,
+                  "count-soil": 4,
+                  "count-agri": 1,
+                  "count-climate": 4,
+                  "count-daily": 3,
+                  "count-rain": 1,
+                };
+
+                const maxCount = maxCounts[elementId] || 1;
+                const percentage = (count / maxCount) * 100;
+
+                if (percentage >= 100) {
+                  statItem.className = "stat-item complete";
+                  if (statItem.querySelector(".stat-icon")) {
+                    statItem.querySelector(".stat-icon").className =
+                      "stat-icon complete";
+                  }
+                } else if (percentage > 0) {
+                  statItem.className = "stat-item warning";
+                  if (statItem.querySelector(".stat-icon")) {
+                    statItem.querySelector(".stat-icon").className =
+                      "stat-icon warning";
+                  }
+                } else {
+                  statItem.className = "stat-item danger";
+                  if (statItem.querySelector(".stat-icon")) {
+                    statItem.querySelector(".stat-icon").className =
+                      "stat-icon danger";
+                  }
+                }
+              }
+            }
+          }
+
+          // تحديث النسبة الإجمالية
+          updateTotalPercentage();
+
+          // تحديث رسالة الحالة
+          updateStatsMessage();
+
+          // إخفاء شاشة التحميل وإظهار النتائج
+          const statsLoading = document.getElementById("statsLoading");
+          const statsGrid = document.getElementById("statsGrid");
+          const statsSummary = document.getElementById("statsSummary");
+
+          if (statsLoading) statsLoading.style.display = "none";
+          if (statsGrid) statsGrid.style.display = "grid";
+          if (statsSummary) statsSummary.style.display = "block";
+
+          console.log("✅ تم جلب إحصائيات المحطة بنجاح");
+        } catch (error) {
+          console.error("❌ خطأ في جلب الإحصائيات الشاملة:", error);
+          showStatsError("شاملة");
+        }
+      }
+
+      function updateTotalPercentage() {
+        let totalCount = 0;
+        let totalMax = 0;
+
+        // الحدود القصوى لكل نوع
+        const maxCounts = {
+          hourly: 24, // 24 تقرير ساعي يومياً
+          soil: 4, // 4 تقارير تربة يومياً (UTC: 00, 06, 12, 18)
+          agri: 1, // 1 تقرير زراعي يومياً
+          climate: 4, // 4 تقارير مناخية يومياً
+          daily: 3, // 3 تقارير يومية
+          rain: 1, // 1 تقرير مطر يومياً
+        };
+
+        // حساب الإجمالي
+        const types = ["hourly", "soil", "agri", "climate", "daily", "rain"];
+        types.forEach((type) => {
+          const element = document.getElementById(`count-${type}`);
+          if (element) {
+            totalCount += parseInt(element.textContent) || 0;
+          }
+          totalMax += maxCounts[type] || 1;
+        });
+
+        const percentage =
+          totalMax > 0 ? Math.round((totalCount / totalMax) * 100) : 0;
+        const totalPercentageElement =
+          document.getElementById("totalPercentage");
+
+        if (totalPercentageElement) {
+          totalPercentageElement.textContent = `${percentage}%`;
+
+          // تحديث اللون حسب النسبة
+          if (percentage >= 80) {
+            totalPercentageElement.className = "summary-percentage complete";
+          } else if (percentage >= 50) {
+            totalPercentageElement.className = "summary-percentage warning";
+          } else {
+            totalPercentageElement.className = "summary-percentage danger";
+          }
+        }
+      }
+
+      function updateStatsMessage() {
+        const statsMessage = document.getElementById("statsMessage");
+        if (!statsMessage) return;
+
+        // حساب النسبة الإجمالية
+        let totalCount = 0;
+        let totalMax = 0;
+
+        const maxCounts = {
+          hourly: 24,
+          soil: 4,
+          agri: 1,
+          climate: 4,
+          daily: 3,
+          rain: 1,
+        };
+
+        const types = ["hourly", "soil", "agri", "climate", "daily", "rain"];
+
+        types.forEach((type) => {
+          const element = document.getElementById(`count-${type}`);
+          if (element) {
+            totalCount += parseInt(element.textContent) || 0;
+          }
+          totalMax += maxCounts[type] || 1;
+        });
+
+        const percentage =
+          totalMax > 0 ? Math.round((totalCount / totalMax) * 100) : 0;
+
+        let message = "";
+        let messageClass = "info";
+
+        if (percentage >= 80) {
+          message = `🎉 ممتاز! إكمال ${percentage}% من التقارير الإجمالية`;
+          messageClass = "success";
+        } else if (percentage >= 50) {
+          message = `👍 جيد! إكمال ${percentage}% من التقارير الإجمالية`;
+          messageClass = "info";
+        } else if (percentage > 0) {
+          message = `👌 بداية جيدة! إكمال ${percentage}% من التقارير الإجمالية`;
+          messageClass = "info";
+        } else {
+          message = "📝 لم يتم إرسال أي تقارير بعد";
+          messageClass = "warning";
+        }
+
+        statsMessage.textContent = message;
+        statsMessage.className = `stats-message ${messageClass}`;
+      }
+
+      function showStatsError(type) {
+        const statsGrid = document.getElementById("statsGrid");
+        const statsLoading = document.getElementById("statsLoading");
+        const statsMessage = document.getElementById("statsMessage");
+
+        if (statsLoading) {
+          statsLoading.style.display = "none";
+        }
+
+        if (statsGrid) {
+          statsGrid.innerHTML = `
+                    <div class="col-12 text-center py-4">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3" style="color: #e74c3c;"></i>
+                        <p>عذراً، حدث خطأ في تحميل الإحصائيات ${type}.</p>
+                        <button class="btn btn-sm btn-outline-light" onclick="loadAllStationStatistics()">
+                            <i class="fas fa-redo me-1"></i>إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+          statsGrid.style.display = "grid";
+        }
+
+        if (statsMessage) {
+          statsMessage.textContent =
+            "❌ حدث خطأ في جلب البيانات. تأكد من اتصالك بالإنترنت.";
+          statsMessage.className = "stats-message message-warning";
+        }
+      }
+
+      function setupStatsRefreshButton() {
+        const refreshBtn = document.getElementById("refreshStatsBtn");
+        if (refreshBtn) {
+          refreshBtn.addEventListener("click", function () {
+            const statsLoading = document.getElementById("statsLoading");
+            const statsGrid = document.getElementById("statsGrid");
+
+            if (statsLoading && statsGrid) {
+              statsLoading.style.display = "block";
+              statsGrid.style.display = "none";
+            }
+
+            loadAllStationStatistics();
+
+            // إضافة تأثير للزر
+            this.innerHTML =
+              '<i class="fas fa-spinner fa-spin me-1"></i>جاري التحديث...';
+            setTimeout(() => {
+              this.innerHTML =
+                '<i class="fas fa-sync-alt me-1"></i>تحديث الإحصائيات';
+            }, 1000);
+          });
+        }
+      }
+
+      function setupAutoRefresh() {
+        // تحديث الإحصائيات كل 5 دقائق
+        setInterval(
+          () => {
+            if (document.visibilityState === "visible") {
+              loadAllStationStatistics();
+              console.log("🔄 تحديث تلقائي للإحصائيات");
+            }
+          },
+          5 * 60 * 1000,
+        );
+      }
+
+      // ==================== إدارة القائمة الجانبية ====================
+      function setupSidebar() {
+        const logoutBtn = document.getElementById("logoutBtn");
+        const mobileSidebarBtn = document.getElementById("mobileSidebarBtn");
+        const sidebar = document.getElementById("sidebar");
+
+        // زر تسجيل الخروج
+        if (logoutBtn) {
+          logoutBtn.addEventListener("click", logout);
+        }
+
+        // زر القائمة الجانبية للجوال
+        if (mobileSidebarBtn && sidebar) {
+          mobileSidebarBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("active");
+          });
+        }
+
+        // إغلاق القائمة عند النقر خارجها على الجوال
+        document.addEventListener("click", (e) => {
+          if (window.innerWidth <= 992) {
+            const sidebar = document.getElementById("sidebar");
+            const mobileBtn = document.getElementById("mobileSidebarBtn");
+
+            if (
+              sidebar &&
+              sidebar.classList.contains("active") &&
+              !sidebar.contains(e.target) &&
+              !mobileBtn.contains(e.target)
+            ) {
+              sidebar.classList.remove("active");
+            }
+          }
+        });
+      }
+
+      // ==================== البيانات التجريبية ====================
+      function setupTestDataButton() {
+        const testDataBtn = document.getElementById("testDataBtn");
+
+        if (testDataBtn) {
+          testDataBtn.addEventListener("click", insertTestData);
+        }
+      }
+
+      function insertTestData() {
+        // بيانات تجريبية واقعية - اعتماد على UTC فقط
+        const testData = {
+          utcTime: "06",
+          soilTemp5cm: "+15.5",
+          soilTemp10cm: "+14.8",
+          soilTemp20cm: "+14.2",
+          soilTemp50cm: "+13.5",
+          observerNotes:
+            "بيانات تجريبية - حالة الطقس مستقرة - لا توجد ملاحظات خاصة",
+        };
+
+        // تعبئة الحقول
+        document.getElementById("utcTime").value = testData.utcTime;
+        document.getElementById("soilTemp5cm").value = testData.soilTemp5cm;
+        document.getElementById("soilTemp10cm").value = testData.soilTemp10cm;
+        document.getElementById("soilTemp20cm").value = testData.soilTemp20cm;
+        document.getElementById("soilTemp50cm").value = testData.soilTemp50cm;
+        document.getElementById("observerNotes").value = testData.observerNotes;
+
+        // تحديث المؤشرات
+        document.querySelectorAll(".temperature-input").forEach((field) => {
+          updateSignIndicator(field);
+        });
+
+        // تحديث عداد الملاحظات
+        const notesCounter = document.getElementById("notesCounter");
+        if (notesCounter) {
+          notesCounter.textContent = `${testData.observerNotes.length}/500`;
+        }
+
+        // تفعيل خانة التأكيد
+        document.getElementById("responsibilityConfirmed").checked = true;
+
+        showNotification("✅ تم إدخال البيانات التجريبية بنجاح", "success");
+      }
+
+      // ==================== مشاركة عبر واتساب ====================
+      function setupWhatsAppButtons() {
+        const whatsappBtn = document.getElementById("whatsappBtn");
+
+        if (whatsappBtn) {
+          whatsappBtn.addEventListener("click", shareViaWhatsApp);
+        }
+      }
+
+      function enableWhatsAppButton() {
+        const whatsappBtn = document.getElementById("whatsappBtn");
+
+        if (whatsappBtn) {
+          whatsappBtn.disabled = false;
+          whatsappBtn.classList.add("pulse");
+          whatsappBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>مشاركة عبر واتساب';
+        }
+      }
+
+      function disableWhatsAppButton() {
+        const whatsappBtn = document.getElementById("whatsappBtn");
+
+        if (whatsappBtn) {
+          whatsappBtn.disabled = true;
+          whatsappBtn.classList.remove("pulse");
+          whatsappBtn.innerHTML =
+            '<i class="fab fa-whatsapp me-2"></i>يجب إرسال البيانات أولاً';
+        }
+      }
+
+      function shareViaWhatsApp() {
+        if (!lastSavedData) {
+          showNotification("❌ يجب إرسال البيانات أولاً قبل المشاركة", "error");
+          return;
+        }
+
+        const message = createWhatsAppMessage();
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+
+        window.open(whatsappUrl, "_blank");
+        updateWhatsAppShareStatus();
+      }
+
+      function createWhatsAppMessage() {
+        if (!lastSavedData) return "";
+
+        const {
+          user_name,
+          user_station,
+          user_role,
+          observation_date,
+          utc_time,
+        } = lastSavedData;
+
+        let message = `📊 *تقرير درجات حرارة التربة*\n`;
+        message += `📅 التاريخ: ${observation_date}\n`;
+        message += `🌍 التوقيت العالمي: ${utc_time}\n`;
+        message += `📍 المحطة: ${user_station}\n`;
+        message += `👤 الراصد: ${user_name} (${user_role})\n`;
+        message += `\n🌡️ *درجات الحرارة:*\n`;
+
+        const depths = [
+          { key: "soil_temp_5cm", label: "5 سم" },
+          { key: "soil_temp_10cm", label: "10 سم" },
+          { key: "soil_temp_20cm", label: "20 سم" },
+          { key: "soil_temp_50cm", label: "50 سم" },
+        ];
+
+        depths.forEach((depth) => {
+          const temp = lastSavedData[depth.key];
+          if (temp !== null && temp !== undefined) {
+            message += `• ${depth.label}: ${temp.toFixed(1)}°C\n`;
+          } else {
+            message += `• ${depth.label}: # (لا بيانات)\n`;
+          }
+        });
+
+        if (lastSavedData.observer_notes) {
+          message += `\n📝 *ملاحظات الراصد:*\n${lastSavedData.observer_notes}\n`;
+        }
+
+        message += `\n✅ *تم تأكيد المسؤولية عن البيانات* ✓\n`;
+        message += `\n📱 *مرسل عبر:* نظام إدارة  البيانات الجوية`;
+
+        return message;
+      }
+
+      async function updateWhatsAppShareStatus() {
+        if (!lastSavedData || !lastSavedData.supabase_id) return;
+
+        try {
+          const { error } = await supabaseClient
+            .from("soil_temperatures")
+            .update({ whatsapp_shared: true })
+            .eq("id", lastSavedData.supabase_id);
+
+          if (!error) {
+            lastSavedData.whatsapp_shared = true;
+          }
+        } catch (error) {
+          console.error("❌ خطأ في تحديث المشاركة:", error);
+        }
+      }
+
+      // ==================== دوال النظام الأساسية ====================
+      function showNotification(message, type = "success") {
+        const notification = document.getElementById("notification");
+        if (!notification) return;
+
+        const icons = {
+          success: "fa-check-circle",
+          error: "fa-exclamation-triangle",
+          warning: "fa-exclamation-circle",
+          info: "fa-info-circle",
+        };
+
+        notification.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas ${icons[type] || "fa-info-circle"} me-2"></i>
+                    <div>${message}</div>
+                </div>
+            `;
+
+        // إضافة كلاس النجاح إذا كانت الرسالة نجاح
+        if (type === "success") {
+          notification.classList.add("success-notification");
+        } else {
+          notification.classList.remove("success-notification");
+        }
+
+        notification.style.display = "block";
+
+        const colors = {
+          success: "#28a745",
+          error: "#dc3545",
+          warning: "#ffc107",
+          info: "#17a2b8",
+        };
+
+        notification.style.borderRightColor = colors[type] || colors.success;
+
+        setTimeout(() => {
+          notification.style.display = "none";
+        }, 5000);
+      }
+
+      function showSuccessMessage() {
+        const successMessage = document.getElementById("successMessage");
+        if (successMessage) {
+          successMessage.style.display = "block";
+
+          // إخفاء الرسالة بعد 10 ثواني
+          setTimeout(() => {
+            successMessage.style.display = "none";
+          }, 10000);
+        }
+      }
+
+      function showLoading(show, text = "جاري إرسال البيانات...") {
+        const overlay = document.getElementById("loadingOverlay");
+        const loadingText = document.getElementById("loadingText");
+
+        if (overlay) overlay.style.display = show ? "flex" : "none";
+        if (loadingText) loadingText.textContent = text;
+      }
+
+      function updateSignIndicator(inputElement) {
+        const wrapper = inputElement.closest(".temperature-input-wrapper");
+        if (!wrapper) return;
+
+        const indicator = wrapper.querySelector(".sign-indicator");
+        if (!indicator) return;
+
+        const value = inputElement.value.trim();
+
+        if (value.startsWith("-")) {
+          indicator.textContent = "−";
+          indicator.style.color = "#dc3545";
+        } else if (value.startsWith("+")) {
+          indicator.textContent = "+";
+          indicator.style.color = "#28a745";
+        } else if (value === "#") {
+          indicator.textContent = "#";
+          indicator.style.color = "#6c757d";
+        } else if (value && !isNaN(parseFloat(value))) {
+          indicator.textContent = "+";
+          indicator.style.color = "#28a745";
+        } else {
+          indicator.textContent = "±";
+          indicator.style.color = "#8b4513";
+        }
+      }
+
+      function validateTemperature(value) {
+        if (!value) return false;
+        if (value === "#") return true;
+
+        const pattern = /^[+-]?\d{1,2}\.\d$/;
+        if (!pattern.test(value)) return false;
+
+        const num = parseFloat(value);
+        return num >= -20.0 && num <= 50.0;
+      }
+
+      function validateForm() {
+        if (!currentUserData) {
+          showNotification("❌ بيانات المستخدم غير متوفرة", "error");
+          return false;
+        }
+
+        const requiredFields = [
+          "utcTime",
+          "soilTemp5cm",
+          "soilTemp10cm",
+          "soilTemp20cm",
+          "soilTemp50cm",
+        ];
+
+        for (const fieldId of requiredFields) {
+          const field = document.getElementById(fieldId);
+          if (!field || !field.value.trim()) {
+            showNotification(`❌ حقل ${getFieldName(fieldId)} مطلوب`, "error");
+            field?.focus();
+            return false;
+          }
+
+          if (fieldId !== "utcTime") {
+            const value = field.value.trim();
+            if (!validateTemperature(value)) {
+              showNotification(
+                `❌ قيمة غير صالحة في ${getFieldName(fieldId)}`,
+                "error",
+              );
+              field.focus();
+              return false;
+            }
+          }
+        }
+
+        const responsibilityConfirmed = document.getElementById(
+          "responsibilityConfirmed",
+        );
+
+        if (!responsibilityConfirmed?.checked) {
+          showNotification("❌ يجب تأكيد مسؤولية البيانات", "error");
+          return false;
+        }
+
+        return true;
+      }
+
+      function getFieldName(fieldId) {
+        const fieldNames = {
+          utcTime: "التوقيت العالمي (UTC)",
+          soilTemp5cm: "درجة حرارة التربة عند 5سم",
+          soilTemp10cm: "درجة حرارة التربة عند 10سم",
+          soilTemp20cm: "درجة حرارة التربة عند 20سم",
+          soilTemp50cm: "درجة حرارة التربة عند 50سم",
+        };
+        return fieldNames[fieldId] || fieldId;
+      }
+
+      function collectFormData() {
+        const now = new Date();
+        const observationDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+        return {
+          utcTime: document.getElementById("utcTime").value + ":00 UTC",
+          soilTemp5cm: document.getElementById("soilTemp5cm").value.trim(),
+          soilTemp10cm: document.getElementById("soilTemp10cm").value.trim(),
+          soilTemp20cm: document.getElementById("soilTemp20cm").value.trim(),
+          soilTemp50cm: document.getElementById("soilTemp50cm").value.trim(),
+          observerNotes: document.getElementById("observerNotes").value.trim(),
+          observationDate: observationDate,
+        };
+      }
+
+      async function submitToSupabase(formData) {
+        try {
+          if (!currentUserData) throw new Error("بيانات المستخدم غير متوفرة");
+
+          const soilData = {
+            observer_id: currentUserData.id || "user-" + Date.now(),
+            observer_name:
+              `${currentUserData.first_name || ""} ${currentUserData.last_name || ""}`.trim() ||
+              "راصد النظام",
+            station: currentUserData.station || "محطة دمشق",
+            observation_date: formData.observationDate,
+            utc_time: formData.utcTime,
+            soil_temp_5cm:
+              formData.soilTemp5cm === "#"
+                ? null
+                : parseFloat(formData.soilTemp5cm),
+            soil_temp_10cm:
+              formData.soilTemp10cm === "#"
+                ? null
+                : parseFloat(formData.soilTemp10cm),
+            soil_temp_20cm:
+              formData.soilTemp20cm === "#"
+                ? null
+                : parseFloat(formData.soilTemp20cm),
+            soil_temp_50cm:
+              formData.soilTemp50cm === "#"
+                ? null
+                : parseFloat(formData.soilTemp50cm),
+            observer_notes: formData.observerNotes || null,
+            responsibility_confirmed: true,
+            whatsapp_shared: false,
+            submitted_at: new Date().toISOString(),
+            user_name:
+              `${currentUserData.first_name || ""} ${currentUserData.father_name || ""} ${currentUserData.last_name || ""}`.trim(),
+            user_station: currentUserData.station,
+            user_role: currentUserData.role,
+          };
+
+          console.log("📦 بيانات للإرسال:", soilData);
+
+          const { data, error } = await supabaseClient
+            .from("soil_temperatures")
+            .insert([soilData])
+            .select();
+
+          if (error) throw error;
+
+          lastSavedData = {
+            ...soilData,
+            supabase_id: data[0]?.id,
+          };
+
+          localStorage.removeItem("soilUserData");
+          localStorage.removeItem("soilTransferData");
+
+          return { success: true, data: data };
+        } catch (error) {
+          console.error("❌ خطأ في الإرسال:", error);
+          throw error;
+        }
+      }
+
+      // ==================== إعداد معالجات الأحداث ====================
+      function setupEventHandlers() {
+        // أزرار الإشارة
+        document.querySelectorAll(".sign-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const targetId = this.getAttribute("data-target");
+            const sign = this.getAttribute("data-value");
+            const targetField = document.getElementById(targetId);
+
+            if (!targetField) return;
+
+            if (sign === "#") {
+              targetField.value = "#";
+            } else if (sign === "-") {
+              const currentValue = targetField.value.replace(/[+-]/g, "");
+              targetField.value = "-" + currentValue;
+            } else if (sign === "+") {
+              const currentValue = targetField.value.replace(/[+-]/g, "");
+              targetField.value = "+" + currentValue;
+            }
+
+            updateSignIndicator(targetField);
+          });
+        });
+
+        // حقول درجة الحرارة
+        document.querySelectorAll(".temperature-input").forEach((field) => {
+          field.addEventListener("blur", function () {
+            const value = this.value.trim();
+            if (value === "#") return;
+
+            if (
+              !value.startsWith("+") &&
+              !value.startsWith("-") &&
+              value !== "#"
+            ) {
+              this.value = "+" + value;
+            }
+            updateSignIndicator(this);
+          });
+
+          field.addEventListener("input", function () {
+            updateSignIndicator(this);
+          });
+
+          // إصلاح الخلفية عند التركيز
+          field.addEventListener("focus", function () {
+            this.style.backgroundColor = "#ffffff";
+            this.style.color = "#212529";
+          });
+
+          field.addEventListener("blur", function () {
+            this.style.backgroundColor = "#ffffff";
+            this.style.color = "#212529";
+          });
+        });
+
+        // ملاحظات الراصد
+        const observerNotes = document.getElementById("observerNotes");
+        const notesCounter = document.getElementById("notesCounter");
+
+        if (observerNotes && notesCounter) {
+          observerNotes.addEventListener("input", function () {
+            const length = this.value.length;
+            notesCounter.textContent = `${length}/500`;
+
+            if (length > 500) {
+              this.value = this.value.substring(0, 500);
+              notesCounter.textContent = "500/500";
+              showNotification("⚠️ تم الوصول للحد الأقصى للملاحظات", "warning");
+            }
+          });
+        }
+
+        // النموذج الرئيسي
+        const form = document.getElementById("soilTempForm");
+        const submitBtn = document.getElementById("submitBtn");
+
+        if (form && submitBtn) {
+          submitBtn.addEventListener("click", async function (e) {
+            e.preventDefault();
+
+            if (!validateForm()) return;
+
+            const formData = collectFormData();
+            showLoading(true);
+
+            try {
+              const result = await submitToSupabase(formData);
+
+              // عرض رسالة النجاح الكبيرة
+              showSuccessMessage();
+
+              // عرض إشعار النجاح
+              showNotification(
+                "✅ تم إرسال البيانات بنجاح إلى قاعدة البيانات",
+                "success",
+              );
+
+              // تفعيل زر المشاركة عبر واتساب
+              enableWhatsAppButton();
+
+              // تحديث إحصائيات المحطة بعد إضافة بيانات جديدة
+              setTimeout(() => {
+                loadAllStationStatistics();
+              }, 1000);
+
+              // إعادة تعيين بعض الحقول
+              if (notesCounter) {
+                notesCounter.textContent = "0/500";
+              }
+
+              console.log("✅ نتيجة الإرسال:", result);
+            } catch (error) {
+              console.error("❌ فشل الإرسال:", error);
+              showNotification(
+                "❌ فشل إرسال البيانات: " + error.message,
+                "error",
+              );
+            } finally {
+              showLoading(false);
+            }
+          });
+        }
+      }
+
+      // ==================== دوال مساعدة ====================
+      function logout() {
+        console.log("🚪 جاري تسجيل الخروج...");
+        localStorage.clear();
+        window.location.href = "../../../index.html";
+      }
+
+      // ==================== تهيئة الصفحة ====================
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 تهيئة صفحة درجات حرارة التربة...");
+
+        // 1. إصلاح الخلفيات أولاً
+        setTimeout(fixInputBackgrounds, 100);
+
+        // 2. تحميل بيانات المستخدم
+        if (!loadUserData()) return;
+
+        // 3. إعداد القائمة الجانبية
+        setupSidebar();
+
+        // 4. إعداد زر البيانات التجريبية
+        setupTestDataButton();
+
+        // 5. إعداد أزرار واتساب
+        setupWhatsAppButtons();
+
+        // 6. ضبط الوقت الافتراضي (UTC)
+        const utcTimeSelect = document.getElementById("utcTime");
+        if (utcTimeSelect) {
+          utcTimeSelect.value = "06";
+        }
+
+        // 7. إعداد معالجات الأحداث
+        setupEventHandlers();
+
+        // 8. تعطيل زر واتساب في البداية
+        disableWhatsAppButton();
+
+        // 9. جلب إحصائيات المحطة عند التحميل
+        setTimeout(() => {
+          loadAllStationStatistics();
+          setupStatsRefreshButton();
+          setupAutoRefresh();
+        }, 1000);
+
+        // 10. رسالة ترحيب
+        setTimeout(() => {
+          if (currentUserData) {
+            const userName =
+              `${currentUserData.first_name || ""} ${currentUserData.last_name || ""}`.trim();
+            showNotification(
+              `مرحباً ${userName}! النظام جاهز لإدخال درجات حرارة التربة`,
+              "info",
+            );
+          }
+        }, 1500);
+
+        // 11. إصلاح إضافي للخلفيات بعد تحميل كامل الصفحة
+        setTimeout(() => {
+          fixInputBackgrounds();
+          // إعادة تعيين إضافية بعد 2 ثانية للتأكد
+          setTimeout(fixInputBackgrounds, 2000);
+        }, 500);
+      });
+    </script>
+  </body>
+</html>

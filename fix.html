@@ -1,0 +1,3090 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - الإبلاغ عن أعطال</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #198754;
+        --accent-color: #fd7e14;
+        --error-color: #dc3545;
+        --dark-blue: #0a58ca;
+        --light-bg: #f8f9fa;
+        --warning-color: #ffc107;
+        --border-color: #dee2e6;
+        --text-muted: #6c757d;
+        --whatsapp-color: #25d366;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+        position: relative;
+        padding-bottom: 60px;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath fill='%230d6efd' fill-opacity='0.05' d='M50 0L100 50L50 100L0 50Z'/%3E%3C/svg%3E");
+        background-size: 100px;
+        background-position: center;
+        opacity: 0.1;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      .main-container {
+        min-height: 100vh;
+        display: none;
+      }
+
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        flex-direction: column;
+        background-color: rgba(255, 255, 255, 0.9);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+      }
+
+      .spinner {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .error-message {
+        display: none;
+        color: var(--error-color);
+        margin-top: 15px;
+        text-align: center;
+      }
+
+      .main-card {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 1300px;
+        overflow: hidden;
+        margin: 16px auto;
+        border: 1px solid var(--border-color);
+        transition: all 0.25s ease;
+      }
+
+      .main-content {
+        padding: 20px;
+      }
+
+      .sidebar {
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        min-height: 80vh;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.06);
+        border-radius: 8px;
+        padding: 12px;
+      }
+
+      .sidebar .nav-link {
+        color: #ecf0f1;
+        padding: 0.5rem 0.7rem;
+        margin: 0.2rem 0;
+        border-radius: 0.375rem;
+        transition: all 0.18s ease;
+        border: none;
+        font-size: 0.9rem;
+      }
+
+      .sidebar .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        transform: translateX(-4px);
+      }
+
+      .sidebar .nav-link.active {
+        background-color: #0d6efd;
+        color: white;
+      }
+
+      .sidebar .nav-link.text-danger:hover {
+        background-color: rgba(220, 53, 69, 0.08);
+      }
+
+      .sidebar-sticky {
+        position: sticky;
+        top: 16px;
+        height: calc(100vh - 48px);
+        padding-top: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .dashboard-content {
+        background-color: var(--light-bg);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 0;
+        border: 1px solid var(--border-color);
+        min-height: 75vh;
+      }
+
+      .logo {
+        width: 90px;
+        height: 90px;
+        background-color: white;
+        padding: 8px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid var(--primary-color);
+        margin: 0 auto;
+      }
+
+      .logo img {
+        max-height: 80px;
+        max-width: 80px;
+        object-fit: contain;
+        border-radius: 50%;
+      }
+
+      .mobile-logo {
+        height: 50px;
+        width: 50px;
+        background-color: white;
+        padding: 4px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--primary-color);
+      }
+
+      .mobile-logo img {
+        max-height: 42px;
+        max-width: 42px;
+        object-fit: contain;
+        border-radius: 50%;
+      }
+
+      .mobile-header {
+        display: none;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--dark-blue) 100%
+        );
+        color: white;
+        padding: 12px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 0 0 10px 10px;
+        margin: 0 10px;
+      }
+
+      .mobile-header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .mobile-menu-btn {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.4rem;
+        padding: 5px 10px;
+        border-radius: 5px;
+        transition: background-color 0.2s;
+      }
+
+      .mobile-menu-btn:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+
+      .mobile-sidebar {
+        position: fixed;
+        top: 0;
+        right: -300px;
+        width: 280px;
+        height: 100%;
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        z-index: 1030;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+        padding: 20px;
+        box-shadow: -2px 0 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .mobile-sidebar.active {
+        right: 0;
+      }
+
+      .mobile-sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .mobile-sidebar-close {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .mobile-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1029;
+        display: none;
+      }
+
+      .mobile-overlay.active {
+        display: block;
+      }
+
+      .user-welcome {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .content-section {
+        display: none;
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .content-section.active {
+        display: block;
+      }
+
+      .dashboard-card {
+        border-radius: 10px;
+        overflow: hidden;
+        transition: transform 0.3s;
+        height: 100%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        background-color: white;
+      }
+
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .stats-card {
+        text-align: center;
+        padding: 20px;
+      }
+
+      .card-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+      }
+
+      .stats-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+      }
+
+      .form-section {
+        background-color: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .nav-pills .nav-link {
+        color: #495057;
+        text-align: right;
+        margin-bottom: 10px;
+        border-radius: 8px;
+      }
+
+      .nav-pills .nav-link:hover {
+        background-color: #f8f9fa;
+      }
+
+      .nav-pills .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .station-type-card {
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .station-type-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-5px);
+      }
+
+      .station-type-card.active {
+        border-color: var(--primary-color);
+        background-color: rgba(13, 110, 253, 0.1);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.2);
+      }
+
+      .station-type-card i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: var(--primary-color);
+      }
+
+      .station-type-card h5 {
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .station-type-card p {
+        color: var(--text-muted);
+        margin-bottom: 0;
+      }
+
+      .btn-report {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px;
+        font-weight: bold;
+        border-radius: 8px;
+      }
+
+      .btn-report:hover {
+        background-color: var(--dark-blue);
+        color: white;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+        display: none;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .measurement-card {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: white;
+        transition: all 0.3s;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .measurement-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .measurement-icon {
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+      }
+
+      .measurement-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: var(--dark-blue);
+      }
+
+      .measurement-description {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+      }
+
+      .measurement-btn {
+        width: 100%;
+      }
+
+      .page-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--dark-blue) 100%
+        );
+        color: white;
+        padding: 12px 20px;
+        text-align: center;
+        z-index: 1000;
+        font-size: 0.9rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
+
+      .footer-content > div {
+        flex: 1;
+      }
+
+      .center-text {
+        text-align: center;
+      }
+
+      .programmer {
+        text-align: left;
+      }
+
+      /* أزرار المشاركة */
+      .share-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+
+      .btn-whatsapp {
+        background-color: var(--whatsapp-color);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s;
+        font-weight: 500;
+      }
+
+      .btn-whatsapp:hover {
+        background-color: #1da851;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+      }
+
+      .btn-whatsapp i {
+        font-size: 1.2rem;
+      }
+
+      .btn-whatsapp:disabled {
+        background-color: #a5d6a7;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn-copy {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.3s;
+        font-weight: 500;
+      }
+
+      .btn-copy:hover {
+        background-color: #5a6268;
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      .btn-copy.copied {
+        background-color: var(--secondary-color);
+      }
+
+      .share-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 30px;
+        border: 2px dashed #dee2e6;
+      }
+
+      .share-section h5 {
+        color: var(--dark-blue);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .share-section h5 i {
+        color: var(--whatsapp-color);
+      }
+
+      .share-link-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 15px;
+        word-break: break-all;
+      }
+
+      .share-link {
+        font-family: monospace;
+        font-size: 0.9rem;
+        color: var(--dark-blue);
+        direction: ltr;
+        text-align: left;
+      }
+
+      .share-qr {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+      }
+
+      .share-qr canvas {
+        max-width: 200px;
+        height: auto;
+      }
+
+      .share-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .share-option {
+        flex: 1;
+        min-width: 150px;
+      }
+
+      /* تخصيص التقويم الميلادي */
+      input[type="datetime-local"] {
+        direction: ltr;
+        text-align: left;
+        font-family: monospace;
+      }
+
+      .date-format-note {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-header {
+          display: block;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .main-content {
+          padding: 16px;
+        }
+
+        .dashboard-content {
+          padding: 16px;
+          min-height: 70vh;
+        }
+
+        .footer-content {
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .footer-content > div {
+          text-align: center;
+        }
+
+        .programmer {
+          text-align: center;
+        }
+
+        .share-buttons {
+          flex-direction: column;
+        }
+
+        .share-options {
+          flex-direction: column;
+        }
+
+        .share-option {
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .main-card {
+          margin: 8px;
+          border-radius: 10px;
+        }
+
+        .main-content {
+          padding: 12px;
+        }
+
+        .dashboard-content {
+          padding: 12px;
+        }
+
+        .page-footer {
+          padding: 10px;
+          font-size: 0.8rem;
+        }
+      }
+
+      [dir="rtl"] {
+        text-align: right;
+      }
+
+      [dir="rtl"] .sidebar .nav-link:hover {
+        transform: translateX(-4px);
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 8px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 8px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--dark-blue);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- شاشة التحميل -->
+    <div class="loading-container" id="loadingContainer">
+      <div class="spinner-border text-primary spinner" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-3">جاري تحميل البيانات...</p>
+      <div class="error-message" id="errorMessage">
+        <p>حدث خطأ في التحميل. يرجى المحاولة مرة أخرى.</p>
+        <button class="btn btn-primary mt-2" id="retryButton">
+          إعادة المحاولة
+        </button>
+      </div>
+    </div>
+
+    <!-- هيدر الجوال -->
+    <div class="mobile-header">
+      <div class="mobile-header-content">
+        <div class="mobile-logo">
+          <img
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='20' fill='%230d6efd'/%3E%3Cpath fill='white' d='M25 12l-8 13h5v8h6v-8h5l-8-13z'/%3E%3C/svg%3E"
+            alt="شعار المديرية"
+          />
+        </div>
+        <h5 class="mb-0">لوحة التحكم</h5>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- القائمة الجانبية للجوال -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+      <div class="mobile-sidebar-header">
+        <h5 class="text-white mb-0">القائمة</h5>
+        <button class="mobile-sidebar-close" id="mobileSidebarClose">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <ul class="nav flex-column" id="mobileSidebarMenu">
+        <!-- سيتم تعبئته بواسطة JavaScript -->
+      </ul>
+    </div>
+
+    <!-- طبقة التعتيم للجوال -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-container" id="mainContainer">
+      <div class="container-fluid">
+        <div class="main-card">
+          <div class="main-content">
+            <!-- القائمة الجانبية -->
+            <div class="row">
+              <div class="col-md-3 col-lg-2 sidebar">
+                <div class="sidebar-sticky">
+                  <div class="text-center my-4">
+                    <div class="logo">
+                      <img
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Ccircle cx='40' cy='40' r='35' fill='%230d6efd'/%3E%3Cpath fill='white' d='M40 20l-12 20h8v12h8v-12h8l-12-20z'/%3E%3C/svg%3E"
+                        alt="شعار المديرية"
+                      />
+                    </div>
+                    <h5 class="mt-2 text-white">نظام إدارة البيانات الجوية</h5>
+                    <p
+                      class="text-light mb-0"
+                      style="font-size: 0.85rem; opacity: 0.8"
+                    >
+                      لوحة التحكم
+                    </p>
+                  </div>
+
+                  <ul class="nav flex-column" id="sidebarMenu">
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../../main.html"
+                      >
+                        <i
+                          class="fa-solid fa-home me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        لوحة التحكم الرئيسية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../hourly/hourly_send/hourly_reports.html"
+                      >
+                        <i
+                          class="fa-regular fa-clock me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        النشرات الساعية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../daily/daily_send/daily.html"
+                      >
+                        <i
+                          class="fa-regular fa-calendar-days me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        النشرات اليومية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../rain/rain_send/rainfall_reports.html"
+                      >
+                        <i
+                          class="fa-solid fa-cloud-rain me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        النشرات المطرية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../h_climate/h_climate_send/h_climate_send.html"
+                      >
+                        <i
+                          class="fa-solid fa-wind me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        الساعي المناخي
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../soil/soil_send/soil-send.html"
+                      >
+                        <i
+                          class="fa-solid fa-temperature-half me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        حرارة التربة
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../arg/send-argicultural/agricultural_reports.html"
+                      >
+                        <i
+                          class="fa-solid fa-leaf me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        النشرات الزراعية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center active"
+                        href="#"
+                      >
+                        <i
+                          class="fa-solid fa-microchip me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        أعطال أجهزة الرصد
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="fix-tel.html"
+                      >
+                        <i
+                          class="fa-solid fa-tower-cell me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        مشاكل أجهزة الإتصالات
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="it.html"
+                      >
+                        <i
+                          class="fa-solid fa-bug me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        أعطال البرامج (IT)
+                      </a>
+                    </li>
+
+                    <li class="nav-item mb-2">
+                      <a
+                        class="nav-link d-flex align-items-center"
+                        href="../weather_phenomena/weather_phenomena.html"
+                      >
+                        <i
+                          class="fa-solid fa-cloud-bolt me-2"
+                          style="color: #27ae60"
+                        ></i>
+                        الظواهر الجوية
+                      </a>
+                    </li>
+
+                    <li class="nav-item mt-3">
+                      <a
+                        class="nav-link d-flex align-items-center text-danger"
+                        href="#"
+                        onclick="logout()"
+                      >
+                        <i
+                          class="fa-solid fa-right-from-bracket me-2"
+                          style="color: #ff0000"
+                        ></i>
+                        تسجيل الخروج
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="col-md-9 col-lg-10">
+                <div class="dashboard-content">
+                  <div class="user-welcome" id="userWelcomeSection">
+                    <!-- سيتم تعبئته بواسطة JavaScript -->
+                  </div>
+
+                  <!-- قسم أعطال أجهزة الرصد -->
+                  <div
+                    class="content-section active"
+                    id="equipment-failures-section"
+                  >
+                    <!-- إحصائيات سريعة -->
+                    <div class="row mb-4">
+                      <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="dashboard-card stats-card">
+                          <div class="card-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                          <div
+                            class="stats-number text-warning"
+                            id="pendingCount"
+                          >
+                            0
+                          </div>
+                          <div class="stats-label">أعطال قيد المعالجة</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="dashboard-card stats-card">
+                          <div class="card-icon">
+                            <i class="fas fa-clock"></i>
+                          </div>
+                          <div class="stats-number text-info" id="reviewCount">
+                            0
+                          </div>
+                          <div class="stats-label">في انتظار المراجعة</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="dashboard-card stats-card">
+                          <div class="card-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div
+                            class="stats-number text-success"
+                            id="resolvedCount"
+                          >
+                            0
+                          </div>
+                          <div class="stats-label">أعطال تم إصلاحها</div>
+                        </div>
+                      </div>
+                      <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="dashboard-card stats-card">
+                          <div class="card-icon">
+                            <i class="fas fa-bolt"></i>
+                          </div>
+                          <div
+                            class="stats-number text-danger"
+                            id="urgentCount"
+                          >
+                            0
+                          </div>
+                          <div class="stats-label">أعطال عاجلة</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-section">
+                      <h4 class="mb-4">
+                        <i class="fas fa-plus-circle me-2"></i>الإبلاغ عن عطل
+                        جديد
+                      </h4>
+
+                      <form id="failureReportForm">
+                        <div class="row mb-4">
+                          <div class="col-md-6">
+                            <label class="form-label"
+                              >المحطة:
+                              <strong id="stationName"
+                                >جاري التحميل...</strong
+                              ></label
+                            >
+                          </div>
+                          <div class="col-md-6">
+                            <label class="form-label"
+                              >مقدم البلاغ:
+                              <strong id="reporterName"
+                                >جاري التحميل...</strong
+                              ></label
+                            >
+                          </div>
+                        </div>
+
+                        <div class="mb-4">
+                          <h6 class="mb-3">اختر نوع المحطة</h6>
+                          <div class="row">
+                            <div class="col-md-4 mb-3">
+                              <div
+                                class="station-type-card active"
+                                id="automatic-station"
+                                data-station-type="automatic"
+                              >
+                                <i class="fas fa-microchip"></i>
+                                <h5>محطة أوتوماتيكية</h5>
+                                <p class="small">
+                                  محطات القياس التلقائي المتطورة
+                                </p>
+                              </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                              <div
+                                class="station-type-card"
+                                id="classic-station"
+                                data-station-type="classic"
+                              >
+                                <i class="fas fa-building"></i>
+                                <h5>محطة كلاسيكية</h5>
+                                <p class="small">
+                                  محطات الرصد التقليدية والمختلطة
+                                </p>
+                              </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                              <div
+                                class="station-type-card"
+                                id="special-station"
+                                data-station-type="special"
+                              >
+                                <i class="fas fa-satellite"></i>
+                                <h5>محطات متخصصة</h5>
+                                <p class="small">
+                                  محطات رصد متخصصة (زراعية، بحرية، إلخ)
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- قسم المحطات الأوتوماتيكية -->
+                        <div id="automatic-section">
+                          <div class="mb-4">
+                            <h6 class="mb-3">اختر نوع الجهاز المعطل</h6>
+
+                            <div class="row">
+                              <!-- مستشعر درجة الحرارة -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-thermometer-half"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر درجة الحرارة
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس درجة الحرارة التلقائي
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="temperature_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مستشعر الرطوبة -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-tint"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر الرطوبة
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس الرطوبة النسبية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="humidity_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مستشعر الضغط الجوي -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر الضغط الجوي
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس الضغط الجوي
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="pressure_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مستشعر سرعة الرياح -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-wind"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر سرعة الرياح
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس سرعة الرياح (الأنيمومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="wind_speed_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مستشعر اتجاه الرياح -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-compass"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر اتجاه الرياح
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس اتجاه الرياح (دوارة الرياح)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="wind_direction_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مستشعر هطول الأمطار -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-cloud-rain"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مستشعر هطول الأمطار
+                                  </div>
+                                  <div class="measurement-description">
+                                    مستشعر قياس كمية هطول الأمطار (البلومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="rain_sensor"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- جهاز الإرسال اللاسلكي -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-broadcast-tower"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    جهاز الإرسال اللاسلكي
+                                  </div>
+                                  <div class="measurement-description">
+                                    جهاز إرسال البيانات لاسلكياً
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="wireless_transmitter"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مودم الاتصال -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-wifi"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مودم الاتصال
+                                  </div>
+                                  <div class="measurement-description">
+                                    مودم اتصال البيانات
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="communication_modem"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- لوحة الطاقة الشمسية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-solar-panel"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    لوحة الطاقة الشمسية
+                                  </div>
+                                  <div class="measurement-description">
+                                    لوحة توليد الطاقة الشمسية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="solar_panel"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- قسم المحطات الكلاسيكية -->
+                        <div id="classic-section" style="display: none">
+                          <div class="mb-4">
+                            <h6 class="mb-3">اختر نوع مقياس الرصد المعطل</h6>
+
+                            <div class="row">
+                              <!-- مقياس الحرارة -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-thermometer-half"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مقياس الحرارة
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس درجة الحرارة (الترمومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="thermometer"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مقياس الرطوبة -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-tint"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مقياس الرطوبة
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس الرطوبة النسبية (الهيجرومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="hygrometer"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- البارومتر -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                  </div>
+                                  <div class="measurement-title">البارومتر</div>
+                                  <div class="measurement-description">
+                                    مقياس الضغط الجوي (البارومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="barometer"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مقياس سرعة الرياح -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-wind"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مقياس سرعة الرياح
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس سرعة الرياح (الأنيمومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="anemometer"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- دوارة الرياح -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-compass"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    دوارة الرياح
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس اتجاه الرياح (دوارة الرياح)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="windvane"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مقياس المطر -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-cloud-rain"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مقياس المطر
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس كمية هطول الأمطار (البلومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="rain_gauge"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- البيرانومتر -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-sun"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    البيرانومتر
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس الإشعاع الشمسي (البيرانومتر)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="pyranometer"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- الهيليوغراف -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-sun"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    الهيليوغراف
+                                  </div>
+                                  <div class="measurement-description">
+                                    ساعات سطوع الشمس (الهيليوغراف)
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="heliograph"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- مقياس الرؤية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-eye"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    مقياس الرؤية
+                                  </div>
+                                  <div class="measurement-description">
+                                    مقياس مدى الرؤية الأفقية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="visibility_meter"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- قسم المحطات المتخصصة -->
+                        <div id="special-section" style="display: none">
+                          <div class="mb-4">
+                            <h6 class="mb-3">اختر نوع المحطة المتخصصة</h6>
+
+                            <div class="row">
+                              <!-- محطة زراعية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-leaf"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    محطة زراعية
+                                  </div>
+                                  <div class="measurement-description">
+                                    محطات رصد الظروف الزراعية والتربة
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="agricultural"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- محطة بحرية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-water"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    محطة بحرية
+                                  </div>
+                                  <div class="measurement-description">
+                                    محطات رصد الأحوال البحرية والمد والجزر
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="marine"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- محطة جوية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-plane"></i>
+                                  </div>
+                                  <div class="measurement-title">محطة جوية</div>
+                                  <div class="measurement-description">
+                                    محطات رصد الأحوال الجوية للملاحة الجوية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="aviation"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- محطة بيئية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-tree"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    محطة بيئية
+                                  </div>
+                                  <div class="measurement-description">
+                                    محطات رصد التلوث والعناصر البيئية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="environmental"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- محطة بحثية -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-flask"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    محطة بحثية
+                                  </div>
+                                  <div class="measurement-description">
+                                    محطات الرصد للأغراض البحثية والعلمية
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="research"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+
+                              <!-- محطة إنذار مبكر -->
+                              <div class="col-md-4 mb-3">
+                                <div class="measurement-card">
+                                  <div class="measurement-icon">
+                                    <i class="fas fa-bell"></i>
+                                  </div>
+                                  <div class="measurement-title">
+                                    محطة إنذار مبكر
+                                  </div>
+                                  <div class="measurement-description">
+                                    محطات رصد الظواهر الجوية الخطرة
+                                  </div>
+                                  <button
+                                    type="button"
+                                    class="btn btn-primary measurement-btn"
+                                    data-measurement="early_warning"
+                                  >
+                                    الإبلاغ عن عطل
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="failureDescription" class="form-label"
+                            >وصف العطل</label
+                          >
+                          <textarea
+                            class="form-control"
+                            id="failureDescription"
+                            rows="4"
+                            placeholder="صف العطل بالتفصيل وأعراضه..."
+                            required
+                          ></textarea>
+                          <div class="form-text">
+                            يجب أن يكون الوصف على الأقل 10 أحرف
+                          </div>
+                        </div>
+
+                        <div class="row mb-3">
+                          <div class="col-md-6">
+                            <label for="failureDate" class="form-label"
+                              >تاريخ ووقت حدوث العطل</label
+                            >
+                            <input
+                              type="datetime-local"
+                              class="form-control"
+                              id="failureDate"
+                              required
+                            />
+                            <div class="date-format-note">
+                              <i class="fas fa-info-circle"></i>
+                              التاريخ الميلادي بالأرقام: YYYY-MM-DD HH:MM
+                            </div>
+                          </div>
+                          <div class="col-md-6">
+                            <label for="failureSeverity" class="form-label"
+                              >شدة العطل</label
+                            >
+                            <select
+                              class="form-select"
+                              id="failureSeverity"
+                              required
+                            >
+                              <option value="منخفض">
+                                منخفض (لا يؤثر على القياس)
+                              </option>
+                              <option value="متوسط">
+                                متوسط (يؤثر على بعض القياسات)
+                              </option>
+                              <option value="مرتفع">
+                                مرتفع (يؤثر على معظم القياسات)
+                              </option>
+                              <option value="حرج">
+                                حرج (المحطة متوقفة بالكامل)
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div class="mb-3">
+                          <label for="failureImage" class="form-label"
+                            >رفع صور للعطل (اختياري)</label
+                          >
+                          <input
+                            type="file"
+                            class="form-control"
+                            id="failureImage"
+                            accept="image/*"
+                            multiple
+                          />
+                          <div class="form-text">
+                            يمكنك رفع أكثر من صورة لتوضيح العطل
+                          </div>
+                        </div>
+
+                        <div class="form-check mb-4">
+                          <input
+                            class="form-check-input"
+                            type="checkbox"
+                            id="urgentRepair"
+                          />
+                          <label class="form-check-label" for="urgentRepair">
+                            <i class="fas fa-bolt me-1 text-danger"></i>هذا
+                            العطل عاجل ويحتاج إلى تدخل سريع
+                          </label>
+                        </div>
+
+                        <button
+                          type="submit"
+                          class="btn btn-report w-100"
+                          id="submitButton"
+                        >
+                          <span class="loading" id="submitLoading"></span>
+                          <i class="fas fa-paper-plane me-2"></i>إرسال بلاغ
+                          العطل
+                        </button>
+
+                        <!-- زر المشاركة عبر الواتساب -->
+                        <button
+                          type="button"
+                          class="btn btn-success w-100 mt-3"
+                          id="shareReportBtn"
+                          style="display: none"
+                        >
+                          <i class="fab fa-whatsapp me-2"></i>
+                          مشاركة تقرير العطل عبر الواتساب
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج الإبلاغ عن عطل في مقياس يدوي -->
+    <div
+      class="modal fade"
+      id="manualMeasurementModal"
+      tabindex="-1"
+      aria-labelledby="manualMeasurementModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="manualMeasurementModalLabel">
+              <i class="fas fa-tools me-2"></i>الإبلاغ عن عطل في مقياس يدوي
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="manualMeasurementForm">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label"
+                    >المحطة:
+                    <strong id="manualStationName"
+                      >جاري التحميل...</strong
+                    ></label
+                  >
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label"
+                    >مقدم البلاغ:
+                    <strong id="manualReporterName"
+                      >جاري التحميل...</strong
+                    ></label
+                  >
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="manualMeasurementType" class="form-label"
+                  >نوع المقياس</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="manualMeasurementType"
+                  readonly
+                />
+              </div>
+
+              <div class="mb-3">
+                <label for="manualMeasurementProblem" class="form-label"
+                  >نوع المشكلة</label
+                >
+                <select
+                  class="form-select"
+                  id="manualMeasurementProblem"
+                  required
+                >
+                  <option value="" selected disabled>اختر نوع المشكلة</option>
+                  <option value="كسر">كسر في الجهاز</option>
+                  <option value="تلف">تلف في الأجزاء</option>
+                  <option value="عدم دقة">عدم دقة في القياس</option>
+                  <option value="عدم استجابة">عدم استجابة الجهاز</option>
+                  <option value="تآكل">تآكل الأجزاء</option>
+                  <option value="أخرى">مشكلة أخرى</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="manualMeasurementDescription" class="form-label"
+                  >وصف العطل</label
+                >
+                <textarea
+                  class="form-control"
+                  id="manualMeasurementDescription"
+                  rows="4"
+                  required
+                  placeholder="صف العطل بالتفصيل، متى بدأ، وما الإجراءات التي قمت بها"
+                ></textarea>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label for="manualMeasurementDate" class="form-label"
+                    >تاريخ ووقت حدوث العطل</label
+                  >
+                  <input
+                    type="datetime-local"
+                    class="form-control"
+                    id="manualMeasurementDate"
+                    required
+                  />
+                  <div class="date-format-note">
+                    <i class="fas fa-info-circle"></i>
+                    التاريخ الميلادي بالأرقام: YYYY-MM-DD HH:MM
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label for="manualMeasurementSeverity" class="form-label"
+                    >شدة العطل</label
+                  >
+                  <select
+                    class="form-select"
+                    id="manualMeasurementSeverity"
+                    required
+                  >
+                    <option value="منخفض">منخفض (لا يؤثر على القياس)</option>
+                    <option value="متوسط">متوسط (يؤثر على بعض القياسات)</option>
+                    <option value="مرتفع">
+                      مرتفع (يؤثر على معظم القياسات)
+                    </option>
+                    <option value="حرج">حرج (المحطة متوقفة بالكامل)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="manualMeasurementImage" class="form-label"
+                  >رفع صورة للعطل (اختياري)</label
+                >
+                <input
+                  type="file"
+                  class="form-control"
+                  id="manualMeasurementImage"
+                  accept="image/*"
+                />
+              </div>
+
+              <div class="form-check mb-3">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="manualMeasurementUrgent"
+                />
+                <label class="form-check-label" for="manualMeasurementUrgent">
+                  <i class="fas fa-bolt me-1 text-danger"></i>هذا العطل عاجل
+                  ويحتاج إلى تدخل سريع
+                </label>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitManualMeasurement"
+            >
+              إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نافذة مشاركة التقرير عبر الواتساب -->
+    <div
+      class="modal fade"
+      id="shareReportModal"
+      tabindex="-1"
+      aria-labelledby="shareReportModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title" id="shareReportModalLabel">
+              <i class="fas fa-share-alt me-2"></i>مشاركة تقرير العطل
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="share-section">
+              <h5><i class="fab fa-whatsapp"></i> مشاركة عبر الواتساب</h5>
+              <p class="text-muted mb-3">
+                يمكنك مشاركة تقرير العطل مع فريق الصيانة أو المشرفين عبر
+                الواتساب
+              </p>
+
+              <div class="share-link-container">
+                <div class="share-link" id="shareableLink">
+                  جاري إنشاء رابط المشاركة...
+                </div>
+              </div>
+
+              <div class="share-buttons">
+                <button
+                  class="btn btn-whatsapp share-option"
+                  id="shareWhatsAppBtn"
+                >
+                  <i class="fab fa-whatsapp"></i>
+                  <span>مشاركة عبر الواتساب</span>
+                </button>
+
+                <button class="btn btn-copy share-option" id="copyLinkBtn">
+                  <i class="fas fa-copy"></i>
+                  <span>نسخ الرابط</span>
+                </button>
+              </div>
+
+              <div class="share-qr" id="qrCodeContainer">
+                <p class="text-muted mb-2">مسح الكود QR للمشاركة</p>
+                <canvas id="qrCodeCanvas"></canvas>
+              </div>
+
+              <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <small>
+                  سيتم إنشاء رابط فريد لهذا التقرير يمكن للفريق التقني استخدامه
+                  لمتابعة حالة الإصلاح
+                </small>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h6>إعدادات المشاركة:</h6>
+              <div class="form-check mb-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="includeDetails"
+                  checked
+                />
+                <label class="form-check-label" for="includeDetails">
+                  تضمين تفاصيل العطل
+                </label>
+              </div>
+              <div class="form-check mb-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="includeContact"
+                  checked
+                />
+                <label class="form-check-label" for="includeContact">
+                  تضمين معلومات الاتصال
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="includeStatus"
+                  checked
+                />
+                <label class="form-check-label" for="includeStatus">
+                  تضمين حالة البلاغ
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              id="refreshShareLinkBtn"
+            >
+              <i class="fas fa-sync-alt me-2"></i>تحديث الرابط
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- إزالة Supabase مؤقتاً للاختبار -->
+
+    <!-- مكتبة QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+      // تعطيل Supabase مؤقتاً للاختبار
+      const USE_SUPABASE = false; // يمكنك تغييرها إلى true بعد إعداد Supabase
+      let supabaseClient = null;
+
+      if (USE_SUPABASE) {
+        // إعداد الاتصال مع Supabase
+        const SUPABASE_CONFIG = {
+          url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+          anonKey:
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+        };
+
+        // تحميل مكتبة Supabase ديناميكياً
+        const script = document.createElement("script");
+        script.src =
+          "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+        script.onload = function () {
+          supabaseClient = window.supabase.createClient(
+            SUPABASE_CONFIG.url,
+            SUPABASE_CONFIG.anonKey,
+          );
+          console.log("Supabase loaded successfully");
+        };
+        document.head.appendChild(script);
+      }
+
+      let currentUser = null;
+      let currentFailureReport = null;
+
+      // دالة تنسيق التاريخ الميلادي بالأرقام
+      function formatGregorianDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+
+      // دالة لعرض التاريخ الميلادي في الرسائل
+      function formatDateForMessage(dateString) {
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}/${month}/${day} ${hours}:${minutes}`;
+      }
+
+      // دالة للانتقال بين الصفحات
+      function navigateToSection(sectionId) {
+        // قائمة بالصفحات وروابطها
+        const pagesMap = {
+          dashboard: "../../main.html",
+          hourly: "../hourly/hourly_send/hourly_reports.html",
+          daily: "../daily/daily_send/daily.html",
+          rain: "../rain/rain_send/rainfall_reports.html",
+          climate: "../h_climate/h_climate_send/h_climate_send.html",
+          soil: "../soil/soil_send/soil-send.html",
+          agricultural: "../arg/send-argicultural/agricultural_reports.html",
+          telecom: "fix-tel.html",
+          it: "it.html",
+          weather: "../weather_phenomena/weather_phenomena.html",
+        };
+
+        if (pagesMap[sectionId]) {
+          // تسجيل نشاط الانتقال
+          logActivity("navigation", `انتقال إلى ${sectionId}`, null);
+
+          // الانتقال إلى الصفحة المطلوبة
+          window.location.href = pagesMap[sectionId];
+        } else {
+          console.warn(`الصفحة ${sectionId} غير معروفة`);
+          showAlert("هذه الصفحة قيد التطوير حالياً", "info");
+        }
+      }
+
+      // دالة إظهار الأقسام الأخرى (للتنقل)
+      function showSection(sectionId) {
+        navigateToSection(sectionId);
+      }
+
+      // التحقق من تسجيل الدخول وجلب بيانات المستخدم
+      async function checkAuthentication() {
+        const userData = localStorage.getItem("currentUser");
+        if (!userData) {
+          window.location.href = "../../index.html";
+          return false;
+        }
+
+        try {
+          currentUser = JSON.parse(userData);
+          return true;
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          localStorage.removeItem("currentUser");
+          window.location.href = "../../index.html";
+          return false;
+        }
+      }
+
+      // عرض معلومات المستخدم في أعلى الصفحة
+      function displayUserInfo() {
+        const userWelcome = document.getElementById("userWelcomeSection");
+        if (userWelcome && currentUser) {
+          userWelcome.innerHTML = `
+                  <h4>مرحباً، ${currentUser.first_name} ${currentUser.father_name} ${currentUser.last_name}</h4>
+                  <p>محطة: ${currentUser.station || "-"} | صفة العمل: ${currentUser.role || "-"}</p>
+              `;
+        }
+
+        // تحديث معلومات المحطة والمستخدم في النموذج
+        document.getElementById("stationName").textContent =
+          currentUser.station || "-";
+        document.getElementById("reporterName").textContent =
+          `${currentUser.first_name} ${currentUser.father_name} ${currentUser.last_name}`;
+
+        document.getElementById("manualStationName").textContent =
+          currentUser.station || "-";
+        document.getElementById("manualReporterName").textContent =
+          `${currentUser.first_name} ${currentUser.father_name} ${currentUser.last_name}`;
+      }
+
+      // دالة لرفع الصور إلى Supabase Storage
+      async function uploadImages(files, failureId) {
+        const imageUrls = [];
+
+        if (!files || files.length === 0) {
+          return imageUrls;
+        }
+
+        // محاكاة رفع الصور للاختبار
+        for (let i = 0; i < files.length; i++) {
+          imageUrls.push(
+            `https://via.placeholder.com/600x400/0d6efd/ffffff?text=صورة+العطل+${i + 1}`,
+          );
+        }
+
+        return imageUrls;
+      }
+
+      // دالة إرسال البلاغ الرئيسية
+      async function submitFailureReport(formData, imageFiles) {
+        const submitButton = document.getElementById("submitButton");
+        const submitLoading = document.getElementById("submitLoading");
+
+        // إظهار حالة التحميل
+        submitButton.disabled = true;
+        submitLoading.style.display = "inline-block";
+
+        try {
+          // الحصول على بيانات النموذج
+          const stationTypeCard = document.querySelector(
+            ".station-type-card.active",
+          );
+          const stationType =
+            stationTypeCard?.getAttribute("data-station-type") || "automatic";
+
+          // تحضير البيانات للإرسال
+          const failureData = {
+            station_name: currentUser?.station || "غير محدد",
+            reporter_name:
+              `${currentUser?.first_name} ${currentUser?.father_name} ${currentUser?.last_name}` ||
+              "غير معروف",
+            station_type: stationType,
+            equipment_type: getSelectedEquipmentType(),
+            measurement_type: getSelectedMeasurementType(),
+            failure_description:
+              document.getElementById("failureDescription").value,
+            failure_date: new Date(
+              document.getElementById("failureDate").value,
+            ).toISOString(),
+            failure_severity: document.getElementById("failureSeverity").value,
+            urgency_level: document.getElementById("urgentRepair").checked,
+            status: "pending",
+            images_urls: [],
+            problem_type: determineProblemType(),
+            user_id: currentUser?.id ? currentUser.id.toString() : null,
+          };
+
+          // محاكاة إرسال البيانات
+          console.log("بيانات الإرسال:", failureData);
+
+          // إنشاء بيانات وهمية للبلاغ
+          const insertedData = {
+            id: Date.now(),
+            ...failureData,
+            created_at: new Date().toISOString(),
+          };
+
+          // تخزين ID البلاغ
+          currentFailureReport = insertedData;
+
+          // رفع الصور إذا وجدت
+          if (imageFiles.length > 0) {
+            const uploadedImages = await uploadImages(
+              imageFiles,
+              insertedData.id,
+            );
+            insertedData.images_urls = uploadedImages;
+          }
+
+          // تسجيل النشاط في سجل النشاطات
+          await logActivity(
+            "failure_report",
+            `تم إرسال بلاغ عطل جديد للمحطة ${currentUser?.station}`,
+            insertedData.id,
+          );
+
+          // إظهار زر المشاركة
+          const shareBtn = document.getElementById("shareReportBtn");
+          if (shareBtn) {
+            shareBtn.style.display = "block";
+
+            // عرض نافذة المشاركة تلقائياً
+            setTimeout(() => {
+              showShareModal(insertedData);
+            }, 1500);
+          }
+
+          // نجاح الإرسال
+          showAlert("تم إرسال البلاغ بنجاح! يمكنك مشاركته الآن.", "success");
+          resetForm();
+
+          // تحديث الإحصائيات
+          await updateFailureStats();
+
+          return insertedData;
+        } catch (error) {
+          console.error("Error submitting failure report:", error);
+          showAlert(`خطأ في الإرسال: ${error.message}`, "danger");
+          return null;
+        } finally {
+          // إخفاء حالة التحميل
+          submitButton.disabled = false;
+          submitLoading.style.display = "none";
+        }
+      }
+
+      // دالة إرسال البلاغ اليدوي
+      async function submitManualMeasurementReport() {
+        const modalElement = document.getElementById("manualMeasurementModal");
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        const form = document.getElementById("manualMeasurementForm");
+
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const submitBtn = document.getElementById("submitManualMeasurement");
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML =
+          '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإرسال...';
+        submitBtn.disabled = true;
+
+        try {
+          const imageFile = document.getElementById("manualMeasurementImage")
+            .files[0];
+          const imageFiles = imageFile ? [imageFile] : [];
+
+          // تعيين الوقت الحالي إذا لم يتم إدخاله
+          let failureDate = document.getElementById(
+            "manualMeasurementDate",
+          ).value;
+          if (!failureDate) {
+            const now = new Date();
+            failureDate = formatGregorianDate(now);
+          }
+
+          // تحضير البيانات
+          const failureData = {
+            station_name: currentUser?.station || "غير محدد",
+            reporter_name:
+              `${currentUser?.first_name} ${currentUser?.father_name} ${currentUser?.last_name}` ||
+              "غير معروف",
+            station_type: "manual",
+            equipment_type: document.getElementById("manualMeasurementType")
+              .value,
+            measurement_type: document.getElementById("manualMeasurementType")
+              .value,
+            failure_description: document.getElementById(
+              "manualMeasurementDescription",
+            ).value,
+            failure_date: new Date(failureDate).toISOString(),
+            failure_severity: document.getElementById(
+              "manualMeasurementSeverity",
+            ).value,
+            urgency_level: document.getElementById("manualMeasurementUrgent")
+              .checked,
+            status: "pending",
+            images_urls: [],
+            problem_type: document.getElementById("manualMeasurementProblem")
+              .value,
+            user_id: currentUser?.id ? currentUser.id.toString() : null,
+          };
+
+          // محاكاة إرسال البيانات
+          console.log("بيانات الإرسال اليدوي:", failureData);
+
+          // إنشاء بيانات وهمية
+          const insertedData = {
+            id: Date.now(),
+            ...failureData,
+            created_at: new Date().toISOString(),
+          };
+
+          // رفع الصورة إذا وجدت
+          if (imageFiles.length > 0) {
+            const uploadedImages = await uploadImages(
+              imageFiles,
+              insertedData.id,
+            );
+            insertedData.images_urls = uploadedImages;
+          }
+
+          // تسجيل النشاط
+          await logActivity(
+            "manual_failure_report",
+            `تم إرسال بلاغ عطل يدوي للمحطة ${currentUser?.station}`,
+            insertedData.id,
+          );
+
+          showAlert("تم إرسال بلاغ العطل اليدوي بنجاح!", "success");
+
+          if (modal) {
+            modal.hide();
+          }
+          form.reset();
+
+          // تحديث الإحصائيات
+          await updateFailureStats();
+        } catch (error) {
+          showAlert(`خطأ في الإرسال: ${error.message}`, "danger");
+        } finally {
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
+      }
+
+      // دالة تحديث الإحصائيات
+      async function updateFailureStats() {
+        try {
+          // بيانات وهمية للإحصائيات
+          const stats = {
+            pending: Math.floor(Math.random() * 10) + 1,
+            review: Math.floor(Math.random() * 5) + 1,
+            resolved: Math.floor(Math.random() * 20) + 5,
+            urgent: Math.floor(Math.random() * 3) + 1,
+            total: 0,
+          };
+
+          stats.total = stats.pending + stats.review + stats.resolved;
+
+          // تحديث DOM
+          document.getElementById("pendingCount").textContent = stats.pending;
+          document.getElementById("reviewCount").textContent = stats.review;
+          document.getElementById("resolvedCount").textContent = stats.resolved;
+          document.getElementById("urgentCount").textContent = stats.urgent;
+
+          // تسجيل النشاط
+          await logActivity(
+            "stats_update",
+            `تم تحديث إحصائيات أعطال المحطة ${currentUser?.station}`,
+          );
+        } catch (error) {
+          console.error("Error in updateFailureStats:", error);
+        }
+      }
+
+      // دالة لتسجيل النشاطات
+      async function logActivity(actionType, details, targetId = null) {
+        try {
+          const activityData = {
+            user_id: currentUser?.id,
+            user_name: `${currentUser?.first_name} ${currentUser?.father_name} ${currentUser?.last_name}`,
+            user_email: currentUser?.email,
+            user_role: currentUser?.role,
+            user_station: currentUser?.station,
+            action_type: actionType,
+            action_details: details,
+            target_id: targetId,
+            target_type: "equipment_failure",
+            timestamp: new Date().toISOString(),
+          };
+
+          console.log("نشاط مسجل:", activityData);
+        } catch (error) {
+          console.error("Error in logActivity:", error);
+        }
+      }
+
+      // دالة لعرض التنبيهات
+      function showAlert(message, type = "info") {
+        // إزالة أي تنبيهات سابقة
+        const existingAlert = document.querySelector(".custom-alert");
+        if (existingAlert) existingAlert.remove();
+
+        const alert = document.createElement("div");
+        alert.className = `alert alert-${type} custom-alert alert-dismissible fade show`;
+        alert.innerHTML = `
+              <i class="fas ${type === "success" ? "fa-check-circle" : type === "danger" ? "fa-exclamation-circle" : "fa-info-circle"} me-2"></i>
+              ${message}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          `;
+
+        document.body.appendChild(alert);
+
+        // إزالة التنبيه تلقائياً بعد 5 ثوان
+        setTimeout(() => {
+          if (alert.parentNode) {
+            alert.remove();
+          }
+        }, 5000);
+      }
+
+      // دالة إعادة تعيين النموذج
+      function resetForm() {
+        document.getElementById("failureReportForm").reset();
+        document.getElementById("failureDescription").value = "";
+        document.getElementById("failureDate").value = "";
+        document.getElementById("failureImage").value = "";
+        document.getElementById("urgentRepair").checked = false;
+
+        // تعيين الوقت الحالي كقيمة افتراضية باستخدام التنسيق الميلادي
+        const now = new Date();
+        document.getElementById("failureDate").value = formatGregorianDate(now);
+
+        // إعادة النوع الافتراضي للمحطة
+        document.querySelectorAll(".station-type-card").forEach((card) => {
+          card.classList.remove("active");
+        });
+        document.getElementById("automatic-station").classList.add("active");
+        document.getElementById("automatic-section").style.display = "block";
+        document.getElementById("classic-section").style.display = "none";
+        document.getElementById("special-section").style.display = "none";
+
+        // إخفاء زر المشاركة
+        document.getElementById("shareReportBtn").style.display = "none";
+      }
+
+      // دالة مساعدة: تحديد نوع الجهاز المختار
+      function getSelectedEquipmentType() {
+        const activeSection = document.querySelector('[id$="-section"]');
+        if (!activeSection) return "";
+
+        // البحث عن أي كرت مختار
+        const measurementCard =
+          activeSection.querySelector(".measurement-card");
+        if (!measurementCard) return "";
+
+        return (
+          measurementCard.querySelector(".measurement-title")?.textContent || ""
+        );
+      }
+
+      // دالة مساعدة: تحديد نوع القياس المختار
+      function getSelectedMeasurementType() {
+        const activeSection = document.querySelector('[id$="-section"]');
+        if (!activeSection) return "";
+
+        const measurementCard =
+          activeSection.querySelector(".measurement-card");
+        if (!measurementCard) return "";
+
+        return (
+          measurementCard.querySelector(".measurement-title")?.textContent || ""
+        );
+      }
+
+      // دالة مساعدة: تحديد نوع المشكلة بناءً على الوصف
+      function determineProblemType() {
+        const description = document
+          .getElementById("failureDescription")
+          .value.toLowerCase();
+
+        if (description.includes("كسر") || description.includes("مكسور"))
+          return "كسر";
+        if (description.includes("تلف") || description.includes("معطل"))
+          return "تلف";
+        if (description.includes("دقة") || description.includes("قراءة"))
+          return "عدم دقة";
+        if (description.includes("استجابة") || description.includes("تشغيل"))
+          return "عدم استجابة";
+        if (description.includes("تآكل") || description.includes("صدأ"))
+          return "تآكل";
+
+        return "أخرى";
+      }
+
+      // دالة تسجيل الخروج
+      function logout() {
+        localStorage.removeItem("currentUser");
+        // تسجيل نشاط الخروج
+        logActivity("logout", "تم تسجيل خروج المستخدم");
+
+        // استخدام تأخير بسيط لعرض رسالة قبل التوجيه
+        setTimeout(() => {
+          window.location.href = "../../index.html";
+        }, 500);
+
+        // عرض رسالة تأكيد
+        showAlert("جاري تسجيل الخروج...", "info");
+      }
+
+      // إعداد كروت اختيار نوع المحطة
+      function setupStationTypeCards() {
+        const stationTypeCards =
+          document.querySelectorAll(".station-type-card");
+
+        stationTypeCards.forEach((card) => {
+          card.addEventListener("click", function () {
+            // إزالة النشاط من جميع الكروت
+            stationTypeCards.forEach((c) => c.classList.remove("active"));
+
+            // إضافة النشاط للكرت المحدد
+            this.classList.add("active");
+
+            // إظهار القسم المناسب وإخفاء الآخرين
+            const stationType = this.getAttribute("data-station-type");
+
+            document.getElementById("automatic-section").style.display = "none";
+            document.getElementById("classic-section").style.display = "none";
+            document.getElementById("special-section").style.display = "none";
+
+            document.getElementById(`${stationType}-section`).style.display =
+              "block";
+          });
+        });
+      }
+
+      // إعداد أزرار الإبلاغ عن أعطال في المقاييس
+      function setupMeasurementButtons() {
+        const measurementButtons =
+          document.querySelectorAll(".measurement-btn");
+
+        measurementButtons.forEach((button) => {
+          button.addEventListener("click", function () {
+            const measurementTitle =
+              this.closest(".measurement-card").querySelector(
+                ".measurement-title",
+              ).textContent;
+
+            document.getElementById("manualMeasurementType").value =
+              measurementTitle;
+
+            // تعيين الوقت الحالي للنموذج اليدوي باستخدام التنسيق الميلادي
+            const now = new Date();
+            document.getElementById("manualMeasurementDate").value =
+              formatGregorianDate(now);
+
+            const modal = new bootstrap.Modal(
+              document.getElementById("manualMeasurementModal"),
+            );
+            modal.show();
+          });
+        });
+      }
+
+      // ====================== دوال المشاركة عبر الواتساب ======================
+
+      // دالة لإنشاء رابط المشاركة الفريد
+      async function createShareableLink(failureId) {
+        try {
+          // إنشاء رمز مشاركة فريد
+          const shareCode = generateShareCode();
+
+          // محاكاة حفظ في قاعدة البيانات
+          console.log("تم إنشاء رمز المشاركة:", shareCode);
+
+          // إنشاء الرابط
+          const baseUrl = window.location.origin;
+          const sharePath = `/share/failure/${shareCode}`;
+          const fullUrl = baseUrl + sharePath;
+
+          return {
+            url: fullUrl,
+            code: shareCode,
+          };
+        } catch (error) {
+          console.error("Error creating shareable link:", error);
+          throw error;
+        }
+      }
+
+      // دالة لإنشاء كود مشاركة فريد
+      function generateShareCode() {
+        const timestamp = Date.now().toString(36);
+        const random = Math.random().toString(36).substr(2, 9);
+        return `FAIL-${timestamp.toUpperCase()}-${random.toUpperCase()}`;
+      }
+
+      // دالة لإنشاء نص رسالة الواتساب
+      function createWhatsAppMessage(failureData, shareUrl) {
+        const includeDetails =
+          document.getElementById("includeDetails")?.checked ?? true;
+        const includeContact =
+          document.getElementById("includeContact")?.checked ?? true;
+        const includeStatus =
+          document.getElementById("includeStatus")?.checked ?? true;
+
+        let message = `*📋 تقرير عطل في أجهزة الرصد الجوي*\n\n`;
+
+        if (includeDetails) {
+          message += `*المحطة:* ${failureData.station_name}\n`;
+          message += `*نوع الجهاز:* ${failureData.equipment_type}\n`;
+          message += `*وصف العطل:* ${failureData.failure_description.substring(0, 150)}${failureData.failure_description.length > 150 ? "..." : ""}\n`;
+          message += `*شدة العطل:* ${failureData.failure_severity}\n`;
+          message += `*تاريخ العطل:* ${formatDateForMessage(failureData.failure_date)}\n`;
+        }
+
+        if (includeContact && currentUser) {
+          message += `\n*مقدم البلاغ:* ${failureData.reporter_name}\n`;
+          message += `*محطة العمل:* ${currentUser.station || "-"}\n`;
+        }
+
+        if (includeStatus) {
+          message += `\n*حالة البلاغ:* ${getStatusText(failureData.status)}\n`;
+          message += `*مستوى العجلة:* ${failureData.urgency_level ? "🟢 عاجل" : "🟡 عادي"}\n`;
+        }
+
+        message += `\n🔗 *رابط التقرير:* ${shareUrl}\n`;
+        message += `\n_تم إنشاء التقرير بواسطة نظام إدارة البيانات الجوية_`;
+
+        return encodeURIComponent(message);
+      }
+
+      // دالة للحصول على نص الحالة
+      function getStatusText(status) {
+        const statusMap = {
+          pending: "⏳ قيد المعالجة",
+          review: "🔍 قيد المراجعة",
+          resolved: "✅ تم الإصلاح",
+          closed: "✔️ مغلق",
+        };
+        return statusMap[status] || status;
+      }
+
+      // دالة لإنشاء QR Code
+      function generateQRCode(url, elementId) {
+        const canvas = document.getElementById(elementId);
+        if (!canvas) return;
+
+        // مسح الكانفاس أولاً
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        QRCode.toCanvas(
+          canvas,
+          url,
+          {
+            width: 180,
+            margin: 2,
+            color: {
+              dark: "#0d6efd",
+              light: "#ffffff",
+            },
+          },
+          function (error) {
+            if (error) {
+              console.error("Error generating QR code:", error);
+            }
+          },
+        );
+      }
+
+      // دالة لعرض نافذة المشاركة
+      async function showShareModal(failureData) {
+        try {
+          const modalElement = document.getElementById("shareReportModal");
+          const modal = new bootstrap.Modal(modalElement);
+
+          // إنشاء رابط المشاركة
+          const shareInfo = await createShareableLink(failureData.id);
+
+          // تحديث رابط المشاركة في النافذة
+          document.getElementById("shareableLink").textContent = shareInfo.url;
+
+          // إنشاء QR Code
+          generateQRCode(shareInfo.url, "qrCodeCanvas");
+
+          // إعداد أزرار المشاركة
+          setupShareButtons(shareInfo.url, failureData);
+
+          // إظهار النافذة
+          modal.show();
+
+          // تسجيل نشاط المشاركة
+          await logActivity(
+            "share_report",
+            `إنشاء رابط مشاركة لتقرير العطل ${failureData.id}`,
+          );
+        } catch (error) {
+          console.error("Error showing share modal:", error);
+          showAlert("خطأ في إنشاء رابط المشاركة", "danger");
+        }
+      }
+
+      // دالة لإعداد أزرار المشاركة
+      function setupShareButtons(shareUrl, failureData) {
+        const whatsappBtn = document.getElementById("shareWhatsAppBtn");
+        const copyBtn = document.getElementById("copyLinkBtn");
+        const refreshBtn = document.getElementById("refreshShareLinkBtn");
+
+        // إزالة المفاتيح السابقة
+        const newWhatsappBtn = whatsappBtn.cloneNode(true);
+        const newCopyBtn = copyBtn.cloneNode(true);
+        const newRefreshBtn = refreshBtn.cloneNode(true);
+
+        whatsappBtn.parentNode.replaceChild(newWhatsappBtn, whatsappBtn);
+        copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+        refreshBtn.parentNode.replaceChild(newRefreshBtn, refreshBtn);
+
+        // زر المشاركة عبر الواتساب
+        document
+          .getElementById("shareWhatsAppBtn")
+          .addEventListener("click", function () {
+            const message = createWhatsAppMessage(failureData, shareUrl);
+            const whatsappUrl = `https://wa.me/?text=${message}`;
+
+            window.open(whatsappUrl, "_blank");
+
+            // تسجيل النشاط
+            logActivity(
+              "whatsapp_share",
+              `مشاركة تقرير العطل ${failureData.id} عبر الواتساب`,
+            );
+          });
+
+        // زر نسخ الرابط
+        document
+          .getElementById("copyLinkBtn")
+          .addEventListener("click", async function () {
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+
+              // تغيير مظهر الزر مؤقتاً
+              const btn = this;
+              const originalText = btn.innerHTML;
+              btn.innerHTML =
+                '<i class="fas fa-check"></i><span>تم النسخ</span>';
+              btn.classList.add("copied");
+
+              setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove("copied");
+              }, 2000);
+
+              showAlert("تم نسخ الرابط إلى الحافظة", "success");
+
+              // تسجيل النشاط
+              logActivity(
+                "copy_share_link",
+                `نسخ رابط مشاركة تقرير العطل ${failureData.id}`,
+              );
+            } catch (error) {
+              console.error("Error copying text:", error);
+              showAlert("خطأ في نسخ الرابط", "danger");
+            }
+          });
+
+        // زر تحديث الرابط
+        document
+          .getElementById("refreshShareLinkBtn")
+          .addEventListener("click", async function () {
+            const btn = this;
+            const originalText = btn.innerHTML;
+
+            btn.innerHTML =
+              '<span class="spinner-border spinner-border-sm me-2"></span>جاري التحديث...';
+            btn.disabled = true;
+
+            try {
+              // إنشاء رابط جديد
+              const newShareInfo = await createShareableLink(failureData.id);
+
+              // تحديث العرض
+              document.getElementById("shareableLink").textContent =
+                newShareInfo.url;
+              generateQRCode(newShareInfo.url, "qrCodeCanvas");
+
+              // إعادة إعداد الأزرار
+              setupShareButtons(newShareInfo.url, failureData);
+
+              showAlert("تم تحديث رابط المشاركة بنجاح", "success");
+
+              // تسجيل النشاط
+              await logActivity(
+                "refresh_share_link",
+                `تحديث رابط مشاركة تقرير العطل ${failureData.id}`,
+              );
+            } catch (error) {
+              console.error("Error refreshing share link:", error);
+              showAlert("خطأ في تحديث الرابط", "danger");
+            } finally {
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+            }
+          });
+      }
+
+      // إعداد زر المشاركة
+      function setupShareButton() {
+        const shareBtn = document.getElementById("shareReportBtn");
+        if (shareBtn) {
+          shareBtn.addEventListener("click", function () {
+            if (currentFailureReport) {
+              showShareModal(currentFailureReport);
+            } else {
+              showAlert("يرجى إرسال تقرير العطل أولاً", "warning");
+            }
+          });
+        }
+      }
+
+      // تهيئة الصفحة عند تحميل DOM
+      document.addEventListener("DOMContentLoaded", async function () {
+        // التحقق من المصادقة أولاً
+        const isAuthenticated = await checkAuthentication();
+        if (!isAuthenticated) {
+          showAlert("يجب تسجيل الدخول أولاً", "warning");
+          return;
+        }
+
+        // عرض معلومات المستخدم
+        displayUserInfo();
+
+        // إعداد القائمة الجانبية للجوال
+        const mobileSidebarMenu = document.getElementById("mobileSidebarMenu");
+        const sidebarMenu = document.getElementById("sidebarMenu");
+
+        // نسخ محتوى القائمة الجانبية العادية للقائمة الجوال
+        if (mobileSidebarMenu && sidebarMenu) {
+          mobileSidebarMenu.innerHTML = sidebarMenu.innerHTML;
+        }
+
+        // تحديث الروابط في القائمة الجانبية للجوال
+        document
+          .querySelectorAll("#mobileSidebarMenu .nav-link")
+          .forEach((link) => {
+            const href = link.getAttribute("href");
+            if (href && href !== "#" && !href.startsWith("http")) {
+              // روابط عادية - لا حاجة للتعديل
+              return;
+            }
+
+            // تحديث روابط الشريط الجانبي للجوال
+            if (link.innerHTML.includes("لوحة التحكم الرئيسية")) {
+              link.href = "../../main.html";
+            } else if (link.innerHTML.includes("النشرات الساعية")) {
+              link.href = "../hourly/hourly_send/hourly_reports.html";
+            } else if (link.innerHTML.includes("النشرات اليومية")) {
+              link.href = "../daily/daily_send/daily.html";
+            } else if (link.innerHTML.includes("النشرات المطرية")) {
+              link.href = "../rain/rain_send/rainfall_reports.html";
+            } else if (link.innerHTML.includes("الساعي المناخي")) {
+              link.href = "../h_climate/h_climate_send/h_climate_send.html";
+            } else if (link.innerHTML.includes("حرارة التربة")) {
+              link.href = "../soil/soil_send/soil-send.html";
+            } else if (link.innerHTML.includes("النشرات الزراعية")) {
+              link.href = "../arg/send-argicultural/agricultural_reports.html";
+            } else if (link.innerHTML.includes("مشاكل أجهزة الإتصالات")) {
+              link.href = "fix-tel.html";
+            } else if (link.innerHTML.includes("أعطال البرامج (IT)")) {
+              link.href = "it.html";
+            } else if (link.innerHTML.includes("الظواهر الجوية")) {
+              link.href = "../weather_phenomena/weather_phenomena.html";
+            }
+          });
+
+        // التحكم في فتح وإغلاق القائمة الجانبية للجوال
+        const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+        const mobileSidebar = document.getElementById("mobileSidebar");
+        const mobileSidebarClose =
+          document.getElementById("mobileSidebarClose");
+        const mobileOverlay = document.getElementById("mobileOverlay");
+
+        if (
+          mobileMenuBtn &&
+          mobileSidebar &&
+          mobileSidebarClose &&
+          mobileOverlay
+        ) {
+          mobileMenuBtn.addEventListener("click", function () {
+            mobileSidebar.classList.add("active");
+            mobileOverlay.classList.add("active");
+          });
+
+          mobileSidebarClose.addEventListener("click", function () {
+            mobileSidebar.classList.remove("active");
+            mobileOverlay.classList.remove("active");
+          });
+
+          mobileOverlay.addEventListener("click", function () {
+            mobileSidebar.classList.remove("active");
+            mobileOverlay.classList.remove("active");
+          });
+        }
+
+        // إعداد كروت اختيار نوع المحطة
+        setupStationTypeCards();
+
+        // إعداد أزرار الإبلاغ عن أعطال في المقاييس
+        setupMeasurementButtons();
+
+        // إعداد زر المشاركة
+        setupShareButton();
+
+        // تحديث الإحصائيات
+        await updateFailureStats();
+
+        // تعيين الوقت الحالي كقيمة افتراضية للنموذج الرئيسي باستخدام التنسيق الميلادي
+        const now = new Date();
+        document.getElementById("failureDate").value = formatGregorianDate(now);
+
+        // تعيين الوقت الحالي كقيمة افتراضية للنموذج اليدوي باستخدام التنسيق الميلادي
+        document.getElementById("manualMeasurementDate").value =
+          formatGregorianDate(now);
+
+        // إعداد معالج النموذج الرئيسي
+        document
+          .getElementById("failureReportForm")
+          .addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // التحقق من صحة الوصف
+            const description =
+              document.getElementById("failureDescription").value;
+            if (description.length < 10) {
+              showAlert(
+                "يرجى إدخال وصف مفصل للعطل (على الأقل 10 أحرف)",
+                "warning",
+              );
+              return;
+            }
+
+            // التحقق من اختيار نوع المحطة
+            const stationTypeCard = document.querySelector(
+              ".station-type-card.active",
+            );
+            if (!stationTypeCard) {
+              showAlert("يرجى اختيار نوع المحطة أولاً", "warning");
+              return;
+            }
+
+            const imageFiles = document.getElementById("failureImage").files;
+            await submitFailureReport(new FormData(this), imageFiles);
+          });
+
+        // إعداد زر الإرسال اليدوي
+        document
+          .getElementById("submitManualMeasurement")
+          .addEventListener("click", submitManualMeasurementReport);
+
+        // إعداد زر إعادة المحاولة في شاشة التحميل
+        document
+          .getElementById("retryButton")
+          ?.addEventListener("click", function () {
+            location.reload();
+          });
+
+        // تسجيل دخول المستخدم
+        await logActivity(
+          "page_visit",
+          "زيارة صفحة الإبلاغ عن أعطال أجهزة الرصد",
+        );
+
+        // إخفاء شاشة التحميل بعد تحميل الصفحة
+        setTimeout(function () {
+          const loadingContainer = document.getElementById("loadingContainer");
+          const mainContainer = document.getElementById("mainContainer");
+
+          if (loadingContainer && mainContainer) {
+            loadingContainer.style.display = "none";
+            mainContainer.style.display = "block";
+          }
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>

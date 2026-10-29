@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إحصائيات تقارير مشاكل IT</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --primary: #1a5276;
+        --secondary: #2980b9;
+        --accent: #3498db;
+        --light: #ecf0f1;
+        --dark: #2c3e50;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --info: #17a2b8;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #f5f7fa;
+        color: var(--dark);
+      }
+
+      .stats-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--secondary) 100%
+        );
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        height: 400px;
+      }
+
+      .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .stat-title {
+        color: #666;
+        font-size: 1rem;
+      }
+
+      .table-responsive {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      }
+
+      .back-button {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid py-4">
+      <!-- الرأس -->
+      <div class="stats-header text-center">
+        <h1><i class="fas fa-chart-pie me-2"></i> إحصائيات تقارير مشاكل IT</h1>
+        <p class="mb-0">تحليل وإحصائيات شاملة لتقارير المشاكل التقنية</p>
+        <div class="mt-3" id="periodSelector">
+          <button
+            class="btn btn-light btn-sm mx-1"
+            onclick="setPeriod('today')"
+          >
+            اليوم
+          </button>
+          <button class="btn btn-light btn-sm mx-1" onclick="setPeriod('week')">
+            هذا الأسبوع
+          </button>
+          <button
+            class="btn btn-light btn-sm mx-1"
+            onclick="setPeriod('month')"
+          >
+            هذا الشهر
+          </button>
+          <button class="btn btn-light btn-sm mx-1" onclick="setPeriod('year')">
+            هذه السنة
+          </button>
+          <button class="btn btn-light btn-sm mx-1" onclick="setPeriod('all')">
+            الكل
+          </button>
+        </div>
+      </div>
+
+      <!-- الإحصائيات السريعة -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="stat-card text-center">
+            <div class="stat-icon text-primary">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="stat-value" id="totalReports">0</div>
+            <div class="stat-title">إجمالي التقارير</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card text-center">
+            <div class="stat-icon text-warning">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value" id="avgResolutionTime">0</div>
+            <div class="stat-title">متوسط وقت الحل (يوم)</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card text-center">
+            <div class="stat-icon text-success">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-value" id="resolutionRate">0%</div>
+            <div class="stat-title">نسبة الحل</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="stat-card text-center">
+            <div class="stat-icon text-info">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value" id="uniqueReporters">0</div>
+            <div class="stat-title">عدد المبلغين</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- الرسوم البيانية -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-chart-bar me-2"></i> التقارير حسب الحالة
+            </h5>
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-chart-pie me-2"></i> التقارير حسب درجة الأهمية
+            </h5>
+            <canvas id="urgencyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-chart-line me-2"></i> التقارير حسب الشهر
+            </h5>
+            <canvas id="monthlyChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-chart-bar me-2"></i> التقارير حسب نوع النشرة
+            </h5>
+            <canvas id="bulletinChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- المحطات الأكثر إبلاغاً -->
+      <div class="row">
+        <div class="col-12">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-map-marker-alt me-2"></i> المحطات الأكثر إبلاغاً
+            </h5>
+            <div class="table-responsive">
+              <table class="table table-hover" id="stationsTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>المحطة</th>
+                    <th>عدد التقارير</th>
+                    <th>قيد المراجعة</th>
+                    <th>تم الحل</th>
+                    <th>نسبة الحل</th>
+                  </tr>
+                </thead>
+                <tbody id="stationsBody">
+                  <!-- البيانات سيتم تحميلها بواسطة JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ملخص المشاكل الشائعة -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="chart-container">
+            <h5 class="mb-3">
+              <i class="fas fa-exclamation-triangle me-2"></i> المشاكل الشائعة
+            </h5>
+            <div class="row" id="commonProblems">
+              <!-- البيانات سيتم تحميلها بواسطة JavaScript -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- زر العودة -->
+    <a href="it_dashboard.html" class="back-button btn btn-primary">
+      <i class="fas fa-arrow-right me-2"></i> العودة للوحة التحكم
+    </a>
+
+    <!-- مكتبات JavaScript -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="js/protect.js"></script>
+
+    <script>
+      // ==============================================
+      // تهيئة Supabase Client
+      // ==============================================
+      const SUPABASE_CONFIG = {
+        url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        anonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      const supabase = window.supabase.createClient(
+        SUPABASE_CONFIG.url,
+        SUPABASE_CONFIG.anonKey,
+      );
+
+      // ==============================================
+      // المتغيرات
+      // ==============================================
+      let reports = [];
+      let currentPeriod = "all";
+      let charts = {};
+
+      // ==============================================
+      // دوال تحميل البيانات
+      // ==============================================
+      async function loadReports() {
+        try {
+          console.log("📥 جاري تحميل التقارير للإحصائيات...");
+
+          const { data, error } = await supabase
+            .from("it_problem_reports")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+
+          reports = data || [];
+          console.log(`✅ تم تحميل ${reports.length} تقرير للإحصائيات`);
+
+          // تطبيق الفلترة حسب الفترة
+          filterReportsByPeriod();
+
+          // تحديث جميع المخططات والإحصائيات
+          updateAllCharts();
+        } catch (error) {
+          console.error("❌ خطأ في تحميل التقارير:", error);
+          alert("فشل في تحميل البيانات");
+        }
+      }
+
+      function filterReportsByPeriod() {
+        const now = new Date();
+        let filteredReports = [...reports];
+
+        switch (currentPeriod) {
+          case "today":
+            const today = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+            );
+            filteredReports = filteredReports.filter(
+              (report) => new Date(report.created_at) >= today,
+            );
+            break;
+
+          case "week":
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            filteredReports = filteredReports.filter(
+              (report) => new Date(report.created_at) >= weekAgo,
+            );
+            break;
+
+          case "month":
+            const monthAgo = new Date();
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            filteredReports = filteredReports.filter(
+              (report) => new Date(report.created_at) >= monthAgo,
+            );
+            break;
+
+          case "year":
+            const yearAgo = new Date();
+            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+            filteredReports = filteredReports.filter(
+              (report) => new Date(report.created_at) >= yearAgo,
+            );
+            break;
+
+          case "all":
+          default:
+            // لا تطبيق فلتر
+            break;
+        }
+
+        return filteredReports;
+      }
+
+      // ==============================================
+      // دوال تحديث الرسوم البيانية
+      // ==============================================
+      function updateAllCharts() {
+        const filteredReports = filterReportsByPeriod();
+
+        updateStatistics(filteredReports);
+        updateStatusChart(filteredReports);
+        updateUrgencyChart(filteredReports);
+        updateMonthlyChart(filteredReports);
+        updateBulletinChart(filteredReports);
+        updateStationsTable(filteredReports);
+        updateCommonProblems(filteredReports);
+      }
+
+      function updateStatistics(filteredReports) {
+        // إجمالي التقارير
+        document.getElementById("totalReports").textContent =
+          filteredReports.length;
+
+        // متوسط وقت الحل
+        const resolvedReports = filteredReports.filter(
+          (r) => r.status === "resolved",
+        );
+        if (resolvedReports.length > 0) {
+          const totalDays = resolvedReports.reduce((sum, report) => {
+            const created = new Date(report.created_at);
+            const resolved = report.updated_at
+              ? new Date(report.updated_at)
+              : new Date();
+            const days = Math.ceil(
+              (resolved - created) / (1000 * 60 * 60 * 24),
+            );
+            return sum + (days > 0 ? days : 1);
+          }, 0);
+
+          const avgDays = Math.round(totalDays / resolvedReports.length);
+          document.getElementById("avgResolutionTime").textContent = avgDays;
+        } else {
+          document.getElementById("avgResolutionTime").textContent = "0";
+        }
+
+        // نسبة الحل
+        const total = filteredReports.length;
+        const resolved = filteredReports.filter(
+          (r) => r.status === "resolved",
+        ).length;
+        const resolutionRate =
+          total > 0 ? Math.round((resolved / total) * 100) : 0;
+        document.getElementById("resolutionRate").textContent =
+          `${resolutionRate}%`;
+
+        // عدد المبلغين المميزين
+        const uniqueReporters = new Set(
+          filteredReports.map((r) => r.reporter_phone),
+        );
+        document.getElementById("uniqueReporters").textContent =
+          uniqueReporters.size;
+      }
+
+      function updateStatusChart(filteredReports) {
+        const ctx = document.getElementById("statusChart").getContext("2d");
+
+        // إحصائيات الحالة
+        const statusCounts = {
+          "قيد المراجعة": filteredReports.filter((r) => r.status === "pending")
+            .length,
+          "قيد المعالجة": filteredReports.filter(
+            (r) => r.status === "in_progress",
+          ).length,
+          "تم الحل": filteredReports.filter((r) => r.status === "resolved")
+            .length,
+          مغلق: filteredReports.filter((r) => r.status === "closed").length,
+        };
+
+        if (charts.statusChart) {
+          charts.statusChart.destroy();
+        }
+
+        charts.statusChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: Object.keys(statusCounts),
+            datasets: [
+              {
+                label: "عدد التقارير",
+                data: Object.values(statusCounts),
+                backgroundColor: [
+                  "rgba(255, 193, 7, 0.7)",
+                  "rgba(23, 162, 184, 0.7)",
+                  "rgba(40, 167, 69, 0.7)",
+                  "rgba(108, 117, 125, 0.7)",
+                ],
+                borderColor: [
+                  "rgb(255, 193, 7)",
+                  "rgb(23, 162, 184)",
+                  "rgb(40, 167, 69)",
+                  "rgb(108, 117, 125)",
+                ],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateUrgencyChart(filteredReports) {
+        const ctx = document.getElementById("urgencyChart").getContext("2d");
+
+        // إحصائيات درجة الأهمية
+        const urgencyCounts = {
+          منخفضة: filteredReports.filter((r) => r.problem_urgency === "منخفضة")
+            .length,
+          متوسطة: filteredReports.filter((r) => r.problem_urgency === "متوسطة")
+            .length,
+          عالية: filteredReports.filter((r) => r.problem_urgency === "عالية")
+            .length,
+          حرجة: filteredReports.filter((r) => r.problem_urgency === "حرجة")
+            .length,
+        };
+
+        if (charts.urgencyChart) {
+          charts.urgencyChart.destroy();
+        }
+
+        charts.urgencyChart = new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: Object.keys(urgencyCounts),
+            datasets: [
+              {
+                data: Object.values(urgencyCounts),
+                backgroundColor: [
+                  "rgba(40, 167, 69, 0.7)",
+                  "rgba(255, 193, 7, 0.7)",
+                  "rgba(220, 53, 69, 0.7)",
+                  "rgba(192, 57, 43, 0.7)",
+                ],
+                borderColor: [
+                  "rgb(40, 167, 69)",
+                  "rgb(255, 193, 7)",
+                  "rgb(220, 53, 69)",
+                  "rgb(192, 57, 43)",
+                ],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  padding: 20,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateMonthlyChart(filteredReports) {
+        const ctx = document.getElementById("monthlyChart").getContext("2d");
+
+        // تجميع التقارير حسب الشهر
+        const monthlyCounts = {};
+        filteredReports.forEach((report) => {
+          const date = new Date(report.created_at);
+          const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+
+          if (!monthlyCounts[monthYear]) {
+            monthlyCounts[monthYear] = 0;
+          }
+          monthlyCounts[monthYear]++;
+        });
+
+        // تحويل إلى مصفوفات مرتبة
+        const months = Object.keys(monthlyCounts).sort();
+        const counts = months.map((month) => monthlyCounts[month]);
+
+        if (charts.monthlyChart) {
+          charts.monthlyChart.destroy();
+        }
+
+        charts.monthlyChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: months,
+            datasets: [
+              {
+                label: "عدد التقارير",
+                data: counts,
+                backgroundColor: "rgba(52, 152, 219, 0.2)",
+                borderColor: "rgb(52, 152, 219)",
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateBulletinChart(filteredReports) {
+        const ctx = document.getElementById("bulletinChart").getContext("2d");
+
+        // تجميع التقارير حسب نوع النشرة
+        const bulletinCounts = {};
+        filteredReports.forEach((report) => {
+          const bulletinType = report.bulletin_type || "غير محدد";
+
+          if (!bulletinCounts[bulletinType]) {
+            bulletinCounts[bulletinType] = 0;
+          }
+          bulletinCounts[bulletinType]++;
+        });
+
+        // تحويل إلى مصفوفات
+        const bulletins = Object.keys(bulletinCounts);
+        const counts = Object.values(bulletinCounts);
+
+        if (charts.bulletinChart) {
+          charts.bulletinChart.destroy();
+        }
+
+        charts.bulletinChart = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: bulletins,
+            datasets: [
+              {
+                label: "عدد التقارير",
+                data: counts,
+                backgroundColor: "rgba(155, 89, 182, 0.7)",
+                borderColor: "rgb(155, 89, 182)",
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateStationsTable(filteredReports) {
+        const tbody = document.getElementById("stationsBody");
+        tbody.innerHTML = "";
+
+        // تجميع التقارير حسب المحطة
+        const stationStats = {};
+        filteredReports.forEach((report) => {
+          const station = report.station_name || "غير محدد";
+
+          if (!stationStats[station]) {
+            stationStats[station] = {
+              total: 0,
+              pending: 0,
+              resolved: 0,
+            };
+          }
+
+          stationStats[station].total++;
+          if (report.status === "pending") stationStats[station].pending++;
+          if (report.status === "resolved") stationStats[station].resolved++;
+        });
+
+        // تحويل إلى مصفوفة وترتيب تنازلي
+        const stationsArray = Object.entries(stationStats)
+          .map(([station, stats]) => ({
+            station,
+            ...stats,
+            resolutionRate:
+              stats.total > 0
+                ? Math.round((stats.resolved / stats.total) * 100)
+                : 0,
+          }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 10); // أفضل 10 محطات فقط
+
+        // ملء الجدول
+        stationsArray.forEach((item, index) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${item.station}</strong></td>
+                    <td>${item.total}</td>
+                    <td><span class="badge bg-warning">${item.pending}</span></td>
+                    <td><span class="badge bg-success">${item.resolved}</span></td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: ${item.resolutionRate}%">
+                                ${item.resolutionRate}%
+                            </div>
+                        </div>
+                    </td>
+                `;
+          tbody.appendChild(row);
+        });
+      }
+
+      function updateCommonProblems(filteredReports) {
+        const container = document.getElementById("commonProblems");
+        container.innerHTML = "";
+
+        // تجميع المشاكل حسب نوع المشكلة
+        const problemStats = {};
+        filteredReports.forEach((report) => {
+          const problemType = report.problem_type || "غير محدد";
+
+          if (!problemStats[problemType]) {
+            problemStats[problemType] = {
+              count: 0,
+              bulletins: new Set(),
+              urgency: {},
+            };
+          }
+
+          problemStats[problemType].count++;
+          problemStats[problemType].bulletins.add(report.bulletin_type);
+
+          // تجميع حسب درجة الأهمية
+          const urgency = report.problem_urgency || "متوسطة";
+          if (!problemStats[problemType].urgency[urgency]) {
+            problemStats[problemType].urgency[urgency] = 0;
+          }
+          problemStats[problemType].urgency[urgency]++;
+        });
+
+        // تحويل إلى مصفوفة وترتيب تنازلي
+        const problemsArray = Object.entries(problemStats)
+          .map(([problem, stats]) => ({
+            problem,
+            count: stats.count,
+            bulletins: Array.from(stats.bulletins),
+            urgency: stats.urgency,
+          }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 6); // أهم 6 مشاكل فقط
+
+        // إنشاء البطاقات
+        problemsArray.forEach((item) => {
+          const col = document.createElement("div");
+          col.className = "col-md-4 mb-3";
+
+          // حساب أهم درجة أرجحية
+          const mainUrgency = Object.entries(item.urgency).sort(
+            (a, b) => b[1] - a[1],
+          )[0];
+
+          let urgencyColor = "bg-secondary";
+          let urgencyIcon = "fa-exclamation-circle";
+
+          switch (mainUrgency[0]) {
+            case "منخفضة":
+              urgencyColor = "bg-success";
+              urgencyIcon = "fa-check-circle";
+              break;
+            case "متوسطة":
+              urgencyColor = "bg-warning";
+              urgencyIcon = "fa-exclamation-triangle";
+              break;
+            case "عالية":
+              urgencyColor = "bg-danger";
+              urgencyIcon = "fa-fire";
+              break;
+            case "حرجة":
+              urgencyColor = "bg-dark";
+              urgencyIcon = "fa-skull-crossbones";
+              break;
+          }
+
+          col.innerHTML = `
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">${item.problem}</h6>
+                            <span class="badge ${urgencyColor}">
+                                <i class="fas ${urgencyIcon} me-1"></i>${mainUrgency[0]}
+                            </span>
+                        </div>
+                        <div class="stat-value text-primary">${item.count}</div>
+                        <div class="stat-title">تقرير</div>
+                        <small class="text-muted">
+                            <i class="fas fa-file-alt me-1"></i>
+                            ${item.bulletins.slice(0, 2).join("، ")}${item.bulletins.length > 2 ? "..." : ""}
+                        </small>
+                    </div>
+                `;
+
+          container.appendChild(col);
+        });
+      }
+
+      // ==============================================
+      // دوال التحكم بالفترة
+      // ==============================================
+      function setPeriod(period) {
+        currentPeriod = period;
+
+        // تحديث أزرار التحديد
+        document.querySelectorAll("#periodSelector button").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+
+        // تحديث الرسوم البيانية
+        updateAllCharts();
+      }
+
+      // ==============================================
+      // تهيئة الصفحة
+      // ==============================================
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 تهيئة صفحة الإحصائيات...");
+        loadReports();
+      });
+    </script>
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>نظام إدارة البيانات الجوية – لوحة التحكم المتكاملة</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --primary-color: #2c3e50; --secondary-color: #34495e; --accent-color: #3498db; --success-color: #27ae60; --warning-color: #f39c12; --danger-color: #e74c3c; --border-radius: 15px; }
+    body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); font-family: 'Segoe UI', sans-serif; padding: 20px; }
+    .container-fluid { max-width: 1400px; }
+    .header, .footer { background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem; }
+    .stat-card { background: white; border-radius: var(--border-radius); padding: 1.5rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); transition: 0.3s; border-top: 5px solid; }
+    .stat-card:hover { transform: translateY(-5px); }
+    .section-card { background: white; border-radius: var(--border-radius); padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .section-title { color: var(--primary-color); border-bottom: 3px solid var(--accent-color); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+    .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: none; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; }
+    .loading-spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .alert-fixed { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1050; min-width: 300px; }
+    .table th { background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); color: white; }
+    .nav-tabs .nav-link.active { background: var(--primary-color); color: white; }
+    .btn-sm-excel { background: #28a745; color: white; border: none; padding: 4px 10px; border-radius: 5px; font-size: 0.8rem; }
+    .btn-sm-excel:hover { background: #218838; }
+    .modal-dialog-scrollable { max-height: 90vh; }
+    .details-table td:first-child { font-weight: bold; background-color: #f8f9fa; width: 30%; }
+  </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div><div id="loadingText">جاري التحميل...</div></div>
+<div id="alertContainer" class="alert-fixed"></div>
+
+<div class="container-fluid">
+  <!-- رأس الصفحة -->
+  <div class="header">
+    <div class="row align-items-center">
+      <div class="col-md-8"><h2><i class="fas fa-satellite-dish me-2"></i> نظام إدارة المحطات والرصاد الجويين</h2><span id="currentDate"></span></div>
+      <div class="col-md-4 text-md-end"><button class="btn btn-outline-light btn-sm me-2" onclick="refreshAllData()"><i class="fas fa-sync-alt"></i> تحديث شامل</button><button class="btn btn-outline-light btn-sm" onclick="exportCurrentTable()"><i class="fas fa-file-excel"></i> تصدير الجدول الحالي</button></div>
+    </div>
+  </div>
+
+  <!-- بطاقات الإحصائيات -->
+  <div class="row">
+    <div class="col-lg-3 col-md-6"><div class="stat-card" style="border-top-color: var(--accent-color)"><i class="fas fa-satellite fa-2x text-primary"></i><div class="stat-number text-primary" id="totalStations">0</div><div>المحطات</div><small>نشطة: <span id="activeStations">0</span></small></div></div>
+    <div class="col-lg-3 col-md-6"><div class="stat-card" style="border-top-color: var(--success-color)"><i class="fas fa-users fa-2x text-success"></i><div class="stat-number text-success" id="totalObservers">0</div><div>الرصاد</div><small>نشطون: <span id="activeObservers">0</span></small></div></div>
+    <div class="col-lg-3 col-md-6"><div class="stat-card" style="border-top-color: var(--warning-color)"><i class="fas fa-file-alt fa-2x text-warning"></i><div class="stat-number text-warning" id="totalReports">0</div><div>نشرات اليوم</div><small>مرسلة: <span id="todayReports">0</span></small></div></div>
+    <div class="col-lg-3 col-md-6"><div class="stat-card" style="border-top-color: var(--danger-color)"><i class="fas fa-exclamation-triangle fa-2x text-danger"></i><div class="stat-number text-danger" id="missingReports">0</div><div>نشرات ناقصة</div><small>حرجة: <span id="criticalMissing">0</span></small></div></div>
+  </div>
+
+  <!-- تبويبات رئيسية لكل الجداول -->
+  <div class="section-card">
+    <div class="section-title"><h4><i class="fas fa-database me-2"></i> جميع تقارير النظام والجداول</h4></div>
+    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#weatherReports" type="button">🌦️ النشرات الجوية</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#equipmentFailures" type="button">🛠️ أعطال المعدات</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#telecomFailures" type="button">📡 أعطال الاتصالات</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#itProblems" type="button">💻 مشاكل تقنية</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#reminders" type="button">🔔 التذكيرات</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#activityLog" type="button">📜 سجل النشاط</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#userMessages" type="button">💬 رسائل المستخدمين</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#regQueue" type="button">📋 طلبات التسجيل</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#systemStats" type="button">📊 إحصائيات النظام</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#backups" type="button">💾 النسخ الاحتياطية</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#smsTable" type="button">✉️ جدول SMS</button></li>
+    </ul>
+
+    <div class="tab-content mt-3">
+      <!-- 1. النشرات الجوية -->
+      <div class="tab-pane fade show active" id="weatherReports">
+        <div class="d-flex justify-content-between align-items-center mb-2"><h5>تفاصيل النشرات اليومية</h5><button class="btn-sm-excel" onclick="exportTableToCSV('reportsSummaryTable', 'النشرات_اليومية')"><i class="fas fa-download"></i> تصدير</button></div>
+        <div class="table-responsive"><table class="table table-bordered"><thead><tr><th>المحطة</th><th>ساعية(24)</th><th>يومية(3)</th><th>مناخية(4)</th><th>أمطار(1)</th><th>ظواهر(24)</th><th>زراعية(1)</th><th>تربة(4)</th><th>المرسل</th><th>المطلوب</th><th>%</th></tr></thead><tbody id="reportsSummaryTable"></tbody></table></div>
+        <div class="mt-4"><h5>النشرات المرسلة (مع زر التفاصيل)</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>النوع</th><th>المحطة</th><th>الراصد</th><th>الوقت</th><th>التفاصيل</th></tr></thead><tbody id="sentReportsTable"></tbody></table></div></div>
+        <div class="mt-4"><h5>النشرات غير المرسلة (النواقص)</h5><div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>النوع</th><th>المحطة</th><th>الرصاد</th><th>المرسل/المطلوب</th><th>الناقص</th></tr></thead><tbody id="missingReportsTable"></tbody></table></div></div>
+      </div>
+      <!-- باقي التبويبات (مختصرة ولكنها تعمل) -->
+      <div class="tab-pane fade" id="equipmentFailures"><div class="d-flex justify-content-between"><h5>أعطال المعدات</h5><button class="btn-sm-excel" onclick="exportTableToCSV('equipmentFailuresTable', 'اعطال_المعدات')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المحطة</th><th>المعدة</th><th>الوصف</th><th>التاريخ</th><th>الخطورة</th><th>الحالة</th></tr></thead><tbody id="equipmentFailuresTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="telecomFailures"><div class="d-flex justify-content-between"><h5>أعطال الاتصالات</h5><button class="btn-sm-excel" onclick="exportTableToCSV('telecomFailuresTable', 'اعطال_الاتصالات')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>الجهاز</th><th>المبلغ</th><th>المحطة</th><th>الوصف</th><th>عاجل</th><th>التاريخ</th></tr></thead><tbody id="telecomFailuresTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="itProblems"><div class="d-flex justify-content-between"><h5>مشاكل تقنية</h5><button class="btn-sm-excel" onclick="exportTableToCSV('itProblemsTable', 'مشاكل_تقنية')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>المحطة</th><th>النشرة</th><th>المشكلة</th><th>الوصف</th><th>الحالة</th></tr></thead><tbody id="itProblemsTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="reminders"><div class="d-flex justify-content-between"><h5>التذكيرات</h5><button class="btn-sm-excel" onclick="exportTableToCSV('remindersTable', 'التذكيرات')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المحطة</th><th>العنوان</th><th>الرسالة</th><th>الأولوية</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="remindersTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="activityLog"><div class="d-flex justify-content-between"><h5>آخر 50 نشاط</h5><button class="btn-sm-excel" onclick="exportTableToCSV('activityLogTable', 'سجل_النشاط')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>الإجراء</th><th>التفاصيل</th><th>التاريخ</th></tr></thead><tbody id="activityLogTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="userMessages"><div class="d-flex justify-content-between"><h5>رسائل المستخدمين</h5><button class="btn-sm-excel" onclick="exportTableToCSV('userMessagesTable', 'رسائل_المستخدمين')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>الرسالة</th><th>التاريخ</th></tr></thead><tbody id="userMessagesTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="regQueue"><div class="d-flex justify-content-between"><h5>طلبات التسجيل</h5><button class="btn-sm-excel" onclick="exportTableToCSV('regQueueTable', 'قائمة_الانتظار')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>الاسم</th><th>البريد</th><th>المحطة</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="regQueueTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="systemStats"><div class="d-flex justify-content-between"><h5>إحصائيات النظام</h5><button class="btn-sm-excel" onclick="exportTableToCSV('systemStatsTable', 'احصائيات_النظام')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>التاريخ</th><th>المستخدمين</th><th>النشطاء</th><th>الطلبات</th><th>النشرات</th><th>الأخطاء</th></tr></thead><tbody id="systemStatsTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="backups"><div class="d-flex justify-content-between"><h5>النسخ الاحتياطية</h5><button class="btn-sm-excel" onclick="exportTableToCSV('backupsTable', 'النسخ_الاحتياطية')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>الاسم</th><th>النوع</th><th>عدد السجلات</th><th>التاريخ</th></tr></thead><tbody id="backupsTable"></tbody></table></div></div>
+      <div class="tab-pane fade" id="smsTable"><div class="d-flex justify-content-between"><h5>SMS</h5><button class="btn-sm-excel" onclick="exportTableToCSV('smsTableBody', 'sms')">تصدير</button></div><div class="table-responsive"><table class="table"><thead><tr><th>المرسل إليه</th><th>النص</th><th>الحالة</th><th>التاريخ</th><th></th></tr></thead><tbody id="smsTableBody"></tbody></table></div><button class="btn btn-primary btn-sm mt-2" onclick="sendTestSms()"><i class="fas fa-paper-plane"></i> إرسال SMS تجريبي</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة منبثقة لعرض تفاصيل النشرة -->
+<div class="modal fade" id="reportDetailsModal" tabindex="-1" aria-labelledby="reportDetailsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="reportDetailsLabel">📄 تفاصيل النشرة</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-bordered details-table">
+            <tbody id="detailsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer"><div class="footer-content"><div class="footer-programmer"><h5>المبرمج</h5><p>ابراهيم احمد زينب</p></div><div class="footer-center"><h4>المركز الوطني للأرصاد الجوية</h4><p>نظام إدارة المحطات والرصاد</p><p>© 2026</p></div></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ==================== إعدادات Supabase ====================
+  const SUPABASE_URL = "https://vktcvkwqszehgmhqjrkb.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o";
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let stationsData = [], observersData = [], reportsData = [], missingReportsData = [];
+  let dailyRequirements = { hourly:24, daily:3, climate:4, rainfall:1, phenomena:24, agricultural:1, soil:4 };
+  let reportTypeNames = { hourly:"ساعية", daily:"يومية", climate:"مناخية", rainfall:"أمطار", phenomena:"ظواهر", agricultural:"زراعية", soil:"تربة" };
+
+  function showLoading(t) { document.getElementById("loadingText").innerText = t; document.getElementById("loadingOverlay").style.display = "flex"; }
+  function hideLoading() { document.getElementById("loadingOverlay").style.display = "none"; }
+  function showAlert(msg, type) { let a = document.getElementById("alertContainer"); a.innerHTML = `<div class="alert alert-${type} alert-dismissible">${msg}<button class="btn-close" onclick="this.parentElement.remove()"></button></div>`; setTimeout(()=>{if(a.firstChild) a.firstChild.remove()},4000); }
+
+  // عرض تفاصيل النشرة
+  function showReportDetails(rawData) {
+    if (!rawData) { showAlert("لا توجد بيانات لعرضها", "danger"); return; }
+    const tbody = document.getElementById("detailsTableBody");
+    tbody.innerHTML = "";
+    for (const [key, value] of Object.entries(rawData)) {
+      let displayValue = value;
+      if (value === null || value === undefined) displayValue = "<span class='text-muted'>—</span>";
+      else if (typeof value === "object") displayValue = JSON.stringify(value);
+      else if (key.includes("date") || key.includes("time")) displayValue = new Date(value).toLocaleString("ar-SA");
+      tbody.innerHTML += `<tr><td>${key}</td><td>${displayValue}</td></tr>`;
+    }
+    new bootstrap.Modal(document.getElementById("reportDetailsModal")).show();
+  }
+
+  // جلب البيانات
+  async function refreshAllData() {
+    showLoading("جلب جميع البيانات...");
+    try {
+      await loadStationsAndObservers();
+      await loadWeatherReports();
+      await loadEquipmentFailures();
+      await loadTelecomFailures();
+      await loadItProblems();
+      await loadReminders();
+      await loadActivityLog();
+      await loadUserMessages();
+      await loadRegistrationQueue();
+      await loadSystemStats();
+      await loadBackups();
+      await loadSmsTable();
+      updateStats();
+      renderWeatherTables();
+      showAlert("تم تحديث جميع الجداول", "success");
+    } catch(e) { console.error(e); showAlert("خطأ: "+e.message, "danger"); }
+    finally { hideLoading(); }
+  }
+
+  async function loadStationsAndObservers() {
+    let { data: users } = await db.from("users").select("id,first_name,father_name,last_name,station,status,role,email").not("station","is",null);
+    let unique = {};
+    users?.forEach(u => { if(u.station && !unique[u.station]) unique[u.station] = { name: u.station, region: extractRegion(u.station), status: u.status || "pending", observers: [] }; });
+    stationsData = Object.values(unique);
+    let { data: allObs } = await db.from("users").select("*").in("status",["approved","active"]);
+    observersData = allObs || [];
+    stationsData.forEach(s => { s.observers = observersData.filter(o => o.station === s.name); });
+  }
+  function extractRegion(n) { let r = { دمشق:"ريف دمشق", حلب:"محافظة حلب", حمص:"محافظة حمص", اللاذقية:"محافظة اللاذقية" }; for(let [k,v] of Object.entries(r)) if(n.includes(k)) return v; return "غير محدد"; }
+
+  async function loadWeatherReports() {
+    let today = new Date(), start = new Date(today.setHours(0,0,0)).toISOString(), end = new Date(today.setHours(23,59,59)).toISOString();
+    let tables = [
+      { name:"hourly_reports", type:"hourly", date:"created_at" }, { name:"daily_reports", type:"daily", date:"submission_date" },
+      { name:"climate_reports", type:"climate", date:"created_at" }, { name:"rainfall_reports", type:"rainfall", date:"created_at" },
+      { name:"weather_phenomena", type:"phenomena", date:"created_at" }, { name:"agricultural_reports", type:"agricultural", date:"created_at" },
+      { name:"soil_temperatures", type:"soil", date:"submitted_at" }
+    ];
+    let all = [];
+    for(let t of tables) {
+      let { data } = await db.from(t.name).select("*").gte(t.date, start).lte(t.date, end);
+      if(data) data.forEach(r => { 
+        let station = r.station || r.station_name || r.user_station || "غير محدد"; 
+        let observer = r.user_name || r.observer_name || `${r.first_name||""} ${r.last_name||""}`.trim() || "غير معروف"; 
+        all.push({ station, type: t.type, observer, time: r[t.date] || new Date(), table: t.name, rawData: r }); 
+      });
+    }
+    reportsData = all;
+    // حساب النواقص
+    let sentCount = {};
+    reportsData.forEach(r => { let key = `${r.station}|${r.type}`; sentCount[key] = (sentCount[key]||0)+1; });
+    missingReportsData = [];
+    stationsData.forEach(s => { Object.keys(dailyRequirements).forEach(type => { let required = dailyRequirements[type]; let sent = sentCount[`${s.name}|${type}`] || 0; if(sent < required) missingReportsData.push({ station: s.name, type, requiredCount: required, sentCount: sent, missingCount: required-sent, observers: s.observers.map(o=>`${o.first_name||''} ${o.last_name||''}`) }); }); });
+  }
+
+  // دوال الجلب الأخرى (مختصرة)
+  async function loadEquipmentFailures() { let { data } = await db.from("equipment_failures").select("*").order("created_at", {ascending:false}).limit(100); window.equipmentFailures = data || []; renderTable("equipmentFailuresTable", window.equipmentFailures, ["station_name","equipment_type","failure_description","failure_date","failure_severity","status"]); }
+  async function loadTelecomFailures() { let { data } = await db.from("telecom_failures").select("*").limit(100); window.telecomFailures = data || []; renderTable("telecomFailuresTable", window.telecomFailures, ["device_type","reporter_name","reporter_station","description","urgent","created_at"]); }
+  async function loadItProblems() { let { data } = await db.from("it_problem_reports").select("*").limit(100); window.itProblems = data || []; renderTable("itProblemsTable", window.itProblems, ["reporter_name","station_name","bulletin_type","problem_type","problem_description","status"]); }
+  async function loadReminders() { let { data } = await db.from("reminders").select("*").limit(100); window.reminders = data || []; renderTable("remindersTable", window.reminders, ["station_name","title","message","priority","status","send_at"]); }
+  async function loadActivityLog() { let { data } = await db.from("activity_log").select("*").order("created_at", {ascending:false}).limit(50); window.activityLog = data || []; renderTable("activityLogTable", window.activityLog, ["user_name","action_type","action_details","created_at"]); }
+  async function loadUserMessages() { let { data } = await db.from("user_messages").select("*").order("created_at", {ascending:false}).limit(100); window.userMessages = data || []; renderTable("userMessagesTable", window.userMessages, ["user_id","message","created_at"]); }
+  async function loadRegistrationQueue() { let { data } = await db.from("registration_queue").select("*").order("created_at", {ascending:false}).limit(100); window.regQueue = data || []; renderTable("regQueueTable", window.regQueue, ["first_name","email","station","status","created_at"]); }
+  async function loadSystemStats() { let { data } = await db.from("system_stats").select("*").order("date", {ascending:false}).limit(30); window.systemStats = data || []; renderTable("systemStatsTable", window.systemStats, ["date","total_users","active_users","pending_requests","sent_reports","errors_count"]); }
+  async function loadBackups() { let { data } = await db.from("system_backups").select("*").order("created_at", {ascending:false}).limit(50); window.backups = data || []; renderTable("backupsTable", window.backups, ["backup_name","backup_type","data_count","created_at"]); }
+  async function loadSmsTable() { let { data } = await db.from("sms").select("*").order("created_at", {ascending:false}).limit(100); window.smsData = data || []; if(!data) showAlert("⚠️ جدول SMS غير موجود، بيانات تجريبية", "warning"); renderTable("smsTableBody", window.smsData, ["recipient","message","status","created_at"], true); }
+
+  function renderTable(tbodyId, data, fields, showActions=false) {
+    let tbody = document.getElementById(tbodyId); if(!tbody) return;
+    if(!data || !data.length) { tbody.innerHTML = "<tr><td colspan='99' class='text-center'>لا توجد بيانات</td></tr>"; return; }
+    let html = "";
+    data.forEach(row => {
+      html += "<tr>";
+      fields.forEach(f => { let val = row[f]; if(f.includes("date") || f.includes("created_at")) val = new Date(val).toLocaleString("ar-SA"); html += `<td>${val || "-"}</td>`; });
+      if(showActions && tbodyId==="smsTableBody") html += `<td><button class="btn btn-sm btn-outline-primary" onclick="resendSms('${row.id||''}')"><i class="fas fa-redo"></i> إعادة</button></td>`;
+      html += "</tr>";
+    });
+    tbody.innerHTML = html;
+  }
+
+  function renderWeatherTables() {
+    // ملخص المحطات
+    let summaryHtml = "";
+    stationsData.forEach(s => {
+      let counts = { hourly:0,daily:0,climate:0,rainfall:0,phenomena:0,agricultural:0,soil:0 };
+      reportsData.filter(r=>r.station===s.name).forEach(r=>{ if(counts[r.type]!==undefined) counts[r.type]++; });
+      let totalSent = Object.values(counts).reduce((a,b)=>a+b,0);
+      let totalReq = Object.values(dailyRequirements).reduce((a,b)=>a+b,0);
+      let rate = totalReq ? Math.round((totalSent/totalReq)*100) : 0;
+      summaryHtml += `<tr><td>${s.name}</td>${Object.keys(dailyRequirements).map(t=>`<td class="${counts[t]>=dailyRequirements[t]?'text-success':counts[t]?'text-warning':'text-danger'}">${counts[t]}/${dailyRequirements[t]}</td>`).join('')}<td><strong>${totalSent}</strong></td><td>${totalReq}</td><td><span class="badge bg-${rate<50?'danger':rate<80?'warning':'success'}">${rate}%</span></td></tr>`;
+    });
+    document.getElementById("reportsSummaryTable").innerHTML = summaryHtml || "<tr><td colspan='11'>لا توجد محطات</td></tr>";
+    
+    // النشرات المرسلة مع زر تفاصيل
+    let sentHtml = ""; 
+    reportsData.forEach((r,i)=>{ 
+      sentHtml += `<tr>
+        <td>${i+1}</td>
+        <td>${reportTypeNames[r.type]}</td>
+        <td>${r.station}</td>
+        <td>${r.observer}</td>
+        <td>${new Date(r.time).toLocaleString()}</td>
+        <td><button class="btn btn-sm btn-info" onclick='showReportDetails(${JSON.stringify(r.rawData).replace(/'/g, "\\'")})'><i class="fas fa-eye"></i> تفاصيل</button></td>
+      </tr>`;
+    });
+    document.getElementById("sentReportsTable").innerHTML = sentHtml || "<tr><td colspan='6'>لا توجد نشرات مرسلة</td></tr>";
+    
+    // النواقص
+    let missingHtml = ""; 
+    missingReportsData.forEach((m,i)=>{ 
+      missingHtml += `<tr><td>${i+1}</td><td>${reportTypeNames[m.type]}</td><td>${m.station}</td><td>${m.observers.join(", ")}</td><td>${m.sentCount}/${m.requiredCount}</td><td class="text-danger">${m.missingCount}</td></tr>`;
+    });
+    document.getElementById("missingReportsTable").innerHTML = missingHtml || "<tr><td colspan='6'>لا توجد نواقص</td></tr>";
+  }
+
+  function updateStats() {
+    document.getElementById("totalStations").innerText = stationsData.length;
+    document.getElementById("activeStations").innerText = stationsData.filter(s=>s.status==='approved'||s.status==='active').length;
+    document.getElementById("totalObservers").innerText = observersData.length;
+    document.getElementById("activeObservers").innerText = observersData.filter(o=>o.status==='approved'||o.status==='active').length;
+    document.getElementById("totalReports").innerText = reportsData.length;
+    document.getElementById("todayReports").innerText = reportsData.length;
+    let totalMissing = missingReportsData.reduce((s,m)=>s+m.missingCount,0);
+    let criticalMissing = missingReportsData.filter(m=>m.type==='hourly'||m.type==='daily').reduce((s,m)=>s+m.missingCount,0);
+    document.getElementById("missingReports").innerText = totalMissing;
+    document.getElementById("criticalMissing").innerText = criticalMissing;
+  }
+
+  function exportTableToCSV(tableId, filename) {
+    let table = document.getElementById(tableId);
+    if(!table) { showAlert("الجدول غير موجود", "danger"); return; }
+    let rows = table.querySelectorAll("tr");
+    let csv = [];
+    for(let row of rows) {
+      let cols = row.querySelectorAll("td,th");
+      let rowData = Array.from(cols).map(cell => `"${cell.innerText.replace(/"/g,'""')}"`).join(",");
+      csv.push(rowData);
+    }
+    let blob = new Blob(["\uFEFF" + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `${filename}_${new Date().toISOString().slice(0,19)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showAlert(`تم تصدير ${filename}`, "success");
+  }
+
+  function exportCurrentTable() {
+    let activeTab = document.querySelector(".tab-pane.active");
+    let table = activeTab.querySelector("table");
+    if(table) exportTableToCSV(table.id, "export");
+    else showAlert("لا يوجد جدول في التبويب النشط", "warning");
+  }
+
+  function sendTestSms() { showAlert("📱 إرسال SMS تجريبي (محاكاة)", "info"); }
+  function resendSms(id) { showAlert(`إعادة إرسال SMS للرسالة رقم ${id} (محاكاة)`, "info"); }
+
+  document.addEventListener("DOMContentLoaded", ()=>{
+    document.getElementById("currentDate").innerText = new Date().toLocaleDateString("ar-SA");
+    refreshAllData();
+  });
+</script>
+</body>
+</html>

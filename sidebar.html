@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>القائمة الجانبية - نظام إدارة البيانات الجوية</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-bg: #2c3e50;
+            --sidebar-hover: #34495e;
+            --sidebar-active: #3498db;
+            --rain-color: #2980b9;
+            --text-light: #ecf0f1;
+            --weather-phenomena: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-hover) 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 100%;
+            height: 100vh;
+            padding: 20px 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* الرأس */
+        .sidebar-header {
+            text-align: center;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo-container {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+
+        .logo-circle {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .logo-circle img {
+            max-width: 85%;
+            max-height: 85%;
+            border-radius: 50%;
+        }
+
+        .system-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0;
+            color: white;
+        }
+
+        .system-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 5px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* معلومات المستخدم */
+        .user-info-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 0 15px 20px;
+            border-left: 4px solid var(--rain-color);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--rain-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 1.2rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .user-details {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* عناوين الأقسام */
+        .section-header {
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 15px 20px 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin: 10px 15px 5px;
+        }
+
+        /* عناصر القائمة */
+        .nav-item {
+            margin: 3px 15px;
+        }
+
+        .nav-link {
+            color: var(--text-light) !important;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            cursor: pointer;
+            position: relative;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: right;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .nav-link.active {
+            background: var(--rain-color);
+            box-shadow: 0 4px 12px rgba(41, 128, 185, 0.3);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-left: 10px;
+            font-size: 1rem;
+        }
+
+        /* تخصيصات خاصة */
+        .dashboard-item .nav-link i {
+            color: var(--success-color);
+        }
+
+        .hourly-item .nav-link i {
+            color: #9b59b6;
+        }
+
+        .climate-item .nav-link i {
+            color: #1abc9c;
+        }
+
+        .daily-item .nav-link i {
+            color: #f39c12;
+        }
+
+        .soil-item .nav-link i {
+            color: #8e44ad;
+        }
+
+        .agriculture-item .nav-link i {
+            color: #27ae60;
+        }
+
+        .phenomena-item {
+            background: linear-gradient(135deg, 
+                rgba(231, 76, 60, 0.15) 0%, 
+                rgba(192, 57, 43, 0.15) 100%);
+            border-left: 3px solid var(--weather-phenomena);
+        }
+
+        .phenomena-item .nav-link i {
+            color: var(--weather-phenomena);
+        }
+
+        .phenomena-item.active {
+            background: linear-gradient(135deg, 
+                var(--weather-phenomena) 0%, 
+                #c0392b 100%);
+        }
+
+        .rainfall-item {
+            background: linear-gradient(135deg, 
+                rgba(41, 128, 185, 0.15) 0%, 
+                rgba(52, 152, 219, 0.15) 100%);
+            border-left: 3px solid var(--rain-color);
+        }
+
+        .rainfall-item .nav-link i {
+            color: var(--rain-color);
+        }
+
+        .rainfall-item.active {
+            background: linear-gradient(135deg, 
+                var(--rain-color) 0%, 
+                #21618c 100%);
+        }
+
+        .support-item .nav-link i {
+            color: #95a5a6;
+        }
+
+        /* شارات */
+        .badge-new {
+            background: #e74c3c;
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: auto;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* زر تسجيل الخروج */
+        .logout-section {
+            margin-top: 30px;
+            padding: 20px 15px 0;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logout-btn {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c !important;
+            padding: 10px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(231, 76, 60, 0.2);
+            border-color: rgba(231, 76, 60, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* شريط التمرير */
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--rain-color);
+            border-radius: 10px;
+        }
+        
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #21618c;
+        }
+
+        /* مؤشر الوقت */
+        .time-indicator {
+            font-size: 0.75rem;
+            opacity: 0.7;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* تحسينات للشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .sidebar {
+                padding: 15px 0;
+            }
+            
+            .logo-container {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .nav-link {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <!-- الرأس -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-circle">
+                    <img src="../../../../assets/images/logo.jpg" alt="شعار النظام" 
+                         onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"%232c3e50\"><path d=\"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z\"/></svg>'">
+                </div>
+            </div>
+            <h4 class="system-title">نظام إدارة البيانات الجوية</h4>
+            <p class="system-subtitle">النشرات المطرية</p>
+            <div class="time-indicator" id="currentTime">--:--:--</div>
+        </div>
+
+        <!-- معلومات المستخدم -->
+        <div class="user-info-card">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-name" id="userNameDisplay">مستخدم النظام</div>
+            <div class="user-details">
+                <div id="userRoleDisplay">الراصد الجوي</div>
+                <div id="userStationDisplay">المحطة الرئيسية</div>
+            </div>
+        </div>
+
+        <!-- القائمة الرئيسية -->
+        <div class="section-header">الإدارة</div>
+        <ul class="nav flex-column">
+            <li class="nav-item dashboard-item">
+                <button class="nav-link" data-href="/pages/main.html">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>لوحة التحكم</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="section-header">النشرات الجوية</div>
+        <ul class="nav flex-column">
+            <li class="nav-item hourly-item">
+                <button class="nav-link" data-href="/pages/hourly/hourly_send/hourly_reports.html">
+                    <i class="fas fa-clock"></i>
+                    <span>النشرات الساعية</span>
+                </button>
+            </li>
+            <li class="nav-item climate-item">
+                <button class="nav-link" data-href="/pages/h_climate/h_climate_send/h_climate_send.html">
+                    <i class="fas fa-wind"></i>
+                    <span>المناخ الساعي</span>
+                </button>
+            </li>
+            <li class="nav-item daily-item">
+                <button class="nav-link" data-href="/pages/daily/daily_send/daily.html">
+                    <i class="fas fa-calendar-day"></i>
+                    <span>النشرات اليومية</span>
+                </button>
+            </li>
+            <li class="nav-item soil-item">
+                <button class="nav-link" data-href="/pages/soil/soil_send/soil-send.html">
+                    <i class="fas fa-mountain"></i>
+                    <span>حرارة التربة</span>
+                </button>
+            </li>
+            <li class="nav-item agriculture-item">
+                <button class="nav-link" data-href="/pages/arg/send-argicultural/agricultural_reports.html">
+                    <i class="fas fa-seedling"></i>
+                    <span>النشرات الزراعية</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="section-header">التقارير الخاصة</div>
+        <ul class="nav flex-column">
+            <li class="nav-item phenomena-item">
+                <button class="nav-link" data-href="/pages/weather_phenomena/weather_phenomena.html">
+                    <i class="fas fa-bolt"></i>
+                    <span>الظواهر الجوية</span>
+                    <span class="badge-new">جديد</span>
+                </button>
+            </li>
+            <li class="nav-item rainfall-item active">
+                <button class="nav-link" data-href="/pages/rain/rain_send/rainfall_reports.html">
+                    <i class="fas fa-cloud-rain"></i>
+                    <span>النشرات المطرية</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="section-header">الدعم الفني</div>
+        <ul class="nav flex-column">
+            <li class="nav-item support-item">
+                <button class="nav-link" data-href="/pages/fix/fix.html">
+                    <i class="fas fa-tools"></i>
+                    <span>أعطال الرصد</span>
+                </button>
+            </li>
+            <li class="nav-item support-item">
+                <button class="nav-link" data-href="/pages/fix/fix-tel.html">
+                    <i class="fas fa-phone-alt"></i>
+                    <span>أعطال الاتصالات</span>
+                </button>
+            </li>
+            <li class="nav-item support-item">
+                <button class="nav-link" data-href="/pages/fix/it.html">
+                    <i class="fas fa-laptop-code"></i>
+                    <span>أعطال البرامج</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- تسجيل الخروج -->
+        <div class="logout-section">
+            <button class="nav-link logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>تسجيل الخروج</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة الصفحة عند التحميل
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 تحميل القائمة الجانبية...');
+            initializeSidebar();
+        });
+
+        // دالة التهيئة الرئيسية
+        function initializeSidebar() {
+            loadUserData();
+            setupNavigation();
+            setupLogoutButton();
+            startClock();
+            highlightCurrentPage();
+            
+            console.log('✅ تم تهيئة القائمة الجانبية');
+        }
+
+        // تحميل بيانات المستخدم
+        function loadUserData() {
+            try {
+                const userData = localStorage.getItem('currentUser');
+                
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    
+                    // اسم المستخدم
+                    let userName = 'غير معروف';
+                    if (user.first_name && user.last_name) {
+                        userName = `${user.first_name} ${user.last_name}`;
+                    } else if (user.name) {
+                        userName = user.name;
+                    } else if (user.username) {
+                        userName = user.username;
+                    }
+                    
+                    // المحطة
+                    const userStation = user.station || 'المحطة الرئيسية';
+                    
+                    // الدور الوظيفي
+                    const userRole = user.role || user.jobTitle || 'الراصد الجوي';
+                    
+                    // تحديث العرض
+                    document.getElementById('userNameDisplay').textContent = userName;
+                    document.getElementById('userStationDisplay').textContent = userStation;
+                    document.getElementById('userRoleDisplay').textContent = userRole;
+                }
+            } catch (error) {
+                console.error('❌ خطأ في تحميل بيانات المستخدم:', error);
+            }
+        }
+
+        // إعداد التنقل
+        function setupNavigation() {
+            const navButtons = document.querySelectorAll('.nav-link[data-href]');
+            
+            navButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const href = this.getAttribute('data-href');
+                    
+                    if (!href || href === '#') return;
+                    
+                    console.log(`🧭 الانتقال إلى: ${href}`);
+                    navigateToPage(href);
+                });
+            });
+        }
+
+        // دالة التنقل بين الصفحات
+        function navigateToPage(url) {
+            try {
+                // إذا كان في iframe، أرسل رسالة للصفحة الرئيسية
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'NAVIGATE',
+                        url: url,
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                } 
+                // إذا كانت الصفحة مستقلة، انتقل مباشرة
+                else {
+                    window.location.href = url;
+                }
+            } catch (error) {
+                console.error('❌ خطأ في التنقل:', error);
+                // خطة بديلة: الانتقال المباشر
+                window.location.href = url;
+            }
+        }
+
+        // إعداد زر تسجيل الخروج
+        function setupLogoutButton() {
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // تأكيد تسجيل الخروج
+                    if (confirm('هل تريد حقاً تسجيل الخروج؟')) {
+                        performLogout();
+                    }
+                });
+            }
+        }
+
+        // تنفيذ تسجيل الخروج
+        function performLogout() {
+            try {
+                // مسح بيانات المستخدم
+                localStorage.removeItem('currentUser');
+                sessionStorage.clear();
+                
+                console.log('🚪 تسجيل الخروج...');
+                
+                // إرسال رسالة تسجيل الخروج للصفحة الرئيسية
+                if (window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'LOGOUT',
+                        timestamp: new Date().toISOString()
+                    }, '*');
+                }
+                
+                // الانتقال إلى صفحة تسجيل الدخول
+                setTimeout(() => {
+                    window.location.href = '/index.html';
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ خطأ في تسجيل الخروج:', error);
+                window.location.href = '/index.html';
+            }
+        }
+
+        // تشغيل الساعة
+        function startClock() {
+            function updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('ar-SA', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+                
+                const dateElement = document.getElementById('currentTime');
+                if (dateElement) {
+                    dateElement.textContent = timeString;
+                }
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        // تحديد الصفحة الحالية
+        function highlightCurrentPage() {
+            const currentPage = window.location.pathname;
+            
+            // إزالة التحديد السابق
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                const parentItem = link.closest('.nav-item');
+                if (parentItem) {
+                    parentItem.classList.remove('active');
+                }
+            });
+            
+            // تحديد الصفحة الحالية
+            const navButtons = document.querySelectorAll('.nav-link[data-href]');
+            navButtons.forEach(button => {
+                const href = button.getAttribute('data-href');
+                
+                // مقارنة المسارات
+                if (currentPage.includes(href) || href.includes(currentPage)) {
+                    button.classList.add('active');
+                    const parentItem = button.closest('.nav-item');
+                    if (parentItem) {
+                        parentItem.classList.add('active');
+                    }
+                }
+            });
+            
+            // تحديد خاص لصفحة النشرات المطرية
+            if (currentPage.includes('rainfall_reports.html')) {
+                const rainfallButton = document.querySelector('.rainfall-item .nav-link');
+                if (rainfallButton) {
+                    rainfallButton.classList.add('active');
+                    document.querySelector('.rainfall-item').classList.add('active');
+                }
+            }
+        }
+
+        // استقبال الرسائل من الصفحة الرئيسية
+        window.addEventListener('message', function(event) {
+            console.log('📨 رسالة واردة:', event.data);
+            
+            // التحقق من مصدر الرسالة (يمكنك تحديد النطاق الخاص بك)
+            // if (event.origin !== 'http://127.0.0.1:5501') return;
+            
+            if (event.data && event.data.type === 'USER_DATA_UPDATE') {
+                // تحديث بيانات المستخدم
+                loadUserData();
+            }
+            
+            if (event.data && event.data.type === 'UPDATE_HIGHLIGHT') {
+                // تحديث التحديد
+                highlightCurrentPage();
+            }
+        });
+
+        // جعل الدوال متاحة عالمياً
+        window.sidebarFunctions = {
+            initializeSidebar,
+            loadUserData,
+            navigateToPage,
+            performLogout
+        };
+
+        // إرسال بيانات المستخدم للصفحة الرئيسية عند الطلب
+        function sendUserDataToParent() {
+            if (window.parent !== window) {
+                try {
+                    const userData = localStorage.getItem('currentUser');
+                    if (userData) {
+                        window.parent.postMessage({
+                            type: 'SIDEBAR_USER_DATA',
+                            data: JSON.parse(userData)
+                        }, '*');
+                    }
+                } catch (error) {
+                    console.error('❌ خطأ في إرسال بيانات المستخدم:', error);
+                }
+            }
+        }
+
+        // إرسال البيانات بعد تحميل الصفحة
+        setTimeout(sendUserDataToParent, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - النشرات الزراعية</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="agricultural_reports.css" />
+  </head>
+  <body>
+    
+    <!-- طبقة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">جاري الإرسال...</span>
+      </div>
+    </div>
+
+    <!-- نظام الإشعارات -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- هيدر الجوال -->
+    <div class="mobile-header">
+      <div class="mobile-header-content">
+        <h5 class="mb-0">النشرات الزراعية</h5>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- القائمة الجانبية للجوال -->
+    <div class="mobile-sidebar" id="mobileSidebar">
+      <div class="mobile-sidebar-header">
+        <h5 class="text-white mb-0">القائمة</h5>
+        <button class="mobile-sidebar-close" id="mobileSidebarClose">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="text-center my-4">
+        <h5 class="mt-2 text-white">نظام إدارة البيانات الجوية</h5>
+        <p class="text-light mb-0" style="font-size: 0.85rem; opacity: 0.8">
+          النشرات الزراعية
+        </p>
+      </div>
+      <ul class="nav flex-column" id="mobileSidebarMenu">
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../../main.html"
+          >
+            <i class="fa-solid fa-chart-line me-2" style="color: #27ae60"></i>
+            لوحة التحكم
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/hourly/hourly_send/hourly_reports.html"
+          >
+            <i class="fa-regular fa-clock me-2" style="color: #27ae60"></i>
+            النشرات الساعية
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/daily/daily_send/daily.html"
+          >
+            <i
+              class="fa-regular fa-calendar-days me-2"
+              style="color: #27ae60"
+            ></i>
+            النشرات اليومية
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/rain/rain_send/rainfall_reports.html"
+          >
+            <i class="fa-solid fa-cloud-rain me-2" style="color: #27ae60"></i>
+            النشرات المطرية
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/h_climate/h_climate_send/h_climate_send.html"
+          >
+            <i class="fa-solid fa-wind me-2" style="color: #27ae60"></i> الساعي
+            المناخي
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/soil/soil_send/soil-send.html"
+          >
+            <i
+              class="fa-solid fa-temperature-half me-2"
+              style="color: #27ae60"
+            ></i>
+            حرارة التربة
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center active"
+            href="../../../pages/arg/send-argicultural/agricultural_reports.html"
+          >
+            <i class="fa-solid fa-leaf me-2" style="color: #27ae60"></i> النشرات
+            الزراعية
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/fix/fix.html"
+          >
+            <i class="fa-solid fa-microchip me-2" style="color: #27ae60"></i>
+            أعطال أجهزة الرصد
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/fix/fix-tel.html"
+          >
+            <i class="fa-solid fa-tower-cell me-2" style="color: #27ae60"></i>
+            مشاكل أجهزة الإتصالات
+          </a>
+        </li>
+
+        <li class="nav-item mb-2">
+          <a
+            class="nav-link d-flex align-items-center"
+            href="../../../pages/fix/it.html"
+          >
+            <i class="fa-solid fa-bug me-2" style="color: #27ae60"></i> أعطال
+            البرامج (IT)
+          </a>
+        </li>
+
+        <li class="nav-item mt-3">
+          <a
+            class="nav-link d-flex align-items-center text-danger"
+            href="../../../index.html"
+          >
+            <i
+              class="fa-solid fa-right-from-bracket me-2"
+              style="color: #ff0000"
+            ></i>
+            تسجيل الخروج
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- طبقة التعتيم للجوال -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- لوحة التحكم الجانبية -->
+    <div class="sidebar-dashboard">
+      <div class="sidebar-sticky">
+        <div class="text-center my-4">
+          <h5 class="mt-2 text-white">نظام  إدارة البيانات الجوية</h5>
+          <p class="text-light mb-0" style="font-size: 0.85rem; opacity: 0.8">
+            النشرات الزراعية
+          </p>
+        </div>
+
+        <ul class="nav flex-column" id="sidebarMenu">
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../../main.html"
+            >
+              <i class="fa-solid fa-chart-line me-2" style="color: #27ae60"></i>
+              لوحة التحكم
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/hourly/hourly_send/hourly_reports.html"
+            >
+              <i class="fa-regular fa-clock me-2" style="color: #27ae60"></i>
+              النشرات الساعية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/daily/daily_send/daily.html"
+            >
+              <i
+                class="fa-regular fa-calendar-days me-2"
+                style="color: #27ae60"
+              ></i>
+              النشرات اليومية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/rain/rain_send/rainfall_reports.html"
+            >
+              <i class="fa-solid fa-cloud-rain me-2" style="color: #27ae60"></i>
+              النشرات المطرية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/h_climate/h_climate_send/h_climate_send.html"
+            >
+              <i class="fa-solid fa-wind me-2" style="color: #27ae60"></i>
+              الساعي المناخي
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/soil/soil_send/soil-send.html"
+            >
+              <i
+                class="fa-solid fa-temperature-half me-2"
+                style="color: #27ae60"
+              ></i>
+              حرارة التربة
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center active"
+              href="../../../pages/arg/send-argicultural/agricultural_reports.html"
+            >
+              <i class="fa-solid fa-leaf me-2" style="color: #27ae60"></i>
+              النشرات الزراعية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/fix/fix.html"
+            >
+              <i class="fa-solid fa-microchip me-2" style="color: #27ae60"></i>
+              أعطال أجهزة الرصد
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/fix/fix-tel.html"
+            >
+              <i class="fa-solid fa-tower-cell me-2" style="color: #27ae60"></i>
+              مشاكل أجهزة الإتصالات
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../pages/fix/it.html"
+            >
+              <i class="fa-solid fa-bug me-2" style="color: #27ae60"></i> أعطال
+              البرامج (IT)
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <a
+              class="nav-link d-flex align-items-center text-danger"
+              href="../../../index.html"
+            >
+              <i
+                class="fa-solid fa-right-from-bracket me-2"
+                style="color: #ff0000"
+              ></i>
+              تسجيل الخروج
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content-with-sidebar">
+      <div class="main-card">
+        <div class="main-header">
+          <h2><i class="fas fa-seedling me-2"></i>النشرات الزراعية الشهرية</h2>
+          <p>إدخال البيانات الزراعية الشهرية وتتبع التغيرات</p>
+        </div>
+
+        <div class="main-content">
+          <!-- قسم التعريف بالمحطة والراصد -->
+          <div class="data-form mb-4">
+            <h4 class="section-title">
+              <i class="fas fa-user-tie"></i>التعريف بالمحطة والراصد
+            </h4>
+            <div class="user-welcome">
+              <h4>مرحباً، <span id="userName">اسم المستخدم</span></h4>
+              <p>
+                محطة: <span id="userStation">اسم المحطة</span> | صفة العمل:
+                <span id="userRole">الراصد الجوي</span>
+              </p>
+            </div>
+              
+            <!-- قسم إحصائيات المحطة - محدث -->
+            <div class="station-stats" id="stationStats">
+              <h5><i class="fas fa-chart-pie me-2"></i>إحصائيات تقارير المحطة اليوم</h5>
+              
+              <div class="stats-loading" id="statsLoading">
+                <div class="spinner-border spinner-border-sm text-light" role="status">
+                  <span class="visually-hidden">جاري التحميل...</span>
+                </div>
+                <span class="ms-2">جاري تحديث الإحصائيات...</span>
+              </div>
+
+              <div class="stats-grid" id="statsGrid" style="display: none;">
+                <!-- العناصر الأساسية -->
+                <div class="stat-item complete" id="statTotal">
+                  <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                  </div>
+                  <div class="stat-label">إجمالي التقارير</div>
+                  <span class="stat-count" id="totalReportsCount">0</span>
+                </div>
+                
+                <div class="stat-item warning" id="statToday">
+                  <div class="stat-icon">
+                    <i class="fas fa-calendar-day"></i>
+                  </div>
+                  <div class="stat-label">تقارير اليوم</div>
+                  <span class="stat-count" id="todayReportsCount">0</span>
+                </div>
+                
+                <!-- العناصر التفصيلية ستتم إضافتها ديناميكياً -->
+                
+                <div class="stat-item danger" id="statMissing">
+                  <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  <div class="stat-label">ناقصة</div>
+                  <span class="stat-count" id="missingReportsCount">0</span>
+                </div>
+              </div>
+              
+              <div class="text-center mt-3">
+                <small class="text-light opacity-75">
+                  <i class="fas fa-sync-alt me-1"></i>
+                  يتم تحديث الإحصائيات تلقائياً كل 5 دقائق
+                </small>
+                <br />
+                <small class="text-light opacity-50">
+                  <i class="fas fa-calendar me-1"></i>
+                  تاريخ اليوم: <span id="statsCurrentDate"></span>
+                </small>
+                <div class="mt-2">
+                  <button type="button" class="btn btn-sm btn-outline-light" onclick="loadStationStatistics()">
+                    <i class="fas fa-redo me-1"></i>تحديث الآن
+                  </button>
+                </div>
+              </div>
+            </div>
+                  <br />
+                  <small class="text-light opacity-50">
+                    <i class="fas fa-calendar me-1"></i>
+                    تاريخ اليوم الميلادي: <span id="statsCurrentDate"></span>
+                  </small>
+                </div>
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="card-field">
+                  <label class="form-label"
+                    ><i class="fas fa-calendar"></i>تاريخ اليوم</label
+                  >
+                  
+              </div>
+              <div class="col-md-4">
+                <div class="card-field">
+                  <label for="reportDate" class="form-label"
+                    ><i class="fas fa-calendar-alt"></i>تاريخ التقرير</label
+                  >
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="reportDate"
+                    required
+                  />
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card-field">
+                  <label class="form-label"
+                    ><i class="fas fa-database"></i>حالة الاتصال</label
+                  >
+                  <div
+                    class="alert alert-light border text-center"
+                    id="connectionStatus"
+                  >
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    جاري التحقق من الاتصال...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-form">
+            <form id="agriculturalReportForm">
+              <!-- درجات الحرارة -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-thermometer-half"></i>درجات الحرارة
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="avgAirTemp" class="form-label"
+                        ><i class="fas fa-temperature-high"></i>معدل درجة
+                        الحرارة الهواء (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="avgAirTemp"
+                            placeholder="+25.5 أو -05.3"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d (مثال: +25.5 أو -5.3 أو 25.5)"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="avgAirTempError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة (مثال: +25.5 أو
+                        -05.3)
+                      </div>
+                      <div class="success-message" id="avgAirTempSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="maxAirTemp" class="form-label"
+                        ><i class="fas fa-temperature-high"></i>القيمة العظمى
+                        لدرجة حرارة الهواء (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="maxAirTemp"
+                            placeholder="+32.1"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="maxAirTempError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="maxAirTempSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="minAirTemp" class="form-label"
+                        ><i class="fas fa-temperature-low"></i>القيمة الصغرى
+                        لدرجة حرارة الهواء (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="minAirTemp"
+                            placeholder="+18.3"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="minAirTempError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="minAirTempSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="minTemp2m" class="form-label"
+                        ><i class="fas fa-temperature-low"></i>القيمة الصغرى على
+                        ارتفاع 2م (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="minTemp2m"
+                            placeholder="+17.8"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="minTemp2mError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="minTemp2mSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="maxSoilSurfaceTemp" class="form-label"
+                        ><i class="fas fa-thermometer-full"></i>القيمة العظمى
+                        لدرجة حرارة سطح التربة (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="maxSoilSurfaceTemp"
+                            placeholder="+45.2"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="maxSoilSurfaceTempError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div
+                        class="success-message"
+                        id="maxSoilSurfaceTempSuccess"
+                      >
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="minSoilSurfaceTemp" class="form-label"
+                        ><i class="fas fa-thermometer-empty"></i>القيمة الصغرى
+                        لدرجة حرارة سطح التربة (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="minSoilSurfaceTemp"
+                            placeholder="+15.6"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="minSoilSurfaceTempError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div
+                        class="success-message"
+                        id="minSoilSurfaceTempSuccess"
+                      >
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الرطوبة والحسابات -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-tint"></i>الرطوبة والحسابات
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="avgHumidity" class="form-label"
+                        ><i class="fas fa-humidity"></i>معدل الرطوبة النسبية
+                        (%)</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="avgHumidity"
+                          placeholder="075 أو 085 أو 100"
+                          maxlength="3"
+                          pattern="^\d{3}$"
+                          inputmode="numeric"
+                          title="يجب إدخال 3 أرقام (مثال: 075 أو 085 أو 100)"
+                        />
+                      </div>
+                      <div class="error-message" id="avgHumidityError">
+                        يجب أن تكون القيمة بين 000 و 100
+                      </div>
+                      <div class="success-message" id="avgHumiditySuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="minHumidity" class="form-label"
+                        ><i class="fas fa-humidity"></i>القيمة الصغرى الرطوبة
+                        النسبية (%)</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="minHumidity"
+                          placeholder="045"
+                          maxlength="3"
+                          pattern="^\d{3}$"
+                          inputmode="numeric"
+                          title="يجب إدخال 3 أرقام"
+                        />
+                      </div>
+                      <div class="error-message" id="minHumidityError">
+                        يجب أن تكون القيمة بين 000 و 100
+                      </div>
+                      <div class="success-message" id="minHumiditySuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="avgEsE" class="form-label"
+                        ><i class="fas fa-wind"></i>معدل es-e</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="avgEsE"
+                          placeholder="12.3"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بصيغة: رقمين صحيحين ورقم عشري واحد (مثال: 12.3)"
+                        />
+                      </div>
+                      <div class="error-message" id="avgEsEError">
+                        يجب أن تكون القيمة بصيغة dd.d
+                      </div>
+                      <div class="success-message" id="avgEsESuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="minEsE" class="form-label"
+                        ><i class="fas fa-wind"></i>القيمة الصغرى لes-e</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="minEsE"
+                          placeholder="08.7"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بصيغة: رقمين صحيحين ورقم عشري واحد"
+                        />
+                      </div>
+                      <div class="error-message" id="minEsEError">
+                        يجب أن تكون القيمة بصيغة dd.d
+                      </div>
+                      <div class="success-message" id="minEsESuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- السطوع الشمسي والغيوم -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-sun"></i>السطوع الشمسي والغيوم
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="sunshineHours" class="form-label"
+                        ><i class="fas fa-sun"></i>مدة السطوع الشمس -
+                        ساعة</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="sunshineHours"
+                          placeholder="09.5"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بين 00.0 و 12.0"
+                        />
+                      </div>
+                      <div class="error-message" id="sunshineHoursError">
+                        يجب أن تكون القيمة بين 00.0 و 12.0
+                      </div>
+                      <div class="success-message" id="sunshineHoursSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="totalCloudCover" class="form-label"
+                        ><i class="fas fa-cloud"></i>معدل التغطية الكلية</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="totalCloudCover"
+                          placeholder="03"
+                          maxlength="2"
+                          pattern="^\d{1,2}$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بين 00 و 08"
+                        />
+                      </div>
+                      <div class="error-message" id="totalCloudCoverError">
+                        يجب أن تكون القيمة بين 00 و 08
+                      </div>
+                      <div class="success-message" id="totalCloudCoverSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="lowCloudCover" class="form-label"
+                        ><i class="fas fa-cloud"></i>معدل تغطية الغيوم
+                        المنخفضة</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="lowCloudCover"
+                          placeholder="02"
+                          maxlength="2"
+                          pattern="^\d{1,2}$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بين 00 و 08"
+                        />
+                      </div>
+                      <div class="error-message" id="lowCloudCoverError">
+                        يجب أن تكون القيمة بين 00 و 08
+                      </div>
+                      <div class="success-message" id="lowCloudCoverSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الهطول والرياح -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-cloud-rain"></i>الهطول والرياح
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="precipitation" class="form-label"
+                        ><i class="fas fa-tint"></i>الهطول (مم)</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="precipitation"
+                          placeholder="000.0"
+                          maxlength="5"
+                          pattern="^\d{1,3}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بصيغة: 3 أرقام صحيحة ورقم عشري واحد (مثال: 000.0 أو 125.5)"
+                        />
+                      </div>
+                      <div class="error-message" id="precipitationError">
+                        يجب أن تكون القيمة بصيغة ddd.d
+                      </div>
+                      <div class="success-message" id="precipitationSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="maxWindSpeed" class="form-label"
+                        ><i class="fas fa-wind"></i>أكبر سرعة رياح من
+                        المخطط</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="maxWindSpeed"
+                          placeholder="15"
+                          maxlength="2"
+                          pattern="^\d{1,2}$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بين 00 و 36"
+                        />
+                      </div>
+                      <div class="error-message" id="maxWindSpeedError">
+                        يجب أن تكون القيمة بين 00 و 36
+                      </div>
+                      <div class="success-message" id="maxWindSpeedSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="classAEvaporation" class="form-label"
+                        ><i class="fas fa-water"></i>التبخر من CLASS-A</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="classAEvaporation"
+                          placeholder="08.2"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بصيغة: رقمين صحيحين ورقم عشري واحد"
+                        />
+                      </div>
+                      <div class="error-message" id="classAEvaporationError">
+                        يجب أن تكون القيمة بصيغة dd.d
+                      </div>
+                      <div
+                        class="success-message"
+                        id="classAEvaporationSuccess"
+                      >
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="avgWindSpeed2m" class="form-label"
+                        ><i class="fas fa-wind"></i>معدل سرعة الرياح على ارتفاع
+                        2 م</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="avgWindSpeed2m"
+                          placeholder="05.7"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بين 00.0 و 36.0"
+                        />
+                      </div>
+                      <div class="error-message" id="avgWindSpeed2mError">
+                        يجب أن تكون القيمة بين 00.0 و 36.0
+                      </div>
+                      <div class="success-message" id="avgWindSpeed2mSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- درجات حرارة التربة -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-mountain"></i>درجات حرارة التربة
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgSoilTemp5cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>معدل حرارة تربة
+                        على عمق 5 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="avgSoilTemp5cm"
+                            placeholder="+24.3"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="avgSoilTemp5cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="avgSoilTemp5cmSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgSoilTemp10cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>معدل حرارة تربة
+                        على عمق 10 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="avgSoilTemp10cm"
+                            placeholder="+23.1"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="avgSoilTemp10cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="avgSoilTemp10cmSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgSoilTemp20cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>معدل درجة حرارة
+                        تربة على عمق 20 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="avgSoilTemp20cm"
+                            placeholder="+21.8"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="avgSoilTemp20cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="avgSoilTemp20cmSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgSoilTemp50cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>معدل درجة حرارة
+                        تربة على عمق 50 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="avgSoilTemp50cm"
+                            placeholder="+20.5"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="avgSoilTemp50cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="avgSoilTemp50cmSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="fieldSoilTemp5cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>درجة حرارة تربة
+                        الحقل على عمق 5 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="fieldSoilTemp5cm"
+                            placeholder="+25.1"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="fieldSoilTemp5cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div class="success-message" id="fieldSoilTemp5cmSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="fieldSoilTemp10cm" class="form-label"
+                        ><i class="fas fa-thermometer-half"></i>حرارة تربة الحقل
+                        على عمق 10 سم (سْ)</label
+                      >
+                      <div class="input-with-sign">
+                        <div class="sign-buttons">
+                          <button type="button" class="sign-btn" data-sign="-">
+                            -
+                          </button>
+                          <button type="button" class="sign-btn" data-sign="+">
+                            +
+                          </button>
+                        </div>
+                        <div class="input-with-validation" style="flex: 1">
+                          <input
+                            type="text"
+                            class="form-control input-mask temperature-input"
+                            id="fieldSoilTemp10cm"
+                            placeholder="+23.9"
+                            maxlength="6"
+                            pattern="^[+-]?\d{1,2}(\.\d)?$"
+                            inputmode="numeric"
+                            title="درجة الحرارة: ±dd.d أو ±d.d"
+                          />
+                        </div>
+                      </div>
+                      <div class="error-message" id="fieldSoilTemp10cmError">
+                        يجب أن تكون القيمة بين -20.0 و 60.0 درجة
+                      </div>
+                      <div
+                        class="success-message"
+                        id="fieldSoilTemp10cmSuccess"
+                      >
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="logEvaporation" class="form-label"
+                        ><i class="fas fa-water"></i>التبخر من السجل</label
+                      >
+                      <div class="input-with-validation">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="logEvaporation"
+                          placeholder="07.5"
+                          maxlength="4"
+                          pattern="^\d{1,2}\.\d$"
+                          inputmode="numeric"
+                          title="يجب إدخال قيمة بصيغة: رقمين صحيحين ورقم عشري واحد"
+                        />
+                      </div>
+                      <div class="error-message" id="logEvaporationError">
+                        يجب أن تكون القيمة بصيغة dd.d
+                      </div>
+                      <div class="success-message" id="logEvaporationSuccess">
+                        القيمة صحيحة
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الظواهر الجوية -->
+              <div class="form-section">
+                <h4 class="section-title">
+                  <i class="fas fa-cloud-sun-rain"></i>الظواهر الجوية
+                </h4>
+                <div class="row mb-3">
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="dew" class="form-label"
+                        ><i class="fas fa-tint"></i>ندى</label
+                      >
+                      <select class="form-select" id="dew" required>
+                        <option value="" selected disabled>اختر</option>
+                        <option value="0">لا</option>
+                        <option value="1">نعم</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="fog" class="form-label"
+                        ><i class="fas fa-smog"></i>ضباب</label
+                      >
+                      <select class="form-select" id="fog" required>
+                        <option value="" selected disabled>اختر</option>
+                        <option value="0">لا</option>
+                        <option value="1">نعم</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="hail" class="form-label"
+                        ><i class="fas fa-cloud-meatball"></i>برد</label
+                      >
+                      <select class="form-select" id="hail" required>
+                        <option value="" selected disabled>اختر</option>
+                        <option value="0">لا</option>
+                        <option value="1">نعم</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="sandstorm" class="form-label"
+                        ><i class="fas fa-wind"></i>عواصف رملية أو ترابية</label
+                      >
+                      <select class="form-select" id="sandstorm" required>
+                        <option value="" selected disabled>اختر</option>
+                        <option value="0">لا</option>
+                        <option value="1">نعم</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الملاحظات والمسؤولية -->
+              <div class="form-section">
+                <div class="row mb-3">
+                  <div class="col-md-12">
+                    <div class="card-field">
+                      <label for="observerNotes" class="form-label"
+                        ><i class="fas fa-sticky-note"></i>ملاحظات الراصد</label
+                      >
+                      <textarea
+                        class="form-control"
+                        id="observerNotes"
+                        rows="3"
+                        placeholder="أدخل أي ملاحظات إضافية حول الظروف الجوية أو ملاحظات الرصد..."
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="responsibility-check">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="responsibilityAgreement"
+                      required
+                    />
+                    <label
+                      class="form-check-label"
+                      for="responsibilityAgreement"
+                    >
+                      <i class="fas fa-shield-alt me-1"></i>
+                      أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية
+                      الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في
+                      البيانات سيكون تحت مسؤوليتي الشخصية.
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- أزرار الإرسال -->
+              <div class="text-center mt-4">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-custom"
+                  id="saveDraftBtn"
+                >
+                  <i class="fas fa-save me-1"></i>حفظ مسودة
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-warning btn-custom"
+                  id="testDataBtn"
+                >
+                  <i class="fas fa-vial me-1"></i>إدخال بيانات تجريبية
+                </button>
+                <button type="submit" class="btn btn-primary btn-custom">
+                  <i class="fas fa-paper-plane me-1"></i>إرسال التقرير
+                </button>
+                <!-- زر المشاركة عبر الواتساب -->
+                <button
+                  type="button"
+                  class="btn btn-success btn-custom"
+                  id="whatsappShareBtn"
+                  style="background-color: #25d366; border-color: #25d366"
+                >
+                  <i class="fab fa-whatsapp me-1"></i>مشاركة عبر واتساب
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <script src="config.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="agricultural_reports.js"></script>
+    <script src="agricultural_send.js"></script>
+    <script src="agricultural_validation_fix.js"></script>
+    <script src="whatsapp-share.js"></script>
+    <script src="agricultural_stats.js"></script>    
+    <script src="traffic-monitor.js"></script>  <!-- المراقب -->
+        <script src="js/protect.js"></script>
+
+    <!-- تهيئة الاتصال -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // تحديث حالة الاتصال بعد تحميل النظام
+        setTimeout(() => {
+          if (window.updateAllDisplays) {
+            window.updateAllDisplays();
+          }
+        }, 3000);
+        
+        // تهيئة نظام الإحصائيات
+        setTimeout(() => {
+          if (window.initStatsSystem) {
+            window.initStatsSystem();
+          }
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>

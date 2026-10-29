@@ -1,0 +1,1073 @@
+/* daily_styles.css - التنسيقات الرئيسية مع تصحيح اتجاه الإشارة */
+
+/* === تنسيقات عامة === */
+body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    transition: all 0.3s ease;
+}
+
+/* === تنسيقات الهيكل الرئيسي === */
+.main-content-with-sidebar {
+    margin-right: 280px;
+    padding: 20px;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 992px) {
+    .main-content-with-sidebar {
+        margin-right: 0;
+        padding: 15px;
+    }
+}
+
+.main-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    margin-bottom: 30px;
+}
+
+.main-header {
+    background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    color: white;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.main-header h2 {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.main-header p {
+    opacity: 0.9;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+/* === تنسيقات الأقسام === */
+.form-section {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.8rem;
+    margin-bottom: 1.8rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eef2f7;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+    color: #2c3e50;
+    border-bottom: 3px solid #3498db;
+    padding-bottom: 0.7rem;
+    margin-bottom: 1.8rem;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+}
+
+.section-title i {
+    color: #3498db;
+    font-size: 1.2rem;
+}
+
+/* === تنسيقات البطاقات والحقول === */
+.card-field {
+    margin-bottom: 1.8rem;
+    position: relative;
+}
+
+.card-field label {
+    margin-bottom: 0.6rem;
+    display: block;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    border: 2px solid #e0e6ed;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.3rem rgba(52, 152, 219, 0.15);
+    outline: none;
+}
+
+.form-control:hover {
+    border-color: #b8c2cc;
+}
+
+/* === تنسيقات خاصة بدرجات الحرارة (الإشارة على اليسار) === */
+.sign-input-group {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.sign-input-group .sign-btn {
+    order: 1;
+    min-width: 50px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    border: 2px solid;
+    flex-shrink: 0;
+}
+
+.sign-input-group .input-with-icon {
+    order: 2;
+    flex: 1;
+    position: relative;
+}
+
+/* تنسيق حقل درجة الحرارة */
+.temperature-input {
+    direction: ltr !important;
+    text-align: left !important;
+    unicode-bidi: embed !important;
+    font-family: 'Courier New', monospace !important;
+    font-weight: bold !important;
+    font-size: 1.1rem !important;
+    letter-spacing: 1px !important;
+    padding-left: 12px !important;
+}
+
+/* ضمان ظهور الإشارة على اليسار */
+.temperature-input::-webkit-input-placeholder {
+    direction: ltr;
+    text-align: left;
+}
+
+.temperature-input:-moz-placeholder {
+    direction: ltr;
+    text-align: left;
+}
+
+.temperature-input::-moz-placeholder {
+    direction: ltr;
+    text-align: left;
+}
+
+.temperature-input:-ms-input-placeholder {
+    direction: ltr;
+    text-align: left;
+}
+
+/* === أزرار الإشارة === */
+.sign-btn.btn-outline-danger {
+    color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.08);
+}
+
+.sign-btn.btn-outline-danger:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
+}
+
+.sign-btn.btn-outline-secondary {
+    color: #6c757d !important;
+    border-color: #6c757d !important;
+    background-color: rgba(108, 117, 125, 0.08);
+}
+
+.sign-btn.btn-outline-secondary:hover {
+    background-color: #6c757d !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(108, 117, 125, 0.25);
+}
+
+/* === تنسيقات التحقق === */
+.input-with-icon {
+    position: relative;
+}
+
+.validation-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-size: 0.9rem;
+    z-index: 2;
+    display: none;
+}
+
+.has-success .validation-icon {
+    display: block;
+    animation: iconSuccess 0.5s ease-in-out;
+}
+
+.has-error .validation-icon {
+    color: #dc3545;
+    display: block;
+    animation: iconError 0.5s ease-in-out;
+}
+
+@keyframes iconSuccess {
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.3); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+@keyframes iconError {
+    0% { transform: translateY(-50%) rotate(0deg); }
+    25% { transform: translateY(-50%) rotate(-15deg); }
+    75% { transform: translateY(-50%) rotate(15deg); }
+    100% { transform: translateY(-50%) rotate(0deg); }
+}
+
+/* === رسائل الأخطاء === */
+.error-message {
+    font-size: 0.85rem;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: rgba(220, 53, 69, 0.07);
+    border-right: 3px solid #dc3545;
+    color: #721c24;
+    display: none;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.has-error .error-message {
+    display: block;
+}
+
+/* === أزرار "لا تتوفر معلومات" === */
+.btn-no-data {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border-width: 1.5px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-no-data.btn-outline-info {
+    color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+    background-color: rgba(23, 162, 184, 0.05);
+}
+
+.btn-no-data.btn-outline-info:hover {
+    background-color: #17a2b8 !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.2);
+}
+
+.btn-no-data.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border-color: transparent !important;
+    color: white !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+.btn-no-data.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* === تأثير التنسيق التلقائي === */
+.formatted-highlight {
+    animation: highlightField 0.5s ease-in-out;
+    border-color: #3498db !important;
+    background-color: rgba(52, 152, 219, 0.03) !important;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.08) !important;
+}
+
+@keyframes highlightField {
+    0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(52, 152, 219, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
+}
+
+/* === تلميحات نجاح التنسيق === */
+.format-success-tip {
+    position: absolute;
+    top: -35px;
+    right: 0;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 100;
+    animation: formatPulse 2s ease-in-out;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+@keyframes formatPulse {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-10px) scale(0.9);
+    }
+    10% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+    }
+    90% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1);
+    }
+    100% { 
+        opacity: 0; 
+        transform: translateY(-10px) scale(0.9);
+    }
+}
+
+/* === الحقول المعطلة === */
+.form-control:disabled {
+    background-color: #f8fafc !important;
+    color: #94a3b8 !important;
+    cursor: not-allowed !important;
+    border-color: #e2e8f0 !important;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+/* === أزرار التحكم === */
+.btn-custom {
+    padding: 0.7rem 1.8rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin: 0 8px 10px;
+    min-width: 150px;
+    font-size: 1rem;
+    border: none;
+}
+
+.btn-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-custom:active {
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #23923d 0%, #1ba487 100%);
+    transform: translateY(-3px);
+}
+
+/* === تنسيقات الجوال === */
+.mobile-header {
+    background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    padding: 18px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: none;
+}
+
+.mobile-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mobile-header h5 {
+    color: white;
+    font-weight: 700;
+    margin: 0;
+}
+
+.mobile-menu-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* === تنسيقات القائمة الجانبية للجوال === */
+.mobile-sidebar {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(180deg, rgba(44, 62, 80, 0.98) 0%, rgba(52, 73, 94, 0.98) 100%);
+    backdrop-filter: blur(10px);
+    z-index: 1100;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-sidebar.active {
+    right: 0;
+}
+
+.mobile-sidebar-header {
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-sidebar-body {
+    padding: 20px;
+}
+
+.mobile-sidebar-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-sidebar-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: none;
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.active {
+    display: block;
+    opacity: 1;
+}
+
+/* ===== تحسينات خاصة للجوال - زر الإشارة المصغر ===== */
+@media (max-width: 992px) {
+    .mobile-header {
+        display: block;
+    }
+    
+    .main-content-with-sidebar {
+        margin-top: 80px;
+    }
+    
+    /* تحسين أزرار درجة الحرارة للجوال - تصغير إلى الربع */
+    .sign-input-group {
+        flex-direction: row-reverse !important;
+        align-items: center;
+        gap: 5px !important;
+    }
+    
+    .sign-btn {
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
+        height: 38px !important;
+        padding: 0.25rem !important;
+        font-size: 0.8rem !important;
+        order: 1 !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .temperature-input {
+        width: calc(100% - 45px) !important;
+        flex: 1 !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.95rem !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        text-align: left !important;
+    }
+    
+    .input-with-icon {
+        order: 2 !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+    
+    .btn-custom {
+        min-width: 130px;
+        padding: 0.6rem 1.2rem;
+        margin: 5px;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+    }
+    
+    .form-section {
+        padding: 1.2rem;
+    }
+}
+
+/* شاشات صغيرة جداً (أقل من 400px) */
+@media (max-width: 400px) {
+    .sign-btn {
+        width: 35px !important;
+        min-width: 35px !important;
+        max-width: 35px !important;
+        height: 35px !important;
+        font-size: 0.75rem !important;
+        padding: 0.2rem !important;
+    }
+    
+    .temperature-input {
+        width: calc(100% - 40px) !important;
+        font-size: 0.9rem !important;
+        padding: 0.4rem 0.6rem !important;
+    }
+}
+
+/* تحسين التنسيق للأعمدة على الجوال */
+@media (max-width: 768px) {
+    .col-md-6 .sign-input-group {
+        gap: 3px !important;
+    }
+    
+    .col-md-6 .sign-btn {
+        width: 38px !important;
+        height: 36px !important;
+        font-size: 0.7rem !important;
+        padding: 0.2rem !important;
+    }
+    
+    .col-md-6 .temperature-input {
+        padding: 0.4rem 0.6rem !important;
+        font-size: 0.88rem !important;
+        width: calc(100% - 41px) !important;
+    }
+}
+
+/* تلميح للمستخدم على الموبايل */
+.temperature-field-hint {
+    display: none;
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 4px;
+    text-align: center;
+}
+
+@media (max-width: 992px) {
+    .temperature-field-hint {
+        display: block;
+    }
+    
+    .card-field:focus-within .temperature-field-hint {
+        color: #3498db;
+        font-weight: 500;
+    }
+}
+
+/* === تنسيقات القائمة الجانبية الرئيسية === */
+.sidebar-dashboard {
+    background: linear-gradient(180deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+    min-height: 100vh;
+    box-shadow: 3px 0 15px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 280px;
+    z-index: 1000;
+    overflow-y: auto;
+    backdrop-filter: blur(5px);
+    display: block; /* تأكد من الظهور */
+}
+
+.sidebar-sticky {
+    position: sticky;
+    top: 20px;
+    height: calc(100vh - 60px);
+    padding-top: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* تنسيقات الروابط في القائمة الجانبية الرئيسية */
+.sidebar-dashboard .nav-link {
+    color: #ecf0f1;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.sidebar-dashboard .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    transform: translateX(-5px);
+}
+
+.sidebar-dashboard .nav-link.active {
+    background-color: #3498db;
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* تنسيقات الروابط في القائمة الجانبية للجوال */
+#mobileSidebarMenu .nav-link {
+    color: #ecf0f1;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+#mobileSidebarMenu .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    transform: translateX(-5px);
+}
+
+#mobileSidebarMenu .nav-link.active {
+    background-color: #3498db;
+    color: white;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+/* === تنسيقات التحميل === */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(44, 62, 80, 0.95) 0%, rgba(52, 73, 94, 0.95) 100%);
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    font-family: 'Cairo', sans-serif;
+    color: white;
+    display: none;
+}
+
+.spinner-border {
+    width: 4rem;
+    height: 4rem;
+    color: #3498db;
+}
+
+/* === تنسيقات التنبيهات === */
+.alert {
+    border-radius: 10px;
+    padding: 15px;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #e8f4f8 100%);
+    border-left: 4px solid #17a2b8;
+    color: #0c5460;
+}
+
+/* === تنسيقات النماذج الأخرى === */
+.checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.checkbox-item {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.checkbox-item:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.checkbox-item input[type="checkbox"] {
+    margin-left: 10px;
+    transform: scale(1.2);
+}
+
+.checkbox-item label {
+    margin-bottom: 0;
+    cursor: pointer;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+/* === تنسيق شريط التمرير === */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
+
+/* تحسين شريط التمرير للقائمة الجانبية للجوال */
+.mobile-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.mobile-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mobile-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+/* === تحسينات الوصول === */
+:focus {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* === تنسيقات الطباعة === */
+@media print {
+    .sidebar-dashboard,
+    .mobile-header,
+    .mobile-sidebar,
+    .mobile-overlay,
+    .btn-custom {
+        display: none !important;
+    }
+    
+    .main-content-with-sidebar {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    .main-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+
+/* === زر الواتساب === */
+.whatsapp-btn {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+    border: none !important;
+    color: white !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.whatsapp-btn:hover {
+    background: linear-gradient(135deg, #1DA851 0%, #0E6E5E 100%) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(37, 211, 102, 0.3) !important;
+}
+
+.whatsapp-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+}
+
+.whatsapp-btn:hover::before {
+    left: 100%;
+}
+
+.whatsapp-btn i {
+    font-size: 1.2rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* زر الواتساب في حالة التحميل */
+.whatsapp-btn.loading {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.whatsapp-btn.loading i {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* رسالة نسخ الواتساب */
+.whatsapp-message-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 9999;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.whatsapp-message-header {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    margin: -20px -20px 20px -20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.whatsapp-message-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    font-family: 'Courier New', monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    direction: ltr;
+    text-align: left;
+}
+
+.whatsapp-message-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+.whatsapp-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+    backdrop-filter: blur(5px);
+}
+
+/* نسخة بديلة للزر على الشاشات الصغيرة */
+@media (max-width: 768px) {
+    .whatsapp-btn {
+        min-width: 140px;
+        padding: 0.6rem 1rem;
+    }
+    
+    .whatsapp-btn i {
+        font-size: 1.1rem;
+    }
+}
+
+/* تأثيرات خاصة للزر */
+.btn-custom.whatsapp-btn {
+    animation: whatsappGlow 3s infinite;
+}
+
+@keyframes whatsappGlow {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+    }
+}
+
+/* === منع التمرير عند فتح القائمة === */
+body.sidebar-open {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}
+
+/* === مخفي على الجوال === */
+@media (max-width: 992px) {
+    .sidebar-dashboard {
+        display: none !important;
+    }
+    
+    .mobile-sidebar {
+        display: block !important;
+    }
+}
+
+/* === ظاهر على الشاشات الكبيرة === */
+@media (min-width: 993px) {
+    .mobile-header,
+    .mobile-sidebar,
+    .mobile-overlay {
+        display: none !important;
+    }
+    
+    .sidebar-dashboard {
+        display: block !important;
+    }
+}
+
+/* === تحسينات إضافية للزر المصغر === */
+@media (max-width: 992px) {
+    .sign-input-group.compact {
+        gap: 3px !important;
+    }
+    
+    .sign-btn.compact {
+        width: 35px !important;
+        min-width: 35px !important;
+        max-width: 35px !important;
+        height: 35px !important;
+        padding: 0.15rem !important;
+        font-size: 0.7rem !important;
+    }
+    
+    .temperature-input.compact {
+        width: calc(100% - 38px) !important;
+        font-size: 0.88rem !important;
+        padding: 0.35rem 0.5rem !important;
+    }
+}
+
+/* تحسين التباعد على الشاشات الصغيرة جداً */
+@media (max-width: 360px) {
+    .sign-btn {
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        height: 32px !important;
+        font-size: 0.65rem !important;
+    }
+    
+    .temperature-input {
+        width: calc(100% - 35px) !important;
+        font-size: 0.85rem !important;
+        padding: 0.3rem 0.4rem !important;
+    }
+}

@@ -1,0 +1,2776 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات البيانات الجوية - أعطال أجهزة الرصد</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #198754;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #0dcaf0;
+        --light-bg: #f8f9fa;
+        --dark-bg: #212529;
+        --border-color: #dee2e6;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        flex-direction: column;
+      }
+
+      .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .dashboard-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          #0a58ca 100%
+        );
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card {
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        border: none;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+      }
+
+      .card-pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffc107 100%);
+        color: #664d03;
+      }
+
+      .card-in-progress {
+        background: linear-gradient(135deg, #cff4fc 0%, #0dcaf0 100%);
+        color: #055160;
+      }
+
+      .card-resolved {
+        background: linear-gradient(135deg, #d1e7dd 0%, #198754 100%);
+        color: #0a3622;
+      }
+
+      .card-urgent {
+        background: linear-gradient(135deg, #f8d7da 0%, #dc3545 100%);
+        color: #58151c;
+      }
+
+      .card-today {
+        background: linear-gradient(135deg, #e7d7f8 0%, #8b5cf6 100%);
+        color: #4c1d95;
+      }
+
+      .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .badge-pending {
+        background-color: #ffc107;
+        color: #000;
+      }
+
+      .badge-review {
+        background-color: #0dcaf0;
+        color: #000;
+      }
+
+      .badge-in-progress {
+        background-color: #6c757d;
+        color: #fff;
+      }
+
+      .badge-resolved {
+        background-color: #198754;
+        color: #fff;
+      }
+
+      .badge-cancelled {
+        background-color: #dc3545;
+        color: #fff;
+      }
+
+      .severity-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+
+      .badge-low {
+        background-color: #198754;
+        color: #fff;
+      }
+
+      .badge-medium {
+        background-color: #ffc107;
+        color: #000;
+      }
+
+      .badge-high {
+        background-color: #fd7e14;
+        color: #fff;
+      }
+
+      .badge-critical {
+        background-color: #dc3545;
+        color: #fff;
+      }
+
+      .urgency-badge {
+        background-color: #dc3545;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-top: 20px;
+      }
+
+      .dataTables_wrapper {
+        margin-top: 20px;
+      }
+
+      .filter-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      .action-buttons button {
+        margin: 0 5px;
+        font-size: 0.85rem;
+      }
+
+      .image-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .image-thumbnail {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: transform 0.3s;
+      }
+
+      .image-thumbnail:hover {
+        transform: scale(1.1);
+      }
+
+      .modal-image {
+        max-width: 100%;
+        max-height: 80vh;
+        margin: 0 auto;
+        display: block;
+      }
+
+      .export-btn {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          #0a58ca 100%
+        );
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: all 0.3s;
+      }
+
+      .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+      }
+
+      .reload-btn {
+        background: linear-gradient(135deg, #198754 0%, #0d6c3e 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: all 0.3s;
+      }
+
+      .reload-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
+      }
+
+      .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .chart-title {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: var(--primary-color);
+      }
+
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 400px;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      .page-footer {
+        background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+        color: white;
+        padding: 20px;
+        margin-top: 40px;
+        border-radius: 10px 10px 0 0;
+        text-align: center;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .footer-content .copyright {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      .footer-content .center-text {
+        font-weight: 600;
+      }
+
+      .footer-content .programmer {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+
+      /* تصليحات للجدول في الشاشات الصغيرة */
+      @media (max-width: 768px) {
+        .stat-card {
+          margin-bottom: 10px;
+        }
+
+        .stat-number {
+          font-size: 2rem;
+        }
+
+        .table-container {
+          padding: 10px;
+          overflow-x: auto;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+          text-align: right;
+        }
+
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+
+      .dt-button {
+        background: linear-gradient(
+          135deg,
+          #6c757d 0%,
+          #495057 100%
+        ) !important;
+        color: white !important;
+        border: none !important;
+        margin: 0 5px !important;
+        border-radius: 5px !important;
+        padding: 5px 15px !important;
+      }
+
+      .dt-button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      .search-box {
+        position: relative;
+        margin-bottom: 20px;
+      }
+
+      .search-box input {
+        padding-right: 45px;
+        border-radius: 25px;
+      }
+
+      .search-box i {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+      }
+
+      .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .quick-action-btn {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+      }
+
+      .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .quick-action-btn.primary {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      }
+
+      .quick-action-btn.success {
+        background: linear-gradient(135deg, #198754 0%, #0d6c3e 100%);
+      }
+
+      .quick-action-btn.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      }
+
+      .quick-action-btn.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+      }
+
+      .station-info {
+        background: linear-gradient(135deg, #e7f5ff 0%, #d0ebff 100%);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-right: 5px solid #0d6efd;
+      }
+
+      .station-info h5 {
+        color: #0d6efd;
+        margin-bottom: 10px;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .progress-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      .progress-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+      }
+
+      .progress-bar {
+        height: 10px;
+        border-radius: 5px;
+        background: #e9ecef;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: 5px;
+        transition: width 1s ease-in-out;
+      }
+
+      .progress-fill.pending {
+        background: linear-gradient(90deg, #ffc107, #ffca28);
+      }
+
+      .progress-fill.resolved {
+        background: linear-gradient(90deg, #198754, #20c997);
+      }
+
+      .progress-fill.urgent {
+        background: linear-gradient(90deg, #dc3545, #ff6b6b);
+      }
+
+      .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        font-size: 0.85rem;
+        color: #6c757d;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- شاشة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-border text-primary loading-spinner" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-3">جاري تحميل البيانات...</p>
+    </div>
+
+    <div class="container-fluid py-4" id="mainContent" style="display: none">
+      <!-- الرأس -->
+      <div class="dashboard-header">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h1>
+              <i class="fas fa-tools me-3"></i>لوحة تحكم أعطال أجهزة الرصد
+            </h1>
+            <p class="mb-0">مراقبة وإدارة جميع أعطال أجهزة الرصد الجوي</p>
+          </div>
+          <div class="col-md-4 text-left">
+            <div class="d-flex justify-content-start gap-2">
+              <button class="btn reload-btn" onclick="loadData()">
+                <i class="fas fa-sync-alt me-2"></i>تحديث البيانات
+              </button>
+              <button class="btn btn-light" onclick="location.reload()">
+                <i class="fas fa-redo me-2"></i>إعادة تحميل
+              </button>
+              <div class="dropdown">
+                <button class="btn btn-info dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-cogs me-2"></i>الإجراءات
+                </button>
+                <ul class="dropdown-menu">
+                  <li>
+                    <a class="dropdown-item" href="../../../pages/fix/fix-tel.html" target="_blank">
+                      <i class="fas fa-tower-cell me-2"></i>مشاكل الاتصالات
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="../../../pages/fix/fix.html" target="_blank">
+                      <i class="fas fa-plus-circle me-2"></i>إضافة عطل جديد
+                    </a>
+                  </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="showSystemStats()">
+                      <i class="fas fa-chart-line me-2"></i>إحصائيات النظام
+                    </a>
+                  </li>
+                  <li>
+                    <a class="dropdown-item" href="javascript:void(0)" onclick="showActivityLog()">
+                      <i class="fas fa-history me-2"></i>سجل النشاطات
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- معلومات المحطة -->
+      <div class="station-info" id="stationInfo" style="display: none;">
+        <h5><i class="fas fa-info-circle me-2"></i>معلومات المحطة</h5>
+        <div class="row">
+          <div class="col-md-3">
+            <strong>اسم المستخدم:</strong> <span id="userName">-</span>
+          </div>
+          <div class="col-md-3">
+            <strong>المحطة:</strong> <span id="userStation">-</span>
+          </div>
+          <div class="col-md-3">
+            <strong>الدور:</strong> <span id="userRole">-</span>
+          </div>
+          <div class="col-md-3">
+            <strong>آخر تحديث:</strong> <span id="lastUpdate">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- الإحصائيات -->
+      <div class="row mb-4">
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card card-pending">
+            <div class="stat-icon">
+              <i class="fas fa-exclamation-circle"></i>
+            </div>
+            <div class="stat-number" id="totalPending">0</div>
+            <div class="stat-label">قيد المعالجة</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card card-in-progress">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number" id="totalInProgress">0</div>
+            <div class="stat-label">قيد التنفيذ</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card card-resolved">
+            <div class="stat-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-number" id="totalResolved">0</div>
+            <div class="stat-label">تم الإصلاح</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card card-urgent">
+            <div class="stat-icon">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <div class="stat-number" id="totalUrgent">0</div>
+            <div class="stat-label">عاجلة</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card card-today">
+            <div class="stat-icon">
+              <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="stat-number" id="totalToday">0</div>
+            <div class="stat-label">اليوم</div>
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="stat-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); color: #495057;">
+            <div class="stat-icon">
+              <i class="fas fa-database"></i>
+            </div>
+            <div class="stat-number" id="totalFailures">0</div>
+            <div class="stat-label">إجمالي الأعطال</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تقدم المعالجة -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="progress-card">
+            <div class="progress-title">معدل إنجاز الأعطال</div>
+            <div class="progress-bar">
+              <div class="progress-fill resolved" id="resolutionRate" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+              <span>تم الإصلاح: <strong id="resolvedCount">0</strong></span>
+              <span>النسبة: <strong id="resolutionPercent">0%</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="progress-card">
+            <div class="progress-title">الأعطال العاجلة</div>
+            <div class="progress-bar">
+              <div class="progress-fill urgent" id="urgentRate" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+              <span>عاجلة: <strong id="urgentCount">0</strong></span>
+              <span>النسبة: <strong id="urgentPercent">0%</strong></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="progress-card">
+            <div class="progress-title">الأعطال المعلقة</div>
+            <div class="progress-bar">
+              <div class="progress-fill pending" id="pendingRate" style="width: 0%"></div>
+            </div>
+            <div class="progress-stats">
+              <span>معلقة: <strong id="pendingCount">0</strong></span>
+              <span>النسبة: <strong id="pendingPercent">0%</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- المخططات -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-chart-pie me-2"></i>توزيع الأعطال حسب الحالة
+            </div>
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-chart-bar me-2"></i>الأعطال حسب شدة الخطورة
+            </div>
+            <canvas id="severityChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- الإجراءات السريعة -->
+      <div class="quick-actions">
+        <button class="quick-action-btn primary" onclick="window.open('../../../pages/fix/fix.html', '_blank')">
+          <i class="fas fa-plus-circle me-2"></i>إضافة عطل جديد
+        </button>
+        <button class="quick-action-btn success" onclick="exportToExcel()">
+          <i class="fas fa-file-excel me-2"></i>تصدير إلى Excel
+        </button>
+        <button class="quick-action-btn warning" onclick="exportToPDF()">
+          <i class="fas fa-file-pdf me-2"></i>تصدير إلى PDF
+        </button>
+        <button class="quick-action-btn danger" onclick="showUrgentFailures()">
+          <i class="fas fa-exclamation-triangle me-2"></i>عرض الأعطال العاجلة
+        </button>
+        <button class="quick-action-btn" onclick="showMyStationFailures()">
+          <i class="fas fa-building me-2"></i>أعطال محطتي
+        </button>
+        <button class="quick-action-btn" onclick="showRecentFailures()">
+          <i class="fas fa-history me-2"></i>الأعطال الأخيرة
+        </button>
+      </div>
+
+      <!-- فلترة البيانات -->
+      <div class="filter-section">
+        <div class="row mb-3">
+          <div class="col-md-8">
+            <div class="search-box">
+              <input type="text" class="form-control" id="searchInput" placeholder="ابحث في الأعطال...">
+              <i class="fas fa-search"></i>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary w-50" onclick="clearFilters()">
+                <i class="fas fa-times me-2"></i>مسح الفلاتر
+              </button>
+              <button class="btn btn-primary w-50" onclick="applyFilters()">
+                <i class="fas fa-filter me-2"></i>تطبيق
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-3">
+            <label class="form-label">فلترة حسب الحالة</label>
+            <select class="form-select" id="filterStatus">
+              <option value="">جميع الحالات</option>
+              <option value="pending">قيد المعالجة</option>
+              <option value="review">في انتظار المراجعة</option>
+              <option value="in_progress">قيد التنفيذ</option>
+              <option value="resolved">تم الإصلاح</option>
+              <option value="cancelled">ملغي</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">فلترة حسب الشدة</label>
+            <select class="form-select" id="filterSeverity">
+              <option value="">جميع الشدات</option>
+              <option value="منخفض">منخفض</option>
+              <option value="متوسط">متوسط</option>
+              <option value="مرتفع">مرتفع</option>
+              <option value="حرج">حرج</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">فلترة حسب المحطة</label>
+            <select class="form-select" id="filterStation">
+              <option value="">جميع المحطات</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">فلترة حسب التاريخ</label>
+            <select class="form-select" id="filterDate">
+              <option value="">جميع التواريخ</option>
+              <option value="today">اليوم</option>
+              <option value="week">آخر أسبوع</option>
+              <option value="month">آخر شهر</option>
+              <option value="quarter">آخر 3 أشهر</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- جدول البيانات -->
+      <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3><i class="fas fa-table me-2"></i>قائمة الأعطال</h3>
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="toggleColumnVisibility()">
+              <i class="fas fa-columns me-2"></i>إظهار/إخفاء الأعمدة
+            </button>
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-2"></i>تصدير البيانات
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportToExcel()">Excel</a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportToPDF()">PDF</a></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="exportToCSV()">CSV</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="javascript:void(0)" onclick="printTable()">طباعة</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <table
+          id="failuresTable"
+          class="table table-striped table-hover"
+          style="width: 100%"
+        >
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>المحطة</th>
+              <th>نوع الجهاز</th>
+              <th>الوصف</th>
+              <th>تاريخ البلاغ</th>
+              <th>تاريخ التحديث</th>
+              <th>الشدة</th>
+              <th>الحالة</th>
+              <th>الأولوية</th>
+              <th>المسؤول</th>
+              <th>الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- سيتم تعبئته بواسطة JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal لعرض التفاصيل -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="detailsModalTitle">
+              <i class="fas fa-info-circle me-2"></i>تفاصيل العطل
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="detailsModalBody">
+            <!-- سيتم تعبئته بواسطة JavaScript -->
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="printDetails()"
+            >
+              <i class="fas fa-print me-2"></i>طباعة
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal لعرض الصور -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-images me-2"></i>صور العطل
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <img src="" alt="صورة العطل" class="modal-image" id="modalImage" />
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal لتحديث الحالة -->
+    <div class="modal fade" id="updateModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title" id="updateModalTitle">
+              <i class="fas fa-edit me-2"></i>تحديث حالة العطل
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="updateForm">
+              <input type="hidden" id="updateFailureId" />
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">تحديث الحالة</label>
+                    <select class="form-select" id="updateStatus" required>
+                      <option value="pending">قيد المعالجة</option>
+                      <option value="review">في انتظار المراجعة</option>
+                      <option value="in_progress">قيد التنفيذ</option>
+                      <option value="resolved">تم الإصلاح</option>
+                      <option value="cancelled">ملغي</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">تعيين تقني</label>
+                    <select class="form-select" id="assignTo">
+                      <option value="">اختر التقني المسؤول</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">نسبة الإنجاز</label>
+                    <input type="range" class="form-range" id="progressPercentage" min="0" max="100" step="10">
+                    <div class="d-flex justify-content-between">
+                      <small>0%</small>
+                      <small id="progressValue">50%</small>
+                      <small>100%</small>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">تاريخ الإصلاح المتوقع</label>
+                    <input type="date" class="form-control" id="expectedResolutionDate">
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">ملاحظات التحديث</label>
+                <textarea
+                  class="form-control"
+                  id="updateNotes"
+                  rows="3"
+                  placeholder="أدخل ملاحظات التحديث..."
+                ></textarea>
+              </div>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="markUrgent" role="switch">
+                    <label class="form-check-label" for="markUrgent">
+                      تعيين كعاجل
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="needsFollowUp" role="switch">
+                    <label class="form-check-label" for="needsFollowUp">
+                      يحتاج متابعة
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">رفع ملفات إضافية</label>
+                <input type="file" class="form-control" id="additionalFiles" multiple>
+                <small class="text-muted">يمكن رفع صور أو ملفات داعمة (حد أقصى 5 ملفات)</small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-warning"
+              onclick="updateFailureStatus()"
+            >
+              <i class="fas fa-save me-2"></i>حفظ التحديث
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal لإحصائيات النظام -->
+    <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-chart-line me-2"></i>إحصائيات النظام
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" id="statsModalBody">
+            <!-- سيتم تعبئته بواسطة JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal لسجل النشاطات -->
+    <div class="modal fade" id="activityModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-dark text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-history me-2"></i>سجل النشاطات
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="table-responsive">
+              <table class="table table-hover" id="activityTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>المستخدم</th>
+                    <th>النشاط</th>
+                    <th>التفاصيل</th>
+                    <th>الهدف</th>
+                    <th>التاريخ</th>
+                  </tr>
+                </thead>
+                <tbody id="activityTableBody">
+                  <!-- سيتم تعبئته بواسطة JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مكتبات JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+        <script src="js/protect.js"></script>
+
+    <!-- إضافة Supabase آخر لتجنب تضارب التصريحات -->
+    <script>
+      // تحميل Supabase فقط إذا لم يكن محملاً بالفعل
+      if (typeof window.supabase === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+        script.onload = initializeSystem;
+        document.head.appendChild(script);
+      } else {
+        // إذا كان supabase محملاً بالفعل، تهيئة النظام مباشرة
+        setTimeout(initializeSystem, 100);
+      }
+    </script>
+
+    <script>
+      // إعداد Supabase - باستخدام Immediately Invoked Function Expression لتجنب التصريحات العالمية
+      (function() {
+        console.log('🔧 جاري تهيئة نظام إدارة الأعطال...');
+
+        const SUPABASE_CONFIG = {
+          url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+          anonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o"
+        };
+
+        // استخدام متغيرات محلية بدلاً من عالمية
+        let workshopSupabase = null;
+        let currentUser = null;
+        let failuresData = [];
+        let dataTable = null;
+        let technicians = [];
+        let userStation = null;
+        let statusChart = null;
+        let severityChart = null;
+
+        // دالة تهيئة النظام
+        function initializeSystem() {
+          console.log('🚀 بدء تشغيل نظام إدارة الأعطال...');
+          
+          // إظهار شاشة التحميل
+          showLoading(true);
+          showAlert("جاري تهيئة النظام...", "info");
+
+          try {
+            // تهيئة Supabase
+            initializeSupabase();
+            
+            // بدء تحميل البيانات بعد تهيئة Supabase
+            setTimeout(() => {
+              loadData();
+              showLoading(false);
+            }, 500);
+            
+            console.log('✅ تم تهيئة النظام بنجاح');
+          } catch (error) {
+            console.error('❌ خطأ في تهيئة النظام:', error);
+            showAlert("حدث خطأ في تهيئة النظام: " + error.message, "danger");
+            showLoading(false);
+          }
+        }
+
+        // دالة تهيئة Supabase
+        function initializeSupabase() {
+          try {
+            console.log('🔧 جاري تهيئة اتصال Supabase...');
+            
+            if (typeof window.supabase === 'undefined') {
+              console.error('❌ مكتبة Supabase غير محملة');
+              showAlert('مكتبة الاتصال غير متوفرة. تحقق من اتصال الإنترنت.', 'danger');
+              return false;
+            }
+            
+            workshopSupabase = window.supabase.createClient(
+              SUPABASE_CONFIG.url, 
+              SUPABASE_CONFIG.anonKey,
+              {
+                auth: {
+                  persistSession: false,
+                  autoRefreshToken: false
+                }
+              }
+            );
+            
+            console.log('✅ تم تهيئة Supabase بنجاح');
+            return true;
+          } catch (error) {
+            console.error('❌ فشل تهيئة Supabase:', error);
+            showAlert('فشل تهيئة الاتصال بقاعدة البيانات', 'danger');
+            return false;
+          }
+        }
+
+        // دالة اختبار الاتصال
+        async function testSupabaseConnection() {
+          try {
+            console.log('🔍 اختبار الاتصال بقاعدة البيانات...');
+            
+            if (!workshopSupabase) {
+              const initialized = initializeSupabase();
+              if (!initialized) return false;
+            }
+            
+            const { data, error } = await workshopSupabase
+              .from('equipment_failures')
+              .select('count', { count: 'exact', head: true })
+              .limit(1);
+            
+            if (error) {
+              console.error('❌ خطأ في الاتصال:', error);
+              return false;
+            }
+            
+            console.log('✅ الاتصال ناجح');
+            return true;
+          } catch (error) {
+            console.error('❌ استثناء في اختبار الاتصال:', error);
+            return false;
+          }
+        }
+
+        // دالة التحميل الرئيسية
+        async function loadData() {
+          console.log('📥 جاري تحميل البيانات...');
+          showLoading(true);
+          
+          try {
+            // اختبار الاتصال أولاً
+            const isConnected = await testSupabaseConnection();
+            if (!isConnected) {
+              showAlert("فشل الاتصال بقاعدة البيانات. تحقق من اتصال الإنترنت.", "danger");
+              showLoading(false);
+              return;
+            }
+
+            // جلب بيانات المستخدم الحالي
+            await loadCurrentUser();
+
+            // جلب قائمة التقنيين
+            await loadTechnicians();
+
+            // جلب البيانات من Supabase
+            let query = workshopSupabase
+              .from("equipment_failures")
+              .select("*")
+              .order("created_at", { ascending: false });
+
+            // تطبيق فلتر المحطة إذا كان المستخدم ليس مدير نظام
+            if (userStation && currentUser?.role !== "مدير النظام") {
+              query = query.eq("station_name", userStation);
+              document.getElementById("stationInfo").style.display = "block";
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+              console.error("❌ خطأ في جلب البيانات:", error);
+              showAlert("خطأ في جلب البيانات من قاعدة البيانات: " + error.message, "danger");
+              failuresData = [];
+            } else {
+              failuresData = data || [];
+              console.log(`✅ تم تحميل ${failuresData.length} سجل`);
+            }
+
+            // تحديث الإحصائيات
+            updateStatistics();
+
+            // تحديث المخططات
+            updateCharts();
+
+            // تحديث الجدول
+            updateTable();
+
+            // تحديث قوائم الفلترة
+            updateFilters();
+
+            // تهيئة DataTable
+            initDataTable();
+
+            // تسجيل نشاط التحميل
+            await logActivity("عرض البيانات", `تم تحميل ${failuresData.length} عطل`, "equipment_failures");
+            
+            // عرض رسالة نجاح إذا كانت هناك بيانات
+            if (failuresData.length > 0) {
+              showAlert(`تم تحميل ${failuresData.length} عطل بنجاح`, "success");
+            } else {
+              showAlert("لا توجد أعطال مسجلة حالياً", "info");
+            }
+            
+          } catch (error) {
+            console.error("❌ خطأ في دالة loadData:", error);
+            showAlert("حدث خطأ غير متوقع في تحميل البيانات: " + error.message, "danger");
+          } finally {
+            showLoading(false);
+          }
+        }
+
+        // دالة تحميل المستخدم الحالي
+        async function loadCurrentUser() {
+          try {
+            console.log('👤 جاري تحميل بيانات المستخدم...');
+            
+            // محاولة الحصول من localStorage أولاً
+            const storedUser = localStorage.getItem("currentUser");
+            if (storedUser) {
+              currentUser = JSON.parse(storedUser);
+              userStation = currentUser.station;
+              updateUserInfo();
+              console.log('✅ تم تحميل المستخدم من التخزين المحلي:', currentUser);
+              return;
+            }
+
+            // إذا لم يوجد في localStorage، جلب من Supabase
+            const { data: { user } } = await workshopSupabase.auth.getUser();
+            if (user) {
+              const { data, error } = await workshopSupabase
+                .from("users")
+                .select("*")
+                .eq("email", user.email)
+                .single();
+
+              if (!error && data) {
+                currentUser = data;
+                userStation = currentUser.station;
+                localStorage.setItem("currentUser", JSON.stringify(currentUser));
+                updateUserInfo();
+                console.log('✅ تم تحميل المستخدم من قاعدة البيانات:', currentUser);
+              } else {
+                console.warn('⚠️ لم يتم العثور على المستخدم في قاعدة البيانات');
+                // إنشاء مستخدم افتراضي للاختبار
+                currentUser = {
+                  id: 1,
+                  first_name: "مستخدم",
+                  father_name: "تجريبي",
+                  last_name: "النظام",
+                  email: "test@example.com",
+                  station: "المحطة الرئيسية",
+                  role: "مدير النظام",
+                  status: "approved"
+                };
+                userStation = currentUser.station;
+                updateUserInfo();
+              }
+            } else {
+              console.warn('⚠️ لم يتم العثور على جلسة مستخدم نشطة');
+              // إنشاء مستخدم افتراضي للاختبار
+              currentUser = {
+                id: 1,
+                first_name: "مستخدم",
+                father_name: "تجريبي",
+                last_name: "النظام",
+                email: "test@example.com",
+                station: "المحطة الرئيسية",
+                role: "مدير النظام",
+                status: "approved"
+              };
+              userStation = currentUser.station;
+              updateUserInfo();
+            }
+          } catch (error) {
+            console.error("❌ خطأ في تحميل بيانات المستخدم:", error);
+            // إنشاء مستخدم افتراضي في حالة الخطأ
+            currentUser = {
+              id: 1,
+              first_name: "مستخدم",
+              father_name: "تجريبي",
+              last_name: "النظام",
+              email: "test@example.com",
+              station: "المحطة الرئيسية",
+              role: "مدير النظام",
+              status: "approved"
+            };
+            userStation = currentUser.station;
+            updateUserInfo();
+          }
+        }
+
+        // دالة تحديث معلومات المستخدم
+        function updateUserInfo() {
+          if (currentUser) {
+            document.getElementById("userName").textContent = 
+              `${currentUser.first_name} ${currentUser.father_name} ${currentUser.last_name}`;
+            document.getElementById("userStation").textContent = currentUser.station || "-";
+            document.getElementById("userRole").textContent = currentUser.role || "-";
+            document.getElementById("lastUpdate").textContent = new Date().toLocaleString("ar-SA");
+            
+            // إظهار معلومات المحطة
+            document.getElementById("stationInfo").style.display = "block";
+          }
+        }
+
+        // دالة جلب التقنيين
+        async function loadTechnicians() {
+          try {
+            console.log('🔧 جاري تحميل قائمة التقنيين...');
+            
+            const { data, error } = await workshopSupabase
+              .from("users")
+              .select("id, first_name, father_name, last_name, role, station")
+              .in("role", ["فني صيانة", "مهندس", "مدير ورشة"])
+              .eq("status", "approved");
+
+            if (!error && data) {
+              technicians = data;
+              updateTechniciansSelect();
+              console.log(`✅ تم تحميل ${technicians.length} تقني`);
+            } else {
+              console.warn('⚠️ لم يتم العثور على تقنيين');
+              technicians = [];
+            }
+          } catch (error) {
+            console.error("❌ خطأ في تحميل التقنيين:", error);
+            technicians = [];
+          }
+        }
+
+        // دالة تحديث قائمة التقنيين
+        function updateTechniciansSelect() {
+          const select = document.getElementById("assignTo");
+          select.innerHTML = '<option value="">اختر التقني المسؤول</option>';
+          
+          technicians.forEach(tech => {
+            const option = document.createElement("option");
+            option.value = `${tech.first_name} ${tech.father_name} ${tech.last_name}`;
+            option.textContent = `${tech.first_name} ${tech.father_name} ${tech.last_name} - ${tech.role} - ${tech.station}`;
+            select.appendChild(option);
+          });
+        }
+
+        // دالة تحديث الإحصائيات
+        function updateStatistics() {
+          const pending = failuresData.filter(f => f.status === "pending").length;
+          const inProgress = failuresData.filter(f => f.status === "in_progress").length;
+          const resolved = failuresData.filter(f => f.status === "resolved").length;
+          const urgent = failuresData.filter(f => f.urgency_level).length;
+          const total = failuresData.length;
+          
+          // حساب الأعطال اليومية
+          const today = new Date().toISOString().split('T')[0];
+          const todayCount = failuresData.filter(f => {
+            const reportDate = new Date(f.created_at).toISOString().split('T')[0];
+            return reportDate === today;
+          }).length;
+
+          // تحديث العدادات
+          document.getElementById("totalPending").textContent = pending;
+          document.getElementById("totalInProgress").textContent = inProgress;
+          document.getElementById("totalResolved").textContent = resolved;
+          document.getElementById("totalUrgent").textContent = urgent;
+          document.getElementById("totalToday").textContent = todayCount;
+          document.getElementById("totalFailures").textContent = total;
+
+          // تحديث أشرطة التقدم
+          updateProgressBars(pending, resolved, urgent, total);
+        }
+
+        // دالة تحديث أشرطة التقدم
+        function updateProgressBars(pending, resolved, urgent, total) {
+          const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+          const urgentRate = total > 0 ? Math.round((urgent / total) * 100) : 0;
+          const pendingRate = total > 0 ? Math.round((pending / total) * 100) : 0;
+
+          // تحديث الأشرطة
+          document.getElementById("resolutionRate").style.width = `${resolutionRate}%`;
+          document.getElementById("urgentRate").style.width = `${urgentRate}%`;
+          document.getElementById("pendingRate").style.width = `${pendingRate}%`;
+
+          // تحديث النسب
+          document.getElementById("resolvedCount").textContent = resolved;
+          document.getElementById("resolutionPercent").textContent = `${resolutionRate}%`;
+          document.getElementById("urgentCount").textContent = urgent;
+          document.getElementById("urgentPercent").textContent = `${urgentRate}%`;
+          document.getElementById("pendingCount").textContent = pending;
+          document.getElementById("pendingPercent").textContent = `${pendingRate}%`;
+        }
+
+        // دالة تحديث المخططات
+        function updateCharts() {
+          // توزيع الحالات
+          const statusCounts = {
+            pending: failuresData.filter(f => f.status === "pending").length,
+            review: failuresData.filter(f => f.status === "review").length,
+            in_progress: failuresData.filter(f => f.status === "in_progress").length,
+            resolved: failuresData.filter(f => f.status === "resolved").length,
+            cancelled: failuresData.filter(f => f.status === "cancelled").length
+          };
+
+          // توزيع الشدة
+          const severityCounts = {
+            منخفض: failuresData.filter(f => f.failure_severity === "منخفض").length,
+            متوسط: failuresData.filter(f => f.failure_severity === "متوسط").length,
+            مرتفع: failuresData.filter(f => f.failure_severity === "مرتفع").length,
+            حرج: failuresData.filter(f => f.failure_severity === "حرج").length
+          };
+
+          // تدمير المخططات القديمة إذا كانت موجودة
+          if (statusChart) statusChart.destroy();
+          if (severityChart) severityChart.destroy();
+
+          // مخطط توزيع الحالات
+          const statusCtx = document.getElementById("statusChart");
+          if (statusCtx) {
+            statusChart = new Chart(statusCtx.getContext("2d"), {
+              type: "pie",
+              data: {
+                labels: ["قيد المعالجة", "في المراجعة", "قيد التنفيذ", "تم الإصلاح", "ملغي"],
+                datasets: [{
+                  data: [
+                    statusCounts.pending,
+                    statusCounts.review,
+                    statusCounts.in_progress,
+                    statusCounts.resolved,
+                    statusCounts.cancelled
+                  ],
+                  backgroundColor: ["#ffc107", "#0dcaf0", "#6c757d", "#198754", "#dc3545"]
+                }]
+              },
+              options: {
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: "right",
+                    rtl: true
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                        return `${label}: ${value} (${percentage}%)`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          }
+
+          // مخطط توزيع الشدة
+          const severityCtx = document.getElementById("severityChart");
+          if (severityCtx) {
+            severityChart = new Chart(severityCtx.getContext("2d"), {
+              type: "bar",
+              data: {
+                labels: ["منخفض", "متوسط", "مرتفع", "حرج"],
+                datasets: [{
+                  label: "عدد الأعطال",
+                  data: [
+                    severityCounts.منخفض,
+                    severityCounts.متوسط,
+                    severityCounts.مرتفع,
+                    severityCounts.حرج
+                  ],
+                  backgroundColor: ["#198754", "#ffc107", "#fd7e14", "#dc3545"]
+                }]
+              },
+              options: {
+                responsive: true,
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                },
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        return `عدد الأعطال: ${context.raw}`;
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          }
+        }
+
+        // دالة تحديث الجدول
+        function updateTable() {
+          const tableBody = document.getElementById("tableBody");
+          if (!tableBody) return;
+          
+          tableBody.innerHTML = "";
+
+          if (failuresData.length === 0) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td colspan="11" class="text-center text-muted py-4">
+                <i class="fas fa-inbox fa-2x mb-3"></i>
+                <br>
+                لا توجد أعطال مسجلة حالياً
+              </td>
+            `;
+            tableBody.appendChild(row);
+            return;
+          }
+
+          failuresData.forEach((failure, index) => {
+            const row = document.createElement("tr");
+
+            // تحديد لون الصف حسب الحالة
+            if (failure.urgency_level) {
+              row.className = "table-danger";
+            } else if (failure.status === "resolved") {
+              row.className = "table-success";
+            } else if (failure.status === "in_progress") {
+              row.className = "table-warning";
+            } else if (failure.status === "review") {
+              row.className = "table-info";
+            }
+
+            // دالة للحصول على نص الحالة
+            function getStatusText(status) {
+              const statusMap = {
+                pending: "قيد المعالجة",
+                review: "في انتظار المراجعة",
+                in_progress: "قيد التنفيذ",
+                resolved: "تم الإصلاح",
+                cancelled: "ملغي"
+              };
+              return statusMap[status] || status;
+            }
+
+            // دالة للحصول على كلاس الحالة
+            function getStatusClass(status) {
+              const classMap = {
+                pending: "badge-pending",
+                review: "badge-review",
+                in_progress: "badge-in-progress",
+                resolved: "badge-resolved",
+                cancelled: "badge-cancelled"
+              };
+              return classMap[status] || "badge-secondary";
+            }
+
+            // دالة للحصول على كلاس الشدة
+            function getSeverityClass(severity) {
+              const classMap = {
+                منخفض: "badge-low",
+                متوسط: "badge-medium",
+                مرتفع: "badge-high",
+                حرج: "badge-critical"
+              };
+              return classMap[severity] || "badge-secondary";
+            }
+
+            row.innerHTML = `
+              <td>${index + 1}</td>
+              <td>
+                <strong>${failure.station_name || "-"}</strong><br>
+                <small class="text-muted">${failure.station_type || "-"}</small>
+              </td>
+              <td>
+                ${failure.equipment_type || "غير محدد"}<br>
+                <small class="text-muted">${failure.measurement_type || ""}</small>
+              </td>
+              <td>
+                <div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${failure.failure_description || "-"}
+                </div>
+              </td>
+              <td>
+                ${formatDate(failure.created_at)}<br>
+                <small class="text-muted">${formatTime(failure.created_at)}</small>
+              </td>
+              <td>
+                ${failure.updated_at ? formatDate(failure.updated_at) : "-"}<br>
+                <small class="text-muted">${failure.updated_at ? formatTime(failure.updated_at) : ""}</small>
+              </td>
+              <td>
+                <span class="severity-badge ${getSeverityClass(failure.failure_severity)}">
+                  ${failure.failure_severity || "غير محدد"}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge ${getStatusClass(failure.status)}">
+                  ${getStatusText(failure.status)}
+                </span>
+              </td>
+              <td>
+                ${failure.urgency_level 
+                  ? '<span class="urgency-badge"><i class="fas fa-bolt me-1"></i>عاجل</span>' 
+                  : '<span class="text-muted">عادي</span>'}
+              </td>
+              <td>
+                ${failure.assigned_to || '<span class="text-muted">غير معين</span>'}
+              </td>
+              <td class="action-buttons">
+                <button class="btn btn-sm btn-info" onclick="showDetails(${failure.id})" 
+                  data-bs-toggle="tooltip" title="عرض التفاصيل">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="openUpdateModal(${failure.id})"
+                  data-bs-toggle="tooltip" title="تحديث الحالة">
+                  <i class="fas fa-edit"></i>
+                </button>
+                ${failure.status !== "resolved" 
+                  ? `<button class="btn btn-sm btn-success" onclick="markAsResolved(${failure.id})"
+                      data-bs-toggle="tooltip" title="تعيين كمصلح">
+                      <i class="fas fa-check"></i>
+                    </button>` 
+                  : ""}
+                <button class="btn btn-sm btn-danger" onclick="deleteFailure(${failure.id})"
+                  data-bs-toggle="tooltip" title="حذف العطل">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+
+        // دالة تحديث الفلاتر
+        function updateFilters() {
+          updateStationFilter();
+          updateTechnicianFilter();
+        }
+
+        // دالة تحديث قائمة المحطات للفلترة
+        function updateStationFilter() {
+          const stationFilter = document.getElementById("filterStation");
+          if (!stationFilter) return;
+          
+          const stations = [...new Set(failuresData.map(f => f.station_name).filter(Boolean))];
+
+          const currentValue = stationFilter.value;
+          stationFilter.innerHTML = '<option value="">جميع المحطات</option>';
+          
+          stations.forEach(station => {
+            const option = document.createElement("option");
+            option.value = station;
+            option.textContent = station;
+            stationFilter.appendChild(option);
+          });
+
+          if (stations.includes(currentValue)) {
+            stationFilter.value = currentValue;
+          }
+        }
+
+        // دالة تحديث قائمة التقنيين للفلترة
+        function updateTechnicianFilter() {
+          // يمكن إضافة فلتر التقنيين هنا
+        }
+
+        // دالة تهيئة DataTable
+        function initDataTable() {
+          if (dataTable) {
+            dataTable.destroy();
+          }
+
+          const table = document.getElementById('failuresTable');
+          if (!table) return;
+
+          dataTable = $("#failuresTable").DataTable({
+            language: {
+              url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json"
+            },
+            responsive: true,
+            pageLength: 25,
+            order: [[0, "desc"]],
+            dom: 'Bfrtip',
+            buttons: [
+              {
+                extend: 'colvis',
+                text: '<i class="fas fa-columns me-2"></i>إظهار/إخفاء الأعمدة',
+                className: 'btn btn-outline-secondary'
+              },
+              {
+                extend: 'excel',
+                text: '<i class="fas fa-file-excel me-2"></i>Excel',
+                className: 'btn btn-success',
+                exportOptions: {
+                  columns: ':visible'
+                }
+              },
+              {
+                extend: 'pdf',
+                text: '<i class="fas fa-file-pdf me-2"></i>PDF',
+                className: 'btn btn-danger',
+                exportOptions: {
+                  columns: ':visible'
+                }
+              },
+              {
+                extend: 'print',
+                text: '<i class="fas fa-print me-2"></i>طباعة',
+                className: 'btn btn-info',
+                exportOptions: {
+                  columns: ':visible'
+                }
+              }
+            ],
+            initComplete: function() {
+              // إضافة البحث
+              $('#searchInput').on('keyup', function() {
+                dataTable.search(this.value).draw();
+              });
+              
+              // تهيئة tooltips
+              const tooltipTriggerList = [].slice.call(
+                document.querySelectorAll('[data-bs-toggle="tooltip"]')
+              );
+              tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+              });
+            }
+          });
+        }
+
+        // دالة تطبيق الفلاتر
+        function applyFilters() {
+          const statusFilter = document.getElementById("filterStatus").value;
+          const severityFilter = document.getElementById("filterSeverity").value;
+          const stationFilter = document.getElementById("filterStation").value;
+          const dateFilter = document.getElementById("filterDate").value;
+
+          let filteredData = failuresData;
+
+          // تطبيق فلتر الحالة
+          if (statusFilter) {
+            filteredData = filteredData.filter(f => f.status === statusFilter);
+          }
+
+          // تطبيق فلتر الشدة
+          if (severityFilter) {
+            filteredData = filteredData.filter(f => f.failure_severity === severityFilter);
+          }
+
+          // تطبيق فلتر المحطة
+          if (stationFilter) {
+            filteredData = filteredData.filter(f => f.station_name === stationFilter);
+          }
+
+          // تطبيق فلتر التاريخ
+          if (dateFilter) {
+            const now = new Date();
+            filteredData = filteredData.filter(f => {
+              const reportDate = new Date(f.created_at);
+              switch(dateFilter) {
+                case 'today':
+                  return reportDate.toDateString() === now.toDateString();
+                case 'week':
+                  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                  return reportDate >= weekAgo;
+                case 'month':
+                  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                  return reportDate >= monthAgo;
+                case 'quarter':
+                  const quarterAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                  return reportDate >= quarterAgo;
+                default:
+                  return true;
+              }
+            });
+          }
+
+          // تحديث الجدول مع البيانات المفلترة
+          updateTableWithData(filteredData);
+          
+          // تسجيل نشاط التصفية
+          logActivity("تصفية البيانات", `تم تطبيق فلتر: ${statusFilter || 'كل الحالات'} - ${severityFilter || 'كل الشدات'}`, "equipment_failures");
+          
+          showAlert(`تم تطبيق الفلاتر على ${filteredData.length} عطل`, "info");
+        }
+
+        // دالة تحديث الجدول ببيانات محددة
+        function updateTableWithData(data) {
+          if (dataTable) {
+            dataTable.clear();
+            data.forEach((failure, index) => {
+              dataTable.row.add([
+                index + 1,
+                `${failure.station_name}<br><small class="text-muted">${failure.station_type || "-"}</small>`,
+                `${failure.equipment_type || "غير محدد"}<br><small class="text-muted">${failure.measurement_type || ""}</small>`,
+                `<div style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${failure.failure_description}</div>`,
+                `${formatDate(failure.created_at)}<br><small class="text-muted">${formatTime(failure.created_at)}</small>`,
+                `${failure.updated_at ? formatDate(failure.updated_at) : "-"}<br><small class="text-muted">${failure.updated_at ? formatTime(failure.updated_at) : ""}</small>`,
+                `<span class="severity-badge ${getSeverityClass(failure.failure_severity)}">${failure.failure_severity}</span>`,
+                `<span class="status-badge ${getStatusClass(failure.status)}">${getStatusText(failure.status)}</span>`,
+                failure.urgency_level 
+                  ? '<span class="urgency-badge"><i class="fas fa-bolt me-1"></i>عاجل</span>' 
+                  : '<span class="text-muted">عادي</span>',
+                failure.assigned_to || '<span class="text-muted">غير معين</span>',
+                generateActionButtons(failure)
+              ]);
+            });
+            dataTable.draw();
+          } else {
+            // إذا لم يكن DataTable مهيئاً، استخدم الطريقة العادية
+            updateTable();
+          }
+        }
+
+        // دالة إنشاء أزرار الإجراءات
+        function generateActionButtons(failure) {
+          return `
+            <div class="action-buttons">
+              <button class="btn btn-sm btn-info" onclick="showDetails(${failure.id})" 
+                data-bs-toggle="tooltip" title="عرض التفاصيل">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-warning" onclick="openUpdateModal(${failure.id})"
+                data-bs-toggle="tooltip" title="تحديث الحالة">
+                <i class="fas fa-edit"></i>
+              </button>
+              ${failure.status !== "resolved" 
+                ? `<button class="btn btn-sm btn-success" onclick="markAsResolved(${failure.id})"
+                    data-bs-toggle="tooltip" title="تعيين كمصلح">
+                    <i class="fas fa-check"></i>
+                  </button>` 
+                : ""}
+              <button class="btn btn-sm btn-danger" onclick="deleteFailure(${failure.id})"
+                data-bs-toggle="tooltip" title="حذف العطل">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          `;
+        }
+
+        // دالة مسح الفلاتر
+        function clearFilters() {
+          document.getElementById("filterStatus").value = "";
+          document.getElementById("filterSeverity").value = "";
+          document.getElementById("filterStation").value = "";
+          document.getElementById("filterDate").value = "";
+          document.getElementById("searchInput").value = "";
+          
+          // إعادة تحميل البيانات الأصلية
+          updateTableWithData(failuresData);
+          
+          // تسجيل النشاط
+          logActivity("مسح الفلاتر", "تم مسح جميع الفلاتر", "equipment_failures");
+          
+          showAlert("تم مسح جميع الفلاتر", "info");
+        }
+
+        // دالة عرض التفاصيل
+        function showDetails(failureId) {
+          const failure = failuresData.find(f => f.id === failureId);
+          if (!failure) {
+            showAlert("لم يتم العثور على العطل المطلوب", "warning");
+            return;
+          }
+
+          function displayImages(images) {
+            if (!images || images.length === 0) {
+              return '<p class="text-muted">لا توجد صور مرفوعة</p>';
+            }
+
+            let html = '<div class="image-gallery">';
+            images.forEach((img, index) => {
+              if (img && img.trim() !== '') {
+                html += `
+                  <img src="${img}" alt="صورة العطل ${index + 1}" 
+                    class="image-thumbnail" 
+                    onclick="openImageModal('${img}')"
+                    style="cursor: pointer">
+                `;
+              }
+            });
+            html += "</div>";
+            return html;
+          }
+
+          const details = `
+            <div class="row">
+              <div class="col-md-6">
+                <h6>معلومات المحطة:</h6>
+                <table class="table table-sm">
+                  <tr>
+                    <th>اسم المحطة:</th>
+                    <td>${failure.station_name || "-"}</td>
+                  </tr>
+                  <tr>
+                    <th>نوع المحطة:</th>
+                    <td>${failure.station_type || "-"}</td>
+                  </tr>
+                  <tr>
+                    <th>مقدم البلاغ:</th>
+                    <td>${failure.reporter_name || "-"}</td>
+                  </tr>
+                  <tr>
+                    <th>تاريخ البلاغ:</th>
+                    <td>${formatDate(failure.created_at)} ${formatTime(failure.created_at)}</td>
+                  </tr>
+                  <tr>
+                    <th>آخر تحديث:</th>
+                    <td>${failure.updated_at ? formatDate(failure.updated_at) + ' ' + formatTime(failure.updated_at) : '-'}</td>
+                  </tr>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6>معلومات العطل:</h6>
+                <table class="table table-sm">
+                  <tr>
+                    <th>نوع الجهاز:</th>
+                    <td>${failure.equipment_type || "غير محدد"}</td>
+                  </tr>
+                  <tr>
+                    <th>نوع القياس:</th>
+                    <td>${failure.measurement_type || "غير محدد"}</td>
+                  </tr>
+                  <tr>
+                    <th>شدة العطل:</th>
+                    <td>
+                      <span class="severity-badge ${getSeverityClass(failure.failure_severity)}">
+                        ${failure.failure_severity || "غير محدد"}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>الحالة:</th>
+                    <td>
+                      <span class="status-badge ${getStatusClass(failure.status)}">
+                        ${getStatusText(failure.status)}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>الأولوية:</th>
+                    <td>
+                      ${failure.urgency_level
+                        ? '<span class="badge bg-danger">عاجل</span>'
+                        : '<span class="badge bg-secondary">عادي</span>'}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>المسؤول:</th>
+                    <td>${failure.assigned_to || '<span class="text-muted">غير معين</span>'}</td>
+                  </tr>
+                  ${failure.resolved_at ? `
+                  <tr>
+                    <th>تاريخ الإصلاح:</th>
+                    <td>${formatDate(failure.resolved_at)} ${formatTime(failure.resolved_at)}</td>
+                  </tr>
+                  ` : ''}
+                </table>
+              </div>
+            </div>
+            
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>وصف العطل:</h6>
+                <div class="alert alert-light">
+                  ${failure.failure_description || "لا يوجد وصف"}
+                </div>
+              </div>
+            </div>
+            
+            ${failure.brand_model ? `
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>العلامة التجارية:</h6>
+                <p>${failure.brand_model}</p>
+              </div>
+            </div>
+            ` : ""}
+            
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>الصور المرفوعة:</h6>
+                ${displayImages(failure.images_urls)}
+              </div>
+            </div>
+            
+            ${failure.problem_type ? `
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>نوع المشكلة:</h6>
+                <p>${failure.problem_type}</p>
+              </div>
+            </div>
+            ` : ""}
+            
+            ${failure.update_notes ? `
+            <div class="row mt-3">
+              <div class="col-12">
+                <h6>ملاحظات التحديث:</h6>
+                <div class="alert alert-info">
+                  ${failure.update_notes}
+                </div>
+              </div>
+            </div>
+            ` : ""}
+          `;
+
+          document.getElementById("detailsModalBody").innerHTML = details;
+          document.getElementById("detailsModalTitle").innerHTML =
+            `<i class="fas fa-info-circle me-2"></i>تفاصيل العطل #${failure.id}`;
+
+          const modal = new bootstrap.Modal(document.getElementById("detailsModal"));
+          modal.show();
+          
+          // تسجيل النشاط
+          logActivity("عرض التفاصيل", `عرض تفاصيل العطل #${failure.id}`, "equipment_failures", failure.id);
+        }
+
+        // دالة فتح نافذة الصور
+        function openImageModal(imageUrl) {
+          if (!imageUrl || imageUrl.trim() === '') {
+            showAlert("لا توجد صورة لعرضها", "warning");
+            return;
+          }
+          
+          document.getElementById("modalImage").src = imageUrl;
+          const modal = new bootstrap.Modal(document.getElementById("imageModal"));
+          modal.show();
+        }
+
+        // دالة فتح نافذة تحديث الحالة
+        function openUpdateModal(failureId) {
+          const failure = failuresData.find(f => f.id === failureId);
+          if (!failure) {
+            showAlert("لم يتم العثور على العطل المطلوب", "warning");
+            return;
+          }
+
+          document.getElementById("updateFailureId").value = failureId;
+          document.getElementById("updateStatus").value = failure.status || "pending";
+          document.getElementById("updateNotes").value = failure.update_notes || "";
+          document.getElementById("assignTo").value = failure.assigned_to || "";
+          document.getElementById("markUrgent").checked = failure.urgency_level || false;
+          document.getElementById("needsFollowUp").checked = failure.needs_followup || false;
+          document.getElementById("progressPercentage").value = failure.progress_percentage || 0;
+          document.getElementById("progressValue").textContent = `${failure.progress_percentage || 0}%`;
+          
+          if (failure.expected_resolution_date) {
+            document.getElementById("expectedResolutionDate").value = failure.expected_resolution_date.split('T')[0];
+          }
+
+          // تحديث قيمة شريط التقدم
+          document.getElementById("progressPercentage").addEventListener("input", function() {
+            document.getElementById("progressValue").textContent = `${this.value}%`;
+          });
+
+          document.getElementById("updateModalTitle").innerHTML =
+            `<i class="fas fa-edit me-2"></i>تحديث حالة العطل #${failureId}`;
+
+          const modal = new bootstrap.Modal(document.getElementById("updateModal"));
+          modal.show();
+        }
+
+        // دالة تحديث حالة العطل
+        async function updateFailureStatus() {
+          const failureId = document.getElementById("updateFailureId").value;
+          const newStatus = document.getElementById("updateStatus").value;
+          const notes = document.getElementById("updateNotes").value;
+          const assignedTo = document.getElementById("assignTo").value;
+          const isUrgent = document.getElementById("markUrgent").checked;
+          const needsFollowUp = document.getElementById("needsFollowUp").checked;
+          const progressPercentage = document.getElementById("progressPercentage").value;
+          const expectedResolutionDate = document.getElementById("expectedResolutionDate").value;
+
+          if (!failureId) {
+            showAlert("لم يتم تحديد العطل", "warning");
+            return;
+          }
+
+          try {
+            const updateData = {
+              status: newStatus,
+              urgency_level: isUrgent,
+              needs_followup: needsFollowUp,
+              progress_percentage: parseInt(progressPercentage) || 0,
+              updated_at: new Date().toISOString(),
+              assigned_to: assignedTo || null
+            };
+
+            if (notes) {
+              updateData.update_notes = notes;
+            }
+
+            if (expectedResolutionDate) {
+              updateData.expected_resolution_date = expectedResolutionDate;
+            }
+
+            // إذا كانت الحالة تم الإصلاح، إضافة تاريخ الإصلاح
+            if (newStatus === "resolved") {
+              updateData.resolved_at = new Date().toISOString();
+            }
+
+            const { data, error } = await workshopSupabase
+              .from("equipment_failures")
+              .update(updateData)
+              .eq("id", failureId)
+              .select();
+
+            if (error) throw error;
+
+            // تحديث البيانات المحلية
+            await loadData();
+
+            // إغلاق النافذة
+            const modal = bootstrap.Modal.getInstance(document.getElementById("updateModal"));
+            if (modal) modal.hide();
+
+            // تسجيل النشاط
+            await logActivity(
+              "تحديث حالة العطل", 
+              `تم تحديث حالة العطل #${failureId} إلى ${getStatusText(newStatus)}`,
+              "equipment_failures", 
+              failureId
+            );
+
+            showAlert("تم تحديث حالة العطل بنجاح", "success");
+          } catch (error) {
+            console.error("Error updating failure:", error);
+            showAlert("حدث خطأ في تحديث العطل: " + error.message, "danger");
+          }
+        }
+
+        // دالة تعيين العطل كمصلح
+        async function markAsResolved(failureId) {
+          if (!confirm("هل أنت متأكد من تعيين هذا العطل كمصلح؟")) return;
+
+          try {
+            const { data, error } = await workshopSupabase
+              .from("equipment_failures")
+              .update({
+                status: "resolved",
+                resolved_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                progress_percentage: 100
+              })
+              .eq("id", failureId)
+              .select();
+
+            if (error) throw error;
+
+            // تحديث البيانات المحلية
+            await loadData();
+
+            // تسجيل النشاط
+            await logActivity(
+              "تعيين كمصلح", 
+              `تم تعيين العطل #${failureId} كمصلح`,
+              "equipment_failures", 
+              failureId
+            );
+
+            showAlert("تم تعيين العطل كمصلح بنجاح", "success");
+          } catch (error) {
+            console.error("Error marking as resolved:", error);
+            showAlert("حدث خطأ في تعيين العطل كمصلح: " + error.message, "danger");
+          }
+        }
+
+        // دالة حذف العطل
+        async function deleteFailure(failureId) {
+          if (!confirm("هل أنت متأكد من حذف هذا العطل؟ هذا الإجراء لا يمكن التراجع عنه.")) return;
+
+          try {
+            const { error } = await workshopSupabase
+              .from("equipment_failures")
+              .delete()
+              .eq("id", failureId);
+
+            if (error) throw error;
+
+            // تسجيل النشاط قبل تحديث البيانات
+            await logActivity(
+              "حذف العطل", 
+              `تم حذف العطل #${failureId}`,
+              "equipment_failures", 
+              failureId
+            );
+
+            // تحديث البيانات المحلية
+            await loadData();
+
+            showAlert("تم حذف العطل بنجاح", "success");
+          } catch (error) {
+            console.error("Error deleting failure:", error);
+            showAlert("حدث خطأ في حذف العطل: " + error.message, "danger");
+          }
+        }
+
+        // دالة تسجيل النشاط
+        async function logActivity(actionType, actionDetails, targetType, targetId = null) {
+          try {
+            if (!currentUser || !workshopSupabase) return;
+
+            const activityData = {
+              user_id: currentUser.id,
+              user_name: `${currentUser.first_name} ${currentUser.father_name} ${currentUser.last_name}`,
+              user_email: currentUser.email,
+              user_role: currentUser.role,
+              user_station: currentUser.station,
+              action_type: actionType,
+              action_details: actionDetails,
+              target_type: targetType,
+              created_at: new Date().toISOString()
+            };
+
+            if (targetId) {
+              activityData.target_id = targetId;
+            }
+
+            const { error } = await workshopSupabase
+              .from("activity_log")
+              .insert([activityData]);
+
+            if (error) {
+              console.error("Error logging activity:", error);
+            }
+          } catch (error) {
+            console.error("Error in logActivity:", error);
+          }
+        }
+
+        // دالة عرض إحصائيات النظام
+        async function showSystemStats() {
+          try {
+            // جلب إحصائيات من مختلف الجداول
+            const [
+              { data: failuresStats, error: failuresError },
+              { data: usersStats, error: usersError }
+            ] = await Promise.all([
+              workshopSupabase.from("equipment_failures").select("status, urgency_level, created_at, station_name"),
+              workshopSupabase.from("users").select("status, role")
+            ]);
+
+            if (failuresError || usersError) {
+              throw new Error("Error fetching statistics");
+            }
+
+            // معالجة إحصائيات الأعطال
+            const totalFailures = failuresStats ? failuresStats.length : 0;
+            const urgentFailures = failuresStats ? failuresStats.filter(f => f.urgency_level).length : 0;
+            const resolvedFailures = failuresStats ? failuresStats.filter(f => f.status === "resolved").length : 0;
+            const resolutionRate = totalFailures > 0 ? Math.round((resolvedFailures / totalFailures) * 100) : 0;
+
+            // معالجة إحصائيات المستخدمين
+            const totalUsers = usersStats ? usersStats.length : 0;
+            const activeUsers = usersStats ? usersStats.filter(u => u.status === "approved").length : 0;
+            const techniciansCount = usersStats ? usersStats.filter(u => u.role === "فني صيانة" || u.role === "مهندس").length : 0;
+
+            // عدد المحطات الفريدة
+            const uniqueStations = failuresStats ? [...new Set(failuresStats.map(f => f.station_name).filter(Boolean))].length : 0;
+
+            // إنشاء HTML للإحصائيات
+            const statsHTML = `
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                      <h6 class="mb-0"><i class="fas fa-tools me-2"></i>إحصائيات الأعطال</h6>
+                    </div>
+                    <div class="card-body">
+                      <table class="table table-sm">
+                        <tr>
+                          <td>إجمالي الأعطال:</td>
+                          <td><strong>${totalFailures}</strong></td>
+                        </tr>
+                        <tr>
+                          <td>الأعطال العاجلة:</td>
+                          <td><strong>${urgentFailures}</strong></td>
+                        </tr>
+                        <tr>
+                          <td>الأعطال المصلحة:</td>
+                          <td><strong>${resolvedFailures}</strong></td>
+                        </tr>
+                        <tr>
+                          <td>معدل الإصلاح:</td>
+                          <td><strong>${resolutionRate}%</strong></td>
+                        </tr>
+                        <tr>
+                          <td>عدد المحطات:</td>
+                          <td><strong>${uniqueStations}</strong></td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                      <h6 class="mb-0"><i class="fas fa-users me-2"></i>إحصائيات المستخدمين</h6>
+                    </div>
+                    <div class="card-body">
+                      <table class="table table-sm">
+                        <tr>
+                          <td>إجمالي المستخدمين:</td>
+                          <td><strong>${totalUsers}</strong></td>
+                        </tr>
+                        <tr>
+                          <td>المستخدمين النشطين:</td>
+                          <td><strong>${activeUsers}</strong></td>
+                        </tr>
+                        <tr>
+                          <td>عدد التقنيين:</td>
+                          <td><strong>${techniciansCount}</strong></td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card">
+                <div class="card-header bg-info text-white">
+                  <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>معلومات النظام</h6>
+                </div>
+                <div class="card-body">
+                  <table class="table table-sm">
+                    <tr>
+                      <td>النسخة:</td>
+                      <td><strong>1.0</strong></td>
+                    </tr>
+                    <tr>
+                      <td>تاريخ آخر تحديث:</td>
+                      <td><strong>${new Date().toLocaleDateString('ar-SA')}</strong></td>
+                    </tr>
+                    <tr>
+                      <td>حالة الاتصال:</td>
+                      <td><strong class="text-success">نشط</strong></td>
+                    </tr>
+                    <tr>
+                      <td>عدد الأعطال المعروضة:</td>
+                      <td><strong>${failuresData.length}</strong></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            `;
+
+            document.getElementById("statsModalBody").innerHTML = statsHTML;
+            const modal = new bootstrap.Modal(document.getElementById("statsModal"));
+            modal.show();
+          } catch (error) {
+            console.error("Error showing system stats:", error);
+            showAlert("حدث خطأ في جلب إحصائيات النظام", "danger");
+          }
+        }
+
+        // دالة عرض سجل النشاطات
+        async function showActivityLog() {
+          try {
+            const { data, error } = await workshopSupabase
+              .from("activity_log")
+              .select("*")
+              .order("created_at", { ascending: false })
+              .limit(50);
+
+            if (error) throw error;
+
+            const tableBody = document.getElementById("activityTableBody");
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = "";
+
+            if (!data || data.length === 0) {
+              tableBody.innerHTML = `
+                <tr>
+                  <td colspan="6" class="text-center text-muted">
+                    لا توجد نشاطات مسجلة
+                  </td>
+                </tr>
+              `;
+              return;
+            }
+
+            data.forEach((activity, index) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>
+                  <strong>${activity.user_name || "غير معروف"}</strong><br>
+                  <small class="text-muted">${activity.user_role || "-"} - ${activity.user_station || "-"}</small>
+                </td>
+                <td>${activity.action_type || "-"}</td>
+                <td>${activity.action_details || "-"}</td>
+                <td>
+                  ${activity.target_type || "-"}<br>
+                  ${activity.target_id ? `<small class="text-muted">ID: ${activity.target_id}</small>` : ''}
+                </td>
+                <td>
+                  ${formatDate(activity.created_at)}<br>
+                  <small class="text-muted">${formatTime(activity.created_at)}</small>
+                </td>
+              `;
+              tableBody.appendChild(row);
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById("activityModal"));
+            modal.show();
+          } catch (error) {
+            console.error("Error showing activity log:", error);
+            showAlert("حدث خطأ في جلب سجل النشاطات", "danger");
+          }
+        }
+
+        // دالة عرض الأعطال العاجلة
+        function showUrgentFailures() {
+          const urgentFailures = failuresData.filter(f => f.urgency_level);
+          updateTableWithData(urgentFailures);
+          showAlert(`عرض ${urgentFailures.length} عطل عاجل`, "warning");
+        }
+
+        // دالة عرض أعطال محطتي
+        function showMyStationFailures() {
+          if (!userStation) {
+            showAlert("لم يتم تحديد محطة للمستخدم الحالي", "warning");
+            return;
+          }
+          
+          const stationFailures = failuresData.filter(f => f.station_name === userStation);
+          updateTableWithData(stationFailures);
+          showAlert(`عرض ${stationFailures.length} عطل لمحطة ${userStation}`, "info");
+        }
+
+        // دالة عرض الأعطال الأخيرة
+        function showRecentFailures() {
+          const recentFailures = failuresData.slice(0, 20); // آخر 20 عطلاً
+          updateTableWithData(recentFailures);
+          showAlert(`عرض آخر ${recentFailures.length} عطل`, "info");
+        }
+
+        // دالة تبديل إظهار/إخفاء الأعمدة
+        function toggleColumnVisibility() {
+          if (dataTable) {
+            dataTable.button('.buttons-colvis').trigger();
+          } else {
+            showAlert("الجدول غير مهيئ بعد", "warning");
+          }
+        }
+
+        // دالة تصدير إلى Excel
+        function exportToExcel() {
+          if (dataTable) {
+            dataTable.button('.buttons-excel').trigger();
+            logActivity("تصدير البيانات", "تم تصدير البيانات إلى Excel", "equipment_failures");
+            showAlert("جاري تصدير البيانات إلى Excel...", "info");
+          } else {
+            showAlert("الجدول غير مهيئ للتصدير", "warning");
+          }
+        }
+
+        // دالة تصدير إلى PDF
+        function exportToPDF() {
+          if (dataTable) {
+            dataTable.button('.buttons-pdf').trigger();
+            logActivity("تصدير البيانات", "تم تصدير البيانات إلى PDF", "equipment_failures");
+            showAlert("جاري تصدير البيانات إلى PDF...", "info");
+          } else {
+            showAlert("الجدول غير مهيئ للتصدير", "warning");
+          }
+        }
+
+        // دالة تصدير إلى CSV
+        function exportToCSV() {
+          showAlert("ميزة تصدير CSV قيد التطوير", "info");
+        }
+
+        // دالة طباعة الجدول
+        function printTable() {
+          if (dataTable) {
+            dataTable.button('.buttons-print').trigger();
+            logActivity("طباعة البيانات", "تم طباعة قائمة الأعطال", "equipment_failures");
+          } else {
+            showAlert("الجدول غير مهيئ للطباعة", "warning");
+          }
+        }
+
+        // دالة طباعة التفاصيل
+        function printDetails() {
+          const printContent = document.getElementById("detailsModalBody")?.innerHTML;
+          if (!printContent) {
+            showAlert("لا توجد تفاصيل للطباعة", "warning");
+            return;
+          }
+          
+          const printWindow = window.open("", "_blank");
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+              <meta charset="UTF-8">
+              <title>تفاصيل العطل</title>
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
+                .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                th { background-color: #f2f2f2; }
+                .badge { padding: 5px 10px; border-radius: 3px; font-size: 12px; }
+                .bg-danger { background-color: #dc3545; color: white; }
+                .bg-success { background-color: #198754; color: white; }
+                .bg-warning { background-color: #ffc107; color: black; }
+                .image-gallery { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+                .image-thumbnail { width: 100px; height: 100px; object-fit: cover; border-radius: 5px; }
+                @media print {
+                  body { padding: 10px; }
+                  .no-print { display: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h2>تفاصيل العطل</h2>
+                <p>نظام إدارة أعطال أجهزة الرصد الجوي</p>
+                <p>تاريخ الطباعة: ${new Date().toLocaleString('ar-SA')}</p>
+              </div>
+              ${printContent}
+            </body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.print();
+        }
+
+        // دالة تنسيق التاريخ
+        function formatDate(dateString) {
+          if (!dateString) return "-";
+          try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "-";
+            return date.toLocaleDateString("ar-SA");
+          } catch (error) {
+            return "-";
+          }
+        }
+
+        // دالة تنسيق الوقت
+        function formatTime(dateString) {
+          if (!dateString) return "";
+          try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "";
+            return date.toLocaleTimeString("ar-SA", {
+              hour: "2-digit",
+              minute: "2-digit"
+            });
+          } catch (error) {
+            return "";
+          }
+        }
+
+        // دالة الحصول على كلاس الشدة
+        function getSeverityClass(severity) {
+          const classMap = {
+            منخفض: "badge-low",
+            متوسط: "badge-medium",
+            مرتفع: "badge-high",
+            حرج: "badge-critical"
+          };
+          return classMap[severity] || "badge-secondary";
+        }
+
+        // دالة الحصول على كلاس الحالة
+        function getStatusClass(status) {
+          const classMap = {
+            pending: "badge-pending",
+            review: "badge-review",
+            in_progress: "badge-in-progress",
+            resolved: "badge-resolved",
+            cancelled: "badge-cancelled"
+          };
+          return classMap[status] || "badge-secondary";
+        }
+
+        // دالة الحصول على نص الحالة
+        function getStatusText(status) {
+          const statusMap = {
+            pending: "قيد المعالجة",
+            review: "في انتظار المراجعة",
+            in_progress: "قيد التنفيذ",
+            resolved: "تم الإصلاح",
+            cancelled: "ملغي"
+          };
+          return statusMap[status] || status;
+        }
+
+        // دالة إظهار/إخفاء شاشة التحميل
+        function showLoading(show) {
+          const loadingOverlay = document.getElementById("loadingOverlay");
+          const mainContent = document.getElementById("mainContent");
+
+          if (show) {
+            loadingOverlay.style.display = "flex";
+            mainContent.style.display = "none";
+          } else {
+            loadingOverlay.style.display = "none";
+            mainContent.style.display = "block";
+          }
+        }
+
+        // دالة لعرض التنبيهات
+        function showAlert(message, type = "info") {
+          // إزالة التنبيهات القديمة
+          const oldAlerts = document.querySelectorAll('.custom-alert');
+          oldAlerts.forEach(alert => alert.remove());
+          
+          const alertDiv = document.createElement("div");
+          alertDiv.className = `alert alert-${type} custom-alert alert-dismissible fade show`;
+          alertDiv.style.cssText = "top: 20px; right: 20px; z-index: 9999; max-width: 400px;";
+          alertDiv.innerHTML = `
+            <div class="d-flex align-items-center">
+              <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'danger' ? 'times-circle' : 'info-circle'} me-2"></i>
+              <span>${message}</span>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+          `;
+
+          document.body.appendChild(alertDiv);
+
+          setTimeout(() => {
+            if (alertDiv.parentNode) {
+              try {
+                alertDiv.remove();
+              } catch (e) {
+                console.log('تم إغلاق التنبيه');
+              }
+            }
+          }, 5000);
+        }
+
+        // جعل الدوال متاحة عالمياً
+        window.loadData = loadData;
+        window.showDetails = showDetails;
+        window.openImageModal = openImageModal;
+        window.openUpdateModal = openUpdateModal;
+        window.updateFailureStatus = updateFailureStatus;
+        window.markAsResolved = markAsResolved;
+        window.deleteFailure = deleteFailure;
+        window.showSystemStats = showSystemStats;
+        window.showActivityLog = showActivityLog;
+        window.showUrgentFailures = showUrgentFailures;
+        window.showMyStationFailures = showMyStationFailures;
+        window.showRecentFailures = showRecentFailures;
+        window.toggleColumnVisibility = toggleColumnVisibility;
+        window.exportToExcel = exportToExcel;
+        window.exportToPDF = exportToPDF;
+        window.exportToCSV = exportToCSV;
+        window.printTable = printTable;
+        window.printDetails = printDetails;
+        window.clearFilters = clearFilters;
+        window.applyFilters = applyFilters;
+
+        // تحديث تلقائي كل 60 ثانية
+        setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            console.log('🔄 تحديث البيانات التلقائي...');
+            loadData();
+          }
+        }, 60000);
+      })();
+    </script>
+
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,2767 @@
+[file name]: staion_rain.json
+[file content begin]
+{
+  "stations": [
+    {
+      "code": "Kassab",
+      "name": "كسب"
+    },
+    {
+      "code": "Bexeria",
+      "name": "بكسريا"
+    },
+    {
+      "code": "AL Difleh",
+      "name": "الدفلة"
+    },
+    {
+      "code": "Qastl muaf",
+      "name": "قسطل معاف"
+    },
+    {
+      "code": "Bdama",
+      "name": "بداما"
+    },
+    {
+      "code": "AL Baidaa",
+      "name": "البيضاء"
+    },
+    {
+      "code": "Zaheieh",
+      "name": "زاهية"
+    },
+    {
+      "code": "Wadi Qandeel",
+      "name": "وادي قنديل"
+    },
+    {
+      "code": "Ein Eido",
+      "name": "عين عيدو"
+    },
+    {
+      "code": "Salma",
+      "name": "سلمى"
+    },
+    {
+      "code": "Sadd Birmaneh",
+      "name": "سد برمانة"
+    },
+    {
+      "code": "Kferieh",
+      "name": "كفرية"
+    },
+    {
+      "code": "Sadd S. Sadeq",
+      "name": "سد صاقية صادق"
+    },
+    {
+      "code": "Saad Karasaneh",
+      "name": "سد كرسانة"
+    },
+    {
+      "code": "سد الحفة",
+      "name": "سد الحفة"
+    },
+    {
+      "code": "Slenfeh",
+      "name": "صلنفة = باب جنة"
+    },
+    {
+      "code": "Ein AL Tteeneh",
+      "name": "عين التينة"
+    },
+    {
+      "code": "Mina AL Baida",
+      "name": "مينا البيضا"
+    },
+    {
+      "code": "Jib Hasan",
+      "name": "جب حسان ـ حسن"
+    },
+    {
+      "code": "Bouqa",
+      "name": "بوقا"
+    },
+    {
+      "code": "Ein Dlaimeh",
+      "name": "عين دليمة"
+    },
+    {
+      "code": "LATTAKIA",
+      "name": "اللاذقية"
+    },
+    {
+      "code": "AL Hassanieh",
+      "name": "الحسانية"
+    },
+    {
+      "code": "Jowbt Brghal",
+      "name": "جوبة برغال"
+    },
+    {
+      "code": "Zano",
+      "name": "زينو"
+    },
+    {
+      "code": "QIRDAHA",
+      "name": "القرداحة"
+    },
+    {
+      "code": "Bsherieh",
+      "name": "بشرية"
+    },
+    {
+      "code": "MATAR AL BASSL -HMIMIM",
+      "name": "مطار الباسل ـ حميميم"
+    },
+    {
+      "code": "Jableh",
+      "name": "جبلة"
+    },
+    {
+      "code": "Mneizleh",
+      "name": "منيزلة"
+    },
+    {
+      "code": "Ein Sharqiyeh",
+      "name": "عين شرقية"
+    },
+    {
+      "code": "Al Sin",
+      "name": "السن"
+    },
+    {
+      "code": "Dwair Baabada",
+      "name": "دوير بعبدا"
+    },
+    {
+      "code": "Banias al Massab",
+      "name": "بانياس المصب- غير بانياس"
+    },
+    {
+      "code": "Shandakha",
+      "name": "شندخة"
+    },
+    {
+      "code": "AL Drdarh",
+      "name": "الدردارة ـ العنازة ـ العليقة"
+    },
+    {
+      "code": "Heilouneh",
+      "name": "الحيلونة"
+    },
+    {
+      "code": "AL Hatriyeh",
+      "name": "الحاطرية"
+    },
+    {
+      "code": "Qadmous",
+      "name": "قدموس"
+    },
+    {
+      "code": "Hammam Wasel",
+      "name": "حمام واصل"
+    },
+    {
+      "code": "Dwair AL Qamisiyh",
+      "name": "دوير القميصية"
+    },
+    {
+      "code": "Wadi AL Eyoun",
+      "name": "وادي العيون"
+    },
+    {
+      "code": "Sheikh Bader",
+      "name": "شيخ بدر"
+    },
+    {
+      "code": "Jnainet Reslan",
+      "name": "جنينة رسلان"
+    },
+    {
+      "code": "Hosn Soulaiman",
+      "name": "حصن سليمان"
+    },
+    {
+      "code": "Mashtl Tartous",
+      "name": "مشتل طرطوس"
+    },
+    {
+      "code": "Dreikeesh",
+      "name": "دريكيش"
+    },
+    {
+      "code": "Mashta Hilow",
+      "name": "مشتى حلو"
+    },
+    {
+      "code": "TARTOUS",
+      "name": "طرطوس"
+    },
+    {
+      "code": "Arwad",
+      "name": "أرواد"
+    },
+    {
+      "code": "Beit  Aslan",
+      "name": "بيت أصلان"
+    },
+    {
+      "code": "Al Hameediyeh",
+      "name": "الحميدية ـ غير عكار"
+    },
+    {
+      "code": "SAFITA",
+      "name": "صافيتا"
+    },
+    {
+      "code": "El Nassrah",
+      "name": "الناصرة"
+    },
+    {
+      "code": "Bourg Arab",
+      "name": "برج عرب"
+    },
+    {
+      "code": "Kal`at AL Huson",
+      "name": "قلعة الحصن"
+    },
+    {
+      "code": "Safsafeh",
+      "name": "الصفصافة"
+    },
+    {
+      "code": "Sadd Kh. AL Hammam",
+      "name": "سد خربة الحمام"
+    },
+    {
+      "code": "Sadd Tel Kalakh",
+      "name": "سد تلكلخ ـ سد خربة الجباب"
+    },
+    {
+      "code": "Qarto",
+      "name": "كرتو"
+    },
+    {
+      "code": "EL Arida",
+      "name": "العريضة ـ غير مشتل العريضة"
+    },
+    {
+      "code": "Bahra",
+      "name": "البحرة"
+    },
+    {
+      "code": "Sadd Nahr Kabeer",
+      "name": "سد نهر الكبير الشمالي ـ16تشرين"
+    },
+    {
+      "code": "Joubt Mjber",
+      "name": "جوبة مجبر"
+    },
+    {
+      "code": "El Buetat",
+      "name": "البويتات"
+    },
+    {
+      "code": "Pastaueer",
+      "name": "بسطوير"
+    },
+    {
+      "code": "Kom",
+      "name": "الكوم"
+    },
+    {
+      "code": "Zaher Safra",
+      "name": "ظهر صفرا"
+    },
+    {
+      "code": "El Kafroon",
+      "name": "الكفرون"
+    },
+    {
+      "code": "Sadd bit al quseir",
+      "name": "سد بيت القصير"
+    },
+    {
+      "code": "Setkhairis",
+      "name": "ستخيرس"
+    },
+    {
+      "code": "Ain-kita",
+      "name": "بيت ياشوط ـ عين قيطة"
+    },
+    {
+      "code": "Salah al deen",
+      "name": "صلاح الدين"
+    },
+    {
+      "code": "Boulbol",
+      "name": "بلبل"
+    },
+    {
+      "code": "Mersawa",
+      "name": "مرساوا"
+    },
+    {
+      "code": "Sagher Obasi",
+      "name": "صاغر أوباسي"
+    },
+    {
+      "code": "Rajo",
+      "name": "راجو"
+    },
+    {
+      "code": "Midanky",
+      "name": "ميدانكي"
+    },
+    {
+      "code": "Korkan Foqany",
+      "name": "كوركان فوقاني"
+    },
+    {
+      "code": "Mazra 'et Sino",
+      "name": "مزرعة سينو"
+    },
+    {
+      "code": "Mirkan",
+      "name": "ميركان"
+    },
+    {
+      "code": "Afreen",
+      "name": "عفرين"
+    },
+    {
+      "code": "Dalyanly",
+      "name": "داليانلي"
+    },
+    {
+      "code": "Anqaleh",
+      "name": "أنقلة"
+    },
+    {
+      "code": "Marwaneh Foqany",
+      "name": "مروانة فوقاني"
+    },
+    {
+      "code": "Basouta",
+      "name": "الباسوطة"
+    },
+    {
+      "code": "Jandeeress",
+      "name": "جنديرس"
+    },
+    {
+      "code": "Al Hammam",
+      "name": "الحمام"
+    },
+    {
+      "code": "Harem",
+      "name": "حارم"
+    },
+    {
+      "code": "Qorqania",
+      "name": "قورقانية"
+    },
+    {
+      "code": "Kofor Tkhareem",
+      "name": "كفر التخاريم"
+    },
+    {
+      "code": "Armanaz",
+      "name": "أرمناز"
+    },
+    {
+      "code": "Darkoush",
+      "name": "دركوش"
+    },
+    {
+      "code": "Rouge Abhas",
+      "name": "روج أبحاث"
+    },
+    {
+      "code": "Tezeen",
+      "name": "تيزين"
+    },
+    {
+      "code": "Rouge Bal 'a",
+      "name": "روج بالعة"
+    },
+    {
+      "code": "Aura wastani -Seejar",
+      "name": "السيجرـ عرى الوسطاني"
+    },
+    {
+      "code": "Jisr El shoughour",
+      "name": "جسر الشغور"
+    },
+    {
+      "code": "Muhanbel",
+      "name": "محنبل"
+    },
+    {
+      "code": "Sh. Sindian Foqany",
+      "name": "شيخ سنديان فوقاني ـ الحمامة"
+    },
+    {
+      "code": "Ahsam-ein Larouz",
+      "name": "أحسم ـ عين لاروز"
+    },
+    {
+      "code": "Daqmaq",
+      "name": "دقماق"
+    },
+    {
+      "code": "Joureen",
+      "name": "جورين"
+    },
+    {
+      "code": "Kofor Nibule",
+      "name": "كفر نبل"
+    },
+    {
+      "code": "Tel Errasem",
+      "name": "تل الرسم"
+    },
+    {
+      "code": "AL Jayyed",
+      "name": "الجيد"
+    },
+    {
+      "code": "Qorsa 'a",
+      "name": "كورسعة ـ معرة مرقة"
+    },
+    {
+      "code": "Shat 'ha",
+      "name": "شطحة"
+    },
+    {
+      "code": "Merdash",
+      "name": "مرداش"
+    },
+    {
+      "code": "Sadd AL Habeet",
+      "name": "سد الهبيط ـ غبر الهبيط"
+    },
+    {
+      "code": "Khan Sheikhoun",
+      "name": "خان شيخون"
+    },
+    {
+      "code": "AL Kraim",
+      "name": "الكريم ـ بحوث الغاب"
+    },
+    {
+      "code": "Tel Maraq",
+      "name": "تل مرق ـ خوبة الكبير"
+    },
+    {
+      "code": "Tel Khanzeer",
+      "name": "تل خنزير"
+    },
+    {
+      "code": "Hwash AL Ghab",
+      "name": "حواش الغاب ـ الحواش"
+    },
+    {
+      "code": "Suqeilbiyeh",
+      "name": "صقيلبية"
+    },
+    {
+      "code": "El Habeet",
+      "name": "الهبيط ـ غير سد الهبيط"
+    },
+    {
+      "code": "Kofor Zita",
+      "name": "كفر زيتا- غير زيتا"
+    },
+    {
+      "code": "Hawrat Amoureen",
+      "name": "حورات عمورين"
+    },
+    {
+      "code": "Ein AL Kroum",
+      "name": "عين الكروم"
+    },
+    {
+      "code": "AL Asharneh",
+      "name": "العشارنة"
+    },
+    {
+      "code": "Souran",
+      "name": "صوران"
+    },
+    {
+      "code": "Mhardeh",
+      "name": "محردة ـ سد محردة"
+    },
+    {
+      "code": "Abu Qbees",
+      "name": "أبو قبيس"
+    },
+    {
+      "code": "AL Sheeha",
+      "name": "الشيحا"
+    },
+    {
+      "code": "HAMA  ABHAS",
+      "name": "حماة الزراعية"
+    },
+    {
+      "code": "HAMA  MATAR",
+      "name": "حماه المطار"
+    },
+    {
+      "code": "AL Rabbeea",
+      "name": "الربيعة ـ حماه"
+    },
+    {
+      "code": "Ein Saleemo",
+      "name": "عين سليمو"
+    },
+    {
+      "code": "Mab'aoujeh",
+      "name": "المبعوجة"
+    },
+    {
+      "code": "Rab 'ao",
+      "name": "ربعو"
+    },
+    {
+      "code": "Messiaf",
+      "name": "مصياف"
+    },
+    {
+      "code": "Deir El Ssaleeb",
+      "name": "دير الصليب"
+    },
+    {
+      "code": "AL Rasafeh",
+      "name": "الرصافة"
+    },
+    {
+      "code": "Sighata",
+      "name": "سيغاتا"
+    },
+    {
+      "code": "Bireen",
+      "name": "بيرين"
+    },
+    {
+      "code": "Jib Ramleh",
+      "name": "جب رملة"
+    },
+    {
+      "code": "Deir Shmayyel",
+      "name": "دير الشميل"
+    },
+    {
+      "code": "Om Ettiour",
+      "name": "أم الطيور"
+    },
+    {
+      "code": "SALAMIYEH",
+      "name": "السلمية"
+    },
+    {
+      "code": "Humairi",
+      "name": "الحميري"
+    },
+    {
+      "code": "Bayadiyeh",
+      "name": "البياضية"
+    },
+    {
+      "code": "Ein Hlaqeem",
+      "name": "عين حلاقيم"
+    },
+    {
+      "code": "Nissaf",
+      "name": "نيصاف"
+    },
+    {
+      "code": "Hurr Benafsoh",
+      "name": "حر بنفسه"
+    },
+    {
+      "code": "AL RASTAN",
+      "name": "الرستن"
+    },
+    {
+      "code": "Izz Eddin",
+      "name": "عز الدين"
+    },
+    {
+      "code": "Tel Zahab",
+      "name": "تل ذهب"
+    },
+    {
+      "code": "Taldaw",
+      "name": "تلدو"
+    },
+    {
+      "code": "Sheen",
+      "name": "شين"
+    },
+    {
+      "code": "Mariameen",
+      "name": "مريمين"
+    },
+    {
+      "code": "Hiddiyeh",
+      "name": "حدية"
+    },
+    {
+      "code": "Qasraya",
+      "name": "قصرايا"
+    },
+    {
+      "code": "Ein Ennisr",
+      "name": "عين النسر"
+    },
+    {
+      "code": "Talbeeseh",
+      "name": "تلبيسة"
+    },
+    {
+      "code": "AL Musherfeh-homs",
+      "name": "المشيرفة ـ حمص"
+    },
+    {
+      "code": "Jib al Jarrah",
+      "name": "جب الجراح"
+    },
+    {
+      "code": "Kfrram- Rabah",
+      "name": "كفرام ـ رباح"
+    },
+    {
+      "code": "Tareen",
+      "name": "تارين"
+    },
+    {
+      "code": "Sadd Tlail",
+      "name": "سد تليل ـ تل تليل"
+    },
+    {
+      "code": "Mokharram Foqany",
+      "name": "مخرم فوقاني"
+    },
+    {
+      "code": "HOMS",
+      "name": "حمص"
+    },
+    {
+      "code": "Ram AL Anz",
+      "name": "رام العنز"
+    },
+    {
+      "code": "Sadd El Zza'faraneh",
+      "name": "سد الزعفرانة"
+    },
+    {
+      "code": "Khirbet Etteen",
+      "name": "خربة التين - التين"
+    },
+    {
+      "code": "Homs AL Buhera",
+      "name": "حمص البحيرة ـ قطينة"
+    },
+    {
+      "code": "Friqlos",
+      "name": "فركلس"
+    },
+    {
+      "code": "Shinshar",
+      "name": "شنشار"
+    },
+    {
+      "code": "Tel Mando",
+      "name": "تل مندو"
+    },
+    {
+      "code": "Raqama",
+      "name": "الرقامة"
+    },
+    {
+      "code": "Shamseen",
+      "name": "شمسين"
+    },
+    {
+      "code": "Qussir Homs",
+      "name": "قصير حمص"
+    },
+    {
+      "code": "Manzool",
+      "name": "المنزول"
+    },
+    {
+      "code": "Hasia",
+      "name": "حسيا"
+    },
+    {
+      "code": "Sadad",
+      "name": "صدد"
+    },
+    {
+      "code": "Breij",
+      "name": "البريج"
+    },
+    {
+      "code": "Qara",
+      "name": "قارة ـ جبل قارة"
+    },
+    {
+      "code": "Deir Atiyeh",
+      "name": "دير عطية"
+    },
+    {
+      "code": "AL Jarajeer",
+      "name": "الجراجير"
+    },
+    {
+      "code": "NABEK",
+      "name": "النبك"
+    },
+    {
+      "code": "AL Musherfeh-Nabk",
+      "name": "المشيرفة ـ النبك"
+    },
+    {
+      "code": "Yabroud",
+      "name": "يبرود"
+    },
+    {
+      "code": "Asal al Ward",
+      "name": "عسال الورد"
+    },
+    {
+      "code": "Hwash Homs",
+      "name": "حواش ـ تلكلخ ـ حمص"
+    },
+    {
+      "code": "Barsheen",
+      "name": "برشين"
+    },
+    {
+      "code": "AL muktarieh",
+      "name": "المختارية ـ بحوث الري"
+    },
+    {
+      "code": "Mustafa Murtada",
+      "name": "مصطفى مرتضى"
+    },
+    {
+      "code": "Al Taauneh",
+      "name": "التاعونة"
+    },
+    {
+      "code": "Al Jibseh",
+      "name": "الجبسة"
+    },
+    {
+      "code": "Al Zuwaitineh",
+      "name": "الزويتينة"
+    },
+    {
+      "code": "Al SHOMRIEH",
+      "name": "الشومرية"
+    },
+    {
+      "code": "ُEl Foz",
+      "name": "الفوز"
+    },
+    {
+      "code": "Buth",
+      "name": "بعيث"
+    },
+    {
+      "code": "Tl Baider",
+      "name": "تل البيدر ـ البيدر"
+    },
+    {
+      "code": "Tammazeh",
+      "name": "تمازة"
+    },
+    {
+      "code": "Teen Essabeel",
+      "name": "تين أسبيل"
+    },
+    {
+      "code": "Jabal Kokab",
+      "name": "جبل كوكب ـ كوكب"
+    },
+    {
+      "code": "Jelqumeh",
+      "name": "جلقمة"
+    },
+    {
+      "code": "Khirbet El Sendian",
+      "name": "خربة السنديانة - اللاذقية"
+    },
+    {
+      "code": "khirbet Al Maten",
+      "name": "خربة المتن ـ المتن ـ اللاذقية"
+    },
+    {
+      "code": "Drekeesh Zuraib",
+      "name": "دريكيش زريب"
+    },
+    {
+      "code": "Sadd Sraiheen",
+      "name": "سد سرحان"
+    },
+    {
+      "code": "Aqrab",
+      "name": "عقرب ـ غير عقربة"
+    },
+    {
+      "code": "Qurb Ali",
+      "name": "قرب علي"
+    },
+    {
+      "code": "Ma'ret El Basha",
+      "name": "معرة الباشا"
+    },
+    {
+      "code": "Ho Bkanii",
+      "name": "هو بكاني"
+    },
+    {
+      "code": "Derchan",
+      "name": "الدردغان ـ حسن علي الكردي"
+    },
+    {
+      "code": "Mhasseh",
+      "name": "محسة"
+    },
+    {
+      "code": "El Nasreeh",
+      "name": "الناصرية"
+    },
+    {
+      "code": "Saneit Al Yabardh",
+      "name": "ثنية اليبادرة ـ المنقورة"
+    },
+    {
+      "code": "AL Marah",
+      "name": "المراح"
+    },
+    {
+      "code": "Ma'loula",
+      "name": "معلولا"
+    },
+    {
+      "code": "Jeiroud",
+      "name": "جيرود"
+    },
+    {
+      "code": "Ettawany",
+      "name": "التواني"
+    },
+    {
+      "code": "Rankous",
+      "name": "رنكوس"
+    },
+    {
+      "code": "Zabadani",
+      "name": "الزبداني"
+    },
+    {
+      "code": "Qutaifeh",
+      "name": "قطيفة"
+    },
+    {
+      "code": "Madaya_ n.barada",
+      "name": "مضايا ـ نبع بردى"
+    },
+    {
+      "code": "Seidnaya",
+      "name": "صيدنايا ـ غير معرة صيدنايا"
+    },
+    {
+      "code": "Halboun",
+      "name": "حلبون"
+    },
+    {
+      "code": "Jdeidet Yabous",
+      "name": "جديدة يابوس"
+    },
+    {
+      "code": "Al Rawda - batronh",
+      "name": "الروضة ـ بترونة"
+    },
+    {
+      "code": "Al Tal- Mneen",
+      "name": "التل ـ تل منين"
+    },
+    {
+      "code": "Ma'rouneh",
+      "name": "معرونة"
+    },
+    {
+      "code": "Tkiyeh",
+      "name": "التكية"
+    },
+    {
+      "code": "Ein al Feejeh",
+      "name": "عين الفيجة"
+    },
+    {
+      "code": "Adra",
+      "name": "عدرا"
+    },
+    {
+      "code": "Meisaloun",
+      "name": "ميسلون"
+    },
+    {
+      "code": "Dimas",
+      "name": "الديماس"
+    },
+    {
+      "code": "Joubar",
+      "name": "جوبر"
+    },
+    {
+      "code": "Sarghaya",
+      "name": "سرغايا"
+    },
+    {
+      "code": "Harasta",
+      "name": "حرستا"
+    },
+    {
+      "code": "Ma'raba",
+      "name": "معربا"
+    },
+    {
+      "code": "Maida'a",
+      "name": "ميدعا"
+    },
+    {
+      "code": "Al Hama",
+      "name": "الهامة"
+    },
+    {
+      "code": "Douma",
+      "name": "دوما"
+    },
+    {
+      "code": "AL Saboura",
+      "name": "الصبورة ـ الإستشعار عن بعد"
+    },
+    {
+      "code": "Rakhleh",
+      "name": "رخلة"
+    },
+    {
+      "code": "Ya'four",
+      "name": "يعفور"
+    },
+    {
+      "code": "KHARABO",
+      "name": "خرابو"
+    },
+    {
+      "code": "MATAR AL MEZZE",
+      "name": "مطار المزة"
+    },
+    {
+      "code": "AL utaybeh",
+      "name": "العتيبة"
+    },
+    {
+      "code": "Qatana",
+      "name": "قطنا"
+    },
+    {
+      "code": "Artoyz",
+      "name": "عرطوز"
+    },
+    {
+      "code": "DAMASCUS   INT",
+      "name": "دمشق الدولي"
+    },
+    {
+      "code": "Qrahta",
+      "name": "قرحتا"
+    },
+    {
+      "code": "Bqa'sam",
+      "name": "بقعسم"
+    },
+    {
+      "code": "Erneh",
+      "name": "عرنة"
+    },
+    {
+      "code": "Bet Teema",
+      "name": "بيت تيما"
+    },
+    {
+      "code": "Al Kosweh",
+      "name": "الكسوة"
+    },
+    {
+      "code": "Deir Al Hajar",
+      "name": "دير الحجر ـ الطاقة الذرية"
+    },
+    {
+      "code": "El Haijaneh",
+      "name": "الهيجانة"
+    },
+    {
+      "code": "Zakieh",
+      "name": "زاكية"
+    },
+    {
+      "code": "Beit Jin",
+      "name": "بيت جن"
+    },
+    {
+      "code": "Om Esharateet",
+      "name": "أم الشراطيط"
+    },
+    {
+      "code": "Doreen",
+      "name": "دورين"
+    },
+    {
+      "code": "Khlkhlih",
+      "name": "خلخلة ـ مروان زين العابدين"
+    },
+    {
+      "code": "Jaramana",
+      "name": "جرمانا"
+    },
+    {
+      "code": "Darai",
+      "name": "داريا"
+    },
+    {
+      "code": "Mashtal dwer heraj",
+      "name": "مشتل الدوير الحراجي"
+    },
+    {
+      "code": "MEZZE EMARKAZI",
+      "name": "مزة المركزي"
+    },
+    {
+      "code": "Barzh Al balad",
+      "name": "برزة البلد"
+    },
+    {
+      "code": "Dumar",
+      "name": "دمر"
+    },
+    {
+      "code": "Muhajren",
+      "name": "المهاجرين"
+    },
+    {
+      "code": "Jdaidh Artouz",
+      "name": "جديدة عرطوز"
+    },
+    {
+      "code": "Zbdeen",
+      "name": "زبدين"
+    },
+    {
+      "code": "Ain Mneen",
+      "name": "عين منين"
+    },
+    {
+      "code": "Nashabieh",
+      "name": "النشابية"
+    },
+    {
+      "code": "Abu eshamat",
+      "name": "أبو الشامات"
+    },
+    {
+      "code": "Kassyoun",
+      "name": "قاسيون"
+    },
+    {
+      "code": "M'aret-sednaia",
+      "name": "معرة صيدنايا ـ غير صيدنايا"
+    },
+    {
+      "code": "Dmeir",
+      "name": "الضمير ـ عمر صقر"
+    },
+    {
+      "code": "Hala",
+      "name": "حلا"
+    },
+    {
+      "code": "Ghabagheb",
+      "name": "غباغب"
+    },
+    {
+      "code": "AL Shara'a",
+      "name": "الشرائع - المسيحية"
+    },
+    {
+      "code": "Sanamein",
+      "name": "الصنمين"
+    },
+    {
+      "code": "Hazm",
+      "name": "حزم"
+    },
+    {
+      "code": "AL Harra",
+      "name": "الحارة"
+    },
+    {
+      "code": "Inkhel",
+      "name": "أنخل"
+    },
+    {
+      "code": "Khabab",
+      "name": "خبب"
+    },
+    {
+      "code": "Jasem",
+      "name": "جاسم"
+    },
+    {
+      "code": "Sowara",
+      "name": "الصورة الصغرى"
+    },
+    {
+      "code": "Buthyneh",
+      "name": "بثينة"
+    },
+    {
+      "code": "Om ezzaitoun",
+      "name": "أم الزيتون"
+    },
+    {
+      "code": "Nawa",
+      "name": "نوى"
+    },
+    {
+      "code": "Shaqa",
+      "name": "شقا"
+    },
+    {
+      "code": "Izra'",
+      "name": "إزرع"
+    },
+    {
+      "code": "Shahba",
+      "name": "شهبا - شهبا الجنوبية"
+    },
+    {
+      "code": "Nemra",
+      "name": "نمرة"
+    },
+    {
+      "code": "Tseel",
+      "name": "تسيل"
+    },
+    {
+      "code": "Sheikh Meskeen",
+      "name": "شيخ مسكين"
+    },
+    {
+      "code": "EL Majdal",
+      "name": "المجدل _ السجن"
+    },
+    {
+      "code": "Maf'aleh",
+      "name": "مفعلة"
+    },
+    {
+      "code": "Kafr shams",
+      "name": "كفر شمس"
+    },
+    {
+      "code": "Tafas",
+      "name": "طفس"
+    },
+    {
+      "code": "Sweida",
+      "name": "السويداء"
+    },
+    {
+      "code": "Tel Shehab",
+      "name": "تل شهاب"
+    },
+    {
+      "code": "Om Walad",
+      "name": "أم ولد"
+    },
+    {
+      "code": "Na'eemeh",
+      "name": "نعيمة"
+    },
+    {
+      "code": "Saida - DARA",
+      "name": "صيداـ درعا"
+    },
+    {
+      "code": "Ura-south",
+      "name": "عرى الجنوبية"
+    },
+    {
+      "code": "El Kafr",
+      "name": "الكفر"
+    },
+    {
+      "code": "Mseifreh",
+      "name": "مسيفرة"
+    },
+    {
+      "code": "Darah",
+      "name": "دارة"
+    },
+    {
+      "code": "El Mjaimer",
+      "name": "المجيمر"
+    },
+    {
+      "code": "Naseeb",
+      "name": "نصيب"
+    },
+    {
+      "code": "Busra El sham",
+      "name": "بصرى الشام"
+    },
+    {
+      "code": "Sadd El Aiyen",
+      "name": "سد العين"
+    },
+    {
+      "code": "Arman",
+      "name": "عرمان"
+    },
+    {
+      "code": "Smad",
+      "name": "صماد"
+    },
+    {
+      "code": "Salkhad",
+      "name": "صلخد"
+    },
+    {
+      "code": "Zebeen",
+      "name": "ذيبين"
+    },
+    {
+      "code": "Samaj",
+      "name": "سمج"
+    },
+    {
+      "code": "Tesya",
+      "name": "طيسيا"
+    },
+    {
+      "code": "Imtan",
+      "name": "امتان"
+    },
+    {
+      "code": "Khrbet Awwad",
+      "name": "خربة عواد"
+    },
+    {
+      "code": "Mazra't Beet Jin",
+      "name": "مزرعة بيت جن"
+    },
+    {
+      "code": "Naba Elsakhr",
+      "name": "نبع الصخر"
+    },
+    {
+      "code": "HadarQ",
+      "name": "حضر"
+    },
+    {
+      "code": "Sa'sa",
+      "name": "سعسع"
+    },
+    {
+      "code": "QOUNIETRA",
+      "name": "القنيطرة"
+    },
+    {
+      "code": "DAR ' A",
+      "name": "درعا"
+    },
+    {
+      "code": "El hrak",
+      "name": "الحراك"
+    },
+    {
+      "code": "El khshneeh",
+      "name": "الخشنية"
+    },
+    {
+      "code": "Mzareb",
+      "name": "مزيريب"
+    },
+    {
+      "code": "Ein El arab -south",
+      "name": "عين العرب الجنوبية"
+    },
+    {
+      "code": "Play",
+      "name": "بلي ـ عبد الستار عبد الله"
+    },
+    {
+      "code": "Khan-arnabeh",
+      "name": "خان أرنبةـ بحوث الري ـ القنيطرة"
+    },
+    {
+      "code": "Jelleen",
+      "name": "جلين"
+    },
+    {
+      "code": "Tarba",
+      "name": "طربا"
+    },
+    {
+      "code": "El Sowar",
+      "name": "الصور"
+    },
+    {
+      "code": "Tha'leh",
+      "name": "الثعلة ـ دياب الحريري"
+    },
+    {
+      "code": "Qhtaneeieh",
+      "name": "القحطانية - القنيطرة"
+    },
+    {
+      "code": "Beer ajam",
+      "name": "بئر عجم"
+    },
+    {
+      "code": "Al Rafeed",
+      "name": "الرفيد"
+    },
+    {
+      "code": "Al Hajjeh",
+      "name": "الهجة"
+    },
+    {
+      "code": "Hirjilleh",
+      "name": "حرجلة"
+    },
+    {
+      "code": "Dour",
+      "name": "الدور"
+    },
+    {
+      "code": "Raai",
+      "name": "الراعي"
+    },
+    {
+      "code": "Sadd Om Eljloud",
+      "name": "سد أم جلود"
+    },
+    {
+      "code": "Qatma",
+      "name": "قطمة"
+    },
+    {
+      "code": "Izaz",
+      "name": "اعزاز"
+    },
+    {
+      "code": "Dwaibeq",
+      "name": "دويبق"
+    },
+    {
+      "code": "Manbej",
+      "name": "منبج"
+    },
+    {
+      "code": "Mare'",
+      "name": "مارع"
+    },
+    {
+      "code": "Sadd Eshahba'",
+      "name": "سد الشهبا"
+    },
+    {
+      "code": "El Bab",
+      "name": "الباب"
+    },
+    {
+      "code": "Nibule",
+      "name": "نبل"
+    },
+    {
+      "code": "Tadef",
+      "name": "تادف"
+    },
+    {
+      "code": "Borg Haidar",
+      "name": "برج حيدر"
+    },
+    {
+      "code": "MESSELMIYEH",
+      "name": "المسلمية"
+    },
+    {
+      "code": "Daret Izzeh",
+      "name": "دارة عزة"
+    },
+    {
+      "code": "Za' raya",
+      "name": "زعرايا"
+    },
+    {
+      "code": "Tqad",
+      "name": "تقاد"
+    },
+    {
+      "code": "Injara",
+      "name": "عنجارة"
+    },
+    {
+      "code": "Aleppo-mashtal",
+      "name": "مشتل حلب"
+    },
+    {
+      "code": "Dana",
+      "name": "الدانا"
+    },
+    {
+      "code": "ALEPPO",
+      "name": "حلب"
+    },
+    {
+      "code": "Orem Essughra",
+      "name": "أورم الصغرى"
+    },
+    {
+      "code": "Hmaimeh",
+      "name": "حميمة"
+    },
+    {
+      "code": "Hazano",
+      "name": "حزانو"
+    },
+    {
+      "code": "El Sfeereh",
+      "name": "السفيرة"
+    },
+    {
+      "code": "Jabboul",
+      "name": "الجبول"
+    },
+    {
+      "code": "Kofor Aleppo",
+      "name": "كفر حلب"
+    },
+    {
+      "code": "Kitian",
+      "name": "كتيان ـ مغارة الخاسكي"
+    },
+    {
+      "code": "Rasme El Ghazal",
+      "name": "رسم الغزال"
+    },
+    {
+      "code": "Tat",
+      "name": "طاط"
+    },
+    {
+      "code": "IDLEB",
+      "name": "ادلب"
+    },
+    {
+      "code": "Bardeh",
+      "name": "بردة"
+    },
+    {
+      "code": "Zammar",
+      "name": "الزمار"
+    },
+    {
+      "code": "Saraqeb",
+      "name": "سراقب"
+    },
+    {
+      "code": "Tal Toqan",
+      "name": "تل طوقان"
+    },
+    {
+      "code": "Abu Dhour",
+      "name": "أبو الضهور"
+    },
+    {
+      "code": "El Boaider",
+      "name": "البويدر"
+    },
+    {
+      "code": "Tel Mennes",
+      "name": "تل منس ـ معرة النعمان"
+    },
+    {
+      "code": "Zabad",
+      "name": "زبد"
+    },
+    {
+      "code": "Autmanli",
+      "name": "عطمانلي"
+    },
+    {
+      "code": "Mamanli",
+      "name": "ممانلي"
+    },
+    {
+      "code": "Deer Hafer",
+      "name": "دير حافر"
+    },
+    {
+      "code": "Akhtreen",
+      "name": "أخترين"
+    },
+    {
+      "code": "El zrba",
+      "name": "الزربا ـ مبقرة الزربا"
+    },
+    {
+      "code": "Elatarep",
+      "name": "الأتارب"
+    },
+    {
+      "code": "Mork",
+      "name": "مورك"
+    },
+    {
+      "code": "El m'asrounh",
+      "name": "المعيصرونة"
+    },
+    {
+      "code": "Qarqour",
+      "name": "قرقور"
+    },
+    {
+      "code": "Serbaia",
+      "name": "صربايا"
+    },
+    {
+      "code": "Markaz Abhas idleb",
+      "name": "مركز أبحاث أدلب"
+    },
+    {
+      "code": "Kshaish",
+      "name": "كشيش ـ مفيد عجان الحديد ـ جب الجراح"
+    },
+    {
+      "code": "Tftanaaz",
+      "name": "تفتناز ـ مطري"
+    },
+    {
+      "code": "GHASANEIYEH",
+      "name": "الغسانية"
+    },
+    {
+      "code": "Ariha",
+      "name": "أريحا"
+    },
+    {
+      "code": "Jib eddam",
+      "name": "جب ايدم"
+    },
+    {
+      "code": "Hewar Killis",
+      "name": "حوار كلاس"
+    },
+    {
+      "code": "Rasm elaboud",
+      "name": "رسم العبود ـ جميل الزعبي"
+    },
+    {
+      "code": "Ettaybeh",
+      "name": "الطيبة حلب"
+    },
+    {
+      "code": "Al Rhieba",
+      "name": "الرحيبة"
+    },
+    {
+      "code": "Deir AL lbn",
+      "name": "دير اللبن"
+    },
+    {
+      "code": "Mrmareta",
+      "name": "مرمريتا"
+    },
+    {
+      "code": "Ettaaybeh - north",
+      "name": "الطيبة الشمالية"
+    },
+    {
+      "code": "El hajeb",
+      "name": "الحاجب"
+    },
+    {
+      "code": "Khanasser",
+      "name": "خناصر"
+    },
+    {
+      "code": "Hanouteh",
+      "name": "الحانوتة"
+    },
+    {
+      "code": "El Mraijeb",
+      "name": "المريجب"
+    },
+    {
+      "code": "Shujairi",
+      "name": "الشجيري"
+    },
+    {
+      "code": "Athria",
+      "name": "أثريا"
+    },
+    {
+      "code": "El Hamra'",
+      "name": "الحمراء"
+    },
+    {
+      "code": "El Sa'n",
+      "name": "السعن"
+    },
+    {
+      "code": "Sh. Ali Kasoun",
+      "name": "الشيخ علي كاسون"
+    },
+    {
+      "code": "Jolet El Ghirr",
+      "name": "جولة الغر ـ الشولة"
+    },
+    {
+      "code": "Ukeirbat",
+      "name": "عقيربات"
+    },
+    {
+      "code": "El sukhneh",
+      "name": "السخنة"
+    },
+    {
+      "code": "S.wadi el kabeer",
+      "name": "سد وادي الكبير"
+    },
+    {
+      "code": "El Hwaiyeh",
+      "name": "الهوية"
+    },
+    {
+      "code": "Sadd Zkakiyeh",
+      "name": "سد زكاكية - وادي أبيض"
+    },
+    {
+      "code": "Sawaneh - E",
+      "name": "رسم الصوانة الشرقية - رسم الصوان"
+    },
+    {
+      "code": "Amoudiyeh",
+      "name": "العامودية ـ حمص ـ غير عامودا"
+    },
+    {
+      "code": "Sadd Sleem",
+      "name": "سد سليم"
+    },
+    {
+      "code": "Sadd jebab shaqra",
+      "name": "سد جباب شقرا"
+    },
+    {
+      "code": "T4",
+      "name": "ط 4 - تيفور"
+    },
+    {
+      "code": "PALMYRA",
+      "name": "تدمر"
+    },
+    {
+      "code": "El Maqsam",
+      "name": "المقسم"
+    },
+    {
+      "code": "El Qaryatein",
+      "name": "القريتين"
+    },
+    {
+      "code": "Sawaneh -E",
+      "name": "الصوانة الشرقية ـ الصوانة"
+    },
+    {
+      "code": "Khnaifees",
+      "name": "خنيفيس"
+    },
+    {
+      "code": "Sadd El Qaryatein",
+      "name": "سد القريتين"
+    },
+    {
+      "code": "Beer Anebh",
+      "name": "بير عنيبة"
+    },
+    {
+      "code": "Saba'  Biar",
+      "name": "السبع بيار"
+    },
+    {
+      "code": "Beer Sshahmeh",
+      "name": "بير الشحمة"
+    },
+    {
+      "code": "EL tanf",
+      "name": "التنف"
+    },
+    {
+      "code": "Rdaimeh Esharqeyeh",
+      "name": "الرضيمة الشرقية"
+    },
+    {
+      "code": "Om Rwaq",
+      "name": "أم رواق"
+    },
+    {
+      "code": "El Mushannaf",
+      "name": "المشنف"
+    },
+    {
+      "code": "El Shraihy",
+      "name": "الشريحي"
+    },
+    {
+      "code": "Rasheebah",
+      "name": "الرشيدة"
+    },
+    {
+      "code": "Salleh",
+      "name": "سالة"
+    },
+    {
+      "code": "Al Awabed",
+      "name": "الوبيد"
+    },
+    {
+      "code": "Midan Ashaq",
+      "name": "ميدان أشكاك"
+    },
+    {
+      "code": "Zalaf",
+      "name": "الزلف"
+    },
+    {
+      "code": "T 3",
+      "name": "المحطة الثالة ـ ط3"
+    },
+    {
+      "code": "Al Jehar",
+      "name": "الجحار"
+    },
+    {
+      "code": "Alayyan",
+      "name": "العليان"
+    },
+    {
+      "code": "El mashqouqa",
+      "name": "المشكاكا"
+    },
+    {
+      "code": "Mhineiyeh",
+      "name": "المهينية"
+    },
+    {
+      "code": "Nabtiyeh",
+      "name": "النبطية"
+    },
+    {
+      "code": "El bayda",
+      "name": "البيضا"
+    },
+    {
+      "code": "El Dab'a",
+      "name": "الضبعة"
+    },
+    {
+      "code": "Khirbet El Omar",
+      "name": "خربة العمر"
+    },
+    {
+      "code": "Baaren",
+      "name": "بعرين"
+    },
+    {
+      "code": "Khirbet Qazee",
+      "name": "خربة غازي"
+    },
+    {
+      "code": "Ein Diwar",
+      "name": "عين ديوار"
+    },
+    {
+      "code": "Zuheiriyeh",
+      "name": "الزهيرية"
+    },
+    {
+      "code": "Malkiyeh",
+      "name": "مالكية"
+    },
+    {
+      "code": "Kharazeh",
+      "name": "خرزة"
+    },
+    {
+      "code": "Amouda",
+      "name": "عامودا ـ غير العامودية"
+    },
+    {
+      "code": "Derbasiyeh",
+      "name": "درباسية"
+    },
+    {
+      "code": "Tel Jihad",
+      "name": "تل جهاد"
+    },
+    {
+      "code": "Tel Taweel",
+      "name": "تل طويل"
+    },
+    {
+      "code": "Himo",
+      "name": "هيمو"
+    },
+    {
+      "code": "QAMISHLI",
+      "name": "القامشلي"
+    },
+    {
+      "code": "Qahtaneiyeh",
+      "name": "القحطانية ـ الحسكة"
+    },
+    {
+      "code": "Arradeh",
+      "name": "عرادة"
+    },
+    {
+      "code": "El Jawadiyeh",
+      "name": "الجوادية"
+    },
+    {
+      "code": "Ein El Arab -N",
+      "name": "عين العرب الشمالية"
+    },
+    {
+      "code": "Hitteen",
+      "name": "حطين"
+    },
+    {
+      "code": "Abu El Qassa' eb",
+      "name": "أبو القصائب"
+    },
+    {
+      "code": "JARABLUS",
+      "name": "جرابلس"
+    },
+    {
+      "code": "Ra' s El Ein",
+      "name": "رأس العين"
+    },
+    {
+      "code": "Ya' rubeiyeh",
+      "name": "اليعربية"
+    },
+    {
+      "code": "Sadd Kareemeh",
+      "name": "سد كريمة"
+    },
+    {
+      "code": "Qandriyeh",
+      "name": "قندرية"
+    },
+    {
+      "code": "Tel Hamees",
+      "name": "تل حميس"
+    },
+    {
+      "code": "Sharran",
+      "name": "شران ـ حلب"
+    },
+    {
+      "code": "El Manajeer",
+      "name": "المناجير"
+    },
+    {
+      "code": "Tel Mansour",
+      "name": "تل منصور"
+    },
+    {
+      "code": "Sreisat",
+      "name": "صريصات ـ خربة الصريصات"
+    },
+    {
+      "code": "Qadi",
+      "name": "القاضي"
+    },
+    {
+      "code": "Aweinet Ashma",
+      "name": "عونة أشما"
+    },
+    {
+      "code": "TEL ABIAD",
+      "name": "تل أبيض"
+    },
+    {
+      "code": "Tel Tamer",
+      "name": "تل تمر"
+    },
+    {
+      "code": "Tel Brak",
+      "name": "تل براك"
+    },
+    {
+      "code": "Hammam Sagheer",
+      "name": "حمام الصغير"
+    },
+    {
+      "code": "Mabroukeh",
+      "name": "مبروكة"
+    },
+    {
+      "code": "Beer Muheisen",
+      "name": "بير محيسن"
+    },
+    {
+      "code": "Mandak",
+      "name": "مندك ـ جيل"
+    },
+    {
+      "code": "Sarreen",
+      "name": "صرين ـ سرين"
+    },
+    {
+      "code": "Khuza' et Arrad",
+      "name": "خزاعة الرد"
+    },
+    {
+      "code": "Balqees",
+      "name": "بلقيس"
+    },
+    {
+      "code": "HASSAKEH",
+      "name": "الحسكة"
+    },
+    {
+      "code": "Abu Qalqal",
+      "name": "أبو قلقل"
+    },
+    {
+      "code": "Maghloujeh",
+      "name": "مغلوجة"
+    },
+    {
+      "code": "El Hall",
+      "name": "الهول"
+    },
+    {
+      "code": "El Beera",
+      "name": "البيرة"
+    },
+    {
+      "code": "Ein Issa",
+      "name": "عين عيسى"
+    },
+    {
+      "code": "Khwaitleh",
+      "name": "خويتلة"
+    },
+    {
+      "code": "Muta' fyeh",
+      "name": "متعافية"
+    },
+    {
+      "code": "Khirbet El Hajji",
+      "name": "خربة الحجي"
+    },
+    {
+      "code": "El Khafseh",
+      "name": "الخفسة"
+    },
+    {
+      "code": "Tel Ajajeh",
+      "name": "تل عجاجة"
+    },
+    {
+      "code": "Jirneiyeh",
+      "name": "جرنية"
+    },
+    {
+      "code": "Ghouneh",
+      "name": "غونة"
+    },
+    {
+      "code": "Om Madfa",
+      "name": "أم مدفع"
+    },
+    {
+      "code": "Hazeemeh",
+      "name": "حزيمة"
+    },
+    {
+      "code": "Maqasm(47.km)swbatieh",
+      "name": "المقاسم الخمسة ـ الصوبطية"
+    },
+    {
+      "code": "Jarwan",
+      "name": "جروان"
+    },
+    {
+      "code": "Shaddadeh",
+      "name": "الشدادة"
+    },
+    {
+      "code": "Wadi El Faid",
+      "name": "وادي الفيض"
+    },
+    {
+      "code": "RAQQA",
+      "name": "الرقة"
+    },
+    {
+      "code": "El Karameh",
+      "name": "الكرامة"
+    },
+    {
+      "code": "Maskaneh",
+      "name": "مسكنة"
+    },
+    {
+      "code": "Hammam El Raqqa",
+      "name": "حمام الرقة"
+    },
+    {
+      "code": "Thawra",
+      "name": "الثورة ـ غير سد الثورة"
+    },
+    {
+      "code": "Jdeidet Khabour",
+      "name": "جديدة خابور"
+    },
+    {
+      "code": "Jazaret Milaj",
+      "name": "جزرة ميلاج"
+    },
+    {
+      "code": "Ma' dan Jadid",
+      "name": "معدان جديد"
+    },
+    {
+      "code": "Tibneh",
+      "name": "التبنة"
+    },
+    {
+      "code": "Markaz El Madeenh",
+      "name": "مركز المدينة"
+    },
+    {
+      "code": "DEIR EZZOR",
+      "name": "دير الزور"
+    },
+    {
+      "code": "Rawda",
+      "name": "الروضة ـ دير الزور"
+    },
+    {
+      "code": "El Mrei' aiyeh",
+      "name": "المريعية ـالمريعية الثالثة"
+    },
+    {
+      "code": "El Bssaira",
+      "name": "البصيرة"
+    },
+    {
+      "code": "Mayadeen",
+      "name": "الميادين"
+    },
+    {
+      "code": "Abu hardoob",
+      "name": "أبو حردوب"
+    },
+    {
+      "code": "El Salheiyeh",
+      "name": "الصالحية ـ العشارة"
+    },
+    {
+      "code": "ABU KAMAL",
+      "name": "البوكمال"
+    },
+    {
+      "code": "T 2",
+      "name": "ط2 ـ المحطة الثانية"
+    },
+    {
+      "code": "El Mansourh",
+      "name": "المنصورة"
+    },
+    {
+      "code": "MAKADEH",
+      "name": "مرقدة"
+    },
+    {
+      "code": "Deir izzor",
+      "name": "دير الزور الزراعية"
+    },
+    {
+      "code": "Hlwet_lttawarij",
+      "name": "حلوة الطواريج"
+    },
+    {
+      "code": "Sh'aib El Zakar",
+      "name": "شعيب الذكر ـ أبو هريرة"
+    },
+    {
+      "code": "Najd",
+      "name": "نجد ـ البيلاني"
+    },
+    {
+      "code": "Manakher",
+      "name": "المناخر"
+    },
+    {
+      "code": "Abu Kahef sad",
+      "name": "سد أبو كهف"
+    },
+    {
+      "code": "EL ZAYDI",
+      "name": "الزيدي"
+    },
+    {
+      "code": "Karashok",
+      "name": "قرة شوك ـ رميلان"
+    },
+    {
+      "code": "ZeraaI Al Mrei'aiyrh",
+      "name": "زراعي المريعيةـ أنس القاضي"
+    },
+    {
+      "code": "Bloozeht Baniaas",
+      "name": "بلوزة بانياس"
+    },
+    {
+      "code": "Sad Blloran",
+      "name": "سد بلوران ـ موارد"
+    },
+    {
+      "code": "Sad Al Mzzehna",
+      "name": "سد المزينة"
+    },
+    {
+      "code": "Sad Al Shaheed Basel",
+      "name": "سد الشهيد باسل"
+    },
+    {
+      "code": "Sad Al Soorani",
+      "name": "سد الصوراني"
+    },
+    {
+      "code": "Al Dai",
+      "name": "الدي"
+    },
+    {
+      "code": "Mashtal Al Areeda",
+      "name": "مشتل العريضة ـ غير العريضة"
+    },
+    {
+      "code": "Al Mzehraa",
+      "name": "المزيرعة"
+    },
+    {
+      "code": "Sad Kfehr Deebehl",
+      "name": "سد كفر ديبل"
+    },
+    {
+      "code": "Al Drooqiiat",
+      "name": "الدروقيات"
+    },
+    {
+      "code": "Sad Bait Al Reehan",
+      "name": "سد بيت الريحان"
+    },
+    {
+      "code": "Thakaneht Adnan Al Nabelsi",
+      "name": "ثكنة عدنان النابلس"
+    },
+    {
+      "code": "Al Badroosieh",
+      "name": "البدروسية"
+    },
+    {
+      "code": "Href Al Msitreh",
+      "name": "حرف المسيترة"
+    },
+    {
+      "code": "Hineh",
+      "name": "حينة"
+    },
+    {
+      "code": "Jbab",
+      "name": "جباب"
+    },
+    {
+      "code": "Jbab Al Sheek Badeer",
+      "name": "جباب الشيخ بدر"
+    },
+    {
+      "code": "Deir Hanna",
+      "name": "دير حنا"
+    },
+    {
+      "code": "Khrbet-al'umar",
+      "name": "خربة الحمرا"
+    },
+    {
+      "code": "Gharnata",
+      "name": "غرناطة"
+    },
+    {
+      "code": "Tel Alo",
+      "name": "تل علو"
+    },
+    {
+      "code": "WADI AZIB",
+      "name": "وادي العزيب"
+    },
+    {
+      "code": "Hadar",
+      "name": "حاضر"
+    },
+    {
+      "code": "Kanawaat",
+      "name": "قنوات"
+    },
+    {
+      "code": "Bshelaameh",
+      "name": "بشلاما"
+    },
+    {
+      "code": "Sad Al Thawra",
+      "name": "سد الثورة ـ غير الثورة"
+    },
+    {
+      "code": "Rai Akaar",
+      "name": "ري عكار"
+    },
+    {
+      "code": "Karit Kids",
+      "name": "قرية الأطفال"
+    },
+    {
+      "code": "Ein Al Khwin",
+      "name": "عين الخوين"
+    },
+    {
+      "code": "Al Bahlolieh",
+      "name": "البهلولية"
+    },
+    {
+      "code": "Afamia",
+      "name": "أفاميا"
+    },
+    {
+      "code": "Kofor Kamreh",
+      "name": "كفر كمرة"
+    },
+    {
+      "code": "Argol",
+      "name": "أرجل"
+    },
+    {
+      "code": "Dalbooh",
+      "name": "دلبوح"
+    },
+    {
+      "code": "Sad Kastoon",
+      "name": "سد قسطون"
+    },
+    {
+      "code": "Sad Al Skabeh",
+      "name": "سد السخابة"
+    },
+    {
+      "code": "Jabal aL Hees",
+      "name": "جبل الحص"
+    },
+    {
+      "code": "Hoosh Arab",
+      "name": "حوش عرب"
+    },
+    {
+      "code": "تيشور",
+      "name": "تيشور"
+    },
+    {
+      "code": "Al Rima",
+      "name": "الريمة"
+    },
+    {
+      "code": "Al hajen",
+      "name": "الهجين"
+    },
+    {
+      "code": "Hassour",
+      "name": "حاصور"
+    },
+    {
+      "code": "AL Musherfeh - Latakia",
+      "name": "المشيرفة ـ اللاذقية"
+    },
+    {
+      "code": "Abo Raasaiin",
+      "name": "أبو راسين"
+    },
+    {
+      "code": "Tal AL Baidaa",
+      "name": "تل البيضاء ـ ضخ البيضاء"
+    },
+    {
+      "code": "BABJ2509",
+      "name": "باب جنة"
+    },
+    {
+      "code": "ISAW3004",
+      "name": "ISAW3004"
+    },
+    {
+      "code": "KARK3006",
+      "name": "KARK3006"
+    },
+    {
+      "code": "MAHS3003",
+      "name": "MAHS3003"
+    },
+    {
+      "code": "MAZR3002",
+      "name": "MAZR3002"
+    },
+    {
+      "code": "SATK3008",
+      "name": "SATK3008"
+    },
+    {
+      "code": "SEFS2702",
+      "name": "SEFS2702"
+    },
+    {
+      "code": "SEFS2703",
+      "name": "SEFS2703"
+    },
+    {
+      "code": "SHAJ2941",
+      "name": "الشجرة"
+    },
+    {
+      "code": "TABN3007",
+      "name": "TABN3007"
+    },
+    {
+      "code": "TALI1380",
+      "name": "تل طي"
+    },
+    {
+      "code": "Al Sein -1",
+      "name": "السين ـ 1"
+    },
+    {
+      "code": "Mankh",
+      "name": "منغ"
+    },
+    {
+      "code": "Akraba",
+      "name": "عقربا ـ غير عقرب"
+    },
+    {
+      "code": "Al Tabkeh",
+      "name": "الطبقة"
+    },
+    {
+      "code": "Kadam Assaly",
+      "name": "قدم عسالي"
+    },
+    {
+      "code": "Nabee Al Fouaar",
+      "name": "نبع الفوار"
+    },
+    {
+      "code": "Om Batineh",
+      "name": "أم باطنة"
+    },
+    {
+      "code": "Al Zwirieh",
+      "name": "الزويرية"
+    },
+    {
+      "code": "Gadeer Al Bsstan",
+      "name": "غدير البستان"
+    },
+    {
+      "code": "Kaboon",
+      "name": "القابون"
+    },
+    {
+      "code": "Saida - Qunetra",
+      "name": "صيدا ـ القنيطرة"
+    },
+    {
+      "code": "Al Saffa",
+      "name": "الصفاءـ سلحب ـ حماه"
+    },
+    {
+      "code": "ALtibeh",
+      "name": "الطيبة ـ تدمر ـ حمص"
+    },
+    {
+      "code": "ALtibeh-sweda",
+      "name": "الطيبة ـ الجنوبية ـ السويداء"
+    },
+    {
+      "code": "Thakaneht Bassam Hamshow",
+      "name": "ثكنة بسام حمشو الحربية"
+    },
+    {
+      "code": "Thakaneht Abed alstaar",
+      "name": "ثكنة عبد الستار نور الله الجوية"
+    },
+    {
+      "code": "Taftanaz",
+      "name": "تفتناز ـ عسكري"
+    },
+    {
+      "code": "Al Mouallaqa",
+      "name": "المعلقة ـ القنيطرة"
+    },
+    {
+      "code": "Jaliqehm",
+      "name": "جليقم ـ تدمر ـ حمص"
+    },
+    {
+      "code": "Al Mreh\"a",
+      "name": "المريعة ـ تدمر ـ حمص"
+    },
+    {
+      "code": "Mouher",
+      "name": "مهير"
+    },
+    {
+      "code": "KBUD2583",
+      "name": "KBUD2583"
+    },
+    {
+      "code": "HARA5807",
+      "name": "HARA5807"
+    },
+    {
+      "code": "Sendianeh",
+      "name": "السنديانة ـ حمص"
+    },
+    {
+      "code": "Ksibeh",
+      "name": "قصيبة ـ قنيطرة"
+    },
+    {
+      "code": "Al Rabeeaa",
+      "name": "الربيعة ـ اللاذقية"
+    },
+    {
+      "code": "Sad Habraan",
+      "name": "سد حبران"
+    },
+    {
+      "code": "Jabal AL Amoor",
+      "name": "جبل العمور"
+    },
+    {
+      "code": "baniaas al bahriieh",
+      "name": "بانياس البحرية"
+    },
+    {
+      "code": "Okania",
+      "name": "أوقانيا ـ القنيطرة"
+    },
+    {
+      "code": "Hwash Al Taleh",
+      "name": "حواش التلة-تل حوش"
+    },
+    {
+      "code": "Totian",
+      "name": "توتيان ـ حمص"
+    },
+    {
+      "code": "Kassreh",
+      "name": "الكسرة ـ دير الزور"
+    },
+    {
+      "code": "Yalhaneen",
+      "name": "يلحنين"
+    },
+    {
+      "code": "أبحاث جلين",
+      "name": "أبحاث جلين"
+    },
+    {
+      "code": "سد السفرقية ( سد صلاح الدين)",
+      "name": "سد السفرقية ( سد صلاح الدين)"
+    },
+    {
+      "code": "مزرعة دريكيش",
+      "name": "مزرعة دريكيش"
+    },
+    {
+      "code": "جيل حلب",
+      "name": "جيل حلب"
+    },
+    {
+      "code": "بحوث برشين-حماه",
+      "name": "بحوث برشين-حماه"
+    },
+    {
+      "code": "محطة ثعلو- الميادين",
+      "name": "محطة ثعلو- الميادين"
+    },
+    {
+      "code": "العظامية - الحسكة",
+      "name": "العظامية - الحسكة"
+    },
+    {
+      "code": "صحنايا",
+      "name": "صحنايا"
+    },
+    {
+      "code": "SHEBLO",
+      "name": "عريقة _ شبلو"
+    },
+    {
+      "code": "TEWAL ELABA",
+      "name": "طوال العبا"
+    },
+    {
+      "code": "محمية هايل الريحان",
+      "name": "محمية هايل الريحان"
+    },
+    {
+      "code": "حي عجيل",
+      "name": "حي عجيل"
+    },
+    {
+      "code": "مزرعة الرشيد",
+      "name": "مزرعة الرشيد"
+    },
+    {
+      "code": "دوران",
+      "name": "دوران"
+    },
+    {
+      "code": "دبي غضان",
+      "name": "دبي غضان"
+    },
+    {
+      "code": "بندر خان",
+      "name": "بندر خان"
+    },
+    {
+      "code": "قباجب",
+      "name": "قباجب"
+    },
+    {
+      "code": "قحمانة",
+      "name": "قحمانة"
+    },
+    {
+      "code": "أبو كبرة",
+      "name": "أبو كبرة"
+    },
+    {
+      "code": "محممية بئر العمالة",
+      "name": "محممية بئر العمالة"
+    },
+    {
+      "code": "تل السمن",
+      "name": "تل السمن"
+    },
+    {
+      "code": "مديرية ريف دمشق",
+      "name": "مديرية ريف دمشق"
+    },
+    {
+      "code": "وادي السليماني",
+      "name": "وادي السليماني"
+    },
+    {
+      "code": "بربريس",
+      "name": "بربريس"
+    },
+    {
+      "code": "السجن _ المجدل",
+      "name": "السجن _ المجدل"
+    },
+    {
+      "code": "سد درعا",
+      "name": "سد درعا"
+    },
+    {
+      "code": "حواسيس",
+      "name": "حواسيس"
+    },
+    {
+      "code": "مزرعة الرابية",
+      "name": "مزرعة الرابية"
+    },
+    {
+      "code": "المسمية",
+      "name": "المسمية"
+    },
+    {
+      "code": "السماقيات",
+      "name": "السماقيات"
+    },
+    {
+      "code": "بطموش",
+      "name": "بطموش"
+    },
+    {
+      "code": "يشيلي",
+      "name": "يشيلي"
+    },
+    {
+      "code": "رميح",
+      "name": "رميح"
+    },
+    {
+      "code": "السوار",
+      "name": "السوار"
+    },
+    {
+      "code": "القلايع",
+      "name": "القلايع"
+    },
+    {
+      "code": "عمريت أبحاث",
+      "name": "عمريت أبحاث"
+    },
+    {
+      "code": "بحوث زاهد(ري عكار)",
+      "name": "بحوث زاهد(ري عكار)"
+    },
+    {
+      "code": "سد بكسا",
+      "name": "سد بكسا"
+    },
+    {
+      "code": "سد خربة الجوزية",
+      "name": "سد خربة الجوزية"
+    },
+    {
+      "code": "مركز أبحاث طرطوس الزراعي",
+      "name": "مركز أبحاث طرطوس الزراعي"
+    },
+    {
+      "code": "عرامو",
+      "name": "عرامو"
+    },
+    {
+      "code": "ZANABEEL",
+      "name": "زنابيل"
+    },
+    {
+      "code": "QAHH",
+      "name": "قاح"
+    },
+    {
+      "code": "JIB EL AHMAR",
+      "name": "جب الأحمر"
+    },
+    {
+      "code": "HELI",
+      "name": "حلي"
+    },
+    {
+      "code": "KWEIRESS",
+      "name": "كوريس"
+    },
+    {
+      "code": "EL SHRAIHY",
+      "name": "الشرية"
+    },
+    {
+      "code": "DIFAAI",
+      "name": "ديفاي"
+    },
+    {
+      "code": "JIB ESHOYOUKH",
+      "name": "جب الشويكة"
+    },
+    {
+      "code": "EL HAYANIYEH",
+      "name": "الحيوانية"
+    },
+    {
+      "code": "MHAINEIYEH",
+      "name": "مهاينية"
+    },
+    {
+      "code": "TARFAWI",
+      "name": "طرفاوي"
+    },
+    {
+      "code": "SAYKOL",
+      "name": "سايكول"
+    },
+    {
+      "code": "BAILANEH",
+      "name": "بيلانة"
+    },
+    {
+      "code": "FIQQ",
+      "name": "فيق"
+    },
+    {
+      "code": "JABAL AL ARAB",
+      "name": "جبل العرب"
+    },
+    {
+      "code": "KAZMEH",
+      "name": "خازمة"
+    },
+    {
+      "code": "BAIT ANA",
+      "name": "بيت عانا"
+    },
+    {
+      "code": "اللقمانة ـ صلنفة",
+      "name": "اللقمانة ـ صلنفة"
+    },
+    {
+      "code": "بشراغي",
+      "name": "بشراغي"
+    },
+    {
+      "code": "نور 2",
+      "name": "نور 2"
+    },
+    {
+      "code": "(PORT ) TARTOUS",
+      "name": "مطار طرطوس"
+    },
+    {
+      "code": "BANIAS",
+      "name": "بانياس"
+    },
+    {
+      "code": "شبعا",
+      "name": "شبعا"
+    }
+  ]
+}
+[file content end]

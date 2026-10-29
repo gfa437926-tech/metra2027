@@ -1,0 +1,928 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام استقبال وتصدير درجات حرارة التربة</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #198754;
+        --accent-color: #fd7e14;
+        --dark-blue: #0a58ca;
+        --light-bg: #f8f9fa;
+        --table-header-bg: #2c3e50;
+        --table-row-alt: #f8f9fa;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .main-card {
+        background-color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 1400px;
+        overflow: hidden;
+        margin: 0 auto;
+      }
+
+      .main-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--dark-blue) 100%
+        );
+        color: white;
+        padding: 25px;
+        text-align: center;
+        position: relative;
+      }
+
+      .main-content {
+        padding: 30px;
+      }
+
+      .data-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        margin-top: 20px;
+      }
+
+      .table-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color) 0%,
+          var(--dark-blue) 100%
+        );
+        color: white;
+        padding: 20px;
+      }
+
+      .controls {
+        background-color: var(--light-bg);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .btn-custom {
+        min-width: 120px;
+        margin: 5px;
+      }
+
+      .filters-section {
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+      }
+
+      .no-data {
+        padding: 40px;
+        text-align: center;
+        color: #6c757d;
+      }
+
+      .no-data i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+      }
+
+      .excel-style-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .excel-style-table thead {
+        background-color: var(--table-header-bg);
+        color: white;
+      }
+
+      .excel-style-table th {
+        padding: 12px 8px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        font-weight: bold;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .excel-style-table td {
+        padding: 10px 8px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+      }
+
+      .excel-style-table tbody tr:nth-child(even) {
+        background-color: var(--table-row-alt);
+      }
+
+      .excel-style-table tbody tr:hover {
+        background-color: #e9ecef;
+      }
+
+      .time-column {
+        background-color: #e8f4fd;
+        font-weight: bold;
+        color: #0a58ca;
+      }
+
+      .data-cell {
+        min-width: 120px;
+      }
+
+      .negative-temp {
+        color: #dc3545;
+        font-weight: bold;
+      }
+
+      .positive-temp {
+        color: #198754;
+        font-weight: bold;
+      }
+
+      .zero-temp {
+        color: #6c757d;
+        font-weight: bold;
+      }
+
+      .empty-cell {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        font-style: italic;
+      }
+
+      .station-info-header {
+        background-color: #e3f2fd;
+        color: var(--dark-blue);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-right: 5px solid var(--primary-color);
+      }
+
+      .table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-top: 15px;
+      }
+
+      .export-section {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        text-align: center;
+      }
+
+      .table-title {
+        background-color: #2c3e50;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        font-weight: bold;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+      }
+
+      .debug-panel {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 20px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      @media (max-width: 768px) {
+        .main-header {
+          padding: 15px;
+        }
+
+        .main-content {
+          padding: 20px;
+        }
+
+        .excel-style-table {
+          font-size: 12px;
+        }
+
+        .excel-style-table th,
+        .excel-style-table td {
+          padding: 6px 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- طبقة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner-border text-light" role="status">
+        <span class="visually-hidden">جاري تحميل البيانات...</span>
+      </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-card">
+      <div class="main-header">
+        <h2>
+          <i class="fas fa-thermometer-half me-2"></i>نظام درجات حرارة التربة
+        </h2>
+        <p>استقبال البيانات وعرضها في جدول مشابه لملف تربة.xls</p>
+      </div>
+
+      <div class="main-content">
+        <!-- أدوات التحكم -->
+        <div class="controls">
+          <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>أدوات التحكم</h5>
+            </div>
+            <div class="col-md-6 text-start text-md-end">
+              <button
+                class="btn btn-primary btn-custom"
+                onclick="loadDataFromSupabase()"
+              >
+                <i class="fas fa-database me-1"></i>تحميل من قاعدة البيانات
+              </button>
+              <button
+                class="btn btn-warning btn-custom"
+                onclick="toggleDebug()"
+              >
+                <i class="fas fa-bug me-1"></i>تصحيح الأخطاء
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- فلتر البحث -->
+        <div class="filters-section">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="filterStation" class="form-label">المحطة</label>
+              <select
+                class="form-select"
+                id="filterStation"
+                onchange="applyFilters()"
+              >
+                <option value="">جميع المحطات</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="filterDate" class="form-label">تاريخ النشرة</label>
+              <input
+                type="date"
+                class="form-control"
+                id="filterDate"
+                onchange="applyFilters()"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- عرض البيانات -->
+        <div id="dataContainer">
+          <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">جاري تحميل البيانات...</span>
+            </div>
+            <p class="mt-3">جاري تحميل البيانات...</p>
+            <button
+              class="btn btn-primary mt-3"
+              onclick="loadDataFromSupabase()"
+            >
+              <i class="fas fa-database me-1"></i>تحميل البيانات
+            </button>
+          </div>
+        </div>
+
+        <!-- لوحة التصحيح -->
+        <div id="debugPanel" class="debug-panel" style="display: none">
+          <h6><i class="fas fa-bug me-2"></i>معلومات التصحيح</h6>
+          <div id="debugContent">جاري انتظار البيانات...</div>
+          <button class="btn btn-sm btn-secondary mt-2" onclick="clearDebug()">
+            <i class="fas fa-trash me-1"></i>مسح
+          </button>
+        </div>
+
+        <!-- حالة عدم وجود بيانات -->
+        <div id="noDataState" class="no-data" style="display: none">
+          <i class="fas fa-database"></i>
+          <h4>لا توجد بيانات</h4>
+          <p>لم يتم العثور على أي سجلات لعرضها</p>
+          <div class="mt-3">
+            <button class="btn btn-primary" onclick="loadDataFromSupabase()">
+              <i class="fas fa-redo me-1"></i>إعادة المحاولة
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/protect.js"></script>
+
+    <script>
+      // تكوين Supabase
+      const SUPABASE_CONFIG = {
+        url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        anonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      // البيانات
+      let allData = [];
+      let filteredData = [];
+      let stations = [];
+      let dates = [];
+
+      // أوقات الرصد
+      const OBS_TIMES = ["02", "08", "14", "20"];
+
+      // أعمدة Excel
+      const EXCEL_COLUMNS = [
+        "وقت الرصد",
+        "درجة حرارة التربة على عمق 5سم",
+        "درجة حرارة التربة على عمق 10سم",
+        "درجة حرارة التربة على عمق 20سم",
+        "درجة حرارة التربة على عمق 50سم",
+        "درجة حرارة التربة على عمق 100سم",
+        "درجة حرارة التربة على عمق 2م",
+      ];
+
+      // تهيئة الصفحة
+      document.addEventListener("DOMContentLoaded", function () {
+        // تعيين تاريخ اليوم
+        const today = new Date().toISOString().split("T")[0];
+        document.getElementById("filterDate").value = today;
+
+        // تحميل البيانات مباشرة من قاعدة البيانات
+        loadDataFromSupabase();
+      });
+
+      // جلب البيانات من Supabase
+      async function loadDataFromSupabase() {
+        showLoading(true);
+        debugLog("بدء جلب البيانات من Supabase...");
+
+        try {
+          // محاولة جلب البيانات من الجدول
+          const response = await fetch(
+            `${SUPABASE_CONFIG.url}/rest/v1/soil_temperatures?select=*`,
+            {
+              headers: {
+                apikey: SUPABASE_CONFIG.anonKey,
+                Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          debugLog(
+            `استجابة Supabase: ${response.status} ${response.statusText}`,
+          );
+
+          if (!response.ok) {
+            throw new Error(`خطأ في الاتصال: ${response.status}`);
+          }
+
+          const data = await response.json();
+          debugLog(`تم استلام ${data.length} سجلاً`);
+
+          if (data.length > 0) {
+            debugLog("عينة من البيانات المستلمة:", data[0]);
+          }
+
+          // تحويل البيانات إلى التنسيق الداخلي
+          processRawData(data);
+          showLoading(false);
+        } catch (error) {
+          debugLog(`خطأ: ${error.message}`);
+          showLoading(false);
+          alert(
+            `فشل في تحميل البيانات من قاعدة البيانات: ${error.message}\n\nيرجى المحاولة مرة أخرى.`,
+          );
+          showNoDataState();
+        }
+      }
+
+      // معالجة البيانات الخام
+      function processRawData(rawData) {
+        allData = [];
+
+        rawData.forEach((item, index) => {
+          // استخراج الوقت من الحقل local_time
+          let time = "";
+          if (item.local_time) {
+            const timeStr = String(item.local_time).trim();
+            if (timeStr.includes(":")) {
+              time = timeStr.split(":")[0].padStart(2, "0");
+            } else {
+              time = timeStr.padStart(2, "0");
+            }
+          }
+
+          // التأكد من أن الوقت هو واحد من الأوقات المحددة
+          if (!OBS_TIMES.includes(time)) {
+            time = OBS_TIMES[0];
+          }
+
+          // استخراج درجات الحرارة (تسمح بالقيم الموجبة والسالبة)
+          const temp_5cm = extractTemperature(item, [
+            "soil_temp_5cm",
+            "temp_5cm",
+            "soil_temp_avg_5cm",
+            "5cm",
+          ]);
+          const temp_10cm = extractTemperature(item, [
+            "soil_temp_10cm",
+            "temp_10cm",
+            "soil_temp_avg_10cm",
+            "10cm",
+          ]);
+          const temp_20cm = extractTemperature(item, [
+            "soil_temp_20cm",
+            "temp_20cm",
+            "soil_temp_avg_20cm",
+            "20cm",
+          ]);
+          const temp_50cm = extractTemperature(item, [
+            "soil_temp_50cm",
+            "temp_50cm",
+            "soil_temp_avg_50cm",
+            "50cm",
+          ]);
+          const temp_100cm = extractTemperature(item, [
+            "soil_temp_100cm",
+            "temp_100cm",
+            "soil_temp_field_10cm",
+            "100cm",
+          ]);
+          const temp_2m = extractTemperature(item, [
+            "soil_temp_2m",
+            "temp_2m",
+            "notes",
+            "2m",
+          ]);
+
+          const dataItem = {
+            id: item.id || index + 1,
+            station:
+              item.station || item.station_name || item.المحطة || "غير معروف",
+            date:
+              item.observation_date ||
+              item.date ||
+              item.التاريخ ||
+              new Date().toISOString().split("T")[0],
+            time: time,
+
+            // درجات الحرارة مع السماح بالقيم الموجبة والسالبة
+            temp_5cm: temp_5cm,
+            temp_10cm: temp_10cm,
+            temp_20cm: temp_20cm,
+            temp_50cm: temp_50cm,
+            temp_100cm: temp_100cm,
+            temp_2m: temp_2m,
+
+            notes: item.notes || item.ملاحظات || "",
+            submitted_at:
+              item.submitted_at || item.created_at || new Date().toISOString(),
+          };
+
+          allData.push(dataItem);
+        });
+
+        debugLog(`تمت معالجة ${allData.length} سجلاً`);
+        updateFilters();
+        displayData();
+      }
+
+      // استخراج درجة الحرارة مع السماح بالقيم الموجبة والسالبة
+      function extractTemperature(item, fieldNames) {
+        for (const field of fieldNames) {
+          if (
+            item[field] !== undefined &&
+            item[field] !== null &&
+            item[field] !== ""
+          ) {
+            const value = item[field];
+
+            // إذا كانت القيمة رقمية
+            if (typeof value === "number") {
+              return value;
+            }
+
+            // إذا كانت نصية
+            if (typeof value === "string") {
+              const trimmed = value.trim();
+              const numMatch = trimmed.match(/-?\d*\.?\d+/);
+              if (numMatch) {
+                const num = parseFloat(numMatch[0]);
+                return !isNaN(num) ? num : null;
+              }
+              return value;
+            }
+          }
+        }
+        return null;
+      }
+
+      // عرض حالة عدم وجود بيانات
+      function showNoDataState() {
+        const container = document.getElementById("dataContainer");
+        const noDataState = document.getElementById("noDataState");
+
+        container.style.display = "none";
+        noDataState.style.display = "block";
+      }
+
+      // تحديث قوائم التصفية
+      function updateFilters() {
+        // استخراج المحطات الفريدة
+        stations = [
+          ...new Set(allData.map((item) => item.station).filter(Boolean)),
+        ];
+
+        // استخراج التواريخ الفريدة
+        dates = [...new Set(allData.map((item) => item.date).filter(Boolean))]
+          .sort()
+          .reverse();
+
+        // تحديث قائمة المحطات
+        const stationSelect = document.getElementById("filterStation");
+        stationSelect.innerHTML = '<option value="">جميع المحطات</option>';
+        stations.forEach((station) => {
+          stationSelect.innerHTML += `<option value="${station}">${station}</option>`;
+        });
+
+        debugLog(`المحطات المتاحة: ${stations.length}`);
+        debugLog(`التواريخ المتاحة: ${dates.length}`);
+
+        // تطبيق الفلاتر الحالية
+        applyFilters();
+      }
+
+      // تطبيق الفلاتر
+      function applyFilters() {
+        const selectedStation = document.getElementById("filterStation").value;
+        const selectedDate = document.getElementById("filterDate").value;
+
+        filteredData = allData.filter((item) => {
+          if (selectedStation && item.station !== selectedStation) return false;
+          if (selectedDate && item.date !== selectedDate) return false;
+          return true;
+        });
+
+        debugLog(`بعد التصفية: ${filteredData.length} سجلاً`);
+        displayData();
+      }
+
+      // عرض البيانات في جدول مشابه لـ Excel
+      function displayData() {
+        const container = document.getElementById("dataContainer");
+        const noDataState = document.getElementById("noDataState");
+
+        if (filteredData.length === 0) {
+          container.style.display = "none";
+          noDataState.style.display = "block";
+          return;
+        }
+
+        container.style.display = "block";
+        noDataState.style.display = "none";
+
+        // تجميع البيانات حسب المحطة والتاريخ
+        const groupedData = {};
+
+        filteredData.forEach((item) => {
+          const key = `${item.station}|${item.date}`;
+          if (!groupedData[key]) {
+            groupedData[key] = {
+              station: item.station,
+              date: item.date,
+              times: {},
+            };
+          }
+
+          if (!groupedData[key].times[item.time]) {
+            groupedData[key].times[item.time] = [];
+          }
+
+          groupedData[key].times[item.time].push(item);
+        });
+
+        // بناء واجهة العرض
+        let html = "";
+
+        Object.values(groupedData).forEach((group) => {
+          const displayDate = formatDateForDisplay(group.date);
+
+          html += `
+            <div class="station-info-header">
+              <div>
+                <h5 class="mb-1"><i class="fas fa-thermometer-half me-2"></i>${group.station}</h5>
+                <p class="mb-0">${displayDate}</p>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="exportSingleReport('${group.station}', '${group.date}')">
+                <i class="fas fa-download me-1"></i>تصدير
+              </button>
+            </div>
+            
+            <div class="table-container">
+              <table class="excel-style-table">
+                <thead>
+                  <tr>
+                    ${EXCEL_COLUMNS.map((col) => `<th>${col}</th>`).join("")}
+                  </tr>
+                </thead>
+                <tbody>`;
+
+          // إضافة صف لكل وقت رصد
+          OBS_TIMES.forEach((time) => {
+            const records = group.times[time] || [];
+            const latestRecord = records.length > 0 ? records[0] : null;
+
+            html += `<tr>
+              <td class="time-column">${formatTimeForDisplay(time)}</td>
+              ${[
+                "temp_5cm",
+                "temp_10cm",
+                "temp_20cm",
+                "temp_50cm",
+                "temp_100cm",
+                "temp_2m",
+              ]
+                .map((field) => {
+                  const temp = latestRecord ? latestRecord[field] : null;
+                  return `<td class="data-cell">${formatTempForDisplay(temp)}</td>`;
+                })
+                .join("")}
+            </tr>`;
+          });
+
+          html += `</tbody></table></div>`;
+        });
+
+        // إضافة قسم التصدير
+        html += `
+          <div class="export-section">
+            <button class="btn btn-success" onclick="exportAllToExcel()">
+              <i class="fas fa-file-excel me-2"></i>تصدير جميع البيانات إلى Excel
+            </button>
+          </div>`;
+
+        container.innerHTML = html;
+        debugLog(`تم عرض ${Object.keys(groupedData).length} تقريراً`);
+      }
+
+      // تنسيق درجة الحرارة للعرض
+      function formatTempForDisplay(temp) {
+        if (temp === null || temp === undefined || temp === "") {
+          return '<span class="empty-cell">-</span>';
+        }
+
+        const num = parseFloat(temp);
+
+        if (isNaN(num)) {
+          return `<span class="empty-cell">${temp}</span>`;
+        }
+
+        if (num > 0) {
+          return `<span class="positive-temp">${num.toFixed(1)}°C</span>`;
+        } else if (num < 0) {
+          return `<span class="negative-temp">${num.toFixed(1)}°C</span>`;
+        } else {
+          return `<span class="zero-temp">${num.toFixed(1)}°C</span>`;
+        }
+      }
+
+      // تنسيق الوقت للعرض
+      function formatTimeForDisplay(time) {
+        return `${time}:00`;
+      }
+
+      // تنسيق التاريخ للعرض
+      function formatDateForDisplay(dateStr) {
+        if (!dateStr) return "غير محدد";
+        try {
+          const date = new Date(dateStr);
+          const options = { year: "numeric", month: "long", day: "numeric" };
+          return date.toLocaleDateString("ar-SA", options);
+        } catch (e) {
+          return dateStr;
+        }
+      }
+
+      // تصدير تقرير محطة معينة
+      function exportSingleReport(station, date) {
+        const stationData = allData.filter(
+          (item) => item.station === station && item.date === date,
+        );
+
+        if (stationData.length === 0) {
+          alert("لا توجد بيانات للتصدير");
+          return;
+        }
+
+        // إنشاء بيانات Excel
+        const excelData = [EXCEL_COLUMNS];
+
+        // إضافة بيانات كل وقت
+        OBS_TIMES.forEach((time) => {
+          const record = stationData.find((item) => item.time === time);
+          const row = [
+            formatTimeForDisplay(time),
+            formatTempForExcel(record?.temp_5cm),
+            formatTempForExcel(record?.temp_10cm),
+            formatTempForExcel(record?.temp_20cm),
+            formatTempForExcel(record?.temp_50cm),
+            formatTempForExcel(record?.temp_100cm),
+            formatTempForExcel(record?.temp_2m),
+          ];
+          excelData.push(row);
+        });
+
+        // إنشاء ملف Excel
+        const ws = XLSX.utils.aoa_to_sheet(excelData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, cleanSheetName(station));
+
+        // اسم الملف
+        const fileName = `${cleanFileName(station)}_${date.replace(/-/g, "")}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        alert(`تم تصدير التقرير إلى ملف:\n${fileName}`);
+      }
+
+      // تصدير جميع البيانات إلى Excel
+      function exportAllToExcel() {
+        if (filteredData.length === 0) {
+          alert("لا توجد بيانات للتصدير");
+          return;
+        }
+
+        // تجميع البيانات حسب المحطة والتاريخ
+        const groupedData = {};
+        filteredData.forEach((item) => {
+          const key = `${item.station}|${item.date}`;
+          if (!groupedData[key]) {
+            groupedData[key] = {
+              station: item.station,
+              date: item.date,
+              times: {},
+            };
+          }
+          if (!groupedData[key].times[item.time]) {
+            groupedData[key].times[item.time] = [];
+          }
+          groupedData[key].times[item.time].push(item);
+        });
+
+        // إنشاء ملف Excel متعدد الأوراق
+        const wb = XLSX.utils.book_new();
+
+        Object.values(groupedData).forEach((group) => {
+          const excelData = [EXCEL_COLUMNS];
+
+          OBS_TIMES.forEach((time) => {
+            const record = group.times[time]?.[0];
+            const row = [
+              formatTimeForDisplay(time),
+              formatTempForExcel(record?.temp_5cm),
+              formatTempForExcel(record?.temp_10cm),
+              formatTempForExcel(record?.temp_20cm),
+              formatTempForExcel(record?.temp_50cm),
+              formatTempForExcel(record?.temp_100cm),
+              formatTempForExcel(record?.temp_2m),
+            ];
+            excelData.push(row);
+          });
+
+          const shortName = cleanSheetName(`${group.station}_${group.date}`);
+          const ws = XLSX.utils.aoa_to_sheet(excelData);
+          XLSX.utils.book_append_sheet(wb, ws, shortName);
+        });
+
+        // اسم الملف
+        const today = new Date().toISOString().split("T")[0];
+        const fileName = `درجات_حرارة_التربة_${today.replace(/-/g, "")}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        alert(
+          `تم تصدير ${Object.keys(groupedData).length} تقريراً إلى ملف:\n${fileName}`,
+        );
+      }
+
+      // تنسيق درجة الحرارة لملف Excel
+      function formatTempForExcel(temp) {
+        if (temp === null || temp === undefined || temp === "") {
+          return "";
+        }
+        const num = parseFloat(temp);
+        return !isNaN(num) ? num : temp;
+      }
+
+      // تنظيف اسم الورقة
+      function cleanSheetName(name) {
+        return name.replace(/[\\/*\[\]:?]/g, "_").substring(0, 31);
+      }
+
+      // تنظيف اسم الملف
+      function cleanFileName(name) {
+        return name
+          .replace(/[<>:"/\\|?*]/g, "_")
+          .replace(/\s+/g, "_")
+          .replace(/__+/g, "_")
+          .trim();
+      }
+
+      // إظهار/إخفاء التحميل
+      function showLoading(show) {
+        document.getElementById("loadingOverlay").style.display = show
+          ? "flex"
+          : "none";
+      }
+
+      // تسجيل التصحيح
+      function debugLog(message, data = null) {
+        const debugContent = document.getElementById("debugContent");
+        const timestamp = new Date().toLocaleTimeString();
+
+        let logEntry = `[${timestamp}] ${message}`;
+        if (data) {
+          logEntry += `\n${JSON.stringify(data, null, 2)}`;
+        }
+
+        debugContent.innerHTML = logEntry + "\n\n" + debugContent.innerHTML;
+
+        // أيضاً تسجيل في console للمطورين
+        if (data) {
+          console.log(message, data);
+        } else {
+          console.log(message);
+        }
+      }
+
+      // إظهار/إخفاء لوحة التصحيح
+      function toggleDebug() {
+        const panel = document.getElementById("debugPanel");
+        panel.style.display = panel.style.display === "none" ? "block" : "none";
+      }
+
+      // مسح لوحة التصحيح
+      function clearDebug() {
+        document.getElementById("debugContent").innerHTML =
+          "تم مسح سجل التصحيح.";
+      }
+    </script>
+  </body>
+</html>
