@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
   template: `
     <div class="rain-page" dir="rtl">
       <header class="page-head">
-        <div><h1>النشرة المطرية اليومية</h1><p>تسجيل بيانات الهطول المطري والثلوج اليومية</p></div>
+        <div><h1>النشرة المطرية اليومية</h1><p>إرسال النشرة المطرية من الساعة 8:30 إلى 9:30 صباحاً (توقيت سورية)</p></div>
         <span class="mode">وضع المعاينة</span>
       </header>
 
