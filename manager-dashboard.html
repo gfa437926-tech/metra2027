@@ -6223,102 +6223,18 @@ ${successCount > 0 ? "🎉 تم إرسال معظم التذكيرات بنجا�
             updated_at: new Date().toISOString(),
           };
 
-          // إذا كان هناك كلمة مرور مشفرة، أضفها
-          if (request.password_hash) {
-            userData.password_hash = request.password_hash;
-          } else {
-            // إنشاء كلمة مرور افتراضية إذا لم تكن موجودة
-            userData.password_hash = "default_password_123"; // يجب تشفيرها في الواقع
+          // لا تنشئ حسابات حقيقية أو تتجاوز RLS من المتصفح.
+          // يجب تنفيذ إنشاء الحساب واعتماد الطلب عبر ASP.NET Core API موثوق
+          // بعد ربط مزود الهوية وتطبيق التفويض والتسجيل التدقيقي.
+          if (!isDemoMode) {
+            throw new Error(
+              "تم إيقاف اعتماد وإنشاء الحساب من الواجهة مؤقتاً لأسباب أمنية. يجب تنفيذ العملية عبر واجهة الخادم المعتمدة.",
+            );
           }
 
+          // وضع العرض التجريبي فقط: لا تُنشأ حسابات في Supabase ولا تُحفظ كلمات مرور.
           let userId = null;
           let dbOperationSuccess = false;
-
-          if (!isDemoMode && db) {
-            try {
-              console.log("Creating user in database:", userData);
-
-              // محاولة إنشاء المستخدم في جدول users
-              const { data: newUser, error: userError } = await db
-                .from("users")
-                .insert([userData])
-                .select("id")
-                .single();
-
-              if (userError) {
-                console.error("Error creating user:", userError);
-
-                // إذا كان الخطأ بسبب RLS أو أي مشكلة أخرى، حاول معالجة المشكلة
-                if (userError.code === "23505") {
-                  throw new Error("البريد الإلكتروني موجود مسبقاً في النظام");
-                }
-
-                // محاولة أخرى بمفتاح service role
-                console.log("Trying with service role...");
-
-                // مفتاح service role (يجب أن يكون لديك هذا المفتاح في مشروع db)
-                const serviceRoleKey =
-                  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjE3MTc1MSwiZXhwIjoyMDc3NzQ3NzUxfQ.6Uv4BpJjQk5H1hLd1oP2Sd3QwQvY9tJzL8Kv8q3V2kI";
-
-                const servicedb = window.db.createClient(
-                  db_CONFIG.url,
-                  serviceRoleKey,
-                );
-
-                const { data: serviceUser, error: serviceError } =
-                  await servicedb
-                    .from("users")
-                    .insert([userData])
-                    .select("id")
-                    .single();
-
-                if (serviceError) {
-                  console.error("Service role also failed:", serviceError);
-                  throw new Error(
-                    `فشل إنشاء المستخدم: ${serviceError.message}`,
-                  );
-                }
-
-                userId = serviceUser.id;
-                dbOperationSuccess = true;
-                console.log(
-                  "User created successfully with service role, ID:",
-                  userId,
-                );
-              } else {
-                userId = newUser.id;
-                dbOperationSuccess = true;
-                console.log("User created successfully, ID:", userId);
-              }
-
-              if (dbOperationSuccess && userId) {
-                // تحديث طلب التسجيل لتعيين حالة "approved" وربط user_id
-                console.log("Updating registration queue...");
-                const { error: updateError } = await db
-                  .from("registration_queue")
-                  .update({
-                    status: "approved",
-                    approved_by_system_at: new Date().toISOString(),
-                    user_id: userId,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", request.id);
-
-                if (updateError) {
-                  console.error(
-                    "Error updating registration queue:",
-                    updateError,
-                  );
-                  // لا ترمي الخطأ، فقط سجله
-                } else {
-                  console.log("Registration queue updated successfully");
-                }
-              }
-            } catch (dbError) {
-              console.error("Database operation failed:", dbError);
-              throw dbError;
-            }
-          }
 
           // إذا فشلت العملية في قاعدة البيانات، استخدم البيانات المحلية
           if (!dbOperationSuccess || isDemoMode) {
