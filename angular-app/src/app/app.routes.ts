@@ -44,5 +44,10 @@ export const routes: Routes = [
     path: 'reports/annual',
     loadComponent: () => import('./features/reports/annual-reports.component').then((m) => m.AnnualReportsComponent)
   },
-  {\n    path: 'observations/workflow',\n    loadComponent: () => import('./features/observations/observation-workflow.component')\n      .then((m) => m.ObservationWorkflowComponent)\n  },\n  { path: '**', redirectTo: '' }
+  {
+    path: 'observations/workflow',
+    loadComponent: () => import('./features/observations/observation-workflow.component')
+      .then((m) => m.ObservationWorkflowComponent)
+  },
+  { path: '**', redirectTo: '' }
 ];
