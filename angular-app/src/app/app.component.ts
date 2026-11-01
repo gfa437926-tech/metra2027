@@ -30,6 +30,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <a class="nav-link" routerLink="/reports/hourly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-clock hourly"></i><span>النشرات الساعية</span></a>
           <a class="nav-link" routerLink="/reports/climate" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-wind climate"></i><span>المناخ الساعي</span></a>
           <a class="nav-link" routerLink="/reports/daily" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-calendar-days daily"></i><span>النشرات اليومية</span></a>
+          <a class="nav-link" routerLink="/reports/monthly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar-week daily"></i><span>التقارير الشهرية</span></a>
+          <a class="nav-link" routerLink="/reports/annual" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar users"></i><span>التقارير السنوية</span></a>
           <a class="nav-link" routerLink="/soil-temperature" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-temperature-half soil"></i><span>حرارة التربة</span></a>
           <a class="nav-link" routerLink="/agriculture" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-seedling agriculture"></i><span>النشرات الزراعية</span></a>
         </nav>
