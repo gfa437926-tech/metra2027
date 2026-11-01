@@ -36,6 +36,7 @@ public static class WeatherPhenomenonValidator
                 out _))
             issues.Add(new("start_time", "وقت البدء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC."));
 
+        // An omitted, null, empty or whitespace end time means the phenomenon is active.
         if (!string.IsNullOrWhiteSpace(request.EndTime) &&
             !TimeOnly.TryParseExact(
                 request.EndTime,
@@ -44,9 +45,6 @@ public static class WeatherPhenomenonValidator
                 DateTimeStyles.None,
                 out _))
             issues.Add(new("end_time", "وقت الانتهاء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC."));
-
-        if (request.EndTime is not null && string.IsNullOrWhiteSpace(request.EndTime))
-            issues.Add(new("end_time", "اترك وقت الانتهاء فارغاً إذا كانت الظاهرة لا تزال نشطة."));
 
         return issues;
     }
