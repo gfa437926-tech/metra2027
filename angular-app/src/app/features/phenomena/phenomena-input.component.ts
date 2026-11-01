@@ -42,14 +42,14 @@ interface LocalPhenomenon {
       <section class="panel">
         <h2><i class="fa-solid fa-sliders"></i> التحكم بالظاهرة الحالية</h2>
         <div class="status" [class.running]="activePhenomenon" [class.paused]="isPaused">
-          <div><h3>{{ statusText }}</h3><p>{{ statusDetails }}</p></div>
-          <div class="duration" *ngIf="activePhenomenon"><i class="fa-solid fa-hourglass-half"></i> {{ currentDuration }}</div>
+          <div><h3 id="currentStatusText">{{ statusText }}</h3><div class="status-detail-row"><span id="statusIndicator" class="status-indicator" [class.active]="!!activePhenomenon" [class.paused]="isPaused"></span><p id="statusDetails">{{ statusDetails }}</p></div></div>
+          <div id="durationContainer" class="duration" *ngIf="activePhenomenon"><i class="fa-solid fa-hourglass-half"></i> <span id="currentDuration">{{ currentDuration }}</span></div>
         </div>
 
         <div class="field">
           <label for="phenomenonType"><i class="fa-solid fa-cloud-showers-heavy"></i> نوع الظاهرة الجوية</label>
           <div class="input-row"><input id="phenomenonType" [(ngModel)]="phenomenonType" [disabled]="!!activePhenomenon" placeholder="اكتب وصف الظاهرة (مثال: مطر خفيف، عاصفة رعدية، ضباب...)" (keyup.enter)="startPhenomenon()"><button type="button" class="outline" (click)="showSuggestions = !showSuggestions"><i class="fa-solid fa-lightbulb"></i> اقتراحات</button></div>
-          <div class="suggestions" *ngIf="showSuggestions"><button type="button" *ngFor="let suggestion of suggestions" (click)="chooseSuggestion(suggestion)">{{ suggestion }}</button></div>
+          <div id="suggestions" class="suggestions" *ngIf="showSuggestions"><button type="button" *ngFor="let suggestion of suggestions" (click)="chooseSuggestion(suggestion)">{{ suggestion }}</button></div>
         </div>
 
         <div class="controls">
@@ -70,12 +70,12 @@ interface LocalPhenomenon {
       </section>
 
       <section class="panel">
-        <div class="panel-heading"><h2><i class="fa-solid fa-history"></i> سجل الظواهر الجوية</h2><div><small>آخر تحديث: {{ lastUpdateTime }}</small><button type="button" class="outline" (click)="refreshLocalView()"><i class="fa-solid fa-redo"></i> تحديث</button></div></div>
+        <div class="panel-heading"><h2><i class="fa-solid fa-history"></i> سجل الظواهر الجوية</h2><div><small>آخر تحديث: <span id="lastUpdateTime">{{ lastUpdateTime }}</span></small><button type="button" class="outline" (click)="refreshLocalView()"><i class="fa-solid fa-redo"></i> تحديث</button></div></div>
         <div class="filters">
           <button type="button" *ngFor="let item of filters" [class.selected]="activeFilter === item.value" (click)="setFilter(item.value)">{{ item.label }}</button>
         </div>
-        <div class="filter-info"><i class="fa-solid fa-filter"></i> {{ filterInfo }}</div>
-        <div class="record-list" *ngIf="visiblePhenomena.length; else empty">
+        <div id="filterInfo" class="filter-info"><i class="fa-solid fa-filter"></i> <span id="filterInfoText">{{ filterInfo }}</span></div>
+        <div id="phenomenaList" class="record-list" *ngIf="visiblePhenomena.length; else empty">
           <article class="record" *ngFor="let item of visiblePhenomena">
             <div class="record-head"><div><h3><i class="fa-solid fa-cloud-rain"></i> {{ item.phenomenon_type }}</h3><span class="status-pill" [class.done]="item.phenomenon_status === 'منتهية'">{{ item.phenomenon_status }}</span><small>{{ item.phenomenon_date }}</small></div><strong>{{ item.phenomenon_duration || currentDurationFor(item) }}</strong></div>
             <div class="record-times"><span>وقت البدء (محلي): {{ item.start_time_local }}</span><span>وقت البدء (UTC): {{ item.start_time }}</span><span>وقت الانتهاء (محلي): {{ item.end_time_local || '--:--:--' }}</span><span>وقت الانتهاء (UTC): {{ item.end_time || '--:--:--' }}</span></div>
@@ -83,10 +83,10 @@ interface LocalPhenomenon {
             <small class="local-label">سجل معاينة محلي — غير محفوظ في قاعدة البيانات</small>
           </article>
         </div>
-        <ng-template #empty><div class="empty"><i class="fa-solid fa-cloud"></i><h3>لا توجد ظواهر مسجلة في محطتك</h3><p>لا توجد سجلات في معاينة الجلسة الحالية. بعد ربط مصدر البيانات ستظهر ظواهر المحطة هنا.</p><button type="button" (click)="focusPhenomenonType()">ابدأ تسجيل أول ظاهرة</button></div></ng-template>
+        <ng-template #empty><div id="emptyState" class="empty"><i class="fa-solid fa-cloud"></i><h3>لا توجد ظواهر مسجلة في محطتك</h3><p>لا توجد سجلات في معاينة الجلسة الحالية. بعد ربط مصدر البيانات ستظهر ظواهر المحطة هنا.</p><button id="startFirstBtn" type="button" (click)="focusPhenomenonType()">ابدأ تسجيل أول ظاهرة</button></div></ng-template>
       </section>
 
-      <section class="station-stats"><h2><i class="fa-solid fa-chart-pie"></i> إحصائيات تقارير المحطة اليوم</h2><p>إحصائيات المحطة غير متاحة حتى ربط مصدر البيانات المعتمد.</p><div class="stats-grid"><span>التقارير الساعية: —</span><span>درجات حرارة التربة: —</span><span>التقارير الزراعية: —</span><span>التقارير المناخية: —</span><span>التقارير اليومية: —</span><span>تقارير هطول الأمطار: —</span></div></section>
+      <section id="stationStats" class="station-stats"><h2><i class="fa-solid fa-chart-pie"></i> إحصائيات تقارير المحطة اليوم</h2><p>إحصائيات المحطة غير متاحة حتى ربط مصدر البيانات المعتمد.</p><div id="statsGrid" class="stats-grid"><span>التقارير الساعية: —</span><span>درجات حرارة التربة: —</span><span>التقارير الزراعية: —</span><span>التقارير المناخية: —</span><span>التقارير اليومية: —</span><span>تقارير هطول الأمطار: —</span></div></section>
     </div>
   `,
   styles: [`
