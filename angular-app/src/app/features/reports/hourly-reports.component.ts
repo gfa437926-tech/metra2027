@@ -99,9 +99,9 @@ interface HourlyPreview {
           </div>
           <div class="cloud-grid">
             @for (n of cloudLayers; track n) {
-              <div class="cloud-layer"><strong>طبقة السحب {{ n }}</strong><div class="grid">
+              <div class="cloud-layer"><strong>{{ cloudLayerTitle(n) }}</strong><div class="grid">
                 <label>كمية السحب<input [name]="'cloud' + n + 'Amount'" maxlength="1" placeholder="0-8" (blur)="formatField($event)"></label>
-                <label>نوع السحب<input [name]="'cloud' + n + 'Type'" maxlength="50" placeholder="مثال: Ac, Cu" (blur)="formatField($event)"></label>
+                <label *ngIf="n !== 4">نوع السحب<input [name]="'cloud' + n + 'Type'" maxlength="50" placeholder="مثال: Cs1, Ac, Cu" (blur)="formatField($event)"></label>
                 <label *ngIf="n !== 4">ارتفاع السحب (عشرات الأمتار)<input [name]="'cloud' + n + 'Height'" maxlength="3" placeholder="مثال: 120" (blur)="formatField($event)"></label>
               </div></div>
             }
@@ -109,7 +109,6 @@ interface HourlyPreview {
         </section>
 
         <section class="panel">
-          <h2><i class="fa-regular fa-note-sticky"></i> ملاحظات الراصد</h2>
           <label>مقطع السينوب إلى مطار دمشق الدولي synop<textarea name="observerNotes" rows="3" placeholder="المكان المخصص لإدخال مقطع السينوب برجى الحذر أثناء الإدخال "></textarea></label>
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
@@ -153,6 +152,10 @@ export class HourlyReportsComponent {
 
   get isPrecipitationHour(): boolean {
     return ['00','06','12','18'].includes(this.selectedHour);
+  }
+
+  cloudLayerTitle(layer: number): string {
+    return ['الطبقة الأولى', 'الطبقة الثانية', 'الطبقة الثالثة', 'الطبقة الرابعة'][layer - 1] ?? '';
   }
 
   setHour(value: string): void {
