@@ -29,7 +29,7 @@ interface LocalPhenomenon {
 
       <section class="warning">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <div><strong>تنبيه: اتصال قاعدة البيانات غير مفعّل</strong><p>يمكن تجربة المؤقت والتحكم بالظاهرة في هذه الصفحة، لكن السجلات تبقى مؤقتة داخل الصفحة ولا تُرسل إلى قاعدة البيانات أو تُشارك مع المحطة. يلزم تسجيل دخول موثّق وربط API المعتمد لتفعيل التسجيل الفعلي.</p></div>
+        <div><strong>تنبيه: اتصال قاعدة البيانات غير مفعّل</strong><p>يمكن تجربة المؤقت والتحكم بالظاهرة في هذه الصفحة، لكن السجلات تبقى مؤقتة داخل الصفحة ولا تُرسل إلى قاعدة البيانات أو تُشارك مع المحطة. الوقت المحلي المعروض هو وقت الجهاز. يلزم تحديد المنطقة الزمنية الرسمية للمحطة وربط API وتسجيل دخول موثّق قبل تفعيل التسجيل الفعلي.</p></div>
       </section>
 
       <section class="stats">
@@ -171,17 +171,6 @@ export class PhenomenaInputComponent implements OnDestroy {
     const now = new Date();
     return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
   }
-  private localTimeToUTC(local: string): string {
-    const parts = local.split(':').map(Number);
-    let hours = (parts[0] || 0) - 3;
-    if (hours < 0) hours += 24;
-    return `${String(hours).padStart(2, '0')}:${String(parts[1] || 0).padStart(2, '0')}:${String(parts[2] || 0).padStart(2, '0')}`;
-  }
-  private utcToLocal(utc: string): string {
-    const parts = utc.split(':').map(Number);
-    const hours = ((parts[0] || 0) + 3) % 24;
-    return `${String(hours).padStart(2, '0')}:${String(parts[1] || 0).padStart(2, '0')}:${String(parts[2] || 0).padStart(2, '0')}`;
-  }
   private formatDuration(ms: number): string {
     const seconds = Math.max(0, Math.floor(ms / 1000));
     const h = Math.floor(seconds / 3600), m = Math.floor((seconds % 3600) / 60), s = seconds % 60;
@@ -201,7 +190,7 @@ export class PhenomenaInputComponent implements OnDestroy {
       id: `local_${now.getTime()}`,
       phenomenon_type: type,
       phenomenon_date: this.localDate(),
-      start_time: this.localTimeToUTC(local),
+      start_time: now.toISOString().slice(11, 19),
       end_time: '',
       start_time_local: local,
       end_time_local: '',
@@ -236,7 +225,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     const elapsed = (this.isPaused ? this.pausedAt : now.getTime()) - this.startedAt - this.pausedMilliseconds;
     const ended: LocalPhenomenon = {
       ...this.activePhenomenon,
-      end_time: this.localTimeToUTC(local),
+      end_time: now.toISOString().slice(11, 19),
       end_time_local: local,
       phenomenon_duration: this.formatDuration(elapsed),
       phenomenon_status: 'منتهية',
