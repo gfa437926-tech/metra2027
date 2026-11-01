@@ -105,12 +105,14 @@ export class DailyReportsComponent {
       this.noDataFields.delete(key);
       const pattern = field.getAttribute('data-original-pattern');
       if (pattern !== null) field.setAttribute('pattern', pattern);
+      field.required = field.getAttribute('data-original-required') === 'true';
       field.value = '';
-      field.required = true;
       field.removeAttribute('data-original-pattern');
+      field.removeAttribute('data-original-required');
     } else {
       const pattern = field.getAttribute('pattern');
       if (pattern !== null) { field.setAttribute('data-original-pattern', pattern); field.removeAttribute('pattern'); }
+      field.setAttribute('data-original-required', String(field.required));
       field.value = '#';
       field.required = true;
       this.noDataFields.add(key);
@@ -124,10 +126,13 @@ export class DailyReportsComponent {
   typeLabel(value: string): string { return value === '24h' ? 'ملخص 24 ساعة' : value === '06utc' ? 'رصد 06 UTC' : 'رصد 18 UTC'; }
   resetState(form?: HTMLFormElement): void {
     this.issues = []; this.message = ''; this.noDataFields.clear();
-    form?.querySelectorAll<HTMLInputElement>('[data-original-pattern]').forEach(field => {
+    form?.querySelectorAll<HTMLInputElement>('[data-original-pattern], [data-original-required]').forEach(field => {
       const pattern = field.getAttribute('data-original-pattern');
       if (pattern !== null) field.setAttribute('pattern', pattern);
+      const required = field.getAttribute('data-original-required');
+      if (required !== null) field.required = required === 'true';
       field.removeAttribute('data-original-pattern');
+      field.removeAttribute('data-original-required');
     });
   }
 
