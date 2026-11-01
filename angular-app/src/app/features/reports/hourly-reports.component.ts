@@ -35,16 +35,14 @@ interface HourlyPreview {
         <section class="panel">
           <h2><i class="fa-solid fa-user-tie"></i> التعريف بالمحطة والراصد</h2>
           <div class="grid">
-            <label>المحطة<input name="station" maxlength="20" placeholder="رمز المحطة" required (blur)="formatField($event)"></label>
-            <label>الراصد<input name="observer" maxlength="100" placeholder="اسم الراصد" required (blur)="formatField($event)"></label>
-            <label>الوقت الحالي<input value="{{ now }}" readonly></label>
+            <label>التاريخ (ميلادي)<input type="text" name="observationDate" [value]="today" readonly></label>
+            <label>الوقت الحالي<input type="text" [value]="now" readonly></label>
           </div>
         </section>
         <section class="panel">
           <h2><i class="fa-solid fa-circle-info"></i> المعلومات الأساسية</h2>
           <div class="grid">
-            <label>التاريخ (ميلادي)<input type="date" name="observationDate" [value]="today" required></label>
-            <label>التوقيت العالمي (UTC) - الساعة<select name="utcTime" required (change)="setHour($any($event.target).value)"><option value="">اختر الساعة</option>@for (h of hours; track h) {<option [value]="h">{{ h }}:00</option>}</select></label>
+            <label>التوقيت العالمي (UTC) - الساعة<select name="utcTime" required (change)="setHour($any($event.target).value)"><option value="">اختر ساعة التوقيت العالمي</option>@for (h of hours; track h) {<option [value]="h">{{ h }}</option>}</select></label>
           </div>
         </section>
 
