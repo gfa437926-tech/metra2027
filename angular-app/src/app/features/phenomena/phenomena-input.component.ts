@@ -21,7 +21,7 @@ interface LocalPhenomenon {
   selector: 'metra-phenomena-input',
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page" dir="rtl">
+    <div class="page" id="mainContainer" dir="rtl">
       <header class="topbar">
         <div class="brand"><span class="brand-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span><div><h1>نظام تسجيل الظواهر الجوية</h1><p>تسجيل بدء وانتهاء الظواهر الجوية ومتابعتها في الوقت الفعلي</p></div></div>
         <div class="header-actions"><span class="preview-badge"><i class="fa-solid fa-flask"></i> معاينة محلية غير محفوظة</span><span>{{ currentDate }} · {{ currentTime }}</span><button type="button" (click)="resetLocalSession()">إعادة ضبط المعاينة</button></div>
