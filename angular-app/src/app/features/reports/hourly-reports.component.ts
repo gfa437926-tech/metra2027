@@ -37,6 +37,7 @@ interface HourlyPreview {
           <div class="grid">
             <label>المحطة<input name="station" maxlength="20" placeholder="رمز المحطة" required (blur)="formatField($event)"></label>
             <label>الراصد<input name="observer" maxlength="100" placeholder="اسم الراصد" required (blur)="formatField($event)"></label>
+            <label>الوقت الحالي<input value="{{ now }}" readonly></label>
           </div>
         </section>
         <section class="panel">
@@ -88,9 +89,7 @@ interface HourlyPreview {
         </section>
 
         <section class="panel" [hidden]="!isPrecipitationHour">
-          <h2><i class="fa-solid fa-cloud-rain"></i> الهطول</h2>
-          <div class="conditional-note">تُسجل كمية الهطول في ساعات 00 و06 و12 و18 UTC.</div>
-          <div class="grid"><label>كمية الهطول (ملم) *<input name="precipitationAmount" placeholder="012.5" maxlength="5" [required]="isPrecipitationHour" (blur)="formatField($event)"></label></div>
+          <div class="grid"><label>كمية الهطول (ملم)<input name="precipitationAmount" placeholder="012.5" maxlength="5" [required]="isPrecipitationHour" (blur)="formatField($event)"></label></div>
         </section>
 
         <section class="panel">
@@ -113,8 +112,8 @@ interface HourlyPreview {
 
         <section class="panel">
           <h2><i class="fa-regular fa-note-sticky"></i> ملاحظات الراصد</h2>
-          <label>مقطع السينوب إلى مطار دمشق الدولي synop<textarea name="observerNotes" rows="3" placeholder="مقطع السينوب إلى مطار دمشق الدولي synop"></textarea></label>
-          <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بصحة البيانات المدخلة ومطابقتها لسجل الرصد.</label>
+          <label>مقطع السينوب إلى مطار دمشق الدولي synop<textarea name="observerNotes" rows="3" placeholder="المكان المخصص لإدخال مقطع السينوب برجى الحذر أثناء الإدخال "></textarea></label>
+          <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
 
         <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وإنشاء مسودة تجريبية</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
