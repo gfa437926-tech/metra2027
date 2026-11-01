@@ -19,7 +19,7 @@ import { Component } from '@angular/core';
             <select name="utcTime" required>
               <option value="" selected disabled>اختر الوقت العالمي (UTC)</option>
               <option value="23">23:00 UTC</option><option value="02">02:00 UTC</option>
-              <option value="05">05:00 UTC</option><option value="08">08:00 UTC</option>
+              <option value="05" selected>05:00 UTC</option><option value="08">08:00 UTC</option>
               <option value="11">11:00 UTC</option><option value="14">14:00 UTC</option>
               <option value="17">17:00 UTC</option><option value="20">20:00 UTC</option>
             </select>
@@ -61,6 +61,7 @@ import { Component } from '@angular/core';
         <div class="actions">
           <button type="button" class="test" (click)="fillTestData(t5,t10,t20,t50,soilForm)">إدخال بيانات تجريبية</button>
           <button type="submit" class="preview">معاينة التقرير</button>
+          <button type="button" class="submit" disabled title="يتطلب اعتماد التقرير وربط الخدمة">مشاركة عبر واتساب — غير متاحة في المعاينة</button>
           <button type="button" class="submit" disabled title="يتطلب ربط API وقاعدة البيانات">إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
         </div>
       </form>
