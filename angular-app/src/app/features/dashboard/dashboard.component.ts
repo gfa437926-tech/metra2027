@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 
 interface DashboardCard {
@@ -14,7 +15,7 @@ interface DashboardCard {
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   template: `
     <div class="dashboard-page">
       <section class="logo-header fade-in">
