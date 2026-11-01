@@ -12,6 +12,7 @@ import { Component } from '@angular/core';
         <span class="mode">وضع المعاينة</span>
       </header>
 
+      <form #rainForm (submit)="preview($event, rainForm)" novalidate>
       <section class="panel">
         <h2>معلومات الراصد</h2>
         <p class="notice">بيانات اسم الراصد والمحطة والصفة الوظيفية غير متصلة حالياً بمصدر هوية معتمد؛ لن نعرض قيماً افتراضية على أنها بيانات حقيقية.</p>
@@ -20,7 +21,7 @@ import { Component } from '@angular/core';
             <input type="text" [value]="currentDate" readonly>
           </label>
           <label class="field">وقت النشرة (توقيت سورية)
-            <input type="time" [value]="localTime" (change)="updateLocalTime($any($event.target).value)" min="08:30" max="09:30" step="300" required>
+            <input name="localTime" type="time" [value]="localTime" (change)="updateLocalTime($any($event.target).value)" min="08:30" max="09:30" step="300" required>
             <small>النشرة ترسل بين الساعة 08:30 و 09:30 صباحاً (توقيت سورية)</small>
           </label>
           <label class="field">الوقت العالمي (UTC)
@@ -30,7 +31,6 @@ import { Component } from '@angular/core';
         </div>
       </section>
 
-      <form #rainForm (submit)="preview($event, rainForm)" novalidate>
         <section class="panel">
           <h2>بيانات الهطول المطري</h2>
           <div class="fields two">
