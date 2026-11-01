@@ -116,8 +116,6 @@ export class PhenomenaInputComponent implements OnDestroy {
   activeFilter = 'all';
   message = '';
   private startedAt = 0;
-  private pausedMilliseconds = 0;
-  private pausedAt = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private clock: ReturnType<typeof setInterval> | null = null;
 
@@ -182,8 +180,6 @@ export class PhenomenaInputComponent implements OnDestroy {
     const now = new Date();
     const local = this.localTime();
     this.startedAt = now.getTime();
-    this.pausedMilliseconds = 0;
-    this.pausedAt = 0;
     this.isPaused = false;
     this.currentDuration = '00:00:00';
     this.activePhenomenon = {
@@ -208,11 +204,8 @@ export class PhenomenaInputComponent implements OnDestroy {
   togglePause(): void {
     if (!this.activePhenomenon) return;
     if (this.isPaused) {
-      this.pausedMilliseconds += Date.now() - this.pausedAt;
-      this.pausedAt = 0;
       this.isPaused = false;
     } else {
-      this.pausedAt = Date.now();
       this.isPaused = true;
     }
     this.message = this.isPaused ? 'تم إيقاف المؤقت مؤقتاً.' : 'تم استئناف المؤقت.';
@@ -222,7 +215,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     if (!this.activePhenomenon) return;
     const now = new Date();
     const local = this.localTime();
-    const elapsed = (this.isPaused ? this.pausedAt : now.getTime()) - this.startedAt - this.pausedMilliseconds;
+    const elapsed = now.getTime() - this.startedAt;
     const ended: LocalPhenomenon = {
       ...this.activePhenomenon,
       end_time: now.toISOString().slice(11, 19),
@@ -242,8 +235,8 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.lastUpdateTime = this.currentTime;
   }
   private updateDuration(): void {
-    if (!this.activePhenomenon || this.isPaused) return;
-    this.currentDuration = this.formatDuration(Date.now() - this.startedAt - this.pausedMilliseconds);
+    if (!this.activePhenomenon) return;
+    this.currentDuration = this.formatDuration(Date.now() - this.startedAt);
   }
   chooseSuggestion(value: string): void { this.phenomenonType = value; this.showSuggestions = false; }
   setFilter(value: string): void { this.activeFilter = value; }
@@ -256,7 +249,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.lastEnded = null;
     this.isPaused = false;
     this.currentDuration = '00:00:00';
-    this.startedAt = this.pausedMilliseconds = this.pausedAt = 0;
+    this.startedAt = 0;
     this.message = 'تمت إعادة ضبط بيانات المعاينة المحلية.';
   }
   focusPhenomenonType(): void { document.getElementById('phenomenonType')?.focus(); }
