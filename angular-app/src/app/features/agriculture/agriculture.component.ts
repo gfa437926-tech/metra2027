@@ -199,10 +199,14 @@ export class AgricultureComponent {
   saveDraft(form: HTMLFormElement): void {
     try {
       const values: Record<string, string | boolean> = {};
-      for (const [key, value] of new FormData(form).entries()) {
-        values[key] = value instanceof File ? value.name : String(value);
-      }
-      values.responsibilityAgreement = (form.elements.namedItem('responsibilityAgreement') as HTMLInputElement).checked;
+      Array.from(form.elements).forEach(control => {
+        if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) {
+          if (!control.name) return;
+          values[control.name] = control instanceof HTMLInputElement && control.type === 'checkbox'
+            ? control.checked
+            : control.value;
+        }
+      });
       const draft = { data: values, savedAt: new Date().toISOString(), status: 'draft' };
       localStorage.setItem('agriculturalReportDraft', JSON.stringify(draft));
       this.draftStatus = 'حُفظت المسودة محلياً على هذا المتصفح فقط. لم تُرسل إلى الخادم أو قاعدة البيانات.';
