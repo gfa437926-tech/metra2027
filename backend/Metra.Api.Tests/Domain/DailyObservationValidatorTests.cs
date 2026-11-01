@@ -1,3 +1,4 @@
+using Xunit;
 using Metra.Api.Domain.Observations;
 
 namespace Metra.Api.Tests;
