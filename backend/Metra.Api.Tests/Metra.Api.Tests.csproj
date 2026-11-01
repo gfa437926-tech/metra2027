@@ -15,6 +15,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="../../Metra.Api/Metra.Api.csproj" />
+    <ProjectReference Include="../Metra.Api/Metra.Api.csproj" />
   </ItemGroup>
 </Project>
