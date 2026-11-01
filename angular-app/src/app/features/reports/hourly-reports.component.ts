@@ -33,40 +33,49 @@ interface HourlyPreview {
 
       <form #hourlyForm (submit)="submit($event, hourlyForm)">
         <section class="panel">
+          <h2><i class="fa-solid fa-user-tie"></i> التعريف بالمحطة والراصد</h2>
+          <div class="grid">
+            <label>المحطة<input name="station" maxlength="20" placeholder="رمز المحطة" required (blur)="formatField($event)"></label>
+            <label>الراصد<input name="observer" maxlength="100" placeholder="اسم الراصد" required (blur)="formatField($event)"></label>
+          </div>
+        </section>
+        <section class="panel">
           <h2><i class="fa-solid fa-circle-info"></i> المعلومات الأساسية</h2>
           <div class="grid">
-            <label>تاريخ الرصد<input type="date" name="observationDate" [value]="today" required></label>
+            <label>التاريخ (ميلادي)<input type="date" name="observationDate" [value]="today" required></label>
             <label>التوقيت العالمي (UTC) - الساعة<select name="utcTime" required (change)="setHour($any($event.target).value)"><option value="">اختر الساعة</option>@for (h of hours; track h) {<option [value]="h">{{ h }}:00</option>}</select></label>
-            <label>رمز المحطة<input name="station" maxlength="20" placeholder="رمز المحطة" required (blur)="formatField($event)"></label>
-            <label>اسم الراصد<input name="observer" maxlength="100" placeholder="اسم الراصد" required (blur)="formatField($event)"></label>
           </div>
         </section>
 
         <section class="panel">
-          <h2><i class="fa-solid fa-temperature-half"></i> الحرارة والضغط والرطوبة</h2>
+          <h2><i class="fa-solid fa-temperature-half"></i> درجات الحرارة</h2>
           <div class="grid">
             <label>درجة الحرارة الجافة (سْ) *<input name="dryTemp" placeholder="+25.5" maxlength="5" required (blur)="formatField($event)"><small>التنسيق ±dd.d أو #</small></label>
             <label>درجة الحرارة الرطبة (سْ) *<input name="wetTemp" placeholder="+20.0" maxlength="5" required (blur)="formatField($event)"></label>
-            <label>ضغط المحطة (ميلبار) *<input name="stationPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
-            <label>ضغط سطح البحر (ميلبار) *<input name="seaLevelPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
-            <label>الرطوبة النسبية (%) *<input name="relativeHumidity" placeholder="065" maxlength="3" required (blur)="formatField($event)"></label>
-            <label>درجة الندى (سْ) *<input name="dewPoint" placeholder="+18.5" maxlength="5" required (blur)="formatField($event)"></label>
-            <label>ضغط بخار الماء (ميلبار)<input name="vaporPressure" placeholder="16.8" maxlength="4" (blur)="formatField($event)"></label>
-            <label>فرق ضغط بخار الماء (ميلبار)<input name="vaporPressureDiff" placeholder="12.3" maxlength="4" (blur)="formatField($event)"></label>
           </div>
         </section>
-
         <section class="panel">
-          <h2><i class="fa-solid fa-gauge-high"></i> تغير الضغط</h2>
-          <div class="conditional-note" *ngIf="isSynoptic">هذه ساعة سينوبتية؛ حقول ميل الضغط وشكله والطقس السابق مطلوبة.</div>
+          <h2><i class="fa-solid fa-gauge-high"></i> الضغط الجوي</h2>
+          <div class="conditional-note" *ngIf="isSynoptic">هذه ساعة سينوبتية؛ حقول ميل الضغط وشكل الضغط والطقس الغابر مطلوبة.</div>
           <div class="grid">
+            <label>ضغط المحطة (ميلبار) *<input name="stationPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
+            <label>ضغط سطح البحر (ميلبار) *<input name="seaLevelPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
             <label [class.required-field]="isSynoptic">ميل الضغط (د.د)<input name="pressureSlope" placeholder="2.3" maxlength="4" [required]="isSynoptic" (blur)="formatField($event)"></label>
             <label [class.required-field]="isSynoptic">شكل الضغط<input name="pressureShape" placeholder="5" maxlength="1" [required]="isSynoptic" (blur)="formatField($event)"></label>
           </div>
         </section>
+        <section class="panel">
+          <h2><i class="fa-solid fa-calculator"></i> الحسابات المستخرجة</h2>
+          <div class="grid">
+            <label>الرطوبة النسبية (%) *<input name="relativeHumidity" placeholder="065" maxlength="3" required (blur)="formatField($event)"></label>
+            <label>درجة الندى (سْ) *<input name="dewPoint" placeholder="+18.5" maxlength="5" required (blur)="formatField($event)"></label>
+            <label>ضغط بخار الماء (ميلبار)<input name="vaporPressure" placeholder="16.8" maxlength="4" (blur)="formatField($event)"></label>
+            <label>فرق ضغط بخار الماء<input name="vaporPressureDiff" placeholder="12.3" maxlength="4" (blur)="formatField($event)"></label>
+          </div>
+        </section>
 
         <section class="panel">
-          <h2><i class="fa-solid fa-wind"></i> الرياح والرؤية والطقس</h2>
+          <h2><i class="fa-solid fa-wind"></i> الرياح والرؤية</h2>
           <div class="grid">
             <label>اتجاه الرياح السطحية (عشرات) *<input name="windDirection" placeholder="18" maxlength="2" required (blur)="formatField($event)"></label>
             <label>سرعة الرياح السطحية (م/ثا) *<input name="windSpeed" placeholder="12" maxlength="2" required (blur)="formatField($event)"></label>
@@ -85,7 +94,7 @@ interface HourlyPreview {
         </section>
 
         <section class="panel">
-          <h2><i class="fa-solid fa-cloud"></i> الغطاء السحابي وطبقاته</h2>
+          <h2><i class="fa-solid fa-cloud"></i> السحب والتغطية</h2>
           <div class="grid">
             <label>التغطية الكلية للسحب *<select name="totalCloudCover" required><option value="">اختر</option>@for (n of cloudValues; track n) {<option [value]="n">{{ n }}</option>}<option value="#">#</option></select></label>
             <label>مجموع التغطية 1+2 *<input name="cover12" placeholder="0-8 أو #" maxlength="1" required (blur)="formatField($event)"></label>
@@ -104,7 +113,7 @@ interface HourlyPreview {
 
         <section class="panel">
           <h2><i class="fa-regular fa-note-sticky"></i> ملاحظات الراصد</h2>
-          <textarea name="observerNotes" rows="3" placeholder="ملاحظات إضافية عن حالة الطقس..."></textarea>
+          <label>مقطع السينوب إلى مطار دمشق الدولي synop<textarea name="observerNotes" rows="3" placeholder="مقطع السينوب إلى مطار دمشق الدولي synop"></textarea></label>
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بصحة البيانات المدخلة ومطابقتها لسجل الرصد.</label>
         </section>
 
