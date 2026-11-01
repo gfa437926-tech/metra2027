@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Component } from '@angular/core';
 
 interface WeatherPhenomenon {
@@ -33,7 +34,7 @@ interface WeatherPhenomenon {
 @Component({
   standalone: true,
   selector: 'metra-phenomena',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page" dir="rtl">
       <header class="topbar">
