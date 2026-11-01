@@ -11,6 +11,7 @@ interface AgricultureField {
   min?: number;
   max?: number;
   temperature?: boolean;
+  title?: string;
 }
 
 @Component({
