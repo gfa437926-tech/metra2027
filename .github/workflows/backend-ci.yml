@@ -27,5 +27,7 @@ jobs:
           dotnet-version: 10.0.x
       - name: Restore
         run: dotnet restore backend/Metra.Api/Metra.Api.csproj
-      - name: Build
+      - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
+      - name: Run domain tests
+        run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release
