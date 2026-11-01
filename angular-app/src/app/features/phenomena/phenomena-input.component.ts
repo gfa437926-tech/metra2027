@@ -88,7 +88,7 @@ interface LocalPhenomenon {
         <ng-template #empty><div id="emptyState" class="empty"><i class="fa-solid fa-cloud"></i><h3>لا توجد ظواهر مسجلة في محطتك</h3><p>لا توجد سجلات في معاينة الجلسة الحالية. بعد ربط مصدر البيانات ستظهر ظواهر المحطة هنا.</p><button id="startFirstBtn" type="button" (click)="focusPhenomenonType()">ابدأ تسجيل أول ظاهرة</button></div></ng-template>
       </section>
 
-      <section id="stationStats" class="station-stats"><h2><i class="fa-solid fa-chart-pie"></i> إحصائيات تقارير المحطة اليوم</h2><p>إحصائيات المحطة غير متاحة حتى ربط مصدر البيانات المعتمد.</p><div id="statsGrid" class="stats-grid"><span>التقارير الساعية: —</span><span>درجات حرارة التربة: —</span><span>التقارير الزراعية: —</span><span>التقارير المناخية: —</span><span>التقارير اليومية: —</span><span>تقارير هطول الأمطار: —</span></div></section>
+      <section id="stationStats" class="station-stats"><h2><i class="fa-solid fa-chart-pie"></i> إحصائيات تقارير المحطة اليوم</h2><p>إحصائيات المحطة غير متاحة حتى ربط مصدر البيانات المعتمد.</p><div id="statsGrid" class="stats-grid"><span>التقارير الساعية: <span id="count-hourly">—</span></span><span>درجات حرارة التربة: <span id="count-soil">—</span></span><span>التقارير الزراعية: <span id="count-agri">—</span></span><span>التقارير المناخية: <span id="count-climate">—</span></span><span>التقارير اليومية: <span id="count-daily">—</span></span><span>تقارير هطول الأمطار: <span id="count-rain">—</span></span></div></section>
     </div>
   `,
   styles: [`
