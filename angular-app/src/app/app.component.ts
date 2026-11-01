@@ -18,8 +18,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </header>
         <section class="user-card">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-          <div class="user-name">مستخدم النظام</div>
-          <div class="user-details">الراصد الجوي · المحطة الرئيسية</div>
+          <div class="user-name" id="sidebarUser">مستخدم</div>
+          <div class="user-details" id="sidebarStation">محطة</div>
         </section>
         <div id="sidebarMenu">
         <div class="section-title">الإدارة</div>
