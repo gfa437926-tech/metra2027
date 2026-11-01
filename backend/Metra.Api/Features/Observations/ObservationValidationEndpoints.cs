@@ -9,15 +9,19 @@ public static class ObservationValidationEndpoints
     {
         var group = endpoints.MapGroup("/api/v1/observations").WithTags("Observation validation");
 
-        group.MapPost("/daily/validate", ([FromBody] ObservationValidationRequest request) =>
+        group.MapPost("/daily/validate", ([FromBody] ObservationValidationRequest? request) =>
         {
-            var issues = DailyObservationValidator.Validate(request.Values);
+            var error = ObservationValidationRequestGuard.GetError(request?.Values);
+            if (error is not null) return Results.BadRequest(new { error });
+            var issues = DailyObservationValidator.Validate(request!.Values!);
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
         }).WithName("ValidateDailyObservation");
 
-        group.MapPost("/hourly/validate", ([FromBody] ObservationValidationRequest request) =>
+        group.MapPost("/hourly/validate", ([FromBody] ObservationValidationRequest? request) =>
         {
-            var issues = HourlyObservationValidator.Validate(request.Values);
+            var error = ObservationValidationRequestGuard.GetError(request?.Values);
+            if (error is not null) return Results.BadRequest(new { error });
+            var issues = HourlyObservationValidator.Validate(request!.Values!);
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
         }).WithName("ValidateHourlyObservation");
 
@@ -25,5 +29,5 @@ public static class ObservationValidationEndpoints
     }
 }
 
-public sealed record ObservationValidationRequest(Dictionary<string, string?> Values);
+public sealed record ObservationValidationRequest(Dictionary<string, string?>? Values);
 public sealed record ValidationResponse(bool IsValid, IReadOnlyList<ValidationIssue> Issues);
