@@ -1,44 +1,42 @@
-# METRA 2027 Mobile (Flutter)
+# METRA 2027 — Mobile (Flutter)
 
-This is the standalone native mobile application. It does not require the Angular web application or the .NET API to launch.
+This is the independent native mobile client for Android and iOS. It does not depend on the Angular web application.
 
 ## Requirements
+- Flutter stable SDK (Dart 3.6+)
+- Android Studio / Android SDK for Android
+- Xcode on macOS for iOS builds
 
-- Flutter stable SDK
-- Android Studio and Android SDK for Android
-- macOS and Xcode for iOS
-
-## Generate native platform projects
-
-Native runner folders are generated with Flutter tooling:
-
+## Generate native platform runners (first setup)
+The repository currently contains the Flutter source and package configuration. From this directory run:
 ```bash
 flutter create --platforms=android,ios .
 ```
+This generates Android and iOS runner projects using the installed Flutter SDK.
 
-On Windows/Linux, use `flutter create --platforms=android .`. iOS builds require macOS.
-
-## Install and run
-
+## Run independently
 ```bash
 flutter pub get
 flutter run
 ```
 
 ## Build
-
 ```bash
 flutter build apk
+flutter build appbundle
+# On macOS:
+flutter build ios
 ```
 
-For iOS (on macOS): `flutter build ios`.
-
-## API configuration
-
-The future API client will read `METRA_API_BASE_URL` from a Dart compile-time define. Example:
-
+## API endpoint
+Override the API address at run/build time:
 ```bash
-flutter run --dart-define=METRA_API_BASE_URL=http://10.0.2.2:5000
+flutter run --dart-define=METRA_API_BASE_URL=https://your-api-host/api/v1
 ```
+The default development address uses Android emulator host `10.0.2.2`; for a physical phone, pass a reachable LAN or HTTPS address.
 
-Android emulator uses `10.0.2.2` to reach the host machine. A physical phone must use the computer's reachable LAN address. The current starter screens do not require an API connection.
+## Independence
+- No Node.js or Angular CLI is required.
+- No .NET SDK is required to run the mobile UI.
+- The Flutter app owns its dependencies and native platform runners.
+- Mobile code calls the backend API; it must not connect directly to PostgreSQL/Supabase.
