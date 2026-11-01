@@ -18,8 +18,10 @@ import { Component } from '@angular/core';
           <label class="field">التوقيت العالمي المكافئ (UTC)
             <select name="utcTime" required>
               <option value="" selected disabled>اختر الوقت العالمي (UTC)</option>
-              <option value="00">00:00 UTC</option><option value="06">06:00 UTC</option>
-              <option value="12">12:00 UTC</option><option value="18">18:00 UTC</option>
+              <option value="23">23:00 UTC</option><option value="02">02:00 UTC</option>
+              <option value="05">05:00 UTC</option><option value="08">08:00 UTC</option>
+              <option value="11">11:00 UTC</option><option value="14">14:00 UTC</option>
+              <option value="17">17:00 UTC</option><option value="20">20:00 UTC</option>
             </select>
             <small>يتم إدخال التوقيت العالمي فقط (UTC+0)</small>
           </label>
@@ -28,19 +30,19 @@ import { Component } from '@angular/core';
           <h2>درجات حرارة التربة <small>(النطاق: -20.0 إلى +50.0 درجة مئوية)</small></h2>
           <div class="fields">
             <label class="field">درجة حرارة تربة على عمق 5سم (سْ)
-              <input #t5 name="soilTemp5cm" type="text" placeholder="±dd.d أو #" maxlength="5" required>
+              <input #t5 name="soilTemp5cm" type="text" placeholder="±dd.d أو #" maxlength="5" pattern="^[+-]?\\d{1,2}\\.\\d$|^#$" required (blur)="formatTemperature(t5)">
               <span class="signs"><button type="button" (click)="setSign(t5, '-')">سالب</button><button type="button" (click)="setSign(t5, '+')">موجب</button><button type="button" (click)="setMissing(t5)">#</button></span>
             </label>
             <label class="field">درجة حرارة تربة على عمق 10سم (سْ)
-              <input #t10 name="soilTemp10cm" type="text" placeholder="±dd.d أو #" maxlength="5" required>
+              <input #t10 name="soilTemp10cm" type="text" placeholder="±dd.d أو #" maxlength="5" pattern="^[+-]?\\d{1,2}\\.\\d$|^#$" required (blur)="formatTemperature(t10)">
               <span class="signs"><button type="button" (click)="setSign(t10, '-')">سالب</button><button type="button" (click)="setSign(t10, '+')">موجب</button><button type="button" (click)="setMissing(t10)">#</button></span>
             </label>
             <label class="field">درجة حرارة تربة على عمق 20سم (سْ)
-              <input #t20 name="soilTemp20cm" type="text" placeholder="±dd.d أو #" maxlength="5" required>
+              <input #t20 name="soilTemp20cm" type="text" placeholder="±dd.d أو #" maxlength="5" pattern="^[+-]?\\d{1,2}\\.\\d$|^#$" required (blur)="formatTemperature(t20)">
               <span class="signs"><button type="button" (click)="setSign(t20, '-')">سالب</button><button type="button" (click)="setSign(t20, '+')">موجب</button><button type="button" (click)="setMissing(t20)">#</button></span>
             </label>
             <label class="field">درجة حرارة تربة على عمق 50سم (سْ)
-              <input #t50 name="soilTemp50cm" type="text" placeholder="±dd.d أو #" maxlength="5" required>
+              <input #t50 name="soilTemp50cm" type="text" placeholder="±dd.d أو #" maxlength="5" pattern="^[+-]?\\d{1,2}\\.\\d$|^#$" required (blur)="formatTemperature(t50)">
               <span class="signs"><button type="button" (click)="setSign(t50, '-')">سالب</button><button type="button" (click)="setSign(t50, '+')">موجب</button><button type="button" (click)="setMissing(t50)">#</button></span>
             </label>
           </div>
@@ -86,13 +88,44 @@ export class SoilTemperatureComponent {
   previewText = '';
 
   setSign(field: HTMLInputElement, sign: string): void {
-    if (field.value === '#') return;
     const value = field.value.replace(/^[+-]/, '');
     field.value = sign + value;
+    field.setCustomValidity('');
   }
 
   setMissing(field: HTMLInputElement): void {
     field.value = '#';
+    field.setCustomValidity('');
+  }
+
+  formatTemperature(field: HTMLInputElement): void {
+    let value = field.value.trim();
+    if (!value || value === '#') return;
+    value = value.replace(/[^0-9.#+-]/g, '');
+    let sign = '';
+    if (value.startsWith('-') || value.startsWith('+')) {
+      sign = value[0];
+      value = value.substring(1);
+    } else if (value.startsWith('#')) {
+      field.value = '#';
+      return;
+    }
+    value = value.replace(/[+#-]/g, '');
+    if (!value) { field.value = sign; return; }
+    if (!value.includes('.')) {
+      const digits = value.replace(/[^0-9]/g, '');
+      if (digits.length >= 2) value = digits.slice(0, -1) + '.' + digits.slice(-1);
+      else if (digits.length === 1) value = '0.' + digits;
+    } else {
+      const parts = value.split('.');
+      if (parts[1].length > 1) value = parts[0] + '.' + parts[1].charAt(0);
+      else if (parts[1].length === 0) value += '0';
+    }
+    const parts = value.split('.');
+    if (parts[0].length === 1) value = '0' + parts[0] + '.' + parts[1];
+    else if (parts[0].length === 0) value = '00.' + parts[1];
+    field.value = sign ? sign + value : '+' + value;
+    field.setCustomValidity('');
   }
 
   countNotes(event: Event): void {
@@ -100,17 +133,30 @@ export class SoilTemperatureComponent {
   }
 
   fillTestData(t5: HTMLInputElement, t10: HTMLInputElement, t20: HTMLInputElement, t50: HTMLInputElement, form: HTMLFormElement): void {
-    t5.value = '+24.3';
-    t10.value = '+23.1';
-    t20.value = '+21.8';
-    t50.value = '+20.5';
-    (form.elements.namedItem('utcTime') as HTMLSelectElement).value = '06';
-    (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية لا تمثل رصداً فعلياً.';
+    t5.value = '+25.5';
+    t10.value = '-5.3';
+    t20.value = '#';
+    t50.value = '+22.0';
+    (form.elements.namedItem('utcTime') as HTMLSelectElement).value = '05';
+    (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية للاختبار:\\n• قراءات 5سم و50سم طبيعية\\n• قراءات 10سم سالبة\\n• قراءات 20سم غير متوفرة (#)\\n• جميع القراءات ضمن النطاق المسموح\\n• تم إنشاؤها تلقائياً للنظام';
+    (form.elements.namedItem('responsibilityConfirmed') as HTMLInputElement).checked = true;
     this.notesCount = (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value.length;
   }
 
   preview(event: Event, form: HTMLFormElement): void {
     event.preventDefault();
+    const allowedHours = ['23', '02', '05', '08', '11', '14', '17', '20'];
+    const utc = form.elements.namedItem('utcTime') as HTMLSelectElement;
+    utc.setCustomValidity(allowedHours.includes(utc.value) ? '' : 'يجب اختيار ساعة UTC صحيحة');
+    const temperatureFields = ['soilTemp5cm', 'soilTemp10cm', 'soilTemp20cm', 'soilTemp50cm'];
+    for (const id of temperatureFields) {
+      const field = form.elements.namedItem(id) as HTMLInputElement;
+      const value = field.value.trim();
+      const validFormat = value === '#' || /^[+-]?\\d{1,2}\\.\\d$/.test(value);
+      const numeric = value === '#' ? 0 : Number(value);
+      const validRange = value === '#' || (numeric >= -20 && numeric <= 50);
+      field.setCustomValidity(validFormat && validRange ? '' : 'أدخل درجة بصيغة ±dd.d ضمن النطاق -20.0 إلى +50.0، أو #');
+    }
     if (!form.reportValidity()) return;
     const data = new FormData(form);
     const labels: Record<string, string> = {
