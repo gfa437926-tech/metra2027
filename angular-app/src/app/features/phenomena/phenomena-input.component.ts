@@ -23,7 +23,7 @@ interface LocalPhenomenon {
   template: `
     <div class="page" dir="rtl">
       <header class="topbar">
-        <div class="brand"><span class="brand-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span><div><h1>نظام الظواهر الجوية</h1><p>نظام تسجيل الظواهر الجوية</p></div></div>
+        <div class="brand"><span class="brand-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span><div><h1>نظام تسجيل الظواهر الجوية</h1><p>تسجيل بدء وانتهاء الظواهر الجوية ومتابعتها في الوقت الفعلي</p></div></div>
         <div class="header-actions"><span class="preview-badge"><i class="fa-solid fa-flask"></i> معاينة محلية غير محفوظة</span><span>{{ currentDate }} · {{ currentTime }}</span><button type="button" (click)="resetLocalSession()">إعادة ضبط المعاينة</button></div>
       </header>
 
@@ -34,7 +34,7 @@ interface LocalPhenomenon {
 
       <section class="stats">
         <article><strong>{{ phenomena.length }}</strong><span>إجمالي الظواهر</span></article>
-        <article><strong>{{ activeCount }}</strong><span>الظواهر النشطة</span></article>
+        <article><strong>{{ activeCount }}</strong><span>ظواهر نشطة</span></article>
         <article><strong>{{ myActiveCount }}</strong><span>ظواهري النشطة</span></article>
         <article><strong>{{ todayCount }}</strong><span>اليوم</span></article>
       </section>
