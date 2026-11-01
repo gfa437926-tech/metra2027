@@ -15,52 +15,52 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
-          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص 24 ساعة</label>
-          <label><input type="radio" name="reportType" value="06utc" [checked]="reportType === '06utc'" (change)="setType('06utc')"> رصد 06 UTC</label>
-          <label><input type="radio" name="reportType" value="18utc" [checked]="reportType === '18utc'" (change)="setType('18utc')"> رصد 18 UTC</label>
+          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص يومي بتاريخ اليوم السابق</label>
+          <label><input type="radio" name="reportType" value="06utc" [checked]="reportType === '06utc'" (change)="setType('06utc')"> 06 UTC</label>
+          <label><input type="radio" name="reportType" value="18utc" [checked]="reportType === '18utc'" (change)="setType('18utc')"> 18 UTC</label>
         </div>
         <p>{{ typeDescription }}</p>
       </section>
 
       <form #dailyForm (submit)="submit($event, dailyForm)">
         <section class="panel"><h2><i class="fa-solid fa-calendar-check"></i> معلومات النشرة</h2><div class="grid">
-          <label>تاريخ الرصد<input type="date" name="currentDate" [value]="today" required></label>
+          <label>التاريخ<input type="date" name="currentDate" [value]="today" required></label>
           <label>المحطة<input name="station" required maxlength="50" placeholder="اسم أو رمز المحطة"></label>
           <label>اسم الراصد<input name="observer" required maxlength="100" placeholder="اسم الراصد"></label>
         </div></section>
 
-        <section class="panel"><h2><i class="fa-solid fa-temperature-half"></i> درجات الحرارة والهطول</h2><div class="grid">
-          <label>درجة الحرارة الصغرى (°م) *<input name="minTemp" maxlength="6" placeholder="-05.3" required (blur)="formatField($event)"><small>الصيغة -dd.d أو dd.d، أو # عند عدم توفر البيانات</small></label>
-          <label>درجة الحرارة العظمى (°م) *<input name="maxTemp" maxlength="6" placeholder="25.7" required (blur)="formatField($event)"></label>
-          <label>كمية الأمطار (ملم) *<input name="precipitation" maxlength="5" placeholder="012.5" required (blur)="formatField($event)"></label>
-          <label>سماكة الثلوج (سم) *<input name="snowThickness" maxlength="3" placeholder="015" required (blur)="formatField($event)"></label>
-          <label>أثر الهطول<input name="precipitationTrace" maxlength="1" placeholder="T" (blur)="formatField($event)"><small>الحرف T أو t عند وجود أثر فقط</small></label>
+        <section class="panel"><h2><i class="fa-solid fa-temperature-half"></i> درجات الحرارة العظمى والصغرى</h2><div class="grid">
+          <label>القيمة الصغرى في النهايات (سْ)<input name="minTemp" maxlength="6" placeholder="-05.3" required (blur)="formatField($event)"><small>الصيغة -dd.d أو dd.d، أو # عند عدم توفر البيانات</small></label>
+          <label>القيمة العظمى في النهايات (سْ)<input name="maxTemp" maxlength="6" placeholder="25.7" required (blur)="formatField($event)"></label>
+          <label>كمية الهطول لأقرب مم<input name="precipitation" maxlength="5" placeholder="012.5" required (blur)="formatField($event)"></label>
+          <label>أكبر سماكة ثلج لأقرب سم<input name="snowThickness" maxlength="3" placeholder="015" required (blur)="formatField($event)"></label>
+          <label>الأثر (T)<input name="precipitationTrace" maxlength="1" placeholder="T" (blur)="formatField($event)"><small>الحرف T أو t عند وجود أثر فقط</small></label>
         </div></section>
 
         <section class="panel" *ngIf="reportType === '24h'"><h2><i class="fa-solid fa-sun"></i> التبخر وسطوع الشمس</h2><div class="grid">
-          <label>التبخر (ملم) *<input name="evaporation" maxlength="4" placeholder="12.5" required (blur)="formatField($event)"></label>
-          <label>مدة سطوع الشمس (ساعة) *<input name="sunshineDuration" maxlength="4" placeholder="08.5" required (blur)="formatField($event)"></label>
-          <label>نسبة سطوع الشمس (%) *<input name="sunshinePercentage" maxlength="3" placeholder="075" required (blur)="formatField($event)"></label>
+          <label>مجموع التبخر اليومي لأقرب عشر مم<input name="evaporation" maxlength="4" placeholder="12.5" required (blur)="formatField($event)"></label>
+          <label>مجموع مدة سطوع الشمس الحقيقي<input name="sunshineDuration" maxlength="4" placeholder="08.5" required (blur)="formatField($event)"></label>
+          <label>النسبة المئوية لسطوع الشمس<input name="sunshinePercentage" maxlength="3" placeholder="075" required (blur)="formatField($event)"></label>
         </div></section>
 
         <section class="panel" *ngIf="reportType === '24h'"><h2><i class="fa-solid fa-wind"></i> هبات الرياح</h2><div class="grid">
-          <label>أقصى سرعة هبات الرياح (م/ث) *<input name="maxGustSpeed" maxlength="2" placeholder="15" required (blur)="formatField($event)"></label>
-          <label>اتجاه الهبات (عشرات الدرجات) *<input name="maxGustDirection" maxlength="2" placeholder="25" required (blur)="formatField($event)"></label>
-          <label>وقت الهبات القصوى (ساعة عشرية) *<input name="maxGustTime" maxlength="4" placeholder="14.5" required (blur)="formatField($event)"></label>
+          <label>أكبر نفحة للرياح (م/ثا)<input name="maxGustSpeed" maxlength="2" placeholder="15" required (blur)="formatField($event)"></label>
+          <label>اتجاه أكبر نفحة للرياح (درجة)<input name="maxGustDirection" maxlength="2" placeholder="25" required (blur)="formatField($event)"></label>
+          <label>وقت حدوث أكبر نفحة (ساعة)<input name="maxGustTime" maxlength="4" placeholder="14.5" required (blur)="formatField($event)"></label>
         </div></section>
 
         <section class="panel" *ngIf="reportType === '24h'"><h2><i class="fa-solid fa-droplet"></i> الرطوبة النسبية</h2><div class="grid">
-          <label>أعلى رطوبة نسبية (%) *<input name="maxHumidity" maxlength="3" placeholder="085" required (blur)="formatField($event)"></label>
-          <label>وقت أعلى رطوبة (ساعة عشرية) *<input name="maxHumidityTime" maxlength="4" placeholder="06.0" required (blur)="formatField($event)"></label>
-          <label>أدنى رطوبة نسبية (%) *<input name="minHumidity" maxlength="2" placeholder="35" required (blur)="formatField($event)"></label>
-          <label>وقت أدنى رطوبة (ساعة عشرية) *<input name="minHumidityTime" maxlength="4" placeholder="14.0" required (blur)="formatField($event)"></label>
+          <label>أكبر كمية رطوبة (%)<input name="maxHumidity" maxlength="3" placeholder="085" required (blur)="formatField($event)"></label>
+          <label>زمن حدوث أكبر رطوبة النسبة (ساعة)<input name="maxHumidityTime" maxlength="4" placeholder="06.0" required (blur)="formatField($event)"></label>
+          <label>أصغر كمية رطوبة (%)<input name="minHumidity" maxlength="2" placeholder="35" required (blur)="formatField($event)"></label>
+          <label>زمن حدوث أصغر رطوبة النسبة (ساعة)<input name="minHumidityTime" maxlength="4" placeholder="14.0" required (blur)="formatField($event)"></label>
         </div></section>
 
-        <section class="panel"><h2><i class="fa-solid fa-cloud-bolt"></i> الظواهر الجوية خلال اليوم</h2>
+        <section class="panel"><h2><i class="fa-solid fa-cloud-bolt"></i> الظواهر الجوية</h2>
           <div class="phenomena">@for (item of phenomena; track item.id) {<label><input type="checkbox" [name]="item.id" value="1">{{ item.label }}</label>}</div>
           <label class="notes-label">ملاحظات الراصد<textarea name="observerNotes" rows="3" placeholder="تفاصيل إضافية عن الظواهر والحالة الجوية..."></textarea></label>
         </section>
-        <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بصحة البيانات المدخلة ومطابقتها لسجل الرصد.</label>
+        <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في البيانات سيكون تحت مسؤوليتي الشخصية.</label>
         <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وإنشاء مسودة تجريبية</button><button class="secondary" type="reset" (click)="resetState()">مسح الحقول</button></div>
       </form>
 
