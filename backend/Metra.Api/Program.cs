@@ -1,3 +1,5 @@
+using Metra.Api.Features.Observations;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
@@ -26,6 +28,8 @@ if (app.Environment.IsDevelopment())
 }
 
 var api = app.MapGroup("/api/v1");
+app.MapObservationValidationEndpoints();
+
 api.MapGet("/health", () => Results.Ok(new
 {
     status = "healthy",
