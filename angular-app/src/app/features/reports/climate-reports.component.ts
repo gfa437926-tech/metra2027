@@ -13,21 +13,21 @@ interface ClimateDraft { id:string; hour:string; date:string; status:'draft'|'su
   <form #climateForm (submit)="submit($event,climateForm)">
    <section class="panel"><h2><i class="fa-solid fa-clock"></i> المعلومات الأساسية</h2><div class="grid two"><label>التوقيت العالمي المكافئ (UTC)<select name="utcTime" required><option value="">اختر الساعة</option>@for(h of hours;track h){<option [value]="h">{{h}}:00 UTC</option>}</select></label><div class="info">يُستخدم التوقيت العالمي UTC حصراً في تسجيل النشرة. اختر موعد الرصد المحدد في تعليمات المحطة.</div></div></section>
    <section class="panel"><h2><i class="fa-solid fa-temperature-half"></i> درجات الحرارة</h2><div class="grid two">
-    <label>درجة الحرارة الجافة (°م)<input name="dryTemp" required maxlength="5" placeholder="25.5 أو -5.3 أو #" (blur)="formatDecimal($event)"><small>من -20 إلى 60 · صيغة dd.d أو #</small></label>
-    <label>درجة الحرارة الرطبة (°م)<input name="wetTemp" required maxlength="5" placeholder="20.3 أو # " (blur)="formatDecimal($event)"><small>من -20 إلى 60 · صيغة dd.d أو #</small></label>
+    <label>درجة الحرارة الجافة (سْ)<input name="dryTemp" required maxlength="5" placeholder="25.5 أو -5.3 أو #" (blur)="formatDecimal($event)"><small>من -20 إلى 60 · صيغة dd.d أو #</small></label>
+    <label>درجة الحرارة الرطبة (سْ)<input name="wetTemp" required maxlength="5" placeholder="20.3 أو # " (blur)="formatDecimal($event)"><small>من -20 إلى 60 · صيغة dd.d أو #</small></label>
    </div><p class="relation" *ngIf="relationMessage">{{relationMessage}}</p></section>
    <section class="panel"><h2><i class="fa-solid fa-calculator"></i> الحقول المحسوبة</h2><div class="grid three">
     <label>الرطوبة النسبية المحسوبة (%)<input name="relativeHumidity" required maxlength="3" placeholder="075 أو #" (blur)="formatInteger($event,3)"><small>001–100 أو #</small></label>
-    <label>ضغط بخار الماء (مليبار)<input name="vaporPressure" required maxlength="5" placeholder="18.5 أو #" (blur)="formatDecimal($event)"><small>من -50 إلى 50 · dd.d أو #</small></label>
-    <label>درجة الندى (°م)<input name="dewPoint" required maxlength="5" placeholder="18.2 أو #" (blur)="formatDecimal($event)"><small>dd.d أو #</small></label>
+    <label>ضغط بخار الماء (ميلبار)<input name="vaporPressure" required maxlength="5" placeholder="18.5 أو #" (blur)="formatDecimal($event)"><small>من -50 إلى 50 · dd.d أو #</small></label>
+    <label>درجة الندى (سْ)<input name="dewPoint" required maxlength="5" placeholder="18.2 أو #" (blur)="formatDecimal($event)"><small>dd.d أو #</small></label>
    </div></section>
    <section class="panel"><h2><i class="fa-solid fa-wind"></i> الرياح</h2><div class="grid four">
-    <label>اتجاه الرياح (عشرات الدرجات)<input name="windDirection" required maxlength="2" placeholder="15 أو #" (blur)="formatInteger($event,2)"><small>00–36 أو #</small></label>
-    <label>سرعة الرياح (م/ث)<input name="windSpeed" required maxlength="2" placeholder="12 أو #" (blur)="formatInteger($event,2)"><small>00–99 أو #</small></label>
-    <label>متوسط اتجاه الرياح<input name="avgWindDirection" required maxlength="2" placeholder="16 أو #" (blur)="formatInteger($event,2)"><small>00–36 أو #</small></label>
-    <label>متوسط سرعة الرياح<input name="avgWindSpeed" required maxlength="2" placeholder="10 أو #" (blur)="formatInteger($event,2)"><small>00–99 أو #</small></label>
+    <label>اتجاه الرياح السطحية (درجة)<input name="windDirection" required maxlength="2" placeholder="15 أو #" (blur)="formatInteger($event,2)"><small>00–36 أو #</small></label>
+    <label>سرعة الرياح السطحية (م/ثا)<input name="windSpeed" required maxlength="2" placeholder="12 أو #" (blur)="formatInteger($event,2)"><small>00–99 أو #</small></label>
+    <label>اتجاه المتوسط الساعي للرياح (درجة)<input name="avgWindDirection" required maxlength="2" placeholder="16 أو #" (blur)="formatInteger($event,2)"><small>00–36 أو #</small></label>
+    <label>سرعة المتوسط الساعي للرياح (م/ثا)<input name="avgWindSpeed" required maxlength="2" placeholder="10 أو #" (blur)="formatInteger($event,2)"><small>00–99 أو #</small></label>
    </div></section>
-   <section class="panel"><h2><i class="fa-solid fa-cloud"></i> الغطاء السحابي</h2><div class="grid two"><label>كمية الغطاء السحابي الكلي<input name="totalCloudCover" required maxlength="1" placeholder="3 أو #" (blur)="formatInteger($event,1)"><small>0–9 أو #</small></label></div></section>
+   <section class="panel"><h2><i class="fa-solid fa-cloud"></i> التغطية الكلية للسحب</h2><div class="grid two"><label>كمية التغطية الكلية للسحب الكلي<input name="totalCloudCover" required maxlength="1" placeholder="3 أو #" (blur)="formatInteger($event,1)"><small>0–9 أو #</small></label></div></section>
    <section class="panel"><h2><i class="fa-regular fa-note-sticky"></i> ملاحظات الراصد</h2><textarea name="observerNotes" rows="3" placeholder="أي ملاحظات إضافية حول الظروف الجوية..."></textarea><label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بصحة البيانات المدخلة ومطابقتها لسجل الرصد.</label></section>
    <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-check-double"></i> التحقق وإنشاء مسودة</button><button class="secondary" type="reset" (click)="clearMessages()">مسح الحقول</button></div>
   </form>
@@ -53,9 +53,9 @@ export class ClimateReportsComponent {
   const fd=new FormData(form);const values:Record<string,string>={};fd.forEach((v,k)=>{if(typeof v==='string')values[k]=v.trim();});
   const temp=['dryTemp','wetTemp','vaporPressure','dewPoint'];
   for(const k of temp){const v=values[k]??'';const label=this.label(k);if(v==='#')continue;if(!/^-?\d{1,2}\.\d$/.test(v)){this.issues.push(label+': التنسيق المطلوب ±dd.d أو #.');continue;}const n=Number(v);const min=k==='vaporPressure'?-50:-20;const max=k==='vaporPressure'?50:60;if(n<min||n>max)this.issues.push(label+': القيمة خارج المجال '+min+' إلى '+max+'.');}
-  const rules:[string,RegExp,number,number,string][]=[['relativeHumidity',/^\d{3}$/,1,100,'الرطوبة النسبية'],['windDirection',/^\d{2}$/,0,36,'اتجاه الرياح'],['avgWindDirection',/^\d{2}$/,0,36,'متوسط اتجاه الرياح'],['windSpeed',/^\d{2}$/,0,99,'سرعة الرياح'],['avgWindSpeed',/^\d{2}$/,0,99,'متوسط سرعة الرياح'],['totalCloudCover',/^\d$/,0,9,'الغطاء السحابي']];
+  const rules:[string,RegExp,number,number,string][]=[['relativeHumidity',/^\d{3}$/,1,100,'الرطوبة النسبية'],['windDirection',/^\d{2}$/,0,36,'اتجاه الرياح'],['avgWindDirection',/^\d{2}$/,0,36,'اتجاه المتوسط الساعي للرياح (درجة)'],['windSpeed',/^\d{2}$/,0,99,'سرعة الرياح'],['avgWindSpeed',/^\d{2}$/,0,99,'سرعة المتوسط الساعي للرياح (م/ثا)'],['totalCloudCover',/^\d$/,0,9,'التغطية الكلية للسحب']];
   for(const [k,pattern,min,max,label] of rules){const v=values[k]??'';if(v==='#')continue;const n=Number(v);if(!pattern.test(v)||n<min||n>max)this.issues.push(label+': قيمة غير صحيحة، أو # عند عدم توفرها.');}
-  const dry=values['dryTemp'],wet=values['wetTemp'];if(dry&&wet&&dry!=='#'&&wet!=='#'&&Number(dry)<Number(wet)){this.relationMessage='درجة الحرارة الجافة يجب أن تكون مساوية أو أكبر من الرطبة.';this.issues.push(this.relationMessage);}
+  const dry=values['dryTemp'],wet=values['wetTemp'];if(dry&&wet&&dry!=='#'&&wet!=='#'&&Number(dry)<Number(wet)){this.relationMessage='درجة الحرارة الجافة يجب أن تكون مساوية أو أكبر من درجة الحرارة الرطبة';this.issues.push(this.relationMessage);}
   if(this.issues.length)return;
   const id='C-'+String(this.sequence++).padStart(4,'0');this.drafts.unshift({id,hour:values['utcTime'],date:this.date,status:'draft',values});this.message='اجتازت النشرة التحقق الأولي وأُنشئت مسودة مؤقتة في الذاكرة.';form.reset();
  }
