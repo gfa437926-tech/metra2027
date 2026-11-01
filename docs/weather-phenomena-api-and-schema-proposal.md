@@ -102,3 +102,29 @@
 **التوصية للمراجعة فقط، وليست تغييراً معتمداً:** اعتماد معرّفات مناطق IANA للمحطات (مثل `Asia/Damascus`) كمعلومة إعداد موثوقة، وتخزين لحظات البدء والانتهاء كـ timestamps كاملة بتوقيت UTC. ويمكن الاحتفاظ بحقول التاريخ والوقت القديمة للتوافق مع المصدر بعد توثيق معناها وقواعد تحويلها. لا ينبغي إجراء تحويل ثابت بمقدار ثلاث ساعات في الواجهة أو الخادم.
 
 لم يُغيّر هذا التوضيح عقد الطلب أو قاعدة البيانات أو قواعد التحقق، ولم تُنشأ migration أو سياسات RLS.
+
+
+## جدول مطابقة مسميات واجهة الظواهر ومعرّفات المصدر
+
+الجدول التالي يثبت مسميات عناصر الإدخال والتحكم الأساسية كما وردت في `weather_phenomena.html`، ويبيّن طريقة تمثيلها في Angular. معرّفات DOM الأصلية موثقة حتى لا تختلط أسماء العرض بمفاتيح البيانات:
+
+| المسمى الأصلي | معرّف المصدر الأصلي | تمثيله في Angular الحالي | الحالة |
+|---|---|---|---|
+| نوع الظاهرة الجوية | `phenomenonType` | `id="phenomenonType"` / `phenomenonType` | مطابق |
+| اقتراحات | `suggestBtn` | `showSuggestions` و`chooseSuggestion()` | سلوك Angular بديل؛ المسمى محفوظ |
+| بدء الظاهرة | `startBtn` | `startPhenomenon()` | المسمى محفوظ |
+| إيقاف مؤقت | `pauseBtn` | `togglePause()` | المسمى محفوظ |
+| إنهاء الظاهرة | `stopBtn` | `stopPhenomenon()` | المسمى محفوظ |
+| وقت البدء (UTC) | `startTimeDisplay` و`startTime` | `activePhenomenon.start_time` / `lastEnded.start_time` | القيمة معروضة؛ لا يوجد معرّف DOM مطابق |
+| وقت الانتهاء (UTC) | `endTimeDisplay` و`endTime` | `activePhenomenon.end_time` / `lastEnded.end_time` | القيمة معروضة؛ لا يوجد معرّف DOM مطابق |
+| وقت البدء (محلي) | `startTimeLocalDisplay` | `start_time_local` | القيمة معروضة؛ لا يوجد معرّف DOM مطابق |
+| وقت الانتهاء (محلي) | `endTimeLocalDisplay` | `end_time_local` | القيمة معروضة؛ لا يوجد معرّف DOM مطابق |
+| ملاحظات إضافية | `notes` | `id="notes"` / `notes` | مطابق |
+| سجل الظواهر الجوية | `phenomenaList` | `visiblePhenomena` | المسمى محفوظ؛ العرض عبر قائمة Angular |
+| تحديث | `refreshBtn` | `refreshLocalView()` | المسمى محفوظ؛ يحدث المعاينة المحلية فقط |
+| إجمالي الظواهر | `totalPhenomena` | `phenomena.length` | مطابق وظيفياً في المعاينة |
+| ظواهر نشطة | `activePhenomena` | `activeCount` | المسمى مصحح ليطابق الأصل |
+| ظواهري النشطة | `myActivePhenomena` | `myActiveCount` | غير متاح قبل ربط هوية المستخدم |
+| اليوم | `todayPhenomena` | `todayCount` | مطابق وظيفياً في المعاينة |
+
+قيم الفلترة الأصلية `all`, `active`, `ended`, `my`, `today` محفوظة في Angular. يجب عدم اعتبار أسماء خصائص TypeScript بديلاً عن مفاتيح قاعدة البيانات؛ مفاتيح السجل الأصلية موثقة بصورة منفصلة في جدول الحقول أعلاه.
