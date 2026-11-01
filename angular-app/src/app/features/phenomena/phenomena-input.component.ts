@@ -138,7 +138,7 @@ export class PhenomenaInputComponent implements OnDestroy {
   }
   get statusDetails(): string {
     if (!this.activePhenomenon) return 'قم ببدء ظاهرة جديدة';
-    return this.isPaused ? 'التوقيت متوقف مؤقتاً في المعاينة' : 'يتم احتساب المدة في المعاينة المحلية';
+    return this.isPaused ? 'يستمر احتساب المدة أثناء الإيقاف المؤقت' : 'يتم احتساب المدة في المعاينة المحلية';
   }
   get visiblePhenomena(): LocalPhenomenon[] {
     return this.phenomena.filter(p => {
@@ -208,7 +208,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     } else {
       this.isPaused = true;
     }
-    this.message = this.isPaused ? 'تم إيقاف المؤقت مؤقتاً.' : 'تم استئناف المؤقت.';
+    this.message = this.isPaused ? 'تم إيقاف تسجيل الظاهرة مؤقتاً' : 'تم استئناف تسجيل الظاهرة';
     this.updateDuration();
   }
   stopPhenomenon(): void {
