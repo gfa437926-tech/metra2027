@@ -59,6 +59,8 @@ interface LocalPhenomenon {
         </div>
 
         <div class="times">
+          <input type="hidden" id="startTime" name="startTime" [value]="activePhenomenon?.start_time || lastEnded?.start_time || ''">
+          <input type="hidden" id="endTime" name="endTime" [value]="activePhenomenon?.end_time || lastEnded?.end_time || ''">
           <div><label><i class="fa-solid fa-play"></i> وقت البدء (UTC)</label><strong id="startTimeDisplay">{{ activePhenomenon?.start_time || lastEnded?.start_time || '--:--:--' }}</strong></div>
           <div><label><i class="fa-solid fa-stop"></i> وقت الانتهاء (UTC)</label><strong id="endTimeDisplay">{{ activePhenomenon?.end_time || lastEnded?.end_time || '--:--:--' }}</strong></div>
           <div><label><i class="fa-solid fa-play"></i> وقت البدء (محلي)</label><strong id="startTimeLocalDisplay">{{ activePhenomenon?.start_time_local || lastEnded?.start_time_local || '--:--:--' }}</strong></div>
