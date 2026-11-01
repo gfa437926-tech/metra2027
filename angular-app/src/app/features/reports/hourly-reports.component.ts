@@ -36,7 +36,7 @@ interface HourlyPreview {
           <h2><i class="fa-solid fa-circle-info"></i> المعلومات الأساسية</h2>
           <div class="grid">
             <label>تاريخ الرصد<input type="date" name="observationDate" [value]="today" required></label>
-            <label>ساعة الرصد (UTC)<select name="utcTime" required (change)="setHour($any($event.target).value)"><option value="">اختر الساعة</option>@for (h of hours; track h) {<option [value]="h">{{ h }}:00</option>}</select></label>
+            <label>التوقيت العالمي (UTC) - الساعة<select name="utcTime" required (change)="setHour($any($event.target).value)"><option value="">اختر الساعة</option>@for (h of hours; track h) {<option [value]="h">{{ h }}:00</option>}</select></label>
             <label>رمز المحطة<input name="station" maxlength="20" placeholder="رمز المحطة" required (blur)="formatField($event)"></label>
             <label>اسم الراصد<input name="observer" maxlength="100" placeholder="اسم الراصد" required (blur)="formatField($event)"></label>
           </div>
@@ -45,14 +45,14 @@ interface HourlyPreview {
         <section class="panel">
           <h2><i class="fa-solid fa-temperature-half"></i> الحرارة والضغط والرطوبة</h2>
           <div class="grid">
-            <label>الحرارة الجافة (°م) *<input name="dryTemp" placeholder="+25.5" maxlength="5" required (blur)="formatField($event)"><small>التنسيق ±dd.d أو #</small></label>
-            <label>الحرارة الرطبة (°م) *<input name="wetTemp" placeholder="+20.0" maxlength="5" required (blur)="formatField($event)"></label>
-            <label>ضغط المحطة (hPa) *<input name="stationPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
-            <label>ضغط سطح البحر (hPa) *<input name="seaLevelPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
+            <label>درجة الحرارة الجافة (سْ) *<input name="dryTemp" placeholder="+25.5" maxlength="5" required (blur)="formatField($event)"><small>التنسيق ±dd.d أو #</small></label>
+            <label>درجة الحرارة الرطبة (سْ) *<input name="wetTemp" placeholder="+20.0" maxlength="5" required (blur)="formatField($event)"></label>
+            <label>ضغط المحطة (ميلبار) *<input name="stationPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
+            <label>ضغط سطح البحر (ميلبار) *<input name="seaLevelPressure" placeholder="1013.2" maxlength="6" required (blur)="formatField($event)"></label>
             <label>الرطوبة النسبية (%) *<input name="relativeHumidity" placeholder="065" maxlength="3" required (blur)="formatField($event)"></label>
-            <label>نقطة الندى (°م) *<input name="dewPoint" placeholder="+18.5" maxlength="5" required (blur)="formatField($event)"></label>
-            <label>ضغط البخار (hPa)<input name="vaporPressure" placeholder="16.8" maxlength="4" (blur)="formatField($event)"></label>
-            <label>فرق ضغط البخار (hPa)<input name="vaporPressureDiff" placeholder="12.3" maxlength="4" (blur)="formatField($event)"></label>
+            <label>درجة الندى (سْ) *<input name="dewPoint" placeholder="+18.5" maxlength="5" required (blur)="formatField($event)"></label>
+            <label>ضغط بخار الماء (ميلبار)<input name="vaporPressure" placeholder="16.8" maxlength="4" (blur)="formatField($event)"></label>
+            <label>فرق ضغط بخار الماء (ميلبار)<input name="vaporPressureDiff" placeholder="12.3" maxlength="4" (blur)="formatField($event)"></label>
           </div>
         </section>
 
@@ -60,21 +60,21 @@ interface HourlyPreview {
           <h2><i class="fa-solid fa-gauge-high"></i> تغير الضغط</h2>
           <div class="conditional-note" *ngIf="isSynoptic">هذه ساعة سينوبتية؛ حقول ميل الضغط وشكله والطقس السابق مطلوبة.</div>
           <div class="grid">
-            <label [class.required-field]="isSynoptic">ميل الضغط<input name="pressureSlope" placeholder="2.3" maxlength="4" [required]="isSynoptic" (blur)="formatField($event)"></label>
-            <label [class.required-field]="isSynoptic">شكل تغير الضغط<input name="pressureShape" placeholder="5" maxlength="1" [required]="isSynoptic" (blur)="formatField($event)"></label>
+            <label [class.required-field]="isSynoptic">ميل الضغط (د.د)<input name="pressureSlope" placeholder="2.3" maxlength="4" [required]="isSynoptic" (blur)="formatField($event)"></label>
+            <label [class.required-field]="isSynoptic">شكل الضغط<input name="pressureShape" placeholder="5" maxlength="1" [required]="isSynoptic" (blur)="formatField($event)"></label>
           </div>
         </section>
 
         <section class="panel">
           <h2><i class="fa-solid fa-wind"></i> الرياح والرؤية والطقس</h2>
           <div class="grid">
-            <label>اتجاه الرياح (درجة/10) *<input name="windDirection" placeholder="18" maxlength="2" required (blur)="formatField($event)"></label>
-            <label>سرعة الرياح (عقدة) *<input name="windSpeed" placeholder="12" maxlength="2" required (blur)="formatField($event)"></label>
-            <label>متوسط اتجاه الرياح<input name="avgWindDirection" placeholder="18" maxlength="2" (blur)="formatField($event)"></label>
-            <label>متوسط سرعة الرياح<input name="avgWindSpeed" placeholder="10" maxlength="2" (blur)="formatField($event)"></label>
-            <label>مدى الرؤية *<input name="visibility" placeholder="050" maxlength="3" required (blur)="formatField($event)"></label>
-            <label>الطقس الحالي<input name="currentWeather" placeholder="01" maxlength="2" (blur)="formatField($event)"></label>
-            <label [hidden]="!isSynoptic" [class.required-field]="isSynoptic">الطقس السابق *<input name="pastWeather" placeholder="0" maxlength="1" [required]="isSynoptic" (blur)="formatField($event)"></label>
+            <label>اتجاه الرياح السطحية (عشرات) *<input name="windDirection" placeholder="18" maxlength="2" required (blur)="formatField($event)"></label>
+            <label>سرعة الرياح السطحية (م/ثا) *<input name="windSpeed" placeholder="12" maxlength="2" required (blur)="formatField($event)"></label>
+            <label>متوسط الاتجاه (درجة)<input name="avgWindDirection" placeholder="18" maxlength="2" (blur)="formatField($event)"></label>
+            <label>متوسط السرعة (م/ثا)<input name="avgWindSpeed" placeholder="10" maxlength="2" (blur)="formatField($event)"></label>
+            <label>الرؤية الأفقية (مئات الأمتار) *<input name="visibility" placeholder="050" maxlength="3" required (blur)="formatField($event)"></label>
+            <label>الطقس الحاضر (الكود)<input name="currentWeather" placeholder="01" maxlength="2" (blur)="formatField($event)"></label>
+            <label [hidden]="!isSynoptic" [class.required-field]="isSynoptic">الطقس الغابر (الكود) *<input name="pastWeather" placeholder="0" maxlength="1" [required]="isSynoptic" (blur)="formatField($event)"></label>
           </div>
         </section>
 
@@ -87,16 +87,16 @@ interface HourlyPreview {
         <section class="panel">
           <h2><i class="fa-solid fa-cloud"></i> الغطاء السحابي وطبقاته</h2>
           <div class="grid">
-            <label>التغطية الكلية للسحب (أثمان) *<select name="totalCloudCover" required><option value="">اختر</option>@for (n of cloudValues; track n) {<option [value]="n">{{ n }}</option>}<option value="#">#</option></select></label>
-            <label>تغطية الطبقتين الأولى والثانية *<input name="cover12" placeholder="0-8 أو #" maxlength="1" required (blur)="formatField($event)"></label>
-            <label>تغطية الطبقات الثلاث *<input name="cover123" placeholder="0-8 أو #" maxlength="1" required (blur)="formatField($event)"></label>
+            <label>التغطية الكلية للسحب *<select name="totalCloudCover" required><option value="">اختر</option>@for (n of cloudValues; track n) {<option [value]="n">{{ n }}</option>}<option value="#">#</option></select></label>
+            <label>مجموع التغطية 1+2 *<input name="cover12" placeholder="0-8 أو #" maxlength="1" required (blur)="formatField($event)"></label>
+            <label>مجموع التغطية 1+2+3 *<input name="cover123" placeholder="0-8 أو #" maxlength="1" required (blur)="formatField($event)"></label>
           </div>
           <div class="cloud-grid">
             @for (n of cloudLayers; track n) {
               <div class="cloud-layer"><strong>طبقة السحب {{ n }}</strong><div class="grid">
                 <label>كمية السحب<input [name]="'cloud' + n + 'Amount'" maxlength="1" placeholder="0-8" (blur)="formatField($event)"></label>
                 <label>نوع السحب<input [name]="'cloud' + n + 'Type'" maxlength="50" placeholder="مثال: Ac, Cu" (blur)="formatField($event)"></label>
-                <label *ngIf="n !== 4">ارتفاع القاعدة (متر)<input [name]="'cloud' + n + 'Height'" maxlength="3" placeholder="مثال: 120" (blur)="formatField($event)"></label>
+                <label *ngIf="n !== 4">ارتفاع السحب (عشرات الأمتار)<input [name]="'cloud' + n + 'Height'" maxlength="3" placeholder="مثال: 120" (blur)="formatField($event)"></label>
               </div></div>
             }
           </div>
@@ -260,14 +260,14 @@ export class HourlyReportsComponent {
       vaporPressure:{pattern:/^\d{2}\.\d$/,min:0,max:99,label:'ضغط البخار'},
       vaporPressureDiff:{pattern:/^\d{2}\.\d$/,min:0,max:99,label:'فرق ضغط البخار'},
       windDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'اتجاه الرياح'},
-      avgWindDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'متوسط اتجاه الرياح'},
+      avgWindDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'متوسط الاتجاه (درجة)'},
       windSpeed:{pattern:/^\d{2}$/,min:0,max:99,label:'سرعة الرياح'},
-      avgWindSpeed:{pattern:/^\d{2}$/,min:0,max:99,label:'متوسط سرعة الرياح'},
+      avgWindSpeed:{pattern:/^\d{2}$/,min:0,max:99,label:'متوسط السرعة (م/ثا)'},
       visibility:{pattern:/^\d{3}$/,min:0,max:200,label:'مدى الرؤية'},
-      currentWeather:{pattern:/^\d{2}$/,min:0,max:99,label:'الطقس الحالي'},
+      currentWeather:{pattern:/^\d{2}$/,min:0,max:99,label:'الطقس الحاضر (الكود)'},
       pastWeather:{pattern:/^\d$/,min:0,max:9,label:'الطقس السابق'},
       pressureSlope:{pattern:/^\d{1,2}\.\d$/,min:0,max:99,label:'ميل الضغط'},
-      pressureShape:{pattern:/^[0-8]$/,min:0,max:8,label:'شكل تغير الضغط'},
+      pressureShape:{pattern:/^[0-8]$/,min:0,max:8,label:'شكل الضغط'},
       precipitationAmount:{pattern:/^\d{3}\.\d$/,min:0,max:999.9,label:'كمية الهطول'},
       cover12:{pattern:/^[0-8]$/,min:0,max:8,label:'تغطية الطبقتين'},
       cover123:{pattern:/^[0-8]$/,min:0,max:8,label:'تغطية الطبقات الثلاث'}
@@ -324,7 +324,7 @@ export class HourlyReportsComponent {
       seaLevelPressure:'ضغط سطح البحر',windDirection:'اتجاه الرياح',windSpeed:'سرعة الرياح',
       visibility:'الرؤية',totalCloudCover:'الغطاء السحابي',relativeHumidity:'الرطوبة النسبية',
       dewPoint:'نقطة الندى',cover12:'تغطية الطبقتين',cover123:'تغطية الطبقات الثلاث',
-      pressureSlope:'ميل الضغط',pressureShape:'شكل تغير الضغط',pastWeather:'الطقس السابق',
+      pressureSlope:'ميل الضغط',pressureShape:'شكل الضغط',pastWeather:'الطقس السابق',
       precipitationAmount:'كمية الهطول',cloud1Amount:'كمية السحب الأولى',cloud2Amount:'كمية السحب الثانية',
       cloud3Amount:'كمية السحب الثالثة',cloud4Amount:'كمية السحب الرابعة',
       cloud1Height:'ارتفاع السحب الأولى',cloud2Height:'ارتفاع السحب الثانية',cloud3Height:'ارتفاع السحب الثالثة'
