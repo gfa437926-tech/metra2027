@@ -132,7 +132,7 @@ export class PhenomenaInputComponent implements OnDestroy {
   }
 
   get activeCount(): number { return this.phenomena.filter(p => p.phenomenon_status === 'نشطة').length; }
-  get myActiveCount(): number { return this.activeCount; }
+  get myActiveCount(): string { return '—'; }
   get todayCount(): number { const today = this.localDate(); return this.phenomena.filter(p => p.phenomenon_date === today).length; }
   get statusText(): string {
     if (!this.activePhenomenon) return 'لا توجد ظاهرة نشطة حالياً';
@@ -147,14 +147,14 @@ export class PhenomenaInputComponent implements OnDestroy {
       switch (this.activeFilter) {
         case 'active': return p.phenomenon_status === 'نشطة';
         case 'ended': return p.phenomenon_status === 'منتهية';
-        case 'my': return true;
+        case 'my': return false;
         case 'today': return p.phenomenon_date === this.localDate();
         default: return true;
       }
     });
   }
   get filterInfo(): string {
-    const labels: Record<string, string> = { all: 'جاري عرض جميع الظواهر في محطتك', active: 'جاري عرض الظواهر النشطة', ended: 'جاري عرض الظواهر المنتهية', my: 'جاري عرض ظواهري', today: 'جاري عرض ظواهر اليوم' };
+    const labels: Record<string, string> = { all: 'جاري عرض جميع الظواهر في سجل المعاينة المحلي', active: 'جاري عرض الظواهر النشطة', ended: 'جاري عرض الظواهر المنتهية', my: 'يتطلب عرض ظواهري تسجيل الدخول وربط هوية المستخدم', today: 'جاري عرض ظواهر اليوم' };
     return labels[this.activeFilter];
   }
 
