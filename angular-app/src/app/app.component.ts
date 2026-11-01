@@ -6,11 +6,11 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <button class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" aria-label="فتح القائمة">
+    <button id="mobileMenuBtn" class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" aria-label="فتح القائمة">
       <i class="fa-solid fa-bars"></i><span>القائمة</span>
     </button>
-    <div class="sidebar-backdrop" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
-    <aside class="sidebar" [class.open]="sidebarOpen" aria-label="القائمة الرئيسية">
+    <div id="mobileOverlay" class="sidebar-backdrop" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
+    <aside id="mainSidebar" class="sidebar" [class.open]="sidebarOpen" aria-label="القائمة الرئيسية">
       <div class="sidebar-scroll">
         <header class="sidebar-header">
           <div class="logo-container"><i class="fa-solid fa-cloud-sun"></i></div>
