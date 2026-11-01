@@ -1,0 +1,3 @@
+import { Component } from '@angular/core';
+@Component({ standalone: true, template: `<h1>التقارير الساعية</h1><p>تم إنشاء مسار الوحدة. الخطوة التالية هي نقل حقول الرصد والتحقق والمزامنة من التطبيق الحالي.</p><p class="note">لم يتم تفعيل الحفظ أو الاتصال بقاعدة البيانات في هذه المرحلة.</p>`, styles: [`h1{color:#123b52}.note{padding:14px;background:#fff8e9;border-radius:8px;color:#725829}`] })
+export class HourlyReportsComponent {}

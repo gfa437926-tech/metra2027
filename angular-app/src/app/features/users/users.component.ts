@@ -1,0 +1,3 @@
+import { Component } from '@angular/core';
+@Component({ standalone: true, template: `<h1>إدارة المستخدمين</h1><p>مساحة وحدة المستخدمين والأدوار.</p><p class="note">لن يتم اعتماد صلاحيات الواجهة وحدها كوسيلة حماية؛ يجب ربطها بمصادقة Supabase وسياسات RLS قبل الإنتاج.</p>`, styles: [`h1{color:#123b52}.note{padding:14px;background:#fff8e9;border-radius:8px;color:#725829}`] })
+export class UsersComponent {}
