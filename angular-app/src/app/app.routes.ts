@@ -12,6 +12,11 @@ export const routes: Routes = [
       .then((m) => m.HourlyReportsComponent)
   },
   {
+    path: 'reports/rainfall',
+    loadComponent: () => import('./features/reports/rainfall-reports.component')
+      .then((m) => m.RainfallReportsComponent)
+  },
+  {
     path: 'reports/daily',
     loadComponent: () => import('./features/reports/daily-reports.component')
       .then((m) => m.DailyReportsComponent)
