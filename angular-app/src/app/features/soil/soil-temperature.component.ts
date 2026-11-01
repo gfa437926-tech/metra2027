@@ -138,7 +138,7 @@ export class SoilTemperatureComponent {
     t20.value = '#';
     t50.value = '+22.0';
     (form.elements.namedItem('utcTime') as HTMLSelectElement).value = '05';
-    (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية للاختبار:\\n• قراءات 5سم و50سم طبيعية\\n• قراءات 10سم سالبة\\n• قراءات 20سم غير متوفرة (#)\\n• جميع القراءات ضمن النطاق المسموح\\n• تم إنشاؤها تلقائياً للنظام';
+    (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية للاختبار:\n• قراءات 5سم و50سم طبيعية\n• قراءات 10سم سالبة\n• قراءات 20سم غير متوفرة (#)\n• جميع القراءات ضمن النطاق المسموح\n• تم إنشاؤها تلقائياً للنظام';
     (form.elements.namedItem('responsibilityConfirmed') as HTMLInputElement).checked = true;
     this.notesCount = (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value.length;
   }
@@ -152,7 +152,7 @@ export class SoilTemperatureComponent {
     for (const id of temperatureFields) {
       const field = form.elements.namedItem(id) as HTMLInputElement;
       const value = field.value.trim();
-      const validFormat = value === '#' || /^[+-]?\\d{1,2}\\.\\d$/.test(value);
+      const validFormat = value === '#' || /^[+-]?\d{1,2}\.\d$/.test(value);
       const numeric = value === '#' ? 0 : Number(value);
       const validRange = value === '#' || (numeric >= -20 && numeric <= 50);
       field.setCustomValidity(validFormat && validRange ? '' : 'أدخل درجة بصيغة ±dd.d ضمن النطاق -20.0 إلى +50.0، أو #');
@@ -167,7 +167,7 @@ export class SoilTemperatureComponent {
       soilTemp50cm: 'درجة حرارة تربة على عمق 50سم (سْ)',
       observerNotes: 'ملاحظات إضافية (اختياري)'
     };
-    this.previewText = Object.entries(labels).map(([key, label]) => `${label}: ${String(data.get(key) ?? '—')}`).join('\\n');
-    this.previewText += '\\nتأكيد المسؤولية: تم التأكيد';
+    this.previewText = Object.entries(labels).map(([key, label]) => `${label}: ${String(data.get(key) ?? '—')}`).join('\n');
+    this.previewText += '\nتأكيد المسؤولية: تم التأكيد';
   }
 }
