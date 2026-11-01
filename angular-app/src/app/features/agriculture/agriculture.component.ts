@@ -214,7 +214,7 @@ export class AgricultureComponent {
   formatTemperature(input: HTMLInputElement): void {
     const raw = input.value.trim();
     if (!raw) return;
-    const match = raw.match(/^([+-]?)(\\d{1,2})(?:\\.(\\d+))?$/);
+    const match = raw.match(/^([+-]?)(\d{1,2})(?:\\.(\\d+))?$/);
     if (!match) return;
     const sign = match[1] || '+';
     const whole = match[2].padStart(2, '0');
