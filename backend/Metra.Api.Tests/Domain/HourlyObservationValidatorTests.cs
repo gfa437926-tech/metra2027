@@ -105,4 +105,45 @@ public sealed class HourlyObservationValidatorTests
         Assert.Contains(issues, issue => issue.Field == "stationPressure");
         Assert.Contains(issues, issue => issue.Field == "relativeHumidity");
     }
+    [Fact]
+    public void Accepts_hash_marker_in_conditional_synoptic_fields()
+    {
+        var values = ValidReport("00");
+        values["pressureSlope"] = "#";
+        values["pressureShape"] = "#";
+        values["pastWeather"] = "#";
+        values["precipitationAmount"] = "#";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Empty(issues);
+    }
+
+    [Fact]
+    public void Rejects_invalid_cloud_amount_and_height_codes()
+    {
+        var values = ValidReport();
+        values["cloud1Amount"] = "9";
+        values["cloud2Height"] = "1000";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "cloud1Amount");
+        Assert.Contains(issues, issue => issue.Field == "cloud2Height");
+    }
+
+    [Fact]
+    public void Accepts_missing_optional_average_wind_and_vapor_fields()
+    {
+        var values = ValidReport();
+        values.Remove("avgWindDirection");
+        values.Remove("avgWindSpeed");
+        values.Remove("vaporPressure");
+        values.Remove("vaporPressureDiff");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Empty(issues);
+    }
+
 }
