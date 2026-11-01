@@ -1,3 +1,251 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-@Component({ standalone: true, template: `<h1>البيانات الزراعية</h1><p>مساحة وحدة البيانات والتقارير الزراعية.</p><p class="note">سيتم نقل الوظائف بعد مراجعة ملفات الوحدة القديمة.</p>`, styles: [`h1{color:#123b52}.note{padding:14px;background:#fff8e9;border-radius:8px;color:#725829}`] })
-export class AgricultureComponent {}
+
+interface AgricultureField {
+  id: string;
+  label: string;
+  placeholder: string;
+  pattern: string;
+  maxLength: number;
+  required?: boolean;
+  min?: number;
+  max?: number;
+  temperature?: boolean;
+}
+
+@Component({
+  standalone: true,
+  selector: 'metra-agriculture',
+  imports: [CommonModule],
+  template: `
+    <div class="agri-page" dir="rtl">
+      <header class="page-head">
+        <div><h1>النشرات الزراعية الشهرية</h1><p>إدخال ومراجعة البيانات الزراعية الشهرية</p></div>
+        <span class="mode">وضع المعاينة</span>
+      </header>
+      <div class="notice"><strong>نسخة معاينة:</strong> التحقق والمعاينة يعملان داخل الصفحة. لا يوجد اتصال فعلي بقاعدة البيانات أو API، ولا يتم حفظ التقارير بشكل دائم.</div>
+
+      <form #agriForm (submit)="preview($event, agriForm)" novalidate>
+        <section class="panel">
+          <h2>التعريف بالمحطة والراصد</h2>
+          <div class="fields one">
+            <label class="field">تاريخ التقرير
+              <input name="reportDate" type="date" [value]="today" [min]="minDate" [max]="today" required>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel" *ngFor="let section of sections">
+          <h2>{{ section.title }}</h2>
+          <div class="fields">
+            <label class="field" *ngFor="let field of section.fields">
+              {{ field.label }}
+              <input #fieldInput [id]="field.id" [name]="field.id" type="text"
+                [placeholder]="field.placeholder" [attr.maxlength]="field.maxLength"
+                [attr.pattern]="field.pattern" [required]="!!field.required"
+                [attr.inputmode]="'numeric'" [title]="field.title || field.label"
+                (blur)="validateField(fieldInput, field)"
+                (input)="clearFieldError(fieldInput)">
+              <span class="signs" *ngIf="field.temperature">
+                <button type="button" (click)="setSign(fieldInput, '-')">-</button>
+                <button type="button" (click)="setSign(fieldInput, '+')">+</button>
+              </span>
+              <small class="error" [id]="field.id + 'Error'"></small>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>الظواهر الجوية</h2>
+          <div class="fields">
+            <label class="field" *ngFor="let item of phenomena">
+              {{ item.label }}
+              <select [id]="item.id" [name]="item.id" required>
+                <option value="" selected disabled>اختر</option>
+                <option value="0">لا</option>
+                <option value="1">نعم</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>ملاحظات الراصد</h2>
+          <label class="field">ملاحظات الراصد
+            <textarea name="observerNotes" rows="3" placeholder="أدخل أي ملاحظات إضافية حول الظروف الجوية أو ملاحظات الرصد..."></textarea>
+          </label>
+        </section>
+
+        <section class="panel">
+          <h2>المسؤولية</h2>
+          <label class="agreement">
+            <input type="checkbox" name="responsibilityAgreement" required>
+            أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في البيانات سيكون تحت مسؤوليتي الشخصية.
+          </label>
+        </section>
+
+        <div class="actions">
+          <button type="button" class="test" (click)="fillTestData(agriForm)">إدخال بيانات تجريبية</button>
+          <button type="submit" class="preview-btn">معاينة التقرير</button>
+          <button type="button" class="submit" disabled title="يتطلب ربط API وقاعدة البيانات">إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
+        </div>
+      </form>
+
+      <section class="panel" *ngIf="previewText">
+        <h2>معاينة التقرير</h2>
+        <pre>{{ previewText }}</pre>
+      </section>
+    </div>
+  `,
+  styles: [`
+    .agri-page{max-width:1200px;margin:0 auto;padding:20px;color:#263746}
+    .page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;background:#123b52;color:#fff;border-radius:12px}
+    h1{margin:0;font-size:1.6rem}.page-head p{margin:7px 0 0;color:#e1eaf0}.mode{background:#fff;color:#123b52;border-radius:20px;padding:7px 13px;white-space:nowrap}
+    .notice{margin:16px 0;padding:13px 16px;border-right:4px solid #b8860b;background:#fff8e9;border-radius:8px;line-height:1.8}
+    .panel{background:#fff;border:1px solid #dce4e9;border-radius:11px;padding:20px;margin:16px 0;box-shadow:0 2px 10px #123b520d}
+    h2{font-size:1.12rem;color:#123b52;border-bottom:2px solid #dce4e9;padding-bottom:10px;margin:0 0 18px}
+    .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.fields.one{grid-template-columns:minmax(220px,1fr);max-width:420px}
+    .field{display:flex;flex-direction:column;gap:7px;font-weight:600;min-width:0}
+    input[type=text],input[type=date],select,textarea{box-sizing:border-box;width:100%;padding:10px 11px;border:1px solid #bdcbd4;border-radius:7px;background:#fff;color:#263746;font:inherit}
+    input:focus,select:focus,textarea:focus{outline:2px solid #123b5233;border-color:#123b52}
+    .signs{display:flex;gap:7px}.signs button{border:1px solid #c7d3db;background:#eef3f6;color:#123b52;border-radius:6px;padding:5px 13px;cursor:pointer}
+    .error{color:#b42318;min-height:0;font-weight:400}.agreement{display:flex;align-items:flex-start;gap:10px;line-height:1.9}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.actions button{border:0;border-radius:7px;padding:11px 16px;color:white;cursor:pointer;font:inherit}
+    .test{background:#8b6a28}.preview-btn{background:#123b52}.submit{background:#777;cursor:not-allowed!important}
+    pre{white-space:pre-wrap;font:inherit;line-height:1.9}
+    @media(max-width:850px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:580px){.agri-page{padding:11px}.page-head{align-items:flex-start;flex-direction:column}.fields,.fields.one{grid-template-columns:1fr}}
+  `]
+})
+export class AgricultureComponent {
+  previewText = '';
+  readonly today = this.toDateInput(new Date());
+  readonly minDate = this.toDateInput(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
+
+  readonly sections: { title: string; fields: AgricultureField[] }[] = [
+    { title: 'درجات الحرارة', fields: [
+      this.temp('avgAirTemp','معدل درجة الحرارة الهواء (سْ)','+25.5 أو -05.3',true),
+      this.temp('maxAirTemp','القيمة العظمى لدرجة حرارة الهواء (سْ)','+32.1',true),
+      this.temp('minAirTemp','القيمة الصغرى لدرجة حرارة الهواء (سْ)','+18.3',true),
+      this.temp('minTemp2m','القيمة الصغرى على ارتفاع 2م (سْ)','+17.8'),
+      this.temp('maxSoilSurfaceTemp','القيمة العظمى لدرجة حرارة سطح التربة (سْ)','+45.2'),
+      this.temp('minSoilSurfaceTemp','القيمة الصغرى لدرجة حرارة سطح التربة (سْ)','+15.6')
+    ]},
+    { title: 'الرطوبة والحسابات', fields: [
+      this.field('avgHumidity','معدل الرطوبة النسبية (%)','075 أو 085 أو 100',3,'^\\d{3}$',true,0,100),
+      this.field('minHumidity','القيمة الصغرى الرطوبة النسبية (%)','045',3,'^\\d{3}$',false,0,100),
+      this.field('avgEsE','معدل es-e','12.3',4,'^\\d{1,2}\\.\\d$',false,0,99.9),
+      this.field('minEsE','القيمة الصغرى لes-e','08.7',4,'^\\d{1,2}\\.\\d$',false,0,99.9)
+    ]},
+    { title: 'السطوع الشمسي والغيوم', fields: [
+      this.field('sunshineHours','مدة السطوع الشمس - ساعة','09.5',4,'^\\d{1,2}\\.\\d$',false,0,12),
+      this.field('totalCloudCover','معدل التغطية الكلية','03',2,'^\\d{1,2}$',false,0,8),
+      this.field('lowCloudCover','معدل تغطية الغيوم المنخفضة','02',2,'^\\d{1,2}$',false,0,8)
+    ]},
+    { title: 'الهطول والرياح', fields: [
+      this.field('precipitation','الهطول (مم)','000.0',5,'^\\d{1,3}\\.\\d$',false,0,999.9),
+      this.field('maxWindSpeed','أكبر سرعة رياح من المخطط','15',2,'^\\d{1,2}$',false,0,36),
+      this.field('classAEvaporation','التبخر من CLASS-A','08.2',4,'^\\d{1,2}\\.\\d$',false,0,99.9),
+      this.field('avgWindSpeed2m','معدل سرعة الرياح على ارتفاع 2 م','05.7',4,'^\\d{1,2}\\.\\d$',false,0,36)
+    ]},
+    { title: 'درجات حرارة التربة', fields: [
+      this.temp('avgSoilTemp5cm','معدل حرارة تربة على عمق 5 سم (سْ)','+24.3'),
+      this.temp('avgSoilTemp10cm','معدل حرارة تربة على عمق 10 سم (سْ)','+23.1'),
+      this.temp('avgSoilTemp20cm','معدل درجة حرارة تربة على عمق 20 سم (سْ)','+21.8'),
+      this.temp('avgSoilTemp50cm','معدل درجة حرارة تربة على عمق 50 سم (سْ)','+20.5'),
+      this.temp('fieldSoilTemp5cm','درجة حرارة تربة الحقل على عمق 5 سم (سْ)','+25.1'),
+      this.temp('fieldSoilTemp10cm','حرارة تربة الحقل على عمق 10 سم (سْ)','+23.9'),
+      this.field('logEvaporation','التبخر من السجل','07.5',4,'^\\d{1,2}\\.\\d$',false,0,99.9)
+    ]}
+  ];
+
+  readonly phenomena = [
+    { id: 'dew', label: 'ندى' }, { id: 'fog', label: 'ضباب' },
+    { id: 'hail', label: 'برد' }, { id: 'sandstorm', label: 'عواصف رملية أو ترابية' }
+  ];
+
+  private field(id: string, label: string, placeholder: string, maxLength: number, pattern: string, required = false, min?: number, max?: number): AgricultureField {
+    return { id, label, placeholder, maxLength, pattern, required, min, max };
+  }
+
+  private temp(id: string, label: string, placeholder: string, required = false): AgricultureField {
+    return { id, label, placeholder, maxLength: 6, pattern: '^[+-]?\\d{1,2}(\\.\\d)?$', required, min: -20, max: 60, temperature: true, title: 'درجة الحرارة: ±dd.d أو ±d.d' } as AgricultureField;
+  }
+
+  private toDateInput(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  setSign(input: HTMLInputElement, sign: string): void {
+    const value = input.value.replace(/^[+-]/, '');
+    input.value = sign + value;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  clearFieldError(input: HTMLInputElement): void {
+    input.setCustomValidity('');
+    const error = document.getElementById(input.id + 'Error');
+    if (error) error.textContent = '';
+  }
+
+  validateField(input: HTMLInputElement, field: AgricultureField): void {
+    const value = input.value.trim();
+    if (!value) {
+      input.setCustomValidity(field.required ? 'هذا الحقل مطلوب' : '');
+      return;
+    }
+    let message = '';
+    if (!new RegExp(field.pattern).test(value)) {
+      message = field.temperature
+        ? 'تنسيق درجة الحرارة غير صحيح. أمثلة: +25.5, -05.3, 25.5'
+        : 'الصيغة غير صحيحة';
+    } else {
+      const numeric = Number(value);
+      if (field.min !== undefined && numeric < field.min) message = `القيمة أقل من الحد الأدنى (${field.min})`;
+      if (field.max !== undefined && numeric > field.max) message = `القيمة أكبر من الحد الأقصى (${field.max})`;
+    }
+    input.setCustomValidity(message);
+    const error = document.getElementById(input.id + 'Error');
+    if (error) error.textContent = message;
+  }
+
+  fillTestData(form: HTMLFormElement): void {
+    const sample: Record<string,string> = {
+      avgAirTemp:'+25.5', maxAirTemp:'+32.1', minAirTemp:'+18.3', minTemp2m:'+17.8',
+      maxSoilSurfaceTemp:'+45.2', minSoilSurfaceTemp:'+15.6', avgHumidity:'075', minHumidity:'045',
+      avgEsE:'12.3', minEsE:'08.7', sunshineHours:'09.5', totalCloudCover:'03', lowCloudCover:'02',
+      precipitation:'000.0', maxWindSpeed:'15', classAEvaporation:'08.2', avgWindSpeed2m:'05.7',
+      avgSoilTemp5cm:'+24.3', avgSoilTemp10cm:'+23.1', avgSoilTemp20cm:'+21.8',
+      avgSoilTemp50cm:'+20.5', fieldSoilTemp5cm:'+25.1', fieldSoilTemp10cm:'+23.9', logEvaporation:'07.5'
+    };
+    for (const [id,value] of Object.entries(sample)) {
+      const input = form.elements.namedItem(id) as HTMLInputElement | null;
+      if (input) { input.value = value; input.setCustomValidity(''); }
+    }
+    (form.elements.namedItem('reportDate') as HTMLInputElement).value = this.today;
+    for (const item of this.phenomena) (form.elements.namedItem(item.id) as HTMLSelectElement).value = '0';
+    (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية لا تمثل رصداً فعلياً.';
+    (form.elements.namedItem('responsibilityAgreement') as HTMLInputElement).checked = true;
+    form.querySelectorAll('.error').forEach(el => el.textContent = '');
+  }
+
+  preview(event: Event, form: HTMLFormElement): void {
+    event.preventDefault();
+    const fields = this.sections.flatMap(section => section.fields);
+    for (const field of fields) {
+      const input = form.elements.namedItem(field.id) as HTMLInputElement;
+      this.validateField(input, field);
+    }
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const labels: Record<string,string> = { reportDate: 'تاريخ التقرير', observerNotes: 'ملاحظات الراصد' };
+    for (const section of this.sections) for (const field of section.fields) labels[field.id] = field.label;
+    for (const item of this.phenomena) labels[item.id] = item.label;
+    const lines = Object.entries(labels).map(([id,label]) => `${label}: ${String(data.get(id) ?? '—')}`);
+    lines.push('تأكيد المسؤولية: تم التأكيد');
+    this.previewText = lines.join('\\n');
+  }
+}
