@@ -27,6 +27,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </nav>
         <div class="section-title">النشرات الجوية</div>
         <nav>
+          <a class="nav-link" routerLink="/phenomena" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain daily"></i><span>عرض ظواهر المطر والثلج</span></a>
+        </nav>
+        <nav>
           <a class="nav-link" routerLink="/reports/hourly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-clock hourly"></i><span>النشرات الساعية</span></a>
           <a class="nav-link" routerLink="/reports/climate" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-wind climate"></i><span>المناخ الساعي</span></a>
           <a class="nav-link" routerLink="/reports/daily" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-calendar-days daily"></i><span>النشرات اليومية</span></a>
