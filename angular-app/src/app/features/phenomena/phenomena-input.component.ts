@@ -33,10 +33,10 @@ interface LocalPhenomenon {
       </section>
 
       <section class="stats">
-        <article><strong>{{ phenomena.length }}</strong><span>إجمالي الظواهر</span></article>
-        <article><strong>{{ activeCount }}</strong><span>ظواهر نشطة</span></article>
-        <article><strong>{{ myActiveCount }}</strong><span>ظواهري النشطة</span></article>
-        <article><strong>{{ todayCount }}</strong><span>اليوم</span></article>
+        <article><strong id="totalPhenomena">{{ phenomena.length }}</strong><span>إجمالي الظواهر</span></article>
+        <article><strong id="activePhenomena">{{ activeCount }}</strong><span>ظواهر نشطة</span></article>
+        <article><strong id="myActivePhenomena">{{ myActiveCount }}</strong><span>ظواهري النشطة</span></article>
+        <article><strong id="todayPhenomena">{{ todayCount }}</strong><span>اليوم</span></article>
       </section>
 
       <section class="panel">
@@ -48,21 +48,21 @@ interface LocalPhenomenon {
 
         <div class="field">
           <label for="phenomenonType"><i class="fa-solid fa-cloud-showers-heavy"></i> نوع الظاهرة الجوية</label>
-          <div class="input-row"><input id="phenomenonType" [(ngModel)]="phenomenonType" [disabled]="!!activePhenomenon" placeholder="اكتب وصف الظاهرة (مثال: مطر خفيف، عاصفة رعدية، ضباب...)" (keyup.enter)="startPhenomenon()"><button type="button" class="outline" (click)="showSuggestions = !showSuggestions"><i class="fa-solid fa-lightbulb"></i> اقتراحات</button></div>
+          <div class="input-row"><input id="phenomenonType" [(ngModel)]="phenomenonType" [disabled]="!!activePhenomenon" placeholder="اكتب وصف الظاهرة (مثال: مطر خفيف، عاصفة رعدية، ضباب...)" (keyup.enter)="startPhenomenon()"><button id="suggestBtn" type="button" class="outline" (click)="showSuggestions = !showSuggestions"><i class="fa-solid fa-lightbulb"></i> اقتراحات</button></div>
           <div id="suggestions" class="suggestions" *ngIf="showSuggestions"><button type="button" *ngFor="let suggestion of suggestions" (click)="chooseSuggestion(suggestion)">{{ suggestion }}</button></div>
         </div>
 
         <div class="controls">
-          <div><button class="start" type="button" (click)="startPhenomenon()" [disabled]="!!activePhenomenon || !phenomenonType.trim()"><i class="fa-solid fa-play-circle"></i> بدء الظاهرة</button><small>بدء معاينة تسجيل الظاهرة محلياً</small></div>
-          <div><button class="pause" type="button" (click)="togglePause()" [disabled]="!activePhenomenon"><i [class]="isPaused ? 'fa-solid fa-play-circle' : 'fa-solid fa-pause-circle'"></i> {{ isPaused ? 'استئناف' : 'إيقاف مؤقت' }}</button><small>توقف مؤقت في التسجيل</small></div>
-          <div><button class="stop" type="button" (click)="stopPhenomenon()" [disabled]="!activePhenomenon"><i class="fa-solid fa-stop-circle"></i> إنهاء الظاهرة</button><small>تسجيل وقت انتهاء الظاهرة في المعاينة</small></div>
+          <div><button id="startBtn" class="start" type="button" (click)="startPhenomenon()" [disabled]="!!activePhenomenon || !phenomenonType.trim()"><i class="fa-solid fa-play-circle"></i> بدء الظاهرة</button><small>بدء معاينة تسجيل الظاهرة محلياً</small></div>
+          <div><button id="pauseBtn" class="pause" type="button" (click)="togglePause()" [disabled]="!activePhenomenon"><i [class]="isPaused ? 'fa-solid fa-play-circle' : 'fa-solid fa-pause-circle'"></i> {{ isPaused ? 'استئناف' : 'إيقاف مؤقت' }}</button><small>توقف مؤقت في التسجيل</small></div>
+          <div><button id="stopBtn" class="stop" type="button" (click)="stopPhenomenon()" [disabled]="!activePhenomenon"><i class="fa-solid fa-stop-circle"></i> إنهاء الظاهرة</button><small>تسجيل وقت انتهاء الظاهرة في المعاينة</small></div>
         </div>
 
         <div class="times">
-          <div><label><i class="fa-solid fa-play"></i> وقت البدء (UTC)</label><strong>{{ activePhenomenon?.start_time || lastEnded?.start_time || '--:--:--' }}</strong></div>
-          <div><label><i class="fa-solid fa-stop"></i> وقت الانتهاء (UTC)</label><strong>{{ activePhenomenon?.end_time || lastEnded?.end_time || '--:--:--' }}</strong></div>
-          <div><label><i class="fa-solid fa-play"></i> وقت البدء (محلي)</label><strong>{{ activePhenomenon?.start_time_local || lastEnded?.start_time_local || '--:--:--' }}</strong></div>
-          <div><label><i class="fa-solid fa-stop"></i> وقت الانتهاء (محلي)</label><strong>{{ activePhenomenon?.end_time_local || lastEnded?.end_time_local || '--:--:--' }}</strong></div>
+          <div><label><i class="fa-solid fa-play"></i> وقت البدء (UTC)</label><strong id="startTimeDisplay">{{ activePhenomenon?.start_time || lastEnded?.start_time || '--:--:--' }}</strong></div>
+          <div><label><i class="fa-solid fa-stop"></i> وقت الانتهاء (UTC)</label><strong id="endTimeDisplay">{{ activePhenomenon?.end_time || lastEnded?.end_time || '--:--:--' }}</strong></div>
+          <div><label><i class="fa-solid fa-play"></i> وقت البدء (محلي)</label><strong id="startTimeLocalDisplay">{{ activePhenomenon?.start_time_local || lastEnded?.start_time_local || '--:--:--' }}</strong></div>
+          <div><label><i class="fa-solid fa-stop"></i> وقت الانتهاء (محلي)</label><strong id="endTimeLocalDisplay">{{ activePhenomenon?.end_time_local || lastEnded?.end_time_local || '--:--:--' }}</strong></div>
         </div>
 
         <div class="field"><label for="notes"><i class="fa-solid fa-comment"></i> ملاحظات إضافية</label><textarea id="notes" rows="3" [(ngModel)]="notes" placeholder="ملاحظات حول الظاهرة، شدتها، تأثيرها..."></textarea></div>
@@ -70,7 +70,7 @@ interface LocalPhenomenon {
       </section>
 
       <section class="panel">
-        <div class="panel-heading"><h2><i class="fa-solid fa-history"></i> سجل الظواهر الجوية</h2><div><small>آخر تحديث: <span id="lastUpdateTime">{{ lastUpdateTime }}</span></small><button type="button" class="outline" (click)="refreshLocalView()"><i class="fa-solid fa-redo"></i> تحديث</button></div></div>
+        <div class="panel-heading"><h2><i class="fa-solid fa-history"></i> سجل الظواهر الجوية</h2><div><small>آخر تحديث: <span id="lastUpdateTime">{{ lastUpdateTime }}</span></small><button id="refreshBtn" type="button" class="outline" (click)="refreshLocalView()"><i class="fa-solid fa-redo"></i> تحديث</button></div></div>
         <div class="filters">
           <button type="button" *ngFor="let item of filters" [class.selected]="activeFilter === item.value" (click)="setFilter(item.value)">{{ item.label }}</button>
         </div>
