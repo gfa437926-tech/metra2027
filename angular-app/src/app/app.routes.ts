@@ -36,5 +36,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/users/users.component')
       .then((m) => m.UsersComponent)
   },
+  {
+    path: 'reports/monthly',
+    loadComponent: () => import('./features/reports/monthly-reports.component').then((m) => m.MonthlyReportsComponent)
+  },
+  {
+    path: 'reports/annual',
+    loadComponent: () => import('./features/reports/annual-reports.component').then((m) => m.AnnualReportsComponent)
+  },
   { path: '**', redirectTo: '' }
 ];
