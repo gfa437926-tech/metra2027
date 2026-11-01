@@ -68,7 +68,12 @@ interface LocalPhenomenon {
         </div>
 
         <div class="field"><label for="notes"><i class="fa-solid fa-comment"></i> ملاحظات إضافية</label><textarea id="notes" rows="3" [(ngModel)]="notes" placeholder="ملاحظات حول الظاهرة، شدتها، تأثيرها..."></textarea></div>
-        <p class="inline-notice" *ngIf="message">{{ message }}</p>
+        <div id="notificationContainer" class="notification-container" aria-live="polite" aria-relevant="additions">
+          <div class="notification" *ngFor="let notification of notifications" [class.info]="notification.type === 'info'" [class.success]="notification.type === 'success'" [class.warning]="notification.type === 'warning'" [class.error]="notification.type === 'error'" role="status">
+            <span>{{ notification.message }}</span>
+            <button type="button" aria-label="إغلاق الإشعار" (click)="dismissNotification(notification.id)">×</button>
+          </div>
+        </div>
       </section>
 
       <section class="panel">
@@ -92,7 +97,7 @@ interface LocalPhenomenon {
     </div>
   `,
   styles: [`
-    .page{max-width:1400px;margin:0 auto;color:#2c3e50;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif}.topbar{background:linear-gradient(135deg,#3498db,#2c3e50);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:13px}.brand-icon{width:52px;height:52px;background:#fff;color:#3498db;border-radius:50%;display:grid;place-items:center;font-size:25px}.brand h1{font-size:1.25rem;margin:0}.brand p{margin:4px 0 0;opacity:.85}.header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.85rem}.header-actions button{border:1px solid #ffffff80;background:transparent;color:#fff;border-radius:6px;padding:7px 10px}.preview-badge{background:#fff3cd;color:#795600;border-radius:20px;padding:6px 11px;font-weight:700}.warning{display:flex;gap:14px;background:#fff8e9;border-right:5px solid #f39c12;border-radius:8px;padding:14px 17px;margin-bottom:18px;color:#75520e}.warning>i{font-size:22px;padding-top:3px}.warning p{margin:5px 0 0;line-height:1.7}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.stats article{background:#fff;border-radius:9px;box-shadow:0 3px 10px #0000000d;padding:16px;text-align:center;display:grid;gap:5px}.stats strong{font-size:1.8rem;color:#2980b9}.stats span{font-size:.9rem;color:#71808a}.panel{background:#fff;border-radius:10px;padding:22px;margin-bottom:20px;box-shadow:0 4px 12px #0000000c}.panel h2,.station-stats h2{font-size:1.2rem;margin:0 0 18px;color:#2c3e50}.panel h2 i,.station-stats h2 i{color:#3498db;margin-left:8px}.status{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 17px;background:#f8f9fa;border-radius:8px;border-right:4px solid #95a5a6;margin-bottom:22px}.status.running{border-color:#27ae60}.status.paused{border-color:#f39c12}.status-detail-row{display:flex;align-items:center;gap:9px}.status-detail-row p{margin:0}.status-indicator{display:inline-block;width:11px;height:11px;flex:0 0 11px;border-radius:50%;background:#95a5a6}.status-indicator.active{background:#27ae60;animation:pulse 2s infinite}.status-indicator.paused{background:#f39c12;animation:none}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}.status h3{font-size:1.05rem;margin:0 0 5px}.status p{margin:0;color:#7f8c8d;font-size:.88rem}.duration{font-family:monospace;font-size:1.25rem;font-weight:700;background:#eaf5fc;padding:8px 13px;border-radius:7px}.field{margin:18px 0}.field label{display:block;font-weight:700;margin-bottom:8px}.field label i{color:#3498db;margin-left:5px}.input-row{display:flex;gap:8px}.field input,.field textarea{width:100%;box-sizing:border-box;border:1px solid #ced4da;border-radius:6px;padding:11px 13px;font:inherit;background:#fff;color:#34495e}.field input:focus,.field textarea:focus{outline:2px solid #3498db30;border-color:#3498db}.outline{border:1px solid #6c757d;color:#56616b;background:#fff;border-radius:6px;padding:9px 13px;white-space:nowrap}.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.suggestions button{border:0;background:#6c757d;color:white;border-radius:16px;padding:6px 12px;cursor:pointer}.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.controls>div{display:grid;gap:6px}.controls button{border:0;border-radius:7px;padding:12px;color:white;font:inherit;font-weight:700;cursor:pointer}.controls button:disabled{opacity:.45;cursor:not-allowed}.start{background:#27ae60}.pause{background:#f39c12}.stop{background:#e74c3c}.controls small{text-align:center;color:#7f8c8d}.times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0;padding:16px;background:#f8f9fa;border-radius:8px}.times>div{display:flex;justify-content:space-between;align-items:center;gap:8px}.times label{font-size:.9rem;color:#52616b}.times label i{color:#3498db;margin-left:5px}.times strong{font-family:monospace;color:#2c3e50}.inline-notice{padding:9px 12px;background:#eef7fc;border-radius:6px;color:#2874a6}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.panel-heading h2{margin:0}.panel-heading>div{display:flex;align-items:center;gap:10px}.panel-heading small{color:#7f8c8d}.filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 12px}.filters button{background:#fff;border:1px solid #3498db;color:#2980b9;border-radius:6px;padding:8px 13px;font:inherit}.filters button.selected{background:#3498db;color:#fff}.filter-info{background:#eaf5fc;color:#2874a6;border-radius:6px;padding:10px 13px;margin-bottom:14px}.record-list{display:grid;gap:12px}.record{border:1px solid #e4e9ed;border-radius:8px;padding:15px}.record-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.record-head>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.record h3{font-size:1rem;margin:0}.record h3 i{color:#3498db}.record-head>strong{font-family:monospace}.status-pill{background:#d5f5e3;color:#196f3d;padding:4px 10px;border-radius:16px;font-size:.8rem}.status-pill.done{background:#fadbd8;color:#922b21}.record-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0;font-size:.88rem;color:#56616b}.local-label{color:#9a6b17}.empty{text-align:center;padding:35px 15px;color:#7f8c8d}.empty>i{font-size:2.8rem;color:#bdc3c7}.empty h3{margin:12px 0 6px;color:#56616b}.empty button{border:0;background:#3498db;color:#fff;border-radius:6px;padding:9px 15px}.station-stats{background:#34495e;color:#fff;border-radius:10px;padding:20px}.station-stats h2{color:#fff}.station-stats h2 i{color:#5dade2}.station-stats p{color:#d5dce2}.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stats-grid span{background:#ffffff12;border-radius:6px;padding:10px;font-size:.88rem}@media(max-width:850px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr}.times{grid-template-columns:1fr}.record-times{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.panel{padding:15px}.stats{gap:8px}.stats article{padding:11px}.input-row{flex-direction:column}.header-actions{font-size:.78rem}.record-head{align-items:flex-start;flex-direction:column}}
+    .page{max-width:1400px;margin:0 auto;color:#2c3e50;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif}.topbar{background:linear-gradient(135deg,#3498db,#2c3e50);color:#fff;padding:18px 22px;border-radius:10px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:13px}.brand-icon{width:52px;height:52px;background:#fff;color:#3498db;border-radius:50%;display:grid;place-items:center;font-size:25px}.brand h1{font-size:1.25rem;margin:0}.brand p{margin:4px 0 0;opacity:.85}.header-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:.85rem}.header-actions button{border:1px solid #ffffff80;background:transparent;color:#fff;border-radius:6px;padding:7px 10px}.preview-badge{background:#fff3cd;color:#795600;border-radius:20px;padding:6px 11px;font-weight:700}.warning{display:flex;gap:14px;background:#fff8e9;border-right:5px solid #f39c12;border-radius:8px;padding:14px 17px;margin-bottom:18px;color:#75520e}.warning>i{font-size:22px;padding-top:3px}.warning p{margin:5px 0 0;line-height:1.7}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}.stats article{background:#fff;border-radius:9px;box-shadow:0 3px 10px #0000000d;padding:16px;text-align:center;display:grid;gap:5px}.stats strong{font-size:1.8rem;color:#2980b9}.stats span{font-size:.9rem;color:#71808a}.panel{background:#fff;border-radius:10px;padding:22px;margin-bottom:20px;box-shadow:0 4px 12px #0000000c}.panel h2,.station-stats h2{font-size:1.2rem;margin:0 0 18px;color:#2c3e50}.panel h2 i,.station-stats h2 i{color:#3498db;margin-left:8px}.status{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 17px;background:#f8f9fa;border-radius:8px;border-right:4px solid #95a5a6;margin-bottom:22px}.status.running{border-color:#27ae60}.status.paused{border-color:#f39c12}.status-detail-row{display:flex;align-items:center;gap:9px}.status-detail-row p{margin:0}.status-indicator{display:inline-block;width:11px;height:11px;flex:0 0 11px;border-radius:50%;background:#95a5a6}.status-indicator.active{background:#27ae60;animation:pulse 2s infinite}.status-indicator.paused{background:#f39c12;animation:none}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}.status h3{font-size:1.05rem;margin:0 0 5px}.status p{margin:0;color:#7f8c8d;font-size:.88rem}.duration{font-family:monospace;font-size:1.25rem;font-weight:700;background:#eaf5fc;padding:8px 13px;border-radius:7px}.field{margin:18px 0}.field label{display:block;font-weight:700;margin-bottom:8px}.field label i{color:#3498db;margin-left:5px}.input-row{display:flex;gap:8px}.field input,.field textarea{width:100%;box-sizing:border-box;border:1px solid #ced4da;border-radius:6px;padding:11px 13px;font:inherit;background:#fff;color:#34495e}.field input:focus,.field textarea:focus{outline:2px solid #3498db30;border-color:#3498db}.outline{border:1px solid #6c757d;color:#56616b;background:#fff;border-radius:6px;padding:9px 13px;white-space:nowrap}.suggestions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.suggestions button{border:0;background:#6c757d;color:white;border-radius:16px;padding:6px 12px;cursor:pointer}.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.controls>div{display:grid;gap:6px}.controls button{border:0;border-radius:7px;padding:12px;color:white;font:inherit;font-weight:700;cursor:pointer}.controls button:disabled{opacity:.45;cursor:not-allowed}.start{background:#27ae60}.pause{background:#f39c12}.stop{background:#e74c3c}.controls small{text-align:center;color:#7f8c8d}.times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:22px 0;padding:16px;background:#f8f9fa;border-radius:8px}.times>div{display:flex;justify-content:space-between;align-items:center;gap:8px}.times label{font-size:.9rem;color:#52616b}.times label i{color:#3498db;margin-left:5px}.times strong{font-family:monospace;color:#2c3e50}.notification-container{display:grid;gap:8px;margin-top:12px}.notification{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:6px;border-right:4px solid #3498db;background:#eef7fc;color:#2874a6}.notification.success{border-color:#27ae60;background:#eafaf1;color:#196f3d}.notification.warning{border-color:#f39c12;background:#fff8e9;color:#75520e}.notification.error{border-color:#e74c3c;background:#fdedec;color:#922b21}.notification button{border:0;background:transparent;color:inherit;font-size:1.2rem;cursor:pointer}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.panel-heading h2{margin:0}.panel-heading>div{display:flex;align-items:center;gap:10px}.panel-heading small{color:#7f8c8d}.filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 12px}.filters button{background:#fff;border:1px solid #3498db;color:#2980b9;border-radius:6px;padding:8px 13px;font:inherit}.filters button.selected{background:#3498db;color:#fff}.filter-info{background:#eaf5fc;color:#2874a6;border-radius:6px;padding:10px 13px;margin-bottom:14px}.record-list{display:grid;gap:12px}.record{border:1px solid #e4e9ed;border-radius:8px;padding:15px}.record-head{display:flex;justify-content:space-between;gap:12px;align-items:center}.record-head>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.record h3{font-size:1rem;margin:0}.record h3 i{color:#3498db}.record-head>strong{font-family:monospace}.status-pill{background:#d5f5e3;color:#196f3d;padding:4px 10px;border-radius:16px;font-size:.8rem}.status-pill.done{background:#fadbd8;color:#922b21}.record-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0;font-size:.88rem;color:#56616b}.local-label{color:#9a6b17}.empty{text-align:center;padding:35px 15px;color:#7f8c8d}.empty>i{font-size:2.8rem;color:#bdc3c7}.empty h3{margin:12px 0 6px;color:#56616b}.empty button{border:0;background:#3498db;color:#fff;border-radius:6px;padding:9px 15px}.station-stats{background:#34495e;color:#fff;border-radius:10px;padding:20px}.station-stats h2{color:#fff}.station-stats h2 i{color:#5dade2}.station-stats p{color:#d5dce2}.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.stats-grid span{background:#ffffff12;border-radius:6px;padding:10px;font-size:.88rem}@media(max-width:850px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.controls{grid-template-columns:1fr}.times{grid-template-columns:1fr}.record-times{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.panel{padding:15px}.stats{gap:8px}.stats article{padding:11px}.input-row{flex-direction:column}.header-actions{font-size:.78rem}.record-head{align-items:flex-start;flex-direction:column}}
   `]
 })
 export class PhenomenaInputComponent implements OnDestroy {
@@ -116,7 +121,9 @@ export class PhenomenaInputComponent implements OnDestroy {
   currentTime = '';
   lastUpdateTime = '--:--';
   activeFilter = 'all';
-  message = '';
+  notifications: Array<{ id: number; message: string; type: 'info' | 'success' | 'warning' | 'error' }> = [];
+  private notificationSequence = 0;
+  private notificationTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private startedAt = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private clock: ReturnType<typeof setInterval> | null = null;
@@ -129,6 +136,8 @@ export class PhenomenaInputComponent implements OnDestroy {
   ngOnDestroy(): void {
     if (this.timer) clearInterval(this.timer);
     if (this.clock) clearInterval(this.clock);
+    this.notificationTimers.forEach(timer => clearTimeout(timer));
+    this.notificationTimers.clear();
   }
 
   get activeCount(): number { return this.phenomena.filter(p => p.phenomenon_status === 'نشطة').length; }
@@ -198,7 +207,7 @@ export class PhenomenaInputComponent implements OnDestroy {
       created_at: now.toISOString()
     };
     this.phenomena = [this.activePhenomenon, ...this.phenomena];
-    this.message = 'بدأت معاينة الظاهرة محلياً فقط؛ لم يتم إرسال أي بيانات إلى قاعدة البيانات.';
+    this.showNotification('بدأت معاينة الظاهرة محلياً فقط؛ لم يتم إرسال أي بيانات إلى قاعدة البيانات.', 'info');
     this.showSuggestions = false;
     this.lastUpdateTime = this.currentTime;
     this.timer = setInterval(() => this.updateDuration(), 1000);
@@ -210,7 +219,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     } else {
       this.isPaused = true;
     }
-    this.message = this.isPaused ? 'تم إيقاف تسجيل الظاهرة مؤقتاً' : 'تم استئناف تسجيل الظاهرة';
+    this.showNotification(this.isPaused ? 'تم إيقاف تسجيل الظاهرة مؤقتاً' : 'تم استئناف تسجيل الظاهرة', this.isPaused ? 'warning' : 'info');
     this.updateDuration();
   }
   stopPhenomenon(): void {
@@ -233,16 +242,30 @@ export class PhenomenaInputComponent implements OnDestroy {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.currentDuration = ended.phenomenon_duration;
-    this.message = 'انتهت المعاينة المحلية. السجل غير محفوظ في قاعدة البيانات.';
+    this.showNotification('انتهت المعاينة المحلية. السجل غير محفوظ في قاعدة البيانات.', 'success');
     this.lastUpdateTime = this.currentTime;
   }
   private updateDuration(): void {
     if (!this.activePhenomenon) return;
     this.currentDuration = this.formatDuration(Date.now() - this.startedAt);
   }
+  showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
+    const id = ++this.notificationSequence;
+    this.notifications = [...this.notifications, { id, message, type }];
+    const timer = setTimeout(() => this.dismissNotification(id), 5000);
+    this.notificationTimers.set(id, timer);
+  }
+
+  dismissNotification(id: number): void {
+    const timer = this.notificationTimers.get(id);
+    if (timer) clearTimeout(timer);
+    this.notificationTimers.delete(id);
+    this.notifications = this.notifications.filter(item => item.id !== id);
+  }
+
   chooseSuggestion(value: string): void { this.phenomenonType = value; this.showSuggestions = false; }
   setFilter(value: string): void { this.activeFilter = value; }
-  refreshLocalView(): void { this.lastUpdateTime = this.currentTime; this.message = 'تم تحديث عرض سجلات المعاينة المحلية. لم يتم الاتصال بقاعدة البيانات.'; }
+  refreshLocalView(): void { this.lastUpdateTime = this.currentTime; this.showNotification('تم تحديث عرض سجلات المعاينة المحلية. لم يتم الاتصال بقاعدة البيانات.', 'info'); }
   resetLocalSession(): void {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
@@ -252,7 +275,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.isPaused = false;
     this.currentDuration = '00:00:00';
     this.startedAt = 0;
-    this.message = 'تمت إعادة ضبط بيانات المعاينة المحلية.';
+    this.showNotification('تمت إعادة ضبط بيانات المعاينة المحلية.', 'info');
   }
   focusPhenomenonType(): void { document.getElementById('phenomenonType')?.focus(); }
   currentDurationFor(item: LocalPhenomenon): string {
