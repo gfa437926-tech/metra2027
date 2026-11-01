@@ -21,6 +21,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <div class="user-name">مستخدم النظام</div>
           <div class="user-details">الراصد الجوي · المحطة الرئيسية</div>
         </section>
+        <div id="sidebarMenu">
         <div class="section-title">الإدارة</div>
         <nav>
           <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeSidebar()"><i class="fa-solid fa-gauge-high"></i><span>لوحة التحكم</span></a>
@@ -45,6 +46,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         <nav>
           <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
         </nav>
+        </div>
       </div>
     </aside>
     <main class="content-area">
