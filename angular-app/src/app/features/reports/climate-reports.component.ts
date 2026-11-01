@@ -9,7 +9,7 @@ interface ClimateDraft { id:string; hour:string; date:string; status:'draft'|'su
  <div class="page" dir="rtl">
   <header class="hero"><div class="hero-icon"><i class="fa-solid fa-wind"></i></div><div><h1>النشرات الساعية المناخية</h1><p>إدخال البيانات المناخية الساعية وتتبع التغيرات · التوقيت العالمي UTC</p></div><span class="preview">وضع المعاينة</span></header>
   <div class="notice"><i class="fa-solid fa-circle-info"></i><div><strong>نموذج تجريبي مستقل عن قاعدة البيانات.</strong><span>المسودات وحالات الإرسال مؤقتة داخل الصفحة ولا تمثل حفظاً أو اعتماداً فعلياً.</span></div></div>
-  <section class="panel identity"><h2><i class="fa-solid fa-user-tie"></i> التعريف بالمحطة والراصد</h2><div class="grid three"><label>المحطة<input name="station" [(value)]="station" placeholder="رمز أو اسم المحطة"></label><label>اسم الراصد<input name="observer" [(value)]="observer" placeholder="اسم الراصد"></label><label>تاريخ الرصد<input type="date" [value]="date" (change)="date=$any($event.target).value"></label></div></section>
+  <section class="panel identity"><h2><i class="fa-solid fa-user-tie"></i> التعريف بالمحطة والراصد</h2><div class="grid three"><label>المحطة<input name="station" [value]="station" (input)="station=$any($event.target).value" placeholder="رمز أو اسم المحطة"></label><label>اسم الراصد<input name="observer" [value]="observer" (input)="observer=$any($event.target).value" placeholder="اسم الراصد"></label><label>تاريخ الرصد<input type="date" [value]="date" (change)="date=$any($event.target).value"></label></div></section>
   <form #climateForm (submit)="submit($event,climateForm)">
    <section class="panel"><h2><i class="fa-solid fa-clock"></i> المعلومات الأساسية</h2><div class="grid two"><label>التوقيت العالمي المكافئ (UTC)<select name="utcTime" required><option value="">اختر الساعة</option>@for(h of hours;track h){<option [value]="h">{{h}}:00 UTC</option>}</select></label><div class="info">يُستخدم التوقيت العالمي UTC حصراً في تسجيل النشرة. اختر موعد الرصد المحدد في تعليمات المحطة.</div></div></section>
    <section class="panel"><h2><i class="fa-solid fa-temperature-half"></i> درجات الحرارة</h2><div class="grid two">
@@ -31,10 +31,10 @@ interface ClimateDraft { id:string; hour:string; date:string; status:'draft'|'su
    <section class="panel"><h2><i class="fa-regular fa-note-sticky"></i> ملاحظات الراصد</h2><textarea name="observerNotes" rows="3" placeholder="ملاحظات الراصد"></textarea><label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في البيانات سيكون تحت مسؤوليتي الشخصية.</label></section>
    <section class="panel"><h2><i class="fa-brands fa-whatsapp"></i> مشاركة التقرير عبر WhatsApp</h2>
     <div class="share-options">
-     <label><input type="checkbox" name="enableWhatsAppShare" [(checked)]="enableWhatsAppShare"> تفعيل المشاركة عبر WhatsApp بعد الإرسال</label>
-     <label><input type="checkbox" name="includeMissingFields" [(checked)]="includeMissingFields"> تضمين الحقول غير المتوفرة (#) في المشاركة</label>
+     <label><input type="checkbox" name="enableWhatsAppShare" [checked]="enableWhatsAppShare" (change)="enableWhatsAppShare=$any($event.target).checked"> تفعيل المشاركة عبر WhatsApp بعد الإرسال</label>
+     <label><input type="checkbox" name="includeMissingFields" [checked]="includeMissingFields" (change)="includeMissingFields=$any($event.target).checked"> تضمين الحقول غير المتوفرة (#) في المشاركة</label>
     </div>
-    <div class="actions"><button type="button" class="secondary" (click)="previewWhatsApp(climateForm)">معاينة نص WhatsApp</button><a class="primary share-link" *ngIf="enableWhatsAppShare && whatsAppText" [href]="whatsAppUrl" target="_blank" rel="noopener">مشاركة عبر WhatsApp</a></div>
+    <div class="actions"><button type="button" class="secondary" (click)="previewWhatsApp(climateForm)">معاينة نص WhatsApp</button><a class="primary share-link" *ngIf="enableWhatsAppShare && shareReady && whatsAppText" [href]="whatsAppUrl" target="_blank" rel="noopener">مشاركة عبر WhatsApp</a></div>
     <pre class="share-preview" *ngIf="whatsAppText">{{whatsAppText}}</pre>
    </section>
    <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-check-double"></i> التحقق وإنشاء مسودة</button><button class="secondary" type="reset" (click)="clearMessages()">مسح الحقول</button></div>
@@ -52,14 +52,18 @@ export class ClimateReportsComponent {
  station='';observer='';date=new Date().toISOString().slice(0,10);
  readonly hours=['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
  issues:string[]=[];message='';drafts:ClimateDraft[]=[];private sequence=1;
- relationMessage='';enableWhatsAppShare=true;includeMissingFields=false;whatsAppText='';
+ relationMessage='';enableWhatsAppShare=true;includeMissingFields=false;whatsAppText='';shareReady=false;
  get whatsAppUrl():string{return 'https://wa.me/?text='+encodeURIComponent(this.whatsAppText);}
- previewWhatsApp(form:HTMLFormElement):void{
-  const data=new FormData(form);
+ private createWhatsAppText(values:Record<string,string>):string{
   const fields:[string,string][]=[['utcTime','التوقيت العالمي المكافئ (UTC)'],['dryTemp','درجة الحرارة الجافة (سْ)'],['wetTemp','درجة الحرارة الرطبة (سْ)'],['relativeHumidity','الرطوبة النسبية المحسوبة (%)'],['vaporPressure','ضغط بخار الماء (ميلبار)'],['dewPoint','درجة الندى (سْ)'],['windDirection','اتجاه الرياح السطحية (درجة)'],['windSpeed','سرعة الرياح السطحية (م/ثا)'],['avgWindDirection','اتجاه المتوسط الساعي للرياح (درجة)'],['avgWindSpeed','سرعة المتوسط الساعي للرياح (م/ثا)'],['totalCloudCover','التغطية الكلية للسحب'],['observerNotes','ملاحظات الراصد']];
-  const lines=['النشرات الساعية المناخية','المحطة: '+(this.station||'—'),'الراصد: '+(this.observer||'—')];
-  for(const [key,label] of fields){const value=String(data.get(key)||'').trim();if(value&&value!=='#')lines.push(label+': '+value);else if(this.includeMissingFields&&value==='#')lines.push(label+': #');}
-  this.whatsAppText=lines.join('\n');
+  const lines=['النشرات الساعية المناخية','التاريخ: '+this.date,'المحطة: '+(this.station||'—'),'الراصد: '+(this.observer||'—')];
+  for(const [key,label] of fields){const value=String(values[key]||'').trim();if(value&&value!=='#')lines.push(label+': '+value);else if(this.includeMissingFields&&value==='#')lines.push(label+': #');}
+  return lines.join('\\n');
+ }
+ previewWhatsApp(form:HTMLFormElement):void{
+  const data=new FormData(form);const values:Record<string,string>={};
+  data.forEach((value,key)=>{if(typeof value==='string')values[key]=value.trim();});
+  this.whatsAppText=this.createWhatsAppText(values);
  }
  formatDecimal(event:FocusEvent):void{const f=event.target as HTMLInputElement;let v=f.value.trim();if(!v||v==='#')return;const negative=v.startsWith('-');v=v.replace(/[^0-9.]/g,'');const p=v.split('.');const whole=(p[0]||'0').slice(0,2);const fraction=(p[1]||'0').slice(0,1);f.value=(negative?'-':'')+whole+'.'+fraction;}
  formatInteger(event:FocusEvent,width:number):void{const f=event.target as HTMLInputElement;let v=f.value.trim();if(!v||v==='#')return;f.value=v.replace(/\D/g,'').slice(0,width).padStart(width,'0');}
@@ -73,8 +77,8 @@ export class ClimateReportsComponent {
   for(const [k,pattern,min,max,label] of rules){const v=values[k]??'';if(v==='#')continue;const n=Number(v);if(!pattern.test(v)||n<min||n>max)this.issues.push(label+': قيمة غير صحيحة، أو # عند عدم توفرها.');}
   const dry=values['dryTemp'],wet=values['wetTemp'];if(dry&&wet&&dry!=='#'&&wet!=='#'&&Number(dry)<Number(wet)){this.relationMessage='درجة الحرارة الجافة يجب أن تكون مساوية أو أكبر من درجة الحرارة الرطبة';this.issues.push(this.relationMessage);}
   if(this.issues.length)return;
-  const id='C-'+String(this.sequence++).padStart(4,'0');this.drafts.unshift({id,hour:values['utcTime'],date:this.date,status:'draft',values});this.message='اجتازت النشرة التحقق الأولي وأُنشئت مسودة مؤقتة في الذاكرة.';form.reset();
+  const id='C-'+String(this.sequence++).padStart(4,'0');this.drafts.unshift({id,hour:values['utcTime'],date:this.date,status:'draft',values});this.shareReady=false;this.whatsAppText='';this.message='اجتازت النشرة التحقق الأولي وأُنشئت مسودة مؤقتة في الذاكرة.';form.reset();
  }
- send(d:ClimateDraft):void{d.status='submitted';this.message='تم تغيير حالة '+d.id+' في المعاينة فقط.';}
+ send(d:ClimateDraft):void{d.status='submitted';this.whatsAppText=this.createWhatsAppText(d.values);this.shareReady=this.enableWhatsAppShare;this.message='تم تغيير حالة '+d.id+' في المعاينة فقط.';}
  private label(k:string):string{return ({dryTemp:'الحرارة الجافة',wetTemp:'الحرارة الرطبة',vaporPressure:'ضغط بخار الماء',dewPoint:'درجة الندى'} as Record<string,string>)[k]??k;}
 }
