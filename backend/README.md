@@ -1,24 +1,24 @@
-# METRA 2027 Backend
+# METRA 2027 — Backend (.NET)
 
-The shared backend is ASP.NET Core Web API on .NET 10 (C#).
+The backend is a standalone ASP.NET Core Web API. It runs independently of Angular and Flutter and exposes shared HTTP endpoints to both clients.
 
-## Projects
+## Requirements
+- .NET 10 SDK
 
-- `Metra.Api`: HTTP API entry point. All Angular and Flutter clients will use this API.
-- Future application/domain/infrastructure projects will be introduced when the approved climate-record model and workflows are defined.
-
-## Current endpoint
-
-- `GET /api/v1/health`: service health only.
-
-## Local run
-
+## Run independently
 ```bash
-dotnet run --project backend/Metra.Api
+dotnet restore backend/Metra.Api/Metra.Api.csproj
+dotnet run --project backend/Metra.Api/Metra.Api.csproj
 ```
 
-OpenAPI is exposed in Development at `/openapi/v1.json`.
+The actual listening address is printed by ASP.NET Core. Health endpoint: `GET /api/v1/health`. In Development, OpenAPI is exposed at `/openapi/v1.json`.
 
-## Data and security
+## Configuration
+- Browser origins are configured under `Cors:AllowedOrigins` in `Metra.Api/appsettings.json`.
+- Use environment variables or a secret store for deployment secrets. Do not commit credentials.
+- Flutter native requests are not subject to browser CORS; configure network access and HTTPS appropriately for deployment.
 
-No database schema, credentials, authentication provider, or RLS policies are changed by this scaffold. Do not put secrets in appsettings files. PostgreSQL/Supabase integration, identity, roles, audit history, and record validation will be designed before implementation.
+## Independence
+- No Node.js or Flutter SDK is required.
+- The API starts and answers its health endpoint without either client running.
+- Database integration, authentication, climate-record models, validation, and audit trails will be added in planned stages. No database schema or Supabase settings are changed by this scaffold.
