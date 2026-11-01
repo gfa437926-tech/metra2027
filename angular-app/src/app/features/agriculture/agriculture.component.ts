@@ -30,7 +30,8 @@ interface AgricultureField {
         <section class="panel">
           <h2>التعريف بالمحطة والراصد</h2>
           <div class="identity-note">
-            بيانات اسم الراصد والمحطة والصفة الوظيفية غير متاحة في وضع المعاينة؛ لن تُعرض بيانات افتراضية على أنها بيانات حقيقية.
+            <strong>تاريخ اليوم الميلادي:</strong> {{ today }}
+            <p>بيانات اسم الراصد والمحطة والصفة الوظيفية غير متاحة في وضع المعاينة؛ لن تُعرض بيانات افتراضية على أنها بيانات حقيقية.</p>
           </div>
           <div class="stats-note">
             <strong>إحصائيات تقارير المحطة اليوم</strong>
@@ -110,19 +111,19 @@ interface AgricultureField {
   `,
   styles: [`
     .agri-page{max-width:1200px;margin:0 auto;padding:20px;color:#263746}
-    .page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;background:#123b52;color:#fff;border-radius:12px}
+    .page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;background:linear-gradient(135deg,#27ae60 0%,#2c3e50 100%);color:#fff;border-radius:15px 15px 0 0}
     h1{margin:0;font-size:1.6rem}.page-head p{margin:7px 0 0;color:#e1eaf0}.mode{background:#fff;color:#123b52;border-radius:20px;padding:7px 13px;white-space:nowrap}
     .notice{margin:16px 0;padding:13px 16px;border-right:4px solid #b8860b;background:#fff8e9;border-radius:8px;line-height:1.8}
     .identity-note,.stats-note{padding:13px 15px;margin:12px 0;border-radius:8px;background:#f1f5f8;line-height:1.8}
     .stats-note{display:flex;flex-direction:column;gap:4px;background:#eaf1f5;color:#123b52}
     .stats-note span{font-size:.92rem;color:#536875}
     .draft-status{padding:10px 14px;border-right:3px solid #8b6a28;background:#fff8e9;border-radius:6px}
-    .panel{background:#fff;border:1px solid #dce4e9;border-radius:11px;padding:20px;margin:16px 0;box-shadow:0 2px 10px #123b520d}
-    h2{font-size:1.12rem;color:#123b52;border-bottom:2px solid #dce4e9;padding-bottom:10px;margin:0 0 18px}
+    .panel{background:rgba(255,255,255,.96);border:1px solid #e0e0e0;border-right:5px solid #27ae60;border-radius:12px;padding:22px;margin:16px 0;box-shadow:0 6px 15px rgba(0,0,0,.1);transition:all .3s ease}
+    h2{font-size:1.2rem;color:#2c3e50;border-bottom:2px solid #ecf0f1;padding-bottom:10px;margin:0 0 18px}
     .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.fields.one{grid-template-columns:minmax(220px,1fr);max-width:420px}
     .field{display:flex;flex-direction:column;gap:7px;font-weight:600;min-width:0}
     input[type=text],input[type=date],select,textarea{box-sizing:border-box;width:100%;padding:10px 11px;border:1px solid #bdcbd4;border-radius:7px;background:#fff;color:#263746;font:inherit}
-    input:focus,select:focus,textarea:focus{outline:2px solid #123b5233;border-color:#123b52}
+    input:focus,select:focus,textarea:focus{outline:2px solid #27ae6040;border-color:#27ae60}
     .signs{display:flex;gap:7px}.signs button{border:1px solid #c7d3db;background:#eef3f6;color:#123b52;border-radius:6px;padding:5px 13px;cursor:pointer}
     .error{color:#b42318;min-height:0;font-weight:400}.agreement{display:flex;align-items:flex-start;gap:10px;line-height:1.9}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.actions button{border:0;border-radius:7px;padding:11px 16px;color:white;cursor:pointer;font:inherit}
@@ -266,6 +267,8 @@ export class AgricultureComponent {
     for (const [id,value] of Object.entries(sample)) {
       const input = form.elements.namedItem(id) as HTMLInputElement | null;
       if (input) { input.value = value; input.setCustomValidity(''); }
+      const error = document.getElementById(id + 'Error');
+      if (error) error.textContent = '';
     }
     (form.elements.namedItem('reportDate') as HTMLInputElement).value = this.today;
     (form.elements.namedItem('dew') as HTMLSelectElement).value = '1';
