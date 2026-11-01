@@ -29,6 +29,13 @@ interface AgricultureField {
       <form #agriForm (submit)="preview($event, agriForm)" novalidate>
         <section class="panel">
           <h2>التعريف بالمحطة والراصد</h2>
+          <div class="identity-note">
+            بيانات اسم الراصد والمحطة والصفة الوظيفية غير متاحة في وضع المعاينة؛ لن تُعرض بيانات افتراضية على أنها بيانات حقيقية.
+          </div>
+          <div class="stats-note">
+            <strong>إحصائيات تقارير المحطة اليوم</strong>
+            <span>غير متاحة في المعاينة — تتطلب ربط قاعدة البيانات ومصدر الإحصائيات الأصلي.</span>
+          </div>
           <div class="fields one">
             <label class="field">تاريخ التقرير
               <input name="reportDate" type="date" [value]="today" [min]="minDate" [max]="today" required>
@@ -45,7 +52,7 @@ interface AgricultureField {
                 [placeholder]="field.placeholder" [attr.maxlength]="field.maxLength"
                 [attr.pattern]="field.pattern" [required]="!!field.required"
                 [attr.inputmode]="'numeric'" [title]="field.title || field.label"
-                (blur)="validateField(fieldInput, field)"
+                (blur)="field.temperature ? formatTemperature(fieldInput) : null; validateField(fieldInput, field)"
                 (input)="clearFieldError(fieldInput)">
               <span class="signs" *ngIf="field.temperature">
                 <button type="button" (click)="setSign(fieldInput, '-')">-</button>
@@ -86,10 +93,13 @@ interface AgricultureField {
         </section>
 
         <div class="actions">
+          <button type="button" class="draft" (click)="saveDraft(agriForm)">حفظ المسودة</button>
           <button type="button" class="test" (click)="fillTestData(agriForm)">إدخال بيانات تجريبية</button>
           <button type="submit" class="preview-btn">معاينة التقرير</button>
           <button type="button" class="submit" disabled title="يتطلب ربط API وقاعدة البيانات">إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
+          <button type="button" class="submit" disabled title="تتطلب المشاركة اعتماد التقرير وربط بيانات الراصد">مشاركة عبر WhatsApp — غير متاحة في المعاينة</button>
         </div>
+        <p class="draft-status" *ngIf="draftStatus">{{ draftStatus }}</p>
       </form>
 
       <section class="panel" *ngIf="previewText">
@@ -103,6 +113,10 @@ interface AgricultureField {
     .page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 26px;background:#123b52;color:#fff;border-radius:12px}
     h1{margin:0;font-size:1.6rem}.page-head p{margin:7px 0 0;color:#e1eaf0}.mode{background:#fff;color:#123b52;border-radius:20px;padding:7px 13px;white-space:nowrap}
     .notice{margin:16px 0;padding:13px 16px;border-right:4px solid #b8860b;background:#fff8e9;border-radius:8px;line-height:1.8}
+    .identity-note,.stats-note{padding:13px 15px;margin:12px 0;border-radius:8px;background:#f1f5f8;line-height:1.8}
+    .stats-note{display:flex;flex-direction:column;gap:4px;background:#eaf1f5;color:#123b52}
+    .stats-note span{font-size:.92rem;color:#536875}
+    .draft-status{padding:10px 14px;border-right:3px solid #8b6a28;background:#fff8e9;border-radius:6px}
     .panel{background:#fff;border:1px solid #dce4e9;border-radius:11px;padding:20px;margin:16px 0;box-shadow:0 2px 10px #123b520d}
     h2{font-size:1.12rem;color:#123b52;border-bottom:2px solid #dce4e9;padding-bottom:10px;margin:0 0 18px}
     .fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}.fields.one{grid-template-columns:minmax(220px,1fr);max-width:420px}
@@ -112,7 +126,7 @@ interface AgricultureField {
     .signs{display:flex;gap:7px}.signs button{border:1px solid #c7d3db;background:#eef3f6;color:#123b52;border-radius:6px;padding:5px 13px;cursor:pointer}
     .error{color:#b42318;min-height:0;font-weight:400}.agreement{display:flex;align-items:flex-start;gap:10px;line-height:1.9}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}.actions button{border:0;border-radius:7px;padding:11px 16px;color:white;cursor:pointer;font:inherit}
-    .test{background:#8b6a28}.preview-btn{background:#123b52}.submit{background:#777;cursor:not-allowed!important}
+    .draft{background:#647987}.test{background:#8b6a28}.preview-btn{background:#123b52}.submit{background:#777;cursor:not-allowed!important}
     pre{white-space:pre-wrap;font:inherit;line-height:1.9}
     @media(max-width:850px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:580px){.agri-page{padding:11px}.page-head{align-items:flex-start;flex-direction:column}.fields,.fields.one{grid-template-columns:1fr}}
@@ -120,6 +134,7 @@ interface AgricultureField {
 })
 export class AgricultureComponent {
   previewText = '';
+  draftStatus = '';
   readonly today = this.toDateInput(new Date());
   readonly minDate = this.toDateInput(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
 
@@ -180,6 +195,32 @@ export class AgricultureComponent {
     return `${y}-${m}-${d}`;
   }
 
+  saveDraft(form: HTMLFormElement): void {
+    try {
+      const values: Record<string, string | boolean> = {};
+      for (const [key, value] of new FormData(form).entries()) {
+        values[key] = value instanceof File ? value.name : String(value);
+      }
+      values.responsibilityAgreement = (form.elements.namedItem('responsibilityAgreement') as HTMLInputElement).checked;
+      const draft = { data: values, savedAt: new Date().toISOString(), status: 'draft' };
+      localStorage.setItem('agriculturalReportDraft', JSON.stringify(draft));
+      this.draftStatus = 'حُفظت المسودة محلياً على هذا المتصفح فقط. لم تُرسل إلى الخادم أو قاعدة البيانات.';
+    } catch {
+      this.draftStatus = 'تعذر حفظ المسودة محلياً في هذا المتصفح.';
+    }
+  }
+
+  formatTemperature(input: HTMLInputElement): void {
+    const raw = input.value.trim();
+    if (!raw) return;
+    const match = raw.match(/^([+-]?)(\\d{1,2})(?:\\.(\\d+))?$/);
+    if (!match) return;
+    const sign = match[1] || '+';
+    const whole = match[2].padStart(2, '0');
+    const decimal = (match[3] || '0').slice(0, 1);
+    input.value = `${sign}${whole}.${decimal}`;
+  }
+
   setSign(input: HTMLInputElement, sign: string): void {
     const value = input.value.replace(/^[+-]/, '');
     input.value = sign + value;
@@ -227,7 +268,8 @@ export class AgricultureComponent {
       if (input) { input.value = value; input.setCustomValidity(''); }
     }
     (form.elements.namedItem('reportDate') as HTMLInputElement).value = this.today;
-    for (const item of this.phenomena) (form.elements.namedItem(item.id) as HTMLSelectElement).value = '0';
+    (form.elements.namedItem('dew') as HTMLSelectElement).value = '1';
+    for (const id of ['fog', 'hail', 'sandstorm']) (form.elements.namedItem(id) as HTMLSelectElement).value = '0';
     (form.elements.namedItem('observerNotes') as HTMLTextAreaElement).value = 'بيانات تجريبية لا تمثل رصداً فعلياً.';
     (form.elements.namedItem('responsibilityAgreement') as HTMLInputElement).checked = true;
     form.querySelectorAll('.error').forEach(el => el.textContent = '');
