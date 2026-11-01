@@ -21,7 +21,7 @@ interface AgricultureField {
   template: `
     <div class="agri-page" dir="rtl">
       <header class="page-head">
-        <div><h1>النشرات الزراعية الشهرية</h1><p>إدخال ومراجعة البيانات الزراعية الشهرية</p></div>
+        <div><h1>النشرات الزراعية الشهرية</h1><p>إدخال البيانات الزراعية الشهرية وتتبع التغيرات</p></div>
         <span class="mode">وضع المعاينة</span>
       </header>
       <div class="notice"><strong>نسخة معاينة:</strong> التحقق والمعاينة يعملان داخل الصفحة. لا يوجد اتصال فعلي بقاعدة البيانات أو API، ولا يتم حفظ التقارير بشكل دائم.</div>
@@ -30,7 +30,7 @@ interface AgricultureField {
         <section class="panel">
           <h2>التعريف بالمحطة والراصد</h2>
           <div class="identity-note">
-            <strong>تاريخ اليوم الميلادي:</strong> {{ today }}
+            <strong>تاريخ اليوم:</strong> {{ today }}
             <p>بيانات اسم الراصد والمحطة والصفة الوظيفية غير متاحة في وضع المعاينة؛ لن تُعرض بيانات افتراضية على أنها بيانات حقيقية.</p>
           </div>
           <div class="stats-note">
@@ -97,8 +97,8 @@ interface AgricultureField {
           <button type="button" class="draft" (click)="saveDraft(agriForm)">حفظ المسودة</button>
           <button type="button" class="test" (click)="fillTestData(agriForm)">إدخال بيانات تجريبية</button>
           <button type="submit" class="preview-btn">معاينة التقرير</button>
-          <button type="button" class="submit" disabled title="يتطلب ربط API وقاعدة البيانات">إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
-          <button type="button" class="submit" disabled title="تتطلب المشاركة اعتماد التقرير وربط بيانات الراصد">مشاركة عبر WhatsApp — غير متاحة في المعاينة</button>
+          <button type="button" class="submit" disabled title="يتطلب ربط API وقاعدة البيانات">إرسال التقرير — غير متاح في المعاينة</button>
+          <button type="button" class="submit" disabled title="تتطلب المشاركة اعتماد التقرير وربط بيانات الراصد">مشاركة عبر واتساب — غير متاحة في المعاينة</button>
         </div>
         <p class="draft-status" *ngIf="draftStatus">{{ draftStatus }}</p>
       </form>
