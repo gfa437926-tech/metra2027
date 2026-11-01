@@ -25,6 +25,12 @@ public static class ObservationValidationEndpoints
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
         }).WithName("ValidateHourlyObservation");
 
+        group.MapPost("/phenomena/validate", ([FromBody] WeatherPhenomenonRequest? request) =>
+        {
+            var issues = WeatherPhenomenonValidator.Validate(request);
+            return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
+        }).WithName("ValidateWeatherPhenomenon");
+
         return endpoints;
     }
 }
