@@ -7,6 +7,11 @@ export const routes: Routes = [
       .then((m) => m.DashboardComponent)
   },
   {
+    path: 'phenomena',
+    loadComponent: () => import('./features/phenomena/phenomena.component')
+      .then((m) => m.PhenomenaComponent)
+  },
+  {
     path: 'reports/hourly',
     loadComponent: () => import('./features/reports/hourly-reports.component')
       .then((m) => m.HourlyReportsComponent)
