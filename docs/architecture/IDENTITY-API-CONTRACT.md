@@ -157,7 +157,7 @@ No role, station, account state, actor identifier or permission supplied in JSON
 
 ## 8. Current implementation gap
 
-The inspected `backend/Metra.Api/Program.cs` currently registers Problem Details, OpenAPI and CORS, and maps health and observation-validation endpoints. It does not yet register authentication or authorization middleware, identity-provider integration, identity endpoints or persistence. The observation validation endpoints are validation-only and must not be mistaken for protected submission endpoints.
+The inspected `backend/Metra.Api/Program.cs` currently registers Problem Details, OpenAPI and CORS, and maps health and observation-validation endpoints. It does not yet register authentication or authorization middleware, identity-provider integration, identity endpoints or persistence. The observation validation endpoints are validation-only and must not be mistaken for protected submission endpoints.\n\nA provider-neutral domain foundation now exists in `backend/Metra.Api/Domain/Identity/`: a pure two-stage registration state machine and an authorization policy that accepts server-resolved actor/request facts. Unit tests cover the stage transitions, terminal states, station scope and explicit system-approval permission. These classes are not wired to HTTP endpoints, identity claims, a repository or audit persistence; they do not activate accounts or write data.
 
 Implementation of protected identity endpoints is intentionally deferred until the identity provider and the account/assignment persistence model are approved. This avoids adding a fake authentication layer or choosing a provider by assumption.
 
