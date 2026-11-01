@@ -66,7 +66,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
           <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
           <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
-          <button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال إلى قاعدة البيانات</button>
+          <button class="primary" type="submit" disabled title="يتطلب ربط API وقاعدة البيانات"><i class="fa-solid fa-paper-plane"></i> إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
           <button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button>
         </div>
       </form>
