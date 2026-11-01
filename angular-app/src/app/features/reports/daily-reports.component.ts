@@ -61,9 +61,17 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <label class="notes-label">ملاحظات الراصد<textarea name="observerNotes" rows="3" placeholder="تفاصيل إضافية عن الظواهر والحالة الجوية..."></textarea></label>
         </section>
         <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في البيانات سيكون تحت مسؤوليتي الشخصية.</label>
-        <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وإنشاء مسودة تجريبية</button><button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button></div>
+        <div class="actions">
+          <button class="secondary" type="button" (click)="saveDraft($event, dailyForm)"><i class="fa-solid fa-save"></i> حفظ مسودة</button>
+          <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
+          <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
+          <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
+          <button class="primary" type="submit"><i class="fa-solid fa-paper-plane"></i> إرسال إلى قاعدة البيانات</button>
+          <button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button>
+        </div>
       </form>
 
+      <section class="panel preview-panel" *ngIf="reportPreview"><h2><i class="fa-solid fa-eye"></i> معاينة التقرير</h2><pre class="report-preview">{{reportPreview}}</pre></section>
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات التحقق</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
@@ -74,7 +82,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
     </div>
   `,
   styles: [`
-    :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#3498db,#2471a3);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #3498db30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:18px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.type-panel{background:#fff;border:1px solid #e5eaee;border-radius:12px;padding:17px 20px;margin-bottom:18px}.type-options{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0}.type-options label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.type-panel p{color:#2980b9;font-size:12px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.daily-field{display:flex;flex-direction:column;gap:7px;min-width:0}.daily-field>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.field-actions{display:flex;gap:7px;flex-wrap:wrap}.no-data-btn,.sign-toggle{border:1px solid #c8dce8;border-radius:7px;background:#f3f8fb;color:#28658a;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}.no-data-btn.active{background:#e8f5ec;border-color:#8ac79d;color:#267443}.sign-toggle{min-width:42px;font-weight:800}.grid label,.notes-label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.notes-label textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.notes-label textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.phenomena{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}.phenomena label{display:flex;align-items:center;gap:8px;background:#f7f9fb;padding:11px;border-radius:8px;font-size:13px}.agreement{display:flex;align-items:center;gap:9px;background:#f4f8fb;padding:14px 16px;border-radius:9px;margin:15px 0;font-size:13px}.actions{display:flex;gap:10px}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phenomena{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid,.phenomena{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
+    :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#3498db,#2471a3);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #3498db30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:18px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.type-panel{background:#fff;border:1px solid #e5eaee;border-radius:12px;padding:17px 20px;margin-bottom:18px}.type-options{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0}.type-options label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.type-panel p{color:#2980b9;font-size:12px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.daily-field{display:flex;flex-direction:column;gap:7px;min-width:0}.daily-field>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.field-actions{display:flex;gap:7px;flex-wrap:wrap}.no-data-btn,.sign-toggle{border:1px solid #c8dce8;border-radius:7px;background:#f3f8fb;color:#28658a;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}.no-data-btn.active{background:#e8f5ec;border-color:#8ac79d;color:#267443}.sign-toggle{min-width:42px;font-weight:800}.grid label,.notes-label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.notes-label textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.notes-label textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.phenomena{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}.phenomena label{display:flex;align-items:center;gap:8px;background:#f7f9fb;padding:11px;border-radius:8px;font-size:13px}.agreement{display:flex;align-items:center;gap:9px;background:#f4f8fb;padding:14px 16px;border-radius:9px;margin:15px 0;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions .test,.actions .info,.actions .whatsapp{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px}.actions .test{background:#fff3cd;color:#856404}.actions .info{background:#d9edf7;color:#245575}.actions .whatsapp{background:#25d366;color:#fff}.report-preview{white-space:pre-wrap;direction:rtl;text-align:right;background:#f7f9fb;border:1px solid #e5eaee;border-radius:8px;padding:14px;font:13px/1.8 inherit;max-height:420px;overflow:auto}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phenomena{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid,.phenomena{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
   `]
 })
 export class DailyReportsComponent {
@@ -90,6 +98,8 @@ export class DailyReportsComponent {
   message = '';
   previews: DailyPreview[] = [];
   private nextReference = 1;
+  reportPreview = '';
+  whatsAppUrl = '';
 
   get typeDescription(): string {
     if (this.reportType === '06utc') return 'نشرة الساعة 06:00 UTC؛ تُطلب الحرارة والهطول والثلوج فقط من حقول الملخص.';
@@ -125,7 +135,7 @@ export class DailyReportsComponent {
 
   typeLabel(value: string): string { return value === '24h' ? 'ملخص 24 ساعة' : value === '06utc' ? 'رصد 06 UTC' : 'رصد 18 UTC'; }
   resetState(form?: HTMLFormElement): void {
-    this.issues = []; this.message = ''; this.noDataFields.clear();
+    this.issues = []; this.message = ''; this.noDataFields.clear(); this.clearPreview();
     form?.querySelectorAll<HTMLInputElement>('[data-original-pattern], [data-original-required]').forEach(field => {
       const pattern = field.getAttribute('data-original-pattern');
       if (pattern !== null) field.setAttribute('pattern', pattern);
@@ -214,7 +224,36 @@ export class DailyReportsComponent {
     this.resetState(form); form.reset();
   }
 
-  sendForReview(item: DailyPreview): void { item.status = 'submitted'; this.message = 'تم إرسال ' + item.reference + ' للمراجعة في المعاينة فقط.'; }
+  private readForm(form: HTMLFormElement): Record<string,string> {
+    const values: Record<string,string> = {};
+    new FormData(form).forEach((value,key) => { if (typeof value === 'string') values[key] = value.trim(); });
+    return values;
+  }
+  private buildReportText(values: Record<string,string>): string {
+    const labels: Record<string,string> = {currentDate:'التاريخ',station:'المحطة',observer:'اسم الراصد',minTemp:'القيمة الصغرى في النهايات (سْ)',maxTemp:'القيمة العظمى في النهايات (سْ)',precipitation:'كمية الهطول لأقرب مم',snowThickness:'أكبر سماكة ثلج لأقرب سم',precipitationTrace:'الأثر (T)',evaporation:'مجموع التبخر اليومي لأقرب عشر مم',sunshineDuration:'مجموع مدة سطوع الشمس الحقيقي',sunshinePercentage:'النسبة المئوية لسطوع الشمس',maxGustSpeed:'أكبر نفحة للرياح (م/ثا)',maxGustDirection:'اتجاه أكبر نفحة للرياح (درجة)',maxGustTime:'وقت حدوث أكبر نفحة (ساعة)',maxHumidity:'أكبر كمية رطوبة (%)',maxHumidityTime:'زمن حدوث أكبر رطوبة النسبة (ساعة)',minHumidity:'أصغر كمية رطوبة (%)',minHumidityTime:'زمن حدوث أصغر رطوبة النسبة (ساعة)',observerNotes:'ملاحظات الراصد'};
+    const lines=['النشرات اليومية - '+this.typeLabel(this.reportType)];
+    for (const [key,label] of Object.entries(labels)) if(values[key]) lines.push(label+': '+values[key]);
+    return lines.join('\\n');
+  }
+  saveDraft(event: Event, form: HTMLFormElement): void {
+    event.preventDefault(); this.submit(event,form);
+    if(this.previews.length && this.previews[0].status==='draft') this.message='تم حفظ المسودة في ذاكرة الصفحة الحالية فقط؛ لا تُحفظ بعد إغلاق الصفحة.';
+  }
+  fillTestData(form: HTMLFormElement): void {
+    const sample: Record<string,string>={minTemp:'-05.3',maxTemp:'25.7',precipitation:'012.5',snowThickness:'015',precipitationTrace:'T',evaporation:'12.5',sunshineDuration:'08.5',sunshinePercentage:'075',maxGustSpeed:'15',maxGustDirection:'25',maxGustTime:'14.5',maxHumidity:'085',maxHumidityTime:'06.0',minHumidity:'35',minHumidityTime:'14.0',observerNotes:'بيانات تجريبية لأغراض الاختبار'};
+    for(const [name,value] of Object.entries(sample)){const field=form.elements.namedItem(name) as HTMLInputElement|HTMLTextAreaElement|null;if(field)field.value=value;}
+    for(const name of ['rain','fog','stormyWind']){const field=form.elements.namedItem(name) as HTMLInputElement|null;if(field)field.checked=true;}
+    const agreement=form.elements.namedItem('responsibilityAgreement') as HTMLInputElement|null;if(agreement)agreement.checked=true;
+    this.noDataFields.clear();this.message='تمت تعبئة بيانات تجريبية؛ راجعها قبل الحفظ أو المعاينة.';
+  }
+  previewData(form: HTMLFormElement): void {
+    if(!form.reportValidity()) return;
+    const values=this.readForm(form);this.reportPreview=this.buildReportText(values);
+    this.whatsAppUrl='https://wa.me/?text='+encodeURIComponent(this.reportPreview);
+    this.message='هذه معاينة للنص فقط؛ لم يتم إرسال التقرير أو حفظه.';
+  }
+  private clearPreview(): void { this.reportPreview='';this.whatsAppUrl=''; }
+    sendForReview(item: DailyPreview): void { item.status = 'submitted'; this.message = 'تم إرسال ' + item.reference + ' للمراجعة في المعاينة فقط.'; }
 
   private label(key: string): string {
     const labels: Record<string,string> = {minTemp:'الحرارة الصغرى',maxTemp:'الحرارة العظمى',precipitation:'الهطول',snowThickness:'سماكة الثلوج',evaporation:'التبخر',sunshineDuration:'مدة سطوع الشمس',sunshinePercentage:'نسبة سطوع الشمس',maxGustSpeed:'سرعة هبات الرياح',maxGustDirection:'اتجاه الهبات',maxGustTime:'وقت الهبات القصوى',maxHumidity:'الرطوبة العظمى',maxHumidityTime:'وقت الرطوبة العظمى',minHumidity:'الرطوبة الصغرى',minHumidityTime:'وقت الرطوبة الصغرى'};
