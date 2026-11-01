@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 
 interface AgricultureField {
   id: string;
@@ -133,7 +133,8 @@ interface AgricultureField {
     @media(max-width:580px){.agri-page{padding:11px}.page-head{align-items:flex-start;flex-direction:column}.fields,.fields.one{grid-template-columns:1fr}}
   `]
 })
-export class AgricultureComponent {
+export class AgricultureComponent implements AfterViewInit {
+  @ViewChild('agriForm') private formRef!: ElementRef<HTMLFormElement>;
   previewText = '';
   draftStatus = '';
   readonly today = this.toDateInput(new Date());
@@ -180,6 +181,27 @@ export class AgricultureComponent {
     { id: 'dew', label: 'ندى' }, { id: 'fog', label: 'ضباب' },
     { id: 'hail', label: 'برد' }, { id: 'sandstorm', label: 'عواصف رملية أو ترابية' }
   ];
+
+  ngAfterViewInit(): void {
+    try {
+      const saved = localStorage.getItem('agriculturalReportDraft');
+      if (!saved) return;
+      const draft = JSON.parse(saved) as { data?: Record<string, string | boolean> };
+      if (!draft.data) return;
+      const form = this.formRef.nativeElement;
+      for (const [name, value] of Object.entries(draft.data)) {
+        const control = form.elements.namedItem(name);
+        if (control instanceof HTMLInputElement && control.type === 'checkbox') {
+          control.checked = Boolean(value);
+        } else if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) {
+          control.value = String(value);
+        }
+      }
+      this.draftStatus = 'تم استعادة مسودة محفوظة محلياً من هذا المتصفح. لم يتم تحميلها من الخادم.';
+    } catch {
+      this.draftStatus = 'تعذر استعادة المسودة المحلية.';
+    }
+  }
 
   private field(id: string, label: string, placeholder: string, maxLength: number, pattern: string, required = false, min?: number, max?: number): AgricultureField {
     return { id, label, placeholder, maxLength, pattern, required, min, max };
