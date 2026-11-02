@@ -80,7 +80,37 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(300px,85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:#2980b9;color:white;box-shadow:0 4px 14px rgba(41,128,185,.25)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  readonly identity = inject(CurrentUserContextService);
   sidebarOpen = false;
+
+  get sessionLabel(): string {
+    return this.sessionTitle;
+  }
+
+  get sessionTitle(): string {
+    switch (this.identity.state()) {
+      case 'loading': return 'جارٍ التحقق من الجلسة';
+      case 'unauthenticated': return 'غير مسجل الدخول';
+      case 'active': return 'الحساب نشط';
+      case 'pendingApproval': return 'الحساب بانتظار الموافقة';
+      case 'suspended': return 'الحساب موقوف أو غير مفعّل';
+      case 'forbidden': return 'لا توجد صلاحية للوصول';
+      case 'unknownAccountState': return 'حالة الحساب غير معروفة';
+      case 'unavailable': return 'خدمة الهوية غير متاحة';
+      default: return 'نسخة معاينة — المصادقة غير مهيأة';
+    }
+  }
+
+  get sessionDescription(): string {
+    return this.identity.state() === 'active'
+      ? 'يتم عرض بيانات الحساب من واجهة API. وتظل كل عملية محمية خاضعة لفحص الصلاحيات على الخادم.'
+      : 'لا توجد جلسة مستخدم موثقة في هذه النسخة. لا تُدخل بيانات تشغيلية أو شخصية حقيقية.';
+  }
+
+  ngOnInit(): void {
+    void this.identity.refresh();
+  }
+
   closeSidebar(): void { this.sidebarOpen = false; }
 }
