@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { CurrentUserContextService } from './core/identity/current-user-context.service';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
@@ -18,8 +19,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </header>
         <section class="user-card">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-          <div class="user-name" id="sidebarUser">مستخدم</div>
-          <div class="user-details" id="sidebarStation">محطة</div>
+          <div class="user-name" id="sidebarUser">{{ identity.context()?.profile?.firstName || 'لا توجد جلسة مستخدم' }}</div>
+          <div class="user-details" id="sidebarStation">{{ sessionLabel }}</div>
         </section>
         <div id="sidebarMenu">
         <div class="section-title">الإدارة</div>
@@ -51,7 +52,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     </aside>
     <main class="content-area">
       <div class="security-notice" role="status" aria-live="polite">
-        <strong>نسخة معاينة غير تشغيلية:</strong> لا توجد مصادقة مستخدمين أو صلاحيات API مفعّلة في هذه الواجهة حالياً. لا تُدخل بيانات تشغيلية أو شخصية حقيقية.
+        <strong>{{ sessionTitle }}</strong> {{ sessionDescription }}
       </div>
       <router-outlet />
       <footer>METRA 2027 · نظام إدارة السجلات المناخية</footer>
