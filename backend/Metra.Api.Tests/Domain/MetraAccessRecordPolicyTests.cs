@@ -154,6 +154,33 @@ public sealed class MetraAccessRecordPolicyTests
         Assert.Equal("access_record_time_must_be_utc", result.Code);
     }
 
+    [Theory]
+    [InlineData("2026-01-01T00:00:00+00:00", "2026-01-03T00:00:00+00:00", "2026-01-03T00:00:00+00:00")]
+    [InlineData("2026-01-01T00:00:00+00:00", "2026-01-03T00:00:00+00:00", "2025-12-31T23:59:59+00:00")]
+    public void Rejects_assignment_revocation_outside_its_validity_window(
+        string validFrom,
+        string validUntil,
+        string revokedAt)
+    {
+        var result = MetraAccessRecordPolicy.ValidateAssignment(
+            new(
+                "station-1",
+                DateTimeOffset.Parse(validFrom),
+                DateTimeOffset.Parse(validUntil),
+                DateTimeOffset.Parse(revokedAt)));
+
+        Assert.Equal("access_record_revocation_time_invalid", result.Code);
+    }
+
+    [Fact]
+    public void Rejects_assignment_with_revocation_timestamp_that_is_not_utc()
+    {
+        var result = MetraAccessRecordPolicy.ValidateAssignment(
+            new("station-1", Start, null, Start.AddHours(1).ToOffset(TimeSpan.FromHours(1))));
+
+        Assert.Equal("access_record_time_must_be_utc", result.Code);
+    }
+
     [Fact]
     public void Rejects_assignment_with_invalid_window()
     {
