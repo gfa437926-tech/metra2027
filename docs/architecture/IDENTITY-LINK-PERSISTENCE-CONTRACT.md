@@ -89,16 +89,20 @@ The Supabase Auth sign-up operation and the METRA API transaction are separate t
 
 ## 7. Implementation status
 
-Existing .NET code includes:
-- a generic identity-link application service and `IIdentityLinkStore` contract;
-- an identity context resolved by a trusted server-side adapter contract;
-- unit tests for malformed identity keys, freshness checks, account state and atomic store outcomes.
+Implemented in the current .NET branch:
+- a generic identity-link application service and `IIdentityLinkStore` contract for linking a secondary identity to an already-active METRA account;
+- initial registration application service and guarded HTTP adapter (the route remains deliberately unmapped);
+- Supabase JWT bearer configuration with exact issuer/audience validation, lifetime/signature validation, and RS256/ES256 algorithm allow-list;
+- trusted registration actor context derived only from the validated JWT `sub` UUID;
+- fail-closed deployment-configuration catalogue adapter for role/station allowlists;
+- unit tests for identity-link behavior, registration validation, actor context and JWT configuration.
 
-Not implemented:
-- the Supabase JWT bearer validator and live issuer/JWKS configuration;
-- the initial registration submission service;
-- the PostgreSQL adapter for account links, registration requests, role grants, station assignments and audit;
-- physical constraints, RLS, grants or migrations;
-- Auth settings review and production signing-key verification.
+Still pending:
+- runtime verification of the selected Supabase project's issuer, audience, JWKS and asymmetric signing configuration;
+- authoritative active role/station catalogue integration;
+- PostgreSQL adapter for account links, registration requests, role grants, station assignments and audit;
+- approved physical constraints, runtime grants, RLS decisions and migrations;
+- isolated PostgreSQL concurrency/rollback integration tests;
+- production session/revocation and operational policy review.
 
-The generic issuer+subject service must not be treated as the final Supabase account-link adapter without a reviewed implementation decision. No live database, Supabase Auth setting, RLS, schema, existing account record or secret has been changed.
+The generic issuer+subject service must not be treated as the final Supabase account-link adapter without a reviewed implementation decision. The initial-registration service is separate from that relinking workflow. No live database, Supabase Auth setting, RLS, schema, existing account record or secret has been changed.
