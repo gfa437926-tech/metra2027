@@ -59,6 +59,43 @@ public sealed class AuthoritativeMetraPermissionGrantEvaluatorTests
         Assert.False(allowed);
     }
 
+    [Theory]
+    [InlineData("2026-11-02T15:00:00+03:00", null, null)]
+    [InlineData("2026-11-01T00:00:00+00:00", "2026-10-31T23:59:00+00:00", null)]
+    [InlineData("2026-11-01T00:00:00+00:00", "2026-11-03T00:00:00+00:00", "2026-11-03T00:00:00+00:00")]
+    public async Task Denies_malformed_authoritative_grant_timestamps(
+        string validFrom,
+        string? validTo,
+        string? revokedAt)
+    {
+        var facts = new MetraPermissionGrantFacts(
+            true,
+            true,
+            DateTimeOffset.Parse(validFrom),
+            validTo is null ? null : DateTimeOffset.Parse(validTo),
+            revokedAt is null ? null : DateTimeOffset.Parse(revokedAt));
+        var evaluator = Evaluator(new FakeDataSource(facts));
+
+        var allowed = await evaluator.HasPermissionAsync(
+            "subject-42", MetraPermissions.DailyObservationCreate, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
+    public async Task Denies_when_time_provider_does_not_return_utc()
+    {
+        var source = new FakeDataSource(new(true, true, Now.AddDays(-1), null, null));
+        var evaluator = new AuthoritativeMetraPermissionGrantEvaluator(
+            source,
+            new FixedTimeProvider(Now.ToOffset(TimeSpan.FromHours(3))));
+
+        var allowed = await evaluator.HasPermissionAsync(
+            "subject-42", MetraPermissions.DailyObservationCreate, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
     [Fact]
     public async Task Rejects_unknown_permission_without_querying_source()
     {
