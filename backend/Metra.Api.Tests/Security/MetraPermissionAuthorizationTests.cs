@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -76,7 +75,7 @@ public sealed class MetraPermissionAuthorizationTests
 
         Assert.NotNull(policy);
         Assert.Contains(policy!.Requirements, requirement =>
-            requirement is DenyAnonymousAuthorizationRequirement);
+            requirement.GetType().Name == "DenyAnonymousAuthorizationRequirement");
         Assert.Contains(policy.Requirements, requirement =>
             requirement is MetraPermissionRequirement permission &&
             permission.Permission == MetraPermissions.RegistrationSystemApprove);
