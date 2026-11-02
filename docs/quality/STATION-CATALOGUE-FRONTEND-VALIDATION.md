@@ -18,6 +18,8 @@ The Angular client consumes `GET /api/v1/stations` through `StationCatalogueServ
 - Responses may not exceed the requested page size, claim more pages while returning no records, or repeat the cursor used for the current request.
 - Duplicate source identities within a page or across pages are invalid.
 - The client does not infer canonical station identity, merge records by display name, or synthesize missing coordinates.
+- Source filter buttons expose their selected state through `aria-pressed`; the catalogue panel exposes request activity through `aria-busy`.
+- The catalogue table has a descriptive caption and explicitly scoped column headers; the initial loading state is announced through a polite live status.
 
 ## Loading and recovery behavior
 
