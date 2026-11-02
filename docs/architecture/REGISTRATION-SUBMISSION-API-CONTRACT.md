@@ -49,8 +49,7 @@ HTTP `201 Created` for a newly submitted request:
   "code": "registration_submitted",
   "message": "تم إرسال طلب التسجيل للمراجعة.",
   "accountId": "00000000-0000-0000-0000-000000000000",
-  "requestId": "00000000-0000-0000-0000-000000000000",
-  "status": "PendingStationApproval"
+  "requestId": "00000000-0000-0000-0000-000000000000"
 }
 ```
 
@@ -87,7 +86,7 @@ The persistence transaction is a required infrastructure guarantee, not an assum
 ## 6. Security and privacy requirements
 
 - Require verified email or an approved enrollment policy before enabling submission; the exact policy remains a product/security decision.
-- Apply per-IP and per-identity rate limits, bot/abuse controls, and generic responses that avoid account enumeration where appropriate.
+- Apply per-IP and per-identity rate limits, bot/abuse controls, and generic responses that avoid account enumeration where appropriate. A conservative per-IP limit of five registration submissions per hour is configured for the future endpoint; production thresholds require operational review.
 - Never log bearer tokens, passwords, recovery codes, MFA secrets, or full request bodies.
 - Audit the event with actor subject, request/account references, UTC timestamp, correlation ID, outcome, terms version, and minimal metadata.
 - Do not trust user-editable JWT metadata for role, station, approval, or permissions.
@@ -103,8 +102,8 @@ The persistence transaction is a required infrastructure guarantee, not an assum
 | Trusted actor-context interface | Defined; production JWT-backed adapter pending |
 | Role/station catalogue interface | Defined; authoritative adapter pending |
 | Atomic store interface | Defined; PostgreSQL adapter pending |
-| HTTP endpoint and DTO mapping | Not implemented |
-| OpenAPI contract and integration tests | Pending |
+| HTTP endpoint adapter | Implemented but deliberately not mapped in Program.cs until dependencies exist |
+| OpenAPI metadata | Added to endpoint adapter; integration tests pending |
 | Angular and Flutter integration | Pending |
 | Database schema / migration | Not approved; no changes authorized |
 
@@ -121,3 +120,5 @@ The persistence transaction is a required infrastructure guarantee, not an assum
 - Failure at any point in the atomic store leaves no partial METRA account/request/link/audit state.
 - No role grant or station assignment exists before both approval stages complete.
 - Logs and error responses contain no credentials or secrets.
+
+The endpoint adapter is in `backend/Metra.Api/Features/Identity/RegistrationSubmissionEndpoints.cs`. It is intentionally not mapped yet: doing so before registering trusted actor-context, catalogue and atomic-store adapters would expose a route that cannot complete safely. Its named per-IP limiter is configured in `Program.cs`.
