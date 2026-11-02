@@ -112,14 +112,15 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - The full weather/report history has not yet been migrated. It requires dedicated table mappings, privacy/identity handling, data-quality validation, and explicit retention rules before bulk transfer.
 
 
-## Observation migration milestone — 2026-11-02
+## Observation migration milestone — 2026-11-03
 
-- Imported 58,043 source records into `public.metra_observation_records` in the new METRA project.
-- Verified exact source-ID coverage for daily, hourly, climate, agricultural, FieldClimate, soil-temperature, and weather-phenomena tables.
-- Removed user identifiers, names, email addresses, role labels, observer names/roles, user-agent, browser-language, and observer IDs from the JSON payloads.
+- Imported and verified 58,059 meteorological observations in `public.metra_observation_records` across daily, hourly, climate, agricultural, FieldClimate, soil-temperature, and weather-phenomena sources.
+- Destination counts now match source counts for all seven migrated tables.
+- 56,808 observations are linked to stations. 1,251 remain unlinked for owner-reviewed reconciliation; uncertain station aliases were not guessed.
+- Applied five documented, explicit station aliases after source-label review.
+- Removed user IDs, names, email addresses, role labels, observer names/roles, observer notes, user-agent, browser-language, observer IDs, and validation metadata from payloads. Verification found zero remaining identity/observer metadata keys.
 - Used idempotent source identity keys; zero duplicate source identities remain.
-- 13 exact and unique station-name matches were linked. Ambiguous or unmatched observations remain unlinked for controlled reconciliation.
 - The one legacy `weather_records` row is a connection-test fixture and was intentionally excluded. `rainfall_reports` was empty at inspection.
-- Added `supabase/tests/observation_import_integrity.sql` and `docs/delivery/LEGACY-OBSERVATION-IMPORT-2026-11-02.md`.
+- Added/updated `supabase/tests/observation_import_integrity.sql` and `docs/delivery/LEGACY-OBSERVATION-IMPORT-2026-11-02.md`.
 - The legacy INSERT database was queried read-only throughout. All writes were directed only to the new METRA database.
-- Security advisor returned zero findings after import.
+- METRA destination security advisor returned zero findings. The legacy project's advisor reports 22 public tables with RLS disabled; no remediation was applied there under the user's no-modification instruction.
