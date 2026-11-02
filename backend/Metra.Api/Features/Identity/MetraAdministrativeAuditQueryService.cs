@@ -116,7 +116,7 @@ public sealed class MetraAdministrativeAuditQueryService(
         var actorId = await actorContextProvider.GetCurrentActorUserIdAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(actorId))
             return Failure("unauthenticated");
-        if (actorId != actorId.Trim() || actorId.Length > 128 || actorId.Any(char.IsControl))
+        if (!IsOptionalIdentifier(actorId))
             return Failure("actor_context_invalid");
 
         var read = await store.ReadAsync(actorId, query, cancellationToken);
