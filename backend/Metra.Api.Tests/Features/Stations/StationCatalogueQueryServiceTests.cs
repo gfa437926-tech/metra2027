@@ -100,6 +100,10 @@ public sealed class StationCatalogueQueryServiceTests
             (await service.ReadAsync(new(Cursor: new string('x', 2049)))).Status);
         Assert.Equal(StationCatalogueReadStatus.InvalidQuery,
             (await service.ReadAsync(new(Cursor: "bad\r"))).Status);
+        Assert.Equal(StationCatalogueReadStatus.InvalidQuery,
+            (await service.ReadAsync(new(Cursor: "\u0085"))).Status);
+        Assert.Equal(StationCatalogueReadStatus.InvalidQuery,
+            (await service.ReadAsync(new(Cursor: "   "))).Status);
         Assert.Equal(0, store.Calls);
     }
 
