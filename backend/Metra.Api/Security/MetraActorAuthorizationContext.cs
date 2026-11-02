@@ -31,6 +31,7 @@ public sealed record MetraActorAuthorizationContext(
 public sealed class AuthoritativeMetraActorAuthorizationContextProvider(
     IMetraActorAuthorizationContextDataSource dataSource,
     TimeProvider timeProvider)
+    : IMetraActorAuthorizationContextProvider
 {
     public async Task<bool> CanPerformOnResourceAsync(
         string actorSubject,
