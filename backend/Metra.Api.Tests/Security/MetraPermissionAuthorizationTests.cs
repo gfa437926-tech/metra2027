@@ -9,70 +9,67 @@ namespace Metra.Api.Tests;
 public sealed class MetraPermissionAuthorizationTests
 {
     [Fact]
-    public async Task Grants_permission_only_for_exact_server_permission_claim()
+    public async Task Grants_permission_only_when_authoritative_evaluator_allows()
     {
-        var principal = Principal(PermissionClaim(
-            MetraPermissions.RegistrationStationApprove));
-        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
-
-        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
+        var evaluator = new FakePermissionEvaluator(true);
+        var context = Context(Principal(new Claim("sub", "subject-42")),
+            MetraPermissions.RegistrationStationApprove);
+        await new MetraPermissionAuthorizationHandler(evaluator).HandleAsync(context);
 
         Assert.True(context.HasSucceeded);
+        Assert.Equal("subject-42", evaluator.ActorSubject);
+        Assert.Equal(MetraPermissions.RegistrationStationApprove, evaluator.Permission);
     }
 
-    [Theory]
-    [InlineData("registrations.system.approve")]
-    [InlineData("registrations.station.approve.extra")]
-    [InlineData("REGISTRATIONS.STATION.APPROVE")]
-    [InlineData("admin")]
-    public async Task Denies_missing_or_non_exact_permission_claim(string claimValue)
+    [Fact]
+    public async Task Denies_permission_when_authoritative_evaluator_denies()
+    {
+        var context = Context(Principal(new Claim("sub", "subject-42")),
+            MetraPermissions.RegistrationStationApprove);
+
+        await new MetraPermissionAuthorizationHandler(new FakePermissionEvaluator(false))
+            .HandleAsync(context);
+
+        Assert.False(context.HasSucceeded);
+    }
+
+    [Fact]
+    public async Task Denies_permission_when_only_external_role_or_permission_claims_exist()
     {
         var principal = Principal(
-            new Claim(MetraPermissionAuthorizationHandler.PermissionClaimType, claimValue));
-        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
+            new Claim(ClaimTypes.Role, "StationManager"),
+            new Claim("metra_permission", MetraPermissions.RegistrationStationApprove));
 
-        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
+        await new MetraPermissionAuthorizationHandler(new FakePermissionEvaluator(false))
+            .HandleAsync(Context(principal, MetraPermissions.RegistrationStationApprove));
 
-        Assert.False(context.HasSucceeded);
-        Assert.Single(context.PendingRequirements);
+        Assert.False(Context(principal, MetraPermissions.RegistrationStationApprove).HasSucceeded);
     }
 
     [Fact]
-    public async Task Denies_permission_claim_from_external_issuer()
+    public async Task Denies_permission_when_authenticated_subject_is_missing()
     {
-        var principal = Principal(new Claim(
-            MetraPermissionAuthorizationHandler.PermissionClaimType,
-            MetraPermissions.RegistrationStationApprove,
-            ClaimValueTypes.String,
-            issuer: "https://identity-provider.example.test"));
-        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
+        var evaluator = new FakePermissionEvaluator(true);
+        var context = Context(Principal(new Claim(ClaimTypes.Name, "display-name")),
+            MetraPermissions.RegistrationStationApprove);
 
-        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
+        await new MetraPermissionAuthorizationHandler(evaluator).HandleAsync(context);
 
         Assert.False(context.HasSucceeded);
+        Assert.Null(evaluator.ActorSubject);
     }
 
     [Fact]
-    public async Task Denies_permission_when_only_role_claim_is_present()
+    public async Task Uses_name_identifier_as_subject_fallback()
     {
-        var principal = Principal(new Claim(ClaimTypes.Role, "StationManager"));
-        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
+        var evaluator = new FakePermissionEvaluator(true);
+        var context = Context(Principal(new Claim(ClaimTypes.NameIdentifier, "subject-fallback")),
+            MetraPermissions.DailyObservationCreate);
 
-        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
+        await new MetraPermissionAuthorizationHandler(evaluator).HandleAsync(context);
 
-        Assert.False(context.HasSucceeded);
-    }
-
-    [Fact]
-    public async Task Denies_permission_when_permission_claim_type_is_not_exact()
-    {
-        var principal = Principal(new Claim("permission",
-            MetraPermissions.RegistrationStationApprove));
-        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
-
-        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
-
-        Assert.False(context.HasSucceeded);
+        Assert.True(context.HasSucceeded);
+        Assert.Equal("subject-fallback", evaluator.ActorSubject);
     }
 
     [Fact]
@@ -93,6 +90,8 @@ public sealed class MetraPermissionAuthorizationTests
         Assert.Contains(policy.Requirements, requirement =>
             requirement is MetraPermissionRequirement permission &&
             permission.Permission == MetraPermissions.RegistrationSystemApprove);
+        Assert.IsType<DenyAllMetraPermissionGrantEvaluator>(
+            provider.GetRequiredService<IMetraPermissionGrantEvaluator>());
     }
 
     [Theory]
@@ -105,21 +104,27 @@ public sealed class MetraPermissionAuthorizationTests
             () => MetraAuthorizationPolicies.ForPermission(permission));
     }
 
-    private static Claim PermissionClaim(string permission)
-        => new(
-            MetraPermissionAuthorizationHandler.PermissionClaimType,
-            permission,
-            ClaimValueTypes.String,
-            MetraPermissionAuthorizationHandler.PermissionClaimIssuer);
-
     private static ClaimsPrincipal Principal(params Claim[] claims)
         => new(new ClaimsIdentity(claims, authenticationType: "test"));
 
     private static AuthorizationHandlerContext Context(
         ClaimsPrincipal principal,
         string permission)
-        => new(
-            [new MetraPermissionRequirement(permission)],
-            principal,
-            resource: null);
+        => new([new MetraPermissionRequirement(permission)], principal, resource: null);
+
+    private sealed class FakePermissionEvaluator(bool allowed) : IMetraPermissionGrantEvaluator
+    {
+        public string? ActorSubject { get; private set; }
+        public string? Permission { get; private set; }
+
+        public Task<bool> HasPermissionAsync(
+            string actorSubject,
+            string permission,
+            CancellationToken cancellationToken)
+        {
+            ActorSubject = actorSubject;
+            Permission = permission;
+            return Task.FromResult(allowed);
+        }
+    }
 }
