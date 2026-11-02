@@ -59,7 +59,6 @@ public sealed class IdentityLinkApplicationServiceTests
             null,
             new("", "https://issuer.example.test", "subject", Now, Now, true),
             new("account", "", "subject", Now, Now, true),
-            new("account", "https://issuer.example.test", " ", Now, Now, true)
         };
 
         foreach (var context in cases)
@@ -81,6 +80,7 @@ public sealed class IdentityLinkApplicationServiceTests
     [InlineData("https://user@identity.example.test", "subject")]
     [InlineData("https://identity.example.test", "subject\u0001with-control")]
     [InlineData("https://identity.example.test", "")]
+    [InlineData("https://identity.example.test", " ")]
     public async Task Rejects_malformed_or_non_https_identity_keys(
         string issuer,
         string subject)
