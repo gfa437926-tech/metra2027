@@ -22,7 +22,7 @@ public sealed record MetraResourceAuthorizationFacts(
     bool ActorIsActive,
     bool ResourceExists,
     string? CanonicalStationId,
-    bool HasActiveStationAssignment);
+    IReadOnlyCollection<string>? ActiveStationIds);
 
 /// <summary>
 /// Fail-closed evaluator that applies active-account, resource-existence and
@@ -57,8 +57,12 @@ public sealed class AuthoritativeMetraResourceAccessEvaluator(
             {
                 ActorIsActive: true,
                 ResourceExists: true,
-                HasActiveStationAssignment: true
-            } && !string.IsNullOrWhiteSpace(facts.CanonicalStationId);
+                CanonicalStationId: not null,
+                ActiveStationIds: not null
+            } &&
+            !string.IsNullOrWhiteSpace(facts.CanonicalStationId) &&
+            facts.ActiveStationIds.Any(stationId =>
+                string.Equals(stationId, facts.CanonicalStationId, StringComparison.Ordinal));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
