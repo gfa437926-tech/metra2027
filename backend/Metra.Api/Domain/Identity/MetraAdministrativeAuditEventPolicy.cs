@@ -74,7 +74,9 @@ public static class MetraAdministrativeAuditEventPolicy
         => !string.IsNullOrWhiteSpace(value) &&
            value.Length <= maxLength &&
            value == value.Trim() &&
-           !ContainsDisallowedControlCharacters(value);
+           value.All(character =>
+               character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or
+                   >= '0' and <= '9' or '-' or '_' or ':' or '.');
 
     private static bool IsCanonicalCode(string? value)
     {
