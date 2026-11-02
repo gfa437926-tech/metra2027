@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { afterEach } from '@angular/core/testing';
 import { StationCatalogueService } from './station-catalogue.service';
 import { StationsComponent } from './stations.component';
 
