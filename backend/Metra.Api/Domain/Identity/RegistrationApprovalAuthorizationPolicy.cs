@@ -8,6 +8,7 @@ namespace Metra.Api.Domain.Identity;
 public sealed record RegistrationApprovalActorContext(
     string UserId,
     bool IsActive,
+    bool CanApproveStationRegistrations,
     IReadOnlySet<string> StationManagerStationIds,
     bool CanApproveSystemRegistrations);
 
@@ -57,6 +58,9 @@ public static class RegistrationApprovalAuthorizationPolicy
         RegistrationApprovalActorContext actor,
         RegistrationApprovalRequestContext request)
     {
+        if (!actor.CanApproveStationRegistrations)
+            return Deny("station_approval_permission_required", "لا يملك المستخدم صلاحية اعتماد طلبات المحطات.");
+
         if (actor.StationManagerStationIds is null ||
             !actor.StationManagerStationIds.Contains(request.RequestedStationId))
             return Deny("station_scope_violation", "لا يملك المستخدم صلاحية اعتماد طلبات هذه المحطة.");
