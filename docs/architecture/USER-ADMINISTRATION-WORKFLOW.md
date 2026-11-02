@@ -1,8 +1,8 @@
 # METRA 2027 — User Administration and Station Assignment Workflow
 
-Status: implementation-ready workflow proposal; business authorization and persistence mapping remain pending.
+Status: two-stage registration workflow approved; Supabase Auth recommended; role catalogue and persistence mapping remain pending.
 
-This document turns the observed legacy registration and approval behavior into a reviewable workflow. It does not select an identity provider, grant permissions to roles, define SQL, or authorize changes to Supabase.
+The provider recommendation is recorded in IDENTITY-PROVIDER-DECISION.md. A provider-independent .NET domain transition service now implements the station-then-system decision order and has dedicated unit tests. The service is not yet connected to HTTP endpoints or persistence. No SQL, schema, Auth settings, or RLS changes are authorized.
 
 ## 1. Non-negotiable boundaries
 
@@ -153,7 +153,13 @@ The administration UI should distinguish:
 
 Do not show a requested role/station as granted before provisioning completes. Do not fabricate demo users or static permission lists to make an unfinished integration appear operational.
 
-## 8. Approval checklist before implementation
+## 8. Current .NET implementation boundary
+
+The API now contains a pure registration approval workflow in backend/Metra.Api/Features/Registration/RegistrationApprovalWorkflow.cs. It enforces the station stage before the system stage, station assignment scope for station decisions, explicit stage permissions, self-approval prevention, terminal rejection, UTC audit-event facts, and rejection of stale/out-of-order transitions. Unit tests are in backend/Metra.Api.Tests/Features/Registration/RegistrationApprovalWorkflowTests.cs.
+
+The workflow returns a transition and audit-event value; it does not write to a database. A future repository must load the request under a transaction/lock and persist the state change, audit event, and (on final approval) approved role grant and station assignment atomically. Do not expose approval endpoints until authoritative permission and assignment adapters are implemented.
+
+## 9. Approval checklist before persistence implementation
 
 - [ ] Approve the identity provider and ASP.NET Core token/session validation model.
 - [ ] Approve open registration versus invitation/verified-email enrollment.
