@@ -1,0 +1,33 @@
+name: Angular build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "angular-app/**"
+      - ".github/workflows/angular-ci.yml"
+  pull_request:
+    paths:
+      - "angular-app/**"
+      - ".github/workflows/angular-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Install dependencies
+        working-directory: angular-app
+        run: npm install
+      - name: Build production bundle
+        working-directory: angular-app
+        run: npx ng build --configuration production --base-href /metra2027/
