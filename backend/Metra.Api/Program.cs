@@ -1,6 +1,7 @@
 using System.Net;
 using System.Threading.RateLimiting;
 using Metra.Api.Features.Observations;
+using Metra.Api.Features.Identity;
 using Metra.Api.Infrastructure.Database;
 using Npgsql;
 using Metra.Api.Security;
@@ -12,6 +13,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddMetraConfiguredAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMetraAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IRegistrationSubmissionActorContextProvider, HttpRegistrationSubmissionActorContextProvider>();
 builder.Services.AddMetraResourceAuthorization();
 builder.Services.AddMetraDatabase(builder.Configuration, builder.Environment);
 
