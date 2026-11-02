@@ -46,7 +46,7 @@ describe('StationsComponent', () => {
 
     expect(readPage).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('مصدر بيانات المحطات غير موصول بعد');
-    expect(fixture.componentInstance.items()).toHaveLength(0);
+    expect(fixture.componentInstance.items().length).toBe(0);
   });
 
   it('keeps same-name source records separate and counts missing coordinates', async () => {
@@ -59,7 +59,7 @@ describe('StationsComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.items()).toHaveLength(2);
+    expect(fixture.componentInstance.items().length).toBe(2);
     expect(fixture.componentInstance.classicCount()).toBe(1);
     expect(fixture.componentInstance.automaticCount()).toBe(1);
     expect(fixture.componentInstance.withoutCoordinatesCount()).toBe(1);
@@ -97,14 +97,14 @@ describe('StationsComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const loadMore = Array.from(fixture.nativeElement.querySelectorAll('button'))
-      .find((button: Element) => button.textContent?.includes('تحميل المزيد')) as HTMLButtonElement;
+    const loadMore = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
+      .find(button => button.textContent?.includes('تحميل المزيد'));
     expect(loadMore).toBeDefined();
     loadMore.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.items()).toHaveLength(1);
+    expect(fixture.componentInstance.items().length).toBe(1);
     expect(fixture.componentInstance.loadMoreError()).toBe(true);
     expect(fixture.componentInstance.loadMoreErrorRequiresReload()).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('أعد تحميل الدليل');
