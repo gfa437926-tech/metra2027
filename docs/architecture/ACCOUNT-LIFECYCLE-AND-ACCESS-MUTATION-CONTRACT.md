@@ -15,7 +15,7 @@ The policy supports only these transitions:
 
 PendingApproval is governed by the registration approval workflow and cannot be changed by these lifecycle commands. Disabled is terminal in this contract. No automatic restore, deletion, or reactivation path exists.
 
-The lifecycle application service resolves the actor from a server-side provider, requires a nonblank reason for suspension/disable, bounds reason length, applies the transition policy, and delegates to a transactional store. The store must reload and lock target + actor authorization facts, verify explicit permission, compare state and version, update account state, and append the immutable audit event in one transaction. Restore must not alter grants or assignments. Self-administration rules and exact permission codes require product approval before endpoints are introduced.
+The lifecycle application service resolves the actor from a server-side provider, requires a nonblank reason for suspension/disable, bounds reason length, rejects control characters in identifiers/reasons, validates actor context and the returned account snapshot, applies the transition policy, and delegates to a transactional store. The store must reload and lock target + actor authorization facts, verify explicit permission, compare state and version, update account state, and append the immutable audit event in one transaction. Restore must not alter grants or assignments. Self-administration rules and exact permission codes require product approval before endpoints are introduced.
 
 ## Effective access consequences
 
