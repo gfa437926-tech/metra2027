@@ -152,6 +152,25 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
     }
 
     [Fact]
+    public async Task Denies_entire_authorization_snapshot_when_any_assignment_fact_is_malformed()
+    {
+        var source = new FakeDataSource(new(
+            true,
+            true,
+            "station-7",
+            [
+                new("station-7", Now.AddDays(-1), null, null),
+                new("station-7", Now.AddDays(-1).ToOffset(TimeSpan.FromHours(2)), null, null)
+            ]));
+        var evaluator = Evaluator(source);
+
+        var allowed = await evaluator.CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
     public async Task Does_not_trust_station_id_supplied_by_resource_descriptor()
     {
         var source = new FakeDataSource(new(
