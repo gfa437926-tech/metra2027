@@ -73,7 +73,8 @@ public sealed class CurrentUserContextApplicationService(
         string subject,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(subject))
+        if (!IsValidIdentityCoordinate(issuer, 512) ||
+            !IsValidIdentityCoordinate(subject, 256))
             return null;
 
         var facts = await dataSource.FindByIdentitySubjectAsync(
@@ -121,6 +122,11 @@ public sealed class CurrentUserContextApplicationService(
             Array.AsReadOnly(assignments),
             Array.AsReadOnly(permissions));
     }
+
+    private static bool IsValidIdentityCoordinate(string? value, int maximumLength)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= maximumLength &&
+           !value.Any(char.IsControl);
 
     private static bool IsValidSnapshot(CurrentUserAccountFacts? facts)
     {
