@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Metra.Api.Security;
+using Metra.Api.Features.Stations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
@@ -80,6 +81,28 @@ public sealed class MetraAuthenticationBoundaryTests
 
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, protectedResponse.StatusCode);
         Assert.Equal(System.Net.HttpStatusCode.OK, publicResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task Station_catalogue_and_detail_routes_reject_anonymous_requests()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddMetraAuthenticationBoundary();
+        builder.Services.AddMetraAuthorization();
+
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapStationEndpoints();
+        await app.StartAsync();
+
+        using var client = app.GetTestClient();
+        using var catalogueResponse = await client.GetAsync("/api/v1/stations/");
+        using var detailResponse = await client.GetAsync("/api/v1/stations/classic/station-1");
+
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, catalogueResponse.StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, detailResponse.StatusCode);
     }
 
     [Fact]
