@@ -39,8 +39,8 @@ public sealed class HttpRegistrationSubmissionActorContextProviderTests
     [InlineData("00000000-0000-0000-0000-000000000000")]
     public async Task Rejects_missing_or_invalid_subject(string? subject)
     {
-        var claims = subject is null
-            ? Array.Empty<Claim>()
+        Claim[] claims = subject is null
+            ? []
             : [new Claim("sub", subject)];
         var context = AuthenticatedContext(claims);
 
