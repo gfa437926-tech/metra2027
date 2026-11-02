@@ -50,6 +50,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
       </div>
     </aside>
     <main class="content-area">
+      <div class="security-notice" role="status" aria-live="polite">
+        <strong>نسخة معاينة غير تشغيلية:</strong> لا توجد مصادقة مستخدمين أو صلاحيات API مفعّلة في هذه الواجهة حالياً. لا تُدخل بيانات تشغيلية أو شخصية حقيقية.
+      </div>
       <router-outlet />
       <footer>METRA 2027 · نظام إدارة السجلات المناخية</footer>
     </main>
@@ -70,6 +73,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     .nav-link i{width:20px;text-align:center;font-size:15px;color:#27ae60}.nav-link i.hourly{color:#bb8fce}.nav-link i.climate{color:#1abc9c}.nav-link i.daily{color:#f39c12}.nav-link i.soil{color:#af7ac5}.nav-link i.agriculture{color:#2ecc71}.nav-link i.users{color:#d7bde2}
     .nav-link:hover{background:rgba(255,255,255,.1);transform:translateX(-3px);color:#fff}.nav-link.active{background:#2980b9;color:#fff;box-shadow:0 4px 12px rgba(41,128,185,.3)}.nav-link.active i{color:#fff}
     .content-area{margin-right:300px;padding:30px;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
+    .security-notice{margin:0 0 20px;padding:13px 16px;border:1px solid #d6a54b;border-right:4px solid #b7791f;border-radius:9px;background:#fff8e8;color:#624512;font-size:13px;line-height:1.7}
     footer{margin-top:auto;text-align:center;padding:24px 8px 0;color:#83929b;font-size:11px}
     .mobile-menu,.sidebar-backdrop{display:none}
     @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(300px,85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:#2980b9;color:white;box-shadow:0 4px 14px rgba(41,128,185,.25)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
