@@ -106,7 +106,8 @@ public sealed class MetraAccessMutationApplicationService(
         if (target is null)
             return Failure("account_not_found");
         if (string.IsNullOrWhiteSpace(target.AccountId) ||
-            target.AccountId != accountId || target.Version <= 0)
+            target.AccountId != accountId || target.Version <= 0 ||
+            !Enum.IsDefined(target.AccountState))
             return Failure("account_snapshot_invalid");
         var createsAccess = command.Kind is
             MetraAccessMutationKind.GrantPermission or MetraAccessMutationKind.AssignStation;
@@ -158,8 +159,7 @@ public sealed class MetraAccessMutationApplicationService(
             case MetraAccessMutationKind.RevokeStationAssignment:
                 return hasRecordId && !hasGrant && !hasAssignment &&
                        command.RecordId!.Trim() == command.RecordId &&
-                       command.RecordId.Length <= 128 &&
-                       !command.RecordId.Any(char.IsControl)
+                       IsValidRecordId(command.RecordId)
                     ? null
                     : "access_mutation_payload_invalid";
 
@@ -167,6 +167,10 @@ public sealed class MetraAccessMutationApplicationService(
                 return "access_mutation_kind_invalid";
         }
     }
+
+    private static bool IsValidRecordId(string recordId)
+        => recordId.Length <= 128 &&
+           recordId.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.' or ':');
 
     private static MetraAccessMutationResult Failure(string code)
         => new(false, code, "تعذر تنفيذ تغيير الصلاحيات أو إسناد المحطة.");
