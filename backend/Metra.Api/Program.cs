@@ -90,3 +90,5 @@ api.MapGet("/health", () => Results.Ok(new
 })).WithName("GetApiHealth");
 
 app.Run();
+
+public partial class Program { }
