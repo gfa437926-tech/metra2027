@@ -1,176 +1,104 @@
-# METRA 2027 — External Identity Link Persistence Contract
+# METRA 2027 — Supabase Auth Account-Link Contract
 
-Status: proposed Supabase Auth account-link contract. This is not an executable migration and does not authorize a database schema or Supabase configuration change.
+Status: logical persistence contract for review. Supabase Auth is the recommended identity provider. This document is not an executable migration and does not authorize changes to Supabase Auth, PostgreSQL, RLS, grants or keys.
 
 Related documents:
-- `IDENTITY-API-CONTRACT.md`
+- `IDENTITY-PROVIDER-DECISION.md`
+- `CANONICAL-DATA-MODEL-PROPOSAL.md`
 - `AUTHENTICATION-SESSION-SECURITY-DESIGN.md`
 - `SECURITY-CRYPTOGRAPHY-BASELINE.md`
-- `THREAT-MODEL-AND-SECURITY-REGISTER.md`
 
-## 1. Security invariants
+## 1. Provider and trust boundary
 
-A persisted Supabase Auth link maps exactly one authenticated `auth.users.id` to exactly one canonical METRA account. Supabase Auth is the recommended provider for METRA 2027. ASP.NET Core remains the authority for METRA account state, role grants, station assignments and authorization.
+- Supabase Auth owns credentials, sign-in methods, sessions, MFA, email/phone verification and recovery.
+- ASP.NET Core 10 owns METRA accounts, registration, roles, permission grants, station assignments and all application authorization.
+- Angular and Flutter send Supabase Auth access tokens to the METRA API. They never choose the METRA account ID or Auth user ID used for account linking.
+- The API validates the access-token signature, exact configured issuer, audience, expiry, not-before and permitted signing algorithm using the project's public JWKS. Expected issuer form: `https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1`; confirm from live non-production metadata before activation. Expected audience is normally `authenticated`; confirm the actual access token.
+- The immutable `sub` claim is the Supabase Auth user UUID and must correspond to `auth.users.id`.
+- Never use editable `user_metadata` for authorization. Do not accept roles, permissions, station IDs or account state from JWT user metadata or client JSON.
+- Never expose Supabase secret/service-role credentials to Angular or Flutter.
 
-1. The identity key is the UUID `sub` claim from a signature-, issuer-, audience- and expiry-validated Supabase Auth access token. It must match the corresponding Supabase-managed `auth.users.id`; it never originates from a request body.
-2. The accepted issuer is pinned to the configured Supabase project issuer and must match exactly. Expected form: `https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1`; confirm it against a non-production token and live provider metadata before enabling JWT validation.
-3. The `sub` value is an opaque UUID subject. Parse it as a UUID only for the FK to `auth.users.id`; never derive it from email, phone, username, or display name.
-4. The same `auth.users.id` must never be linked to two METRA accounts; enforce this with a database unique constraint.
-5. The initial model proposes one METRA account to one Supabase Auth user. Multiple sign-in identities (for example email/password and OAuth) may belong to the same Supabase Auth user and remain managed inside Supabase Auth. Linking a second, distinct Supabase Auth user to one METRA account is not permitted unless separately approved.
-6. Linking must not create or activate a METRA account. Account provisioning and approval remain separate workflows.
-7. The account must be active both before the application operation and again inside the persistence transaction immediately before commit.
-8. Link row and audit event commit atomically. A failed audit write means the identity link must not commit.
-9. Reads and writes fail closed on missing, ambiguous, stale, or inconsistent identity data.
-10. No endpoint, UI, support tool, or client-supplied ID may bypass these invariants.
+## 2. Proposed logical relationship
 
-## 2. Identity-key validation
+Proposed application table: `metra.account_auth_links`.
 
-The current generic application boundary performs defensive validation for an HTTPS issuer+subject pair. For the selected Supabase Auth design, the future adapter must instead validate the configured Supabase issuer and require a UUID `sub` that resolves to the corresponding managed `auth.users.id`. The generic issuer+subject implementation must not be treated as the final Supabase adapter:
-- issuer is an absolute HTTPS URI;
-- issuer contains no user information, query, or fragment;
-- issuer length is at most 512 characters;
-- subject is non-empty and at most 255 characters;
-- neither value contains control characters;
-- original issuer and subject strings are passed unchanged to the store.
-
-This validation is not a substitute for OIDC validation. The trusted proof adapter must additionally validate signature, exact configured issuer, audience/client ID, nonce, state, authorization-code binding, PKCE, expiry, and provider-specific requirements. Provider-specific issuer allow-list configuration is mandatory. Do not accept an arbitrary HTTPS issuer.
-
-## 3. Logical data model
-
-The proposed physical link is `metra.account_auth_links(account_id, auth_user_id, linked_at, revoked_at)`, where `account_id` references the canonical METRA account and `auth_user_id UUID` references `auth.users(id)`. The proposed one-to-one unique constraints and cross-schema FK require review against Supabase platform ownership before implementation. No guessed DDL or executable migration is included.
-
-### Identity link record
-
-Required logical fields:
-- account_id — FK to `metra.accounts.account_id`;
-- auth_user_id — UUID FK to Supabase-managed `auth.users.id`;
-- linked_at — server timestamp;
-- revoked_at — nullable server timestamp for controlled unlink/revocation.
-
-Do not store a password, access token, refresh token, provider secret or duplicate email in this link.
-
-| Field | Requirement |
+| Field | Logical meaning |
 |---|---|
-| id | Opaque server-generated primary key |
-| metra_user_id | Foreign key to the canonical METRA account; never a provider subject |
-| issuer | Exact validated issuer identifier, or an encrypted representation with a deterministic lookup key |
-| subject | Exact opaque provider subject, protected at rest according to data classification |
-| linked_at | UTC timestamp assigned by the server |
-| linked_by_user_id | Canonical METRA account that initiated the link |
-| status | Explicit active/revoked state; unknown values are not active |
-| revoked_at | Nullable UTC timestamp |
-| created_at | UTC timestamp |
-| updated_at | UTC timestamp, updated only by controlled audited operations |
+| `account_id` | FK to the canonical METRA account |
+| `auth_user_id` | UUID FK to Supabase-managed `auth.users.id` |
+| `linked_at` | Server-assigned UTC timestamp |
+| `revoked_at` | Nullable timestamp for controlled unlink/revocation |
 
-Constraints and indexes:
-- unique exact issuer+subject for all active links;
-- foreign key to canonical METRA account with deletion restricted or an approved anonymization workflow;
-- index by METRA account ID for account identity listing and recovery;
-- check constraints for non-empty issuer/subject and valid status values;
-- no cascade delete from account to audit history;
-- all timestamps use timezone-aware database types and UTC application values.
+Proposed cardinality for the first release:
+- One METRA account has one Supabase Auth user.
+- One Supabase Auth user maps to at most one METRA account.
+- Enforce uniqueness on both `account_id` and `auth_user_id`.
+- Multiple login methods attached to the same Supabase Auth user (email/password, OAuth, etc.) remain within Supabase Auth and do not create additional METRA accounts.
+- Linking a second distinct Supabase Auth user to an existing METRA account is not supported unless a separate security and recovery decision approves it.
 
-If the product requires historical relinking, retain revoked rows and enforce uniqueness only for active rows with a partial unique index. Re-linking a previously revoked identity must be a separately authorized operation, not an implicit upsert. Concurrent attempts must be serialized by the unique constraint and transaction.
+The FK to `auth.users(id)` is a proposal only. It must be reviewed for schema ownership, deletion behavior and migration permissions before implementation. METRA must never insert, update or delete rows in platform-managed `auth` tables. Do not use cascading deletion to erase METRA account or audit evidence when an Auth user is deleted.
 
-### Audit event
+## 3. Registration is not ordinary identity linking
 
-The same transaction must append an event with:
-- event ID and UTC timestamp;
-- actor METRA account ID;
-- target METRA account ID;
-- action (`identity.linked`, and later separately approved `identity.revoked`);
-- identity-link record ID;
-- outcome and stable reason code;
-- correlation/request ID;
-- trusted authentication/proof timestamps and assurance context, without storing raw ID/access/refresh tokens;
-- previous/new status where applicable.
+The current `IdentityLinkApplicationService` supports a separately re-authenticated identity being linked to an already-active METRA account. It deliberately rejects inactive accounts. It is therefore not the initial registration flow.
 
-Do not put raw provider tokens, authorization codes, client secrets, MFA secrets, or full subject values in audit logs. Avoid recording email/phone unless required by a documented audit purpose.
+Initial registration should proceed as follows:
 
-Application-level append-only behavior is not sufficient against a database owner. The deployed database role used by the API should have INSERT/SELECT privileges on audit records but no UPDATE/DELETE privileges. Migration/owner credentials must not be used by the runtime API. Where regulatory or insider-risk requirements justify it, export audit events to a separately controlled append-only/WORM destination.
+1. The user signs up/signs in through Supabase Auth. Supabase creates and manages the Auth user and session.
+2. The client calls the METRA registration endpoint using the validated access token. The API derives `auth_user_id` from the trusted `sub` claim; the client does not send it.
+3. The API validates the requested role and station against server-owned catalogues, validates the profile and terms, and rejects duplicate or already-linked submissions.
+4. In one METRA database transaction, the API creates a pending METRA account, inserts the account-to-Auth link, creates the registration request in `PendingStationApproval`, and appends the submission audit event. No role grant or station assignment is created at this stage.
+5. The station manager decides first, constrained by explicit station-approval permission and an active assignment for the requested station.
+6. The system manager decides second, and only after station approval.
+7. Final approval atomically activates the METRA account, creates the approved role grant and station assignment, advances the request to its final approved state, and appends the decision audit event.
 
-## 4. Protecting the external subject
+The Supabase Auth sign-up operation and the METRA API transaction are separate transactions. If Auth sign-up succeeds but METRA registration fails, the Auth user remains in Supabase Auth without a METRA account link. The API must return a retry-safe outcome and provide a controlled resume/reconciliation path; it must not create a duplicate account or silently delete the Auth user.
 
-The subject is an account-linking identifier and should be treated as sensitive identity data, even though it is not a credential.
+## 4. Database invariants
 
-The implementation review must choose and document one of:
-- database/storage encryption at rest with strict DB access controls, TLS in transit, restricted backups and logs; or
-- application-level envelope encryption for the raw subject plus a keyed deterministic lookup fingerprint (HMAC) for uniqueness and lookup.
+- The `auth_user_id` value is obtained only from a fully validated Supabase access-token principal.
+- A pending, rejected, suspended, closed, unlinked or unknown METRA account cannot access protected METRA resources.
+- An authenticated Supabase user without an active METRA account has no application permissions by default.
+- A registration request is not an account grant, role grant or station assignment.
+- A requested role and station are validated against canonical server-side catalogues; they are not effective permissions.
+- Account link, registration request and submission audit event commit atomically in the METRA database.
+- Final approval, account activation, role grant, station assignment and approval audit event commit atomically.
+- Identity link uniqueness and request idempotency are enforced by database constraints, not only application checks.
+- Account suspension and permission revocation are re-checked within sensitive database transactions.
+- Audit records are append-only for the runtime API role; runtime credentials must not UPDATE or DELETE audit rows.
+- No password, access token, refresh token, authorization code, MFA secret or service-role key is stored in METRA application tables.
 
-Do not use an unkeyed SHA hash as a substitute for encryption or a keyed fingerprint. If HMAC is selected:
-- use a dedicated key managed by KMS/HSM, not a source-code or database-stored secret;
-- include a domain separator and unambiguous length-prefix encoding of issuer and subject;
-- store key version metadata;
-- plan dual-fingerprint rotation and uniqueness conflict handling before rotating;
-- never reuse encryption keys as HMAC keys;
-- never log the fingerprint or raw subject.
+## 5. Supabase schema and Data API boundary
 
-No encryption scheme or key-management provider is selected by this contract. The chosen design must be tested for key rotation, backup restoration, key loss and incident revocation before production.
+- Place application tables in a dedicated non-exposed schema, proposed as `metra`.
+- Do not put privileged application tables in `public` merely for convenience.
+- Do not grant `anon` or `authenticated` direct table access to METRA accounts, role grants, station assignments, registration requests or audit records.
+- Use a dedicated least-privilege PostgreSQL runtime role for the .NET API, separate from migration/schema-owner credentials.
+- RLS is defense in depth for any table that is intentionally exposed or directly reachable; it does not replace API authorization.
+- Do not modify Supabase-managed `auth`, `storage` or `realtime` internals.
+- The 2026-10-30 Data API exposure change means new public tables are no longer automatically exposed by default. Do not treat default exposure settings as an authorization mechanism.
 
-## 5. Atomic store operation
+## 6. Operational and recovery requirements
 
-The production implementation of `IIdentityLinkStore.TryLinkAsync` must execute one transaction equivalent to:
+- A failed METRA transaction after successful Auth sign-up must be safe to retry using the authenticated Auth UUID and a defined idempotency strategy.
+- A duplicate Auth UUID already linked to another METRA account must be rejected without disclosing the other account.
+- Revocation/unlinking requires recent re-authentication, an explicit server-side authorization rule and an immutable audit event.
+- Auth-user deletion, compromise or recovery must be coordinated with METRA account suspension/revocation. Deleting an Auth user alone must not be assumed to invalidate every already-issued access token immediately.
+- Sensitive operations may require session validation/revocation checks in addition to JWT validation, according to the final session policy.
+- Keep PII and provider identifiers out of application logs unless a documented purpose requires them.
 
-1. Lock/read the canonical METRA account row and confirm it is active.
-2. Validate that the actor is the same canonical account and that the verified identity proof is still within the allowed freshness window.
-3. Look up the exact identity key under the approved issuer/subject comparison rules.
-4. If active link exists for this same account, return `AlreadyLinkedToSameAccount` without creating a duplicate event unless an explicit idempotent audit policy says otherwise.
-5. If active link exists for another account, return `IdentityLinkedToDifferentAccount`; never transfer it.
-6. If a concurrent insert wins, catch only the expected unique-constraint violation, re-read the row and map to same-account or different-account outcome. Do not swallow unrelated database errors as a conflict.
-7. Insert the identity link and its audit event in the same transaction.
-8. Commit, then return `Linked`.
+## 7. Implementation status
 
-Map only known unique-constraint violations. A deadlock, timeout, serialization failure, audit failure or unknown database exception must not be reported as successful linking. Retry only errors known to be transient and only with bounded retry plus idempotent transaction semantics.
+Existing .NET code includes:
+- a generic identity-link application service and `IIdentityLinkStore` contract;
+- an identity context resolved by a trusted server-side adapter contract;
+- unit tests for malformed identity keys, freshness checks, account state and atomic store outcomes.
 
-The store must propagate request cancellation and must not return database names, SQL text, constraint names or provider internals to the client.
+Not implemented:
+- the Supabase JWT bearer validator and live issuer/JWKS configuration;
+- the initial registration submission service;
+- the PostgreSQL adapter for account links, registration requests, role grants, station assignments and audit;
+- physical constraints, RLS, grants or migrations;
+- Auth settings review and production signing-key verification.
 
-## 6. Issuer/subject uniqueness and collation
-
-PostgreSQL text equality is case-sensitive under deterministic collations, but the actual database collation and index definition must be verified. Do not assume that all database engines or collations behave identically.
-
-The migration must explicitly select deterministic, case-sensitive comparison semantics for issuer and subject (or a byte-stable representation), and test:
-- issuer with and without trailing slash are distinct identifiers;
-- subject `AbC` and `abc` are distinct;
-- Unicode and non-ASCII subject values follow provider specification;
-- whitespace/control characters are rejected;
-- tenant/realm issuers cannot collide;
-- duplicate concurrent inserts yield exactly one active link.
-
-## 7. Account lifecycle and recovery
-
-- Suspending or rejecting a METRA account blocks identity linking and all protected operations even if provider authentication succeeds.
-- Account deletion must not cascade-delete identity-link audit evidence. Use an approved retention/anonymization policy.
-- Provider account deletion, compromise or issuer retirement must have a controlled incident/revocation workflow.
-- Unlinking is not enabled by this contract. Before it exists, define last-login-method protection, alternative verified recovery method, recent step-up proof, notifications, cooldown, audit, and support escalation.
-- A user must never be allowed to unlink the only usable authentication method without a verified replacement/recovery route.
-
-## 8. Required tests before enabling a concrete adapter
-
-- exact issuer and subject round-trip;
-- issuer trailing-slash and subject case-sensitivity;
-- duplicate link to same account;
-- cross-account collision;
-- concurrent same-key insert race;
-- account suspension between service check and transaction commit;
-- audit write failure rolls back identity link;
-- cancellation and database timeout;
-- database collation behavior;
-- encryption/HMAC key rotation and backup restore, if selected;
-- account deletion/anonymization retention;
-- no raw token/subject leakage in logs and errors.
-
-## 9. Activation gate
-
-Do not create or apply a database migration until all of the following are confirmed:
-1. canonical METRA account table and primary key;
-2. approved PostgreSQL/Supabase hosting and migration ownership;
-3. identity provider, issuer allow-list and subject semantics;
-4. account-to-identity cardinality policy;
-5. audit retention and access-control policy;
-6. subject protection and KMS/HSM key ownership;
-7. production transaction/concurrency integration tests;
-8. backup, restore, monitoring and incident-response procedures.
-
-The current `IdentityLinkApplicationService` is for linking a separately re-authenticated identity to an already-active METRA account; it is not the initial registration/onboarding flow because pending applicants are not active. Initial registration must be a separate application operation that atomically creates the pending METRA account, links the authenticated Supabase `auth.users.id`, creates the request and appends the submission audit event. Its persistence adapter remains unimplemented.
-
-No live database, Supabase Auth setting, RLS, schema, existing account record or secret has been changed.
+The generic issuer+subject service must not be treated as the final Supabase account-link adapter without a reviewed implementation decision. No live database, Supabase Auth setting, RLS, schema, existing account record or secret has been changed.
