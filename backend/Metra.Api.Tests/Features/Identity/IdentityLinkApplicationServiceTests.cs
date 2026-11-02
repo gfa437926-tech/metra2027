@@ -37,7 +37,7 @@ public sealed class IdentityLinkApplicationServiceTests
     {
         var actor = new FakeActorProvider(new(
             "server-resolved-account",
-            "issuer",
+            "https://issuer.example.test",
             "subject",
             Now,
             Now,
@@ -57,9 +57,9 @@ public sealed class IdentityLinkApplicationServiceTests
         var cases = new IdentityLinkActorContext?[]
         {
             null,
-            new("", "issuer", "subject", Now, Now, true),
+            new("", "https://issuer.example.test", "subject", Now, Now, true),
             new("account", "", "subject", Now, Now, true),
-            new("account", "issuer", " ", Now, Now, true)
+            new("account", "https://issuer.example.test", " ", Now, Now, true)
         };
 
         foreach (var context in cases)
@@ -79,7 +79,7 @@ public sealed class IdentityLinkApplicationServiceTests
     [InlineData("https://identity.example.test?tenant=one", "subject")]
     [InlineData("https://identity.example.test#fragment", "subject")]
     [InlineData("https://user@identity.example.test", "subject")]
-    [InlineData("https://identity.example.test", "subject\\nwith-control")]
+    [InlineData("https://identity.example.test", "subject\\u0001with-control")]
     [InlineData("https://identity.example.test", "")]
     public async Task Rejects_malformed_or_non_https_identity_keys(
         string issuer,
@@ -115,7 +115,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Rejects_inactive_metra_account()
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, Now, false));
+            "account", "https://issuer.example.test", "subject", Now, Now, false));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -131,7 +131,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Requires_recent_non_future_authentication(int minutesFromNow)
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now.AddMinutes(-minutesFromNow), Now.AddMinutes(-minutesFromNow), true));
+            "account", "https://issuer.example.test", "subject", Now.AddMinutes(-minutesFromNow), Now.AddMinutes(-minutesFromNow), true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -145,7 +145,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Requires_recent_proof_for_the_identity_being_linked_even_if_session_is_fresh()
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "new-provider-subject",
+            "account", "https://issuer.example.test", "new-provider-subject",
             Now, Now.AddMinutes(-6), true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
@@ -160,7 +160,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Treats_exact_five_minute_authentication_age_as_valid()
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now.AddMinutes(-5), Now.AddMinutes(-5), true));
+            "account", "https://issuer.example.test", "subject", Now.AddMinutes(-5), Now.AddMinutes(-5), true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -180,7 +180,7 @@ public sealed class IdentityLinkApplicationServiceTests
         string code)
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, Now, true));
+            "account", "https://issuer.example.test", "subject", Now, Now, true));
         var store = new FakeStore(commit);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -194,7 +194,7 @@ public sealed class IdentityLinkApplicationServiceTests
     {
         using var cts = new CancellationTokenSource();
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, Now, true));
+            "account", "https://issuer.example.test", "subject", Now, Now, true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
         var service = CreateService(actor, store);
 
