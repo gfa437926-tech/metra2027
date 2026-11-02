@@ -97,7 +97,8 @@ public sealed class MetraAdministrativeAuditQueryService(
         return read.Result switch
         {
             MetraAdministrativeAuditReadResult.Success when IsValidPage(read.Page, query.PageSize) &&
-                !string.Equals(query.Cursor, read.Page!.NextCursor, StringComparison.Ordinal) =>
+                (!read.Page!.HasMore ||
+                 !string.Equals(query.Cursor, read.Page.NextCursor, StringComparison.Ordinal)) =>
                 new(true, "audit_query_succeeded", read.Page),
             MetraAdministrativeAuditReadResult.Success => Failure("audit_store_response_invalid"),
             MetraAdministrativeAuditReadResult.ActorNotAuthorized => Failure("actor_not_authorized"),
