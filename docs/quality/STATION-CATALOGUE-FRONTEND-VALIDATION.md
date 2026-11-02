@@ -1,8 +1,10 @@
 # Station Catalogue Frontend Validation
 
+> **Prototype-only notice:** This checklist validates the historical Classic/Automatic compatibility screen. It is not acceptance criteria for the new METRA 2027 operational station catalogue. Per [Station Data Independence Decision](../architecture/STATION-DATA-INDEPENDENCE-DECISION.md), the production catalogue must be independently modelled and must operate without any legacy data provider, legacy schema, or historical station records. Do not connect this prototype to the production station catalogue.
+
 ## Scope
 
-This checklist defines the frontend acceptance boundary for the unified classic/automatic station catalogue. It is a verification aid, not evidence that every scenario has already been executed.
+This checklist defines the frontend behavior of the historical Classic/Automatic compatibility prototype only. It is a verification aid, not evidence that every scenario has already been executed, and it must not be treated as the new catalogue's requirements.
 
 ## Data contract
 
@@ -18,6 +20,7 @@ The Angular client consumes `GET /api/v1/stations` through `StationCatalogueServ
 - Responses may not exceed the requested page size, claim more pages while returning no records, or repeat the cursor used for the current request.
 - Duplicate source identities within a page or across pages are invalid.
 - The client does not infer canonical station identity, merge records by display name, or synthesize missing coordinates.
+- This legacy-shaped API projection is not a source for the new operational catalogue.
 - Source filter buttons expose their selected state through `aria-pressed`; the catalogue panel exposes request activity through `aria-busy`.
 - The catalogue table has a descriptive caption and explicitly scoped column headers; the initial loading state is announced through a polite live status.
 
@@ -69,6 +72,8 @@ The Angular client consumes `GET /api/v1/stations` through `StationCatalogueServ
 - The live geographic map remains a separate integration gate. Map markers must be built from verified coordinate pairs and use source-specific visual identities.
 
 ## Release gates
+
+These gates apply only to the compatibility prototype. The new production catalogue requires a separate contract and tests proving that it has no dependency on historical sources.
 
 Do not enable the endpoint or present the catalogue as production-connected until all of the following are true:
 
