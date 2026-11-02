@@ -3,7 +3,7 @@ namespace Metra.Api.Security;
 /// <summary>
 /// One authoritative read model for an object-level authorization decision.
 /// Implementations must resolve the resource's canonical station relationship
-/// and the actor's currently active assignment from trusted persistence.
+/// and the actor's assignment records from trusted persistence.
 /// </summary>
 public interface IMetraResourceAuthorizationDataSource
 {
@@ -15,6 +15,16 @@ public interface IMetraResourceAuthorizationDataSource
 }
 
 /// <summary>
+/// Assignment dates are UTC instants. A null ValidToUtc means no scheduled end;
+/// RevokedAtUtc, when present, terminates the assignment immediately.
+/// </summary>
+public sealed record MetraStationAssignmentFacts(
+    string StationId,
+    DateTimeOffset ValidFromUtc,
+    DateTimeOffset? ValidToUtc,
+    DateTimeOffset? RevokedAtUtc);
+
+/// <summary>
 /// Facts returned by one authoritative authorization lookup. The station ID
 /// must come from the persisted resource, never from the request descriptor.
 /// </summary>
@@ -22,15 +32,16 @@ public sealed record MetraResourceAuthorizationFacts(
     bool ActorIsActive,
     bool ResourceExists,
     string? CanonicalStationId,
-    IReadOnlyCollection<string>? ActiveStationIds);
+    IReadOnlyCollection<MetraStationAssignmentFacts>? StationAssignments);
 
 /// <summary>
-/// Fail-closed evaluator that applies active-account, resource-existence and
-/// active-station-assignment checks to authoritative facts. It deliberately
-/// ignores the descriptor's optional StationId because that value is untrusted.
+/// Fail-closed evaluator applying account, resource and time-bounded station
+/// assignment checks. It deliberately ignores the descriptor's optional
+/// StationId because that value is untrusted.
 /// </summary>
 public sealed class AuthoritativeMetraResourceAccessEvaluator(
-    IMetraResourceAuthorizationDataSource dataSource)
+    IMetraResourceAuthorizationDataSource dataSource,
+    TimeProvider timeProvider)
     : IMetraResourceAccessEvaluator
 {
     public async Task<bool> CanAccessAsync(
@@ -53,16 +64,26 @@ public sealed class AuthoritativeMetraResourceAccessEvaluator(
                 resource.ResourceId,
                 cancellationToken);
 
-            return facts is
+            if (facts is not
+                {
+                    ActorIsActive: true,
+                    ResourceExists: true,
+                    CanonicalStationId: not null,
+                    StationAssignments: not null
+                } || string.IsNullOrWhiteSpace(facts.CanonicalStationId))
             {
-                ActorIsActive: true,
-                ResourceExists: true,
-                CanonicalStationId: not null,
-                ActiveStationIds: not null
-            } &&
-            !string.IsNullOrWhiteSpace(facts.CanonicalStationId) &&
-            facts.ActiveStationIds.Any(stationId =>
-                string.Equals(stationId, facts.CanonicalStationId, StringComparison.Ordinal));
+                return false;
+            }
+
+            var now = timeProvider.GetUtcNow();
+            return facts.StationAssignments.Any(assignment =>
+                string.Equals(
+                    assignment.StationId,
+                    facts.CanonicalStationId,
+                    StringComparison.Ordinal) &&
+                assignment.ValidFromUtc <= now &&
+                (assignment.ValidToUtc is null || now < assignment.ValidToUtc) &&
+                (assignment.RevokedAtUtc is null || now < assignment.RevokedAtUtc));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
