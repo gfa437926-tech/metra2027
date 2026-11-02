@@ -61,7 +61,7 @@ The Angular client consumes `GET /api/v1/stations` through `StationCatalogueServ
 - The component keeps the loaded catalogue visible while fetching subsequent pages.
 - It detects duplicate identities across pages and cursor cycles.
 - Invalid continuation responses require a full catalogue reload; transient failures can be retried.
-- The Angular project currently exposes production build scripts but no dedicated unit-test runner in `package.json`. The checklist must not be represented as automated test coverage until a test runner and executable specs are added.
+- The Angular project now uses the Angular 20 `@angular/build:unit-test` builder with Vitest and jsdom. `npm test` runs the station catalogue service specs in non-watch mode, and Angular CI executes this suite before the production build. The current service suite covers disabled-endpoint behavior, invalid query rejection before network access, credentialed requests, response normalization, duplicate identities, invalid coordinate pairs, cursor cycles, pagination metadata, and authentication errors. Component-level interaction and cross-page UI tests remain outstanding.
 - The live map remains a separate integration gate. Map markers must be built from verified coordinate pairs and use source-specific visual identities.
 
 ## Release gates
