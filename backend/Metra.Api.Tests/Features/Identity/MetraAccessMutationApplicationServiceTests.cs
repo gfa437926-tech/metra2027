@@ -56,6 +56,47 @@ public sealed class MetraAccessMutationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_control_characters_in_reason_before_actor_lookup()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("user-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccessMutationApplicationService(actor, store);
+
+        var result = await service.ExecuteAsync(GrantCommand() with { Reason = "Approved\nby admin" });
+
+        Assert.Equal("access_mutation_reason_invalid", result.Code);
+        Assert.Equal(0, actor.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_oversized_or_control_character_account_identifiers()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("user-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccessMutationApplicationService(actor, store);
+
+        var oversized = await service.ExecuteAsync(GrantCommand() with { AccountId = new string('a', 129) });
+        var control = await service.ExecuteAsync(GrantCommand() with { AccountId = "user-1\n" });
+
+        Assert.Equal("account_id_invalid", oversized.Code);
+        Assert.Equal("account_id_invalid", control.Code);
+        Assert.Equal(0, actor.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_invalid_store_snapshot_before_commit()
+    {
+        var store = new FakeStore(new("different-account", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccessMutationApplicationService(new FakeActor("admin"), store);
+
+        var result = await service.ExecuteAsync(GrantCommand());
+
+        Assert.Equal("account_snapshot_invalid", result.Code);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Rejects_missing_actor_before_target_lookup()
     {
         var actor = new FakeActor(null);
