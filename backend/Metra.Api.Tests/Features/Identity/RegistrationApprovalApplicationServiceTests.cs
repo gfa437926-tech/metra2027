@@ -10,7 +10,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     public async Task Persists_station_approval_with_server_resolved_actor()
     {
         var actor = new RegistrationApprovalActorContext(
-            "station-manager", true, new HashSet<string> { "station-1" }, false);
+            "station-manager", true, true, new HashSet<string> { "station-1" }, false);
         var request = Request();
         var store = new FakeStore(request);
         var service = new RegistrationApprovalApplicationService(
@@ -32,7 +32,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     public async Task Does_not_persist_when_actor_lacks_station_scope()
     {
         var actor = new RegistrationApprovalActorContext(
-            "manager", true, new HashSet<string> { "station-2" }, false);
+            "manager", true, true, new HashSet<string> { "station-2" }, false);
         var store = new FakeStore(Request());
         var service = new RegistrationApprovalApplicationService(
             new FakeActorProvider(actor), store);
@@ -84,7 +84,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     public async Task Requires_explicit_system_permission_for_final_decision()
     {
         var actor = new RegistrationApprovalActorContext(
-            "system-manager", true, new HashSet<string>(), false);
+            "system-manager", true, false, new HashSet<string>(), false);
         var store = new FakeStore(Request(
             status: RegistrationApprovalStatus.PendingSystemApproval));
         var service = new RegistrationApprovalApplicationService(
@@ -132,7 +132,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     public async Task Final_approval_commits_activation_transition_only_after_system_authorization()
     {
         var actor = new RegistrationApprovalActorContext(
-            "system-manager", true, new HashSet<string>(), true);
+            "system-manager", true, false, new HashSet<string>(), true);
         var store = new FakeStore(Request(
             status: RegistrationApprovalStatus.PendingSystemApproval));
         var service = new RegistrationApprovalApplicationService(
