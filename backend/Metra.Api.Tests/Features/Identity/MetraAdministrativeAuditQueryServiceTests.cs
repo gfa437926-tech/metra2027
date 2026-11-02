@@ -188,6 +188,20 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
             "Security review", "request-1", 2);
 
     [Fact]
+    public async Task Accepts_terminal_page_without_continuation_cursor()
+    {
+        var store = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(Array.Empty<MetraAdministrativeAuditEvent>(), null, false)));
+        var service = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), store);
+
+        var result = await service.ExecuteAsync(Query());
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Page);
+        Assert.False(result.Page.HasMore);
+    }
+
+    [Fact]
     public async Task Rejects_non_advancing_or_empty_continuation_page()
     {
         var eventItem = AuditEvent("event-1", Before);
