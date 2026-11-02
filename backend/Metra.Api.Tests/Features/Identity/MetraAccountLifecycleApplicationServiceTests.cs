@@ -74,6 +74,21 @@ public sealed class MetraAccountLifecycleApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_noncanonical_account_identifier_before_actor_lookup()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("account-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccountLifecycleApplicationService(actor, store);
+
+        var result = await service.ExecuteAsync(new(
+            "account/1", MetraAccountLifecycleCommand.Suspend, "Reason"));
+
+        Assert.Equal("account_id_invalid", result.Code);
+        Assert.Equal(0, actor.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
     public async Task Rejects_control_characters_in_reason_before_actor_lookup()
     {
         var actor = new FakeActor("admin");
