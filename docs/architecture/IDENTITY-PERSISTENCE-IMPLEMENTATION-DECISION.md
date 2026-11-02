@@ -5,7 +5,7 @@ Status: Supabase Auth recommended; no production METRA persistence selected or i
 ## Findings in the current branch
 
 - The API project targets .NET 10 and references ASP.NET Core OpenAPI packages only.
-- The API project has no Entity Framework Core, Npgsql, Dapper, or other PostgreSQL client package.
+- The API project references Npgsql 10.0.0 and has a connection configuration helper in backend/Metra.Api/Infrastructure/Database/MetraDatabaseConfiguration.cs.
 - The test project has no PostgreSQL test container or database integration-test dependency.
 - No API `DbContext`, database connection registration, repository adapter, migration directory, or SQL migration convention was found in the backend project.
 - The current identity-link implementation is an application service plus an `IIdentityLinkStore` contract and in-memory test doubles. It is not connected to persistence.
@@ -41,4 +41,4 @@ The next implementation increment should first establish an explicit persistence
 
 ## Scope and limits
 
-The target project has now been inspected read-only; see `SUPABASE-TARGET-PROJECT.md`. No Supabase Auth settings, RLS policies, schema, data, credentials, or deployment configuration were changed. No PostgreSQL adapter or migration is available yet.
+The target project has now been inspected read-only; see `SUPABASE-TARGET-PROJECT.md`. No Supabase Auth settings, RLS policies, schema, data, credentials, or deployment configuration were changed. A generic Npgsql connection source is registered, but no METRA identity/approval repository adapter or application migration is available yet.
