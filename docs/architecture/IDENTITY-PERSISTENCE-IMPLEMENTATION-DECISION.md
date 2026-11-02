@@ -9,8 +9,10 @@ Status: repository inspection; no production persistence selected or implemented
 - The test project has no PostgreSQL test container or database integration-test dependency.
 - No API `DbContext`, database connection registration, repository adapter, migration directory, or SQL migration convention was found in the backend project.
 - The current identity-link implementation is an application service plus an `IIdentityLinkStore` contract and in-memory test doubles. It is not connected to persistence.
-- The repository documentation says database integration is planned and that no database schema or Supabase settings are changed by the scaffold.
-- The canonical METRA account table and primary key are not established in the inspected backend.
+- The user has now selected Supabase project `tbdnklyxjvbrilvnwgmq` (`metra2027-angular`, `eu-west-2`, PostgreSQL 17) as the target database; read-only findings are in `SUPABASE-TARGET-PROJECT.md`.
+- The selected project's `public` schema currently has no application tables or views, and its migration history is empty.
+- The platform-managed `auth.users.id` is a UUID primary key, but no METRA application account/profile table exists yet. The canonical METRA account model and its relationship to Auth remain to be approved.
+- Database target selection does not establish that Supabase Auth is the chosen identity provider.
 
 ## Decision
 
@@ -19,12 +21,12 @@ Do not add a speculative PostgreSQL adapter or executable migration in this chan
 Adding Npgsql/EF Core before the project selects database ownership, canonical account schema, deployment connection management, migration authority, and integration-test environment would create a persistence path that could accidentally become treated as production-ready. A hand-written SQL file with a guessed account foreign key would be similarly unsafe.
 
 The next implementation increment should first establish an explicit persistence decision:
-1. Confirm PostgreSQL is the authoritative application database and identify whether it is managed directly or through Supabase.
-2. Inspect and approve the existing canonical account schema and primary key.
+1. Approve the METRA account/profile model and decide whether it references `auth.users.id` or an external OIDC subject mapping.
+2. Decide whether Supabase Auth is the production identity provider; database selection alone does not decide this.
 3. Select the migration mechanism and designate who owns migration execution.
-4. Define runtime database roles separately from schema-owner/migration credentials.
+4. Define runtime database roles separately from schema-owner/migration credentials and managed-secret delivery.
 5. Decide whether identity subjects are stored as plaintext protected by platform encryption at rest, or envelope-encrypted with a KMS-backed deterministic lookup fingerprint.
-6. Provide an isolated PostgreSQL integration-test service in CI.
+6. Provide an isolated Supabase/PostgreSQL development environment and integration-test service in CI.
 7. Only then add the concrete adapter, constraints, transaction and append-only audit controls.
 
 ## Non-negotiable implementation requirements
@@ -39,4 +41,4 @@ The next implementation increment should first establish an explicit persistence
 
 ## Scope and limits
 
-This inspection and decision document make no live database connection and change no Supabase project, Auth settings, RLS policies, schema, data, credentials, or deployment configuration. No PostgreSQL adapter or migration is available yet.
+The target project has now been inspected read-only; see `SUPABASE-TARGET-PROJECT.md`. No Supabase Auth settings, RLS policies, schema, data, credentials, or deployment configuration were changed. No PostgreSQL adapter or migration is available yet.
