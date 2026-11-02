@@ -26,8 +26,10 @@ public enum MetraAccountLifecycleCommitResult
 /// <summary>
 /// The implementation must reload and lock target + actor authorization facts,
 /// verify the required explicit permission, compare state and version, update
-/// account state, and append the immutable audit event in one transaction.
-/// It must not modify grants or station assignments during restore.
+/// account state, and append a validated MetraAdministrativeAuditEvent in one
+/// transaction. The event must be created from trusted transaction context and
+/// pass MetraAdministrativeAuditEventPolicy. Restore must not modify grants
+/// or station assignments.
 /// </summary>
 public interface IAccountLifecycleStore
 {
