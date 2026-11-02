@@ -157,7 +157,7 @@ public sealed class IdentityLinkApplicationServiceTests
     {
         using var cts = new CancellationTokenSource();
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, true));
+            "account", "issuer", "subject", Now, Now, true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
         var service = CreateService(actor, store);
 
