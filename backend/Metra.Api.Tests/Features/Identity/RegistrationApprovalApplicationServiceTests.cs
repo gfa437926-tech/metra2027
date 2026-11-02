@@ -64,7 +64,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     public async Task Returns_conflict_when_request_changed_concurrently()
     {
         var actor = new RegistrationApprovalActorContext(
-            "manager", true, new HashSet<string> { "station-1" }, false);
+            "manager", true, true, new HashSet<string> { "station-1" }, false);
         var store = new FakeStore(Request())
         {
             CommitResult = RegistrationApprovalCommitResult.Conflict
