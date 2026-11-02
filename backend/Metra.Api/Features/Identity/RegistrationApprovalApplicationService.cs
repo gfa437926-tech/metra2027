@@ -67,6 +67,7 @@ public sealed class RegistrationApprovalApplicationService(
     IRegistrationApprovalStore store)
 {
     private const int MaximumNoteLength = 2000;
+    private const int MaximumRequestIdLength = 128;
 
     public async Task<RegistrationApprovalApplicationResult> DecideAsync(
         SubmitRegistrationApprovalDecision command,
@@ -75,19 +76,35 @@ public sealed class RegistrationApprovalApplicationService(
         if (command is null || string.IsNullOrWhiteSpace(command.RequestId))
             return Failure("invalid_request", "معرّف طلب التسجيل مطلوب.");
 
+        var requestId = command.RequestId.Trim();
+        if (requestId.Length > MaximumRequestIdLength ||
+            requestId.Any(char.IsControl) ||
+            requestId.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')))
+            return Failure("invalid_request", "معرّف طلب التسجيل غير صالح.");
+
         if (!Enum.IsDefined(command.Decision))
             return Failure("invalid_decision", "قرار الاعتماد غير معروف.");
 
         if (command.Note?.Length > MaximumNoteLength)
             return Failure("note_too_long", "ملاحظة القرار تتجاوز الحد المسموح.");
+        if (command.Note?.Any(char.IsControl) == true)
+            return Failure("note_invalid", "ملاحظة القرار تحتوي على محارف غير مسموح بها.");
 
         var actor = await actorContextProvider.GetCurrentActorAsync(cancellationToken);
         if (actor is null || string.IsNullOrWhiteSpace(actor.UserId))
             return Failure("unauthenticated", "يجب تسجيل الدخول أولاً.");
+        if (actor.UserId != actor.UserId.Trim() ||
+            actor.UserId.Length > MaximumRequestIdLength ||
+            actor.UserId.Any(char.IsControl))
+            return Failure("actor_context_invalid", "تعذر التحقق من هوية منفذ القرار.");
 
-        var request = await store.FindRequestAsync(command.RequestId, cancellationToken);
+        var request = await store.FindRequestAsync(requestId, cancellationToken);
         if (request is null)
             return Failure("registration_request_not_found", "طلب التسجيل غير موجود.");
+        if (request.RequestId != requestId ||
+            string.IsNullOrWhiteSpace(request.RequestId) ||
+            request.RequestId.Any(char.IsControl))
+            return Failure("registration_request_invalid", "بيانات طلب التسجيل غير صالحة.");
 
         var authorization = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
         if (!authorization.IsAuthorized)
@@ -101,7 +118,7 @@ public sealed class RegistrationApprovalApplicationService(
                 request.Status);
 
         var commit = await store.TryCommitDecisionAsync(
-            request.RequestId,
+            requestId,
             request.Status,
             transition.Transition,
             actor.UserId,
