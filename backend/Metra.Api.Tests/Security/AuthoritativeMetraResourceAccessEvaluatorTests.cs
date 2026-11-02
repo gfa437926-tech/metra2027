@@ -9,13 +9,13 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
         new("observation", "obs-100", "untrusted-station-from-route");
 
     [Fact]
-    public async Task Allows_only_when_actor_resource_and_active_assignment_facts_are_valid()
+    public async Task Allows_when_active_actor_has_assignment_to_the_resources_canonical_station()
     {
         var source = new FakeDataSource(new(
             ActorIsActive: true,
             ResourceExists: true,
             CanonicalStationId: "station-canonical",
-            HasActiveStationAssignment: true));
+            ActiveStationIds: ["station-other", "station-canonical"]));
         var evaluator = new AuthoritativeMetraResourceAccessEvaluator(source);
 
         var allowed = await evaluator.CanAccessAsync(
@@ -28,22 +28,23 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
     }
 
     [Theory]
-    [InlineData(false, true, "station-7", true)]
-    [InlineData(true, false, "station-7", true)]
-    [InlineData(true, true, null, true)]
-    [InlineData(true, true, "", true)]
-    [InlineData(true, true, "station-7", false)]
-    public async Task Denies_when_any_authoritative_access_fact_is_missing_or_inactive(
+    [InlineData(false, true, "station-7", "station-7")]
+    [InlineData(true, false, "station-7", "station-7")]
+    [InlineData(true, true, null, "station-7")]
+    [InlineData(true, true, "", "")]
+    [InlineData(true, true, "station-7", null)]
+    [InlineData(true, true, "station-7", "station-other")]
+    public async Task Denies_inactive_actor_missing_resource_or_nonmatching_assignment(
         bool actorIsActive,
         bool resourceExists,
         string? canonicalStationId,
-        bool hasActiveStationAssignment)
+        string? activeStationId)
     {
         var source = new FakeDataSource(new(
             actorIsActive,
             resourceExists,
             canonicalStationId,
-            hasActiveStationAssignment));
+            activeStationId is null ? [] : [activeStationId]));
         var evaluator = new AuthoritativeMetraResourceAccessEvaluator(source);
 
         var allowed = await evaluator.CanAccessAsync(
@@ -59,7 +60,7 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
             ActorIsActive: true,
             ResourceExists: true,
             CanonicalStationId: "station-actual",
-            HasActiveStationAssignment: true));
+            ActiveStationIds: ["station-actual"]));
         var evaluator = new AuthoritativeMetraResourceAccessEvaluator(source);
         var forgedDescriptor = Resource with { StationId = "station-attacker-selected" };
 
@@ -114,7 +115,7 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
         string resourceType,
         string resourceId)
     {
-        var source = new FakeDataSource(new(true, true, "station-7", true));
+        var source = new FakeDataSource(new(true, true, "station-7", ["station-7"]));
         var evaluator = new AuthoritativeMetraResourceAccessEvaluator(source);
 
         var allowed = await evaluator.CanAccessAsync(
