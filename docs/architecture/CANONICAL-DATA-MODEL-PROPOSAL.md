@@ -115,7 +115,8 @@ The legacy source audit observed these table names: `hourly_reports`, `daily_rep
 These should not be copied one-for-one into a new schema yet. The physical model for each operational domain must be derived from the complete form fields, validation rules, units, date/time semantics, station catalogue, correction/approval lifecycle, export requirements and authoritative data ownership.
 
 Recommended domain boundaries for later design:
-- **Meteorological observations:** separate daily, hourly, rainfall, climate, soil and phenomena record types with shared station/time/author attribution contracts where justified. Do not merge distinct scientific measurements into a generic untyped JSON table.
+- **Meteorological observations:** explicitly model daily, hourly, monthly and annual reports; rainfall; climate summaries; weather phenomena; agricultural reports; and soil-temperature observations as typed domain records. Preserve each form's actual fields, units, precision, time basis, quality flags, correction history and approval lifecycle. Monthly/annual products should be defined as either independently submitted reports or reproducible aggregates from lower-frequency observations; do not assume which without source evidence. Agricultural reports and soil temperatures must remain first-class scientific records, not be dropped into generic JSON.
+- **Classic and automatic stations:** both station classes belong in the same canonical station catalogue and shared application filters/map, with an explicit station type and source-system provenance. Their display markers may differ in clients, but station identity, coordinates and type must come from authoritative station master data. Keep provider-specific ingestion/collector storage separate where required; expose a normalized METRA API contract so Angular and Flutter can present both classes together without merging source databases or overwriting classic records.
 - **Maintenance and incident reporting:** reconcile equipment and telecom field variants, reporter attribution, status transitions and device-specific attributes before defining normalized tables.
 - **IT support:** separate report, assignment, work notes and resolution history if the actual workflow requires them.
 - **Notifications/reminders:** define recipient, delivery channel, consent/purpose, scheduling, delivery attempts and idempotency. Do not store secrets or treat UI simulations as sent messages.
@@ -166,11 +167,12 @@ Legacy `users` and `registration_queue` include password-related fields and inco
 | External OIDC provider | Not in scope; requires a separate decision if later needed |
 | Canonical METRA account key and lifecycle | UUID account key; pending/active/suspended/rejected/closed lifecycle proposed; physical constraints require review |
 | Account-to-Auth-user cardinality | One-to-one proposed; recovery/relinking requires separate controlled workflow |
-| Role catalogue and Arabic label reconciliation | Requires domain-owner approval |
-| Permission-to-role mapping and station scope | Requires domain-owner approval |
-| Complete station master and organizational hierarchy | Source data required |
-| Registration return/reopen/appeal behavior | Requires business decision |
-| Subject encryption/key-management approach | Not selected |
+| Role catalogue and Arabic label reconciliation | Requires domain-owner approval; 10 legacy role labels need reconciliation |
+| Permission-to-role mapping and station scope | Requires domain-owner approval; role names alone do not grant capabilities |
+| Complete station master (classic and automatic) and organizational hierarchy | Source data required; 32 legacy labels are not authoritative or complete |
+| Registration return/reopen/appeal behavior | Two sequential approvals selected; rejection is terminal in current proposal; return/reopen/appeal policy remains a business decision |
+| Auth-user link storage | Supabase `auth.users.id` UUID FK proposed; subject is not duplicated as free text |
+| Subject encryption/key-management approach | Not applicable to direct UUID FK proposal; reassess if external OIDC is added |
 | Runtime DB role and migration ownership | Not selected |
 | Audit retention and immutable export | Not selected |
 | Separate development/test project and CI integration DB | Not selected |
