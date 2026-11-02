@@ -49,6 +49,7 @@ If asymmetric signing is not currently configured, stop and present a separate c
 - Read only immutable provider identity coordinates from the validated principal. The provider sub is a provider subject, not a METRA account ID.
 - Resolve (issuer, subject) to the METRA account using authoritative persistence.
 - Do not trust email as the identity-link key and do not use provider user metadata or client-supplied role/station claims for authorization.
+- Initial registration is a separate operation: after Supabase Auth sign-up, the API creates the pending METRA account, Auth-user link, request and audit event atomically. The generic active-account identity-link service is not used for initial onboarding.
 - Keep account lifecycle, station approvals, system approvals, role grants, station assignments and permission checks in ASP.NET Core.
 - Deny protected application operations for pending, rejected, suspended, unlinked or unknown accounts.
 - Re-check current permissions and station scope for every protected request.
