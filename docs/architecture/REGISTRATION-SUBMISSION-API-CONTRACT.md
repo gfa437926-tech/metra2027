@@ -100,7 +100,7 @@ The persistence transaction is a required infrastructure guarantee, not an assum
 |---|---|
 | Request/application command | Implemented in `RegistrationSubmissionApplicationService.cs` |
 | Trusted actor-context interface | Defined; production JWT-backed adapter pending |
-| Role/station catalogue interface | Defined; authoritative adapter pending |
+| Role/station catalogue interface | Defined; deployment-configuration adapter registered; authoritative active catalogue integration pending |
 | Atomic store interface | Defined; PostgreSQL adapter pending |
 | HTTP endpoint adapter | Implemented but deliberately not mapped in Program.cs until dependencies exist |
 | OpenAPI metadata | Added to endpoint adapter; integration tests pending |
@@ -121,4 +121,8 @@ The persistence transaction is a required infrastructure guarantee, not an assum
 - No role grant or station assignment exists before both approval stages complete.
 - Logs and error responses contain no credentials or secrets.
 
-The endpoint adapter is in `backend/Metra.Api/Features/Identity/RegistrationSubmissionEndpoints.cs`. It is intentionally not mapped yet: doing so before registering trusted actor-context, catalogue and atomic-store adapters would expose a route that cannot complete safely. Its named per-IP limiter is configured in `Program.cs`.
+The endpoint adapter is in `backend/Metra.Api/Features/Identity/RegistrationSubmissionEndpoints.cs`. It is intentionally not mapped yet: the atomic store adapter is not implemented, and the catalogue adapter currently reads only deployment-controlled allowlists. Its named per-IP limiter is configured in `Program.cs`.
+
+## 9. Current catalogue adapter boundary
+
+`ConfigurationRegistrationSubmissionCatalogue` reads `RegistrationSubmissionCatalogue:RequestableRoleCodes` and `RegistrationSubmissionCatalogue:SelectableStationIds` from server-side configuration. Missing or empty lists fail closed; comparisons are ordinal and client-supplied labels are never used. No role codes or station IDs are seeded or guessed by the application. This adapter is a guarded interim source for controlled environments, not proof that a role or station is active in the canonical METRA catalogue. Production release still requires a read-only adapter to the approved authoritative catalogue, including active/inactive state and lifecycle changes. Do not add real station identifiers or enable the route as part of this change.
