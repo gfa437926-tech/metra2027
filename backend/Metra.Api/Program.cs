@@ -1,6 +1,7 @@
 using System.Net;
 using System.Threading.RateLimiting;
 using Metra.Api.Features.Observations;
+using Metra.Api.Features.Stations;
 using Metra.Api.Features.Identity;
 using Metra.Api.Infrastructure.Database;
 using Npgsql;
@@ -104,6 +105,7 @@ if (app.Environment.IsDevelopment())
 
 var api = app.MapGroup("/api/v1");
 app.MapObservationValidationEndpoints();
+app.MapStationEndpoints();
 
 api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancellationToken) =>
 {
