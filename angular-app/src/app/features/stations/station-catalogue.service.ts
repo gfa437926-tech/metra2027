@@ -2,9 +2,9 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import { firstValueFrom, timeout } from 'rxjs';
 import {
+  StationCatalogueItem,
   StationCataloguePage,
   StationCatalogueQuery,
-  StationCatalogueItem,
   StationSourceKind
 } from './station-catalogue.models';
 
@@ -24,6 +24,46 @@ export class StationCatalogueHttpError extends Error {
     super(message);
     this.name = 'StationCatalogueHttpError';
   }
+}
+
+@Injectable({ providedIn: 'root' })
+export class StationCatalogueService {
+  private readonly http = inject(HttpClient);
+  private readonly enabled = inject(STATION_CATALOGUE_ENDPOINT_ENABLED);
+  private readonly baseUrl = inject(STATION_CATALOGUE_API_BASE_URL);
+
+  get isConfigured(): boolean {
+    return this.enabled;
+  }
+
+  async readPage(query: StationCatalogueQuery = {}): Promise<StationCataloguePage> {
+    if (!this.enabled) {
+      throw new StationCatalogueHttpError(0, 'Station catalogue API is not configured.');
+    }
+
+    let params = new HttpParams().set('pageSize', String(query.pageSize ?? 50));
+    if (query.sourceKind) params = params.set('sourceKind', query.sourceKind);
+    if (query.namePrefix) params = params.set('namePrefix', query.namePrefix);
+    if (query.cursor) params = params.set('cursor', query.cursor);
+
+    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    try {
+      const value = await firstValueFrom(
+        this.http.get<unknown>(\`\${base}/stations\`, {
+          params,
+          withCredentials: true
+        }).pipe(timeout({ first: 15000 }))
+      );
+      return this.normalizePage(value);
+    } catch (error: unknown) {
+      if (error instanceof StationCatalogueHttpError) throw error;
+      if (error instanceof HttpErrorResponse) {
+        throw new StationCatalogueHttpError(error.status, 'Station catalogue request failed.');
+      }
+      throw new StationCatalogueHttpError(0, 'Station catalogue service is unavailable.');
+    }
+  }
+
   private normalizePage(value: unknown): StationCataloguePage {
     if (!value || typeof value !== 'object') {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue response.');
@@ -70,7 +110,7 @@ export class StationCatalogueHttpError extends Error {
 
     if (typeof sourceRecordId !== 'string' || !/^[A-Za-z0-9._:-]{1,128}$/.test(sourceRecordId) ||
         typeof displayName !== 'string' || !displayName.trim() || displayName.length > 256 ||
-        /[\\u0000-\\u001f\\u007f]/.test(displayName) ||
+        /[\u0000-\u001f\u007f]/.test(displayName) ||
         !this.validOptionalText(sourceStationType, 128) ||
         !this.validOptionalText(sourceCode, 128) ||
         !this.validCoordinatePair(latitude, longitude) ||
@@ -99,7 +139,7 @@ export class StationCatalogueHttpError extends Error {
   private validOptionalText(value: unknown, maxLength: number): boolean {
     return value === null || value === undefined ||
       (typeof value === 'string' && value.length <= maxLength &&
-       !/[\\u0000-\\u001f\\u007f]/.test(value));
+       !/[\u0000-\u001f\u007f]/.test(value));
   }
 
   private validCoordinatePair(latitude: unknown, longitude: unknown): boolean {
@@ -112,45 +152,5 @@ export class StationCatalogueHttpError extends Error {
       latitude >= -90 && latitude <= 90 &&
       typeof longitude === 'number' && Number.isFinite(longitude) &&
       longitude >= -180 && longitude <= 180;
-  }
-
-}
-
-@Injectable({ providedIn: 'root' })
-export class StationCatalogueService {
-  private readonly http = inject(HttpClient);
-  private readonly enabled = inject(STATION_CATALOGUE_ENDPOINT_ENABLED);
-  private readonly baseUrl = inject(STATION_CATALOGUE_API_BASE_URL);
-
-  get isConfigured(): boolean {
-    return this.enabled;
-  }
-
-  async readPage(query: StationCatalogueQuery = {}): Promise<StationCataloguePage> {
-    if (!this.enabled) {
-      throw new StationCatalogueHttpError(0, 'Station catalogue API is not configured.');
-    }
-
-    let params = new HttpParams().set('pageSize', String(query.pageSize ?? 50));
-    if (query.sourceKind) params = params.set('sourceKind', query.sourceKind);
-    if (query.namePrefix) params = params.set('namePrefix', query.namePrefix);
-    if (query.cursor) params = params.set('cursor', query.cursor);
-
-    const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
-    try {
-      const page = await firstValueFrom(
-        this.http.get<StationCataloguePage>(`${base}/stations`, {
-          params,
-          withCredentials: true
-        }).pipe(timeout({ first: 15000 }))
-      );
-      return this.normalizePage(page);
-    } catch (error: unknown) {
-      if (error instanceof StationCatalogueHttpError) throw error;
-      if (error instanceof HttpErrorResponse) {
-        throw new StationCatalogueHttpError(error.status, 'Station catalogue request failed.');
-      }
-      throw new StationCatalogueHttpError(0, 'Station catalogue service is unavailable.');
-    }
   }
 }
