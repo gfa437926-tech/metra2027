@@ -28,8 +28,8 @@ public enum IdentityLinkCommitResult
 
 /// <summary>
 /// Atomic persistence boundary. Implementations must enforce a database unique
-/// constraint on the normalized (issuer, subject) pair and write the identity
-/// link plus its audit event in the same transaction.
+/// constraint using exact, case-sensitive issuer and subject semantics, and
+/// write the identity link plus its audit event in the same transaction.
 /// </summary>
 public interface IIdentityLinkStore
 {
@@ -116,18 +116,26 @@ public sealed class IdentityLinkApplicationService(
     // OIDC issuer comparison is exact: do not lowercase, trim, or remove a
     // trailing slash. Subject is opaque and case-sensitive.
     private static bool IsValidIdentityKey(string issuer, string? subject)
-        => subject is { Length: > 0 and <= 255 } &&
-           !string.IsNullOrWhiteSpace(subject) &&
-           issuer.Length <= 512 &&
-           Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri) &&
-           issuerUri.Scheme == Uri.UriSchemeHttps &&
-           string.IsNullOrEmpty(issuerUri.UserInfo) &&
-           string.IsNullOrEmpty(issuerUri.Query) &&
-           string.IsNullOrEmpty(issuerUri.Fragment) &&
-           !issuer.Any(char.IsControl) &&
-           subject.Length <= 255 &&
-           !subject.Any(char.IsControl) &&
-           !string.IsNullOrWhiteSpace(subject);
+    {
+        if (string.IsNullOrWhiteSpace(issuer) ||
+            issuer.Length > 512 ||
+            issuer.Any(char.IsControl) ||
+            subject is not { Length: > 0 and <= 255 } ||
+            string.IsNullOrWhiteSpace(subject) ||
+            subject.Any(char.IsControl))
+        {
+            return false;
+        }
+
+        // Validate URI shape only. Keep the original issuer string unchanged;
+        // the future OIDC adapter must additionally enforce its configured
+        // trusted-issuer allow-list and full protocol validation.
+        return Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri) &&
+               issuerUri.Scheme == Uri.UriSchemeHttps &&
+               string.IsNullOrEmpty(issuerUri.UserInfo) &&
+               string.IsNullOrEmpty(issuerUri.Query) &&
+               string.IsNullOrEmpty(issuerUri.Fragment);
+    }
 
     private static IdentityLinkApplicationResult Failure(string code, string message)
         => new(false, code, message);
