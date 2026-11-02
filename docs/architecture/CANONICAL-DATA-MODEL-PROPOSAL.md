@@ -72,7 +72,7 @@ The proposed registration submission transaction creates a METRA account in `Pen
 
 The proposed request lifecycle is:
 
-`PendingStationApproval → PendingSystemApproval → Approved` (or terminal `Rejected`). The METRA account remains non-active until final approval; final approval changes the account to `Active` and creates the approved role grant and station assignment in the same transaction.
+`PendingStationApproval → PendingSystemApproval → Active` (or terminal `Rejected`). The METRA account remains non-active until final approval; final approval changes the account to `Active` and creates the approved role grant and station assignment in the same transaction.
 
 Rejection is terminal unless a separately approved appeal/reopen process is specified. The current API domain code has this two-stage model, while legacy source inspection does not prove every management-screen action or edge case. Business owners must confirm whether requests can be returned, edited, reopened, delegated or rejected at either stage.
 
