@@ -49,7 +49,7 @@ export class StationCatalogueService {
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     try {
       const value = await firstValueFrom(
-        this.http.get<unknown>(\`\${base}/stations\`, {
+        this.http.get<unknown>(base + '/stations', {
           params,
           withCredentials: true
         }).pipe(timeout({ first: 15000 }))
