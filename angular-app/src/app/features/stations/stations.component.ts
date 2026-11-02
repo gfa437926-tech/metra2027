@@ -86,8 +86,18 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
               </tbody>
             </table>
           </div>
+          @if (loadMoreError()) {
+            <div class="load-more-error" role="alert">
+              <span>{{ errorMessage() }}</span>
+              <button type="button" (click)="loadMore()" [disabled]="isLoadingMore()">إعادة المحاولة</button>
+            </div>
+          }
           @if (hasMore()) {
-            <div class="load-more"><button type="button" (click)="loadMore()" [disabled]="state() === 'loading'">تحميل المزيد</button></div>
+            <div class="load-more">
+              <button type="button" (click)="loadMore()" [disabled]="isLoadingMore()">
+                {{ isLoadingMore() ? 'جارٍ تحميل المزيد…' : 'تحميل المزيد' }}
+              </button>
+            </div>
           }
         }
       </section>
@@ -111,6 +121,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
     .filter-group{display:flex;gap:6px;flex-wrap:wrap}.filter-group button{border:1px solid #dce4eb;background:#fff;color:#5d6b78;padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}.filter-group button.selected{background:#eaf4fb;color:#176b9f;border-color:#9fc9e2;font-weight:800}
     .state-panel{padding:54px 20px;text-align:center;color:#71808e}.state-panel>i{font-size:35px;color:#7d9aaf}.state-panel h2{font-size:18px;color:#34495e;margin:14px 0 8px}.state-panel p{font-size:13px;line-height:1.8;max-width:650px;margin:0 auto 14px}
     .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px;text-align:right}th{background:#f7f9fb;color:#697987;font-size:12px;font-weight:800;padding:13px 15px;white-space:nowrap}td{padding:14px 15px;border-top:1px solid #edf1f4;font-size:13px}td strong{display:block}td .record-id{display:block;color:#8a97a3;font-size:10px;margin-top:5px}.source-pill,.location-state{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.classic-pill{background:#eaf3ff;color:#2769b1}.automatic-pill{background:#e8f7f0;color:#16845a}.location-state{background:#e8f7f0;color:#16845a}.location-state.missing{background:#fff4df;color:#9a6811}.coordinates{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}.load-more{padding:16px;text-align:center;border-top:1px solid #edf1f4}.load-more button{border:1px solid #b8d2e2;border-radius:8px;background:#f3f9fc;color:#176b9f;padding:9px 18px;font-weight:800;cursor:pointer}
+    .load-more-error{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#9a4b18;background:#fff8ef;border-top:1px solid #f2dfc8;font-size:12px}.load-more-error button{border:1px solid #d7a77c;border-radius:8px;background:#fff;color:#8b4b1b;padding:7px 12px;font-weight:800;cursor:pointer}
     .map-readiness{display:flex;gap:15px;align-items:flex-start;background:#f1f7fb;border:1px solid #d8e8f2;border-radius:13px;padding:17px;margin-top:18px}.map-readiness-icon{width:42px;height:42px;flex:none;border-radius:10px;background:#dceefa;color:#267cae;display:grid;place-items:center;font-size:18px}.map-readiness h2{font-size:15px;margin:0 0 6px}.map-readiness p{font-size:12px;line-height:1.8;color:#586b7a;margin:0 0 5px}.map-readiness small{font-size:11px;color:#7d8b96}
     .spinning{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:850px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.page-heading{align-items:flex-start;flex-direction:column}.refresh-button{align-self:flex-start}}
@@ -125,6 +136,8 @@ export class StationsComponent {
   readonly items = signal<readonly StationCatalogueItem[]>([]);
   readonly hasMore = signal(false);
   readonly nextCursor = signal<string | null>(null);
+  readonly isLoadingMore = signal(false);
+  readonly loadMoreError = signal(false);
   readonly sourceFilter = signal<'all' | StationSourceKind>('all');
   readonly errorMessage = signal('تعذّر الاتصال بخدمة دليل المحطات.');
   readonly searchText = signal('');
@@ -148,6 +161,8 @@ export class StationsComponent {
       return;
     }
     this.state.set('loading');
+    this.isLoadingMore.set(false);
+    this.loadMoreError.set(false);
     this.items.set([]);
     this.hasMore.set(false);
     this.nextCursor.set(null);
@@ -167,12 +182,14 @@ export class StationsComponent {
   async loadMore(): Promise<void> {
     const cursor = this.nextCursor();
     const generation = this.requestGeneration;
-    if (!cursor || this.state() === 'loading') return;
+    if (!cursor || this.state() !== 'loaded' || this.isLoadingMore()) return;
     if (this.consumedCursors.has(cursor)) {
-      this.setErrorState(new StationCatalogueHttpError(502, 'Repeated station catalogue cursor.'));
+      this.errorMessage.set('تم اكتشاف مؤشر صفحات مكرر؛ أعد تحميل الدليل للمتابعة بأمان.');
+      this.loadMoreError.set(true);
       return;
     }
-    this.state.set('loading');
+    this.isLoadingMore.set(true);
+    this.loadMoreError.set(false);
     try {
       const page = await this.catalogue.readPage({ ...this.buildQuery(), cursor });
       if (generation !== this.requestGeneration) return;
@@ -187,9 +204,20 @@ export class StationsComponent {
       this.items.update(current => [...current, ...page.items]);
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
-      this.state.set('loaded');
     } catch (error: unknown) {
-      if (generation === this.requestGeneration) this.setErrorState(error);
+      if (generation === this.requestGeneration) {
+        if (error instanceof StationCatalogueHttpError &&
+            (error.status === 401 || error.status === 403)) {
+          this.setErrorState(error);
+        } else {
+          this.errorMessage.set(error instanceof Error
+            ? error.message
+            : 'تعذّر تحميل الصفحة التالية. يمكنك إعادة المحاولة.');
+          this.loadMoreError.set(true);
+        }
+      }
+    } finally {
+      if (generation === this.requestGeneration) this.isLoadingMore.set(false);
     }
   }
 
