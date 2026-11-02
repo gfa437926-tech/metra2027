@@ -27,7 +27,9 @@ public interface IMetraResourceAccessEvaluator
         CancellationToken cancellationToken);
 }
 
-public sealed class MetraResourceAccessRequirement : IAuthorizationRequirement;
+public sealed class MetraResourceAccessRequirement : IAuthorizationRequirement
+{
+}
 
 public sealed class MetraResourceAccessHandler(
     IMetraResourceAccessEvaluator evaluator)
