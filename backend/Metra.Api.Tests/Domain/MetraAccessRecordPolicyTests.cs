@@ -57,6 +57,19 @@ public sealed class MetraAccessRecordPolicyTests
         Assert.Equal("station_scope_invalid", padded.Code);
     }
 
+    [Theory]
+    [InlineData("station-1\\n")]
+    [InlineData("station/1")]
+    [InlineData(" station-1 ")]
+    [InlineData(" ")]
+    public void Rejects_malformed_station_scope_on_permission_grant(string stationId)
+    {
+        var result = MetraAccessRecordPolicy.ValidateGrant(
+            new("observations.read", stationId, Start, null, null));
+
+        Assert.Equal("station_scope_invalid", result.Code);
+    }
+
     [Fact]
     public void Rejects_non_utc_grant_timestamps()
     {
@@ -119,6 +132,17 @@ public sealed class MetraAccessRecordPolicyTests
 
         Assert.Equal("station_scope_invalid", padded.Code);
         Assert.Equal("station_scope_invalid", oversized.Code);
+    }
+
+    [Theory]
+    [InlineData("station-1\\n")]
+    [InlineData("station/1")]
+    public void Rejects_malformed_station_assignment_identifier(string stationId)
+    {
+        var result = MetraAccessRecordPolicy.ValidateAssignment(
+            new(stationId, Start, null, null));
+
+        Assert.Equal("station_scope_invalid", result.Code);
     }
 
     [Fact]
