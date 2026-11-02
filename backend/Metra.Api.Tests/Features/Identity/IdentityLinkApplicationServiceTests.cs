@@ -74,6 +74,43 @@ public sealed class IdentityLinkApplicationServiceTests
         Assert.Equal(0, store.Calls);
     }
 
+    [Theory]
+    [InlineData("http://identity.example.test", "subject")]
+    [InlineData("https://identity.example.test?tenant=one", "subject")]
+    [InlineData("https://identity.example.test#fragment", "subject")]
+    [InlineData("https://user@identity.example.test", "subject")]
+    [InlineData("https://identity.example.test", "subject\\nwith-control")]
+    [InlineData("https://identity.example.test", "")]
+    public async Task Rejects_malformed_or_non_https_identity_keys(
+        string issuer,
+        string subject)
+    {
+        var actor = new FakeActorProvider(new(
+            "account", issuer, subject, Now, Now, true));
+        var store = new FakeStore(IdentityLinkCommitResult.Linked);
+
+        var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("invalid_identity", result.Code);
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
+    public async Task Preserves_issuer_exactly_including_trailing_slash()
+    {
+        var actor = new FakeActorProvider(new(
+            "account", "https://identity.example.test/", "CaseSensitiveSubject",
+            Now, Now, true));
+        var store = new FakeStore(IdentityLinkCommitResult.Linked);
+
+        var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("https://identity.example.test/", store.Issuer);
+        Assert.Equal("CaseSensitiveSubject", store.Subject);
+    }
+
     [Fact]
     public async Task Rejects_inactive_metra_account()
     {
