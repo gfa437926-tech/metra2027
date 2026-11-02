@@ -38,7 +38,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
         <article class="stat-card"><span>دون إحداثيات</span><strong>{{ withoutCoordinatesCount() }}</strong></article>
       </section>
 
-      <section class="catalogue-panel">
+      <section class="catalogue-panel" [attr.aria-busy]="state() === 'loading' || isLoadingMore()">
         <div class="toolbar">
           <div class="search-field">
             <label for="station-name-prefix">بحث باسم المحطة</label>
@@ -46,9 +46,9 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
             <button type="button" class="apply-search" (click)="applyFilters()" [disabled]="state() === 'loading'">بحث</button>
           </div>
           <div class="filter-group" aria-label="تصفية حسب نوع المحطة">
-            <button type="button" [class.selected]="sourceFilter() === 'all'" (click)="setSourceFilter('all')">الكل</button>
-            <button type="button" [class.selected]="sourceFilter() === 'classic'" (click)="setSourceFilter('classic')">الكلاسيكية</button>
-            <button type="button" [class.selected]="sourceFilter() === 'automatic'" (click)="setSourceFilter('automatic')">الآلية</button>
+            <button type="button" [class.selected]="sourceFilter() === 'all'" [attr.aria-pressed]="sourceFilter() === 'all'" (click)="setSourceFilter('all')">الكل</button>
+            <button type="button" [class.selected]="sourceFilter() === 'classic'" [attr.aria-pressed]="sourceFilter() === 'classic'" (click)="setSourceFilter('classic')">الكلاسيكية</button>
+            <button type="button" [class.selected]="sourceFilter() === 'automatic'" [attr.aria-pressed]="sourceFilter() === 'automatic'" (click)="setSourceFilter('automatic')">الآلية</button>
           </div>
         </div>
 
@@ -59,7 +59,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
             <p>واجهة الدليل جاهزة، لكن خدمة القراءة الآمنة لم تُفعّل. لن نعرض سجلات تجريبية أو بيانات غير موثقة.</p>
           </div>
         } @else if (state() === 'loading') {
-          <div class="state-panel"><i class="fa-solid fa-spinner spinning"></i><h2>جارٍ تحميل دليل المحطات</h2><p>يتم طلب البيانات من واجهة النظام.</p></div>
+          <div class="state-panel" role="status" aria-live="polite"><i class="fa-solid fa-spinner spinning" aria-hidden="true"></i><h2>جارٍ تحميل دليل المحطات</h2><p>يتم طلب البيانات من واجهة النظام.</p></div>
         } @else if (state() === 'unauthenticated') {
           <div class="state-panel"><i class="fa-solid fa-lock"></i><h2>يلزم تسجيل الدخول</h2><p>سجّل الدخول بحساب معتمد للوصول إلى دليل المحطات.</p></div>
         } @else if (state() === 'forbidden') {
@@ -71,7 +71,8 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
         } @else {
           <div class="table-wrap">
             <table>
-              <thead><tr><th>المحطة</th><th>المصدر</th><th>رمز المصدر</th><th>الإحداثيات</th><th>الارتفاع</th><th>حالة الموقع</th></tr></thead>
+              <caption class="visually-hidden">سجلات دليل المحطات مع المصدر والإحداثيات والارتفاع وحالة الموقع</caption>
+              <thead><tr><th scope="col">المحطة</th><th scope="col">المصدر</th><th scope="col">رمز المصدر</th><th scope="col">الإحداثيات</th><th scope="col">الارتفاع</th><th scope="col">حالة الموقع</th></tr></thead>
               <tbody>
                 @for (station of filteredItems(); track station.sourceKind + ':' + station.sourceRecordId) {
                   <tr>
@@ -120,7 +121,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
     .catalogue-panel{background:#fff;border:1px solid #e2e8ee;border-radius:15px;overflow:hidden}.toolbar{padding:17px;display:flex;justify-content:space-between;align-items:end;gap:16px;border-bottom:1px solid #e9eef2;flex-wrap:wrap}.search-field{display:grid;gap:7px;min-width:min(100%,300px);font-size:12px;font-weight:700;color:#536272}.search-field input{border:1px solid #dce4eb;border-radius:8px;padding:10px 12px;font:inherit;min-width:270px;outline-color:#2780b9}.apply-search{border:1px solid #247eaf;border-radius:8px;background:#247eaf;color:#fff;padding:10px 15px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.apply-search:disabled{opacity:.6;cursor:wait}
     .filter-group{display:flex;gap:6px;flex-wrap:wrap}.filter-group button{border:1px solid #dce4eb;background:#fff;color:#5d6b78;padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}.filter-group button.selected{background:#eaf4fb;color:#176b9f;border-color:#9fc9e2;font-weight:800}
     .state-panel{padding:54px 20px;text-align:center;color:#71808e}.state-panel>i{font-size:35px;color:#7d9aaf}.state-panel h2{font-size:18px;color:#34495e;margin:14px 0 8px}.state-panel p{font-size:13px;line-height:1.8;max-width:650px;margin:0 auto 14px}
-    .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px;text-align:right}th{background:#f7f9fb;color:#697987;font-size:12px;font-weight:800;padding:13px 15px;white-space:nowrap}td{padding:14px 15px;border-top:1px solid #edf1f4;font-size:13px}td strong{display:block}td .record-id{display:block;color:#8a97a3;font-size:10px;margin-top:5px}.source-pill,.location-state{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.classic-pill{background:#eaf3ff;color:#2769b1}.automatic-pill{background:#e8f7f0;color:#16845a}.location-state{background:#e8f7f0;color:#16845a}.location-state.missing{background:#fff4df;color:#9a6811}.coordinates{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}.load-more{padding:16px;text-align:center;border-top:1px solid #edf1f4}.load-more button{border:1px solid #b8d2e2;border-radius:8px;background:#f3f9fc;color:#176b9f;padding:9px 18px;font-weight:800;cursor:pointer}
+    .table-wrap{overflow:auto}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}table{width:100%;border-collapse:collapse;min-width:850px;text-align:right}th{background:#f7f9fb;color:#697987;font-size:12px;font-weight:800;padding:13px 15px;white-space:nowrap}td{padding:14px 15px;border-top:1px solid #edf1f4;font-size:13px}td strong{display:block}td .record-id{display:block;color:#8a97a3;font-size:10px;margin-top:5px}.source-pill,.location-state{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.classic-pill{background:#eaf3ff;color:#2769b1}.automatic-pill{background:#e8f7f0;color:#16845a}.location-state{background:#e8f7f0;color:#16845a}.location-state.missing{background:#fff4df;color:#9a6811}.coordinates{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}.load-more{padding:16px;text-align:center;border-top:1px solid #edf1f4}.load-more button{border:1px solid #b8d2e2;border-radius:8px;background:#f3f9fc;color:#176b9f;padding:9px 18px;font-weight:800;cursor:pointer}
     .load-more-error{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#9a4b18;background:#fff8ef;border-top:1px solid #f2dfc8;font-size:12px}.load-more-error button{border:1px solid #d7a77c;border-radius:8px;background:#fff;color:#8b4b1b;padding:7px 12px;font-weight:800;cursor:pointer}
     .map-readiness{display:flex;gap:15px;align-items:flex-start;background:#f1f7fb;border:1px solid #d8e8f2;border-radius:13px;padding:17px;margin-top:18px}.map-readiness-icon{width:42px;height:42px;flex:none;border-radius:10px;background:#dceefa;color:#267cae;display:grid;place-items:center;font-size:18px}.map-readiness h2{font-size:15px;margin:0 0 6px}.map-readiness p{font-size:12px;line-height:1.8;color:#586b7a;margin:0 0 5px}.map-readiness small{font-size:11px;color:#7d8b96}
     .spinning{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
