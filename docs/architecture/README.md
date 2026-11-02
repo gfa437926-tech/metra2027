@@ -87,3 +87,6 @@ Security baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md` is mandatory for all new 
 Identity linking and storage invariants are specified in `IDENTITY-LINK-PERSISTENCE-CONTRACT.md`. It is a proposed contract only; no database migration or identity-link persistence adapter is enabled.
 
 The repository inspection and decision not to introduce a speculative database adapter or migration are recorded in `IDENTITY-PERSISTENCE-IMPLEMENTATION-DECISION.md`. The Supabase Auth + ASP.NET Core logical data model and its remaining decisions are documented in `CANONICAL-DATA-MODEL-PROPOSAL.md`; it is a review proposal, not an approved physical schema.
+
+
+The legacy Supabase project `INSERT` has been inspected read-only and remains separate from the new target. Its schema, classic/automatic station counts, scientific record counts, and security-advisor findings are documented in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md`. No legacy or target database objects were changed.
