@@ -45,8 +45,7 @@ public static class RegistrationSubmissionEndpoints
                         result.Code,
                         result.Message,
                         result.AccountId!.Value,
-                        result.RequestId!.Value,
-                        "PendingStationApproval");
+                        result.RequestId!.Value);
 
                     return Results.Json(
                         response,
@@ -74,5 +73,4 @@ public sealed record RegistrationSubmissionHttpResponse(
     string Code,
     string Message,
     Guid AccountId,
-    Guid RequestId,
-    string Status);
+    Guid RequestId);
