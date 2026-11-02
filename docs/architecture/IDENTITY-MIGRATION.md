@@ -1,6 +1,6 @@
 # METRA 2027 — Identity and Account Lifecycle Migration
 
-Status: legacy behavior extracted; replacement contract proposed; implementation intentionally blocked pending identity-provider and data-model approval.
+Status: legacy behavior extracted; Supabase Auth recommended; provider configuration and persistence implementation remain gated on Auth settings and schema approval.
 
 ## Scope inspected
 
