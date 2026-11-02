@@ -119,7 +119,7 @@ Production identity, approvals or sensitive data workflows must not be enabled u
 
 ## 11. Current status and scope boundaries
 
-The current repository is not yet production-secure and must not be represented as certified or fully hardened. The ASP.NET Core API currently has no configured authentication middleware/provider or production persistence adapter. The registration approval application service is provider-neutral and not registered or exposed as an endpoint.
+The current repository is not yet production-secure and must not be represented as certified or fully hardened. The ASP.NET Core API currently has no configured authentication provider/scheme or production persistence adapter. A provider-neutral authorization catalogue and named permission policies are registered, but no trusted permission-claim enrichment, endpoint-level permission mapping or resource/station authorization is connected yet. The registration approval application service is provider-neutral and not registered or exposed as an endpoint.
 
 This baseline does not itself enable encryption or configure infrastructure. Actual controls require approved hosting, identity, database, key-management and deployment decisions. Until approved, do not change Supabase Auth, schema, RLS, policies or existing records.
 
