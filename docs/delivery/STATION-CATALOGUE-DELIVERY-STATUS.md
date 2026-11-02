@@ -1,65 +1,69 @@
-# METRA 2027 — Station catalogue delivery status
+# METRA 2027 — Station catalogue and identity foundation
 
-**Delivery date:** 2026-11-02  
-**Scope:** independent operational station catalogue on Supabase project `tbdnklyxjvbrilvnwgmq`.
+**Updated:** 2026-11-02  
+**Supabase project:** `tbdnklyxjvbrilvnwgmq` (eu-west-2)
 
 ## Completed and remotely verified
 
-- Created six PostgreSQL tables: `countries`, `meteorological_authorities`, `station_catalogue`, `station_coordinates`, `station_access_grants`, and `station_audit_log`.
-- Added primary/foreign keys, uniqueness rules, validation checks, station approval states, effective-dated coordinate history, and time-bounded authority grants.
-- Enabled RLS on all six public tables.
-- Added explicit deny-all RLS policies for both `anon` and `authenticated` roles. No browser-role table grants are provided.
-- Added foreign-key indexes.
-- Added `updated_at` triggers to mutable catalogue/authority records.
-- Added an append-only trigger to the audit log.
-- Added `btree_gist` exclusion constraints to prohibit overlapping coordinate-validity periods and overlapping pending/approved station access grants.
-- Required a source reference for official-record coordinates, synchronized reviewer/timestamp fields, and review reasons for non-pending decisions.
-- Recorded four remote migrations and mirrored their SQL under `supabase/migrations/`.
-- Supabase security advisor returned zero security findings after the RLS policies were installed.
-- Executed rollback-only SQL regression checks proving overlapping coordinate periods, missing official-coordinate provenance, and overlapping pending access grants are rejected. Follow-up verification confirmed all six tables still contain zero rows and all five new integrity constraints are present.
-- Added the repeatable rollback-only test script at `supabase/tests/station_catalogue_integrity.sql`.
-- Re-queried the project: all six tables exist, RLS is enabled, and all six contain zero rows. No legacy station records were copied or joined.
+- The independent operational catalogue exists in PostgreSQL: countries, meteorological authorities, station catalogue, effective-dated station coordinates, authority station-access grants and append-only station audit log.
+- Added account lifecycle state, authority memberships, exact station assignments and time-bounded permission grants, all linked to Supabase Auth users.
+- Added composite station/authority ownership integrity for assignments.
+- Added database checks for account/membership/assignment/permission states, validity windows, reviewer consistency, reason requirements and prohibition of self-approval.
+- Added exclusion constraints to prevent overlapping pending/approved membership, station-assignment and permission periods for the same subject/resource.
+- Added indexes for foreign-key and authorization lookup paths.
+- Enabled RLS on all ten public tables. Browser roles `anon` and `authenticated` have no table privileges and explicit deny-all policies on the new identity tables; existing catalogue tables remain similarly locked.
+- Added update timestamp triggers to mutable identity records.
+- Expanded the append-only audit entity taxonomy for account state, authority membership, station assignment and permission grant events.
+- All seven remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
+- Supabase security advisor now returns **zero findings**.
+- The performance advisor reports only unused-index notices on empty tables; no unindexed foreign keys remain after the latest indexes were added.
+- Existing rollback-only station integrity checks remain in `supabase/tests/station_catalogue_integrity.sql`.
+- Rechecked all ten tables: they exist, RLS is enabled and the catalogue/identity tables contain zero rows. This is intentional; no invented or legacy station data was loaded.
 
-## Data model and operating rules
+## Operational data rule
 
-`station_catalogue` is the intended sole operational source for station directory, search, filters, and map markers. Each station belongs to one country and one meteorological authority. Coordinates are separate, source-attributed, and effective-dated. A station without verified coordinates must not be plotted at an invented location.
+`station_catalogue` is the sole intended operational source for station directory, search, filters and map markers. Coordinates are separately stored with provenance and effective dates. A station without verified coordinates must remain visible in lists but must not be plotted at a fabricated location.
 
-The schema intentionally contains no classic/automatic legacy import, no legacy fallback, and no automatic station identity crosswalk. The station type is an extensible classification value, not a licence to infer coordinates or source provenance.
+Historical/legacy station datasets are not an operational source. No legacy import, transformation, join, fallback or inferred identity mapping is authorized.
 
-## Security boundary
+## Security and authorization boundary
 
-Browser roles are denied access by both SQL grants and RLS policies. This is a deliberate fail-closed posture, not a temporary public-read configuration. Do not add permissive policies until the full identity model is implemented: active account lifecycle, explicit permission, authority membership, exact station assignment, validity windows, approval state, and prohibition of self-approval.
+The new tables provide persistence for account state, authority membership, station assignment and action permission facts. Their existence does **not** mean that authorization is complete. The backend must still load account state, permission, membership, station assignment and any station-level authority grant from one consistent database snapshot, validate all validity/revocation windows, enforce two-person review and emit an audit event in the same trusted transaction.
 
-The audit log rejects UPDATE and DELETE. Server-side access must use a dedicated least-privilege runtime database identity. Never put a Supabase service-role or secret key in Angular or Flutter.
+Browser clients remain denied. Never expose Supabase `service_role` or secret keys to Angular/Flutter. Do not enable the station API until a dedicated least-privilege backend database identity and a tested authorization-aware repository are configured.
 
 ## Remaining work before production handover
 
-1. Provision and verify a dedicated backend database role and secret-store connection; do not use the database owner credential at runtime.
-2. Implement the Npgsql station read/write repositories against this exact schema, with actor context and authorization checks in the same trusted transaction boundary.
-3. Implement station create/edit/submit/review/approve/reject and coordinate versioning workflows, including mandatory audit entries.
-4. Implement authority membership and station assignment persistence, time-bound grant validation, two-person approval, and self-approval prevention. Database exclusion constraints now prevent overlapping grant validity windows.
-5. Implement API pagination, filtering, search, map projection and detail endpoints using only `station_catalogue` and `station_coordinates`.
-6. Connect the Angular catalogue screen to the protected API; do not query Supabase directly from the browser.
-7. Add integration tests against a disposable PostgreSQL/Supabase test project for RLS, grants, approval transitions, audit immutability, concurrency and pagination.
-8. Add authenticated end-to-end tests, then enable the station API feature flag only after all trusted dependencies are present.
-9. Import only owner-approved station data with documented source, provenance, coordinates and validation report. Do not use the old station database.
-10. Run .NET and Angular builds/tests, security/performance advisors, deployment smoke tests, backup/restore rehearsal and operational acceptance review.
+1. Build the Npgsql repositories and transaction-scoped authorization context against the new tables.
+2. Implement account registration/review/suspension/recovery and identity-linking persistence.
+3. Implement authority membership request/review, station assignment request/review, permission grant/revoke and self-approval prevention in application workflows.
+4. Implement station create/edit/submit/review/approve/reject and coordinate versioning with immutable audit events.
+5. Replace the Classic/Automatic prototype projection with the independent operational station model in API contracts and Angular screens.
+6. Add the actual API endpoints for station catalogue, detail, map, administration and authorization-aware pagination.
+7. Connect Angular to the protected API; never query the protected tables directly from the browser.
+8. Complete Flutter sign-in, current-user context and feature workflows against the same API.
+9. Add disposable PostgreSQL integration tests, authenticated end-to-end tests, concurrency tests and migration replay tests.
+10. Load only verified country/authority/station data with source provenance after owner review. The station catalogue remains empty until that source material is approved.
+11. Complete CI, dependency remediation, staging deployment, backup/restore rehearsal, monitoring and operational acceptance.
 
-## Current release status
+## Release status
 
-**Database foundation: deployed and security-verified.**  
-**Station records: empty by design.**  
-**Backend API: protected route contracts exist, but the trusted data adapter is not yet registered; routes must remain unavailable (503) rather than returning untrusted or unauthorized data.**  
-**Angular: station screen and query client exist, but production API integration is not yet verified.**  
-**Production release: not ready.** No production deployment, PR merge, or public preview URL is claimed by this delivery.
+- **Database and security foundation:** deployed and verified.
+- **Identity persistence foundation:** deployed and verified structurally; application workflows and transaction-level enforcement remain.
+- **Station records:** empty by design.
+- **Backend API:** protected contracts exist; the trusted operational repository is not registered. Station routes must remain unavailable (503) rather than leak data or bypass authorization.
+- **Angular:** station screen and query client exist; production API integration is not verified.
+- **Flutter:** scaffold and identity-context client exist; full operational workflows are not complete.
+- **Production release:** not ready. No merge, deployment or public preview is claimed.
 
-## Migration reconciliation
-
-The remote migration history is:
+## Remote migration history
 
 - `20261102154652_create_independent_station_catalogue`
 - `20261102155101_index_station_catalogue_foreign_keys`
 - `20261102155110_add_catalogue_integrity_triggers`
 - `20261102155119_lock_station_catalogue_client_access`
+- `20261102163034_enforce_station_temporal_integrity`
+- `20261102165436_add_identity_membership_and_station_assignment`
+- `20261102165505_lock_identity_tables_and_index_foreign_keys`
 
-Before using CLI push/pull, compare the local migration files and linked remote history; the remote project was migrated through the Supabase management migration interface. Never blindly replay or reset the production database.
+Compare local files and remote history before any CLI push/pull. Never blindly replay or reset the project database.
