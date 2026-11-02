@@ -28,6 +28,7 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
         Assert.Same(query, store.Query);
         Assert.NotNull(result.Page);
         Assert.Equal("event-2", result.Page.Items[0].EventId);
+        Assert.IsNotType<List<MetraAdministrativeAuditListItem>>(result.Page.Items);
         var responseFields = typeof(MetraAdministrativeAuditListItem)
             .GetProperties().Select(property => property.Name).ToArray();
         Assert.DoesNotContain("Reason", responseFields);
