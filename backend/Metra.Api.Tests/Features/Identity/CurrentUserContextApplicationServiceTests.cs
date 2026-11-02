@@ -146,6 +146,86 @@ public sealed class CurrentUserContextApplicationServiceTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task Rejects_unknown_account_state_from_authoritative_snapshot()
+    {
+        var facts = Facts() with { AccountState = (MetraAccountState)999 };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Rejects_malformed_station_assignment_in_authoritative_snapshot()
+    {
+        var facts = Facts() with
+        {
+            Assignments = [new("station/1", "Station", "observer",
+                Now.AddDays(-1), null, null)]
+        };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Rejects_non_utc_assignment_timestamp()
+    {
+        var facts = Facts() with
+        {
+            Assignments = [new("station-1", "Station", "observer",
+                Now.ToOffset(TimeSpan.FromHours(3)), null, null)]
+        };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Rejects_invalid_assignment_validity_window()
+    {
+        var facts = Facts() with
+        {
+            Assignments = [new("station-1", "Station", "observer",
+                Now, Now.AddTicks(-1), null)]
+        };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Rejects_duplicate_station_role_assignments()
+    {
+        var assignment = new CurrentUserStationAssignmentFacts(
+            "station-1", "Station", "observer", Now.AddDays(-1), null, null);
+        var facts = Facts() with { Assignments = [assignment, assignment] };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Rejects_missing_profile_snapshot()
+    {
+        var facts = Facts() with { Profile = null! };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.Null(result);
+    }
+
     private static CurrentUserContextApplicationService CreateService(
         FakeDataSource source)
         => new(source, new FrozenTimeProvider(Now));
