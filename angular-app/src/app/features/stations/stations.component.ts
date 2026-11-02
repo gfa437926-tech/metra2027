@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   StationCatalogueItem,
   StationCatalogueLoadState,
+  StationCatalogueQuery,
   StationSourceKind
 } from './station-catalogue.models';
 import { StationCatalogueHttpError, StationCatalogueService } from './station-catalogue.service';
@@ -41,7 +42,8 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
         <div class="toolbar">
           <label class="search-field">
             <span>بحث باسم المحطة</span>
-            <input type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" placeholder="اكتب اسم المحطة..." autocomplete="off">
+            <input type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" (keyup.enter)="applyFilters()" placeholder="اكتب بداية اسم المحطة..." autocomplete="off">
+            <button type="button" class="apply-search" (click)="applyFilters()" [disabled]="state() === 'loading'">بحث</button>
           </label>
           <div class="filter-group" aria-label="تصفية حسب نوع المحطة">
             <button type="button" [class.selected]="sourceFilter() === 'all'" (click)="setSourceFilter('all')">الكل</button>
@@ -105,7 +107,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
     .source-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px}.legend-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e4eaf0;border-radius:12px;padding:12px 16px;min-width:220px}.legend-item strong,.legend-item small{display:block}.legend-item strong{font-size:13px}.legend-item small{font-size:11px;color:#7c8995;margin-top:3px}
     .source-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center}.source-icon.classic{background:#eaf3ff;color:#2769b1}.source-icon.automatic{background:#e8f7f0;color:#16845a}
     .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin-bottom:20px}.stat-card{background:#fff;border:1px solid #e5ebf0;border-radius:12px;padding:16px}.stat-card span{display:block;color:#778592;font-size:12px}.stat-card strong{display:block;font-size:26px;margin-top:7px;font-weight:900}
-    .catalogue-panel{background:#fff;border:1px solid #e2e8ee;border-radius:15px;overflow:hidden}.toolbar{padding:17px;display:flex;justify-content:space-between;align-items:end;gap:16px;border-bottom:1px solid #e9eef2;flex-wrap:wrap}.search-field{display:grid;gap:7px;min-width:min(100%,300px);font-size:12px;font-weight:700;color:#536272}.search-field input{border:1px solid #dce4eb;border-radius:8px;padding:10px 12px;font:inherit;min-width:270px;outline-color:#2780b9}
+    .catalogue-panel{background:#fff;border:1px solid #e2e8ee;border-radius:15px;overflow:hidden}.toolbar{padding:17px;display:flex;justify-content:space-between;align-items:end;gap:16px;border-bottom:1px solid #e9eef2;flex-wrap:wrap}.search-field{display:grid;gap:7px;min-width:min(100%,300px);font-size:12px;font-weight:700;color:#536272}.search-field input{border:1px solid #dce4eb;border-radius:8px;padding:10px 12px;font:inherit;min-width:270px;outline-color:#2780b9}.apply-search{border:1px solid #247eaf;border-radius:8px;background:#247eaf;color:#fff;padding:10px 15px;font:inherit;font-size:12px;font-weight:800;cursor:pointer}.apply-search:disabled{opacity:.6;cursor:wait}
     .filter-group{display:flex;gap:6px;flex-wrap:wrap}.filter-group button{border:1px solid #dce4eb;background:#fff;color:#5d6b78;padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px}.filter-group button.selected{background:#eaf4fb;color:#176b9f;border-color:#9fc9e2;font-weight:800}
     .state-panel{padding:54px 20px;text-align:center;color:#71808e}.state-panel>i{font-size:35px;color:#7d9aaf}.state-panel h2{font-size:18px;color:#34495e;margin:14px 0 8px}.state-panel p{font-size:13px;line-height:1.8;max-width:650px;margin:0 auto 14px}
     .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:850px;text-align:right}th{background:#f7f9fb;color:#697987;font-size:12px;font-weight:800;padding:13px 15px;white-space:nowrap}td{padding:14px 15px;border-top:1px solid #edf1f4;font-size:13px}td strong{display:block}td .record-id{display:block;color:#8a97a3;font-size:10px;margin-top:5px}.source-pill,.location-state{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.classic-pill{background:#eaf3ff;color:#2769b1}.automatic-pill{background:#e8f7f0;color:#16845a}.location-state{background:#e8f7f0;color:#16845a}.location-state.missing{background:#fff4df;color:#9a6811}.coordinates{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}.load-more{padding:16px;text-align:center;border-top:1px solid #edf1f4}.load-more button{border:1px solid #b8d2e2;border-radius:8px;background:#f3f9fc;color:#176b9f;padding:9px 18px;font-weight:800;cursor:pointer}
@@ -126,17 +128,13 @@ export class StationsComponent {
   readonly sourceFilter = signal<'all' | StationSourceKind>('all');
   readonly errorMessage = signal('تعذّر الاتصال بخدمة دليل المحطات.');
   readonly searchText = signal('');
+  private readonly appliedSearch = signal('');
+  private readonly consumedCursors = new Set<string>();
 
   readonly classicCount = computed(() => this.items().filter(x => x.sourceKind === 'classic').length);
   readonly automaticCount = computed(() => this.items().filter(x => x.sourceKind === 'automatic').length);
   readonly withoutCoordinatesCount = computed(() => this.items().filter(x => !this.hasCoordinates(x)).length);
-  readonly filteredItems = computed(() => {
-    const query = this.searchText().trim().toLocaleLowerCase();
-    return this.items().filter(item =>
-      (this.sourceFilter() === 'all' || item.sourceKind === this.sourceFilter()) &&
-      (!query || item.displayName.toLocaleLowerCase().includes(query))
-    );
-  });
+  readonly filteredItems = computed(() => this.items());
 
   constructor() {
     if (this.catalogue.isConfigured) void this.load();
@@ -149,9 +147,11 @@ export class StationsComponent {
     }
     this.state.set('loading');
     this.items.set([]);
+    this.hasMore.set(false);
     this.nextCursor.set(null);
+    this.consumedCursors.clear();
     try {
-      const page = await this.catalogue.readPage({ pageSize: 50 });
+      const page = await this.catalogue.readPage(this.buildQuery());
       this.items.set(page.items);
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
@@ -164,12 +164,22 @@ export class StationsComponent {
   async loadMore(): Promise<void> {
     const cursor = this.nextCursor();
     if (!cursor || this.state() === 'loading') return;
+    if (this.consumedCursors.has(cursor)) {
+      this.setErrorState(new StationCatalogueHttpError(502, 'Repeated station catalogue cursor.'));
+      return;
+    }
+    this.consumedCursors.add(cursor);
     this.state.set('loading');
     try {
-      const page = await this.catalogue.readPage({ pageSize: 50, cursor });
+      const page = await this.catalogue.readPage({ ...this.buildQuery(), cursor });
       const known = new Set(this.items().map(x => x.sourceKind + ':' + x.sourceRecordId));
-      const additions = page.items.filter(x => !known.has(x.sourceKind + ':' + x.sourceRecordId));
-      this.items.update(current => [...current, ...additions]);
+      if (page.items.some(x => known.has(x.sourceKind + ':' + x.sourceRecordId))) {
+        throw new StationCatalogueHttpError(502, 'Duplicate station identity across catalogue pages.');
+      }
+      if (page.nextCursor && this.consumedCursors.has(page.nextCursor)) {
+        throw new StationCatalogueHttpError(502, 'Station catalogue cursor cycle detected.');
+      }
+      this.items.update(current => [...current, ...page.items]);
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
       this.state.set('loaded');
@@ -178,7 +188,26 @@ export class StationsComponent {
     }
   }
 
-  setSourceFilter(value: 'all' | StationSourceKind): void { this.sourceFilter.set(value); }
+  setSourceFilter(value: 'all' | StationSourceKind): void {
+    if (this.sourceFilter() === value) return;
+    this.sourceFilter.set(value);
+    void this.load();
+  }
+
+  applyFilters(): void {
+    this.appliedSearch.set(this.searchText().trim());
+    void this.load();
+  }
+
+  private buildQuery(): StationCatalogueQuery {
+    const sourceKind = this.sourceFilter();
+    const namePrefix = this.appliedSearch();
+    return {
+      pageSize: 50,
+      ...(sourceKind === 'all' ? {} : { sourceKind }),
+      ...(namePrefix ? { namePrefix } : {})
+    };
+  }
   sourceLabel(value: StationSourceKind): string { return value === 'classic' ? 'كلاسيكية' : 'آلية'; }
   hasCoordinates(item: StationCatalogueItem): boolean {
     return item.latitude !== null && item.longitude !== null;
