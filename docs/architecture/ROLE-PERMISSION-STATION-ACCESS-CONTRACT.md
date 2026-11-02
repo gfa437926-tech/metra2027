@@ -74,5 +74,12 @@ Before a production adapter is enabled, integration tests against an isolated di
 - concurrent revocation cannot race a protected write into success;
 - unknown/malformed permission or account states fail closed;
 - audit history is committed atomically with authorization-sensitive state changes.
+- resource ownership is resolved from authoritative persistence; a caller-supplied station identifier never establishes ownership.
+- inactive actors, missing/unclassified resources, cross-station assignments, blank actor/resource identifiers and authoritative-store failures are denied.
+- station assignment matching uses exact canonical identifiers (ordinal comparison); whitespace, case variants and look-alike identifiers do not grant access.
+- request cancellation propagates through authorization reads rather than being converted into an authorization denial or retried.
+- anonymous requests to station catalogue and detail routes receive an authentication challenge before route handlers can expose dependency-registration state or data.
+
+The provider-neutral evaluator and HTTP boundary are covered by `StationScopedMetraResourceAccessEvaluatorTests` and `MetraAuthenticationBoundaryTests`. These tests use fakes/TestServer and do not connect to production persistence.
 
 No live Supabase project is used for these tests.
