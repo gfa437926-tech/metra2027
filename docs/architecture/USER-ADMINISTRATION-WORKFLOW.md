@@ -120,7 +120,7 @@ The provider-neutral contract currently proposes:
 - POST /api/v1/registration-requests/{requestId}/system-decision
 - provider-managed recovery endpoints under /api/v1/identity/recovery
 
-These are proposed routes, not claims that the endpoints are implemented. Each endpoint must validate the authenticated provider subject, resolve the METRA account from authoritative storage, enforce current account state and permission, and record state-changing actions transactionally.
+These are proposed routes. The initial-registration Minimal API adapter has been authored, but is deliberately not mapped until its trusted actor-context, catalogue and atomic persistence adapters are registered. The remaining routes are not implemented. Each endpoint must validate the authenticated provider subject, resolve the METRA account from authoritative storage, enforce current account state and permission, and record state-changing actions transactionally.
 
 The API must not accept caller-supplied actor IDs, effective role grants, account states, permission arrays or trusted station assignments. Registration accepts only requested access.
 
