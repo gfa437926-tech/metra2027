@@ -164,10 +164,69 @@ public sealed class RegistrationApprovalApplicationServiceTests
         Assert.Equal("system-manager", store.ActorUserId);
     }
 
+    [Fact]
+    public async Task Rejects_malformed_request_identifier_before_actor_lookup()
+    {
+        var actorProvider = new FakeActorProvider(null);
+        var store = new FakeStore(Request());
+        var service = new RegistrationApprovalApplicationService(actorProvider, store);
+        var result = await service.DecideAsync(new(
+            "request\\n1", RegistrationApprovalDecision.Approve, null));
+        Assert.Equal("invalid_request", result.Code);
+        Assert.Equal(0, actorProvider.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_control_characters_in_decision_note()
+    {
+        var actorProvider = new FakeActorProvider(null);
+        var store = new FakeStore(Request());
+        var service = new RegistrationApprovalApplicationService(actorProvider, store);
+        var result = await service.DecideAsync(new(
+            "request-1", RegistrationApprovalDecision.Reject, "line\\nbreak"));
+        Assert.Equal("note_invalid", result.Code);
+        Assert.Equal(0, actorProvider.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_malformed_actor_context_before_request_lookup()
+    {
+        var actor = new RegistrationApprovalActorContext(
+            " station-manager ", true, true, new HashSet<string> { "station-1" }, false);
+        var store = new FakeStore(Request());
+        var service = new RegistrationApprovalApplicationService(
+            new FakeActorProvider(actor), store);
+        var result = await service.DecideAsync(new(
+            "request-1", RegistrationApprovalDecision.Approve, null));
+        Assert.Equal("actor_context_invalid", result.Code);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_store_request_identifier_mismatch()
+    {
+        var actor = new RegistrationApprovalActorContext(
+            "station-manager", true, true, new HashSet<string> { "station-1" }, false);
+        var store = new FakeStore(Request()) { ReturnedRequest = Request("different-request") };
+        var service = new RegistrationApprovalApplicationService(
+            new FakeActorProvider(actor), store);
+        var result = await service.DecideAsync(new(
+            "request-1", RegistrationApprovalDecision.Approve, null));
+        Assert.Equal("registration_request_invalid", result.Code);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
     private static RegistrationApprovalRequestContext Request(
         RegistrationApprovalStatus status = RegistrationApprovalStatus.PendingStationApproval)
+        => Request("request-1", status);
+
+    private static RegistrationApprovalRequestContext Request(
+        string requestId,
+        RegistrationApprovalStatus status = RegistrationApprovalStatus.PendingStationApproval)
         => new(
-            "request-1",
+            requestId,
             "applicant",
             "station-1",
             status,
