@@ -46,6 +46,14 @@ The domain now defines `MetraAdministrativeAuditEvent` as an immutable scalar fa
 
 This validator is not a persistence or tamper-proofing mechanism. The future transactional store must generate trusted event IDs, actor/target references, occurrence time, correlation metadata and aggregate version from server-side transaction context; it must never accept those values as authoritative client input. It must append the event in the same transaction as the account/access mutation, enforce uniqueness and append-only permissions at the database boundary, and prevent application roles from updating or deleting prior events. Event values must be limited to non-secret change context; never include passwords, bearer tokens, signing material, recovery codes, or full request bodies. Retention, export, legal hold and privileged audit-reader policies remain approval items.
 
+## Administrative audit read contract
+
+`MetraAdministrativeAuditQueryService` now defines a read-only query boundary for audit history. Supported filters are target account, actor, canonical action code, resource type, and UTC occurrence-time bounds. Page size is bounded to 1–100. The cursor is opaque to the API, bounded in size, and must be interpreted only by the trusted store. The query service obtains actor identity from the authenticated server context; it does not accept an actor identifier from the request.
+
+The read-store contract must enforce the approved audit-read permission and any approved data/station scope on every request. It must use keyset pagination with deterministic descending order by `(OccurredAtUtc, EventId)`, return no more than the requested page size, and never mutate audit records. The application service validates returned events against the audit event policy, rejects duplicate event IDs, rejects invalid page sizes/cursor combinations, and verifies deterministic ordering. An authorization failure is distinct from an invalid cursor or malformed store response.
+
+The exact audit-reader role/permission, station visibility model, export capability, retention, and legal-hold policy remain unapproved. No endpoint or database adapter is activated by this contract.
+
 ## Not decided by this contract
 
 No concrete role/permission catalogue values, grant duration defaults, station activation rules, reactivation eligibility checks, self-administration policy, reason taxonomy, global-grant policy, or retention schedule is selected here. These require approval. No database schema, migration, seed data, Supabase project access, production adapter, or endpoint activation is included.
