@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
-builder.Services.AddMetraAuthenticationBoundary();
+builder.Services.AddMetraConfiguredAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMetraAuthorization();
 builder.Services.AddMetraResourceAuthorization();
 builder.Services.AddMetraDatabase(builder.Configuration, builder.Environment);
