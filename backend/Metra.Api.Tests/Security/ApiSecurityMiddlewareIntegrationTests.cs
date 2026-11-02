@@ -111,11 +111,13 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         {
             builder.UseEnvironment(environment);
             builder.UseSetting("Cors:AllowedOrigins:0", "https://metra.example.test");
+            builder.UseSetting("Cors:AllowedOrigins:1", "https://metra.example.test");
             builder.ConfigureAppConfiguration((_, configuration) =>
             {
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["Cors:AllowedOrigins:0"] = "https://metra.example.test"
+                    ["Cors:AllowedOrigins:0"] = "https://metra.example.test",
+                    ["Cors:AllowedOrigins:1"] = "https://metra.example.test"
                 });
             });
         }
