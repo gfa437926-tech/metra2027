@@ -33,6 +33,8 @@ The application service resolves the actor from the authenticated server context
 
 ## Validation and privacy
 
+The query service propagates the request cancellation token to both the authenticated actor-context provider and the trusted read store. If identity resolution is cancelled, the store must not be called. Hosting adapters must preserve cancellation rather than translating it into an authorization success or retrying a cancelled read.
+
 The service rejects unknown source kinds, malformed identifiers, invalid coordinate pairs/ranges, invalid optional metadata, duplicate source-local identities, out-of-order pages, filter leakage, oversized pages, and inconsistent/repeated cursors. Results are returned as read-only collections.
 
 ## Map and client integration requirements
