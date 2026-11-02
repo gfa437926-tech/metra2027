@@ -245,3 +245,29 @@ For daily-observation creation in station scope, use the named policy `metra:dai
 The combined daily-observation policy uses one `MetraCombinedAuthorizationRequirement` and one `IMetraActorAuthorizationContextProvider` call. The provider receives the authenticated subject, approved action permission and resource descriptor, then evaluates account status, permission grant validity, resource existence, canonical station ownership and assignment validity from one context result. Its data-source contract requires a transactionally consistent read or an equivalently versioned snapshot.
 
 The authoritative provider denies missing, inactive, expired, revoked or inconsistent facts, and denies source failures. It does not treat the station identifier supplied by a request as proof of access. The deny-all provider remains registered by default; no persistence adapter or protected endpoint is enabled. Tests cover the combined authorization path and time boundaries.
+
+### Current-user context application boundary
+
+The API now contains a provider-neutral application service in
+`backend/Metra.Api/Features/Identity/CurrentUserContextApplicationService.cs`.
+Its `ICurrentUserContextDataSource` contract requires lookup by the exact issuer+subject
+pair from a validated server principal, and requires account, assignment and permission
+facts to come from one consistent authoritative snapshot.
+
+The service:
+- rejects missing issuer/subject values and unlinked subjects without returning a METRA user;
+- returns no effective assignments or permissions unless the METRA account state is exactly
+  `Active`;
+- treats assignment and grant start times as inclusive and end/revocation times as exclusive;
+- limits context permissions to the canonical `MetraPermissions` catalogue, deduplicates
+  them and sorts them deterministically;
+- never uses email as the identity link key, and never returns the provider subject in the
+  client response.
+
+The service is deliberately not registered in dependency injection and no endpoint is mapped:
+there is no approved provider or verified persistence adapter. A production adapter must
+validate issuer+subject uniqueness, enforce verified-email disclosure policy, return a
+consistent snapshot, and have integration tests for account linking, unlinking, duplicate
+identity links, inactive accounts, concurrent grant revocation and station reassignment.
+The source adapter must not create an account automatically from an arbitrary valid token.
+Account provisioning remains a separate approved registration workflow.
