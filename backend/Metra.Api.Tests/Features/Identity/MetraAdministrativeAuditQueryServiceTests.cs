@@ -187,6 +187,27 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
             "Security review", "request-1", 2);
 
     [Fact]
+    public async Task Rejects_non_advancing_or_empty_continuation_page()
+    {
+        var eventItem = AuditEvent("event-1", Before);
+        var repeatedCursorStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { eventItem }, "cursor-1", true)));
+        var repeatedCursorService = new MetraAdministrativeAuditQueryService(
+            new FakeActor("auditor"), repeatedCursorStore);
+        var repeatedCursor = await repeatedCursorService.ExecuteAsync(
+            Query() with { Cursor = "cursor-1" });
+
+        var emptyContinuationStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(Array.Empty<MetraAdministrativeAuditEvent>(), "cursor-2", true)));
+        var emptyContinuationService = new MetraAdministrativeAuditQueryService(
+            new FakeActor("auditor"), emptyContinuationStore);
+        var emptyContinuation = await emptyContinuationService.ExecuteAsync(Query());
+
+        Assert.Equal("audit_store_response_invalid", repeatedCursor.Code);
+        Assert.Equal("audit_store_response_invalid", emptyContinuation.Code);
+    }
+
+    [Fact]
     public async Task Rejects_success_response_without_page()
     {
         var store = new FakeStore((MetraAdministrativeAuditReadResult.Success, null));
