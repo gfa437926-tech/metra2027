@@ -7,6 +7,7 @@ import 'package:metra_mobile/services/current_user_context_client.dart';
 
 class _TokenProvider implements AccessTokenProvider {
   _TokenProvider(this.token);
+
   final String? token;
 
   @override
@@ -29,23 +30,26 @@ String _contextJson(String state) => jsonEncode({
 
 void main() {
   group('CurrentUserContextClient', () {
-    test('does not call the API while identity integration is disabled', () async {
-      var requestCount = 0;
-      final client = CurrentUserContextClient(
-        client: MockClient((_) async {
-          requestCount++;
-          return http.Response('{}', 200);
-        }),
-        endpointEnabled: false,
-      );
+    test(
+      'does not call the API while identity integration is disabled',
+      () async {
+        var requestCount = 0;
+        final client = CurrentUserContextClient(
+          client: MockClient((_) async {
+            requestCount++;
+            return http.Response('{}', 200);
+          }),
+          endpointEnabled: false,
+        );
 
-      final result = await client.load();
+        final result = await client.load();
 
-      expect(result.state, CurrentUserSessionState.unconfigured);
-      expect(result.context, isNull);
-      expect(requestCount, 0);
-      client.close();
-    });
+        expect(result.state, CurrentUserSessionState.unconfigured);
+        expect(result.context, isNull);
+        expect(requestCount, 0);
+        client.close();
+      },
+    );
 
     test('fails closed when no access token is available', () async {
       final client = CurrentUserContextClient(
@@ -63,7 +67,9 @@ void main() {
 
     test('maps an active server account context', () async {
       final client = CurrentUserContextClient(
-        client: MockClient((_) async => http.Response(_contextJson('Active'), 200)),
+        client: MockClient(
+          (_) async => http.Response(_contextJson('Active'), 200),
+        ),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
       );
@@ -78,7 +84,9 @@ void main() {
 
     test('does not treat an unknown account state as active', () async {
       final client = CurrentUserContextClient(
-        client: MockClient((_) async => http.Response(_contextJson('FutureState'), 200)),
+        client: MockClient(
+          (_) async => http.Response(_contextJson('FutureState'), 200),
+        ),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
       );
