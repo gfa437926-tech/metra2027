@@ -8,9 +8,8 @@
     "noEmit": true
   },
   "include": [
+    "src/test.ts",
+    "test.ts",
     "src/**/*.d.ts"
-  ],
-  "files": [
-    "src/test.ts"
   ]
 }
