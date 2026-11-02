@@ -53,7 +53,14 @@ class CurrentUserContextClient {
       );
     }
 
-    final token = await _tokenProvider?.getAccessToken();
+    String? token;
+    try {
+      token = await _tokenProvider?.getAccessToken();
+    } catch (_) {
+      return const CurrentUserContextResult(
+        CurrentUserSessionState.unavailable,
+      );
+    }
     if (token == null || token.isEmpty) {
       return const CurrentUserContextResult(
         CurrentUserSessionState.unauthenticated,
@@ -112,6 +119,10 @@ class CurrentUserContextClient {
         context: context,
       );
     } on FormatException {
+      return const CurrentUserContextResult(
+        CurrentUserSessionState.unavailable,
+      );
+    } on TypeError {
       return const CurrentUserContextResult(
         CurrentUserSessionState.unavailable,
       );
