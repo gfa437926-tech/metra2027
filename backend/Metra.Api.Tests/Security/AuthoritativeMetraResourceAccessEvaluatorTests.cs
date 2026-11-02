@@ -64,15 +64,19 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
     [InlineData("station-7", "2026-11-01T00:00:00+00:00", null, "2026-11-02T11:59:59+00:00")]
     public async Task Denies_assignment_for_wrong_station_or_outside_validity_window(
         string stationId,
-        DateTimeOffset validFromUtc,
-        DateTimeOffset? validToUtc,
-        DateTimeOffset? revokedAtUtc)
+        string validFromUtc,
+        string? validToUtc,
+        string? revokedAtUtc)
     {
         var source = new FakeDataSource(new(
             true,
             true,
             "station-7",
-            [new(stationId, validFromUtc, validToUtc, revokedAtUtc)]));
+            [new(
+                stationId,
+                DateTimeOffset.Parse(validFromUtc),
+                validToUtc is null ? null : DateTimeOffset.Parse(validToUtc),
+                revokedAtUtc is null ? null : DateTimeOffset.Parse(revokedAtUtc))]));
         var evaluator = Evaluator(source);
 
         var allowed = await evaluator.CanAccessAsync(
