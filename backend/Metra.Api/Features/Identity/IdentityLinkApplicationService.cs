@@ -75,6 +75,9 @@ public sealed class IdentityLinkApplicationService(
         if (!actor.IsAccountActive)
             return Failure("account_not_active", "لا يمكن ربط هوية بحساب METRA غير نشط.");
 
+        if (!IsValidIdentityKey(actor.IdentityToLinkIssuer, actor.IdentityToLinkSubject))
+            return Failure("invalid_identity", "بيانات الهوية الخارجية غير صالحة.");
+
         var now = timeProvider.GetUtcNow();
         var sessionAuthenticationAge = now - actor.SessionAuthenticatedAt;
         var identityProofAge = now - actor.IdentityProofVerifiedAt;
@@ -110,6 +113,20 @@ public sealed class IdentityLinkApplicationService(
 
     private static bool IsRecent(TimeSpan age)
         => age >= TimeSpan.Zero && age <= MaximumAuthenticationAge;
+
+    // OIDC issuer comparison is exact: do not lowercase, trim, or remove a
+    // trailing slash. Subject is opaque and case-sensitive.
+    private static bool IsValidIdentityKey(string issuer, string subject)
+        => issuer.Length <= 512 &&
+           Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri) &&
+           issuerUri.Scheme == Uri.UriSchemeHttps &&
+           string.IsNullOrEmpty(issuerUri.UserInfo) &&
+           string.IsNullOrEmpty(issuerUri.Query) &&
+           string.IsNullOrEmpty(issuerUri.Fragment) &&
+           !issuer.Any(char.IsControl) &&
+           subject.Length <= 255 &&
+           !subject.Any(char.IsControl) &&
+           !string.IsNullOrWhiteSpace(subject);
 
     private static IdentityLinkApplicationResult Failure(string code, string message)
         => new(false, code, message);
