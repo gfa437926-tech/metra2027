@@ -191,6 +191,66 @@ public sealed class EffectivePermissionAuthorizationTests
         Assert.Equal("authorization_time_invalid", result.Code);
     }
 
+    [Theory]
+    [InlineData(MetraAccountAccessState.Suspended)]
+    [InlineData(MetraAccountAccessState.Disabled)]
+    public void Suspended_and_disabled_accounts_cannot_use_valid_grants(
+        MetraAccountAccessState state)
+    {
+        var result = EffectivePermissionAuthorization.Authorize(
+            state, "observations.read", "station-a",
+            [Grant()], [Assignment()], Now);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("account_not_active", result.Code);
+    }
+
+    [Fact]
+    public void Permission_and_assignment_are_effective_at_the_inclusive_start_instant()
+    {
+        var result = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            [Grant(from: Now)], [Assignment(from: Now)], Now);
+
+        Assert.True(result.IsAuthorized);
+        Assert.Equal("authorized", result.Code);
+    }
+
+    [Fact]
+    public void Permission_and_assignment_are_denied_at_the_exclusive_revocation_instant()
+    {
+        var result = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            [Grant()], [Assignment(revoked: Now)], Now);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("station_assignment_required", result.Code);
+    }
+
+    [Fact]
+    public void Revocation_before_validity_start_makes_grant_malformed()
+    {
+        var malformed = Grant(from: Now, revoked: Now.AddTicks(-1));
+
+        Assert.False(malformed.IsEffectiveAt(Now));
+    }
+
+    [Fact]
+    public void Null_permission_and_assignment_collections_fail_closed()
+    {
+        var noPermission = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            null, [Assignment()], Now);
+        var noAssignments = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            [Grant()], null, Now);
+
+        Assert.False(noPermission.IsAuthorized);
+        Assert.Equal("permission_not_granted", noPermission.Code);
+        Assert.False(noAssignments.IsAuthorized);
+        Assert.Equal("station_assignment_required", noAssignments.Code);
+    }
+
     [Fact]
     public void Unknown_account_state_fails_closed()
     {
