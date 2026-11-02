@@ -1,6 +1,8 @@
 using System.Net;
 using System.Threading.RateLimiting;
 using Metra.Api.Features.Observations;
+using Metra.Api.Infrastructure.Database;
+using Npgsql;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -11,6 +13,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddMetraAuthenticationBoundary();
 builder.Services.AddMetraAuthorization();
 builder.Services.AddMetraResourceAuthorization();
+builder.Services.AddMetraDatabase(builder.Configuration, builder.Environment);
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
@@ -87,6 +90,31 @@ if (app.Environment.IsDevelopment())
 
 var api = app.MapGroup("/api/v1");
 app.MapObservationValidationEndpoints();
+
+api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancellationToken) =>
+{
+    var dataSource = services.GetService<NpgsqlDataSource>();
+    if (dataSource is null)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    try
+    {
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand("SELECT 1", connection);
+        await command.ExecuteScalarAsync(cancellationToken);
+        return Results.Ok(new { status = "ready", service = "metra-api" });
+    }
+    catch (NpgsqlException)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (TimeoutException)
+    {
+        return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+    }
+}).WithName("GetApiReadiness").AllowAnonymous();
 
 api.MapGet("/health", () => Results.Ok(new
 {
