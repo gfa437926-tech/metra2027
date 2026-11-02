@@ -79,7 +79,7 @@ public sealed class IdentityLinkApplicationServiceTests
     [InlineData("https://identity.example.test?tenant=one", "subject")]
     [InlineData("https://identity.example.test#fragment", "subject")]
     [InlineData("https://user@identity.example.test", "subject")]
-    [InlineData("https://identity.example.test", "subject\\u0001with-control")]
+    [InlineData("https://identity.example.test", "subject\u0001with-control")]
     [InlineData("https://identity.example.test", "")]
     public async Task Rejects_malformed_or_non_https_identity_keys(
         string issuer,
