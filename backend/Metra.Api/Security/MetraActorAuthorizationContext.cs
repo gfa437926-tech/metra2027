@@ -128,7 +128,8 @@ public sealed class MetraCombinedAuthorizationRequirement : Microsoft.AspNetCore
 }
 
 public sealed class MetraCombinedAuthorizationHandler(
-    IMetraActorAuthorizationContextProvider contextProvider)
+    IMetraActorAuthorizationContextProvider contextProvider,
+    Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor)
     : Microsoft.AspNetCore.Authorization.AuthorizationHandler<
         MetraCombinedAuthorizationRequirement,
         MetraResourceDescriptor>
@@ -157,7 +158,7 @@ public sealed class MetraCombinedAuthorizationHandler(
             return;
         }
 
-        var cancellationToken = (context.Resource as Microsoft.AspNetCore.Http.HttpContext)?.RequestAborted
+        var cancellationToken = httpContextAccessor.HttpContext?.RequestAborted
             ?? CancellationToken.None;
 
         if (await contextProvider.CanPerformOnResourceAsync(
@@ -174,6 +175,7 @@ public static class MetraActorAuthorizationServiceCollectionExtensions
         this IServiceCollection services)
     {
         services.TryAddScoped<IMetraActorAuthorizationContextProvider, DenyAllMetraActorAuthorizationContextProvider>();
+        services.AddHttpContextAccessor();
         services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, MetraCombinedAuthorizationHandler>();
         return services;
     }
