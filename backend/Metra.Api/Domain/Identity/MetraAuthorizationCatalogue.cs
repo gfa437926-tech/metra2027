@@ -50,8 +50,12 @@ public static class MetraAuthorizationCatalogueValidator
         if (errors.Count > 0)
             return new(false, errors);
 
+        var roles = catalogue.Roles!;
+        var permissions = catalogue.Permissions!;
+        var rolePermissions = catalogue.RolePermissions!;
+
         var roleCodes = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var role in catalogue.Roles)
+        foreach (var role in roles)
         {
             if (role is null || !IsCanonicalCode(role.Code) ||
                 string.IsNullOrWhiteSpace(role.DisplayName))
@@ -65,7 +69,7 @@ public static class MetraAuthorizationCatalogueValidator
         }
 
         var permissionCodes = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var permission in catalogue.Permissions)
+        foreach (var permission in permissions)
         {
             if (permission is null || !IsCanonicalCode(permission.Code) ||
                 string.IsNullOrWhiteSpace(permission.DisplayName))
@@ -79,7 +83,7 @@ public static class MetraAuthorizationCatalogueValidator
         }
 
         var mappings = new HashSet<(string Role, string Permission)>();
-        foreach (var mapping in catalogue.RolePermissions)
+        foreach (var mapping in rolePermissions)
         {
             if (mapping is null ||
                 !IsCanonicalCode(mapping.RoleCode) ||
