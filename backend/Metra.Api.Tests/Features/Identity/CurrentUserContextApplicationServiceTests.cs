@@ -135,6 +135,35 @@ public sealed class CurrentUserContextApplicationServiceTests
         Assert.Equal(0, source.Calls);
     }
 
+    [Theory]
+    [InlineData("issuer\\n", "subject")]
+    [InlineData("issuer", "subject\\n")]
+    [InlineData("issuer", "")]
+    public async Task Rejects_identity_coordinates_containing_control_characters_or_missing_values(
+        string issuer,
+        string subject)
+    {
+        var source = new FakeDataSource(Facts());
+        var service = CreateService(source);
+
+        var result = await service.GetAsync(issuer, subject);
+
+        Assert.Null(result);
+        Assert.Equal(0, source.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_oversized_identity_coordinates_before_data_access()
+    {
+        var source = new FakeDataSource(Facts());
+        var service = CreateService(source);
+
+        var result = await service.GetAsync("issuer", new string('s', 257));
+
+        Assert.Null(result);
+        Assert.Equal(0, source.Calls);
+    }
+
     [Fact]
     public async Task Returns_null_when_subject_is_not_linked_to_a_metra_account()
     {
