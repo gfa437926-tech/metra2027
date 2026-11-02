@@ -121,6 +121,12 @@ public static class MetraAuthorizationServiceCollectionExtensions
         services.AddMetraActorAuthorizationContext();
         services.AddAuthorization(options =>
         {
+            // Secure by default: new endpoints require an authenticated principal.
+            // Explicitly public endpoints must opt out with AllowAnonymous().
+            options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                .RequireAuthenticatedUser()
+                .Build();
+
             options.AddPolicy(
                 MetraAuthorizationPolicies.DailyObservationCreateInStation,
                 policy =>
