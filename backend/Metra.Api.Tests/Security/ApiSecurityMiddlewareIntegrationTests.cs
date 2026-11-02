@@ -17,6 +17,15 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         Environment.SetEnvironmentVariable(
             "ConnectionStrings__MetraDatabase",
             "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable");
+        // Program configures authentication before WebApplicationFactory's
+        // ConfigureAppConfiguration callback is applied. Set process-level,
+        // test-only values before the host is created.
+        Environment.SetEnvironmentVariable(
+            "Authentication__Supabase__Authority",
+            "https://ci-project.supabase.co/auth/v1");
+        Environment.SetEnvironmentVariable(
+            "Authentication__Supabase__Audience",
+            "authenticated");
     }
 
     [Fact]
