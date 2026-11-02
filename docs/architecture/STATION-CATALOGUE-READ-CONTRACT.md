@@ -42,3 +42,6 @@ Angular and Flutter should consume the same API projection. A map must use a dis
 ## Activation gates
 
 No production source adapter, endpoint mapping, dependency-injection registration, database query, schema migration, RLS policy, grant, seed data, station mutation, or cross-source merge is introduced. Activation requires review of the source schemas, authoritative permission code, source-field mapping, crosswalk rules, and integration tests. The legacy project remains read-only and untouched.
+## Map projection contract
+
+`StationMapProjection` is a pure projection over the validated catalogue page. It creates one marker collection containing both source classes, with source-qualified marker keys and explicit source kind for distinct classic/automatic icons. It returns every record without a complete verified coordinate pair in a separate list collection. It never supplies default coordinates, approximates a city centre, or merges records by name. Invalid or partial coordinate pairs are rejected rather than plotted.
