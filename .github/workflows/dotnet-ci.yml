@@ -1,0 +1,35 @@
+name: .NET CI
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/dotnet-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/dotnet-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test ASP.NET Core 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore test project
+        run: dotnet restore backend/Metra.Api.Tests/Metra.Api.Tests.csproj
+
+      - name: Build and run tests
+        run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --no-restore --configuration Release
