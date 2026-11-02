@@ -68,7 +68,9 @@ public sealed class CombinedAuthorizationIntegrationTests
             MetraAuthorizationPolicies.DailyObservationCreateInStation);
 
         Assert.NotNull(policy);
-        Assert.Single(policy!.Requirements);
+        Assert.Equal(2, policy!.Requirements.Count);
+        Assert.Contains(policy.Requirements, requirement =>
+            requirement.GetType().Name == "DenyAnonymousAuthorizationRequirement");
         Assert.Contains(policy.Requirements, requirement =>
             requirement is MetraCombinedAuthorizationRequirement);
     }
