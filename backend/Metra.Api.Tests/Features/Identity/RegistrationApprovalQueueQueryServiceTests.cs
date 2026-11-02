@@ -192,6 +192,8 @@ public sealed class RegistrationApprovalQueueQueryServiceTests
         Assert.False(result.Page.HasMore);
         Assert.Null(result.Page.NextCursor);
         Assert.IsNotType<List<RegistrationApprovalQueueItem>>(result.Page.Items);
+        var readOnly = Assert.IsAssignableFrom<IList<RegistrationApprovalQueueItem>>(result.Page.Items);
+        Assert.True(readOnly.IsReadOnly);
     }
 
     private static RegistrationApprovalActorContext Actor()
@@ -238,3 +240,4 @@ public sealed class RegistrationApprovalQueueQueryServiceTests
         }
     }
 }
+
