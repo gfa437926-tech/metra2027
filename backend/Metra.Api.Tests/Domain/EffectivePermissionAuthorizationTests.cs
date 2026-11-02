@@ -181,6 +181,17 @@ public sealed class EffectivePermissionAuthorizationTests
     }
 
     [Fact]
+    public void Non_utc_evaluation_instant_fails_closed()
+    {
+        var result = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            [Grant()], [Assignment()], Now.ToOffset(TimeSpan.FromHours(3)));
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("authorization_time_invalid", result.Code);
+    }
+
+    [Fact]
     public void Unknown_account_state_fails_closed()
     {
         var result = EffectivePermissionAuthorization.Authorize(
