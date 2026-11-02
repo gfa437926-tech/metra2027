@@ -68,7 +68,7 @@ public sealed class AuthoritativeMetraResourceAccessEvaluator(
         {
             throw;
         }
-        catch
+        catch (Exception)
         {
             // Persistence errors and unknown states must never become an allow.
             return false;
