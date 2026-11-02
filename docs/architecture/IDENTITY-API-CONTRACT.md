@@ -157,6 +157,10 @@ No role, station, account state, actor identifier or permission supplied in JSON
 
 ## 8. Current implementation gap
 
+The current API now registers a provider-neutral permission authorization catalogue in `backend/Metra.Api/Security/MetraAuthorization.cs`. It defines exact permission identifiers for station approval, system approval and daily-observation creation. Named policies require an authenticated principal and an exact `metra_permission` claim. That claim is reserved for server-side permissions resolved from authoritative METRA grants; provider roles or client-supplied values must not be copied into it without trusted mapping.
+
+These policies are foundations only. No identity provider, authentication scheme, claims enrichment from METRA persistence, endpoint-level permission mapping or production resource authorization is configured yet. Do not treat a role claim as a permission, and do not enable sensitive endpoints until the trusted permission-claim pipeline and resource/station checks are implemented and tested.
+
 The inspected `backend/Metra.Api/Program.cs` currently registers Problem Details, OpenAPI and CORS, and maps health and observation-validation endpoints. It does not yet register authentication or authorization middleware, identity-provider integration, identity endpoints or persistence. The observation validation endpoints are validation-only and must not be mistaken for protected submission endpoints.
 
 A provider-neutral domain foundation now exists in `backend/Metra.Api/Domain/Identity/`: a pure two-stage registration state machine and an authorization policy that accepts server-resolved actor/request facts. Unit tests cover the stage transitions, terminal states, station scope and explicit system-approval permission.
