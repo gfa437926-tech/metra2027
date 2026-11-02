@@ -57,6 +57,71 @@ public sealed class MetraAccountLifecycleApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_invalid_account_identifier_before_actor_lookup()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("account-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccountLifecycleApplicationService(actor, store);
+
+        var oversized = await service.ExecuteAsync(new(
+            new string('a', 129), MetraAccountLifecycleCommand.Suspend, "Reason"));
+        var control = await service.ExecuteAsync(new(
+            "account-1\n", MetraAccountLifecycleCommand.Suspend, "Reason"));
+
+        Assert.Equal("account_id_invalid", oversized.Code);
+        Assert.Equal("account_id_invalid", control.Code);
+        Assert.Equal(0, actor.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_control_characters_in_reason_before_actor_lookup()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("account-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccountLifecycleApplicationService(actor, store);
+
+        var result = await service.ExecuteAsync(new(
+            "account-1", MetraAccountLifecycleCommand.Suspend, "Approved\nwithout review"));
+
+        Assert.Equal("account_lifecycle_reason_invalid", result.Code);
+        Assert.Equal(0, actor.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_malformed_actor_context()
+    {
+        var store = new FakeStore(new("account-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccountLifecycleApplicationService(
+            new FakeActor(" admin "), store);
+
+        var result = await service.ExecuteAsync(new(
+            "account-1", MetraAccountLifecycleCommand.Suspend, "Reason"));
+
+        Assert.Equal("actor_context_invalid", result.Code);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_inconsistent_or_non_positive_store_snapshot()
+    {
+        var actor = new FakeActor("admin");
+        var service = new MetraAccountLifecycleApplicationService(actor,
+            new FakeStore(new("different-account", MetraAccountAccessState.Active, 1)));
+        var mismatched = await service.ExecuteAsync(new(
+            "account-1", MetraAccountLifecycleCommand.Suspend, "Reason"));
+
+        var invalidVersionService = new MetraAccountLifecycleApplicationService(
+            new FakeActor("admin"),
+            new FakeStore(new("account-1", MetraAccountAccessState.Active, 0)));
+        var invalidVersion = await invalidVersionService.ExecuteAsync(new(
+            "account-1", MetraAccountLifecycleCommand.Suspend, "Reason"));
+
+        Assert.Equal("account_snapshot_invalid", mismatched.Code);
+        Assert.Equal("account_snapshot_invalid", invalidVersion.Code);
+    }
+
+    [Fact]
     public async Task Does_not_lookup_account_without_authenticated_actor()
     {
         var store = new FakeStore(new("account-1", MetraAccountAccessState.Active, 1));
@@ -143,7 +208,7 @@ public sealed class MetraAccountLifecycleApplicationServiceTests
             string accountId, CancellationToken cancellationToken)
         {
             FindCalls++;
-            return Task.FromResult(snapshot?.AccountId == accountId ? snapshot : null);
+            return Task.FromResult(snapshot);
         }
 
         public Task<MetraAccountLifecycleCommitResult> TryCommitAsync(
