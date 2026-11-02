@@ -41,10 +41,25 @@ export class StationCatalogueService {
       throw new StationCatalogueHttpError(0, 'Station catalogue API is not configured.');
     }
 
-    let params = new HttpParams().set('pageSize', String(query.pageSize ?? 50));
+    const pageSize = query.pageSize ?? 50;
+    const namePrefix = query.namePrefix?.trim();
+    const cursor = query.cursor;
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100 ||
+        (query.sourceKind !== undefined &&
+          query.sourceKind !== 'classic' && query.sourceKind !== 'automatic') ||
+        (query.namePrefix !== undefined &&
+          (!namePrefix || namePrefix.length > 128 ||
+           /[\u0000-\u001f\u007f-\u009f]/.test(namePrefix))) ||
+        (cursor !== undefined &&
+          (!cursor || cursor.length > 2048 || cursor !== cursor.trim() ||
+           /[\u0000-\u001f\u007f-\u009f]/.test(cursor)))) {
+      throw new StationCatalogueHttpError(400, 'Invalid station catalogue query.');
+    }
+
+    let params = new HttpParams().set('pageSize', String(pageSize));
     if (query.sourceKind) params = params.set('sourceKind', query.sourceKind);
-    if (query.namePrefix) params = params.set('namePrefix', query.namePrefix);
-    if (query.cursor) params = params.set('cursor', query.cursor);
+    if (namePrefix) params = params.set('namePrefix', namePrefix);
+    if (cursor) params = params.set('cursor', cursor);
 
     const base = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
     try {
@@ -54,7 +69,7 @@ export class StationCatalogueService {
           withCredentials: true
         }).pipe(timeout({ first: 15000 }))
       );
-      return this.normalizePage(value);
+      return this.normalizePage(value, pageSize, cursor ?? null);
     } catch (error: unknown) {
       if (error instanceof StationCatalogueHttpError) throw error;
       if (error instanceof HttpErrorResponse) {
@@ -64,7 +79,7 @@ export class StationCatalogueService {
     }
   }
 
-  private normalizePage(value: unknown): StationCataloguePage {
+  private normalizePage(value: unknown, pageSize: number, requestedCursor: string | null): StationCataloguePage {
     if (!value || typeof value !== 'object') {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue response.');
     }
@@ -73,11 +88,14 @@ export class StationCatalogueService {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue response.');
     }
     const nextCursor = raw['nextCursor'];
-    if ((raw['hasMore'] && (typeof nextCursor !== 'string' || !nextCursor.trim())) ||
+    if (raw['items'].length > pageSize ||
+        (raw['hasMore'] && (raw['items'].length === 0 ||
+          typeof nextCursor !== 'string' || !nextCursor.trim())) ||
         (!raw['hasMore'] && nextCursor !== null && nextCursor !== undefined) ||
         (nextCursor !== null && nextCursor !== undefined &&
           (typeof nextCursor !== 'string' || nextCursor.length > 2048 ||
            nextCursor !== nextCursor.trim() ||
+           nextCursor === requestedCursor ||
            /[\u0000-\u001f\u007f-\u009f]/.test(nextCursor)))) {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue cursor.');
     }
