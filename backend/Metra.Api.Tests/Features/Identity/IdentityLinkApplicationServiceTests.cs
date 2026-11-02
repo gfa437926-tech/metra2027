@@ -16,6 +16,7 @@ public sealed class IdentityLinkApplicationServiceTests
             "https://idp.example.test/",
             "provider-subject-abc",
             Now.AddMinutes(-2),
+            Now.AddMinutes(-2),
             true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
         var service = CreateService(actor, store);
@@ -39,6 +40,7 @@ public sealed class IdentityLinkApplicationServiceTests
             "issuer",
             "subject",
             Now,
+            Now,
             true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
         var service = CreateService(actor, store);
@@ -55,9 +57,9 @@ public sealed class IdentityLinkApplicationServiceTests
         var cases = new IdentityLinkActorContext?[]
         {
             null,
-            new("", "issuer", "subject", Now, true),
-            new("account", "", "subject", Now, true),
-            new("account", "issuer", " ", Now, true)
+            new("", "issuer", "subject", Now, Now, true),
+            new("account", "", "subject", Now, Now, true),
+            new("account", "issuer", " ", Now, Now, true)
         };
 
         foreach (var context in cases)
@@ -76,7 +78,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Rejects_inactive_metra_account()
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, false));
+            "account", "issuer", "subject", Now, Now, false));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -92,7 +94,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Requires_recent_non_future_authentication(int minutesFromNow)
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now.AddMinutes(-minutesFromNow), true));
+            "account", "issuer", "subject", Now.AddMinutes(-minutesFromNow), Now.AddMinutes(-minutesFromNow), true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
@@ -106,7 +108,7 @@ public sealed class IdentityLinkApplicationServiceTests
     public async Task Treats_exact_five_minute_authentication_age_as_valid()
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now.AddMinutes(-5), true));
+            "account", "issuer", "subject", Now.AddMinutes(-5), Now.AddMinutes(-5), true));
         var store = new FakeStore(IdentityLinkCommitResult.Linked);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
