@@ -215,6 +215,19 @@ public sealed class IdentityLinkApplicationServiceTests
     }
 
     [Fact]
+    public async Task Propagates_cancellation_to_the_trusted_actor_context_provider()
+    {
+        using var cts = new CancellationTokenSource();
+        var actor = new FakeActorProvider(new(
+            "account", "https://issuer.example.test", "subject", Now, Now, true));
+        var store = new FakeStore(IdentityLinkCommitResult.Linked);
+
+        await CreateService(actor, store).LinkCurrentIdentityAsync(cts.Token);
+
+        Assert.Equal(cts.Token, actor.CancellationToken);
+    }
+
+    [Fact]
     public async Task Propagates_cancellation_to_the_atomic_store()
     {
         using var cts = new CancellationTokenSource();
@@ -236,9 +249,14 @@ public sealed class IdentityLinkApplicationServiceTests
     private sealed class FakeActorProvider(IdentityLinkActorContext? context)
         : IIdentityLinkActorContextProvider
     {
+        public CancellationToken CancellationToken { get; private set; }
+
         public Task<IdentityLinkActorContext?> GetCurrentAsync(
             CancellationToken cancellationToken)
-            => Task.FromResult(context);
+        {
+            CancellationToken = cancellationToken;
+            return Task.FromResult(context);
+        }
     }
 
     private sealed class FakeStore(IdentityLinkCommitResult result) : IIdentityLinkStore
