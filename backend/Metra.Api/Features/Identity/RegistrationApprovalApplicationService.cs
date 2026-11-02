@@ -13,10 +13,15 @@ public interface IRegistrationApprovalActorContextProvider
 
 /// <summary>
 /// Persistence boundary for approval decisions. TryCommitDecisionAsync must use
-/// an atomic compare-and-set against expectedStatus and persist the status change,
-/// decision audit event, and (for final approval) account activation/assignment
-/// changes in one database transaction. It must return Conflict when the stored
-/// status no longer equals expectedStatus.
+/// one transaction to reload and lock the current request and actor authorization
+/// facts, then revalidate actor activity, explicit stage permission, self-approval
+/// prohibition, and (for station review) the current station assignment. It must
+/// serialize against concurrent permission/assignment revocation so stale facts
+/// from the earlier application-layer check cannot authorize a decision.
+/// Within that same transaction it must compare-and-set expectedStatus and append
+/// the immutable decision audit event. On final approval only, it must activate
+/// the account and create the approved role grant and station assignment atomically.
+/// It must return Conflict when the request state or authorization facts changed.
 /// </summary>
 public interface IRegistrationApprovalStore
 {
