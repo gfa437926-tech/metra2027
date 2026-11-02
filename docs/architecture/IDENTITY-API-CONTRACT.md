@@ -212,3 +212,9 @@ Until these decisions are approved, keep this contract provider-neutral and do n
 ### Combined authorization policy
 
 For daily-observation creation in station scope, use the named policy `metra:daily-observation-create-in-station`. It requires both the canonical `observations.daily.create` action permission and the independent `metra:resource-access` requirement. The permission evaluator and resource evaluator must both allow; success of either one alone is insufficient. The endpoint must pass a server-constructed resource descriptor identifying the target persisted resource; the descriptor's optional station ID is not authoritative. This combined policy is currently a reusable authorization definition tested through `IAuthorizationService`; it is not yet mapped to a production endpoint. The configured deny-all evaluators remain the defaults.
+
+### Consistent actor authorization context
+
+The combined daily-observation policy uses one `MetraCombinedAuthorizationRequirement` and one `IMetraActorAuthorizationContextProvider` call. The provider receives the authenticated subject, approved action permission and resource descriptor, then evaluates account status, permission grant validity, resource existence, canonical station ownership and assignment validity from one context result. Its data-source contract requires a transactionally consistent read or an equivalently versioned snapshot.
+
+The authoritative provider denies missing, inactive, expired, revoked or inconsistent facts, and denies source failures. It does not treat the station identifier supplied by a request as proof of access. The deny-all provider remains registered by default; no persistence adapter or protected endpoint is enabled. Tests cover the combined authorization path and time boundaries.
