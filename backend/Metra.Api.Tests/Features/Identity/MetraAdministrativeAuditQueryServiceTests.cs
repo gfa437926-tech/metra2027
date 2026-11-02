@@ -123,6 +123,22 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
     }
 
     [Theory]
+    [InlineData("auditor 1")]
+    [InlineData(" auditor")]
+    [InlineData("auditor/1")]
+    public async Task Rejects_malformed_server_actor_identifier(string actorId)
+    {
+        var store = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(Array.Empty<MetraAdministrativeAuditEvent>(), null, false)));
+        var service = new MetraAdministrativeAuditQueryService(new FakeActor(actorId), store);
+
+        var result = await service.ExecuteAsync(Query());
+
+        Assert.Equal("actor_context_invalid", result.Code);
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Theory]
     [InlineData(MetraAdministrativeAuditReadResult.ActorNotAuthorized, "actor_not_authorized")]
     [InlineData(MetraAdministrativeAuditReadResult.CursorInvalid, "audit_cursor_invalid")]
     public async Task Maps_store_authorization_and_cursor_failures(
