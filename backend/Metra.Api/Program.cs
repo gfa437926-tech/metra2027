@@ -14,7 +14,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddMetraConfiguredAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMetraAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IRegistrationSubmissionActorContextProvider, HttpRegistrationSubmissionActorContextProvider>();
+ builder.Services.AddScoped<IRegistrationSubmissionActorContextProvider, HttpRegistrationSubmissionActorContextProvider>();
+builder.Services.AddSingleton<IRegistrationSubmissionCatalogue, ConfigurationRegistrationSubmissionCatalogue>();
 builder.Services.AddMetraResourceAuthorization();
 builder.Services.AddMetraDatabase(builder.Configuration, builder.Environment);
 
