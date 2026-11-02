@@ -109,3 +109,6 @@ Station catalogue read contract: `STATION-CATALOGUE-READ-CONTRACT.md` defines on
 
 
 Station detail read contract: `StationDetailQueryService` and its tests resolve one record only by the source-qualified pair (Classic/Automatic + source-local ID). The trusted store contract requires permission and station-scope enforcement in the read itself, returns the same not-found outcome for absent and out-of-scope records, and cannot fall back by name or across source classes. No endpoint, production adapter, DI registration, or database access is enabled.
+
+
+The Angular station catalogue screen is available at `/stations`. Its client models, guarded HTTP service, source-preserving list UI, and explicit unconfigured state are documented in `STATION-CATALOGUE-READ-CONTRACT.md`. API activation and geographic map rendering remain gated on approved server-side permission enforcement and map-provider selection.
