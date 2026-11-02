@@ -8,10 +8,7 @@
     "noEmit": true
   },
   "include": [
+    "src/**/*.spec.ts",
     "src/**/*.d.ts"
-  ],
-  "files": [
-    "src/app/features/stations/station-catalogue.service.spec.ts",
-    "src/app/features/stations/stations.component.spec.ts"
   ]
 }
