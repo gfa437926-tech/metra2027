@@ -246,6 +246,31 @@ public sealed class StationCatalogueQueryServiceTests
         Assert.True(items.IsReadOnly);
     }
 
+    [Fact]
+    public async Task Propagates_cancellation_to_actor_context_provider()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var store = new FakeStore(Page());
+        var service = new StationCatalogueQueryService(
+            new CancellingActorProvider(), store);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.ReadAsync(new(), cancellation.Token));
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
+    public async Task Propagates_cancellation_token_to_catalogue_store()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var store = new FakeStore(Page());
+        var service = Create("admin", store);
+
+        await service.ReadAsync(new(), cancellation.Token);
+        Assert.Equal(cancellation.Token, store.CancellationToken);
+    }
+
     private static StationCatalogueItem Item(
         StationCatalogueSourceKind kind, string id, string name)
         => new(kind, id, name, null, null, 33m, 36m, null);
@@ -262,12 +287,19 @@ public sealed class StationCatalogueQueryServiceTests
             => Task.FromResult(actor);
     }
 
+    private sealed class CancellingActorProvider : IAccountLifecycleActorContextProvider
+    {
+        public Task<string?> GetCurrentActorUserIdAsync(CancellationToken cancellationToken)
+            => Task.FromCanceled<string?>(cancellationToken);
+    }
+
     private sealed class FakeStore(StationCatalogueStorePage page) : IStationCatalogueReadStore
     {
         public int Calls { get; private set; }
         public string? ActorId { get; private set; }
         public StationCatalogueQuery? Query { get; private set; }
         public StationCatalogueStorePage Page { get; set; } = page;
+        public CancellationToken CancellationToken { get; private set; }
 
         public Task<StationCatalogueStorePage> ReadPageAsync(
             string actorUserId, StationCatalogueQuery normalizedQuery,
@@ -276,6 +308,7 @@ public sealed class StationCatalogueQueryServiceTests
             Calls++;
             ActorId = actorUserId;
             Query = normalizedQuery;
+            CancellationToken = cancellationToken;
             return Task.FromResult(Page);
         }
     }
