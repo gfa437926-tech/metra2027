@@ -112,3 +112,6 @@ Station detail read contract: `StationDetailQueryService` and its tests resolve 
 
 
 The Angular station catalogue screen is available at `/stations`. Its client models, guarded HTTP service, source-preserving list UI, and explicit unconfigured state are documented in `STATION-CATALOGUE-READ-CONTRACT.md`. API activation and geographic map rendering remain gated on approved server-side permission enforcement and map-provider selection.
+
+
+The station catalogue has a unified Angular screen at `/stations` and protected HTTP routes at `GET /api/v1/stations` and `GET /api/v1/stations/{sourceKind}/{sourceRecordId}`. The routes return 503 until approved actor-context and permission-enforcing read-store dependencies are registered. Geographic map rendering remains gated on map-provider selection.
