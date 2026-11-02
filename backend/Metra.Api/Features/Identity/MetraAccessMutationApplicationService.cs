@@ -91,7 +91,9 @@ public sealed class MetraAccessMutationApplicationService(
         var target = await store.FindTargetAsync(command.AccountId.Trim(), cancellationToken);
         if (target is null)
             return Failure("account_not_found");
-        if (target.AccountState != MetraAccountAccessState.Active)
+        var createsAccess = command.Kind is
+            MetraAccessMutationKind.GrantPermission or MetraAccessMutationKind.AssignStation;
+        if (createsAccess && target.AccountState != MetraAccountAccessState.Active)
             return Failure("target_account_not_active");
 
         var commit = await store.TryCommitAsync(
