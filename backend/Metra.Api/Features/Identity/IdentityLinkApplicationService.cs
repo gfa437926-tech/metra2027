@@ -67,7 +67,7 @@ public sealed class IdentityLinkApplicationService(
         if (actor is null ||
             string.IsNullOrWhiteSpace(actor.UserId) ||
             string.IsNullOrWhiteSpace(actor.IdentityToLinkIssuer) ||
-            string.IsNullOrWhiteSpace(actor.IdentityToLinkSubject))
+        )
         {
             return Failure("unauthenticated", "يلزم وجود جلسة هوية موثّقة.");
         }
