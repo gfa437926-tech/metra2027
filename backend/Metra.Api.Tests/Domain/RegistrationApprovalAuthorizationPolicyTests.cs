@@ -36,6 +36,27 @@ public sealed class RegistrationApprovalAuthorizationPolicyTests
         Assert.Equal("station_approval_permission_required", result.ErrorCode);
     }
 
+    [Theory]
+    [InlineData(null, "station-a")]
+    [InlineData("", "station-a")]
+    [InlineData("applicant", null)]
+    [InlineData("applicant", " ")]
+    public void Incomplete_request_identity_or_station_scope_fails_closed(
+        string? requestedByUserId,
+        string? requestedStationId)
+    {
+        var actor = new RegistrationApprovalActorContext(
+            "reviewer", true, true, new HashSet<string> { "station-a" }, true);
+        var request = new RegistrationApprovalRequestContext(
+            "request", requestedByUserId!, requestedStationId!,
+            RegistrationApprovalStatus.PendingStationApproval);
+
+        var result = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("registration_request_invalid", result.ErrorCode);
+    }
+
     [Fact]
     public void Final_decision_requires_explicit_system_permission()
     {
