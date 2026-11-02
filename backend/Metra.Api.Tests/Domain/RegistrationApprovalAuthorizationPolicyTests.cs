@@ -58,13 +58,43 @@ public sealed class RegistrationApprovalAuthorizationPolicyTests
     }
 
     [Fact]
+    public void Final_decision_requires_persisted_station_approval_evidence()
+    {
+        var actor = new RegistrationApprovalActorContext(
+            "system-reviewer", true, false, new HashSet<string>(), true);
+        var request = new RegistrationApprovalRequestContext(
+            "request", "applicant", "station-a",
+            RegistrationApprovalStatus.PendingSystemApproval);
+
+        var result = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("station_approval_evidence_missing", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Station_reviewer_cannot_also_complete_system_approval()
+    {
+        var actor = new RegistrationApprovalActorContext(
+            "same-reviewer", true, false, new HashSet<string>(), true);
+        var request = new RegistrationApprovalRequestContext(
+            "request", "applicant", "station-a",
+            RegistrationApprovalStatus.PendingSystemApproval, "same-reviewer");
+
+        var result = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("approval_separation_of_duties_violation", result.ErrorCode);
+    }
+
+    [Fact]
     public void Final_decision_requires_explicit_system_permission()
     {
         var actor = new RegistrationApprovalActorContext(
             "reviewer", true, false, new HashSet<string>(), false);
         var request = new RegistrationApprovalRequestContext(
             "request", "applicant", "station-a",
-            RegistrationApprovalStatus.PendingSystemApproval);
+            RegistrationApprovalStatus.PendingSystemApproval, "station-reviewer");
 
         var result = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
 
