@@ -78,3 +78,35 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - This adds automated mobile validation but does not complete mobile feature integration or establish a committed dependency lockfile.
 - The current station HTTP endpoints remain intentionally fail-closed: `IStationCatalogueReadStore` and trusted identity context are not yet registered, so the endpoints return 503 rather than bypass authorization.
 - Remaining release gates in this document are unchanged. Do not mark production complete until the trusted PostgreSQL repositories, transactional authorization/audit, verified station data, end-to-end tests, Flutter feature workflows, deployment and restore rehearsal are complete.
+
+
+## Legacy INSERT read-only import — 2026-11-02
+
+### Non-destructive boundary
+- The legacy Supabase project `vktcvkwqszehgmhqjrkb` (INSERT) was queried using SELECT statements only.
+- No DDL, INSERT, UPDATE, DELETE, TRUNCATE, policy, trigger, or settings change was issued against the legacy project.
+- Destination was the independent METRA project `tbdnklyxjvbrilvnwgmq`.
+
+### Imported station inventory
+- 29 classic records from `public.stations`.
+- 33 automatic records from `public.fieldclimate_stations`.
+- 50 coordinate records were copied from source rows with both latitude and longitude present.
+- 15 imported catalogue records have no current coordinate because the source did not contain a complete coordinate pair. No coordinates were guessed.
+- 3 clearly synthetic demo catalogue records were added with `is_demo=true`.
+- All 65 records are `approval_status=pending` and `operational_status=unverified`; no imported station was silently approved or marked operational.
+- Classic and automatic station records remain separate and preserve their original source identifiers.
+
+### Provenance and repeatability
+- Added `source_system`, `source_table`, `source_record_id`, and `is_demo` to `public.station_catalogue`.
+- Added a partial unique index over source identity so repeated seed execution cannot duplicate imported records.
+- Added `unverified` as a station operational status to avoid falsely asserting live operational state.
+- The committed repeatable seed is `supabase/seeds/20261102_station_catalogue_import.sql`.
+- Matching schema migrations are committed under `supabase/migrations/` with versions `20261102171030` and `20261102171037`.
+
+### Verification snapshot
+- Destination catalogue: 62 imported + 3 demo = 65 records.
+- Destination coordinates: 50.
+- Supabase security advisors returned zero findings after these changes.
+- Performance advisor returned informational unused-index notices; no indexes were removed.
+- Legacy read-only count verification after import returned unchanged station counts: 29 classic and 33 automatic. The legacy weather/report data remained untouched.
+- The full weather/report history has not yet been migrated. It requires dedicated table mappings, privacy/identity handling, data-quality validation, and explicit retention rules before bulk transfer.
