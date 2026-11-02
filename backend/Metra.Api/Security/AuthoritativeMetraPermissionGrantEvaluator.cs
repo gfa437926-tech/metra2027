@@ -1,3 +1,5 @@
+using Metra.Api.Domain.Identity;
+
 namespace Metra.Api.Security;
 
 /// <summary>
@@ -53,7 +55,19 @@ public sealed class AuthoritativeMetraPermissionGrantEvaluator(
                 return false;
             }
 
+            var grant = new MetraPermissionGrant(
+                permission,
+                null,
+                facts.ValidFromUtc,
+                facts.ValidToUtc,
+                facts.RevokedAtUtc);
+            if (!MetraAccessRecordPolicy.ValidateGrant(grant).IsValid)
+                return false;
+
             var now = timeProvider.GetUtcNow();
+            if (now.Offset != TimeSpan.Zero)
+                return false;
+
             return facts.ValidFromUtc <= now &&
                 (facts.ValidToUtc is null || now < facts.ValidToUtc) &&
                 (facts.RevokedAtUtc is null || now < facts.RevokedAtUtc);
