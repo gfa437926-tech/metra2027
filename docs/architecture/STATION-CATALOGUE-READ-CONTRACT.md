@@ -1,10 +1,13 @@
 # METRA unified station catalogue read contract
 
-## Status and evidence
+> **Superseded for production station-data design:** by owner decision in [STATION-DATA-INDEPENDENCE-DECISION.md](./STATION-DATA-INDEPENDENCE-DECISION.md), the historical Classic/Automatic source projection described below is compatibility/prototype work only. It is not the new operational catalogue contract. The new catalogue must be designed independently and must not read or depend on historical station data. The historical copy remains isolated and read-only.
 
-This is a provider-independent, read-only application contract. It does not approve a physical schema, canonical station identifiers, source crosswalk, API route, production adapter, or station-management mutation workflow.
 
-The read-only legacy evidence recorded in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md` reports 29 records in `public.stations` (classic) and 33 in `public.fieldclimate_stations` (automatic). Seventeen classic records have both coordinates; twelve do not. All 33 automatic records have coordinates. The classic `station_type` field was NULL for all 29 observed records. These are source counts, not a canonical station count.
+## Status and historical evidence
+
+This is a provider-independent prototype/compatibility contract for the historical source shape. It does not approve a physical schema, canonical station identifiers, source crosswalk, API route, production adapter, or station-management mutation workflow. It is not the operational catalogue contract for METRA 2027.
+
+Any counts or schema observations in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md` are archive inventory evidence only. They must not be used as operational totals, requirements, seed data, acceptance criteria, or assumptions for the new catalogue. See `STATION-DATA-INDEPENDENCE-DECISION.md`.
 
 ## Source preservation
 
