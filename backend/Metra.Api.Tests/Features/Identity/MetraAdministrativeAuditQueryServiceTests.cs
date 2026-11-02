@@ -13,7 +13,7 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
     public async Task Reads_page_using_server_actor_and_bounded_query()
     {
         var actor = new FakeActor("auditor-1");
-        var page = new MetraAdministrativeAuditPage(
+        var page = new MetraAdministrativeAuditStorePage(
             new[] { AuditEvent("event-2", Before) }, "cursor-2", true);
         var store = new FakeStore((MetraAdministrativeAuditReadResult.Success, page));
         var service = new MetraAdministrativeAuditQueryService(actor, store);
@@ -26,7 +26,10 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
         Assert.True(result.Succeeded);
         Assert.Equal("auditor-1", store.ActorId);
         Assert.Same(query, store.Query);
-        Assert.Same(page, result.Page);
+        Assert.NotNull(result.Page);
+        Assert.Equal("event-2", result.Page.Items[0].EventId);
+        Assert.DoesNotContain("Reason", typeof(MetraAdministrativeAuditListItem)
+            .GetProperties().Select(property => property.Name));
     }
 
     [Fact]
@@ -247,14 +250,14 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
     }
 
     private sealed class FakeStore(
-        (MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditPage? Page) response)
+        (MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditStorePage? Page) response)
         : IMetraAdministrativeAuditReadStore
     {
         public int Calls { get; private set; }
         public string? ActorId { get; private set; }
         public MetraAdministrativeAuditQuery? Query { get; private set; }
 
-        public Task<(MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditPage? Page)>
+        public Task<(MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditStorePage? Page)>
             ReadAsync(string actorUserId, MetraAdministrativeAuditQuery query,
                 CancellationToken cancellationToken)
         {
