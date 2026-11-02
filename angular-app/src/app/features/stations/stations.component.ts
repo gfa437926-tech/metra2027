@@ -89,7 +89,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
           @if (loadMoreError()) {
             <div class="load-more-error" role="alert">
               <span>{{ errorMessage() }}</span>
-              <button type="button" (click)="loadMore()" [disabled]="isLoadingMore()">إعادة المحاولة</button>
+              <button type="button" (click)="loadMoreErrorRequiresReload() ? load() : loadMore()" [disabled]="isLoadingMore()">{{ loadMoreErrorRequiresReload() ? 'إعادة تحميل الدليل' : 'إعادة المحاولة' }}</button>
             </div>
           }
           @if (hasMore()) {
@@ -138,6 +138,7 @@ export class StationsComponent {
   readonly nextCursor = signal<string | null>(null);
   readonly isLoadingMore = signal(false);
   readonly loadMoreError = signal(false);
+  readonly loadMoreErrorRequiresReload = signal(false);
   readonly sourceFilter = signal<'all' | StationSourceKind>('all');
   readonly errorMessage = signal('تعذّر الاتصال بخدمة دليل المحطات.');
   readonly searchText = signal('');
@@ -163,6 +164,7 @@ export class StationsComponent {
     this.state.set('loading');
     this.isLoadingMore.set(false);
     this.loadMoreError.set(false);
+    this.loadMoreErrorRequiresReload.set(false);
     this.items.set([]);
     this.hasMore.set(false);
     this.nextCursor.set(null);
@@ -186,10 +188,12 @@ export class StationsComponent {
     if (this.consumedCursors.has(cursor)) {
       this.errorMessage.set('تم اكتشاف مؤشر صفحات مكرر؛ أعد تحميل الدليل للمتابعة بأمان.');
       this.loadMoreError.set(true);
+      this.loadMoreErrorRequiresReload.set(true);
       return;
     }
     this.isLoadingMore.set(true);
     this.loadMoreError.set(false);
+    this.loadMoreErrorRequiresReload.set(false);
     try {
       const page = await this.catalogue.readPage({ ...this.buildQuery(), cursor });
       if (generation !== this.requestGeneration) return;
@@ -210,9 +214,13 @@ export class StationsComponent {
             (error.status === 401 || error.status === 403)) {
           this.setErrorState(error);
         } else {
-          this.errorMessage.set(error instanceof Error
-            ? error.message
-            : 'تعذّر تحميل الصفحة التالية. يمكنك إعادة المحاولة.');
+          const requiresReload = error instanceof StationCatalogueHttpError && error.status === 502;
+          this.errorMessage.set(requiresReload
+            ? 'وصلت استجابة غير متوافقة أو مكررة من الخادم. أعد تحميل الدليل لبدء تسلسل صفحات جديد.'
+            : error instanceof Error
+              ? error.message
+              : 'تعذّر تحميل الصفحة التالية. يمكنك إعادة المحاولة.');
+          this.loadMoreErrorRequiresReload.set(requiresReload);
           this.loadMoreError.set(true);
         }
       }
