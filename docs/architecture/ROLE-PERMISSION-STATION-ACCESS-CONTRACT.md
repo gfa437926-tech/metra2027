@@ -22,6 +22,7 @@ A role is an administrative grouping/catalogue concept. A role label, including 
 - A permission grant without a station assignment grants no station access.
 - A global operation (no station target) requires an explicit global permission grant whose StationId is null.
 - A global grant is not a wildcard for station-scoped operations. This avoids accidental scope expansion.
+- The registration workflow additionally requires separation of duties: the station-stage approver and final system approver are distinct METRA accounts. A PendingSystemApproval state without a persisted station approver is invalid for authorization.
 
 ## 3. Validity and revocation
 
