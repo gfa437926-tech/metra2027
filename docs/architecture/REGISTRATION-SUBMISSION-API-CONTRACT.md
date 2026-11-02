@@ -38,7 +38,8 @@ Rules:
 - Role and station values must be validated against server-owned active catalogues.
 - Terms acceptance must be explicit and associated with the exact terms version.
 - The idempotency key is required and scoped to the authenticated identity. It must not contain secrets or personal data.
-- Validate lengths, Unicode normalization policy, phone format, and request size at the HTTP boundary. Apply rate limits and abuse controls.
+- The application service enforces maximum lengths: names 120 characters each, phone 40, role code 128, station ID 128, terms version 64, and idempotency key 128. Role/station keys, terms version, and idempotency key are trimmed before catalogue lookup and persistence.
+- The HTTP host must also enforce a request-body size limit. Phone syntax and Unicode normalization remain explicit policy decisions and must be agreed before release; do not silently rewrite scientific/user-entered names.
 
 ## 3. Success response
 
