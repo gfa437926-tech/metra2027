@@ -25,6 +25,7 @@ public static class MetraPermissions
 public static class MetraAuthorizationPolicies
 {
     public const string PermissionPolicyPrefix = "permission:";
+    public const string DailyObservationCreateInStation = "metra:daily-observation-create-in-station";
 
     public static string ForPermission(string permission)
     {
@@ -119,6 +120,16 @@ public static class MetraAuthorizationServiceCollectionExtensions
         services.AddScoped<IAuthorizationHandler, MetraPermissionAuthorizationHandler>();
         services.AddAuthorization(options =>
         {
+            options.AddPolicy(
+                MetraAuthorizationPolicies.DailyObservationCreateInStation,
+                policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                    policy.AddRequirements(
+                        new MetraPermissionRequirement(MetraPermissions.DailyObservationCreate),
+                        new MetraResourceAccessRequirement());
+                });
+
             foreach (var permission in MetraPermissions.All)
             {
                 options.AddPolicy(
