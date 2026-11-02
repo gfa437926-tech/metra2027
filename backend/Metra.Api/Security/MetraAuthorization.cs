@@ -13,12 +13,12 @@ public static class MetraPermissions
     public const string RegistrationSystemApprove = "registrations.system.approve";
     public const string DailyObservationCreate = "observations.daily.create";
 
-    public static IReadOnlyList<string> All { get; } =
+    public static IReadOnlyList<string> All { get; } = Array.AsReadOnly(
     [
         RegistrationStationApprove,
         RegistrationSystemApprove,
         DailyObservationCreate
-    ];
+    ]);
 }
 
 public static class MetraAuthorizationPolicies
@@ -53,6 +53,7 @@ public sealed class MetraPermissionAuthorizationHandler
     : AuthorizationHandler<MetraPermissionRequirement>
 {
     public const string PermissionClaimType = "metra_permission";
+    public const string PermissionClaimIssuer = "urn:metra:internal:permissions";
 
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
@@ -60,6 +61,7 @@ public sealed class MetraPermissionAuthorizationHandler
     {
         var hasPermission = context.User.Claims.Any(claim =>
             string.Equals(claim.Type, PermissionClaimType, StringComparison.Ordinal) &&
+            string.Equals(claim.Issuer, PermissionClaimIssuer, StringComparison.Ordinal) &&
             string.Equals(claim.Value, requirement.Permission, StringComparison.Ordinal));
 
         if (hasPermission)
