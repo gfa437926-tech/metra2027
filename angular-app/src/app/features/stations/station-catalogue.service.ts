@@ -78,7 +78,7 @@ export class StationCatalogueService {
         (nextCursor !== null && nextCursor !== undefined &&
           (typeof nextCursor !== 'string' || nextCursor.length > 2048 ||
            nextCursor !== nextCursor.trim() ||
-           [...nextCursor].some(character => character.charCodeAt(0) <= 31 || character.charCodeAt(0) === 127)))) {
+           /[\\u0000-\\u001f\\u007f-\\u009f]/.test(nextCursor)))) {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue cursor.');
     }
 
