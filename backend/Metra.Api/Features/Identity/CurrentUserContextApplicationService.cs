@@ -79,7 +79,7 @@ public sealed class CurrentUserContextApplicationService(
         var facts = await dataSource.FindByIdentitySubjectAsync(
             issuer, subject, cancellationToken);
 
-        if (facts is null || string.IsNullOrWhiteSpace(facts.UserId))
+        if (!IsValidSnapshot(facts))
             return null;
 
         var now = timeProvider.GetUtcNow();
@@ -118,9 +118,100 @@ public sealed class CurrentUserContextApplicationService(
                 facts.Profile.Email,
                 facts.Profile.Phone),
             facts.AccountState.ToString(),
-            assignments,
-            permissions);
+            Array.AsReadOnly(assignments),
+            Array.AsReadOnly(permissions));
     }
+
+    private static bool IsValidSnapshot(CurrentUserAccountFacts? facts)
+    {
+        if (facts is null ||
+            !IsCanonicalIdentifier(facts.UserId) ||
+            !Enum.IsDefined(facts.AccountState) ||
+            facts.Profile is null ||
+            facts.Assignments is null ||
+            facts.PermissionGrants is null ||
+            !IsRequiredProfileValue(facts.Profile.FirstName) ||
+            !IsRequiredProfileValue(facts.Profile.LastName) ||
+            !IsOptionalProfileValue(facts.Profile.FatherName) ||
+            !IsOptionalProfileValue(facts.Profile.Email) ||
+            !IsOptionalProfileValue(facts.Profile.Phone))
+            return false;
+
+        var assignmentKeys = new HashSet<(string StationId, string RoleCode)>();
+        foreach (var assignment in facts.Assignments)
+        {
+            if (assignment is null ||
+                !IsCanonicalIdentifier(assignment.StationId) ||
+                !IsRequiredProfileValue(assignment.StationName) ||
+                !IsCanonicalCode(assignment.RoleCode) ||
+                !IsUtc(assignment.ValidFrom) ||
+                assignment.ValidTo is { } validTo &&
+                    (!IsUtc(validTo) || validTo <= assignment.ValidFrom) ||
+                assignment.RevokedAt is { } revokedAt && !IsUtc(revokedAt) ||
+                !assignmentKeys.Add((assignment.StationId, assignment.RoleCode)))
+                return false;
+        }
+
+        foreach (var grant in facts.PermissionGrants)
+        {
+            if (grant is null ||
+                !IsCanonicalCode(grant.Permission) ||
+                !IsUtc(grant.ValidFrom) ||
+                grant.ValidTo is { } validTo &&
+                    (!IsUtc(validTo) || validTo <= grant.ValidFrom) ||
+                grant.RevokedAt is { } revokedAt && !IsUtc(revokedAt))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsCanonicalIdentifier(string? value)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= 128 &&
+           value == value.Trim() &&
+           value.All(character => char.IsAsciiLetterOrDigit(character) ||
+               character is '-' or '_' or '.' or ':');
+
+    private static bool IsCanonicalCode(string? value)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length > 128)
+            return false;
+
+        var segmentHasCharacter = false;
+        foreach (var character in value)
+        {
+            if (character is >= 'a' and <= 'z' or >= '0' and <= '9')
+            {
+                segmentHasCharacter = true;
+                continue;
+            }
+
+            if (character is '.' or '_' or '-')
+            {
+                if (!segmentHasCharacter)
+                    return false;
+                segmentHasCharacter = false;
+                continue;
+            }
+
+            return false;
+        }
+
+        return segmentHasCharacter;
+    }
+
+    private static bool IsRequiredProfileValue(string? value)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= 256 &&
+           value == value.Trim() &&
+           !value.Any(char.IsControl);
+
+    private static bool IsOptionalProfileValue(string? value)
+        => value is null || IsRequiredProfileValue(value);
+
+    private static bool IsUtc(DateTimeOffset value)
+        => value.Offset == TimeSpan.Zero;
 
     private static bool IsEffective(
         DateTimeOffset validFrom,
