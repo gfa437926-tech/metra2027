@@ -40,10 +40,11 @@ describe('StationCatalogueService', () => {
         { provide: STATION_CATALOGUE_ENDPOINT_ENABLED, useValue: false }
       ]
     });
-    const disabled = TestBed.inject(StationCatalogueService);
+    service = TestBed.inject(StationCatalogueService);
+    http = TestBed.inject(HttpTestingController);
 
-    await expect(disabled.readPage()).rejects.toMatchObject({ status: 0 });
-    TestBed.inject(HttpTestingController).expectNone('/api/v1/stations');
+    await expect(service.readPage()).rejects.toMatchObject({ status: 0 });
+    http.expectNone('/api/v1/stations');
   });
 
   it('rejects malformed page size, C1 prefix controls and cursors before network access', async () => {
