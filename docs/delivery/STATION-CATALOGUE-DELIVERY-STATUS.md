@@ -110,3 +110,16 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - Performance advisor returned informational unused-index notices; no indexes were removed.
 - Legacy read-only count verification after import returned unchanged station counts: 29 classic and 33 automatic. The legacy weather/report data remained untouched.
 - The full weather/report history has not yet been migrated. It requires dedicated table mappings, privacy/identity handling, data-quality validation, and explicit retention rules before bulk transfer.
+
+
+## Observation migration milestone — 2026-11-02
+
+- Imported 58,043 source records into `public.metra_observation_records` in the new METRA project.
+- Verified exact source-ID coverage for daily, hourly, climate, agricultural, FieldClimate, soil-temperature, and weather-phenomena tables.
+- Removed user identifiers, names, email addresses, role labels, observer names/roles, user-agent, browser-language, and observer IDs from the JSON payloads.
+- Used idempotent source identity keys; zero duplicate source identities remain.
+- 13 exact and unique station-name matches were linked. Ambiguous or unmatched observations remain unlinked for controlled reconciliation.
+- The one legacy `weather_records` row is a connection-test fixture and was intentionally excluded. `rainfall_reports` was empty at inspection.
+- Added `supabase/tests/observation_import_integrity.sql` and `docs/delivery/LEGACY-OBSERVATION-IMPORT-2026-11-02.md`.
+- The legacy INSERT database was queried read-only throughout. All writes were directed only to the new METRA database.
+- Security advisor returned zero findings after import.
