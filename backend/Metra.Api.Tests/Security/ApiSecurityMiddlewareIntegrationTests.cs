@@ -27,6 +27,22 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
     }
 
     [Fact]
+    public async Task Production_https_response_includes_hsts_header()
+    {
+        using var factory = new ApiFactory("Production");
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://metra.example.test")
+        });
+
+        using var response = await client.GetAsync("/api/v1/health");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Strict-Transport-Security", out var hstsValues));
+        Assert.Contains("max-age=", hstsValues!.Single());
+    }
+
+    [Fact]
     public async Task Cors_allows_only_configured_origin_for_simple_requests()
     {
         using var factory = new ApiFactory();
@@ -89,11 +105,11 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         }
     }
 
-    private sealed class ApiFactory : WebApplicationFactory<Program>
+    private sealed class ApiFactory(string environment = "Development") : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.UseEnvironment("Development");
+            builder.UseEnvironment(environment);
             builder.UseSetting("Cors:AllowedOrigins:0", "https://metra.example.test");
         }
     }
