@@ -66,8 +66,7 @@ public sealed class IdentityLinkApplicationService(
         var actor = await actorContextProvider.GetCurrentAsync(cancellationToken);
         if (actor is null ||
             string.IsNullOrWhiteSpace(actor.UserId) ||
-            string.IsNullOrWhiteSpace(actor.IdentityToLinkIssuer) ||
-        )
+            string.IsNullOrWhiteSpace(actor.IdentityToLinkIssuer))
         {
             return Failure("unauthenticated", "يلزم وجود جلسة هوية موثّقة.");
         }
