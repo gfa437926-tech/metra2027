@@ -28,8 +28,11 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
         Assert.Same(query, store.Query);
         Assert.NotNull(result.Page);
         Assert.Equal("event-2", result.Page.Items[0].EventId);
-        Assert.DoesNotContain("Reason", typeof(MetraAdministrativeAuditListItem)
-            .GetProperties().Select(property => property.Name));
+        var responseFields = typeof(MetraAdministrativeAuditListItem)
+            .GetProperties().Select(property => property.Name).ToArray();
+        Assert.DoesNotContain("Reason", responseFields);
+        Assert.DoesNotContain("PreviousValue", responseFields);
+        Assert.DoesNotContain("NewValue", responseFields);
     }
 
     [Fact]
