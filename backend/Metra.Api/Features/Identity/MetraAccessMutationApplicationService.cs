@@ -40,8 +40,9 @@ public sealed record MetraAccessMutationResult(bool Succeeded, string Code, stri
 
 /// <summary>
 /// The store is the security boundary: within one transaction it must reload
-/// and lock actor/target/catalogue facts, require an active target, authorize
-/// the actor for this exact operation and scope, validate active station and
+/// and lock actor/target/catalogue facts, require an active target for new
+/// access but allow authorized revocation on inactive targets, authorize the
+/// actor for this exact operation and scope, validate active station and
 /// permission catalogue entries, compare the expected version, persist the
 /// mutation and append an immutable audit event. Revocation preserves history.
 /// </summary>
