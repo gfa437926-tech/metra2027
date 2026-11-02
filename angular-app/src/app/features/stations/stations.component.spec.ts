@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach } from '@angular/core/testing';
 import { StationCatalogueService } from './station-catalogue.service';
 import { StationsComponent } from './stations.component';
 
@@ -25,7 +25,7 @@ const automatic = {
   elevationMetres: null
 };
 
-function setup(readPage: ReturnType<typeof vi.fn>, isConfigured = true) {
+function setup(readPage: jasmine.Spy, isConfigured = true) {
   TestBed.configureTestingModule({
     imports: [StationsComponent],
     providers: [{
@@ -42,7 +42,7 @@ describe('StationsComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('shows the unconfigured state without requesting or fabricating records', () => {
-    const readPage = vi.fn();
+    const readPage = jasmine.createSpy('readPage');
     const fixture = setup(readPage, false);
 
     expect(readPage).not.toHaveBeenCalled();
@@ -51,11 +51,11 @@ describe('StationsComponent', () => {
   });
 
   it('keeps same-name source records separate and counts missing coordinates', async () => {
-    const readPage = vi.fn().mockResolvedValue({
+    const readPage = jasmine.createSpy('readPage').and.returnValue(Promise.resolve({
       items: [classic, automatic],
       hasMore: false,
       nextCursor: null
-    });
+    }));
     const fixture = setup(readPage);
     await fixture.whenStable();
     fixture.detectChanges();
@@ -68,11 +68,11 @@ describe('StationsComponent', () => {
   });
 
   it('requests the selected source filter and exposes its pressed state', async () => {
-    const readPage = vi.fn().mockResolvedValue({
+    const readPage = jasmine.createSpy('readPage').and.returnValue(Promise.resolve({
       items: [classic],
       hasMore: false,
       nextCursor: null
-    });
+    }));
     const fixture = setup(readPage);
     await fixture.whenStable();
     fixture.detectChanges();
@@ -85,14 +85,15 @@ describe('StationsComponent', () => {
     fixture.detectChanges();
 
     expect(readPage).toHaveBeenCalledTimes(2);
-    expect(readPage.mock.calls[1][0]).toMatchObject({ sourceKind: 'classic' });
+    expect(readPage.calls.argsFor(1)[0]).toEqual(jasmine.objectContaining({ sourceKind: 'classic' }));
     expect(classicFilter!.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('preserves loaded rows and requires a fresh load after a duplicate next-page identity', async () => {
-    const readPage = vi.fn()
-      .mockResolvedValueOnce({ items: [classic], hasMore: true, nextCursor: 'page-2' })
-      .mockResolvedValueOnce({ items: [classic], hasMore: false, nextCursor: null });
+    const readPage = jasmine.createSpy('readPage').and.returnValues(
+      Promise.resolve({ items: [classic], hasMore: true, nextCursor: 'page-2' }),
+      Promise.resolve({ items: [classic], hasMore: false, nextCursor: null })
+    );
     const fixture = setup(readPage);
     await fixture.whenStable();
     fixture.detectChanges();
