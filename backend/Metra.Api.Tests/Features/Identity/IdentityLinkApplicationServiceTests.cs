@@ -97,6 +97,31 @@ public sealed class IdentityLinkApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_identity_key_values_over_documented_length_limits()
+    {
+        var oversizedIssuer = "https://" + new string('a', 510);
+        var oversizedSubject = new string('s', 256);
+        var store = new FakeStore(IdentityLinkCommitResult.Linked);
+
+        foreach (var (issuer, subject) in new[]
+        {
+            (oversizedIssuer, "subject"),
+            ("https://issuer.example.test", oversizedSubject)
+        })
+        {
+            var actor = new FakeActorProvider(new(
+                "account", issuer, subject, Now, Now, true));
+
+            var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
+
+            Assert.False(result.Succeeded);
+            Assert.Equal("invalid_identity", result.Code);
+        }
+
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
     public async Task Preserves_issuer_exactly_including_trailing_slash()
     {
         var actor = new FakeActorProvider(new(
