@@ -6,8 +6,8 @@ namespace Metra.Api.Features.Identity;
 /// </summary>
 public sealed record IdentityLinkActorContext(
     string UserId,
-    string AuthenticatedIssuer,
-    string AuthenticatedSubject,
+    string IdentityToLinkIssuer,
+    string IdentityToLinkSubject,
     DateTimeOffset AuthenticatedAt,
     bool IsAccountActive);
 
@@ -47,9 +47,10 @@ public sealed record IdentityLinkApplicationResult(
     string Message);
 
 /// <summary>
-/// Links the identity proven by the current authenticated session to that
-/// session's already-resolved METRA account. The caller cannot choose a target
-/// account. A recent authentication is required to reduce session-theft risk.
+/// Links a separately re-authenticated external identity to the METRA account
+/// already resolved for the current session. The actor context provider must
+/// verify proof-of-possession for the identity being linked and bind it to the
+/// active account session. The caller cannot choose a target account.
 /// </summary>
 public sealed class IdentityLinkApplicationService(
     IIdentityLinkActorContextProvider actorContextProvider,
@@ -64,8 +65,8 @@ public sealed class IdentityLinkApplicationService(
         var actor = await actorContextProvider.GetCurrentAsync(cancellationToken);
         if (actor is null ||
             string.IsNullOrWhiteSpace(actor.UserId) ||
-            string.IsNullOrWhiteSpace(actor.AuthenticatedIssuer) ||
-            string.IsNullOrWhiteSpace(actor.AuthenticatedSubject))
+            string.IsNullOrWhiteSpace(actor.IdentityToLinkIssuer) ||
+            string.IsNullOrWhiteSpace(actor.IdentityToLinkSubject))
         {
             return Failure("unauthenticated", "يلزم وجود جلسة هوية موثّقة.");
         }
@@ -84,8 +85,8 @@ public sealed class IdentityLinkApplicationService(
 
         var commit = await store.TryLinkAsync(
             actor.UserId,
-            actor.AuthenticatedIssuer,
-            actor.AuthenticatedSubject,
+            actor.IdentityToLinkIssuer,
+            actor.IdentityToLinkSubject,
             now,
             actor.UserId,
             cancellationToken);
