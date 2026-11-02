@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -77,7 +78,7 @@ class CurrentUserContextClient {
           'Accept': 'application/json',
           'Authorization': 'Bearer $token',
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 401) {
         return const CurrentUserContextResult(
@@ -117,6 +118,10 @@ class CurrentUserContextClient {
       return CurrentUserContextResult(
         _mapAccountState(context.accountState),
         context: context,
+      );
+    } on TimeoutException {
+      return const CurrentUserContextResult(
+        CurrentUserSessionState.unavailable,
       );
     } on FormatException {
       return const CurrentUserContextResult(
