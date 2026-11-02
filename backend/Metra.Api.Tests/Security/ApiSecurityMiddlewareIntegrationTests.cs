@@ -2,6 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Metra.Api.Tests;
@@ -29,6 +30,9 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
     public async Task Cors_preflight_allows_only_configured_origin()
     {
         using var factory = new ApiFactory();
+        Assert.Equal("https://metra.example.test",
+            factory.Services.GetRequiredService<IConfiguration>()["Cors:AllowedOrigins:0"]);
+
         using var client = factory.CreateClient();
 
         using var allowedRequest = new HttpRequestMessage(HttpMethod.Get, "/api/v1/health");
@@ -71,13 +75,7 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Development");
-            builder.ConfigureAppConfiguration((_, configuration) =>
-            {
-                configuration.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Cors:AllowedOrigins:0"] = "https://metra.example.test"
-                });
-            });
+            builder.UseSetting("Cors:AllowedOrigins:0", "https://metra.example.test");
         }
     }
 }
