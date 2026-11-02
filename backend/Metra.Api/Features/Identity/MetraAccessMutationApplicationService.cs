@@ -73,8 +73,11 @@ public sealed class MetraAccessMutationApplicationService(
         if (command is null || string.IsNullOrWhiteSpace(command.AccountId))
             return Failure("account_id_required");
 
+        if (command.AccountId.Any(char.IsControl))
+            return Failure("account_id_invalid");
+
         var accountId = command.AccountId.Trim();
-        if (accountId.Length > 128 || accountId.Any(char.IsControl))
+        if (accountId.Length > 128)
             return Failure("account_id_invalid");
         if (!Enum.IsDefined(command.Kind))
             return Failure("access_mutation_kind_invalid");
