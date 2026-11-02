@@ -96,7 +96,7 @@ describe('StationCatalogueService', () => {
     });
 
     const result = await resultPromise;
-    expect(result.items).toHaveLength(1);
+    expect(result.items.length).toBe(1);
     expect(result.items[0].sourceKind).toBe('classic');
     expect(result.items[0].latitude).toBe(33.5);
     expect(Object.isFrozen(result.items)).toBe(true);
