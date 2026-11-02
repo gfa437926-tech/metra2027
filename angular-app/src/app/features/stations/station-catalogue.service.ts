@@ -78,7 +78,7 @@ export class StationCatalogueService {
         (nextCursor !== null && nextCursor !== undefined &&
           (typeof nextCursor !== 'string' || nextCursor.length > 2048 ||
            nextCursor !== nextCursor.trim() ||
-           /[\\u0000-\\u001f\\u007f-\\u009f]/.test(nextCursor)))) {
+           /[\u0000-\u001f\u007f-\u009f]/.test(nextCursor)))) {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue cursor.');
     }
 
@@ -114,7 +114,7 @@ export class StationCatalogueService {
 
     if (typeof sourceRecordId !== 'string' || !/^[A-Za-z0-9._:-]{1,128}$/.test(sourceRecordId) ||
         typeof displayName !== 'string' || !displayName.trim() || displayName.length > 256 ||
-        /[\u0000-\u001f\u007f]/.test(displayName) ||
+        /[\u0000-\u001f\u007f-\u009f]/.test(displayName) ||
         !this.validOptionalText(sourceStationType, 128) ||
         !this.validOptionalText(sourceCode, 128) ||
         !this.validCoordinatePair(latitude, longitude) ||
@@ -143,7 +143,7 @@ export class StationCatalogueService {
   private validOptionalText(value: unknown, maxLength: number): boolean {
     return value === null || value === undefined ||
       (typeof value === 'string' && value.length <= maxLength &&
-       !/[\u0000-\u001f\u007f]/.test(value));
+       !/[\u0000-\u001f\u007f-\u009f]/.test(value));
   }
 
   private validCoordinatePair(latitude: unknown, longitude: unknown): boolean {
