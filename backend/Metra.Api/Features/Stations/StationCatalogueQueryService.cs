@@ -102,8 +102,10 @@ public sealed class StationCatalogueQueryService(
         if (query.NamePrefix is not null && prefix is null)
             return InvalidQuery();
 
-        var cursor = string.IsNullOrWhiteSpace(query.Cursor) ? null : query.Cursor;
-        if (cursor?.Any(char.IsControl) == true)
+        var cursor = query.Cursor;
+        if (cursor is not null &&
+            (cursor.Length == 0 || cursor.Length != cursor.Trim().Length ||
+             cursor.Any(char.IsControl)))
             return InvalidQuery();
 
         var actorUserId = await actorContextProvider.GetCurrentActorUserIdAsync(cancellationToken);
