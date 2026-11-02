@@ -161,6 +161,11 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
                     // production middleware test boot without connecting to a real database.
                     settings["ConnectionStrings:MetraDatabase"] =
                         "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable";
+                    // Valid syntax only: this middleware test never sends a bearer token
+                    // and must not depend on a real Supabase project or network discovery.
+                    settings["Authentication:Supabase:Authority"] =
+                        "https://ci-project.supabase.co/auth/v1";
+                    settings["Authentication:Supabase:Audience"] = "authenticated";
                 }
 
                 configuration.AddInMemoryCollection(settings);
