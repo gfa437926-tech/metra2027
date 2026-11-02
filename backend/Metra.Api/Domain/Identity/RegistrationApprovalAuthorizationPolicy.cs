@@ -38,6 +38,12 @@ public static class RegistrationApprovalAuthorizationPolicy
         if (request is null || string.IsNullOrWhiteSpace(request.RequestId))
             return Deny("registration_request_not_found", "طلب التسجيل غير موجود.");
 
+        // Missing applicant identity would make the self-approval check fail open.
+        // Missing station scope makes a station-stage decision unverifiable.
+        if (string.IsNullOrWhiteSpace(request.RequestedByUserId) ||
+            string.IsNullOrWhiteSpace(request.RequestedStationId))
+            return Deny("registration_request_invalid", "بيانات طلب التسجيل لا تسمح بالتحقق الآمن من الاعتماد.");
+
         if (!actor.IsActive)
             return Deny("inactive_actor", "حساب المستخدم غير نشط.");
 
