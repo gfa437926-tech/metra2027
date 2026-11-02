@@ -31,6 +31,10 @@ jobs:
       - name: Audit dependencies (block high and critical advisories)
         working-directory: angular-app
         run: npm audit --audit-level=high
+      - name: Run Angular unit tests
+        working-directory: angular-app
+        run: npm test
+
       - name: Build production bundle
         working-directory: angular-app
         run: npx ng build --configuration production --base-href /metra2027/
