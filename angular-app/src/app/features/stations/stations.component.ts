@@ -93,7 +93,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
             </div>
           }
           @if (hasMore()) {
-            <div class="load-more">
+            <div class="load-more" aria-live="polite" aria-atomic="true">
               <button type="button" (click)="loadMore()" [disabled]="isLoadingMore()">
                 {{ isLoadingMore() ? 'جارٍ تحميل المزيد…' : 'تحميل المزيد' }}
               </button>
