@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -23,7 +24,7 @@ public sealed class MetraAuthenticationBoundaryTests
             .Value.FallbackPolicy;
         Assert.NotNull(fallback);
         Assert.Contains(fallback!.Requirements, requirement =>
-            requirement is DenyAnonymousAuthorizationRequirement);
+            requirement.GetType().Name == nameof(DenyAnonymousAuthorizationRequirement));
 
         var authorization = provider.GetRequiredService<IAuthorizationService>();
         var anonymous = new ClaimsPrincipal(new ClaimsIdentity());
