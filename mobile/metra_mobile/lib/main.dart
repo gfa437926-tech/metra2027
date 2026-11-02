@@ -52,11 +52,11 @@ class _MetraHomePageState extends State<MetraHomePage> {
   @override
   void initState() {
     super.initState();
+    _sessionState = CurrentUserSessionState.loading;
     _loadCurrentUser();
   }
 
   Future<void> _loadCurrentUser() async {
-    setState(() => _sessionState = CurrentUserSessionState.loading);
     final result = await _identityClient.load();
     if (!mounted) return;
     setState(() {
