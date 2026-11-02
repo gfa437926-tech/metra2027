@@ -1,6 +1,6 @@
 # METRA 2027 — External Identity Link Persistence Contract
 
-Status: proposed persistence contract. This is not an executable migration and does not select a database schema, identity provider, or Supabase configuration.
+Status: proposed Supabase Auth account-link contract. This is not an executable migration and does not authorize a database schema or Supabase configuration change.
 
 Related documents:
 - `IDENTITY-API-CONTRACT.md`
@@ -10,13 +10,13 @@ Related documents:
 
 ## 1. Security invariants
 
-A persisted external identity link maps exactly one validated external identity to exactly one canonical METRA account.
+A persisted Supabase Auth link maps exactly one authenticated `auth.users.id` to exactly one canonical METRA account. Supabase Auth is the recommended provider for METRA 2027. ASP.NET Core remains the authority for METRA account state, role grants, station assignments and authorization.
 
-1. The identity key is the exact pair `(issuer, subject)`. Both values originate only from a validated provider proof, never from a request body.
-2. Issuer comparison is exact and case-sensitive. Do not lowercase it, remove a trailing slash, decode/re-encode its path, or otherwise normalize it. OIDC issuer identifiers are identifiers, not display URLs.
-3. Subject is opaque and case-sensitive. Do not trim, lowercase, parse, or derive it from email, phone, username, or display name.
-4. The same issuer+subject pair must never be linked to two METRA accounts.
-5. A METRA account may have multiple external identities only if the product explicitly permits it and each additional identity has independently verified proof-of-possession.
+1. The identity key is the UUID `sub` claim from a signature-, issuer-, audience- and expiry-validated Supabase Auth access token. It must match the corresponding Supabase-managed `auth.users.id`; it never originates from a request body.
+2. The accepted issuer is pinned to the configured Supabase project issuer and must match exactly. Expected form: `https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1`; confirm it against a non-production token and live provider metadata before enabling JWT validation.
+3. The `sub` value is an opaque UUID subject. Parse it as a UUID only for the FK to `auth.users.id`; never derive it from email, phone, username, or display name.
+4. The same `auth.users.id` must never be linked to two METRA accounts; enforce this with a database unique constraint.
+5. The initial model proposes one METRA account to one Supabase Auth user. Multiple sign-in identities (for example email/password and OAuth) may belong to the same Supabase Auth user and remain managed inside Supabase Auth. Linking a second, distinct Supabase Auth user to one METRA account is not permitted unless separately approved.
 6. Linking must not create or activate a METRA account. Account provisioning and approval remain separate workflows.
 7. The account must be active both before the application operation and again inside the persistence transaction immediately before commit.
 8. Link row and audit event commit atomically. A failed audit write means the identity link must not commit.
@@ -25,7 +25,7 @@ A persisted external identity link maps exactly one validated external identity 
 
 ## 2. Identity-key validation
 
-The current application boundary performs basic defensive validation before calling the store:
+The current generic application boundary performs defensive validation for an HTTPS issuer+subject pair. For the selected Supabase Auth design, the future adapter must instead validate the configured Supabase issuer and require a UUID `sub` that resolves to the corresponding managed `auth.users.id`. The generic issuer+subject implementation must not be treated as the final Supabase adapter:
 - issuer is an absolute HTTPS URI;
 - issuer contains no user information, query, or fragment;
 - issuer length is at most 512 characters;
@@ -37,11 +37,17 @@ This validation is not a substitute for OIDC validation. The trusted proof adapt
 
 ## 3. Logical data model
 
-The concrete migration must map the METRA account foreign key to the already-approved canonical account table. That table and key are not yet verified in this repository, so no guessed foreign key or executable migration is included.
+The proposed physical link is `metra.account_auth_links(account_id, auth_user_id, linked_at, revoked_at)`, where `account_id` references the canonical METRA account and `auth_user_id UUID` references `auth.users(id)`. The proposed one-to-one unique constraints and cross-schema FK require review against Supabase platform ownership before implementation. No guessed DDL or executable migration is included.
 
 ### Identity link record
 
 Required logical fields:
+- account_id — FK to `metra.accounts.account_id`;
+- auth_user_id — UUID FK to Supabase-managed `auth.users.id`;
+- linked_at — server timestamp;
+- revoked_at — nullable server timestamp for controlled unlink/revocation.
+
+Do not store a password, access token, refresh token, provider secret or duplicate email in this link.
 
 | Field | Requirement |
 |---|---|
@@ -165,4 +171,6 @@ Do not create or apply a database migration until all of the following are confi
 7. production transaction/concurrency integration tests;
 8. backup, restore, monitoring and incident-response procedures.
 
-Until then, `IIdentityLinkStore` remains an unimplemented contract. No live database, Supabase Auth, RLS, schema, existing account record or secret has been changed.
+The current `IdentityLinkApplicationService` is for linking a separately re-authenticated identity to an already-active METRA account; it is not the initial registration/onboarding flow because pending applicants are not active. Initial registration must be a separate application operation that atomically creates the pending METRA account, links the authenticated Supabase `auth.users.id`, creates the request and appends the submission audit event. Its persistence adapter remains unimplemented.
+
+No live database, Supabase Auth setting, RLS, schema, existing account record or secret has been changed.
