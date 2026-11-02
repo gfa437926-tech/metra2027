@@ -106,6 +106,13 @@ public sealed class RegistrationSubmissionApplicationService(
     IRegistrationSubmissionStore store,
     TimeProvider timeProvider)
 {
+    private const int MaximumNameLength = 120;
+    private const int MaximumPhoneLength = 40;
+    private const int MaximumRoleCodeLength = 128;
+    private const int MaximumStationIdLength = 128;
+    private const int MaximumTermsVersionLength = 64;
+    private const int MaximumIdempotencyKeyLength = 128;
+
     public async Task<RegistrationSubmissionApplicationResult> SubmitAsync(
         SubmitRegistrationRequest? command,
         CancellationToken cancellationToken = default)
@@ -117,9 +124,17 @@ public sealed class RegistrationSubmissionApplicationService(
             string.IsNullOrWhiteSpace(command.RequestedRoleCode) ||
             string.IsNullOrWhiteSpace(command.RequestedStationId) ||
             string.IsNullOrWhiteSpace(command.TermsVersion) ||
-            string.IsNullOrWhiteSpace(command.IdempotencyKey))
+            string.IsNullOrWhiteSpace(command.IdempotencyKey) ||
+            command.FirstName.Length > MaximumNameLength ||
+            command.FatherName.Length > MaximumNameLength ||
+            command.LastName.Length > MaximumNameLength ||
+            command.Phone?.Length > MaximumPhoneLength ||
+            command.RequestedRoleCode.Length > MaximumRoleCodeLength ||
+            command.RequestedStationId.Length > MaximumStationIdLength ||
+            command.TermsVersion.Length > MaximumTermsVersionLength ||
+            command.IdempotencyKey.Length > MaximumIdempotencyKeyLength)
         {
-            return Failure("invalid_registration", "بيانات طلب التسجيل غير مكتملة.");
+            return Failure("invalid_registration", "بيانات طلب التسجيل غير مكتملة أو تتجاوز الحدود المسموح بها.");
         }
 
         if (!command.TermsAccepted)
@@ -133,13 +148,13 @@ public sealed class RegistrationSubmissionApplicationService(
         }
 
         if (!await catalogue.IsRoleRequestableAsync(
-            command.RequestedRoleCode, cancellationToken))
+            command.RequestedRoleCode.Trim(), cancellationToken))
         {
             return Failure("role_not_available", "الدور المطلوب غير متاح للتسجيل.");
         }
 
         if (!await catalogue.IsStationSelectableAsync(
-            command.RequestedStationId, cancellationToken))
+            command.RequestedStationId.Trim(), cancellationToken))
         {
             return Failure("station_not_available", "المحطة المطلوبة غير متاحة للتسجيل.");
         }
@@ -150,11 +165,11 @@ public sealed class RegistrationSubmissionApplicationService(
             command.FatherName.Trim(),
             command.LastName.Trim(),
             NormalizeOptional(command.Phone),
-            command.RequestedRoleCode,
-            command.RequestedStationId,
-            command.TermsVersion,
+            command.RequestedRoleCode.Trim(),
+            command.RequestedStationId.Trim(),
+            command.TermsVersion.Trim(),
             timeProvider.GetUtcNow(),
-            command.IdempotencyKey);
+            command.IdempotencyKey.Trim());
 
         var result = await store.TryCreatePendingAsync(submission, cancellationToken);
 
