@@ -69,3 +69,12 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 - `20261102165758_index_account_state_requester`
 
 Compare local files and remote history before any CLI push/pull. Never blindly replay or reset the project database.
+
+
+## Follow-up engineering increment — 2026-11-02
+
+- Added `.github/workflows/flutter-ci.yml` on the delivery branch. It installs Flutter stable, resolves dependencies, checks Dart formatting, runs `flutter analyze`, and executes the committed Flutter tests.
+- The workflow was observed entering the GitHub Actions queue on commit `a97a07686d5e986e58f234ff429d57b866dfc2dd`; its final result must be checked before release.
+- This adds automated mobile validation but does not complete mobile feature integration or establish a committed dependency lockfile.
+- The current station HTTP endpoints remain intentionally fail-closed: `IStationCatalogueReadStore` and trusted identity context are not yet registered, so the endpoints return 503 rather than bypass authorization.
+- Remaining release gates in this document are unchanged. Do not mark production complete until the trusted PostgreSQL repositories, transactional authorization/audit, verified station data, end-to-end tests, Flutter feature workflows, deployment and restore rehearsal are complete.
