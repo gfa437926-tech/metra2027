@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddMetraAuthorization();
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
@@ -74,6 +75,7 @@ app.Use(async (context, next) =>
 app.UseRouting();
 app.UseCors("MetraClients");
 app.UseRateLimiter();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
