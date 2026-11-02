@@ -75,9 +75,8 @@
             "assets": [],
             "browsers": "ChromeHeadless",
             "watch": false,
-            "include": [
-              "src/app/features/stations/**/*.spec.ts"
-            ]
+            "include": [],
+            "main": "src/test.ts"
           }
         }
       }
