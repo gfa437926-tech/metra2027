@@ -48,7 +48,7 @@ export class CurrentUserContextService {
     try {
       const context = await firstValueFrom(
         this.http.get<CurrentUserContext>(
-          `${this.apiBaseUrl.replace(/\\/$/, '')}/identity/me`,
+          `${this.apiBaseUrl.endsWith('/') ? this.apiBaseUrl.slice(0, -1) : this.apiBaseUrl}/identity/me`,
           { withCredentials: true }
         )
       );
