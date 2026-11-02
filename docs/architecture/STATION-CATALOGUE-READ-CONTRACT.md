@@ -54,3 +54,12 @@ No production source adapter, endpoint mapping, dependency-injection registratio
 The trusted detail store must enforce the approved detail-read permission and the actor's authoritative station scope within the same read operation. It returns no record both for a missing record and for a record outside the actor's visible scope, preventing the detail lookup from becoming an existence oracle. Actor identity is derived from the authenticated server context, never from query input.
 
 The application service validates the source key, actor identifier, returned source-qualified identity, display name, optional source metadata, coordinate pair/ranges, and elevation bounds. A mismatched source key or malformed store projection fails closed. Missing coordinates and optional metadata remain null. This contract adds no endpoint, DI registration, database adapter, schema, or mutation workflow; activation remains subject to the gates above.
+
+
+## Angular station catalogue client
+
+The Angular application now includes a unified station catalogue screen at `/stations`, with a navigation entry under system administration. The screen presents one combined list, source-specific visual labels for Classic and Automatic records, source-local identifiers, source codes, coordinates, elevation, and an explicit no-coordinate state. Name filtering is client-side over the pages already loaded; source filtering does not change or merge the source identity.
+
+The client reads only from the planned `GET /api/v1/stations` contract and preserves cursor pagination. It normalizes numeric or named enum serialization for `StationCatalogueSourceKind`, validates the response envelope and every station's source identity, optional metadata, coordinate pair, and elevation, and rejects duplicate source-qualified keys. It sends credentials and maps 401/403 separately from service failures.
+
+Activation is deliberately disabled by default through `STATION_CATALOGUE_ENDPOINT_ENABLED`. The API endpoint, trusted permission-enforcing store, and approved identity context are not yet wired; the screen therefore displays an explicit unconfigured state rather than mock station records. The geographic map provider and actual map renderer are also not selected or activated. The screen documents the intended two-marker distinction and retains unlocated stations, but must not be described as a live map until the map provider and API integration are approved and implemented.
