@@ -151,6 +151,36 @@ public sealed class EffectivePermissionAuthorizationTests
     }
 
     [Fact]
+    public void Station_assignment_end_is_exclusive()
+    {
+        var result = EffectivePermissionAuthorization.Authorize(
+            MetraAccountAccessState.Active, "observations.read", "station-a",
+            [Grant()], [Assignment(until: Now)], Now);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("station_assignment_required", result.Code);
+    }
+
+    [Fact]
+    public void Non_utc_grant_timestamps_fail_closed()
+    {
+        var nonUtcGrant = new MetraPermissionGrant(
+            "observations.read", "station-a",
+            Now.ToOffset(TimeSpan.FromHours(3)), null, null);
+
+        Assert.False(nonUtcGrant.IsEffectiveAt(Now));
+    }
+
+    [Fact]
+    public void Non_utc_assignment_timestamps_fail_closed()
+    {
+        var nonUtcAssignment = new MetraStationAssignment(
+            "station-a", Now.ToOffset(TimeSpan.FromHours(3)), null, null);
+
+        Assert.False(nonUtcAssignment.IsEffectiveAt(Now));
+    }
+
+    [Fact]
     public void Unknown_account_state_fails_closed()
     {
         var result = EffectivePermissionAuthorization.Authorize(
