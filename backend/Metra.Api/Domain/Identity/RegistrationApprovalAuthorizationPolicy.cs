@@ -19,7 +19,8 @@ public sealed record RegistrationApprovalRequestContext(
     string RequestId,
     string RequestedByUserId,
     string RequestedStationId,
-    RegistrationApprovalStatus Status);
+    RegistrationApprovalStatus Status,
+    string? StationApprovedByUserId = null);
 
 public sealed record RegistrationApprovalAuthorizationResult(
     bool IsAuthorized,
@@ -55,7 +56,7 @@ public static class RegistrationApprovalAuthorizationPolicy
             RegistrationApprovalStatus.PendingStationApproval
                 => AuthorizeStationDecision(actor, request),
             RegistrationApprovalStatus.PendingSystemApproval
-                => AuthorizeSystemDecision(actor),
+                => AuthorizeSystemDecision(actor, request),
             _ => Deny("approval_not_pending", "طلب التسجيل ليس بانتظار قرار اعتماد.")
         };
     }
@@ -75,8 +76,19 @@ public static class RegistrationApprovalAuthorizationPolicy
     }
 
     private static RegistrationApprovalAuthorizationResult AuthorizeSystemDecision(
-        RegistrationApprovalActorContext actor)
+        RegistrationApprovalActorContext actor,
+        RegistrationApprovalRequestContext request)
     {
+        // The second stage must be backed by a persisted first-stage actor.
+        // Missing evidence must never turn a corrupted status into final approval.
+        if (string.IsNullOrWhiteSpace(request.StationApprovedByUserId))
+            return Deny("station_approval_evidence_missing", "لا يوجد سجل موثق لاعتماد مدير المحطة.");
+
+        // Enforce separation of duties: the station reviewer and system approver
+        // must be two distinct METRA accounts, not merely two permission checks.
+        if (string.Equals(actor.UserId, request.StationApprovedByUserId, StringComparison.Ordinal))
+            return Deny("approval_separation_of_duties_violation", "يجب أن يكون الاعتماد النهائي من مسؤول مختلف عن معتمد المحطة.");
+
         if (!actor.CanApproveSystemRegistrations)
             return Deny("system_approval_permission_required", "لا يملك المستخدم صلاحية الاعتماد النهائي للنظام.");
 
