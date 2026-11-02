@@ -91,7 +91,7 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - 29 classic records from `public.stations`.
 - 33 automatic records from `public.fieldclimate_stations`.
 - 50 coordinate records were copied from source rows with both latitude and longitude present.
-- 15 imported catalogue records have no current coordinate because the source did not contain a complete coordinate pair. No coordinates were guessed.
+- 12 imported catalogue records have no current coordinate because the source did not contain a complete coordinate pair. No coordinates were guessed.
 - 3 clearly synthetic demo catalogue records were added with `is_demo=true`.
 - All 65 records are `approval_status=pending` and `operational_status=unverified`; no imported station was silently approved or marked operational.
 - Classic and automatic station records remain separate and preserve their original source identifiers.
@@ -109,7 +109,7 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - Supabase security advisors returned zero findings after these changes.
 - Performance advisor returned informational unused-index notices; no indexes were removed.
 - Legacy read-only count verification after import returned unchanged station counts: 29 classic and 33 automatic. The legacy weather/report data remained untouched.
-- The full weather/report history has not yet been migrated. It requires dedicated table mappings, privacy/identity handling, data-quality validation, and explicit retention rules before bulk transfer.
+- The observation history was subsequently migrated in a separate, privacy-filtered milestone: 58,059 records are now in the new observation store. See `docs/delivery/LEGACY-OBSERVATION-IMPORT-2026-11-02.md` for counts, station-link coverage, and remaining reconciliation.
 
 
 ## Observation migration milestone — 2026-11-03
