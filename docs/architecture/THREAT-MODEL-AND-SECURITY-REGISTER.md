@@ -54,9 +54,11 @@ Every endpoint must declare authentication, permission, resource/station scope, 
 
 ## Initial status
 - Threat categories and trust boundaries documented.
+- Provider-neutral object-level authorization requirement/handler is registered; it requires an authenticated subject and delegates every resource decision to an authoritative evaluator. No production evaluator or endpoint-level resource policy invocation exists yet.
 - Deployment topology and full attack-surface inventory: pending.
 - Data classification and privacy review: pending.
 - Identity, hosting, KMS and database controls: pending approval.
+- Resource authorization unit tests cover evaluator allow/deny, anonymous/missing subject and malformed descriptors; production cross-station integration tests: pending authoritative data adapter.
 - Security tests and penetration test: not yet run.
 - No production security certification is claimed.
 
