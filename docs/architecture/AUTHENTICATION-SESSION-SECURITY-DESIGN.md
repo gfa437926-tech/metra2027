@@ -110,3 +110,30 @@ Before enabling sign-in or protected business endpoints:
 - Complete data classification, retention and incident-response requirements.
 
 Until these decisions and adapters are approved, do not configure production authentication, add a default permissive scheme, expose sign-in/recovery endpoints, modify Supabase Auth, or migrate account records. The API must not claim authenticated operation merely because an authorization policy or test principal exists.
+
+
+## Client current-user session presentation
+
+Angular and Flutter now use the same explicit session-state vocabulary: `unconfigured`,
+`loading`, `unauthenticated`, `active`, `pendingApproval`, `suspended`,
+`forbidden`, `unavailable`, and `unknownAccountState`.
+
+- Angular's `CurrentUserContextService` calls `GET /api/v1/identity/me` only when the
+  `IDENTITY_CONTEXT_ENDPOINT_ENABLED` injection token is explicitly enabled. Its default is
+  false. The default API base path is same-origin `/api/v1`.
+- Flutter's `CurrentUserContextClient` calls the same endpoint only when
+  `METRA_IDENTITY_CONTEXT_ENABLED=true` is supplied at build/run time. Its default is false.
+  Native bearer tokens are supplied through an `AccessTokenProvider` abstraction; no token
+  is hard-coded or persisted by this client.
+- Both clients clear the previous context before refresh and do not retain an earlier user's
+  profile after an authentication or transport failure.
+- HTTP 401 maps to unauthenticated, 403 to forbidden, and 404 to unconfigured. Other
+  transport/server failures map to unavailable. Unknown server account states never map to
+  active.
+- The UI shows an explicit preview/unconfigured warning and does not invent a user or station.
+  This is presentation state only; it does not guard sensitive routes or replace API
+  authorization.
+
+The endpoint remains unmapped and the feature flags remain disabled by default. Enabling
+either flag before an approved identity provider, secure client session implementation and
+authoritative account-context endpoint are deployed is not supported.
