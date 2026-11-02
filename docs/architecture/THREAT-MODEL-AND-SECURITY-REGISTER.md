@@ -55,6 +55,7 @@ Every endpoint must declare authentication, permission, resource/station scope, 
 ## Initial status
 - Threat categories and trust boundaries documented.
 - Provider-neutral object-level authorization requirement/handler is registered; it requires an authenticated subject and delegates every resource decision to an authoritative evaluator. No production evaluator or endpoint-level resource policy invocation exists yet.
+- A provider-neutral fail-closed evaluator now requires active actor, existing resource, canonical persisted station scope and active assignment facts from one authoritative data-source result; it ignores request-supplied station IDs and denies missing facts or data-source errors. It is not wired as the production evaluator because no authoritative persistence adapter exists. The default deny-all registration remains in effect. Endpoint invocation, endpoint-specific permission checks and production cross-station integration tests remain pending.
 - Deployment topology and full attack-surface inventory: pending.
 - Data classification and privacy review: pending.
 - Identity, hosting, KMS and database controls: pending approval.
