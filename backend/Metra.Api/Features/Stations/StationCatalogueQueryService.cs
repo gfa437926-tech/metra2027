@@ -184,11 +184,11 @@ public sealed class StationCatalogueQueryService(
 
     private static string? NormalizeNamePrefix(string? value)
     {
-        if (value is null)
+        if (value is null || value.Any(char.IsControl))
             return null;
+
         var normalized = value.Trim();
-        return normalized.Length is > 0 and <= MaximumNamePrefixLength &&
-               !normalized.Any(char.IsControl)
+        return normalized.Length is > 0 and <= MaximumNamePrefixLength
             ? normalized
             : null;
     }
