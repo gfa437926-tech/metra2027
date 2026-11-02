@@ -31,17 +31,17 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         using var factory = new ApiFactory();
         using var client = factory.CreateClient();
 
-        using var allowedRequest = new HttpRequestMessage(HttpMethod.Options, "/api/v1/health");
+        using var allowedRequest = new HttpRequestMessage(HttpMethod.Get, "/api/v1/health");
         allowedRequest.Headers.Add("Origin", "https://metra.example.test");
-        allowedRequest.Headers.Add("Access-Control-Request-Method", "GET");
         using var allowedResponse = await client.SendAsync(allowedRequest);
 
-        Assert.Equal("https://metra.example.test",
-            allowedResponse.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        Assert.True(
+            allowedResponse.Headers.TryGetValues("Access-Control-Allow-Origin", out var allowedOrigins),
+            $"Expected CORS allow-origin header. Status: {(int)allowedResponse.StatusCode}; response: {await allowedResponse.Content.ReadAsStringAsync()}");
+        Assert.Equal("https://metra.example.test", allowedOrigins!.Single());
 
-        using var deniedRequest = new HttpRequestMessage(HttpMethod.Options, "/api/v1/health");
+        using var deniedRequest = new HttpRequestMessage(HttpMethod.Get, "/api/v1/health");
         deniedRequest.Headers.Add("Origin", "https://attacker.example.test");
-        deniedRequest.Headers.Add("Access-Control-Request-Method", "GET");
         using var deniedResponse = await client.SendAsync(deniedRequest);
 
         Assert.False(deniedResponse.Headers.Contains("Access-Control-Allow-Origin"));
