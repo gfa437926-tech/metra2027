@@ -10,8 +10,17 @@ namespace Metra.Api.Tests;
 
 public sealed class ApiSecurityMiddlewareIntegrationTests
 {
+    static ApiSecurityMiddlewareIntegrationTests()
+    {
+        // WebApplicationFactory executes top-level Program before ConfigureWebHost;
+        // supply a harmless CI-only value through the normal environment provider.
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__MetraDatabase",
+            "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable");
+    }
+
     [Fact]
-    public async Task Readiness_is_unavailable_when_database_is_not_configured()
+    public async Task Readiness_is_unavailable_when_database_cannot_be_reached()
     {
         using var factory = new ApiFactory();
         using var client = factory.CreateClient();
