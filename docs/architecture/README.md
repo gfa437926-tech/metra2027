@@ -97,3 +97,8 @@ Registration submission HTTP semantics and security requirements are specified i
 
 
 The provider-independent role/permission catalogue structure and validation rules are specified in `AUTHORIZATION-CATALOGUE-CONTRACT.md`. A pure validator and unit tests now reject malformed/duplicate definitions and dangling or duplicate mappings. No concrete METRA role codes, permission codes, role mappings, seed data, or database objects have been selected or created.
+
+## Authorization governance additions
+
+- `AUTHORIZATION-CATALOGUE-CONTRACT.md` — provider-independent role/permission catalogue structure and structural validation, without preselecting METRA role codes or mappings.
+- `ACCOUNT-LIFECYCLE-AND-ACCESS-MUTATION-CONTRACT.md` — explicit account suspend/restore/disable transitions, effective-access consequences, station/grant mutation boundaries, and audit requirements.
