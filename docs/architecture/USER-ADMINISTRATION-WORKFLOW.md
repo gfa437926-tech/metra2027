@@ -155,9 +155,9 @@ Do not show a requested role/station as granted before provisioning completes. D
 
 ## 8. Current .NET implementation boundary
 
-The API now contains a pure registration approval workflow in backend/Metra.Api/Features/Registration/RegistrationApprovalWorkflow.cs. It enforces the station stage before the system stage, station assignment scope for station decisions, explicit stage permissions, self-approval prevention, terminal rejection, UTC audit-event facts, and rejection of stale/out-of-order transitions. Unit tests are in backend/Metra.Api.Tests/Features/Registration/RegistrationApprovalWorkflowTests.cs.
+The API already contains a pure two-stage state machine in backend/Metra.Api/Domain/Identity/RegistrationApprovalWorkflow.cs and an application orchestration contract in backend/Metra.Api/Features/Identity/RegistrationApprovalApplicationService.cs. The application service resolves actor context, enforces self-approval prevention, checks station scope and system approval permission, applies the domain transition, and calls a compare-and-set store contract. Unit tests cover the state machine, authorization policy and application service.
 
-The workflow returns a transition and audit-event value; it does not write to a database. A future repository must load the request under a transaction/lock and persist the state change, audit event, and (on final approval) approved role grant and station assignment atomically. Do not expose approval endpoints until authoritative permission and assignment adapters are implemented.
+A security review added an explicit CanApproveStationRegistrations fact: an active station assignment alone must not imply approval permission. The policy now requires both the explicit station-approval permission and an active assignment for the requested station. The store contract still has no production adapter. A future implementation must load the request under a transaction/lock and persist the state change, audit event, and (on final approval) approved role grant and station assignment atomically. Do not expose approval endpoints until authoritative actor-context and persistence adapters are implemented.
 
 ## 9. Approval checklist before persistence implementation
 
