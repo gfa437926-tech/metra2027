@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -35,7 +36,7 @@ public sealed class MetraPermissionAuthorizationTests
         await new MetraPermissionAuthorizationHandler().HandleAsync(context);
 
         Assert.False(context.HasSucceeded);
-        Assert.Empty(context.PendingRequirements);
+        Assert.Single(context.PendingRequirements);
     }
 
     [Fact]
