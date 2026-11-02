@@ -135,6 +135,8 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
   - Angular dependency audit, test-source type check, unit tests and production bundle: **success**.
   - Flutter dependency resolution, Dart formatting, analysis and tests: **success**.
 - The preceding Flutter run on `82771e15ed68c5d355ac780ef16d7879fe9e13f7` failed the formatting gate. The test file was formatted in the verified commit above; the subsequent complete Flutter workflow passed.
+- Verified test totals from the workflow logs: **548 .NET tests**, **12 Angular unit tests**, and **5 Flutter tests**, all passed with zero failures. Angular production bundle also completed successfully.
+- CI emitted maintenance warnings for deprecated Node.js 20-based GitHub Actions and a deprecated npm transitive package; these did not fail the build and remain dependency/toolchain cleanup items.
 - PR #1 remains open and draft. These CI results do not mean the PR is merged or the system deployed.
 
 ### Live METRA database verification
