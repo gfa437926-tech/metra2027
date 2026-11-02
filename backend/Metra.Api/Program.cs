@@ -71,6 +71,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseRouting();
 app.UseCors("MetraClients");
 app.UseRateLimiter();
 
