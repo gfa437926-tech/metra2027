@@ -109,6 +109,7 @@ public sealed class RegistrationSubmissionApplicationServiceTests
     [InlineData("FirstName")]
     [InlineData("FatherName")]
     [InlineData("LastName")]
+    [InlineData("Phone")]
     [InlineData("RequestedRoleCode")]
     [InlineData("RequestedStationId")]
     [InlineData("TermsVersion")]
@@ -124,6 +125,7 @@ public sealed class RegistrationSubmissionApplicationServiceTests
             "FirstName" => ValidCommand() with { FirstName = oversized },
             "FatherName" => ValidCommand() with { FatherName = oversized },
             "LastName" => ValidCommand() with { LastName = oversized },
+            "Phone" => ValidCommand() with { Phone = oversized },
             "RequestedRoleCode" => ValidCommand() with { RequestedRoleCode = oversized },
             "RequestedStationId" => ValidCommand() with { RequestedStationId = oversized },
             "TermsVersion" => ValidCommand() with { TermsVersion = oversized },
