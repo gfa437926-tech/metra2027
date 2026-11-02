@@ -96,13 +96,46 @@ public sealed class MetraAdministrativeAuditQueryService(
         var read = await store.ReadAsync(actorId, query, cancellationToken);
         return read.Result switch
         {
-            MetraAdministrativeAuditReadResult.Success when read.Page is not null =>
+            MetraAdministrativeAuditReadResult.Success when IsValidPage(read.Page, query.PageSize) =>
                 new(true, "audit_query_succeeded", read.Page),
             MetraAdministrativeAuditReadResult.Success => Failure("audit_store_response_invalid"),
             MetraAdministrativeAuditReadResult.ActorNotAuthorized => Failure("actor_not_authorized"),
             MetraAdministrativeAuditReadResult.CursorInvalid => Failure("audit_cursor_invalid"),
             _ => Failure("audit_query_failed")
         };
+    }
+
+
+    private static bool IsValidPage(MetraAdministrativeAuditPage? page, int pageSize)
+    {
+        if (page?.Events is null || page.Events.Count > pageSize)
+            return false;
+        if (page.HasMore &&
+            (string.IsNullOrWhiteSpace(page.NextCursor) ||
+             page.NextCursor.Length > MaximumCursorLength ||
+             page.NextCursor.Any(char.IsControl)))
+            return false;
+        if (!page.HasMore && page.NextCursor is not null)
+            return false;
+
+        var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        MetraAdministrativeAuditEvent? previous = null;
+        foreach (var auditEvent in page.Events)
+        {
+            if (!MetraAdministrativeAuditEventPolicy.Validate(auditEvent).IsValid ||
+                !seenIds.Add(auditEvent.EventId))
+                return false;
+
+            if (previous is not null &&
+                (previous.OccurredAtUtc < auditEvent.OccurredAtUtc ||
+                 previous.OccurredAtUtc == auditEvent.OccurredAtUtc &&
+                 string.CompareOrdinal(previous.EventId, auditEvent.EventId) < 0))
+                return false;
+
+            previous = auditEvent;
+        }
+
+        return true;
     }
 
     private static bool IsOptionalIdentifier(string? value)
