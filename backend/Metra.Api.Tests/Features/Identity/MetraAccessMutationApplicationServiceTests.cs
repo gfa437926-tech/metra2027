@@ -141,6 +141,21 @@ public sealed class MetraAccessMutationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Allows_revocation_for_suspended_account_to_support_access_cleanup()
+    {
+        var store = new FakeStore(new("user-1", MetraAccountAccessState.Suspended, 9));
+        var service = new MetraAccessMutationApplicationService(new FakeActor("admin"), store);
+        var command = new ChangeMetraAccessCommand(
+            "user-1", MetraAccessMutationKind.RevokePermission, "grant-9",
+            null, null, "Emergency access cleanup");
+
+        var result = await service.ExecuteAsync(command);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Revoke_requires_exact_record_id_and_no_replacement_payload()
     {
         var actor = new FakeActor("admin");
