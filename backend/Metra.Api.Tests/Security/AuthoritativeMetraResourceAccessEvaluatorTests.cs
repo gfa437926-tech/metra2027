@@ -86,6 +86,72 @@ public sealed class AuthoritativeMetraResourceAccessEvaluatorTests
     }
 
     [Fact]
+    public async Task Denies_non_utc_assignment_even_when_its_instant_covers_now()
+    {
+        var source = new FakeDataSource(new(
+            true,
+            true,
+            "station-7",
+            [new("station-7", Now.AddDays(-1).ToOffset(TimeSpan.FromHours(3)), null, null)]));
+        var evaluator = Evaluator(source);
+
+        var allowed = await evaluator.CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
+    public async Task Denies_assignment_with_empty_or_reversed_validity_window()
+    {
+        var source = new FakeDataSource(new(
+            true,
+            true,
+            "station-7",
+            [new("station-7", Now.AddDays(-1), Now.AddDays(-2), null)]));
+        var evaluator = Evaluator(source);
+
+        var allowed = await evaluator.CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
+    public async Task Denies_noncanonical_authoritative_station_identifier()
+    {
+        var source = new FakeDataSource(new(
+            true,
+            true,
+            " station-7 ",
+            [new(" station-7 ", Now.AddDays(-1), null, null)]));
+        var evaluator = Evaluator(source);
+
+        var allowed = await evaluator.CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
+    public async Task Denies_when_time_provider_does_not_return_utc()
+    {
+        var source = new FakeDataSource(new(
+            true,
+            true,
+            "station-7",
+            [new("station-7", Now.AddDays(-1), null, null)]));
+        var evaluator = new AuthoritativeMetraResourceAccessEvaluator(
+            source,
+            new FixedTimeProvider(Now.ToOffset(TimeSpan.FromHours(3))));
+
+        var allowed = await evaluator.CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
     public async Task Does_not_trust_station_id_supplied_by_resource_descriptor()
     {
         var source = new FakeDataSource(new(
