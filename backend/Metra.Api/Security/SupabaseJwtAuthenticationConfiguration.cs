@@ -68,6 +68,9 @@ public static class SupabaseJwtAuthenticationConfiguration
                 ValidAudience = audience,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+                // Supabase JWKS publishes public verification keys for asymmetric
+                // signing. HS256 requires a separate server-side verification path.
+                ValidAlgorithms = [SecurityAlgorithms.RsaSha256, SecurityAlgorithms.EcdsaSha256],
                 NameClaimType = "sub",
                 ClockSkew = TimeSpan.FromSeconds(60)
             };
