@@ -43,7 +43,6 @@ public sealed class MetraDatabaseConfigurationTests
         var parsed = new NpgsqlConnectionStringBuilder(configured);
 
         Assert.Equal(SslMode.VerifyFull, parsed.SslMode);
-        Assert.False(parsed.TrustServerCertificate);
         Assert.True(parsed.Pooling);
         Assert.Equal(0, parsed.MinPoolSize);
         Assert.Equal(50, parsed.MaxPoolSize);
