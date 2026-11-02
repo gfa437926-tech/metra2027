@@ -35,9 +35,15 @@ public static class StationMapProjection
         {
             ArgumentNullException.ThrowIfNull(station);
             if (!Enum.IsDefined(station.SourceKind) ||
-                string.IsNullOrWhiteSpace(station.SourceRecordId) ||
-                string.IsNullOrWhiteSpace(station.DisplayName))
+                !IsSourceRecordId(station.SourceRecordId) ||
+                string.IsNullOrWhiteSpace(station.DisplayName) ||
+                station.DisplayName.Length > 256 ||
+                station.DisplayName.Any(char.IsControl))
                 throw new ArgumentException("Station projection input is malformed.", nameof(stations));
+
+            var key = $"{station.SourceKind}:{station.SourceRecordId}";
+            if (!seenKeys.Add(key))
+                throw new ArgumentException("Station source identity must be unique.", nameof(stations));
 
             if (station.Latitude is null && station.Longitude is null)
             {
@@ -51,10 +57,6 @@ public static class StationMapProjection
                 longitude is < -180m or > 180m)
                 throw new ArgumentException("Station coordinates must be a valid complete pair.", nameof(stations));
 
-            var key = $"{station.SourceKind}:{station.SourceRecordId}";
-            if (!seenKeys.Add(key))
-                throw new ArgumentException("Station source identity must be unique.", nameof(stations));
-
             markers.Add(new(key, station.SourceKind, station.DisplayName, latitude, longitude));
         }
 
@@ -62,4 +64,10 @@ public static class StationMapProjection
             Array.AsReadOnly(markers.ToArray()),
             Array.AsReadOnly(withoutCoordinates.ToArray()));
     }
+
+    private static bool IsSourceRecordId(string? value)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= 128 &&
+           value == value.Trim() &&
+           value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.' or ':');
 }
