@@ -16,6 +16,8 @@
 - Required a source reference for official-record coordinates, synchronized reviewer/timestamp fields, and review reasons for non-pending decisions.
 - Recorded four remote migrations and mirrored their SQL under `supabase/migrations/`.
 - Supabase security advisor returned zero security findings after the RLS policies were installed.
+- Executed rollback-only SQL regression checks proving overlapping coordinate periods, missing official-coordinate provenance, and overlapping pending access grants are rejected. Follow-up verification confirmed all six tables still contain zero rows and all five new integrity constraints are present.
+- Added the repeatable rollback-only test script at `supabase/tests/station_catalogue_integrity.sql`.
 - Re-queried the project: all six tables exist, RLS is enabled, and all six contain zero rows. No legacy station records were copied or joined.
 
 ## Data model and operating rules
