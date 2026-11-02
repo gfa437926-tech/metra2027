@@ -98,6 +98,22 @@ public sealed class RegistrationApprovalApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_undefined_decision_before_accessing_actor_or_store()
+    {
+        var store = new FakeStore(Request());
+        var actorProvider = new FakeActorProvider(null);
+        var service = new RegistrationApprovalApplicationService(actorProvider, store);
+
+        var result = await service.DecideAsync(new(
+            "request-1", (RegistrationApprovalDecision)999, null));
+
+        Assert.Equal("invalid_decision", result.Code);
+        Assert.Equal(0, actorProvider.Calls);
+        Assert.Equal(0, store.FindCalls);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Rejects_oversized_note_before_accessing_actor_or_store()
     {
         var store = new FakeStore(Request());
