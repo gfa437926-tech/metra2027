@@ -90,3 +90,5 @@ The repository inspection and decision not to introduce a speculative database a
 
 
 The legacy Supabase project `INSERT` has been inspected read-only and remains separate from the new target. Its schema, classic/automatic station counts, scientific record counts, and security-advisor findings are documented in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md`. No legacy or target database objects were changed.
+
+Registration submission HTTP semantics and security requirements are specified in `REGISTRATION-SUBMISSION-API-CONTRACT.md`. The application service exists, but the HTTP endpoint and production actor/catalogue/store adapters remain pending; do not expose registration until those release gates pass.
