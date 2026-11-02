@@ -130,6 +130,7 @@ export class StationsComponent {
   readonly searchText = signal('');
   private readonly appliedSearch = signal('');
   private readonly consumedCursors = new Set<string>();
+  private requestGeneration = 0;
 
   readonly classicCount = computed(() => this.items().filter(x => x.sourceKind === 'classic').length);
   readonly automaticCount = computed(() => this.items().filter(x => x.sourceKind === 'automatic').length);
@@ -141,6 +142,7 @@ export class StationsComponent {
   }
 
   async load(): Promise<void> {
+    const generation = ++this.requestGeneration;
     if (!this.catalogue.isConfigured) {
       this.state.set('unconfigured');
       return;
@@ -152,17 +154,19 @@ export class StationsComponent {
     this.consumedCursors.clear();
     try {
       const page = await this.catalogue.readPage(this.buildQuery());
+      if (generation !== this.requestGeneration) return;
       this.items.set(page.items);
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
       this.state.set('loaded');
     } catch (error: unknown) {
-      this.setErrorState(error);
+      if (generation === this.requestGeneration) this.setErrorState(error);
     }
   }
 
   async loadMore(): Promise<void> {
     const cursor = this.nextCursor();
+    const generation = this.requestGeneration;
     if (!cursor || this.state() === 'loading') return;
     if (this.consumedCursors.has(cursor)) {
       this.setErrorState(new StationCatalogueHttpError(502, 'Repeated station catalogue cursor.'));
@@ -171,6 +175,7 @@ export class StationsComponent {
     this.state.set('loading');
     try {
       const page = await this.catalogue.readPage({ ...this.buildQuery(), cursor });
+      if (generation !== this.requestGeneration) return;
       const known = new Set(this.items().map(x => x.sourceKind + ':' + x.sourceRecordId));
       if (page.items.some(x => known.has(x.sourceKind + ':' + x.sourceRecordId))) {
         throw new StationCatalogueHttpError(502, 'Duplicate station identity across catalogue pages.');
@@ -184,7 +189,7 @@ export class StationsComponent {
       this.nextCursor.set(page.nextCursor);
       this.state.set('loaded');
     } catch (error: unknown) {
-      this.setErrorState(error);
+      if (generation === this.requestGeneration) this.setErrorState(error);
     }
   }
 
