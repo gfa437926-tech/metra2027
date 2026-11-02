@@ -56,6 +56,7 @@ Every endpoint must declare authentication, permission, resource/station scope, 
 - Threat categories and trust boundaries documented.
 - Provider-neutral object-level authorization requirement/handler is registered; it requires an authenticated subject and delegates every resource decision to an authoritative evaluator. No production evaluator or endpoint-level resource policy invocation exists yet.
 - A provider-neutral fail-closed evaluator now requires active actor, existing resource, canonical persisted station scope and active assignment facts from one authoritative data-source result; it ignores request-supplied station IDs and denies missing facts or data-source errors. It is not wired as the production evaluator because no authoritative persistence adapter exists. The default deny-all registration remains in effect. Endpoint invocation, endpoint-specific permission checks and production cross-station integration tests remain pending.
+- The reusable evaluator now receives time-bounded assignment records and an injected `TimeProvider`; it requires exact canonical station matching, `ValidFromUtc <= now`, and `ValidToUtc`/`RevokedAtUtc` to be absent or strictly later than now. This makes expired and revoked assignments deny immediately at evaluation time. Unit tests use a fixed clock; persistence-backed integration tests remain pending.
 - Deployment topology and full attack-surface inventory: pending.
 - Data classification and privacy review: pending.
 - Identity, hosting, KMS and database controls: pending approval.
