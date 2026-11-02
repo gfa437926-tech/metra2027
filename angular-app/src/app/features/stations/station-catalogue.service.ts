@@ -73,8 +73,11 @@ export class StationCatalogueService {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue response.');
     }
     const nextCursor = raw['nextCursor'];
-    if ((raw['hasMore'] && (typeof nextCursor !== 'string' || !nextCursor)) ||
-        (nextCursor !== null && nextCursor !== undefined && typeof nextCursor !== 'string')) {
+    if ((raw['hasMore'] && (typeof nextCursor !== 'string' || !nextCursor.trim())) ||
+        (!raw['hasMore'] && nextCursor !== null && nextCursor !== undefined) ||
+        (nextCursor !== null && nextCursor !== undefined &&
+          (typeof nextCursor !== 'string' || nextCursor.length > 2048 ||
+           nextCursor !== nextCursor.trim() || /[\\u0000-\\u001f\\u007f]/.test(nextCursor)))) {
       throw new StationCatalogueHttpError(502, 'Invalid station catalogue cursor.');
     }
 
