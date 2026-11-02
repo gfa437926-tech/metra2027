@@ -27,8 +27,9 @@ public sealed record MetraPermissionGrant(
     public bool IsEffectiveAt(DateTimeOffset instantUtc)
     {
         if (string.IsNullOrWhiteSpace(PermissionCode) ||
-            ValidUntilUtc is { } end && end <= ValidFromUtc ||
-            RevokedAtUtc is { } revoked && revoked < ValidFromUtc)
+            ValidFromUtc.Offset != TimeSpan.Zero ||
+            ValidUntilUtc is { } end && (end.Offset != TimeSpan.Zero || end <= ValidFromUtc) ||
+            RevokedAtUtc is { } revoked && (revoked.Offset != TimeSpan.Zero || revoked < ValidFromUtc))
             return false;
 
         return instantUtc >= ValidFromUtc &&
@@ -50,8 +51,9 @@ public sealed record MetraStationAssignment(
     public bool IsEffectiveAt(DateTimeOffset instantUtc)
     {
         if (string.IsNullOrWhiteSpace(StationId) ||
-            ValidUntilUtc is { } end && end <= ValidFromUtc ||
-            RevokedAtUtc is { } revoked && revoked < ValidFromUtc)
+            ValidFromUtc.Offset != TimeSpan.Zero ||
+            ValidUntilUtc is { } end && (end.Offset != TimeSpan.Zero || end <= ValidFromUtc) ||
+            RevokedAtUtc is { } revoked && (revoked.Offset != TimeSpan.Zero || revoked < ValidFromUtc))
             return false;
 
         return instantUtc >= ValidFromUtc &&
