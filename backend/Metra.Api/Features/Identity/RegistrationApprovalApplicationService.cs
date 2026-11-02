@@ -15,8 +15,10 @@ public interface IRegistrationApprovalActorContextProvider
 /// Persistence boundary for approval decisions. TryCommitDecisionAsync must use
 /// one transaction to reload and lock the current request and actor authorization
 /// facts, then revalidate actor activity, explicit stage permission, self-approval
-/// prohibition, and (for station review) the current station assignment. It must
-/// serialize against concurrent permission/assignment revocation so stale facts
+/// prohibition, and (for station review) the current station assignment. For
+/// final review it must also verify persisted station-stage evidence and enforce
+/// that the system approver differs from the station approver. It must serialize
+/// against concurrent permission/assignment revocation so stale facts
 /// from the earlier application-layer check cannot authorize a decision.
 /// Within that same transaction it must compare-and-set expectedStatus and append
 /// the immutable decision audit event. On final approval only, it must activate
