@@ -7,7 +7,7 @@ public static class ObservationValidationEndpoints
 {
     public static IEndpointRouteBuilder MapObservationValidationEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var group = endpoints.MapGroup("/api/v1/observations").WithTags("Observation validation");
+        // These endpoints perform deterministic payload validation only; they do not read or mutate user data.\n        var group = endpoints.MapGroup("/api/v1/observations")\n            .WithTags("Observation validation")\n            .AllowAnonymous();
 
         group.MapPost("/daily/validate", ([FromBody] ObservationValidationRequest? request) =>
         {
