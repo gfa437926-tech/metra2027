@@ -105,6 +105,20 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         }
     }
 
+
+    [Fact]
+    public async Task Pure_observation_validation_endpoint_is_explicitly_anonymous()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/observations/daily/validate",
+            new { values = (Dictionary<string, string?>?)null });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
     private sealed class ApiFactory(string environment = "Development") : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
