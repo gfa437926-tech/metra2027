@@ -88,6 +88,39 @@ describe('StationsComponent', () => {
     expect(classicFilter!.getAttribute('aria-pressed')).toBe('true');
   });
 
+  it('preserves loaded rows after a transient page failure and retries successfully', async () => {
+    const readPage = jasmine.createSpy('readPage').and.returnValues(
+      Promise.resolve({ items: [classic], hasMore: true, nextCursor: 'page-2' }),
+      Promise.reject(new Error('Temporary network failure')),
+      Promise.resolve({ items: [automatic], hasMore: false, nextCursor: null })
+    );
+    const fixture = setup(readPage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const loadMore = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
+      .find(button => button.textContent?.includes('تحميل المزيد'));
+    if (!loadMore) throw new Error('Load more button was not rendered.');
+    loadMore.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.items().length).toBe(1);
+    expect(fixture.componentInstance.loadMoreError()).toBe(true);
+    expect(fixture.componentInstance.loadMoreErrorRequiresReload()).toBe(false);
+
+    const retry = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
+      .find(button => button.textContent?.includes('إعادة المحاولة'));
+    if (!retry) throw new Error('Retry button was not rendered.');
+    retry.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(readPage).toHaveBeenCalledTimes(3);
+    expect(fixture.componentInstance.items().length).toBe(2);
+    expect(fixture.componentInstance.loadMoreError()).toBe(false);
+  });
+
   it('preserves loaded rows and requires a fresh load after a duplicate next-page identity', async () => {
     const readPage = jasmine.createSpy('readPage').and.returnValues(
       Promise.resolve({ items: [classic], hasMore: true, nextCursor: 'page-2' }),
