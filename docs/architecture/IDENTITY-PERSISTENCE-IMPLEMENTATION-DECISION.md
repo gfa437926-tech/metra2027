@@ -1,6 +1,6 @@
 # Identity persistence implementation decision
 
-Status: repository inspection; no production persistence selected or implemented.
+Status: Supabase Auth recommended; no production METRA persistence selected or implemented.
 
 ## Findings in the current branch
 
@@ -12,7 +12,7 @@ Status: repository inspection; no production persistence selected or implemented
 - The user has now selected Supabase project `tbdnklyxjvbrilvnwgmq` (`metra2027-angular`, `eu-west-2`, PostgreSQL 17) as the target database; read-only findings are in `SUPABASE-TARGET-PROJECT.md`.
 - The selected project's `public` schema currently has no application tables or views, and its migration history is empty.
 - The platform-managed `auth.users.id` is a UUID primary key, but no METRA application account/profile table exists yet. The canonical METRA account model and its relationship to Auth remain to be approved.
-- Database target selection does not establish that Supabase Auth is the chosen identity provider.
+- Supabase Auth is now the recommended identity provider; provider settings and JWT signing-key configuration still require review before activation.
 
 ## Decision
 
@@ -22,7 +22,7 @@ Adding Npgsql/EF Core before the project selects database ownership, canonical a
 
 The next implementation increment should first establish an explicit persistence decision:
 1. Approve the METRA account/profile model and decide whether it references `auth.users.id` or an external OIDC subject mapping.
-2. Decide whether Supabase Auth is the production identity provider; database selection alone does not decide this.
+2. Complete the read-only Supabase Auth provider and JWT signing-key review before activating the recommended identity provider.
 3. Select the migration mechanism and designate who owns migration execution.
 4. Define runtime database roles separately from schema-owner/migration credentials and managed-secret delivery.
 5. Decide whether identity subjects are stored as plaintext protected by platform encryption at rest, or envelope-encrypted with a KMS-backed deterministic lookup fingerprint.
