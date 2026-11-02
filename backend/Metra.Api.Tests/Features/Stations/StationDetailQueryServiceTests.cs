@@ -170,6 +170,33 @@ public sealed class StationDetailQueryServiceTests
         Assert.Equal(StationDetailReadStatus.InvalidStoreResponse, result.Status);
     }
 
+    [Fact]
+    public async Task Propagates_cancellation_to_actor_context_provider()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var store = new FakeStore(null);
+        var service = new StationDetailQueryService(
+            new CancellingActorProvider(), store);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.ReadAsync(new(StationCatalogueSourceKind.Classic, "station-1"),
+                cancellation.Token));
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
+    public async Task Propagates_cancellation_to_detail_store()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var store = new FakeStore(null);
+        var service = Create("admin", store);
+
+        await service.ReadAsync(new(StationCatalogueSourceKind.Classic, "station-1"),
+            cancellation.Token);
+        Assert.Equal(cancellation.Token, store.CancellationToken);
+    }
+
     private static StationCatalogueItem Item(StationCatalogueSourceKind kind, string id)
         => new(kind, id, "محطة اختبار", "classic", "SRC-1", 33m, 36m, 700m);
 
@@ -182,11 +209,18 @@ public sealed class StationDetailQueryServiceTests
             => Task.FromResult(actor);
     }
 
+    private sealed class CancellingActorProvider : IAccountLifecycleActorContextProvider
+    {
+        public Task<string?> GetCurrentActorUserIdAsync(CancellationToken cancellationToken)
+            => Task.FromCanceled<string?>(cancellationToken);
+    }
+
     private sealed class FakeStore(StationCatalogueItem? station) : IStationDetailReadStore
     {
         public int Calls { get; private set; }
         public string? ActorId { get; private set; }
         public StationSourceKey? Key { get; private set; }
+        public CancellationToken CancellationToken { get; private set; }
 
         public Task<StationCatalogueItem?> ReadAsync(
             string actorUserId, StationSourceKey key, CancellationToken cancellationToken)
@@ -194,6 +228,7 @@ public sealed class StationDetailQueryServiceTests
             Calls++;
             ActorId = actorUserId;
             Key = key;
+            CancellationToken = cancellationToken;
             return Task.FromResult(station);
         }
     }
