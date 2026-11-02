@@ -30,7 +30,6 @@ public static class MetraDatabaseConfiguration
 
         // Never allow a configuration value to silently downgrade transport security.
         connection.SslMode = SslMode.VerifyFull;
-        connection.TrustServerCertificate = false;
         connection.Pooling = true;
         connection.MinPoolSize = 0;
         connection.MaxPoolSize = 50;
