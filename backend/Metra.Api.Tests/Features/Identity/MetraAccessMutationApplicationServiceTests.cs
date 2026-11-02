@@ -85,6 +85,18 @@ public sealed class MetraAccessMutationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Rejects_unknown_account_state_in_store_snapshot()
+    {
+        var store = new FakeStore(new("user-1", (MetraAccountAccessState)999, 1));
+        var service = new MetraAccessMutationApplicationService(new FakeActor("admin"), store);
+
+        var result = await service.ExecuteAsync(GrantCommand());
+
+        Assert.Equal("account_snapshot_invalid", result.Code);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Rejects_invalid_store_snapshot_before_commit()
     {
         var store = new FakeStore(new("different-account", MetraAccountAccessState.Active, 1));
@@ -143,6 +155,23 @@ public sealed class MetraAccessMutationApplicationServiceTests
 
         Assert.Equal("access_mutation_payload_invalid", result.Code);
         Assert.Equal(0, actor.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_malformed_revoke_record_identifier()
+    {
+        var actor = new FakeActor("admin");
+        var store = new FakeStore(new("user-1", MetraAccountAccessState.Active, 1));
+        var service = new MetraAccessMutationApplicationService(actor, store);
+        var command = new ChangeMetraAccessCommand(
+            "user-1", MetraAccessMutationKind.RevokePermission, "grant/1",
+            null, null, "Remove access");
+
+        var result = await service.ExecuteAsync(command);
+
+        Assert.Equal("access_mutation_payload_invalid", result.Code);
+        Assert.Equal(0, actor.Calls);
+        Assert.Equal(0, store.FindCalls);
     }
 
     [Fact]
