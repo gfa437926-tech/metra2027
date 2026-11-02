@@ -66,6 +66,36 @@ describe('StationsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('دون إحداثيات');
   });
 
+  it('plots only complete coordinate pairs and keeps source identity visible', async () => {
+    const locatedAutomatic = {
+      ...automatic,
+      sourceRecordId: 'automatic-located',
+      displayName: 'محطة آلية ساحلية',
+      latitude: 90,
+      longitude: 180
+    };
+    const readPage = jasmine.createSpy('readPage').and.returnValue(Promise.resolve({
+      items: [classic, automatic, locatedAutomatic],
+      hasMore: false,
+      nextCursor: null
+    }));
+    const fixture = setup(readPage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const component = fixture.componentInstance;
+    expect(component.items().length).toBe(3);
+    expect(component.locatedItems().length).toBe(2);
+    expect(component.withoutCoordinatesCount()).toBe(1);
+    expect(component.markerX(locatedAutomatic)).toBe(100);
+    expect(component.markerY(locatedAutomatic)).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.plot-marker').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.plot-marker.classic').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.plot-marker.automatic').length).toBe(1);
+    expect(fixture.nativeElement.textContent).toContain('محطة آلية ساحلية');
+    expect(fixture.nativeElement.textContent).toContain('دون إحداثيات');
+  });
+
   it('requests the selected source filter and exposes its pressed state', async () => {
     const readPage = jasmine.createSpy('readPage').and.returnValue(Promise.resolve({
       items: [classic],
