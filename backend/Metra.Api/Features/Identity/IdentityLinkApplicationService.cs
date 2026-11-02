@@ -115,8 +115,10 @@ public sealed class IdentityLinkApplicationService(
 
     // OIDC issuer comparison is exact: do not lowercase, trim, or remove a
     // trailing slash. Subject is opaque and case-sensitive.
-    private static bool IsValidIdentityKey(string issuer, string subject)
-        => issuer.Length <= 512 &&
+    private static bool IsValidIdentityKey(string issuer, string? subject)
+        => subject is { Length: > 0 and <= 255 } &&
+           !string.IsNullOrWhiteSpace(subject) &&
+           issuer.Length <= 512 &&
            Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri) &&
            issuerUri.Scheme == Uri.UriSchemeHttps &&
            string.IsNullOrEmpty(issuerUri.UserInfo) &&
