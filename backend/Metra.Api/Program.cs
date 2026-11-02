@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddMetraAuthenticationBoundary();
 builder.Services.AddMetraAuthorization();
 builder.Services.AddMetraResourceAuthorization();
 
@@ -76,6 +77,7 @@ app.Use(async (context, next) =>
 app.UseRouting();
 app.UseCors("MetraClients");
 app.UseRateLimiter();
+app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
@@ -91,7 +93,7 @@ api.MapGet("/health", () => Results.Ok(new
     status = "healthy",
     service = "metra-api",
     version = "v1"
-})).WithName("GetApiHealth");
+})).WithName("GetApiHealth").AllowAnonymous();
 
 app.Run();
 
