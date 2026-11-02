@@ -84,3 +84,4 @@ For each legacy workflow:
 The new Supabase project is not yet approved for schema changes. Until a schema and migration plan are explicitly approved, do not create tables, alter RLS, change policies, or migrate legacy data. The existing GitHub Pages deployment serves only the Angular frontend; it does not host the API or database.
 
 Security baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md` is mandatory for all new work. Authentication and session requirements are specified in `AUTHENTICATION-SESSION-SECURITY-DESIGN.md`; provider selection and production authentication remain blocked pending approval. The current repository is not yet production-secure; no production security certification or completed encryption configuration is claimed.
+Identity linking and storage invariants are specified in `IDENTITY-LINK-PERSISTENCE-CONTRACT.md`. It is a proposed contract only; no database migration or identity-link persistence adapter is enabled.
