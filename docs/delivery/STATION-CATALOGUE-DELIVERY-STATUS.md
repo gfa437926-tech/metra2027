@@ -6,19 +6,19 @@
 ## Completed and remotely verified
 
 - The independent operational catalogue exists in PostgreSQL: countries, meteorological authorities, station catalogue, effective-dated station coordinates, authority station-access grants and append-only station audit log.
-- Added account lifecycle state, authority memberships, exact station assignments and time-bounded permission grants, all linked to Supabase Auth users.
+- Added METRA user profiles, account lifecycle state, authority memberships, exact station assignments and time-bounded permission grants, all linked to Supabase Auth users.
 - Added composite station/authority ownership integrity for assignments.
 - Added database checks for account/membership/assignment/permission states, validity windows, reviewer consistency, reason requirements and prohibition of self-approval.
 - Added exclusion constraints to prevent overlapping pending/approved membership, station-assignment and permission periods for the same subject/resource.
 - Added indexes for foreign-key and authorization lookup paths.
-- Enabled RLS on all ten public tables. Browser roles `anon` and `authenticated` have no table privileges and explicit deny-all policies on the new identity tables; existing catalogue tables remain similarly locked.
+- Enabled RLS on all eleven public tables. Browser roles `anon` and `authenticated` have no table privileges and explicit deny-all policies on the new identity tables; existing catalogue tables remain similarly locked.
 - Added update timestamp triggers to mutable identity records.
 - Expanded the append-only audit entity taxonomy for account state, authority membership, station assignment and permission grant events.
-- All seven remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
+- All nine remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
 - Supabase security advisor now returns **zero findings**.
-- The performance advisor reports only unused-index notices on empty tables; no unindexed foreign keys remain after the latest indexes were added.
-- Existing rollback-only station integrity checks remain in `supabase/tests/station_catalogue_integrity.sql`.
-- Rechecked all ten tables: they exist, RLS is enabled and the catalogue/identity tables contain zero rows. This is intentional; no invented or legacy station data was loaded.
+- The performance advisor reports unused-index notices on empty tables only; the one remaining requester foreign-key index was added in the ninth migration.
+- Existing rollback-only station integrity checks remain in `supabase/tests/station_catalogue_integrity.sql`. Read-only identity schema contract checks are in `supabase/tests/identity_schema_contract.sql` and passed against the remote project.
+- Rechecked all eleven tables: they exist, RLS is enabled and the catalogue/identity tables contain zero rows. This is intentional; no invented or legacy station data was loaded.
 
 ## Operational data rule
 
@@ -28,7 +28,7 @@ Historical/legacy station datasets are not an operational source. No legacy impo
 
 ## Security and authorization boundary
 
-The new tables provide persistence for account state, authority membership, station assignment and action permission facts. Their existence does **not** mean that authorization is complete. The backend must still load account state, permission, membership, station assignment and any station-level authority grant from one consistent database snapshot, validate all validity/revocation windows, enforce two-person review and emit an audit event in the same trusted transaction.
+The new tables provide persistence for user profile names, account state, authority membership, station assignment and action permission facts. Account-state values now align with the backend lifecycle contract (`pending_station_approval`, `pending_system_approval`, `active`, `suspended`, `rejected`, `disabled`), and approved transitions require a distinct reviewer from the requester. Their existence does **not** mean that authorization is complete. The backend must still load account state, permission, membership, station assignment and any station-level authority grant from one consistent database snapshot, validate all validity/revocation windows, enforce two-person review and emit an audit event in the same trusted transaction.
 
 Browser clients remain denied. Never expose Supabase `service_role` or secret keys to Angular/Flutter. Do not enable the station API until a dedicated least-privilege backend database identity and a tested authorization-aware repository are configured.
 
@@ -65,5 +65,7 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 - `20261102163034_enforce_station_temporal_integrity`
 - `20261102165436_add_identity_membership_and_station_assignment`
 - `20261102165505_lock_identity_tables_and_index_foreign_keys`
+- `20261102165724_add_user_profile_and_align_account_lifecycle`
+- `20261102165758_index_account_state_requester`
 
 Compare local files and remote history before any CLI push/pull. Never blindly replay or reset the project database.
