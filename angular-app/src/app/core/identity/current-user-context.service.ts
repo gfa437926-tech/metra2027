@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { CurrentUserContext } from './current-user-context.models';
 
 /**
@@ -50,7 +50,7 @@ export class CurrentUserContextService {
         this.http.get<CurrentUserContext>(
           `${this.apiBaseUrl.endsWith('/') ? this.apiBaseUrl.slice(0, -1) : this.apiBaseUrl}/identity/me`,
           { withCredentials: true }
-        )
+        ).pipe(timeout({ first: 15000 }))
       );
       if (!context || typeof context.userId !== 'string' || !context.userId.trim()) {
         this.state.set('unavailable');
