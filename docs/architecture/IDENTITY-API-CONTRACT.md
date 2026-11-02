@@ -1,10 +1,14 @@
-# METRA 2027 — Provider-Neutral Identity API Contract
+# METRA 2027 — Identity API Contract
 
-Status: proposed contract for review. This document deliberately does not select an identity provider, configure authentication middleware, or authorize a database schema change.
+Status: API contract proposed; Supabase Auth is the recommended identity provider; production authentication and persistence remain gated on configuration and schema review.
 
 Related decision record: `IDENTITY-MIGRATION.md`.
 
-## 1. Contract principles
+## 1. Provider recommendation
+
+Use Supabase Auth in project metra2027-angular for credential handling, identity verification, MFA and recovery. ASP.NET Core 10 remains the sole authority for METRA account state, approval workflow, role grants, station assignments and authorization. See IDENTITY-PROVIDER-DECISION.md for the read-only project findings and the security gates before enabling JWT bearer authentication. This recommendation does not authorize Auth configuration changes, signing-key rotation, or database changes.
+
+## 2. Contract principles
 
 - ASP.NET Core is the only application-facing authority for METRA profile, account state, role grants, station assignments and approval decisions.
 - The identity provider is authoritative for credentials, MFA, verified identity claims, recovery and token/session lifecycle.
@@ -14,7 +18,7 @@ Related decision record: `IDENTITY-MIGRATION.md`.
 - Do not use browser local storage as an authorization source.
 - Preserve the existing Arabic labels and original field meanings; JSON property names below are stable API names, not a request to rename legacy database columns.
 
-## 2. Proposed endpoint inventory
+## 3. Proposed endpoint inventory
 
 All paths are under `/api/v1`. These are design contracts, not implemented routes.
 
@@ -31,7 +35,7 @@ All paths are under `/api/v1`. These are design contracts, not implemented route
 
 Credential sign-in, MFA challenge and password recovery verification should be hosted by or delegated to the approved identity provider. METRA must not implement a second password store.
 
-## 3. Registration request
+## 4. Registration request
 
 ### Request shape
 
@@ -62,7 +66,7 @@ The legacy `password`, `confirmPassword` and `programPassword` inputs are not pa
 
 The status values are illustrative until the state machine is approved. The server validates station existence, role requestability, email uniqueness, duplicate pending requests, terms acceptance and all field constraints. It records the request and initial audit event atomically.
 
-## 4. Current identity context
+## 5. Current identity context
 
 ### GET /identity/me response shape
 
@@ -122,7 +126,7 @@ The endpoint remains a proposed contract and is not mapped. There is no producti
 
 A client may cache the last successfully retrieved context briefly for display, but it must clear it on sign-out, authentication failure, account switch or an explicit session-revoked response. It must not persist permissions or station assignments as durable authorization state. A failed refresh must never fall back to a previous user's context. Any protected write/read is independently authorized by the API against current authoritative state, regardless of what the UI currently displays.
 
-## 5. Approval decisions
+## 6. Approval decisions
 
 ### Decision request
 
@@ -142,7 +146,7 @@ The authenticated actor is never included in the request. The API derives the ac
 
 The exact state names, rejection/reopen behavior, delegation rules and notification delivery policy require product approval.
 
-## 6. Standard error envelope
+## 7. Standard error envelope
 
 Use RFC 9457 Problem Details where possible. Validation errors should retain stable machine-readable codes and field paths.
 
@@ -168,7 +172,7 @@ Suggested status semantics:
 - 429: rate limit exceeded, especially registration and recovery.
 - 5xx: unexpected server failure; never return credentials, tokens, stack traces or provider secrets.
 
-## 7. Required server-side authorization sequence
+## 8. Required server-side authorization sequence
 
 For every protected request:
 1. Validate the identity-provider token/session using the selected provider's supported ASP.NET Core integration.
@@ -182,7 +186,7 @@ For every protected request:
 
 No role, station, account state, actor identifier or permission supplied in JSON, query parameters or client storage can override these values.
 
-## 8. Current implementation gap
+## 9. Current implementation gap
 
 ### Object-level authorization boundary
 
