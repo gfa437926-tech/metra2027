@@ -109,7 +109,7 @@ public sealed class RegistrationApprovalAuthorizationPolicyTests
             "reviewer", true, false, new HashSet<string>(), true);
         var request = new RegistrationApprovalRequestContext(
             "request", "applicant", "station-a",
-            RegistrationApprovalStatus.PendingSystemApproval);
+            RegistrationApprovalStatus.PendingSystemApproval, "station-reviewer");
 
         var result = RegistrationApprovalAuthorizationPolicy.Authorize(actor, request);
 
