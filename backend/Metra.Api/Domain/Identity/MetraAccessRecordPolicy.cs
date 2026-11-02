@@ -17,8 +17,7 @@ public static class MetraAccessRecordPolicy
         if (!IsCanonicalCode(grant.PermissionCode))
             return Invalid("permission_code_invalid");
 
-        if (grant.StationId is not null &&
-            (string.IsNullOrWhiteSpace(grant.StationId) || grant.StationId != grant.StationId.Trim()))
+        if (grant.StationId is not null && !IsValidStationId(grant.StationId))
             return Invalid("station_scope_invalid");
 
         if (grant.ValidFromUtc.Offset != TimeSpan.Zero ||
@@ -42,9 +41,7 @@ public static class MetraAccessRecordPolicy
         if (assignment is null)
             return Invalid("station_assignment_required");
 
-        if (string.IsNullOrWhiteSpace(assignment.StationId) ||
-            assignment.StationId != assignment.StationId.Trim() ||
-            assignment.StationId.Length > 128)
+        if (!IsValidStationId(assignment.StationId))
             return Invalid("station_scope_invalid");
 
         if (assignment.ValidFromUtc.Offset != TimeSpan.Zero ||
@@ -62,6 +59,12 @@ public static class MetraAccessRecordPolicy
 
         return new(true, "access_record_valid");
     }
+
+    private static bool IsValidStationId(string? stationId)
+        => !string.IsNullOrWhiteSpace(stationId) &&
+           stationId.Length <= 128 &&
+           stationId == stationId.Trim() &&
+           stationId.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.');
 
     private static bool IsCanonicalCode(string? code)
     {
