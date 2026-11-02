@@ -79,7 +79,7 @@ public sealed class CurrentUserContextApplicationService(
         var facts = await dataSource.FindByIdentitySubjectAsync(
             issuer, subject, cancellationToken);
 
-        if (!IsValidSnapshot(facts))
+        if (facts is null || !IsValidSnapshot(facts))
             return null;
 
         var now = timeProvider.GetUtcNow();
