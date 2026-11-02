@@ -203,7 +203,9 @@ public sealed class RegistrationApprovalApplicationServiceTests
             CancellationToken cancellationToken)
         {
             FindCalls++;
-            var candidate = ReturnedRequest ?? request;\n            return Task.FromResult(candidate?.RequestId == requestId ? candidate : candidate);
+            if (ReturnedRequest is not null)
+                return Task.FromResult<RegistrationApprovalRequestContext?>(ReturnedRequest);
+            return Task.FromResult(request?.RequestId == requestId ? request : null);
         }
 
         public Task<RegistrationApprovalCommitResult> TryCommitDecisionAsync(
