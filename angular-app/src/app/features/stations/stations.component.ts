@@ -103,6 +103,30 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
         }
       </section>
 
+      @if (state() === 'loaded') {
+        <section class="coordinate-preview" aria-labelledby="coordinate-preview-title">
+          <header>
+            <div><h2 id="coordinate-preview-title">معاينة التوزيع الإحداثي</h2><p>تمثيل أولي للإحداثيات الصحيحة ضمن نطاق خطوط الطول والعرض، وليس خريطة جغرافية أو بديلاً عن مزود الخرائط المعتمد.</p></div>
+          <div class="preview-legend"><span><i class="preview-dot classic"></i> كلاسيكية</span><span><i class="preview-dot automatic"></i> آلية</span></div>
+          </header>
+          @if (locatedItems().length > 0) {
+            <div class="coordinate-plot" role="img" [attr.aria-label]="'تمثيل إحداثي لـ ' + locatedItems().length + ' محطة محددة الموقع؛ الأزرق للكلاسيكية والأخضر للآلية'">
+              @for (station of locatedItems(); track station.sourceKind + ':' + station.sourceRecordId) {
+                <span class="plot-marker" [class.classic]="station.sourceKind === 'classic'" [class.automatic]="station.sourceKind === 'automatic'" [style.left.%]="markerX(station)" [style.top.%]="markerY(station)" [title]="station.displayName + ' — ' + sourceLabel(station.sourceKind)"></span>
+              }
+            </div>
+            <ul class="coordinate-marker-list" aria-label="المحطات الممثلة في المعاينة">
+              @for (station of locatedItems(); track station.sourceKind + ':' + station.sourceRecordId) {
+                <li><span class="preview-dot" [class.classic]="station.sourceKind === 'classic'" [class.automatic]="station.sourceKind === 'automatic'"></span><strong>{{ station.displayName }}</strong><small>{{ sourceLabel(station.sourceKind) }} · {{ coordinates(station) }}</small></li>
+              }
+            </ul>
+          } @else {
+            <p class="no-coordinate-points">لا توجد سجلات ذات زوج إحداثيات صالح ضمن السجلات المحمّلة حالياً.</p>
+          }
+          <p class="coordinate-preview-note">المحطات التي لا تملك إحداثيات تبقى محفوظة في جدول الدليل ولا تُحذف من النتائج.</p>
+        </section>
+      }
+
       <section class="map-readiness">
         <div class="map-readiness-icon"><i class="fa-solid fa-map-location-dot"></i></div>
         <div><h2>طبقة الخريطة الموحدة</h2><p>كل محطة ذات إحداثيات ستظهر بعلامة مستقلة حسب مصدرها: أيقونة للكلاسيكية وأخرى للآلية. السجلات غير محددة الموقع ستبقى في الدليل ولن تُمنح إحداثيات افتراضية.</p><small>عرض الخريطة الجغرافية الفعلي ينتظر اعتماد مزود الخرائط وربط واجهة القراءة الآمنة.</small></div>
@@ -123,6 +147,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
     .state-panel{padding:54px 20px;text-align:center;color:#71808e}.state-panel>i{font-size:35px;color:#7d9aaf}.state-panel h2{font-size:18px;color:#34495e;margin:14px 0 8px}.state-panel p{font-size:13px;line-height:1.8;max-width:650px;margin:0 auto 14px}
     .table-wrap{overflow:auto}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}table{width:100%;border-collapse:collapse;min-width:850px;text-align:right}th{background:#f7f9fb;color:#697987;font-size:12px;font-weight:800;padding:13px 15px;white-space:nowrap}td{padding:14px 15px;border-top:1px solid #edf1f4;font-size:13px}td strong{display:block}td .record-id{display:block;color:#8a97a3;font-size:10px;margin-top:5px}.source-pill,.location-state{display:inline-block;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:800;white-space:nowrap}.classic-pill{background:#eaf3ff;color:#2769b1}.automatic-pill{background:#e8f7f0;color:#16845a}.location-state{background:#e8f7f0;color:#16845a}.location-state.missing{background:#fff4df;color:#9a6811}.coordinates{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}.load-more{padding:16px;text-align:center;border-top:1px solid #edf1f4}.load-more button{border:1px solid #b8d2e2;border-radius:8px;background:#f3f9fc;color:#176b9f;padding:9px 18px;font-weight:800;cursor:pointer}
     .load-more-error{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;padding:13px 16px;color:#9a4b18;background:#fff8ef;border-top:1px solid #f2dfc8;font-size:12px}.load-more-error button{border:1px solid #d7a77c;border-radius:8px;background:#fff;color:#8b4b1b;padding:7px 12px;font-weight:800;cursor:pointer}
+    .coordinate-preview{margin-top:18px;padding:18px;background:#fff;border:1px solid #e2e8ee;border-radius:15px}.coordinate-preview header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}.coordinate-preview h2{font-size:16px;margin:0 0 6px}.coordinate-preview header p{font-size:12px;color:#687887;line-height:1.7;margin:0;max-width:760px}.preview-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:#586b7a}.preview-legend span{display:flex;align-items:center;gap:6px}.preview-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none}.preview-dot.classic,.plot-marker.classic{background:#2769b1}.preview-dot.automatic,.plot-marker.automatic{background:#16845a}.coordinate-plot{position:relative;margin-top:16px;min-height:180px;aspect-ratio:2/1;max-height:360px;border:1px solid #dce5ec;border-radius:10px;overflow:hidden;background-color:#f7fafc;background-image:linear-gradient(to right,#dce5ec 1px,transparent 1px),linear-gradient(to bottom,#dce5ec 1px,transparent 1px);background-size:10% 20%}.plot-marker{position:absolute;width:11px;height:11px;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px #34495e88;transform:translate(-50%,-50%)}.coordinate-marker-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;list-style:none;padding:0;margin:14px 0 0}.coordinate-marker-list li{display:grid;grid-template-columns:12px 1fr;column-gap:7px;align-items:center;padding:8px;border:1px solid #edf1f4;border-radius:8px;min-width:0}.coordinate-marker-list li .preview-dot{grid-row:span 2}.coordinate-marker-list strong{font-size:12px;overflow-wrap:anywhere}.coordinate-marker-list small{font-size:10px;color:#71808e;direction:ltr;text-align:right}.no-coordinate-points,.coordinate-preview-note{font-size:11px;color:#7b8995;line-height:1.7;margin:12px 0 0}.coordinate-preview-note{border-top:1px solid #edf1f4;padding-top:10px}
     .map-readiness{display:flex;gap:15px;align-items:flex-start;background:#f1f7fb;border:1px solid #d8e8f2;border-radius:13px;padding:17px;margin-top:18px}.map-readiness-icon{width:42px;height:42px;flex:none;border-radius:10px;background:#dceefa;color:#267cae;display:grid;place-items:center;font-size:18px}.map-readiness h2{font-size:15px;margin:0 0 6px}.map-readiness p{font-size:12px;line-height:1.8;color:#586b7a;margin:0 0 5px}.map-readiness small{font-size:11px;color:#7d8b96}
     .spinning{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:850px){.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.page-heading{align-items:flex-start;flex-direction:column}.refresh-button{align-self:flex-start}}
@@ -151,6 +176,7 @@ export class StationsComponent {
   readonly automaticCount = computed(() => this.items().filter(x => x.sourceKind === 'automatic').length);
   readonly withoutCoordinatesCount = computed(() => this.items().filter(x => !this.hasCoordinates(x)).length);
   readonly filteredItems = computed(() => this.items());
+  readonly locatedItems = computed(() => this.items().filter(item => this.hasCoordinates(item)));
 
   constructor() {
     if (this.catalogue.isConfigured) void this.load();
@@ -256,6 +282,17 @@ export class StationsComponent {
   }
   coordinates(item: StationCatalogueItem): string {
     return this.hasCoordinates(item) ? `${item.latitude}, ${item.longitude}` : '—';
+  }
+
+  /** Maps longitude/latitude to a bounded preview plane; not a map projection. */
+  markerX(item: StationCatalogueItem): number {
+    if (!this.hasCoordinates(item)) return 0;
+    return ((item.longitude! + 180) / 360) * 100;
+  }
+
+  markerY(item: StationCatalogueItem): number {
+    if (!this.hasCoordinates(item)) return 0;
+    return ((90 - item.latitude!) / 180) * 100;
   }
 
   private setErrorState(error: unknown): void {
