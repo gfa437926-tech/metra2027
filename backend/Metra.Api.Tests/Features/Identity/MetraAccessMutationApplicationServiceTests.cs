@@ -156,6 +156,22 @@ public sealed class MetraAccessMutationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Allows_station_assignment_revocation_for_disabled_account()
+    {
+        var store = new FakeStore(new("user-1", MetraAccountAccessState.Disabled, 10));
+        var service = new MetraAccessMutationApplicationService(new FakeActor("admin"), store);
+        var command = new ChangeMetraAccessCommand(
+            "user-1", MetraAccessMutationKind.RevokeStationAssignment, "assignment-12",
+            null, null, "Remove obsolete station access");
+
+        var result = await service.ExecuteAsync(command);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(MetraAccessMutationKind.RevokeStationAssignment, store.Command?.Kind);
+        Assert.Equal("assignment-12", store.Command?.RecordId);
+    }
+
+    [Fact]
     public async Task Revoke_requires_exact_record_id_and_no_replacement_payload()
     {
         var actor = new FakeActor("admin");
