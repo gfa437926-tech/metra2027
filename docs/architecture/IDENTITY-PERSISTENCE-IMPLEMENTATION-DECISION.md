@@ -12,7 +12,7 @@ Status: Supabase Auth recommended; no production METRA persistence selected or i
 - The current identity-link implementation is an application service plus an `IIdentityLinkStore` contract and in-memory test doubles. It is not connected to persistence.
 - The user has now selected Supabase project `tbdnklyxjvbrilvnwgmq` (`metra2027-angular`, `eu-west-2`, PostgreSQL 17) as the target database; read-only findings are in `SUPABASE-TARGET-PROJECT.md`.
 - The selected project's `public` schema currently has no application tables or views, and its migration history is empty.
-- The platform-managed `auth.users.id` is a UUID primary key, but no METRA application account/profile table exists yet. The canonical METRA account model and its relationship to Auth remain to be approved.
+- The platform-managed `auth.users.id` is a UUID primary key, but no METRA application account/profile table exists yet. The revised logical proposal uses a one-to-one `metra.account_auth_links.auth_user_id` UUID reference to `auth.users.id`; physical FK ownership and lifecycle semantics remain to be approved.
 - Supabase Auth is now the recommended identity provider; provider settings and JWT signing-key configuration still require review before activation.
 
 ## Decision
@@ -22,7 +22,7 @@ Do not add a speculative PostgreSQL adapter or executable migration in this chan
 Adding Npgsql/EF Core before the project selects database ownership, canonical account schema, deployment connection management, migration authority, and integration-test environment would create a persistence path that could accidentally become treated as production-ready. A hand-written SQL file with a guessed account foreign key would be similarly unsafe.
 
 The next implementation increment should first establish an explicit persistence decision:
-1. Approve the METRA account/profile model and decide whether it references `auth.users.id` or an external OIDC subject mapping.
+1. Review and approve the METRA account/profile model and the proposed one-to-one `auth.users.id` link. External OIDC subject mapping is not part of the initial design.
 2. Complete the read-only Supabase Auth provider and JWT signing-key review before activating the recommended identity provider.
 3. Select the migration mechanism and designate who owns migration execution.
 4. Define runtime database roles separately from schema-owner/migration credentials and managed-secret delivery.
@@ -33,8 +33,8 @@ The next implementation increment should first establish an explicit persistence
 ## Non-negotiable implementation requirements
 
 - Runtime API database credentials must not own the schema and must not be able to alter migration history.
-- Identity linking must re-check active account state inside the transaction.
-- Exact issuer+subject uniqueness must be enforced by the database, not just application code.
+- Initial registration must atomically create the pending METRA account, Auth-user link, registration request and submission audit event. Ordinary identity relinking remains a separate operation for an already-active account.
+- Exact uniqueness of `auth_user_id` and `account_id` must be enforced by the database, not just application code.
 - Identity-link row and audit event must commit atomically.
 - Runtime API role must not update or delete audit rows.
 - Only expected uniqueness conflicts may be translated into a safe domain outcome; unrelated database failures must propagate to centralized error handling.
