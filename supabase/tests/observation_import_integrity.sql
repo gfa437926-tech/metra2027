@@ -33,7 +33,7 @@ begin
     and payload ?| array[
       'user_id','user_name','user_email','user_role',
       'observer_name','observer_role','user_agent',
-      'browser_language','observer_id'
+      'browser_language','observer_id','observer_notes','validation_notes','submission_method'
     ];
   if identity_leak_count <> 0 then
     raise exception 'Personal identity fields remain in imported payloads: %', identity_leak_count;
