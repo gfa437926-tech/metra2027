@@ -67,3 +67,5 @@ Every endpoint must declare authentication, permission, resource/station scope, 
 - No production security certification is claimed.
 
 Related baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md`.
+
+- The combined daily-observation authorization path now evaluates account state, action grant and resource/station assignment through one context-provider call. Its authoritative data-source contract requires a transactionally consistent or equivalently versioned snapshot, reducing cross-read TOCTOU risk. The provider applies grant and assignment validity/revocation boundaries and fails closed. The default provider still denies all; no production persistence adapter or endpoint mapping is enabled.
