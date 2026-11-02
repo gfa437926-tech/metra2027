@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Metra.Api.Security;
 
@@ -40,36 +41,71 @@ public static class MetraAuthorizationPolicies
 }
 
 /// <summary>
-/// This claim type is reserved for permissions resolved by trusted server-side
-/// code from authoritative METRA grants. Never copy arbitrary client-supplied
-/// values or unreviewed identity-provider role claims into this claim.
+/// Resolves the current permission grant for an authenticated actor.
+/// Implementations must read authoritative server-side grants, not token roles
+/// or client-provided claims.
 /// </summary>
+public interface IMetraPermissionGrantEvaluator
+{
+    Task<bool> HasPermissionAsync(
+        string actorSubject,
+        string permission,
+        CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// Safe bootstrap implementation: no action permission is granted until an
+/// authoritative permission source is explicitly configured.
+/// </summary>
+public sealed class DenyAllMetraPermissionGrantEvaluator : IMetraPermissionGrantEvaluator
+{
+    public Task<bool> HasPermissionAsync(
+        string actorSubject,
+        string permission,
+        CancellationToken cancellationToken)
+        => Task.FromResult(false);
+}
+
 public sealed class MetraPermissionRequirement(string permission) : IAuthorizationRequirement
 {
     public string Permission { get; } = permission;
 }
 
-public sealed class MetraPermissionAuthorizationHandler
+public sealed class MetraPermissionAuthorizationHandler(
+    IMetraPermissionGrantEvaluator evaluator)
     : AuthorizationHandler<MetraPermissionRequirement>
 {
-    public const string PermissionClaimType = "metra_permission";
-    public const string PermissionClaimIssuer = "urn:metra:internal:permissions";
-
-    protected override Task HandleRequirementAsync(
+    protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         MetraPermissionRequirement requirement)
     {
-        var hasPermission = context.User.Claims.Any(claim =>
-            string.Equals(claim.Type, PermissionClaimType, StringComparison.Ordinal) &&
-            string.Equals(claim.Issuer, PermissionClaimIssuer, StringComparison.Ordinal) &&
-            string.Equals(claim.Value, requirement.Permission, StringComparison.Ordinal));
+        if (context.User.Identity?.IsAuthenticated != true ||
+            !MetraPermissions.All.Contains(requirement.Permission, StringComparer.Ordinal))
+        {
+            return;
+        }
 
-        if (hasPermission)
+        // The subject comes only from the validated server authentication principal.
+        // Never accept it from route values, request bodies, query strings or headers.
+        var subject = context.User.FindFirst("sub")?.Value;
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            subject = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            return;
+        }
+
+        var cancellationToken = (context.Resource as HttpContext)?.RequestAborted
+            ?? CancellationToken.None;
+
+        if (await evaluator.HasPermissionAsync(
+            subject, requirement.Permission, cancellationToken))
         {
             context.Succeed(requirement);
         }
-
-        return Task.CompletedTask;
     }
 }
 
@@ -77,7 +113,10 @@ public static class MetraAuthorizationServiceCollectionExtensions
 {
     public static IServiceCollection AddMetraAuthorization(this IServiceCollection services)
     {
-        services.AddSingleton<IAuthorizationHandler, MetraPermissionAuthorizationHandler>();
+        services.TryAddScoped<
+            IMetraPermissionGrantEvaluator,
+            DenyAllMetraPermissionGrantEvaluator>();
+        services.AddScoped<IAuthorizationHandler, MetraPermissionAuthorizationHandler>();
         services.AddAuthorization(options =>
         {
             foreach (var permission in MetraPermissions.All)
