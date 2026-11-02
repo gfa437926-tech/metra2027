@@ -1,3 +1,5 @@
+using Metra.Api.Domain.Identity;
+
 namespace Metra.Api.Security;
 
 /// <summary>
@@ -76,7 +78,21 @@ public sealed class AuthoritativeMetraResourceAccessEvaluator(
             }
 
             var now = timeProvider.GetUtcNow();
+            if (now.Offset != TimeSpan.Zero ||
+                !MetraAccessRecordPolicy.ValidateAssignment(
+                    new MetraStationAssignment(facts.CanonicalStationId, now, null, null)).IsValid)
+            {
+                return false;
+            }
+
             return facts.StationAssignments.Any(assignment =>
+                assignment is not null &&
+                MetraAccessRecordPolicy.ValidateAssignment(
+                    new MetraStationAssignment(
+                        assignment.StationId,
+                        assignment.ValidFromUtc,
+                        assignment.ValidToUtc,
+                        assignment.RevokedAtUtc)).IsValid &&
                 string.Equals(
                     assignment.StationId,
                     facts.CanonicalStationId,
