@@ -52,7 +52,10 @@ A shared sidebar and design tokens are defined once in the shell. Feature pages 
 7. Audit records capture actor, action, target, timestamp and relevant change context.
 8. Report submission and approval transitions are transactional and state-checked on the server.
 9. No silent fallback to local storage for authoritative records or permissions.
-10. Preserve the original visual behavior while replacing unsafe or duplicated implementation details.\n11. Apply the mandatory cybersecurity and cryptography baseline in `SECURITY-CRYPTOGRAPHY-BASELINE.md`; security controls are release gates, not optional hardening.\n12. Require TLS, managed secrets and key lifecycle, encryption at rest for databases/files/backups/logs, least-privilege access, MFA for privileged users, secure sessions, abuse protection, tamper-resistant audit, security scanning and independent penetration testing before production.\n13. Never claim the platform is fully secure or certified without independent evidence and an explicit scope.
+10. Preserve the original visual behavior while replacing unsafe or duplicated implementation details.
+11. Apply the mandatory cybersecurity and cryptography baseline in `SECURITY-CRYPTOGRAPHY-BASELINE.md`; security controls are release gates, not optional hardening.
+12. Require TLS, managed secrets and key lifecycle, encryption at rest for databases/files/backups/logs, least-privilege access, MFA for privileged users, secure sessions, abuse protection, tamper-resistant audit, security scanning and independent penetration testing before production.
+13. Never claim the platform is fully secure or certified without independent evidence and an explicit scope.
 
 ## Refactoring method
 
@@ -73,8 +76,11 @@ For each legacy workflow:
 - Stage 3 — climate, rainfall, agricultural and soil-temperature records.
 - Stage 4 — review, correction, approval, audit and archival.
 - Stage 5 — search, statistics, reports, printing and exports.
-- Stage 6 — station/user administration and Flutter parity.\n- Stage 7 — security architecture, threat modelling, cryptography/key management, secure operations and independent security verification; production release is blocked until the mandatory security gates pass.
+- Stage 6 — station/user administration and Flutter parity.
+- Stage 7 — security architecture, threat modelling, cryptography/key management, secure operations and independent security verification; production release is blocked until the mandatory security gates pass.
 
 ## Database and deployment guardrails
 
-The new Supabase project is not yet approved for schema changes. Until a schema and migration plan are explicitly approved, do not create tables, alter RLS, change policies, or migrate legacy data. The existing GitHub Pages deployment serves only the Angular frontend; it does not host the API or database.\n\nSecurity baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md` is mandatory for all new work. The current repository is not yet production-secure; no production security certification or completed encryption configuration is claimed.
+The new Supabase project is not yet approved for schema changes. Until a schema and migration plan are explicitly approved, do not create tables, alter RLS, change policies, or migrate legacy data. The existing GitHub Pages deployment serves only the Angular frontend; it does not host the API or database.
+
+Security baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md` is mandatory for all new work. The current repository is not yet production-secure; no production security certification or completed encryption configuration is claimed.
