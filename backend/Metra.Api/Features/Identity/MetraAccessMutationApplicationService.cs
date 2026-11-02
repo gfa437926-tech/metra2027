@@ -44,7 +44,9 @@ public sealed record MetraAccessMutationResult(bool Succeeded, string Code, stri
 /// access but allow authorized revocation on inactive targets, authorize the
 /// actor for this exact operation and scope, validate active station and
 /// permission catalogue entries, compare the expected version, persist the
-/// mutation and append an immutable audit event. Revocation preserves history.
+/// mutation and append a validated MetraAdministrativeAuditEvent using trusted
+/// transaction context. The event must pass MetraAdministrativeAuditEventPolicy.
+/// Revocation preserves history and never rewrites the original grant/assignment.
 /// </summary>
 public interface IMetraAccessMutationStore
 {
