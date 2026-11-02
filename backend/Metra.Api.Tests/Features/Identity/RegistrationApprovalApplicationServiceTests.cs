@@ -248,6 +248,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
     private sealed class FakeStore(RegistrationApprovalRequestContext? request)
         : IRegistrationApprovalStore
     {
+        public RegistrationApprovalRequestContext? ReturnedRequest { get; set; }
         public int FindCalls { get; private set; }
         public int CommitCalls { get; private set; }
         public string? ActorUserId { get; private set; }
