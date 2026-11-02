@@ -79,7 +79,7 @@ public sealed class MetraAccountLifecycleApplicationService(
             return Failure("account_id_invalid");
 
         var accountId = command.AccountId.Trim();
-        if (accountId.Length > 128)
+        if (!IsValidIdentifier(accountId))
             return Failure("account_id_invalid");
 
         if (!Enum.IsDefined(command.Command))
@@ -98,15 +98,15 @@ public sealed class MetraAccountLifecycleApplicationService(
         var actorUserId = await actorContextProvider.GetCurrentActorUserIdAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(actorUserId))
             return Failure("unauthenticated");
-        if (actorUserId != actorUserId.Trim() ||
-            actorUserId.Length > 128 || actorUserId.Any(char.IsControl))
+        if (!IsValidIdentifier(actorUserId))
             return Failure("actor_context_invalid");
 
         var account = await store.FindAccountAsync(accountId, cancellationToken);
         if (account is null)
             return Failure("account_not_found");
-        if (string.IsNullOrWhiteSpace(account.AccountId) ||
-            account.AccountId != accountId || account.Version <= 0)
+        if (!IsValidIdentifier(account.AccountId) ||
+            account.AccountId != accountId || account.Version <= 0 ||
+            !Enum.IsDefined(account.State))
             return Failure("account_snapshot_invalid");
 
         var transition = MetraAccountLifecyclePolicy.Apply(account.State, command.Command);
@@ -131,6 +131,12 @@ public sealed class MetraAccountLifecycleApplicationService(
             _ => Failure("account_lifecycle_commit_failed", account.State)
         };
     }
+
+    private static bool IsValidIdentifier(string value)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= 128 &&
+           value == value.Trim() &&
+           value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.' or ':');
 
     private static MetraAccountLifecycleApplicationResult Failure(
         string code,
