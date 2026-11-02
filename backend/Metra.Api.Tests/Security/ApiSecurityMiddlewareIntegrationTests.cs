@@ -11,6 +11,17 @@ namespace Metra.Api.Tests;
 public sealed class ApiSecurityMiddlewareIntegrationTests
 {
     [Fact]
+    public async Task Readiness_is_unavailable_when_database_is_not_configured()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Health_response_contains_security_headers()
     {
         using var factory = new ApiFactory();
@@ -127,6 +138,14 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
             builder.UseEnvironment(environment);
             builder.UseSetting("Cors:AllowedOrigins:0", "https://metra.example.test");
             builder.UseSetting("Cors:AllowedOrigins:1", "https://metra.example.test");
+            if (environment != "Development")
+            {
+                // A syntactically valid, never-used CI-only connection string lets the
+                // production middleware test boot without connecting to a real database.
+                builder.UseSetting(
+                    "ConnectionStrings:MetraDatabase",
+                    "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable");
+            }
             builder.ConfigureAppConfiguration((_, configuration) =>
             {
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
