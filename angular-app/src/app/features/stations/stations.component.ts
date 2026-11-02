@@ -40,11 +40,11 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
 
       <section class="catalogue-panel">
         <div class="toolbar">
-          <label class="search-field">
-            <span>بحث باسم المحطة</span>
-            <input type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" (keyup.enter)="applyFilters()" placeholder="اكتب بداية اسم المحطة..." autocomplete="off">
+          <div class="search-field">
+            <label for="station-name-prefix">بحث باسم المحطة</label>
+            <input id="station-name-prefix" type="search" aria-label="بداية اسم المحطة" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" (keyup.enter)="applyFilters()" placeholder="اكتب بداية اسم المحطة..." autocomplete="off">
             <button type="button" class="apply-search" (click)="applyFilters()" [disabled]="state() === 'loading'">بحث</button>
-          </label>
+          </div>
           <div class="filter-group" aria-label="تصفية حسب نوع المحطة">
             <button type="button" [class.selected]="sourceFilter() === 'all'" (click)="setSourceFilter('all')">الكل</button>
             <button type="button" [class.selected]="sourceFilter() === 'classic'" (click)="setSourceFilter('classic')">الكلاسيكية</button>
@@ -168,7 +168,6 @@ export class StationsComponent {
       this.setErrorState(new StationCatalogueHttpError(502, 'Repeated station catalogue cursor.'));
       return;
     }
-    this.consumedCursors.add(cursor);
     this.state.set('loading');
     try {
       const page = await this.catalogue.readPage({ ...this.buildQuery(), cursor });
@@ -176,9 +175,10 @@ export class StationsComponent {
       if (page.items.some(x => known.has(x.sourceKind + ':' + x.sourceRecordId))) {
         throw new StationCatalogueHttpError(502, 'Duplicate station identity across catalogue pages.');
       }
-      if (page.nextCursor && this.consumedCursors.has(page.nextCursor)) {
+      if (page.nextCursor && (page.nextCursor === cursor || this.consumedCursors.has(page.nextCursor))) {
         throw new StationCatalogueHttpError(502, 'Station catalogue cursor cycle detected.');
       }
+      this.consumedCursors.add(cursor);
       this.items.update(current => [...current, ...page.items]);
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
