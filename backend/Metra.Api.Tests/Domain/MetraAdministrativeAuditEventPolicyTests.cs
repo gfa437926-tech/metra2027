@@ -37,6 +37,24 @@ public sealed class MetraAdministrativeAuditEventPolicyTests
         Assert.Equal(expectedCode, result.Code);
     }
 
+    [Fact]
+    public void Rejects_identifiers_with_internal_spaces()
+    {
+        var result = MetraAdministrativeAuditEventPolicy.Validate(
+            ValidEvent() with { ActorUserId = "admin user" });
+
+        Assert.Equal("audit_identifier_invalid", result.Code);
+    }
+
+    [Fact]
+    public void Rejects_noncanonical_resource_type()
+    {
+        var result = MetraAdministrativeAuditEventPolicy.Validate(
+            ValidEvent() with { ResourceType = "Station Record" });
+
+        Assert.Equal("audit_resource_type_invalid", result.Code);
+    }
+
     [Theory]
     [InlineData("Account.Suspend", "audit_action_code_invalid")]
     [InlineData("account..suspend", "audit_action_code_invalid")]
