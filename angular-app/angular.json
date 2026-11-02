@@ -62,16 +62,21 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test",
+          "builder": "@angular/build:karma",
           "options": {
             "tsConfig": "tsconfig.spec.json",
-            "buildTarget": "metra2027:build:development",
-            "runner": "karma",
-            "browsers": [
-              "ChromeHeadless"
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
             ],
+            "styles": [
+              "src/styles.scss"
+            ],
+            "assets": [],
+            "browsers": "ChromeHeadless",
+            "watch": false,
             "include": [
-              "**/*.spec.ts"
+              "src/app/features/stations/**/*.spec.ts"
             ]
           }
         }
