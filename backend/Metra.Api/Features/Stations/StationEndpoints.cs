@@ -25,7 +25,7 @@ public static class StationEndpoints
     private static async Task<IResult> ReadCatalogueAsync(
         [FromQuery] StationCatalogueSourceKind? sourceKind,
         [FromQuery] string? namePrefix,
-        [FromQuery] int pageSize,
+        [FromQuery] int? pageSize,
         [FromQuery] string? cursor,
         IServiceProvider services,
         CancellationToken cancellationToken)
@@ -35,7 +35,7 @@ public static class StationEndpoints
             return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
 
         var result = await queryService.ReadAsync(
-            new StationCatalogueQuery(sourceKind, namePrefix, pageSize == 0 ? 50 : pageSize, cursor),
+            new StationCatalogueQuery(sourceKind, namePrefix, pageSize ?? 50, cursor),
             cancellationToken);
 
         return result.Status switch
