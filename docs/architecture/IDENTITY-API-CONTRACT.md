@@ -157,6 +157,14 @@ No role, station, account state, actor identifier or permission supplied in JSON
 
 ## 8. Current implementation gap
 
+### Object-level authorization boundary
+
+The API registers the policy `metra:resource-access` and a resource authorization handler. Application/endpoint code must call `IAuthorizationService.AuthorizeAsync(User, resourceDescriptor, MetraResourceAuthorizationPolicies.ResourceAccess)` for each read, update, delete, export and workflow operation that targets an individual resource. A route identifier alone never grants access.
+
+The handler obtains the actor subject only from the authenticated server principal (`sub`, with `NameIdentifier` fallback) and delegates the decision to `IMetraResourceAccessEvaluator`. The future evaluator must load the resource's actual station relationship and the actor's active station assignments/explicit grants from authoritative persistence; it must not trust the descriptor's station identifier as proof of ownership. Missing resources, unknown assignments, inactive actors and evaluator/data failures must never result in an allow decision.
+
+No production evaluator, persistence adapter or endpoint-level invocation has been connected yet. Do not expose sensitive resource endpoints until these components and cross-station integration tests exist.
+
 The current API now registers a provider-neutral permission authorization catalogue in `backend/Metra.Api/Security/MetraAuthorization.cs`. It defines exact permission identifiers for station approval, system approval and daily-observation creation. Named policies require an authenticated principal and an exact `metra_permission` claim issued by the reserved internal issuer `urn:metra:internal:permissions`. That claim is reserved for server-side permissions resolved from authoritative METRA grants; claims issued by an external identity provider, provider roles or client-supplied values cannot grant a permission. The future claims-enrichment component must resolve current METRA grants from authoritative persistence and issue these claims itself on each authenticated request/session validation; stale provider role claims must never be treated as current METRA permissions.
 
 These policies are foundations only. No identity provider, authentication scheme, claims enrichment from METRA persistence, endpoint-level permission mapping or production resource authorization is configured yet. Do not treat a role claim as a permission, and do not enable sensitive endpoints until the trusted permission-claim pipeline and resource/station checks are implemented and tested.
