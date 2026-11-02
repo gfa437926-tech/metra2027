@@ -24,7 +24,9 @@ This directory contains the migration history for the independent station catalo
 
 Use the Supabase CLI linked to the intended project and inspect `supabase migration --help` before selecting commands. Compare remote migration history with these files before applying anything; the remote project was initially migrated through the Supabase management migration API. Never blindly replay migrations against an already-migrated database.
 
-After changes, verify table definitions, RLS and policies, indexes, triggers, migration history, and run Supabase security/performance advisors. The security advisor should report no missing RLS policy for these six tables.
+Temporal integrity uses PostgreSQL exclusion constraints backed by `btree_gist`: a station cannot have overlapping coordinate validity periods, and an authority cannot hold overlapping pending/approved access periods for the same station. Official-record coordinates require a source reference. Review timestamp and reviewer must be set together; non-pending decisions require a review reason.
+
+After changes, verify table definitions, RLS and policies, indexes, triggers, exclusion constraints, migration history, and run Supabase security/performance advisors. The security advisor should report no missing RLS policy for these six tables.
 
 ## Current delivery boundary
 
