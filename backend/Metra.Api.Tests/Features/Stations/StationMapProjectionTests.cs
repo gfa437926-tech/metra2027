@@ -108,7 +108,7 @@ public sealed class StationMapProjectionTests
     public void Rejects_malformed_display_names()
     {
         Assert.Throws<ArgumentException>(() => StationMapProjection.Create([
-            Item(StationCatalogueSourceKind.Classic, "1", "محطة\\nمكسورة", 33m, 36m)
+            Item(StationCatalogueSourceKind.Classic, "1", "محطة\nمكسورة", 33m, 36m)
         ]));
     }
 
