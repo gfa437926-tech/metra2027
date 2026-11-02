@@ -96,7 +96,8 @@ public sealed class MetraAdministrativeAuditQueryService(
         var read = await store.ReadAsync(actorId, query, cancellationToken);
         return read.Result switch
         {
-            MetraAdministrativeAuditReadResult.Success when IsValidPage(read.Page, query.PageSize) =>
+            MetraAdministrativeAuditReadResult.Success when IsValidPage(read.Page, query.PageSize) &&
+                !string.Equals(query.Cursor, read.Page.NextCursor, StringComparison.Ordinal) =>
                 new(true, "audit_query_succeeded", read.Page),
             MetraAdministrativeAuditReadResult.Success => Failure("audit_store_response_invalid"),
             MetraAdministrativeAuditReadResult.ActorNotAuthorized => Failure("actor_not_authorized"),
@@ -111,7 +112,8 @@ public sealed class MetraAdministrativeAuditQueryService(
         if (page?.Events is null || page.Events.Count > pageSize)
             return false;
         if (page.HasMore &&
-            (string.IsNullOrWhiteSpace(page.NextCursor) ||
+            (page.Events.Count == 0 ||
+             string.IsNullOrWhiteSpace(page.NextCursor) ||
              page.NextCursor.Length > MaximumCursorLength ||
              page.NextCursor.Any(char.IsControl)))
             return false;
