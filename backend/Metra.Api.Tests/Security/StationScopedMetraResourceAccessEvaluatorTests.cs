@@ -125,6 +125,19 @@ public sealed class StationScopedMetraResourceAccessEvaluatorTests
     }
 
     [Fact]
+    public async Task Requires_exact_canonical_station_assignment_match()
+    {
+        var resolver = new FakeResourceStationResolver("station-7");
+        var actors = new FakeActorStationAccessStore(true, [" ", "STATION-7", "station-07"]);
+
+        var allowed = await CreateEvaluator(resolver, actors).CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+        Assert.Equal(1, actors.AssignmentReads);
+    }
+
+    [Fact]
     public async Task Denies_when_authoritative_assignment_store_throws()
     {
         var resolver = new FakeResourceStationResolver("station-7");
