@@ -194,6 +194,26 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
             "Security review", "request-1", 2);
 
     [Fact]
+    public async Task Requires_descending_event_id_order_when_timestamps_match()
+    {
+        var sameTime = Before;
+        var outOfOrder = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { AuditEvent("event-a", sameTime), AuditEvent("event-z", sameTime) }, null, false)));
+        var outOfOrderService = new MetraAdministrativeAuditQueryService(
+            new FakeActor("auditor"), outOfOrder);
+        var rejected = await outOfOrderService.ExecuteAsync(Query());
+
+        var ordered = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { AuditEvent("event-z", sameTime), AuditEvent("event-a", sameTime) }, null, false)));
+        var orderedService = new MetraAdministrativeAuditQueryService(
+            new FakeActor("auditor"), ordered);
+        var accepted = await orderedService.ExecuteAsync(Query());
+
+        Assert.Equal("audit_store_response_invalid", rejected.Code);
+        Assert.True(accepted.Succeeded);
+    }
+
+    [Fact]
     public async Task Accepts_terminal_page_without_continuation_cursor()
     {
         var store = new FakeStore((MetraAdministrativeAuditReadResult.Success,
