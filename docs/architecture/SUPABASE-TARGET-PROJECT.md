@@ -13,7 +13,7 @@ Status: target project identified and inspected read-only on 2026-11-02. This do
 | Database engine | PostgreSQL 17 |
 | Project API URL | `https://tbdnklyxjvbrilvnwgmq.supabase.co` |
 
-The user explicitly identified this project as the database target for METRA 2027. This selects the PostgreSQL project only; it does not by itself select Supabase Auth as the production identity provider.
+The user explicitly identified this project as the database target for METRA 2027. Supabase Auth is now the recommended identity provider after inspecting the managed Auth subsystem; this remains a recommendation pending Auth settings and signing-key review.
 
 ## Read-only inspection findings
 
@@ -40,7 +40,7 @@ The following were checked using Supabase project metadata, schema inspection, m
 
 ## Still requiring explicit design approval
 
-1. Whether Supabase Auth will be the production OIDC/identity provider, or whether another OIDC provider will be used with Supabase PostgreSQL.
+1. Supabase Auth is now the recommended identity provider. Confirm its enabled providers, signing-key state, issuer/audience and session/security settings before production activation. See IDENTITY-PROVIDER-DECISION.md.
 2. The canonical METRA account/profile model and relationship to `auth.users.id` (if Supabase Auth is selected).
 3. Account state, station assignments, canonical role/permission catalogue, registration and approval lifecycle.
 4. Database runtime role, grants, network restrictions, secret delivery and migration ownership.
