@@ -86,6 +86,32 @@ public sealed class StationMapProjectionTests
         Assert.True(Assert.IsAssignableFrom<IList<StationCatalogueItem>>(result.WithoutCoordinates).IsReadOnly);
     }
 
+    [Fact]
+    public void Rejects_duplicate_identity_even_when_one_record_has_no_coordinates()
+    {
+        var located = Item(StationCatalogueSourceKind.Classic, "1", "محطة", 33m, 36m);
+        var unlocated = Item(StationCatalogueSourceKind.Classic, "1", "محطة أخرى", null, null);
+        Assert.Throws<ArgumentException>(() => StationMapProjection.Create([located, unlocated]));
+    }
+
+    [Theory]
+    [InlineData("bad/id")]
+    [InlineData(" station-1 ")]
+    public void Rejects_malformed_source_record_ids(string sourceRecordId)
+    {
+        Assert.Throws<ArgumentException>(() => StationMapProjection.Create([
+            Item(StationCatalogueSourceKind.Classic, sourceRecordId, "محطة", null, null)
+        ]));
+    }
+
+    [Fact]
+    public void Rejects_malformed_display_names()
+    {
+        Assert.Throws<ArgumentException>(() => StationMapProjection.Create([
+            Item(StationCatalogueSourceKind.Classic, "1", "محطة\\nمكسورة", 33m, 36m)
+        ]));
+    }
+
     private static StationCatalogueItem Item(
         StationCatalogueSourceKind kind, string id, string name, decimal? latitude, decimal? longitude)
         => new(kind, id, name, null, null, latitude, longitude, null);
