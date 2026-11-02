@@ -1,12 +1,12 @@
 # METRA 2027 — Canonical Data Model Proposal
 
-**Status:** architecture proposal only — not an approved schema or executable migration.  
+**Status:** revised logical proposal — Supabase Auth recommendation and two-stage registration selected for implementation planning; not an approved physical schema or executable migration.  
 **Target database:** Supabase PostgreSQL project `tbdnklyxjvbrilvnwgmq` (selected by the project owner; inspected read-only).  
 **Change scope:** documentation only. No Supabase DDL, data, Auth settings, RLS, grants, keys or secrets are changed by this proposal.
 
 ## 1. Purpose and design boundary
 
-This proposal turns the repository's legacy data evidence and the current API domain contracts into a provider-neutral logical model. It is intended to be reviewed before any physical PostgreSQL schema is created.
+This proposal turns the repository's legacy data evidence and the current API domain contracts into a logical model for Supabase Auth + ASP.NET Core 10. Supabase Auth is the recommended credential provider; the API remains the sole METRA authorization and workflow authority. This document must be reviewed before any physical PostgreSQL schema is created.
 
 The selected Supabase project currently has no METRA application tables in `public` and no recorded migrations. Legacy table names found in source code are evidence of what old clients attempted to use; they are not proof that those tables exist in the selected project or that their schemas are accurate.
 
@@ -39,7 +39,7 @@ Names below are logical names, not final SQL names or column types.
 |---|---|---|
 | `accounts` | account_id, account_state, created_at, updated_at, activated_at, suspended_at | Canonical METRA principal. Server-generated UUID. State is independent of provider login state. No password/hash columns. |
 | `account_profiles` | account_id, first_name, father_name, last_name, email/contact references, phone/contact references | METRA profile data. Preserve original Arabic field meaning. Apply data classification, validation and retention rules. Email/phone uniqueness and normalization require explicit product decisions; do not assume them from legacy UI checks. |
-| `account_identities` | identity_id, account_id, issuer, subject or provider_user_id, status, linked_at, revoked_at | Maps validated external identity to one METRA account. Exact identity semantics and FK depend on the identity-provider decision in section 9. |
+| `account_auth_links` | account_id, auth_user_id, linked_at, revoked_at | Proposed one-to-one mapping from a METRA account to `auth.users.id` (UUID FK to the Supabase-managed Auth user). The Auth user remains managed by Supabase; METRA must not write to `auth` tables. Multiple sign-in methods belonging to the same Supabase Auth user are managed by Supabase Auth, not represented as multiple METRA accounts. |
 | `roles` | role_id, role_code, display_name_ar, lifecycle_state | Approved role catalogue. Stable code is immutable; display label can be versioned/changed through review. |
 | `permissions` | permission_id, permission_code, description | Explicit capabilities such as `registrations.station.approve`, `registrations.system.approve`, `observations.daily.create`. |
 | `role_permissions` | role_id, permission_id, validity metadata | Reviewed mapping from roles to capabilities. No implicit wildcard role. |
@@ -58,7 +58,7 @@ Names below are logical names, not final SQL names or column types.
 - Revocation is an explicit audited operation; do not silently overwrite an existing link.
 - Do not store provider access/refresh tokens, authorization codes or passwords in these tables.
 
-If Supabase Auth is selected, the account-to-provider relationship may use `auth.users.id` only after the identity design and lifecycle are approved. If an external OIDC provider is selected, store the exact configured issuer+subject mapping under the approved protection strategy. Do not implement both patterns speculatively.
+Identity provider for this project: Supabase Auth is the selected recommendation. The proposed physical link is `metra.account_auth_links.auth_user_id UUID REFERENCES auth.users(id)` with uniqueness on `auth_user_id` and, by default, `account_id`. This is a cross-schema FK proposal only; it must be checked against Supabase platform ownership and approved before implementation. Never insert/update/delete rows in `auth.users` or other platform-managed Auth tables. Do not add a generic issuer+subject table alongside this mapping unless a separately approved external OIDC requirement emerges.
 
 ## 4. Registration and approval workflow
 
@@ -68,9 +68,11 @@ If Supabase Auth is selected, the account-to-provider relationship may use `auth
 | `registration_decisions` | decision_id, request_id, stage, outcome, actor_account_id, actor_scope_snapshot, reason_code, reason_text, decided_at | Append-only record of each station/system decision, including actor and effective scope at decision time. |
 | `registration_request_events` | event_id, request_id, event_type, actor_account_id, occurred_at, correlation_id, safe_metadata | Optional unified lifecycle history if the team chooses event history separate from decision records. Avoid duplicating the same audit fact without a clear purpose. |
 
-The proposed target lifecycle is:
+The proposed registration submission transaction creates a METRA account in `PendingApproval`, links the already-authenticated Supabase `auth.users.id`, creates the registration request, and writes the submission audit event atomically. It does not grant a role or station assignment.
 
-`PendingStationApproval → PendingSystemApproval → Active`
+The proposed request lifecycle is:
+
+`PendingStationApproval → PendingSystemApproval → Approved` (or terminal `Rejected`). The METRA account remains non-active until final approval; final approval changes the account to `Active` and creates the approved role grant and station assignment in the same transaction.
 
 Rejection is terminal unless a separately approved appeal/reopen process is specified. The current API domain code has this two-stage model, while legacy source inspection does not prove every management-screen action or edge case. Business owners must confirm whether requests can be returned, edited, reopened, delegated or rejected at either stage.
 
@@ -79,7 +81,8 @@ Required transaction behavior:
 - Stage-two actor must have system-approval capability.
 - The actor is derived from the validated server context, never request JSON.
 - A user cannot approve their own registration.
-- Final activation, effective role grant, approved station assignment, request-state transition and audit event must be atomic.
+- Initial pending account creation, Auth-user link, registration request and submission audit event must be atomic.
+- Final activation, effective role grant, approved station assignment, request-state transition and approval audit event must be atomic.
 - Rejection must record the decision actor, stage, timestamp and reason policy.
 - Duplicate submissions and concurrent decisions must be idempotent or rejected with a stable domain outcome.
 - No browser-side password hashing, program password, temporary password or password recovery is migrated.
@@ -159,10 +162,10 @@ Legacy `users` and `registration_queue` include password-related fields and inco
 | Decision | Current state |
 |---|---|
 | Supabase PostgreSQL target project | Selected: `tbdnklyxjvbrilvnwgmq` |
-| Supabase Auth as production identity provider | **Not yet confirmed** |
-| External OIDC provider, if not Supabase Auth | Not selected |
-| Canonical METRA account key and lifecycle | Proposed; requires approval |
-| Account-to-identity cardinality and relinking policy | Requires approval |
+| Supabase Auth as identity provider | **Recommended and selected for implementation planning; Auth configuration review still gates production activation** |
+| External OIDC provider | Not in scope; requires a separate decision if later needed |
+| Canonical METRA account key and lifecycle | UUID account key; pending/active/suspended/rejected/closed lifecycle proposed; physical constraints require review |
+| Account-to-Auth-user cardinality | One-to-one proposed; recovery/relinking requires separate controlled workflow |
 | Role catalogue and Arabic label reconciliation | Requires domain-owner approval |
 | Permission-to-role mapping and station scope | Requires domain-owner approval |
 | Complete station master and organizational hierarchy | Source data required |
@@ -172,6 +175,10 @@ Legacy `users` and `registration_queue` include password-related fields and inco
 | Audit retention and immutable export | Not selected |
 | Separate development/test project and CI integration DB | Not selected |
 
-## 10. Explicit non-claims
+## 10. Supabase platform and Data API boundary
+
+The proposed METRA application objects belong in a dedicated non-exposed `metra` schema. Supabase's 2026-10-30 Data API exposure change means newly created public-schema tables are no longer automatically exposed by default; METRA must not rely on default exposure behavior as a security control. Keep application tables out of exposed schemas, do not grant `anon` or `authenticated` direct access to privileged METRA tables, and use the .NET API with a least-privilege database role. RLS remains defense in depth for any explicitly exposed object. Never modify platform-owned `auth`, `storage`, or `realtime` internals.
+
+## 11. Explicit non-claims
 
 This proposal is not a verified physical schema, security certification, data migration, production deployment or approval to change the live Supabase project. No application tables, RLS policies, grants, users, Auth settings, secrets or database records have been created, modified or migrated.
