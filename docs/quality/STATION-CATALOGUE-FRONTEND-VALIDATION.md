@@ -14,7 +14,7 @@ The Angular client consumes `GET /api/v1/stations` through `StationCatalogueServ
 - Elevation is nullable and, when present, is constrained to -500 through 10,000 metres.
 - Optional source metadata remains nullable and is not inferred.
 - `hasMore` and `nextCursor` must agree. A continuation cursor is bounded, trimmed, and contains no control characters.
-- Client requests are rejected before network access unless page size is an integer from 1 through 100, source kind is recognized, name prefix is non-empty after trimming and at most 128 characters, and cursor is at most 2,048 characters with no control characters. Control characters in the original name-prefix input are rejected before trimming so whitespace-like C1 controls cannot be silently removed.
+- Client requests are rejected before network access unless page size is an integer from 1 through 100, source kind is recognized, name prefix is non-empty after trimming and at most 128 characters, and cursor is at most 2,048 characters with no control characters. Control characters in the original name-prefix input are rejected before trimming so whitespace-like C1 controls cannot be silently removed. The backend applies the same raw-input rule to cursors: supplied empty, padded, whitespace-only, or control-character cursors are rejected before normalization.
 - Responses may not exceed the requested page size, claim more pages while returning no records, or repeat the cursor used for the current request.
 - Duplicate source identities within a page or across pages are invalid.
 - The client does not infer canonical station identity, merge records by display name, or synthesize missing coordinates.
