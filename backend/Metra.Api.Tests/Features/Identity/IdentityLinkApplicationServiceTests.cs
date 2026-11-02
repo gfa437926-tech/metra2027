@@ -9,7 +9,7 @@ public sealed class IdentityLinkApplicationServiceTests
         new(2026, 11, 2, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public async Task Links_only_the_identity_and_account_from_trusted_session_context()
+    public async Task Links_reauthenticated_external_identity_to_server_resolved_account()
     {
         var actor = new FakeActorProvider(new(
             "metra-account-42",
@@ -87,8 +87,8 @@ public sealed class IdentityLinkApplicationServiceTests
     }
 
     [Theory]
-    [InlineData(-6)]
-    [InlineData(1)]
+    [InlineData(6)]
+    [InlineData(-1)]
     public async Task Requires_recent_non_future_authentication(int minutesFromNow)
     {
         var actor = new FakeActorProvider(new(
