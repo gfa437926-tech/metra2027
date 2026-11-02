@@ -122,26 +122,28 @@ public sealed class RegistrationApprovalQueueQueryService(
             cursor);
 
         var page = await store.ReadPageAsync(actor, normalized, cancellationToken);
-        if (!IsValidPage(page, query.PageSize))
+        if (!IsValidPage(page, normalized))
             return new(RegistrationApprovalQueueReadStatus.InvalidStoreResponse);
 
         return new(
             RegistrationApprovalQueueReadStatus.Succeeded,
-            new(page.Items.ToArray(), page.HasMore, page.NextCursor));
+            new(Array.AsReadOnly(page.Items.ToArray()), page.HasMore, page.NextCursor));
     }
 
     private static bool IsValidPage(
         RegistrationApprovalQueueStorePage? page,
-        int requestedPageSize)
+        RegistrationApprovalQueueQuery query)
     {
-        if (page?.Items is null || page.Items.Count > requestedPageSize)
+        if (page?.Items is null || page.Items.Count > query.PageSize ||
+            (page.HasMore && page.Items.Count == 0))
             return false;
 
         if (page.HasMore != !string.IsNullOrWhiteSpace(page.NextCursor))
             return false;
 
         if (page.NextCursor?.Length > MaximumCursorLength ||
-            page.NextCursor?.Any(char.IsControl) == true)
+            page.NextCursor?.Any(char.IsControl) == true ||
+            (page.NextCursor is not null && string.Equals(page.NextCursor, query.Cursor, StringComparison.Ordinal)))
             return false;
 
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -149,6 +151,8 @@ public sealed class RegistrationApprovalQueueQueryService(
         foreach (var item in page.Items)
         {
             if (item is null ||
+                (query.Status is { } requestedStatus && item.Status != requestedStatus) ||
+                (query.StationId is not null && item.RequestedStationId != query.StationId) ||
                 !IsIdentifier(item.RequestId) ||
                 !IsIdentifier(item.ApplicantAccountId) ||
                 !IsIdentifier(item.RequestedStationId) ||
