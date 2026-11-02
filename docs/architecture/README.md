@@ -102,4 +102,4 @@ The provider-independent role/permission catalogue structure and validation rule
 ## Authorization governance additions
 
 - `AUTHORIZATION-CATALOGUE-CONTRACT.md` — provider-independent role/permission catalogue structure and structural validation, without preselecting METRA role codes or mappings.
-- `ACCOUNT-LIFECYCLE-AND-ACCESS-MUTATION-CONTRACT.md` — explicit account suspend/restore/disable transitions, a tested application-service contract with reason and version checks, effective-access consequences, station/grant mutation boundaries, and transactional audit requirements.
+- `ACCOUNT-LIFECYCLE-AND-ACCESS-MUTATION-CONTRACT.md` — explicit account lifecycle transitions, station assignment and permission grant/revoke application contracts, effective-access consequences, concurrency checks, and transactional audit requirements.
