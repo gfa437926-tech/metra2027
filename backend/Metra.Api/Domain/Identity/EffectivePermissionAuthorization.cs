@@ -84,6 +84,9 @@ public static class EffectivePermissionAuthorization
         IEnumerable<MetraStationAssignment>? stationAssignments,
         DateTimeOffset instantUtc)
     {
+        if (instantUtc.Offset != TimeSpan.Zero)
+            return Deny("authorization_time_invalid", "يجب أن يكون وقت التحقق بتوقيت UTC.");
+
         if (!Enum.IsDefined(accountState))
             return Deny("account_state_invalid", "حالة الحساب غير معروفة.");
 
