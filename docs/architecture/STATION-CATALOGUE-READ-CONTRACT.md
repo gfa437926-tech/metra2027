@@ -45,3 +45,12 @@ No production source adapter, endpoint mapping, dependency-injection registratio
 ## Map projection contract
 
 `StationMapProjection` is a pure projection over the validated catalogue page. It creates one marker collection containing both source classes, with source-qualified marker keys and explicit source kind for distinct classic/automatic icons. It returns every record without a complete verified coordinate pair in a separate list collection. It never supplies default coordinates, approximates a city centre, or merges records by name. Invalid or partial coordinate pairs are rejected rather than plotted.
+
+
+## Source-qualified station detail read contract
+
+`StationDetailQueryService` accepts the pair `(SourceKind, SourceRecordId)` as the only station lookup key. The source namespace is mandatory: a Classic record and an Automatic record with the same local identifier remain distinct, and the read store must never fall back across source classes or resolve a record by display name.
+
+The trusted detail store must enforce the approved detail-read permission and the actor's authoritative station scope within the same read operation. It returns no record both for a missing record and for a record outside the actor's visible scope, preventing the detail lookup from becoming an existence oracle. Actor identity is derived from the authenticated server context, never from query input.
+
+The application service validates the source key, actor identifier, returned source-qualified identity, display name, optional source metadata, coordinate pair/ranges, and elevation bounds. A mismatched source key or malformed store projection fails closed. Missing coordinates and optional metadata remain null. This contract adds no endpoint, DI registration, database adapter, schema, or mutation workflow; activation remains subject to the gates above.
