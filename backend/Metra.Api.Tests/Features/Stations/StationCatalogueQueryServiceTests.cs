@@ -110,18 +110,18 @@ public sealed class StationCatalogueQueryServiceTests
         var service = Create("admin", store);
 
         Assert.Equal(StationCatalogueReadStatus.InvalidQuery,
-            (await service.ReadAsync(new(NamePrefix: "محطة\\u0085"))).Status);
+            (await service.ReadAsync(new(NamePrefix: "محطة\u0085"))).Status);
         Assert.Equal(StationCatalogueReadStatus.InvalidQuery,
-            (await service.ReadAsync(new(Cursor: "cursor\\u009f"))).Status);
+            (await service.ReadAsync(new(Cursor: "cursor\u009f"))).Status);
         Assert.Equal(0, store.Calls);
 
-        var malformedName = Item(StationCatalogueSourceKind.Classic, "1", "محطة\\u0085");
+        var malformedName = Item(StationCatalogueSourceKind.Classic, "1", "محطة\u0085");
         Assert.Equal(StationCatalogueReadStatus.InvalidStoreResponse,
             (await Create("admin", new FakeStore(Page(malformedName))).ReadAsync(new())).Status);
 
         var malformedMetadata = Item(StationCatalogueSourceKind.Classic, "1", "محطة") with
         {
-            SourceCode = "code\\u009f"
+            SourceCode = "code\u009f"
         };
         Assert.Equal(StationCatalogueReadStatus.InvalidStoreResponse,
             (await Create("admin", new FakeStore(Page(malformedMetadata))).ReadAsync(new())).Status);
