@@ -1,8 +1,8 @@
 # METRA 2027 — User Administration and Station Assignment Workflow
 
-Status: two-stage registration workflow approved; Supabase Auth recommended; role catalogue and persistence mapping remain pending.
+Status: two-stage registration workflow approved; Supabase Auth selected for implementation planning; production identity verification, role catalogue and persistence mapping remain pending.
 
-The provider recommendation is recorded in IDENTITY-PROVIDER-DECISION.md. A provider-independent .NET domain transition service now implements the station-then-system decision order and has dedicated unit tests. The service is not yet connected to HTTP endpoints or persistence. No SQL, schema, Auth settings, or RLS changes are authorized.
+The provider decision is recorded in IDENTITY-PROVIDER-DECISION.md. Selection for implementation planning does not authorize production activation or changes to Auth settings. A provider-independent .NET domain transition service now implements the station-then-system decision order and has dedicated unit tests. The service is not yet connected to HTTP endpoints or persistence. No SQL, schema, Auth settings, or RLS changes are authorized.
 
 ## 1. Non-negotiable boundaries
 
