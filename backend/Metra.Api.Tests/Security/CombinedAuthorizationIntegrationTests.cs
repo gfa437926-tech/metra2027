@@ -9,7 +9,7 @@ namespace Metra.Api.Tests.Security;
 public sealed class CombinedAuthorizationIntegrationTests
 {
     [Fact]
-    public async Task Allows_only_when_both_action_permission_and_resource_scope_are_granted()
+    public async Task Allows_only_when_consistent_context_provider_grants_both_dimensions()
     {
         using var provider = CreateProvider(permissionAllowed: true, resourceAllowed: true);
         using var scope = provider.CreateScope();
@@ -44,7 +44,7 @@ public sealed class CombinedAuthorizationIntegrationTests
     }
 
     [Fact]
-    public async Task Denies_anonymous_actor_even_when_test_evaluators_would_allow()
+    public async Task Denies_anonymous_actor_even_when_context_provider_would_allow()
     {
         using var provider = CreateProvider(permissionAllowed: true, resourceAllowed: true);
         using var scope = provider.CreateScope();
@@ -59,7 +59,7 @@ public sealed class CombinedAuthorizationIntegrationTests
     }
 
     [Fact]
-    public async Task Combined_policy_contains_both_independent_requirements()
+    public async Task Combined_policy_uses_one_combined_requirement_not_independent_reads()
     {
         using var provider = CreateProvider(permissionAllowed: true, resourceAllowed: true);
         var policyProvider = provider.GetRequiredService<IAuthorizationPolicyProvider>();
@@ -68,11 +68,9 @@ public sealed class CombinedAuthorizationIntegrationTests
             MetraAuthorizationPolicies.DailyObservationCreateInStation);
 
         Assert.NotNull(policy);
-        Assert.Contains(policy!.Requirements, requirement =>
-            requirement is MetraPermissionRequirement permission &&
-            permission.Permission == MetraPermissions.DailyObservationCreate);
+        Assert.Single(policy!.Requirements);
         Assert.Contains(policy.Requirements, requirement =>
-            requirement is MetraResourceAccessRequirement);
+            requirement is MetraCombinedAuthorizationRequirement);
     }
 
     private static ServiceProvider CreateProvider(bool permissionAllowed, bool resourceAllowed)
@@ -81,29 +79,19 @@ public sealed class CombinedAuthorizationIntegrationTests
         services.AddLogging();
         services.AddMetraAuthorization();
         services.AddMetraResourceAuthorization();
-        services.AddSingleton<IMetraPermissionGrantEvaluator>(
-            new FixedPermissionEvaluator(permissionAllowed));
-        services.AddSingleton<IMetraResourceAccessEvaluator>(
-            new FixedResourceEvaluator(resourceAllowed));
+        services.AddSingleton<IMetraActorAuthorizationContextProvider>(
+            new FixedContextProvider(permissionAllowed && resourceAllowed));
         return services.BuildServiceProvider(validateScopes: true);
     }
 
     private static ClaimsPrincipal Principal(string subject)
         => new(new ClaimsIdentity([new Claim("sub", subject)], "validated-test"));
 
-    private sealed class FixedPermissionEvaluator(bool allowed) : IMetraPermissionGrantEvaluator
+    private sealed class FixedContextProvider(bool allowed) : IMetraActorAuthorizationContextProvider
     {
-        public Task<bool> HasPermissionAsync(
+        public Task<bool> CanPerformOnResourceAsync(
             string actorSubject,
             string permission,
-            CancellationToken cancellationToken)
-            => Task.FromResult(allowed);
-    }
-
-    private sealed class FixedResourceEvaluator(bool allowed) : IMetraResourceAccessEvaluator
-    {
-        public Task<bool> CanAccessAsync(
-            string actorSubject,
             MetraResourceDescriptor resource,
             CancellationToken cancellationToken)
             => Task.FromResult(allowed);
