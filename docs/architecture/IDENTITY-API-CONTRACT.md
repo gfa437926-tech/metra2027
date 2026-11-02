@@ -95,6 +95,33 @@ The status values are illustrative until the state machine is approved. The serv
 
 The response is derived server-side. It is a UI rendering context, not a bearer authorization grant. Every protected operation re-evaluates current account state, assignment validity, station scope and permission. Do not expose provider access or refresh tokens in this response.
 
+
+### Current-user context field semantics and client parity
+
+The response above is the canonical v1 JSON contract. The provider-neutral server DTO is
+`backend/Metra.Api/Features/Identity/CurrentUserContextContract.cs`; matching read-only
+client models are defined in
+`angular-app/src/app/core/identity/current-user-context.models.ts` and
+`mobile/metra_mobile/lib/models/current_user_context.dart`.
+
+- `userId` is the opaque METRA account identifier, never the provider subject or an email address.
+- `profile` contains only the minimum profile fields needed by the clients. Optional values are JSON `null`, not omitted inconsistently.
+- `accountState` is a server-defined state string. The server must use a documented allow-list; clients must not infer that an unknown state is active.
+- `assignments` contains effective station assignments only, not requested or pending assignments. `validFrom` and non-null `validTo` are ISO-8601 timestamps with an explicit UTC offset (UTC `Z` preferred). The start boundary is inclusive; the end boundary is exclusive.
+- `isActive` is a server-computed display hint for the response snapshot. It is not an authorization grant and may become stale immediately after the response.
+- `roleCode` is a canonical server-granted role code for display and navigation only. It does not replace permission checks.
+- `permissions` contains exact server-computed permission identifiers for display/navigation. It must not be populated from untrusted token claims or client input and must not be used by an API endpoint as proof of authorization.
+- The authenticated provider subject is used only inside the server to resolve the METRA account. It is not returned in this payload.
+- The response must not contain access/refresh tokens, password data, MFA secrets, internal grant identifiers, security answers or audit internals.
+
+Angular and Flutter model types intentionally mirror the same camelCase field names and nullability. A client must treat missing required fields, invalid timestamps and unknown account states as a contract error rather than silently substituting a privileged/default identity.
+
+The endpoint remains a proposed contract and is not mapped. There is no production identity provider, account repository or assignment/permission adapter. The new DTO and client model files establish type parity only; they do not create a current-user session or return fabricated data. Do not wire a demo identity or static permission list into either client.
+
+### Refresh and stale-context behavior
+
+A client may cache the last successfully retrieved context briefly for display, but it must clear it on sign-out, authentication failure, account switch or an explicit session-revoked response. It must not persist permissions or station assignments as durable authorization state. A failed refresh must never fall back to a previous user's context. Any protected write/read is independently authorized by the API against current authoritative state, regardless of what the UI currently displays.
+
 ## 5. Approval decisions
 
 ### Decision request
