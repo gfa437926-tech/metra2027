@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Metra.Api.Security;
 
@@ -25,6 +26,19 @@ public interface IMetraResourceAccessEvaluator
         string actorSubject,
         MetraResourceDescriptor resource,
         CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// Safe bootstrap implementation. Until an authoritative persistence-backed
+/// evaluator is configured, all resource access is denied.
+/// </summary>
+public sealed class DenyAllMetraResourceAccessEvaluator : IMetraResourceAccessEvaluator
+{
+    public Task<bool> CanAccessAsync(
+        string actorSubject,
+        MetraResourceDescriptor resource,
+        CancellationToken cancellationToken)
+        => Task.FromResult(false);
 }
 
 public sealed class MetraResourceAccessRequirement : IAuthorizationRequirement
@@ -82,6 +96,7 @@ public static class MetraResourceAuthorizationServiceCollectionExtensions
     public static IServiceCollection AddMetraResourceAuthorization(
         this IServiceCollection services)
     {
+        services.TryAddScoped<IMetraResourceAccessEvaluator, DenyAllMetraResourceAccessEvaluator>();
         services.AddScoped<IAuthorizationHandler, MetraResourceAccessHandler>();
         services.AddAuthorization(options =>
         {
