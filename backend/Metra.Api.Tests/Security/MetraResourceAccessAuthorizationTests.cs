@@ -84,6 +84,16 @@ public sealed class MetraResourceAccessAuthorizationTests
     }
 
     [Fact]
+    public async Task Default_evaluator_denies_every_resource_until_authoritative_adapter_is_registered()
+    {
+        var evaluator = new DenyAllMetraResourceAccessEvaluator();
+
+        var allowed = await evaluator.CanAccessAsync("user-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
     public async Task Resource_access_policy_requires_authenticated_user_and_resource_requirement()
     {
         var services = new ServiceCollection();
