@@ -138,21 +138,23 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
             builder.UseEnvironment(environment);
             builder.UseSetting("Cors:AllowedOrigins:0", "https://metra.example.test");
             builder.UseSetting("Cors:AllowedOrigins:1", "https://metra.example.test");
-            if (environment != "Development")
-            {
-                // A syntactically valid, never-used CI-only connection string lets the
-                // production middleware test boot without connecting to a real database.
-                builder.UseSetting(
-                    "ConnectionStrings:MetraDatabase",
-                    "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable");
-            }
             builder.ConfigureAppConfiguration((_, configuration) =>
             {
-                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                var settings = new Dictionary<string, string?>
                 {
                     ["Cors:AllowedOrigins:0"] = "https://metra.example.test",
                     ["Cors:AllowedOrigins:1"] = "https://metra.example.test"
-                });
+                };
+
+                if (environment != "Development")
+                {
+                    // A syntactically valid, never-used CI-only connection string lets the
+                    // production middleware test boot without connecting to a real database.
+                    settings["ConnectionStrings:MetraDatabase"] =
+                        "Host=127.0.0.1;Database=metra_ci;Username=metra_runtime;Password=ci-only-not-a-secret;SSL Mode=Disable";
+                }
+
+                configuration.AddInMemoryCollection(settings);
             });
         }
     }
