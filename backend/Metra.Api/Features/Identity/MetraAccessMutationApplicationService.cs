@@ -72,6 +72,10 @@ public sealed class MetraAccessMutationApplicationService(
     {
         if (command is null || string.IsNullOrWhiteSpace(command.AccountId))
             return Failure("account_id_required");
+
+        var accountId = command.AccountId.Trim();
+        if (accountId.Length > 128 || accountId.Any(char.IsControl))
+            return Failure("account_id_invalid");
         if (!Enum.IsDefined(command.Kind))
             return Failure("access_mutation_kind_invalid");
 
@@ -80,6 +84,8 @@ public sealed class MetraAccessMutationApplicationService(
             return Failure("access_mutation_reason_required");
         if (reason.Length > MaximumReasonLength)
             return Failure("access_mutation_reason_too_long");
+        if (reason.Any(char.IsControl))
+            return Failure("access_mutation_reason_invalid");
 
         var shapeError = ValidateCommandShape(command);
         if (shapeError is not null)
@@ -88,10 +94,15 @@ public sealed class MetraAccessMutationApplicationService(
         var actorId = await actorContextProvider.GetCurrentActorUserIdAsync(cancellationToken);
         if (string.IsNullOrWhiteSpace(actorId))
             return Failure("unauthenticated");
+        if (actorId != actorId.Trim() || actorId.Length > 128 || actorId.Any(char.IsControl))
+            return Failure("actor_context_invalid");
 
-        var target = await store.FindTargetAsync(command.AccountId.Trim(), cancellationToken);
+        var target = await store.FindTargetAsync(accountId, cancellationToken);
         if (target is null)
             return Failure("account_not_found");
+        if (string.IsNullOrWhiteSpace(target.AccountId) ||
+            target.AccountId != accountId || target.Version <= 0)
+            return Failure("account_snapshot_invalid");
         var createsAccess = command.Kind is
             MetraAccessMutationKind.GrantPermission or MetraAccessMutationKind.AssignStation;
         if (createsAccess && target.AccountState != MetraAccountAccessState.Active)
@@ -141,7 +152,9 @@ public sealed class MetraAccessMutationApplicationService(
             case MetraAccessMutationKind.RevokePermission:
             case MetraAccessMutationKind.RevokeStationAssignment:
                 return hasRecordId && !hasGrant && !hasAssignment &&
-                       command.RecordId!.Trim() == command.RecordId
+                       command.RecordId!.Trim() == command.RecordId &&
+                       command.RecordId.Length <= 128 &&
+                       !command.RecordId.Any(char.IsControl)
                     ? null
                     : "access_mutation_payload_invalid";
 
