@@ -184,7 +184,7 @@ public sealed class RegistrationApprovalApplicationServiceTests
         var store = new FakeStore(Request());
         var service = new RegistrationApprovalApplicationService(actorProvider, store);
         var result = await service.DecideAsync(new(
-            "request-1", RegistrationApprovalDecision.Reject, "line\\nbreak"));
+            "request-1", RegistrationApprovalDecision.Reject, "line" + (char)10 + "break"));
         Assert.Equal("note_invalid", result.Code);
         Assert.Equal(0, actorProvider.Calls);
         Assert.Equal(0, store.FindCalls);
