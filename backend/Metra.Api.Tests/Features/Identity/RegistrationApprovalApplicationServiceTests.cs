@@ -148,7 +148,12 @@ public sealed class RegistrationApprovalApplicationServiceTests
 
     private static RegistrationApprovalRequestContext Request(
         RegistrationApprovalStatus status = RegistrationApprovalStatus.PendingStationApproval)
-        => new("request-1", "applicant", "station-1", status);
+        => new(
+            "request-1",
+            "applicant",
+            "station-1",
+            status,
+            status == RegistrationApprovalStatus.PendingSystemApproval ? "station-reviewer" : null);
 
     private sealed class FakeActorProvider(RegistrationApprovalActorContext? actor)
         : IRegistrationApprovalActorContextProvider
