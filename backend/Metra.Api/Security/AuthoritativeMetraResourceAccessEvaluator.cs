@@ -85,14 +85,19 @@ public sealed class AuthoritativeMetraResourceAccessEvaluator(
                 return false;
             }
 
+            if (facts.StationAssignments.Any(assignment =>
+                    assignment is null ||
+                    !MetraAccessRecordPolicy.ValidateAssignment(
+                        new MetraStationAssignment(
+                            assignment.StationId,
+                            assignment.ValidFromUtc,
+                            assignment.ValidToUtc,
+                            assignment.RevokedAtUtc)).IsValid))
+            {
+                return false;
+            }
+
             return facts.StationAssignments.Any(assignment =>
-                assignment is not null &&
-                MetraAccessRecordPolicy.ValidateAssignment(
-                    new MetraStationAssignment(
-                        assignment.StationId,
-                        assignment.ValidFromUtc,
-                        assignment.ValidToUtc,
-                        assignment.RevokedAtUtc)).IsValid &&
                 string.Equals(
                     assignment.StationId,
                     facts.CanonicalStationId,
