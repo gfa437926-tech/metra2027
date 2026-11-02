@@ -15,17 +15,29 @@
             "outputPath": "dist/metra2027",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "styles": ["src/styles.scss"],
+            "styles": [
+              "src/styles.scss"
+            ],
             "assets": []
           },
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "800kB", "maximumError": "1.5MB" },
-                { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "16kB" }
+                {
+                  "type": "initial",
+                  "maximumWarning": "800kB",
+                  "maximumError": "1.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "8kB",
+                  "maximumError": "16kB"
+                }
               ],
               "outputHashing": "all"
             },
@@ -40,10 +52,22 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
-            "production": { "buildTarget": "metra2027:build:production" },
-            "development": { "buildTarget": "metra2027:build:development" }
+            "production": {
+              "buildTarget": "metra2027:build:production"
+            },
+            "development": {
+              "buildTarget": "metra2027:build:development"
+            }
           },
           "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.spec.json",
+            "buildTarget": "metra2027:build:development",
+            "runner": "vitest"
+          }
         }
       }
     }
