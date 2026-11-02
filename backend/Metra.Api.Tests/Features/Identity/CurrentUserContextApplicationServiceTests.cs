@@ -104,8 +104,8 @@ public sealed class CurrentUserContextApplicationServiceTests
             ],
             PermissionGrants =
             [
-                new("permission.starts.now", Now, null, null),
-                new("permission.ends.now", Now.AddDays(-1), Now, null)
+                new("observations.daily.create", Now, null, null),
+                new("registrations.system.approve", Now.AddDays(-1), Now, null)
             ]
         };
         var service = CreateService(new FakeDataSource(facts));
@@ -114,7 +114,7 @@ public sealed class CurrentUserContextApplicationServiceTests
 
         Assert.NotNull(result);
         Assert.Equal("starts-now", Assert.Single(result.Assignments).StationId);
-        Assert.Equal(new[] { "permission.starts.now" }, result.Permissions);
+        Assert.Equal(new[] { "observations.daily.create" }, result.Permissions);
     }
 
     [Theory]
