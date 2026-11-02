@@ -78,8 +78,10 @@ Before a production adapter is enabled, integration tests against an isolated di
 - inactive actors, missing/unclassified resources, cross-station assignments, blank actor/resource identifiers and authoritative-store failures are denied.
 - station assignment matching uses exact canonical identifiers (ordinal comparison); whitespace, case variants and look-alike identifiers do not grant access.
 - request cancellation propagates through authorization reads rather than being converted into an authorization denial or retried.
+- authoritative permission and assignment facts must contain UTC timestamps, valid non-empty windows, and revocation instants within the validity window; malformed temporal facts fail closed.
+- authoritative station identifiers must satisfy the canonical identifier format before they can establish scope; padded or malformed identifiers fail closed.
 - anonymous requests to station catalogue and detail routes receive an authentication challenge before route handlers can expose dependency-registration state or data.
 
-The provider-neutral evaluator and HTTP boundary are covered by `StationScopedMetraResourceAccessEvaluatorTests` and `MetraAuthenticationBoundaryTests`. These tests use fakes/TestServer and do not connect to production persistence.
+The provider-neutral evaluator and HTTP boundary are covered by `StationScopedMetraResourceAccessEvaluatorTests` and `MetraAuthenticationBoundaryTests`. The authoritative permission and resource evaluators additionally validate UTC time facts, validity windows, revocation boundaries and canonical station identifiers before allowing access. Tests use fakes/TestServer and do not connect to production persistence.
 
 No live Supabase project is used for these tests.
