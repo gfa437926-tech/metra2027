@@ -40,10 +40,11 @@ public sealed class MetraPermissionAuthorizationTests
             new Claim(ClaimTypes.Role, "StationManager"),
             new Claim("metra_permission", MetraPermissions.RegistrationStationApprove));
 
+        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
         await new MetraPermissionAuthorizationHandler(new FakePermissionEvaluator(false))
-            .HandleAsync(Context(principal, MetraPermissions.RegistrationStationApprove));
+            .HandleAsync(context);
 
-        Assert.False(Context(principal, MetraPermissions.RegistrationStationApprove).HasSucceeded);
+        Assert.False(context.HasSucceeded);
     }
 
     [Fact]
