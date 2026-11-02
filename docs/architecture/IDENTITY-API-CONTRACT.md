@@ -271,3 +271,40 @@ consistent snapshot, and have integration tests for account linking, unlinking, 
 identity links, inactive accounts, concurrent grant revocation and station reassignment.
 The source adapter must not create an account automatically from an arbitrary valid token.
 Account provisioning remains a separate approved registration workflow.
+
+
+### External identity linking boundary
+
+A provider-neutral application boundary now exists in
+`backend/Metra.Api/Features/Identity/IdentityLinkApplicationService.cs`.
+It deliberately accepts no target METRA account ID from the caller. The actor
+account is supplied only by a trusted server-side session context provider.
+
+The trusted context separates:
+- the already-authenticated METRA session and its canonical account ID;
+- the issuer+subject of the *additional* external identity being linked;
+- the time the METRA session was authenticated;
+- the time proof-of-possession for the additional identity was verified.
+
+Both authentication events must be no more than five minutes old and cannot be
+in the future. The context provider is responsible for completing a fresh
+authentication/authorization-code flow for the additional identity, validating
+its issuer, signature, audience, nonce/state and protocol requirements, and
+binding that proof to the existing authenticated session. The application
+service does not itself validate OIDC tokens and must never be passed untrusted
+issuer/subject values from a browser request.
+
+The store contract requires an atomic uniqueness guarantee for the normalized
+issuer+subject pair and an audit event in the same transaction. It distinguishes
+an identity already linked to the same account from one linked to another
+account and from a concurrent conflict. No automatic account creation or
+email-based account matching is permitted.
+
+This remains an application contract only: there is no provider proof adapter,
+identity-link database schema, unique index, audit persistence adapter, DI
+registration or HTTP endpoint. Before activation, the concrete store must
+define issuer canonicalization (including trailing-slash behavior), subject
+case-sensitivity, database collation, tenant/realm boundaries, account state
+re-check inside the transaction, and operational handling for compromised or
+retired provider identities. Unlinking is intentionally not implemented:
+it needs a recovery/last-login-method policy and an auditable step-up flow.
