@@ -207,3 +207,8 @@ Implementation of protected identity endpoints is intentionally deferred until t
 6. Approve the persistence model and migration treatment of legacy users and pending registration requests.
 
 Until these decisions are approved, keep this contract provider-neutral and do not change Supabase Auth, PostgreSQL schema, RLS, policies or existing user records.
+
+
+### Combined authorization policy
+
+For daily-observation creation in station scope, use the named policy `metra:daily-observation-create-in-station`. It requires both the canonical `observations.daily.create` action permission and the independent `metra:resource-access` requirement. The permission evaluator and resource evaluator must both allow; success of either one alone is insufficient. The endpoint must pass a server-constructed resource descriptor identifying the target persisted resource; the descriptor's optional station ID is not authoritative. This combined policy is currently a reusable authorization definition tested through `IAuthorizationService`; it is not yet mapped to a production endpoint. The configured deny-all evaluators remain the defaults.
