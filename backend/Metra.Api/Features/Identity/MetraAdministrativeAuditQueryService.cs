@@ -16,7 +16,31 @@ public sealed record MetraAdministrativeAuditQuery(
     int PageSize,
     string? Cursor);
 
+/// <summary>
+/// Deliberately redacted default list projection. Free-text reason and
+/// before/after values are excluded from ordinary list responses.
+/// </summary>
+public sealed record MetraAdministrativeAuditListItem(
+    string EventId,
+    string TargetAccountId,
+    string ActorUserId,
+    string ActionCode,
+    string ResourceType,
+    string ResourceId,
+    DateTimeOffset OccurredAtUtc,
+    string CorrelationId,
+    long AggregateVersion);
+
 public sealed record MetraAdministrativeAuditPage(
+    IReadOnlyList<MetraAdministrativeAuditListItem> Items,
+    string? NextCursor,
+    bool HasMore);
+
+/// <summary>
+/// Internal store page carries complete domain events so the application
+/// service can validate them before producing the redacted API projection.
+/// </summary>
+public sealed record MetraAdministrativeAuditStorePage(
     IReadOnlyList<MetraAdministrativeAuditEvent> Events,
     string? NextCursor,
     bool HasMore);
@@ -35,7 +59,7 @@ public enum MetraAdministrativeAuditReadResult
 /// </summary>
 public interface IMetraAdministrativeAuditReadStore
 {
-    Task<(MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditPage? Page)>
+    Task<(MetraAdministrativeAuditReadResult Result, MetraAdministrativeAuditStorePage? Page)>
         ReadAsync(string actorUserId, MetraAdministrativeAuditQuery query,
             CancellationToken cancellationToken);
 }
@@ -73,8 +97,8 @@ public sealed class MetraAdministrativeAuditQueryService(
         if (!IsOptionalCode(query.ActionCode) || !IsOptionalCode(query.ResourceType))
             return Failure("audit_filter_code_invalid");
 
-        if (query.OccurredFromUtc is { Offset: var fromOffset } && fromOffset != TimeSpan.Zero ||
-            query.OccurredBeforeUtc is { Offset: var beforeOffset } && beforeOffset != TimeSpan.Zero)
+        if ((query.OccurredFromUtc is { Offset: var fromOffset } && fromOffset != TimeSpan.Zero) ||
+            (query.OccurredBeforeUtc is { Offset: var beforeOffset } && beforeOffset != TimeSpan.Zero))
             return Failure("audit_filter_timestamp_must_be_utc");
 
         if (query.OccurredFromUtc is not null &&
@@ -94,35 +118,41 @@ public sealed class MetraAdministrativeAuditQueryService(
             return Failure("actor_context_invalid");
 
         var read = await store.ReadAsync(actorId, query, cancellationToken);
-        return read.Result switch
-        {
-            MetraAdministrativeAuditReadResult.Success when IsValidPage(read.Page, query.PageSize) &&
-                (!read.Page!.HasMore ||
-                 !string.Equals(query.Cursor, read.Page.NextCursor, StringComparison.Ordinal)) =>
-                new(true, "audit_query_succeeded", read.Page),
-            MetraAdministrativeAuditReadResult.Success => Failure("audit_store_response_invalid"),
-            MetraAdministrativeAuditReadResult.ActorNotAuthorized => Failure("actor_not_authorized"),
-            MetraAdministrativeAuditReadResult.CursorInvalid => Failure("audit_cursor_invalid"),
-            _ => Failure("audit_query_failed")
-        };
+        if (read.Result == MetraAdministrativeAuditReadResult.ActorNotAuthorized)
+            return Failure("actor_not_authorized");
+        if (read.Result == MetraAdministrativeAuditReadResult.CursorInvalid)
+            return Failure("audit_cursor_invalid");
+        if (read.Result != MetraAdministrativeAuditReadResult.Success)
+            return Failure("audit_query_failed");
+
+        if (!TryMapPage(read.Page, query, out var safePage))
+            return Failure("audit_store_response_invalid");
+
+        return new(true, "audit_query_succeeded", safePage);
     }
 
-
-    private static bool IsValidPage(MetraAdministrativeAuditPage? page, int pageSize)
+    private static bool TryMapPage(
+        MetraAdministrativeAuditStorePage? page,
+        MetraAdministrativeAuditQuery query,
+        out MetraAdministrativeAuditPage? safePage)
     {
-        if (page?.Events is null || page.Events.Count > pageSize)
+        safePage = null;
+        if (page?.Events is null || page.Events.Count > query.PageSize)
             return false;
         if (page.HasMore &&
             (page.Events.Count == 0 ||
              string.IsNullOrWhiteSpace(page.NextCursor) ||
              page.NextCursor.Length > MaximumCursorLength ||
-             page.NextCursor.Any(char.IsControl)))
+             page.NextCursor.Any(char.IsControl) ||
+             string.Equals(query.Cursor, page.NextCursor, StringComparison.Ordinal)))
             return false;
         if (!page.HasMore && page.NextCursor is not null)
             return false;
 
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
+        var projected = new List<MetraAdministrativeAuditListItem>(page.Events.Count);
         MetraAdministrativeAuditEvent? previous = null;
+
         foreach (var auditEvent in page.Events)
         {
             if (!MetraAdministrativeAuditEventPolicy.Validate(auditEvent).IsValid ||
@@ -135,9 +165,20 @@ public sealed class MetraAdministrativeAuditQueryService(
                  string.CompareOrdinal(previous.EventId, auditEvent.EventId) < 0))
                 return false;
 
+            projected.Add(new(
+                auditEvent.EventId,
+                auditEvent.TargetAccountId,
+                auditEvent.ActorUserId,
+                auditEvent.ActionCode,
+                auditEvent.ResourceType,
+                auditEvent.ResourceId,
+                auditEvent.OccurredAtUtc,
+                auditEvent.CorrelationId,
+                auditEvent.AggregateVersion));
             previous = auditEvent;
         }
 
+        safePage = new(projected, page.NextCursor, page.HasMore);
         return true;
     }
 
