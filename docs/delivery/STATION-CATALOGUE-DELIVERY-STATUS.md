@@ -124,3 +124,28 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 - Added/updated `supabase/tests/observation_import_integrity.sql` and `docs/delivery/LEGACY-OBSERVATION-IMPORT-2026-11-02.md`.
 - The legacy INSERT database was queried read-only throughout. All writes were directed only to the new METRA database.
 - METRA destination security advisor returned zero findings. The legacy project's advisor reports 22 public tables with RLS disabled; no remediation was applied there under the user's no-modification instruction.
+
+## CI verification and current operational snapshot — 2026-11-03
+
+### Pull-request commit verification
+- Verified commit: `14229274f8eea44d9dc9aa674af3507404b027ee`.
+- GitHub Actions results for this exact commit:
+  - Backend build: **success**.
+  - ASP.NET Core 10 build and tests: **success**.
+  - Angular dependency audit, test-source type check, unit tests and production bundle: **success**.
+  - Flutter dependency resolution, Dart formatting, analysis and tests: **success**.
+- The preceding Flutter run on `82771e15ed68c5d355ac780ef16d7879fe9e13f7` failed the formatting gate. The test file was formatted in the verified commit above; the subsequent complete Flutter workflow passed.
+- PR #1 remains open and draft. These CI results do not mean the PR is merged or the system deployed.
+
+### Live METRA database verification
+Read-only verification against `tbdnklyxjvbrilvnwgmq` returned:
+- Observation records: **58,059**.
+- Station catalogue rows: **65** (62 imported, unverified records and 3 explicitly marked demo).
+- Imported stations with current coordinate records: **50**; without current coordinate records: **12**.
+- Observation records linked to stations: **56,808**; unlinked: **1,251**. No station mapping is inferred for the unresolved records.
+- A fresh payload scan found **zero** observation rows containing the checked identity/contact keys (user IDs, email, names, role and observer/browser metadata).
+- Security Advisor: **zero findings**.
+- Browser roles `anon` and `authenticated` have no direct table grants on the protected operational and identity tables. Protected reads must remain behind the trusted backend.
+
+### Remaining production gates
+The station routes are still deliberately unavailable until the trusted PostgreSQL read adapters and actor/permission/station-scope checks are implemented and registered. The 65 station rows are not an assertion that all imported stations are approved or operational. The 12 missing coordinate records must remain unplotted until verified source coordinates are supplied. The 1,251 unlinked observations require evidence-backed reconciliation. No production deployment or 100% completion is claimed.
