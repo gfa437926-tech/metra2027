@@ -43,6 +43,9 @@ Angular and Flutter should consume the same API projection. A map must use a dis
 
 ## Activation gates
 
+HTTP-level security tests must prove that anonymous requests to both catalogue and source-qualified detail routes receive an authentication challenge before route handlers can expose data or dependency-registration state. Application-service tests additionally prove that cancellation is propagated and that identity-resolution cancellation does not invoke the read store.
+
+
 No production source adapter, endpoint mapping, dependency-injection registration, database query, schema migration, RLS policy, grant, seed data, station mutation, or cross-source merge is introduced. Activation requires review of the source schemas, authoritative permission code, source-field mapping, crosswalk rules, and integration tests. The legacy project remains read-only and untouched.
 ## Map projection contract
 
