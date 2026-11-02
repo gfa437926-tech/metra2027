@@ -32,8 +32,8 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
 
       <section class="stats-grid" aria-label="ملخص دليل المحطات">
         <article class="stat-card"><span>إجمالي السجلات المعروضة</span><strong>{{ items().length }}</strong></article>
-        <article class="stat-card"><span>المحطات الكلاسيكية</span><strong>{{ classicCount() }}</strong></article>
-        <article class="stat-card"><span>المحطات الآلية</span><strong>{{ automaticCount() }}</strong></article>
+        <article class="stat-card"><span>الكلاسيكية المحمّلة</span><strong>{{ classicCount() }}</strong></article>
+        <article class="stat-card"><span>الآلية المحمّلة</span><strong>{{ automaticCount() }}</strong></article>
         <article class="stat-card"><span>دون إحداثيات</span><strong>{{ withoutCoordinatesCount() }}</strong></article>
       </section>
 
@@ -41,7 +41,7 @@ import { StationCatalogueHttpError, StationCatalogueService } from './station-ca
         <div class="toolbar">
           <label class="search-field">
             <span>بحث باسم المحطة</span>
-            <input type="search" [(ngModel)]="searchText" (ngModelChange)="applyFilters()" placeholder="اكتب اسم المحطة..." autocomplete="off">
+            <input type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" placeholder="اكتب اسم المحطة..." autocomplete="off">
           </label>
           <div class="filter-group" aria-label="تصفية حسب نوع المحطة">
             <button type="button" [class.selected]="sourceFilter() === 'all'" (click)="setSourceFilter('all')">الكل</button>
@@ -125,13 +125,13 @@ export class StationsComponent {
   readonly nextCursor = signal<string | null>(null);
   readonly sourceFilter = signal<'all' | StationSourceKind>('all');
   readonly errorMessage = signal('تعذّر الاتصال بخدمة دليل المحطات.');
-  searchText = '';
+  readonly searchText = signal('');
 
   readonly classicCount = computed(() => this.items().filter(x => x.sourceKind === 'classic').length);
   readonly automaticCount = computed(() => this.items().filter(x => x.sourceKind === 'automatic').length);
   readonly withoutCoordinatesCount = computed(() => this.items().filter(x => !this.hasCoordinates(x)).length);
   readonly filteredItems = computed(() => {
-    const query = this.searchText.trim().toLocaleLowerCase();
+    const query = this.searchText().trim().toLocaleLowerCase();
     return this.items().filter(item =>
       (this.sourceFilter() === 'all' || item.sourceKind === this.sourceFilter()) &&
       (!query || item.displayName.toLocaleLowerCase().includes(query))
@@ -178,7 +178,6 @@ export class StationsComponent {
     }
   }
 
-  applyFilters(): void { /* Filtering is derived from the current page without another request. */ }
   setSourceFilter(value: 'all' | StationSourceKind): void { this.sourceFilter.set(value); }
   sourceLabel(value: StationSourceKind): string { return value === 'classic' ? 'كلاسيكية' : 'آلية'; }
   hasCoordinates(item: StationCatalogueItem): boolean {
