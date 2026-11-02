@@ -66,4 +66,4 @@ The applicant cannot decide their own request. A request cannot skip either stag
 
 The API currently has an intentionally unconfigured authentication handler that returns no authenticated identity, plus fail-closed permission and resource evaluators. Keep that boundary until the Auth settings and signing algorithm have been inspected and the persistence model has been reviewed and approved.
 
-A provider-independent .NET domain workflow is being implemented separately from persistence. No database schema or RLS changes are part of this decision.
+The provider-independent .NET approval state machine and application-service contract already exist separately from persistence. The station approval policy now requires an explicit station-approval permission in addition to station scope. No production store adapter, identity token validator, database schema, or RLS changes are part of this decision.
