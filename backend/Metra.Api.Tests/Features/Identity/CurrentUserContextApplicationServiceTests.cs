@@ -95,7 +95,7 @@ public sealed class CurrentUserContextApplicationServiceTests
 
         Assert.NotNull(result);
         Assert.Equal("starts-now", Assert.Single(result.Assignments).StationId);
-        Assert.Equal(["permission.starts.now"], result.Permissions);
+        Assert.Equal(new[] { "permission.starts.now" }, result.Permissions);
     }
 
     [Theory]
