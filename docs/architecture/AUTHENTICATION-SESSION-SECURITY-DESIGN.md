@@ -1,13 +1,13 @@
 # METRA 2027 — Authentication and Session Security Design
 
-Status: provider-neutral implementation contract. No identity provider, production token validator, session store, or sign-in endpoint is enabled by this document.
+Status: Supabase Auth is the recommended identity provider; no production token validator, session store, or sign-in endpoint is enabled. Activation remains gated on read-only Auth settings and signing-key review.
 
 ## 1. Current verified state
 
 - ASP.NET Core has authorization policies and deny-all authorization data-source defaults, but no authentication scheme/provider is configured in `Program.cs`.
 - The currently mapped observation endpoints only validate request payloads; they do not persist observations or authorize a business operation.
 - The legacy browser login directly queries user tables, verifies a browser-side password hash, and stores a profile/role snapshot in `localStorage`. The legacy recovery flow exposes a generated temporary password. These are migration blockers, not acceptable fallback behavior.
-- The Angular Supabase client configuration is blank and must not be populated with a privileged key. The final identity provider remains undecided.
+- The Angular Supabase client configuration is blank and must not be populated with a privileged key. Supabase Auth is recommended but not yet activated; Auth provider settings and JWT signing-key configuration still require read-only review.
 - No production session persistence or revocation service exists.
 - The GitHub Pages workflow publishes only the Angular build artifact from `angular-app`; root-level legacy `index.html`, `login.js` and `auth-manager.js` are not included in that workflow's Pages artifact. They remain unsafe legacy source and must not be used as a production sign-in path.
 - Angular currently has no authentication route guards or API identity integration; its user-administration page is a static placeholder. The Pages UI is a preview, not a protected operational application.
@@ -34,7 +34,7 @@ Required validation for API access tokens:
 - Never treat role, permission, station, account status or approval claims as authoritative METRA grants. Those are resolved from server-controlled state.
 - Do not log raw access/refresh tokens, authorization codes, cookies or recovery proofs.
 
-Configuration must fail closed in production if issuer, audience, trusted metadata/JWKS location, HTTPS transport or approved algorithm policy is missing or invalid. Do not hard-code issuer URLs or keys before the provider decision. Do not disable certificate validation or fetch arbitrary metadata/JWKS URLs from request data.
+Configuration must fail closed in production if issuer, audience, trusted metadata/JWKS location, HTTPS transport or approved algorithm policy is missing or invalid. Do not hard-code signing keys. The recommended project issuer is documented in IDENTITY-PROVIDER-DECISION.md; enable it only after validating live issuer/JWKS metadata. Do not disable certificate validation or fetch arbitrary metadata/JWKS URLs from request data.
 
 ## 4. Client session architecture decision
 
@@ -99,7 +99,7 @@ A client-provided user ID, email, role, station, approval flag, or local profile
 ## 7. Fail-closed release gates
 
 Before enabling sign-in or protected business endpoints:
-- Approve the identity provider, issuer, audience, client registrations and redirect URIs.
+- Confirm Supabase Auth provider settings, exact issuer/audience, client registrations and redirect URIs before enabling the JWT adapter.
 - Approve browser BFF versus SPA session architecture and Flutter secure-storage library.
 - Configure and test token signature, issuer, audience, expiry, not-before and key rotation validation.
 - Test invalid/missing tokens, inactive accounts, wrong subject mapping, revoked sessions, expired sessions and refresh replay.
