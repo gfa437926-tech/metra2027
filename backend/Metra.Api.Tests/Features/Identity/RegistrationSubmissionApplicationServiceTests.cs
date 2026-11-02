@@ -105,6 +105,65 @@ public sealed class RegistrationSubmissionApplicationServiceTests
         Assert.Equal(0, store.Calls);
     }
 
+    [Theory]
+    [InlineData("FirstName")]
+    [InlineData("FatherName")]
+    [InlineData("LastName")]
+    [InlineData("RequestedRoleCode")]
+    [InlineData("RequestedStationId")]
+    [InlineData("TermsVersion")]
+    [InlineData("IdempotencyKey")]
+    public async Task Rejects_oversized_registration_fields_before_catalogue_or_store_access(
+        string field)
+    {
+        var catalogue = new FakeCatalogue();
+        var store = new FakeStore(new(RegistrationSubmissionCommitStatus.Created));
+        var oversized = new string('x', 129);
+        var command = field switch
+        {
+            "FirstName" => ValidCommand() with { FirstName = oversized },
+            "FatherName" => ValidCommand() with { FatherName = oversized },
+            "LastName" => ValidCommand() with { LastName = oversized },
+            "RequestedRoleCode" => ValidCommand() with { RequestedRoleCode = oversized },
+            "RequestedStationId" => ValidCommand() with { RequestedStationId = oversized },
+            "TermsVersion" => ValidCommand() with { TermsVersion = oversized },
+            "IdempotencyKey" => ValidCommand() with { IdempotencyKey = oversized },
+            _ => throw new ArgumentOutOfRangeException(nameof(field))
+        };
+
+        var result = await CreateService(catalogue: catalogue, store: store)
+            .SubmitAsync(command);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("invalid_registration", result.Code);
+        Assert.Equal(0, catalogue.Calls);
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
+    public async Task Trims_server_catalogue_keys_and_persisted_registration_values()
+    {
+        var catalogue = new FakeCatalogue();
+        var store = new FakeStore(new(
+            RegistrationSubmissionCommitStatus.Created, AccountId, RequestId));
+        var command = ValidCommand() with
+        {
+            RequestedRoleCode = " observer ",
+            RequestedStationId = " station-1 ",
+            TermsVersion = " terms-2026-01 ",
+            IdempotencyKey = " registration-submit-001 "
+        };
+
+        var result = await CreateService(catalogue: catalogue, store: store)
+            .SubmitAsync(command);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("observer", store.Submission!.RequestedRoleCode);
+        Assert.Equal("station-1", store.Submission.RequestedStationId);
+        Assert.Equal("terms-2026-01", store.Submission.TermsVersion);
+        Assert.Equal("registration-submit-001", store.Submission.IdempotencyKey);
+    }
+
     [Fact]
     public async Task Requires_terms_acceptance()
     {
