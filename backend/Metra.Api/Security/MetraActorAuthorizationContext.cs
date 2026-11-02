@@ -1,3 +1,6 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Metra.Api.Security;
 
 /// <summary>
@@ -170,8 +173,7 @@ public static class MetraActorAuthorizationServiceCollectionExtensions
     public static IServiceCollection AddMetraActorAuthorizationContext(
         this IServiceCollection services)
     {
-        Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions
-            .TryAddScoped<IMetraActorAuthorizationContextProvider, DenyAllMetraActorAuthorizationContextProvider>();
+        services.TryAddScoped<IMetraActorAuthorizationContextProvider, DenyAllMetraActorAuthorizationContextProvider>();
         services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, MetraCombinedAuthorizationHandler>();
         return services;
     }
