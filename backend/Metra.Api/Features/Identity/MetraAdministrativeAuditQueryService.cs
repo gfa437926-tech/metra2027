@@ -180,7 +180,7 @@ public sealed class MetraAdministrativeAuditQueryService(
             previous = auditEvent;
         }
 
-        safePage = new(projected, page.NextCursor, page.HasMore);
+        safePage = new(projected.AsReadOnly(), page.NextCursor, page.HasMore);
         return true;
     }
 
