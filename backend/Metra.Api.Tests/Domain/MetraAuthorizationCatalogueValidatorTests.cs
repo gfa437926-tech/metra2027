@@ -135,7 +135,8 @@ public sealed class MetraAuthorizationCatalogueValidatorTests
     {
         var result = MetraAuthorizationCatalogueValidator.Validate(ValidCatalogue(
             roles: [new("legacy.viewer", "Legacy viewer", IsAssignable: false)],
-            permissions: [new("observations.read", "Read observations", IsEnabled: false)]));
+            permissions: [new("observations.read", "Read observations", IsEnabled: false)],
+            mappings: [new("legacy.viewer", "observations.read")]));
 
         Assert.True(result.IsValid);
     }
