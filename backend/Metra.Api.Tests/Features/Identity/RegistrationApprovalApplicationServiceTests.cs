@@ -98,6 +98,24 @@ public sealed class RegistrationApprovalApplicationServiceTests
     }
 
     [Fact]
+    public async Task Prevents_station_reviewer_from_completing_final_system_stage()
+    {
+        var actor = new RegistrationApprovalActorContext(
+            "station-reviewer", true, false, new HashSet<string>(), true);
+        var store = new FakeStore(Request(
+            status: RegistrationApprovalStatus.PendingSystemApproval));
+        var service = new RegistrationApprovalApplicationService(
+            new FakeActorProvider(actor), store);
+
+        var result = await service.DecideAsync(new(
+            "request-1", RegistrationApprovalDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("approval_separation_of_duties_violation", result.Code);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Rejects_undefined_decision_before_accessing_actor_or_store()
     {
         var store = new FakeStore(Request());
