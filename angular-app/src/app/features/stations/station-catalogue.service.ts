@@ -42,14 +42,15 @@ export class StationCatalogueService {
     }
 
     const pageSize = query.pageSize ?? 50;
-    const namePrefix = query.namePrefix?.trim();
+    const rawNamePrefix = query.namePrefix;
+    const namePrefix = rawNamePrefix?.trim();
     const cursor = query.cursor;
     if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100 ||
         (query.sourceKind !== undefined &&
           query.sourceKind !== 'classic' && query.sourceKind !== 'automatic') ||
-        (query.namePrefix !== undefined &&
+        (rawNamePrefix !== undefined &&
           (!namePrefix || namePrefix.length > 128 ||
-           /[\u0000-\u001f\u007f-\u009f]/.test(namePrefix))) ||
+           /[\u0000-\u001f\u007f-\u009f]/.test(rawNamePrefix))) ||
         (cursor !== undefined &&
           (!cursor || cursor.length > 2048 || cursor !== cursor.trim() ||
            /[\u0000-\u001f\u007f-\u009f]/.test(cursor)))) {
