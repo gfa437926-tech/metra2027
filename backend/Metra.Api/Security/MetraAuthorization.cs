@@ -118,6 +118,7 @@ public static class MetraAuthorizationServiceCollectionExtensions
             IMetraPermissionGrantEvaluator,
             DenyAllMetraPermissionGrantEvaluator>();
         services.AddScoped<IAuthorizationHandler, MetraPermissionAuthorizationHandler>();
+        services.AddMetraActorAuthorizationContext();
         services.AddAuthorization(options =>
         {
             options.AddPolicy(
@@ -125,9 +126,7 @@ public static class MetraAuthorizationServiceCollectionExtensions
                 policy =>
                 {
                     policy.RequireAuthenticatedUser();
-                    policy.AddRequirements(
-                        new MetraPermissionRequirement(MetraPermissions.DailyObservationCreate),
-                        new MetraResourceAccessRequirement());
+                    policy.AddRequirements(new MetraCombinedAuthorizationRequirement());
                 });
 
             foreach (var permission in MetraPermissions.All)
