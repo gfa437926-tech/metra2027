@@ -130,6 +130,63 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
     }
 
     [Fact]
+    public async Task Rejects_page_larger_than_requested_page_size()
+    {
+        var events = Enumerable.Range(1, 2).Select(index => AuditEvent(
+            $"event-{index}", new DateTimeOffset(2026, 11, 2, 0, 0, index, TimeSpan.Zero))).ToArray();
+        var store = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(events, null, false)));
+        var service = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), store);
+
+        var result = await service.ExecuteAsync(Query() with { PageSize = 1 });
+
+        Assert.Equal("audit_store_response_invalid", result.Code);
+    }
+
+    [Fact]
+    public async Task Rejects_invalid_or_duplicate_audit_events_in_page()
+    {
+        var invalid = AuditEvent("event-1", Before) with { ActionCode = "Account.Suspend" };
+        var invalidStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { invalid }, null, false)));
+        var invalidService = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), invalidStore);
+        var invalidResult = await invalidService.ExecuteAsync(Query());
+
+        var duplicate = AuditEvent("event-1", Before);
+        var duplicateStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { duplicate, duplicate }, null, false)));
+        var duplicateService = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), duplicateStore);
+        var duplicateResult = await duplicateService.ExecuteAsync(Query());
+
+        Assert.Equal("audit_store_response_invalid", invalidResult.Code);
+        Assert.Equal("audit_store_response_invalid", duplicateResult.Code);
+    }
+
+    [Fact]
+    public async Task Rejects_non_deterministic_page_order_and_missing_next_cursor()
+    {
+        var newer = AuditEvent("event-z", Before);
+        var older = AuditEvent("event-a", From);
+        var outOfOrderStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { older, newer }, null, false)));
+        var outOfOrderService = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), outOfOrderStore);
+        var outOfOrder = await outOfOrderService.ExecuteAsync(Query());
+
+        var noCursorStore = new FakeStore((MetraAdministrativeAuditReadResult.Success,
+            new(new[] { newer }, null, true)));
+        var noCursorService = new MetraAdministrativeAuditQueryService(new FakeActor("auditor"), noCursorStore);
+        var noCursor = await noCursorService.ExecuteAsync(Query());
+
+        Assert.Equal("audit_store_response_invalid", outOfOrder.Code);
+        Assert.Equal("audit_store_response_invalid", noCursor.Code);
+    }
+
+    private static MetraAdministrativeAuditEvent AuditEvent(string eventId, DateTimeOffset occurredAt)
+        => new(eventId, "account-1", "admin-1", "account.lifecycle.suspend",
+            "account", "account-1", "active", "suspended", occurredAt,
+            "Security review", "request-1", 2);
+
+    [Fact]
     public async Task Rejects_success_response_without_page()
     {
         var store = new FakeStore((MetraAdministrativeAuditReadResult.Success, null));
