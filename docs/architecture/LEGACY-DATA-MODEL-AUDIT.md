@@ -1,8 +1,8 @@
 # Legacy Data Model Audit — METRA 2027
 
-**Status:** Code-derived audit; not a verified database schema  
+**Status:** Code-derived audit supplemented by a separate read-only live schema review; not a target schema proposal  
 **Branch:** `work/identity-migration-audit`  
-**Scope:** Repository source inspection only. No live Supabase project was queried and no database, Auth, RLS, policy, or user data was changed.
+**Scope:** Repository source inspection. Live legacy Supabase metadata and aggregate counts are documented separately in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md`. No database, Auth, RLS, policy, or user data was changed.
 
 ## 1. Evidence standard
 
