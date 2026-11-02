@@ -12,6 +12,8 @@
 - Added foreign-key indexes.
 - Added `updated_at` triggers to mutable catalogue/authority records.
 - Added an append-only trigger to the audit log.
+- Added `btree_gist` exclusion constraints to prohibit overlapping coordinate-validity periods and overlapping pending/approved station access grants.
+- Required a source reference for official-record coordinates, synchronized reviewer/timestamp fields, and review reasons for non-pending decisions.
 - Recorded four remote migrations and mirrored their SQL under `supabase/migrations/`.
 - Supabase security advisor returned zero security findings after the RLS policies were installed.
 - Re-queried the project: all six tables exist, RLS is enabled, and all six contain zero rows. No legacy station records were copied or joined.
@@ -33,7 +35,7 @@ The audit log rejects UPDATE and DELETE. Server-side access must use a dedicated
 1. Provision and verify a dedicated backend database role and secret-store connection; do not use the database owner credential at runtime.
 2. Implement the Npgsql station read/write repositories against this exact schema, with actor context and authorization checks in the same trusted transaction boundary.
 3. Implement station create/edit/submit/review/approve/reject and coordinate versioning workflows, including mandatory audit entries.
-4. Implement authority membership and station assignment persistence, time-bound grant validation, two-person approval, and self-approval prevention.
+4. Implement authority membership and station assignment persistence, time-bound grant validation, two-person approval, and self-approval prevention. Database exclusion constraints now prevent overlapping grant validity windows.
 5. Implement API pagination, filtering, search, map projection and detail endpoints using only `station_catalogue` and `station_coordinates`.
 6. Connect the Angular catalogue screen to the protected API; do not query Supabase directly from the browser.
 7. Add integration tests against a disposable PostgreSQL/Supabase test project for RLS, grants, approval transitions, audit immutability, concurrency and pagination.
