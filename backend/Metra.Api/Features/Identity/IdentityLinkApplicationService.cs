@@ -8,7 +8,8 @@ public sealed record IdentityLinkActorContext(
     string UserId,
     string IdentityToLinkIssuer,
     string IdentityToLinkSubject,
-    DateTimeOffset AuthenticatedAt,
+    DateTimeOffset SessionAuthenticatedAt,
+    DateTimeOffset IdentityProofVerifiedAt,
     bool IsAccountActive);
 
 public interface IIdentityLinkActorContextProvider
@@ -75,9 +76,9 @@ public sealed class IdentityLinkApplicationService(
             return Failure("account_not_active", "لا يمكن ربط هوية بحساب METRA غير نشط.");
 
         var now = timeProvider.GetUtcNow();
-        var authenticationAge = now - actor.AuthenticatedAt;
-        if (authenticationAge < TimeSpan.Zero ||
-            authenticationAge > MaximumAuthenticationAge)
+        var sessionAuthenticationAge = now - actor.SessionAuthenticatedAt;
+        var identityProofAge = now - actor.IdentityProofVerifiedAt;
+        if (!IsRecent(sessionAuthenticationAge) || !IsRecent(identityProofAge))
         {
             return Failure("recent_authentication_required",
                 "يلزم إعادة التحقق من الهوية قبل ربط حساب خارجي.");
@@ -106,6 +107,9 @@ public sealed class IdentityLinkApplicationService(
             _ => Failure("identity_link_failed", "تعذر إتمام عملية ربط الهوية.")
         };
     }
+
+    private static bool IsRecent(TimeSpan age)
+        => age >= TimeSpan.Zero && age <= MaximumAuthenticationAge;
 
     private static IdentityLinkApplicationResult Failure(string code, string message)
         => new(false, code, message);
