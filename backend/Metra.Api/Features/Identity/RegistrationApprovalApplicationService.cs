@@ -68,6 +68,9 @@ public sealed class RegistrationApprovalApplicationService(
         if (command is null || string.IsNullOrWhiteSpace(command.RequestId))
             return Failure("invalid_request", "معرّف طلب التسجيل مطلوب.");
 
+        if (!Enum.IsDefined(command.Decision))
+            return Failure("invalid_decision", "قرار الاعتماد غير معروف.");
+
         if (command.Note?.Length > MaximumNoteLength)
             return Failure("note_too_long", "ملاحظة القرار تتجاوز الحد المسموح.");
 
