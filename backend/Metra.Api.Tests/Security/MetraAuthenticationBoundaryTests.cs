@@ -3,6 +3,8 @@ using Metra.Api.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -53,6 +55,30 @@ public sealed class MetraAuthenticationBoundaryTests
             authenticated, resource: null, fallback.Requirements);
 
         Assert.True(result.Succeeded);
+    }
+
+
+    [Fact]
+    public async Task Unconfigured_scheme_challenges_unannotated_routes_with_401_but_allows_explicit_public_routes()
+    {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.UseTestServer();
+        builder.Services.AddMetraAuthenticationBoundary();
+        builder.Services.AddMetraAuthorization();
+
+        await using var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.MapGet("/protected-by-fallback", () => Results.Ok(new { status = "unexpected" }));
+        app.MapGet("/public", () => Results.Ok(new { status = "public" })).AllowAnonymous();
+        await app.StartAsync();
+
+        using var client = app.GetTestClient();
+        using var protectedResponse = await client.GetAsync("/protected-by-fallback");
+        using var publicResponse = await client.GetAsync("/public");
+
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, protectedResponse.StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.OK, publicResponse.StatusCode);
     }
 
     [Fact]
