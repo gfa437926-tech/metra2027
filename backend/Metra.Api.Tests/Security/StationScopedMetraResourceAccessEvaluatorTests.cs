@@ -108,6 +108,54 @@ public sealed class StationScopedMetraResourceAccessEvaluatorTests
         Assert.False(allowed);
     }
 
+    [Fact]
+    public async Task Propagates_cancellation_before_resolving_resource_ownership()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var resolver = new FakeResourceStationResolver("station-7");
+        var actors = new FakeActorStationAccessStore(true, ["station-7"]);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            CreateEvaluator(resolver, actors).CanAccessAsync(
+                "subject-42", Resource, cancellation.Token));
+
+        Assert.Null(resolver.ResourceType);
+        Assert.Equal(0, actors.AssignmentReads);
+    }
+
+    [Fact]
+    public async Task Denies_when_authoritative_assignment_store_throws()
+    {
+        var resolver = new FakeResourceStationResolver("station-7");
+        var actors = new FakeActorStationAccessStore(true, ["station-7"])
+        {
+            ThrowOnAssignmentRead = true
+        };
+
+        var allowed = await CreateEvaluator(resolver, actors).CanAccessAsync(
+            "subject-42", Resource, CancellationToken.None);
+
+        Assert.False(allowed);
+        Assert.Equal(1, actors.AssignmentReads);
+    }
+
+    [Fact]
+    public async Task Denies_blank_actor_and_invalid_resource_without_calling_authoritative_stores()
+    {
+        var resolver = new FakeResourceStationResolver("station-7");
+        var actors = new FakeActorStationAccessStore(true, ["station-7"]);
+        var evaluator = CreateEvaluator(resolver, actors);
+
+        Assert.False(await evaluator.CanAccessAsync(
+            " ", Resource, CancellationToken.None));
+        Assert.False(await evaluator.CanAccessAsync(
+            "subject-42", new MetraResourceDescriptor("observation", " "), CancellationToken.None));
+
+        Assert.Null(resolver.ResourceType);
+        Assert.Equal(0, actors.AssignmentReads);
+    }
+
     private static StationScopedMetraResourceAccessEvaluator CreateEvaluator(
         FakeResourceStationResolver resolver,
         FakeActorStationAccessStore actors)
@@ -146,12 +194,14 @@ public sealed class StationScopedMetraResourceAccessEvaluatorTests
     {
         public string? ActorSubject { get; private set; }
         public int AssignmentReads { get; private set; }
+        public bool ThrowOnAssignmentRead { get; init; }
 
         public Task<bool> IsActorActiveAsync(
             string actorSubject,
             CancellationToken cancellationToken)
         {
             ActorSubject = actorSubject;
+            cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(isActive);
         }
 
@@ -160,6 +210,9 @@ public sealed class StationScopedMetraResourceAccessEvaluatorTests
             CancellationToken cancellationToken)
         {
             AssignmentReads++;
+            if (ThrowOnAssignmentRead)
+                throw new InvalidOperationException("Simulated assignment-store failure.");
+
             return Task.FromResult(assignments);
         }
     }
