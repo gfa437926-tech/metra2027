@@ -13,7 +13,8 @@ public sealed class MetraAdministrativeAuditQueryServiceTests
     public async Task Reads_page_using_server_actor_and_bounded_query()
     {
         var actor = new FakeActor("auditor-1");
-        var page = new MetraAdministrativeAuditPage(Array.Empty<MetraAdministrativeAuditEvent>(), "cursor-2", true);
+        var page = new MetraAdministrativeAuditPage(
+            new[] { AuditEvent("event-2", Before) }, "cursor-2", true);
         var store = new FakeStore((MetraAdministrativeAuditReadResult.Success, page));
         var service = new MetraAdministrativeAuditQueryService(actor, store);
         var query = new MetraAdministrativeAuditQuery(
