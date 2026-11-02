@@ -11,9 +11,8 @@ public sealed class MetraPermissionAuthorizationTests
     [Fact]
     public async Task Grants_permission_only_for_exact_server_permission_claim()
     {
-        var principal = Principal(
-            new Claim(MetraPermissionAuthorizationHandler.PermissionClaimType,
-                MetraPermissions.RegistrationStationApprove));
+        var principal = Principal(PermissionClaim(
+            MetraPermissions.RegistrationStationApprove));
         var context = Context(principal, MetraPermissions.RegistrationStationApprove);
 
         await new MetraPermissionAuthorizationHandler().HandleAsync(context);
@@ -36,6 +35,21 @@ public sealed class MetraPermissionAuthorizationTests
 
         Assert.False(context.HasSucceeded);
         Assert.Single(context.PendingRequirements);
+    }
+
+    [Fact]
+    public async Task Denies_permission_claim_from_external_issuer()
+    {
+        var principal = Principal(new Claim(
+            MetraPermissionAuthorizationHandler.PermissionClaimType,
+            MetraPermissions.RegistrationStationApprove,
+            ClaimValueTypes.String,
+            issuer: "https://identity-provider.example.test"));
+        var context = Context(principal, MetraPermissions.RegistrationStationApprove);
+
+        await new MetraPermissionAuthorizationHandler().HandleAsync(context);
+
+        Assert.False(context.HasSucceeded);
     }
 
     [Fact]
@@ -90,6 +104,13 @@ public sealed class MetraPermissionAuthorizationTests
         Assert.Throws<ArgumentException>(
             () => MetraAuthorizationPolicies.ForPermission(permission));
     }
+
+    private static Claim PermissionClaim(string permission)
+        => new(
+            MetraPermissionAuthorizationHandler.PermissionClaimType,
+            permission,
+            ClaimValueTypes.String,
+            MetraPermissionAuthorizationHandler.PermissionClaimIssuer);
 
     private static ClaimsPrincipal Principal(params Claim[] claims)
         => new(new ClaimsIdentity(claims, authenticationType: "test"));
