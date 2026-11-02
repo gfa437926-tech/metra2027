@@ -56,6 +56,8 @@ public enum MetraAdministrativeAuditReadResult
 /// The adapter must enforce audit-read permission and any approved station/data
 /// scope on every request. Use keyset pagination ordered by (OccurredAtUtc,
 /// EventId), return at most PageSize records, and never mutate audit rows.
+/// Cursors must be integrity-protected and bound to the actor + normalized
+/// filter set; reject tampering, cross-actor reuse and expired cursors.
 /// </summary>
 public interface IMetraAdministrativeAuditReadStore
 {
