@@ -74,6 +74,25 @@ public sealed class CurrentUserContextApplicationServiceTests
     }
 
     [Fact]
+    public async Task Omits_permissions_outside_the_canonical_permission_catalogue()
+    {
+        var facts = Facts() with
+        {
+            PermissionGrants =
+            [
+                new("observations.daily.create", Now.AddDays(-1), null, null),
+                new("admin.everything", Now.AddDays(-1), null, null)
+            ]
+        };
+        var service = CreateService(new FakeDataSource(facts));
+
+        var result = await service.GetAsync("issuer", "subject");
+
+        Assert.NotNull(result);
+        Assert.Equal(new[] { "observations.daily.create" }, result.Permissions);
+    }
+
+    [Fact]
     public async Task Uses_inclusive_start_and_exclusive_end_boundaries()
     {
         var facts = Facts() with
