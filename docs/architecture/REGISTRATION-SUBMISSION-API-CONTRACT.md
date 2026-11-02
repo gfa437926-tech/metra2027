@@ -1,6 +1,6 @@
 # METRA 2027 — Registration Submission API Contract
 
-Status: application-service contract implemented; HTTP endpoint and infrastructure adapters are not implemented.
+Status: application-service contract and guarded HTTP adapter implemented; endpoint remains intentionally unmapped; production infrastructure adapters are pending.
 
 This document defines the first-registration request boundary shared by Angular and Flutter. It does not authorize a database migration, schema change, or production identity-provider activation.
 
