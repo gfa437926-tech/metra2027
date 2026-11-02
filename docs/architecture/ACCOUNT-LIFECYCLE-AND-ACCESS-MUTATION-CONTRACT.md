@@ -1,6 +1,6 @@
 # METRA 2027 — Account Lifecycle and Access Mutation Contract
 
-Status: domain transition policy implemented; application commands, storage adapter, HTTP endpoints and database changes are intentionally not activated.
+Status: pure domain transition policy and framework-independent application orchestration contract implemented. Production storage adapter, HTTP endpoints and database changes are intentionally not activated.
 
 ## Account lifecycle
 
@@ -15,7 +15,7 @@ The policy supports only these transitions:
 
 PendingApproval is governed by the registration approval workflow and cannot be changed by these lifecycle commands. Disabled is terminal in this contract. No automatic restore, deletion, or reactivation path exists.
 
-The policy is intentionally pure. A future application service must resolve the actor from authenticated server context, authorize a dedicated permission, reject unauthorized self-service, validate a nonblank reason for suspension/disable, and commit the state compare-and-set together with an immutable audit event in one transaction. The exact reason policy and self-administration rules require product approval before endpoints are introduced.
+The policy is intentionally pure. `MetraAccountLifecycleApplicationService` resolves the actor from a server-side actor provider, requires a nonblank reason for suspension/disable, bounds the reason length, applies the transition policy, and delegates to a transactional store contract. The store must reload and lock target + actor authorization facts, verify the required explicit permission, compare state and version, update account state, and append the immutable audit event in one transaction. Self-administration rules and the exact permission codes require product approval before endpoints are introduced.
 
 ## Effective access consequences
 
