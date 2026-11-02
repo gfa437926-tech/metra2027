@@ -100,6 +100,7 @@ describe('StationsComponent', () => {
     const loadMore = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
       .find(button => button.textContent?.includes('تحميل المزيد'));
     expect(loadMore).toBeDefined();
+    if (!loadMore) throw new Error('Load more button was not rendered.');
     loadMore.click();
     await fixture.whenStable();
     fixture.detectChanges();
