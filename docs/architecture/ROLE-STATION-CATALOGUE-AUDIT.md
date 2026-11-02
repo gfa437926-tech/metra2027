@@ -134,3 +134,17 @@ This is a conceptual separation, not a proposed SQL schema. No Supabase schema o
 - UI navigation and role labels never substitute for API permission checks.
 - Angular and Flutter render the same server-provided catalogue and assignment context.
 - Migration reports unresolved names and duplicates instead of silently merging them.
+
+
+## 8. Read-only evidence from the legacy Supabase project
+
+A separate live read-only inspection of the legacy `INSERT` project (`vktcvkwqszehgmhqjrkb`) is recorded in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md`. It supplements, but does not replace, the code-derived observations above.
+
+- The legacy `public.stations` table contains 29 classic station rows. Only 17 have both latitude and longitude; 12 are missing at least one coordinate. Its `station_type` is NULL for all 29 rows.
+- The legacy `public.fieldclimate_stations` table contains 33 automatic station rows, all with coordinates.
+- These 62 rows are source records, not 62 approved canonical stations. Build an explicit crosswalk; do not merge by name alone.
+- The actual `users` table contains role values not fully represented by the old redirect map, including `رئيس دائرة الورشات` and `مساعد متنبئ`.
+- The actual `registration_queue` contains further role variants, including `دائرة الشبكات`, `رئيس الورشات`, `متنبئ جوي راصد`, `متنبئ مكلف بالرصد`, and a trailing-space variant of `متنبئ جوي`.
+- The legacy `users` and `registration_queue` values are historical evidence only. Do not turn every raw value into a new role or grant without reviewing its actual workflow and ownership.
+
+The same inspection found 22 public tables with RLS disabled. This is a separate legacy security-remediation concern; no RLS, grants, policies or other database objects were changed.
