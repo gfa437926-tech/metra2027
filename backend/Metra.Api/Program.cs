@@ -1,6 +1,7 @@
 using System.Net;
 using System.Threading.RateLimiting;
 using Metra.Api.Features.Observations;
+using Metra.Api.Security;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +13,8 @@ var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>() ?? [];
 
-var validatedOrigins = ValidateCorsOrigins(allowedOrigins, builder.Environment.IsDevelopment());
+var validatedOrigins = ApiSecurityConfiguration.ValidateCorsOrigins(
+    allowedOrigins, builder.Environment.IsDevelopment());
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("MetraClients", policy =>
@@ -88,42 +90,3 @@ api.MapGet("/health", () => Results.Ok(new
 })).WithName("GetApiHealth");
 
 app.Run();
-
-static string[] ValidateCorsOrigins(string[] origins, bool isDevelopment)
-{
-    if (origins.Length == 0)
-    {
-        if (!isDevelopment)
-        {
-            throw new InvalidOperationException(
-                "Cors:AllowedOrigins must contain at least one explicit origin outside Development.");
-        }
-
-        return [];
-    }
-
-    var validated = new List<string>(origins.Length);
-    foreach (var origin in origins)
-    {
-        if (string.IsNullOrWhiteSpace(origin)
-            || origin == "*"
-            || !Uri.TryCreate(origin, UriKind.Absolute, out var uri)
-            || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp)
-            || uri.AbsolutePath != "/"
-            || !string.IsNullOrEmpty(uri.Query)
-            || !string.IsNullOrEmpty(uri.Fragment)
-            || uri.UserInfo.Length > 0)
-        {
-            throw new InvalidOperationException(
-                "Cors:AllowedOrigins contains an invalid origin. Use explicit http(s) origins without paths, credentials, query strings, or wildcards.");
-        }
-
-        var normalizedOrigin = uri.GetLeftPart(UriPartial.Authority);
-        if (!validated.Contains(normalizedOrigin, StringComparer.OrdinalIgnoreCase))
-        {
-            validated.Add(normalizedOrigin);
-        }
-    }
-
-    return [.. validated];
-}
