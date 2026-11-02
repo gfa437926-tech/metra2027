@@ -105,6 +105,21 @@ public sealed class IdentityLinkApplicationServiceTests
     }
 
     [Fact]
+    public async Task Requires_recent_proof_for_the_identity_being_linked_even_if_session_is_fresh()
+    {
+        var actor = new FakeActorProvider(new(
+            "account", "issuer", "new-provider-subject",
+            Now, Now.AddMinutes(-6), true));
+        var store = new FakeStore(IdentityLinkCommitResult.Linked);
+
+        var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("recent_authentication_required", result.Code);
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
     public async Task Treats_exact_five_minute_authentication_age_as_valid()
     {
         var actor = new FakeActorProvider(new(
@@ -128,7 +143,7 @@ public sealed class IdentityLinkApplicationServiceTests
         string code)
     {
         var actor = new FakeActorProvider(new(
-            "account", "issuer", "subject", Now, true));
+            "account", "issuer", "subject", Now, Now, true));
         var store = new FakeStore(commit);
 
         var result = await CreateService(actor, store).LinkCurrentIdentityAsync();
