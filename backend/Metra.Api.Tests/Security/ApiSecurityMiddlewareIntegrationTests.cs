@@ -27,7 +27,7 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
     }
 
     [Fact]
-    public async Task Cors_preflight_allows_only_configured_origin()
+    public async Task Cors_allows_only_configured_origin_for_simple_requests()
     {
         using var factory = new ApiFactory();
         Assert.Equal("https://metra.example.test",
@@ -49,6 +49,25 @@ public sealed class ApiSecurityMiddlewareIntegrationTests
         using var deniedResponse = await client.SendAsync(deniedRequest);
 
         Assert.False(deniedResponse.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
+    [Fact]
+    public async Task Cors_preflight_allows_configured_origin_and_requested_method()
+    {
+        using var factory = new ApiFactory();
+        using var client = factory.CreateClient();
+
+        using var request = new HttpRequestMessage(HttpMethod.Options, "/api/v1/health");
+        request.Headers.Add("Origin", "https://metra.example.test");
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+        using var response = await client.SendAsync(request);
+
+        Assert.True(
+            response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins),
+            $"Expected CORS preflight allow-origin header. Status: {(int)response.StatusCode}; response: {await response.Content.ReadAsStringAsync()}");
+        Assert.Equal("https://metra.example.test", origins!.Single());
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Methods", out var methods));
+        Assert.Contains("GET", methods!.Single());
     }
 
     [Fact]
