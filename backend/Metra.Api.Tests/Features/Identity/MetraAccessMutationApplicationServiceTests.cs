@@ -257,7 +257,7 @@ public sealed class MetraAccessMutationApplicationServiceTests
             string accountId, CancellationToken cancellationToken)
         {
             FindCalls++;
-            return Task.FromResult(snapshot?.AccountId == accountId ? snapshot : null);
+            return Task.FromResult(snapshot);
         }
 
         public Task<MetraAccessMutationCommitResult> TryCommitAsync(
