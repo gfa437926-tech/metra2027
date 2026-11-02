@@ -40,6 +40,12 @@ The application service validates command shape and temporal record structure be
 
 For account lifecycle, station assignment, and permission grant/revoke events, persist at minimum: event ID, target account ID, action, previous and next state or exact resource scope, authenticated actor account ID, UTC occurrence time, reason/administrative note where policy permits, correlation/request ID, and concurrency/version reference. Never persist bearer tokens, passwords, or secrets. Audit records must be append-only to application roles. A revoke must preserve the original record and its history.
 
+## Immutable administrative audit event contract
+
+The domain now defines `MetraAdministrativeAuditEvent` as an immutable scalar fact and `MetraAdministrativeAuditEventPolicy` as a structural validator. Required fields include a unique event identifier, target account, authenticated actor, canonical action code, resource type and identifier, UTC occurrence time, reason, correlation identifier, and positive aggregate version. At least one bounded before/after value is required. Identifiers and codes must be canonical and bounded; reasons are trimmed, non-empty and bounded; control characters and oversized change values are rejected.
+
+This validator is not a persistence or tamper-proofing mechanism. The future transactional store must generate trusted event IDs, actor/target references, occurrence time, correlation metadata and aggregate version from server-side transaction context; it must never accept those values as authoritative client input. It must append the event in the same transaction as the account/access mutation, enforce uniqueness and append-only permissions at the database boundary, and prevent application roles from updating or deleting prior events. Event values must be limited to non-secret change context; never include passwords, bearer tokens, signing material, recovery codes, or full request bodies. Retention, export, legal hold and privileged audit-reader policies remain approval items.
+
 ## Not decided by this contract
 
 No concrete role/permission catalogue values, grant duration defaults, station activation rules, reactivation eligibility checks, self-administration policy, reason taxonomy, global-grant policy, or retention schedule is selected here. These require approval. No database schema, migration, seed data, Supabase project access, production adapter, or endpoint activation is included.
