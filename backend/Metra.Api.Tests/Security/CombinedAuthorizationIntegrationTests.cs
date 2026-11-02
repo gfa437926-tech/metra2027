@@ -12,7 +12,8 @@ public sealed class CombinedAuthorizationIntegrationTests
     public async Task Allows_only_when_both_action_permission_and_resource_scope_are_granted()
     {
         using var provider = CreateProvider(permissionAllowed: true, resourceAllowed: true);
-        var authorization = provider.GetRequiredService<IAuthorizationService>();
+        using var scope = provider.CreateScope();
+        var authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
 
         var result = await authorization.AuthorizeAsync(
             Principal("subject-42"),
@@ -31,7 +32,8 @@ public sealed class CombinedAuthorizationIntegrationTests
         bool resourceAllowed)
     {
         using var provider = CreateProvider(permissionAllowed, resourceAllowed);
-        var authorization = provider.GetRequiredService<IAuthorizationService>();
+        using var scope = provider.CreateScope();
+        var authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
 
         var result = await authorization.AuthorizeAsync(
             Principal("subject-42"),
@@ -45,7 +47,8 @@ public sealed class CombinedAuthorizationIntegrationTests
     public async Task Denies_anonymous_actor_even_when_test_evaluators_would_allow()
     {
         using var provider = CreateProvider(permissionAllowed: true, resourceAllowed: true);
-        var authorization = provider.GetRequiredService<IAuthorizationService>();
+        using var scope = provider.CreateScope();
+        var authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
 
         var result = await authorization.AuthorizeAsync(
             new ClaimsPrincipal(new ClaimsIdentity()),
