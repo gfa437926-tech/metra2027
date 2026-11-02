@@ -1,6 +1,6 @@
 # METRA 2027 station catalogue database
 
-This directory contains the migration history for the independent station catalogue in the Supabase project `tbdnklyxjvbrilvnwgmq`.
+This directory contains the migration history for the independent station catalogue and identity model in Supabase project `tbdnklyxjvbrilvnwgmq`.
 
 ## Migration sequence
 
@@ -8,6 +8,12 @@ This directory contains the migration history for the independent station catalo
 2. `20261102155101_index_station_catalogue_foreign_keys.sql` — indexes for foreign-key access paths.
 3. `20261102155110_add_catalogue_integrity_triggers.sql` — maintained `updated_at` timestamps and append-only audit records.
 4. `20261102155200_lock_station_catalogue_client_access.sql` — explicit deny-all policies for browser-facing roles until the reviewed authorization model is implemented.
+
+## Identity schema
+
+The database also stores METRA user profile names, account lifecycle state, authority memberships, exact station assignments and time-bounded permission grants. Account states align with the backend lifecycle contract. Reviewers must differ from requesters, and database exclusion constraints prevent overlapping pending/approved grants or assignments.
+
+Nine migrations are recorded remotely and mirrored in this directory. The latest migrations add the identity model, explicit deny-all client policies, user profiles, account-state consistency and requester indexes.
 
 ## Security posture
 
@@ -26,7 +32,7 @@ Use the Supabase CLI linked to the intended project and inspect `supabase migrat
 
 Temporal integrity uses PostgreSQL exclusion constraints backed by `btree_gist`: a station cannot have overlapping coordinate validity periods, and an authority cannot hold overlapping pending/approved access periods for the same station. Official-record coordinates require a source reference. Review timestamp and reviewer must be set together; non-pending decisions require a review reason.
 
-After changes, verify table definitions, RLS and policies, indexes, triggers, exclusion constraints, migration history, and run Supabase security/performance advisors. The security advisor should report no missing RLS policy for these six tables.
+After changes, verify table definitions, RLS and policies, indexes, triggers, exclusion constraints, migration history, and run Supabase security/performance advisors. The security advisor should report no missing RLS policy for all eleven tables.
 
 ## Current delivery boundary
 
