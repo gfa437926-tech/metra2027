@@ -1,13 +1,23 @@
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   STATION_CATALOGUE_ENDPOINT_ENABLED,
   STATION_CATALOGUE_API_BASE_URL,
   StationCatalogueHttpError,
   StationCatalogueService
 } from './station-catalogue.service';
+
+async function expectRequestFailure(promise: Promise<unknown>, status: number): Promise<unknown> {
+  let failure: unknown;
+  try {
+    await promise;
+  } catch (error: unknown) {
+    failure = error;
+  }
+  expect(failure).toEqual(jasmine.objectContaining({ status }));
+  return failure;
+}
 
 describe('StationCatalogueService', () => {
   let service: StationCatalogueService;
@@ -43,16 +53,16 @@ describe('StationCatalogueService', () => {
     service = TestBed.inject(StationCatalogueService);
     http = TestBed.inject(HttpTestingController);
 
-    await expect(service.readPage()).rejects.toMatchObject({ status: 0 });
+    await expectRequestFailure(service.readPage(), 0);
     http.expectNone('/api/v1/stations');
   });
 
   it('rejects malformed page size, C1 prefix controls and cursors before network access', async () => {
-    await expect(service.readPage({ pageSize: 0 })).rejects.toMatchObject({ status: 400 });
-    await expect(service.readPage({ pageSize: 101 })).rejects.toMatchObject({ status: 400 });
-    await expect(service.readPage({ namePrefix: 'محطة\u0085' })).rejects.toMatchObject({ status: 400 });
-    await expect(service.readPage({ cursor: 'cursor\u009f' })).rejects.toMatchObject({ status: 400 });
-    await expect(service.readPage({ cursor: '   ' })).rejects.toMatchObject({ status: 400 });
+    await expectRequestFailure(service.readPage({ pageSize: 0 }), 400);
+    await expectRequestFailure(service.readPage({ pageSize: 101 }), 400);
+    await expectRequestFailure(service.readPage({ namePrefix: 'محطة\u0085' }), 400);
+    await expectRequestFailure(service.readPage({ cursor: 'cursor\u009f' }), 400);
+    await expectRequestFailure(service.readPage({ cursor: '   ' }), 400);
     http.expectNone('/api/v1/stations');
   });
 
@@ -102,7 +112,7 @@ describe('StationCatalogueService', () => {
       hasMore: false,
       nextCursor: null
     });
-    await expect(duplicatePromise).rejects.toMatchObject({ status: 502 });
+    await expectRequestFailure(duplicatePromise, 502);
 
     const coordinatePromise = service.readPage();
     http.expectOne('/api/v1/stations?pageSize=50').flush({
@@ -116,7 +126,7 @@ describe('StationCatalogueService', () => {
       hasMore: false,
       nextCursor: null
     });
-    await expect(coordinatePromise).rejects.toMatchObject({ status: 502 });
+    await expectRequestFailure(coordinatePromise, 502);
   });
 
   it('rejects cursor cycles and inconsistent pagination metadata', async () => {
@@ -126,7 +136,7 @@ describe('StationCatalogueService', () => {
       hasMore: true,
       nextCursor: 'page-1'
     });
-    await expect(cyclePromise).rejects.toMatchObject({ status: 502 });
+    await expectRequestFailure(cyclePromise, 502);
 
     const inconsistentPromise = service.readPage();
     http.expectOne('/api/v1/stations?pageSize=50').flush({
@@ -134,7 +144,7 @@ describe('StationCatalogueService', () => {
       hasMore: true,
       nextCursor: null
     });
-    await expect(inconsistentPromise).rejects.toMatchObject({ status: 502 });
+    await expectRequestFailure(inconsistentPromise, 502);
   });
 
   it('maps authentication failures to typed HTTP errors', async () => {
@@ -143,7 +153,7 @@ describe('StationCatalogueService', () => {
       { message: 'Unauthorized' },
       { status: 401, statusText: 'Unauthorized' }
     );
-    await expect(resultPromise).rejects.toBeInstanceOf(StationCatalogueHttpError);
-    await expect(resultPromise).rejects.toMatchObject({ status: 401 });
+    const failure = await expectRequestFailure(resultPromise, 401);
+    expect(failure instanceof StationCatalogueHttpError).toBe(true);
   });
 });
