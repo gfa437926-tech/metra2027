@@ -1,3 +1,5 @@
+using Metra.Api.Security;
+
 namespace Metra.Api.Features.Identity;
 
 /// <summary>
@@ -98,6 +100,7 @@ public sealed class CurrentUserContextApplicationService(
 
         var permissions = activeAccount
             ? facts.PermissionGrants
+                .Where(x => MetraPermissions.All.Contains(x.Permission, StringComparer.Ordinal))
                 .Where(x => IsEffective(x.ValidFrom, x.ValidTo, x.RevokedAt, now))
                 .Select(x => x.Permission)
                 .Where(x => !string.IsNullOrWhiteSpace(x))
