@@ -153,7 +153,12 @@ No legacy database operation was performed. The old project remains outside this
 4. Add disposable PostgreSQL integration tests for both approval stages, concurrent decisions, permission revocation races, audit append-only behavior and full transaction rollback.
 5. Validate deployment configuration and complete Angular/Flutter workflow integration and authenticated E2E tests before production activation.
 
-The final CI result for the latest branch head is pending verification; do not interpret earlier green runs as validation of the newest commits.
+### CI verification on current PR head `85bab915bc0493f289be16a011c0a5340aebd3d3`
+
+- .NET 10 CI: **success** (restore, build and tests).
+- Backend build: **success** (API build and domain tests).
+- Angular build: still in progress at the time of this record.
+- Flutter CI: pending/in progress; not yet claimed as passed.
 
 
 ### Latest RPC privilege verification
