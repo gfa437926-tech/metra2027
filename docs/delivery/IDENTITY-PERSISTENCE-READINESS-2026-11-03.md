@@ -134,7 +134,7 @@ No legacy database operation was performed. The old project remains outside this
 - Added endpoints: `GET /api/v1/registration-requests/approval-queue` and `POST /api/v1/registration-requests/{requestId}/decision`. They are mapped only when the database connection is configured.
 - Runtime database role now has narrowly scoped SELECT access to registration requests and approval audit evidence under RLS policies. Browser roles remain denied.
 - Moved the submission RPC into the unexposed `private` schema and restricted execution to `metra_api_runtime`; service_role, anon and authenticated cannot execute it.
-- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`, `20261103001654`, `20261103001743`.
+- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`, `20261103001654`, `20261103001743`, `20261103002006`.
 
 ### Database verification after approval changes
 
@@ -153,12 +153,12 @@ No legacy database operation was performed. The old project remains outside this
 4. Add disposable PostgreSQL integration tests for both approval stages, concurrent decisions, permission revocation races, audit append-only behavior and full transaction rollback.
 5. Validate deployment configuration and complete Angular/Flutter workflow integration and authenticated E2E tests before production activation.
 
-### CI verification on current PR head `85bab915bc0493f289be16a011c0a5340aebd3d3`
+### CI verification on latest code-bearing commit `bab18fbebaae0f30157985fbe615779e63b02577`
 
 - .NET 10 CI: **success** (restore, build and tests).
 - Backend build: **success** (API build and domain tests).
 - Angular build: still in progress at the time of this record.
-- Flutter CI: pending/in progress; not yet claimed as passed.
+- Flutter CI: pending; not yet claimed as passed.
 
 
 ### Latest RPC privilege verification
@@ -194,3 +194,9 @@ A catalog-level privilege check found that replacing the approval function signa
 - The API readiness endpoint now verifies that the actual PostgreSQL login inherits the privileges of `metra_api_runtime` (`pg_has_role(..., 'USAGE')`), and that the login is neither SUPERUSER nor BYPASSRLS.
 - A database connection that uses `postgres`, `service_role`, or an unrelated login will remain unready instead of silently operating with excessive privileges.
 - Deployment must provision a dedicated non-superuser, non-BYPASSRLS LOGIN role, grant inheritable membership in `metra_api_runtime`, and configure that login in the API connection string.
+
+
+### Registration replay classification correction
+
+- Corrected the database submission function so an already-pending request is returned as `existing_pending` before the generic linked-account check. The initial pending workflow intentionally creates the profile and account-state rows, so the previous order masked the correct outcome.
+- Verified the function definition now evaluates the pending-request check before the linked-account check. No synthetic account or request rows were inserted to perform this verification.
