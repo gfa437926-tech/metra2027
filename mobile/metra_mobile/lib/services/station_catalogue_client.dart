@@ -60,7 +60,7 @@ class StationCatalogueClient {
                 cursor.length > 2048 ||
                 cursor.trim() != cursor ||
                 cursor.codeUnits.any(
-                    (unit) => unit < 32 || (unit >= 127 && unit <= 159)))) {
+                    (unit) => unit < 32 || (unit >= 127 && unit <= 159))))) {
       return const StationCatalogueResult(
           StationCatalogueLoadState.unavailable);
     }
