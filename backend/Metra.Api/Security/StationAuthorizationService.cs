@@ -52,10 +52,25 @@ public sealed class SupabaseStationAuthorizationService(
             p_permission_code = permissionCode
         });
 
-        using var response = await client.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-            return false;
+        try
+        {
+            using var response = await client.SendAsync(request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return false;
 
-        return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken);
+            // A malformed or empty RPC response must never authorize access.
+            return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken)
+                ?? false;
+        }
+        catch (HttpRequestException)
+        {
+            // Supabase/network failures are authorization failures: deny by default.
+            return false;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // HttpClient timeout (distinct from caller cancellation) is fail-closed.
+            return false;
+        }
     }
 }
