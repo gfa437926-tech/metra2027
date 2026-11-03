@@ -20,10 +20,14 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       _chip('الآلية', 'automatic'), _chip('السينوبتيكية', 'synoptic'),
     ])),
     Expanded(child: FutureBuilder<List<StationDirectoryItem>>(future: _stations, builder: (context, snapshot) {
-      if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-      if (snapshot.hasError) return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (snapshot.hasError) {
+        return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
         'تحقق من تسجيل الدخول والاتصال بواجهة API.',
         TextButton(onPressed: () => setState(_load), child: const Text('إعادة المحاولة')));
+      }
       final rows = snapshot.data ?? const <StationDirectoryItem>[];
       if (rows.isEmpty) return _empty(Icons.location_off, 'لا توجد محطات', 'لا توجد سجلات مطابقة.');
       return RefreshIndicator(onRefresh: () async => setState(_load),
@@ -46,7 +50,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         child: Icon(classic ? Icons.cell_tower : Icons.sensors,
           color: classic ? const Color(0xFF2463B5) : const Color(0xFF16835D))),
       title: Text(station.nameArabic, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(type + ' • ' + station.localCode + '\n' + approval + ' • ' + operation + '\n' + coords),
+      subtitle: Text('$type • ${station.localCode}\n$approval • $operation\n$coords'),
       isThreeLine: true));
   }
   Widget _empty(IconData icon, String title, String detail, [Widget? action]) =>

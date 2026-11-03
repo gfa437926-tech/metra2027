@@ -37,15 +37,16 @@ class _MetraHomeState extends State<MetraHome> {
 
   @override
   Widget build(BuildContext context) {
+    final api = widget.api;
     final pages = [
       _HomeOverview(onOpenStations: () => setState(() => _index = 1)),
-      widget.api == null
+      api == null
           ? const _InformationPage(
               icon: Icons.lock_outline,
               title: 'دليل المحطات',
               message: 'يلزم تسجيل الدخول وربط جلسة API صالحة لعرض الدليل. لا يتم استخدام رمز دخول أو محطة افتراضية.',
             )
-          : StationDirectoryScreen(api: widget.api!),
+          : StationDirectoryScreen(api: api),
       const _InformationPage(
         icon: Icons.fact_check_outlined,
         title: 'مراجعة الرصدات',
