@@ -191,6 +191,6 @@ A catalog-level privilege check found that replacing the approval function signa
 
 ### Runtime credential enforcement
 
-- The API readiness endpoint now verifies that the actual PostgreSQL login is a member of `metra_api_runtime`, and that the login is neither SUPERUSER nor BYPASSRLS.
+- The API readiness endpoint now verifies that the actual PostgreSQL login inherits the privileges of `metra_api_runtime` (`pg_has_role(..., 'USAGE')`), and that the login is neither SUPERUSER nor BYPASSRLS.
 - A database connection that uses `postgres`, `service_role`, or an unrelated login will remain unready instead of silently operating with excessive privileges.
-- Deployment must provision a dedicated non-superuser, non-BYPASSRLS LOGIN role, grant membership in `metra_api_runtime`, and configure that login in the API connection string.
+- Deployment must provision a dedicated non-superuser, non-BYPASSRLS LOGIN role, grant inheritable membership in `metra_api_runtime`, and configure that login in the API connection string.
