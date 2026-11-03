@@ -21,6 +21,7 @@ builder.Services
         options.Authority = authority;
         options.Audience = audience;
         options.RequireHttpsMetadata = true;
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -29,6 +30,7 @@ builder.Services
             ValidAudience = audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            NameClaimType = "sub",
             ClockSkew = TimeSpan.FromSeconds(60)
         };
     });
