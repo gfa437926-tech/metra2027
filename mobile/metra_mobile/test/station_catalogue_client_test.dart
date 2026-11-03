@@ -63,6 +63,47 @@ void main() {
       client.close();
     });
 
+    test('rejects invalid page bounds and control characters before HTTP', () async {
+      var calls = 0;
+      final client = StationCatalogueClient(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response('{}', 200);
+        }),
+        tokenProvider: _TokenProvider('test-token'),
+        endpointEnabled: true,
+      );
+
+      expect(
+        (await client.loadPage(pageSize: 101)).state,
+        StationCatalogueLoadState.unavailable,
+      );
+      expect(
+        (await client.loadPage(cursor: 'bad\\u0085cursor')).state,
+        StationCatalogueLoadState.unavailable,
+      );
+      expect(
+        (await client.loadPage(namePrefix: 'محطة\\u009f')).state,
+        StationCatalogueLoadState.unavailable,
+      );
+      expect(calls, 0);
+      client.close();
+    });
+
+    test('treats whitespace-only access tokens as unauthenticated', () async {
+      final client = StationCatalogueClient(
+        client: MockClient((_) async => http.Response('{}', 200)),
+        tokenProvider: _TokenProvider('   '),
+        endpointEnabled: true,
+      );
+
+      expect(
+        (await client.loadPage()).state,
+        StationCatalogueLoadState.unauthenticated,
+      );
+      client.close();
+    });
+
     test('loads both source kinds without merging equal display names',
         () async {
       final client = StationCatalogueClient(
