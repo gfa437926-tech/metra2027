@@ -50,6 +50,8 @@ public sealed record RegistrationApprovalQueueReadResult(
     public bool Succeeded => Status == RegistrationApprovalQueueReadStatus.Succeeded;
 }
 
+public sealed class RegistrationApprovalQueueInvalidCursorException : Exception;
+
 /// <summary>
 /// Store contract: enforce the exact queue-read permission and approved station
 /// scope for every call. A station approver sees only assigned stations; a system
@@ -124,7 +126,15 @@ public sealed class RegistrationApprovalQueueQueryService(
             query.PageSize,
             cursor);
 
-        var page = await store.ReadPageAsync(actor, normalized, cancellationToken);
+        RegistrationApprovalQueueStorePage page;
+        try
+        {
+            page = await store.ReadPageAsync(actor, normalized, cancellationToken);
+        }
+        catch (RegistrationApprovalQueueInvalidCursorException)
+        {
+            return InvalidQuery();
+        }
         if (!IsValidPage(page, normalized))
             return new(RegistrationApprovalQueueReadStatus.InvalidStoreResponse);
 
