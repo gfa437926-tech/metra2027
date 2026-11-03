@@ -23,10 +23,10 @@ This recommendation does not authorize a Supabase Auth setting change, a JWT sig
 
 - Project status: ACTIVE_HEALTHY.
 - PostgreSQL: 17.11.
-- The public schema currently contains no application tables.
-- The Supabase migration listing currently returns no application migrations.
-- The managed Auth schema exists; the Auth users table currently reports zero rows.
-- Security and performance advisors returned no lint notices in this inspection.
+- The public schema contains 15 application tables; all 15 have RLS enabled and a read-only audit found zero direct table grants to `anon` or `authenticated`.
+- The Supabase migration history contains 28 applied application migrations.
+- The managed Auth schema exists; a current count query reports zero Auth users.
+- Supabase Security Advisor reports zero findings. Performance Advisor reports informational unused-index notices on this low-traffic/new application dataset; no indexes were removed.
 
 This means the current project is an empty application-data target, not evidence that the Auth provider has already been configured for METRA. No production identity endpoint is enabled by this decision.
 
