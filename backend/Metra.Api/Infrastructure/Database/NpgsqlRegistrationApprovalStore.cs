@@ -126,7 +126,7 @@ public sealed class NpgsqlRegistrationApprovalStore(
             catch (Exception exception) when (
                 exception is CryptographicException or JsonException or FormatException)
             {
-                throw new InvalidOperationException("Approval queue cursor is invalid.");
+                throw new RegistrationApprovalQueueInvalidCursorException();
             }
 
             if (cursor is null ||
@@ -136,7 +136,7 @@ public sealed class NpgsqlRegistrationApprovalStore(
                 cursor.PageSize != query.PageSize ||
                 !Guid.TryParse(cursor.RequestId, out _) ||
                 cursor.SubmittedAtUtc.Offset != TimeSpan.Zero)
-                throw new InvalidOperationException("Approval queue cursor does not match this query.");
+                throw new RegistrationApprovalQueueInvalidCursorException();
         }
 
         Guid? requestedStation = null;
