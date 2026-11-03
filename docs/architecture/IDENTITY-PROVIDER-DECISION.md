@@ -28,7 +28,7 @@ This recommendation does not authorize a Supabase Auth setting change, a JWT sig
 - The managed Auth schema exists; a current count query reports zero Auth users.
 - Supabase Security Advisor reports zero findings. Performance Advisor reports informational unused-index notices on this low-traffic/new application dataset; no indexes were removed.
 
-This means the current project is an empty application-data target, not evidence that the Auth provider has already been configured for METRA. No production identity endpoint is enabled by this decision.
+The application catalogue and observation store are populated, but the managed Auth user table is still empty. The presence of the Auth subsystem does not prove that providers, redirect policy, MFA, signing-key mode or JWT claims have been configured and verified for METRA. No production identity endpoint is enabled by this decision.
 
 ## Required security configuration before enabling .NET JWT authentication
 
