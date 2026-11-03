@@ -1,4 +1,7 @@
-using Npgsql;
+using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace Metra.Api.Security;
 
@@ -8,58 +11,51 @@ public interface IStationAuthorizationService
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
-public sealed class PostgresStationAuthorizationService(IConfiguration configuration) : IStationAuthorizationService
+/// <summary>
+/// Calls a narrowly scoped, server-only Supabase RPC. The service-role key
+/// must be injected by the hosting secret manager and must never reach clients.
+/// </summary>
+public sealed class SupabaseStationAuthorizationService(
+    IHttpClientFactory httpClientFactory,
+    IConfiguration configuration) : IStationAuthorizationService
 {
-    private readonly string? _connectionString = configuration.GetConnectionString("MetraRuntime");
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(_connectionString);
+    private readonly string? _supabaseUrl = configuration["Supabase:Url"];
+    private readonly string? _serviceKey = configuration["Supabase:ServiceRoleKey"];
 
-    public async Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default)
+    public bool IsConfigured =>
+        Uri.TryCreate(_supabaseUrl, UriKind.Absolute, out var uri) &&
+        uri.Scheme == Uri.UriSchemeHttps &&
+        !string.IsNullOrWhiteSpace(_serviceKey);
+
+    public async Task<bool> HasStationPermissionAsync(
+        Guid userId,
+        Guid stationId,
+        string permissionCode,
+        CancellationToken cancellationToken = default)
     {
-        if (!IsConfigured || userId == Guid.Empty || stationId == Guid.Empty || string.IsNullOrWhiteSpace(permissionCode))
+        if (!IsConfigured || userId == Guid.Empty || stationId == Guid.Empty ||
+            string.IsNullOrWhiteSpace(permissionCode))
             return false;
 
-        const string sql = """
-            SELECT EXISTS (
-                SELECT 1
-                FROM public.metra_account_states account
-                JOIN public.station_catalogue station ON station.id = @station_id
-                JOIN public.meteorological_authorities authority
-                  ON authority.id = station.owner_authority_id AND authority.country_id = station.country_id
-                JOIN public.countries country ON country.id = station.country_id
-                JOIN public.authority_memberships membership
-                  ON membership.user_id = account.user_id AND membership.authority_id = station.owner_authority_id
-                JOIN public.station_assignments assignment
-                  ON assignment.user_id = account.user_id AND assignment.station_id = station.id
-                 AND assignment.authority_id = station.owner_authority_id
-                JOIN public.metra_role_catalogue role
-                  ON role.role_code = assignment.assignment_role_code AND role.is_active = TRUE
-                JOIN public.permission_grants permission
-                  ON permission.user_id = account.user_id AND permission.permission_code = @permission_code
-                WHERE account.user_id = @user_id
-                  AND account.account_state = 'active'
-                  AND station.approval_status = 'approved'
-                  AND station.operational_status = 'active'
-                  AND station.is_demo = FALSE
-                  AND authority.is_active = TRUE AND country.is_active = TRUE
-                  AND membership.approval_status = 'approved'
-                  AND membership.valid_from <= now()
-                  AND (membership.valid_to IS NULL OR membership.valid_to > now())
-                  AND assignment.approval_status = 'approved'
-                  AND assignment.valid_from <= now()
-                  AND (assignment.valid_to IS NULL OR assignment.valid_to > now())
-                  AND permission.approval_status = 'approved'
-                  AND permission.revoked_at IS NULL
-                  AND permission.valid_from <= now()
-                  AND (permission.valid_to IS NULL OR permission.valid_to > now())
-            );
-            """;
+        var client = httpClientFactory.CreateClient(nameof(SupabaseStationAuthorizationService));
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{_supabaseUrl!.TrimEnd('/')}/rest/v1/rpc/metra_user_has_station_permission");
 
-        await using var connection = new NpgsqlConnection(_connectionString);
-        await connection.OpenAsync(cancellationToken);
-        await using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("user_id", userId);
-        command.Parameters.AddWithValue("station_id", stationId);
-        command.Parameters.AddWithValue("permission_code", permissionCode);
-        return await command.ExecuteScalarAsync(cancellationToken) is true;
+        request.Headers.TryAddWithoutValidation("apikey", _serviceKey);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
+        request.Content = JsonContent.Create(new
+        {
+            p_user_id = userId,
+            p_station_id = stationId,
+            p_permission_code = permissionCode
+        });
+
+        using var response = await client.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+            return false;
+
+        return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken);
     }
 }
