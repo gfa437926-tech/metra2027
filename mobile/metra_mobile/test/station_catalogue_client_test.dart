@@ -83,7 +83,8 @@ void main() {
                 'hasMore': false,
                 'nextCursor': null,
               }),
-              200);
+              200,
+              encoding: utf8);
         }),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
@@ -112,7 +113,8 @@ void main() {
                 'hasMore': false,
                 'nextCursor': null,
               }),
-              200);
+              200,
+              encoding: utf8);
         }),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
