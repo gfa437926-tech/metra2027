@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';\nimport 'core/api/metra_api_client.dart';\nimport 'features/stations/station_directory_screen.dart';
 
 void main() => runApp(const MetraApp());
 
@@ -17,7 +17,7 @@ class MetraApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: _blue),
           scaffoldBackgroundColor: const Color(0xFFF3F6FC),
         ),
-        home: const MetraHome(),
+        home: MetraHome(api: api),
       );
 }
 

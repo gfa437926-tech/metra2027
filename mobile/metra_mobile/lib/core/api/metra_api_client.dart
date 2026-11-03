@@ -38,7 +38,39 @@ class ObservationQueueItem {
   }
 }
 
-/// API wrapper. Supply a current Supabase access token from the auth layer.
+/// API wrapper. Supply a current Supabase access token from the auth layer.\nclass StationDirectoryItem {
+  const StationDirectoryItem({required this.id, required this.localCode,
+    required this.nameArabic, required this.nameEnglish, required this.stationType,
+    required this.operationalStatus, required this.approvalStatus, required this.isDemo,
+    this.latitude, this.longitude, this.wmoStationId});
+  final String id, localCode, nameArabic, nameEnglish, stationType;
+  final String operationalStatus, approvalStatus;
+  final bool isDemo;
+  final double? latitude, longitude;
+  final String? wmoStationId;
+  bool get hasCoordinates => latitude != null && longitude != null;
+  factory StationDirectoryItem.fromJson(Map<String, dynamic> json) {
+    for (final key in ['id','local_station_code','name_ar','name_en','station_type','operational_status','approval_status']) {
+      if (json[key] is! String) throw const FormatException('invalid_station_directory_item');
+    }
+    double? number(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
+    double? lat, lon;
+    final coords = json['station_coordinates'];
+    if (coords is List && coords.isNotEmpty && coords.first is Map) {
+      final point = Map<String, dynamic>.from(coords.first as Map);
+      lat = number(point['latitude']); lon = number(point['longitude']);
+    }
+    return StationDirectoryItem(id: json['id'] as String,
+      localCode: json['local_station_code'] as String,
+      nameArabic: json['name_ar'] as String, nameEnglish: json['name_en'] as String,
+      stationType: json['station_type'] as String,
+      operationalStatus: json['operational_status'] as String,
+      approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
+      latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?);
+  }
+}
+
+
 class MetraApiClient {
   MetraApiClient({required this.accessTokenProvider,
     String baseUrl = metraApiBaseUrl, http.Client? client})
@@ -49,6 +81,23 @@ class MetraApiClient {
   final http.Client _client;
   bool get isConfigured => _baseUri != null &&
       _baseUri.scheme == 'https' && _baseUri.host.isNotEmpty;
+
+  Future<List<StationDirectoryItem>> getStationDirectory({
+    int limit = 250, int offset = 0, String? stationType,
+  }) async {
+    if (limit < 1 || limit > 500 || offset < 0) {
+      throw const MetraApiException(400, 'invalid_pagination');
+    }
+    if (stationType != null && !const {'classic', 'automatic', 'synoptic'}.contains(stationType)) {
+      throw const MetraApiException(400, 'invalid_station_type');
+    }
+    final filter = stationType == null ? '' : '&stationType=$stationType';
+    final response = await _send('GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) throw const FormatException('invalid_station_directory');
+    return decoded.map((item) => StationDirectoryItem.fromJson(
+      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+  }
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');

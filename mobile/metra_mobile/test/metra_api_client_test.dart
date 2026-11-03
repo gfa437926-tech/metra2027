@@ -26,6 +26,30 @@ void main() {
     client.close();
   });
 
+  test('station directory parses coordinate and approval state', () async {
+    late http.Request captured;
+    final client = MetraApiClient(baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode([{
+          'id': stationId, 'local_station_code': 'ST-001',
+          'name_ar': 'محطة اختبار', 'name_en': 'Test station',
+          'station_type': 'classic', 'operational_status': 'unverified',
+          'approval_status': 'pending', 'is_demo': false,
+          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}]
+        }]), 200);
+      }));
+    final rows = await client.getStationDirectory(stationType: 'classic');
+    expect(captured.url.path, '/api/v1/stations');
+    expect(captured.url.queryParameters['stationType'], 'classic');
+    expect(captured.headers['authorization'], 'Bearer directory-token');
+    expect(rows.single.nameArabic, 'محطة اختبار');
+    expect(rows.single.hasCoordinates, isTrue);
+    expect(rows.single.approvalStatus, 'pending');
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
