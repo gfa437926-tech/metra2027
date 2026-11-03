@@ -166,3 +166,7 @@ Read-only query against the destination catalogue and effective coordinate table
 The 13 classic records without coordinate rows comprise 12 imported source records plus the explicitly marked demo row. The 12 source records requiring authoritative coordinate evidence are: مركز بحوث الغاب، صحنايا، البوكمال، دير الزور، حمام واصل، الإدارة العامة، درعا، بوقا، حلب الجامعية، زاهد، عين العرب الجنوبية، ومحطة حماه.
 
 All 65 records remain pending and unverified. A station without a complete verified coordinate pair remains in the directory/list but must not be plotted. No coordinates were guessed or inserted in this audit.
+
+### Coordinate provenance and validity audit — 2026-11-03
+
+All 50 stored coordinate rows currently have `coordinate_source=other`, a non-empty source reference, and an effective validity window that has started and has not expired. This confirms provenance fields and temporal shape are populated; it does **not** certify the source itself or the positional accuracy. Coordinates and their station records remain pending owner review.
