@@ -66,6 +66,23 @@ describe('StationsComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('دون إحداثيات');
   });
 
+  it('loads every catalogue page before rendering the complete station preview', async () => {
+    const readPage = jasmine.createSpy('readPage').and.returnValues(
+      Promise.resolve({ items: [classic], hasMore: true, nextCursor: 'page-2' }),
+      Promise.resolve({ items: [automatic], hasMore: false, nextCursor: null })
+    );
+    const fixture = setup(readPage);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(readPage).toHaveBeenCalledTimes(2);
+    expect(readPage.calls.argsFor(1)[0]).toEqual(jasmine.objectContaining({ cursor: 'page-2' }));
+    expect(fixture.componentInstance.items().length).toBe(2);
+    expect(fixture.componentInstance.classicCount()).toBe(1);
+    expect(fixture.componentInstance.automaticCount()).toBe(1);
+    expect(fixture.componentInstance.hasMore()).toBe(false);
+  });
+
   it('plots only complete coordinate pairs and keeps source identity visible', async () => {
     const locatedAutomatic = {
       ...automatic,
@@ -128,13 +145,6 @@ describe('StationsComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const loadMore = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
-      .find(button => button.textContent?.includes('تحميل المزيد'));
-    if (!loadMore) throw new Error('Load more button was not rendered.');
-    loadMore.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
     expect(fixture.componentInstance.items().length).toBe(1);
     expect(fixture.componentInstance.loadMoreError()).toBe(true);
     expect(fixture.componentInstance.loadMoreErrorRequiresReload()).toBe(false);
@@ -157,14 +167,6 @@ describe('StationsComponent', () => {
       Promise.resolve({ items: [classic], hasMore: false, nextCursor: null })
     );
     const fixture = setup(readPage);
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const loadMore = (Array.from(fixture.nativeElement.querySelectorAll('button')) as HTMLButtonElement[])
-      .find(button => button.textContent?.includes('تحميل المزيد'));
-    expect(loadMore).toBeDefined();
-    if (!loadMore) throw new Error('Load more button was not rendered.');
-    loadMore.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
