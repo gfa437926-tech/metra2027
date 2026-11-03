@@ -4,7 +4,7 @@ Status: Supabase Auth remains the recommended but not activated identity provide
 
 ## 1. Current verified state
 
-- ASP.NET Core has authorization policies and deny-all authorization data-source defaults, but no authentication scheme/provider is configured in `Program.cs`.
+- ASP.NET Core has an explicit unconfigured authentication handler that always returns no authentication result. No production issuer/token validator is configured; protected routes fail closed. PostgreSQL-backed account, permission, resource and station-assignment data sources are wired only when the METRA database connection is configured.
 - The currently mapped observation endpoints only validate request payloads; they do not persist observations or authorize a business operation.
 - The legacy browser login directly queries user tables, verifies a browser-side password hash, and stores a profile/role snapshot in `localStorage`. The legacy recovery flow exposes a generated temporary password. These are migration blockers, not acceptable fallback behavior.
 - The Angular Supabase client configuration is blank and must not be populated with a privileged key. Supabase Auth is recommended but not yet activated; Auth provider settings and JWT signing-key configuration still require read-only review.
@@ -134,6 +134,4 @@ Angular and Flutter now use the same explicit session-state vocabulary: `unconfi
   This is presentation state only; it does not guard sensitive routes or replace API
   authorization.
 
-The endpoint remains unmapped and the feature flags remain disabled by default. Enabling
-either flag before an approved identity provider, secure client session implementation and
-authoritative account-context endpoint are deployed is not supported.
+The route is mapped when database configuration is present, but the feature flags remain disabled by default. Enabling either flag before an approved identity provider, secure client session implementation and production API deployment results in unauthenticated or unavailable requests. Keep the flags disabled until the full release gate passes.
