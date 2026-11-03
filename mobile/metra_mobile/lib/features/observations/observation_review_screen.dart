@@ -70,7 +70,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.assignment_outlined)),
                     title: Text(_typeLabel(item.observationType)),
-                    subtitle: Text(item.observedAt.toLocal().toString() + ' • ' + item.status,
+                    subtitle: Text('${item.observedAt.toLocal()} • ${item.status}',
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
                   Padding(
@@ -181,6 +181,6 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     'daily' => 'نشرة يومية',
     'hourly' => 'نشرة ساعية',
     'phenomenon' => 'بلاغ ظاهرة جوية',
-    _ => 'نشرة: ' + type,
+    _ => 'نشرة: $type',
   };
 }
