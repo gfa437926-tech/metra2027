@@ -12,7 +12,8 @@ public enum MetraAccountState
     PendingSystemApproval = 1,
     Active = 2,
     Suspended = 3,
-    Rejected = 4
+    Rejected = 4,
+    Disabled = 5
 }
 
 /// <summary>
