@@ -33,9 +33,11 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     ])),
     Expanded(child: FutureBuilder<List<StationDirectoryItem>>(future: _stations, builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-      if (snapshot.hasError) return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
-        'تحقق من تسجيل الدخول والاتصال بواجهة API.',
-        TextButton(onPressed: () => setState(_load), child: const Text('إعادة المحاولة')));
+      if (snapshot.hasError) {
+        return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
+          'تحقق من تسجيل الدخول والاتصال بواجهة API.',
+          TextButton(onPressed: () => setState(_load), child: const Text('إعادة المحاولة')));
+      }
       final rows = snapshot.data ?? const <StationDirectoryItem>[];
       if (rows.isEmpty) return _empty(Icons.location_off, 'لا توجد محطات', 'لا توجد سجلات مطابقة.');
       final located = rows.where((s) => s.hasCoordinates &&
@@ -49,8 +51,10 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     })),
   ]);
   Widget _map(List<StationDirectoryItem> rows, List<StationDirectoryItem> located) {
-    if (located.isEmpty) return _empty(Icons.location_off, 'لا توجد إحداثيات موثقة',
-      'يعرض الدليل ${rows.length} محطة، لكن لا توجد إحداثيات صالحة لرسمها. راجع القائمة للتفاصيل.');
+    if (located.isEmpty) {
+      return _empty(Icons.location_off, 'لا توجد إحداثيات موثقة',
+        'يعرض الدليل ${rows.length} محطة، لكن لا توجد إحداثيات صالحة لرسمها. راجع القائمة للتفاصيل.');
+    }
     final center = LatLng(
       located.map((s) => s.latitude!).reduce((a,b) => a+b) / located.length,
       located.map((s) => s.longitude!).reduce((a,b) => a+b) / located.length);
@@ -69,7 +73,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   ? const Color(0xFF2463B5) : const Color(0xFF16835D)),
             )),
         )).toList()),
-        RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+        const RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
       ]),
       PositionedDirectional(start: 12, top: 12, child: Card(child: Padding(
         padding: const EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.start,
