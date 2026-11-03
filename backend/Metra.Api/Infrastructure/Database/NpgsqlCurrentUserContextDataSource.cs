@@ -34,10 +34,9 @@ public sealed class NpgsqlCurrentUserContextDataSource(
         await using (var command = new NpgsqlCommand(
             """
             select s.account_state, p.first_name, p.father_name, p.last_name,
-                   u.email, p.phone
+                   null::text as email, p.phone
             from public.metra_account_states s
             join public.metra_user_profiles p on p.user_id = s.user_id
-            left join auth.users u on u.id = s.user_id
             where s.user_id = @user_id
             """,
             connection,
