@@ -77,8 +77,7 @@ class MetraApiClient {
     if (token == null || token.trim().isEmpty) {
       throw const MetraApiException(401, 'authentication_required');
     }
-    final uri = _baseUri!.replace(path:
-      '${_baseUri!.path.replaceFirst(RegExp(r'/+$'), '')}$path', query: null);
+    final uri = _baseUri!.resolve(path);
     final request = http.Request(method, uri)..headers.addAll({
       'Accept': 'application/json', 'Authorization': 'Bearer $token'});
     if (body != null) {
