@@ -35,7 +35,7 @@ public sealed class SupabaseStationDirectoryService(
         var query =
             "select=id,local_station_code,wmo_station_id,name_ar,name_en,station_type," +
             "operational_status,approval_status,is_demo,elevation_m,station_coordinates(latitude,longitude,coordinate_source,accuracy_m)" +
-            "&is_demo=eq.false" +
+            "&is_demo=eq.false&station_coordinates.valid_to=is.null" +
             "&order=name_ar.asc&limit=" + limit + "&offset=" + offset;
         if (!string.IsNullOrWhiteSpace(stationType))
             query += "&station_type=eq." + Uri.EscapeDataString(stationType);
