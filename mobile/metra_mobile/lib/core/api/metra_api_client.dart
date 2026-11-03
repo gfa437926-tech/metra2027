@@ -26,7 +26,7 @@ class ObservationQueueItem {
     final id = json['id'];
     final stationId = json['station_id'];
     final type = json['observation_type'];
-    final observedAt = DateTime.tryParse('\${json['observed_at'] ?? ''}');
+    final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
     if (id is! String || stationId is! String || type is! String || observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
@@ -53,7 +53,7 @@ class MetraApiClient {
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',
-      '/api/v1/stations/\${Uri.encodeComponent(stationId)}/observations?limit=$limit');
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
     final decoded = jsonDecode(response.body);
     if (decoded is! List) throw const FormatException('invalid_observation_queue');
     return decoded.map((item) => ObservationQueueItem.fromJson(
@@ -64,7 +64,7 @@ class MetraApiClient {
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
     bool submit = false}) async {
-    await _send('POST', '/api/v1/stations/\${Uri.encodeComponent(stationId)}/observations',
+    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
       body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
         'payload': payload, 'submit': submit});
@@ -78,7 +78,7 @@ class MetraApiClient {
       throw const MetraApiException(401, 'authentication_required');
     }
     final uri = _baseUri!.replace(path:
-      '\${_baseUri!.path.replaceFirst(RegExp(r'/+$'), '')}$path', query: null);
+      '${_baseUri!.path.replaceFirst(RegExp(r'/+$'), '')}$path', query: null);
     final request = http.Request(method, uri)..headers.addAll({
       'Accept': 'application/json', 'Authorization': 'Bearer $token'});
     if (body != null) {
