@@ -14,7 +14,7 @@ The legacy project `INSERT` (`vktcvkwqszehgmhqjrkb`) was not queried or modified
 
 ## Verified public-schema state
 
-The target currently has these 12 public tables, all with RLS enabled:
+The target currently has 15 public tables, all with RLS enabled (latest row-count verification):
 
 - `countries` (1 row)
 - `meteorological_authorities` (1 row)
@@ -28,8 +28,11 @@ The target currently has these 12 public tables, all with RLS enabled:
 - `permission_grants` (0 rows)
 - `metra_user_profiles` (0 rows)
 - `metra_observation_records` (58,059 rows)
+- `metra_role_catalogue` (0 rows)
+- `registration_requests` (0 rows)
+- `registration_audit_events` (0 rows)
 
-Applied migrations include the station catalogue, identity/membership/assignment tables, account profile/state, provenance fields, and observation store. The security advisor returned no findings. The performance advisor returned 34 informational unused-index findings; no index was removed.
+Applied migrations include the independent station catalogue, identity/membership/assignment tables, account profile/state, provenance-preserving observation store, registration workflow, least-privilege runtime role, and two-stage registration approval. The latest security advisor returned no findings. No indexes were removed.
 
 ## Persistence gap
 
@@ -116,3 +119,37 @@ No legacy database operation was performed. The old project remains outside this
 
 - Backend build for commit `b7ce0357cd7ae7f0bd3497a86993d5c4f6c2c2fe`: success.
 - .NET CI for commit `cda3634dddb7d8ec911f6317caf7e240038b012b`: **success** (restore, build and tests).
+
+
+## Two-stage registration approval increment — 2026-11-03
+
+- Added the private-schema `private.decide_metra_registration` database function. It locks the request and account state, checks the live active approver account, explicit stage-specific permission grant, station assignment scope, and persisted first-stage audit evidence.
+- The decision RPC now requires the expected prior status. Stale application reads cannot accidentally be interpreted as approval at the next stage.
+- Station-stage approval rechecks that the requested station is still approved, active, non-demo and owned by an active authority, and that the requested role remains active/requestable.
+- Final approval requires a distinct system approver, rechecks station and role eligibility, creates the approved station assignment, activates the account, closes the registration request and appends the immutable audit event in the same transaction.
+- Rejection requires a non-empty reason; both decision stages retain the note in append-only audit history.
+- Added a unique partial index preventing duplicate stage-decision audit events.
+- Added trusted .NET actor resolution from live account state, approved permission grants and current station assignments. JWT subject is the actor lookup key; client role claims are not trusted.
+- Added a redacted approval queue with keyset pagination and protected cursors. Queue SQL revalidates the active account, current stage permission and station scope in the same read statement.
+- Added endpoints: `GET /api/v1/registration-requests/approval-queue` and `POST /api/v1/registration-requests/{requestId}/decision`. They are mapped only when the database connection is configured.
+- Runtime database role now has narrowly scoped SELECT access to registration requests and approval audit evidence under RLS policies. Browser roles remain denied.
+- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`.
+
+### Database verification after approval changes
+
+- New approval RPC exists and `metra_api_runtime` can execute it.
+- Runtime cannot execute the obsolete five-argument approval RPC.
+- Runtime has SELECT on registration requests and registration audit events, with dedicated RLS policies.
+- All 15 public tables still have RLS enabled.
+- Supabase security advisor: 0 findings.
+- No synthetic users, roles, grants or approval records were inserted.
+
+### Remaining release gates
+
+1. The managed LOGIN role, secret and connection string for `metra_api_runtime` are still deployment work; no credentials were generated or exposed.
+2. Configure a persistent shared ASP.NET Data Protection key ring before running multiple API replicas, so protected approval cursors remain readable across instances and restarts.
+3. Approved role definitions and verified station records/coordinates are still absent. Current counts are 0 requestable roles and 0 selectable stations; the 65 station records remain unapproved/unverified for registration.
+4. Add disposable PostgreSQL integration tests for both approval stages, concurrent decisions, permission revocation races, audit append-only behavior and full transaction rollback.
+5. Validate deployment configuration and complete Angular/Flutter workflow integration and authenticated E2E tests before production activation.
+
+The final CI result for the latest branch head is pending verification; do not interpret earlier green runs as validation of the newest commits.
