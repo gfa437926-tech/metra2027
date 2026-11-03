@@ -170,3 +170,5 @@ All 65 records remain pending and unverified. A station without a complete verif
 ### Coordinate provenance and validity audit — 2026-11-03
 
 All 50 stored coordinate rows currently have `coordinate_source=other`, a non-empty source reference, and an effective validity window that has started and has not expired. This confirms provenance fields and temporal shape are populated; it does **not** certify the source itself or the positional accuracy. Coordinates and their station records remain pending owner review.
+
+The same audit found that all 50 rows have distinct source references, but `accuracy_m` is null on all 50. Do not interpret a present coordinate or provenance string as a surveyed/verified coordinate; positional accuracy still needs an authoritative value or explicit owner validation.
