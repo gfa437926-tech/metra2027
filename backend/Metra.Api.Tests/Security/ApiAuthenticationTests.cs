@@ -22,23 +22,25 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Observation_validation_endpoint_requires_authentication()
+    [Theory]
+    [InlineData("/api/v1/observations/daily/validate")]
+    [InlineData("/api/v1/observations/hourly/validate")]
+    [InlineData("/api/v1/observations/phenomena/validate")]
+    public async Task Every_observation_validation_endpoint_requires_authentication(string path)
     {
         using var content = new StringContent("{}", Encoding.UTF8, "application/json");
-        using var response = await _client.PostAsync(
-            "/api/v1/observations/phenomena/validate",
-            content);
+        using var response = await _client.PostAsync(path, content);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    [Fact]
-    public async Task Malformed_bearer_token_is_rejected()
+    [Theory]
+    [InlineData("/api/v1/observations/daily/validate")]
+    [InlineData("/api/v1/observations/hourly/validate")]
+    [InlineData("/api/v1/observations/phenomena/validate")]
+    public async Task Malformed_bearer_token_is_rejected(string path)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            "/api/v1/observations/phenomena/validate");
+        using var request = new HttpRequestMessage(HttpMethod.Post, path);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
         request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
