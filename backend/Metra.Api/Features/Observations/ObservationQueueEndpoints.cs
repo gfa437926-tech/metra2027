@@ -53,6 +53,11 @@ public sealed class SupabaseObservationQueueService(
         {
             return null;
         }
+        catch (JsonException)
+        {
+            // A malformed PostgREST response must fail closed as an unavailable queue.
+            return null;
+        }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             return null;
@@ -74,9 +79,10 @@ public static class ObservationQueueEndpoints
                 if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
                     return Results.Unauthorized();
 
+                var limitError = ObservationQueueRequestGuard.GetLimitError(limit);
+                if (limitError is not null)
+                    return Results.BadRequest(new { error = limitError, maximum = 100 });
                 var take = limit ?? 50;
-                if (take is < 1 or > 100)
-                    return Results.BadRequest(new { error = "invalid_limit", maximum = 100 });
 
                 if (!authorization.IsConfigured || !queue.IsConfigured)
                     return Results.Problem(
@@ -116,4 +122,10 @@ public static class ObservationQueueEndpoints
 
         return endpoints;
     }
+}
+
+public static class ObservationQueueRequestGuard
+{
+    public static string? GetLimitError(int? limit) =>
+        limit is not null and (< 1 or > 100) ? "invalid_limit" : null;
 }
