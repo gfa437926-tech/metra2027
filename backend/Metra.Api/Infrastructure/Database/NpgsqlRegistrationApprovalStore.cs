@@ -169,7 +169,7 @@ public sealed class NpgsqlRegistrationApprovalStore(
         command.Parameters.Add("can_station", NpgsqlDbType.Boolean).Value = actor.CanApproveStationRegistrations;
         command.Parameters.Add("station_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).Value = stationIds;
         command.Parameters.Add("requested_status", NpgsqlDbType.Text).Value =
-            query.Status is { } status ? ToDatabaseStatus(status) : DBNull.Value;
+            query.Status is { } requestedStatus ? ToDatabaseStatus(requestedStatus) : DBNull.Value;
         command.Parameters.Add("requested_station", NpgsqlDbType.Uuid).Value =
             (object?)requestedStation ?? DBNull.Value;
         command.Parameters.Add("cursor_at", NpgsqlDbType.TimestampTz).Value =
