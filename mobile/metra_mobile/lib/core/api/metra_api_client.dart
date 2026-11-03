@@ -60,6 +60,29 @@ class MetraApiClient {
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
   }
 
+  Future<void> decideObservation({
+    required String stationId,
+    required String observationId,
+    required String decision,
+    String? note,
+  }) async {
+    if (decision != 'approve' && decision != 'return_for_correction') {
+      throw const MetraApiException(400, 'invalid_observation_decision');
+    }
+    if (decision == 'return_for_correction' &&
+        (note == null || note.trim().isEmpty)) {
+      throw const MetraApiException(400, 'decision_note_required');
+    }
+    if (note != null && (note.length > 2000 || note != note.trim())) {
+      throw const MetraApiException(400, 'invalid_decision_note');
+    }
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}/decision',
+      body: {'decision': decision, 'note': note},
+    );
+  }
+
   Future<void> submitObservation({required String stationId,
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
