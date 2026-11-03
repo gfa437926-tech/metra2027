@@ -44,6 +44,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
         <div class="section-title">إدارة النظام</div>
         <nav>
+          <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
+        </nav>
+        <nav>
           <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
         </nav>
         </div>
