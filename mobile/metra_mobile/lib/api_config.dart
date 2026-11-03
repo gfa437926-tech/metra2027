@@ -11,6 +11,13 @@ class ApiConfig {
     defaultValue: false,
   );
 
+  /// Keep disabled until the trusted API store, station-read permission and
+  /// authenticated mobile token provider have been approved and deployed.
+  static const bool stationCatalogueEnabled = bool.fromEnvironment(
+    'METRA_STATION_CATALOGUE_ENABLED',
+    defaultValue: false,
+  );
+
   static const String baseUrl = String.fromEnvironment(
     'METRA_API_BASE_URL',
     defaultValue: 'http://10.0.2.2:5000/api/v1',
