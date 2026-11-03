@@ -109,12 +109,6 @@ public sealed class NpgsqlRegistrationApprovalStore(
         if (!Guid.TryParse(actor.UserId, out var actorId))
             throw new InvalidOperationException("Approval actor ID is invalid.");
 
-        var stationIds = actor.StationManagerStationIds
-            .Select(value => Guid.TryParse(value, out var id) ? id : Guid.Empty)
-            .Where(value => value != Guid.Empty)
-            .Distinct()
-            .ToArray();
-
         QueueCursor? cursor = null;
         if (query.Cursor is not null)
         {
@@ -153,11 +147,31 @@ public sealed class NpgsqlRegistrationApprovalStore(
             select r.id::text, r.user_id::text, r.requested_station_id::text,
                    r.requested_role_code, r.status, r.submitted_at
             from public.registration_requests r
-            where (
-              (r.status='pending_system_approval' and @can_system)
+            where exists (
+              select 1 from public.metra_account_states actor_state
+              where actor_state.user_id=@actor_id and actor_state.account_state='active'
+            )
+            and (
+              (r.status='pending_system_approval' and exists (
+                select 1 from public.permission_grants g
+                where g.user_id=@actor_id and g.permission_code='registrations.system.approve'
+                  and g.approval_status='approved' and g.revoked_at is null
+                  and g.valid_from <= now() and (g.valid_to is null or g.valid_to > now())
+              ))
               or
-              (r.status='pending_station_approval' and @can_station
-               and r.requested_station_id = any(@station_ids))
+              (r.status='pending_station_approval'
+               and exists (
+                 select 1 from public.permission_grants g
+                 where g.user_id=@actor_id and g.permission_code='registrations.station.approve'
+                   and g.approval_status='approved' and g.revoked_at is null
+                   and g.valid_from <= now() and (g.valid_to is null or g.valid_to > now())
+               )
+               and exists (
+                 select 1 from public.station_assignments a
+                 where a.user_id=@actor_id and a.station_id=r.requested_station_id
+                   and a.approval_status='approved' and a.valid_from <= now()
+                   and (a.valid_to is null or a.valid_to > now())
+               ))
             )
             and (@requested_status is null or r.status=@requested_status)
             and (@requested_station is null or r.requested_station_id=@requested_station)
@@ -165,9 +179,7 @@ public sealed class NpgsqlRegistrationApprovalStore(
             order by r.submitted_at desc,r.id desc
             limit @limit
             """, connection);
-        command.Parameters.Add("can_system", NpgsqlDbType.Boolean).Value = actor.CanApproveSystemRegistrations;
-        command.Parameters.Add("can_station", NpgsqlDbType.Boolean).Value = actor.CanApproveStationRegistrations;
-        command.Parameters.Add("station_ids", NpgsqlDbType.Array | NpgsqlDbType.Uuid).Value = stationIds;
+        command.Parameters.Add("actor_id", NpgsqlDbType.Uuid).Value = actorId;
         command.Parameters.Add("requested_status", NpgsqlDbType.Text).Value =
             query.Status is { } requestedStatus ? ToDatabaseStatus(requestedStatus) : DBNull.Value;
         command.Parameters.Add("requested_station", NpgsqlDbType.Uuid).Value =
