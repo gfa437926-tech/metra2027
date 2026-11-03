@@ -1,4 +1,5 @@
 using Metra.Api.Features.Observations;
+using Metra.Api.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +13,8 @@ var authority = builder.Configuration["Authentication:Authority"]
 var audience = builder.Configuration["Authentication:Audience"] ?? "authenticated";
 
 builder.Services.AddProblemDetails();
+builder.Services.AddHttpClient(nameof(SupabaseStationAuthorizationService));
+builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddOpenApi();
 
 builder.Services
