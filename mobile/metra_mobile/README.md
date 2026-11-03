@@ -28,12 +28,16 @@ flutter build appbundle
 flutter build ios
 ```
 
-## API endpoint
-Override the API address at run/build time:
+## API endpoint and authentication
+
+The API client lives in `lib/core/api/metra_api_client.dart`. Configure the HTTPS API **origin** (without `/api/v1`) at run/build time:
+
 ```bash
-flutter run --dart-define=METRA_API_BASE_URL=https://your-api-host/api/v1
+flutter run --dart-define=METRA_API_BASE_URL=https://your-api-host
+flutter build apk --dart-define=METRA_API_BASE_URL=https://your-api-host
 ```
-The default development address uses Android emulator host `10.0.2.2`; for a physical phone, pass a reachable LAN or HTTPS address.
+
+The client requires an access-token provider supplied by the authentication layer. It sends the token as a Bearer credential and never embeds a service-role key. Review queue reads and observation submissions are implemented; the app's sign-in/token-refresh UI and station picker still need to be connected before these operations can be used end-to-end.
 
 ## Independence
 - No Node.js or Angular CLI is required.
