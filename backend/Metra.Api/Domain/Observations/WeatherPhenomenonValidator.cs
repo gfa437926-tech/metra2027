@@ -37,14 +37,28 @@ public static class WeatherPhenomenonValidator
             issues.Add(new("start_time", "وقت البدء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC."));
 
         // An omitted, null, empty or whitespace end time means the phenomenon is active.
-        if (!string.IsNullOrWhiteSpace(request.EndTime) &&
-            !TimeOnly.TryParseExact(
-                request.EndTime,
-                "HH:mm:ss",
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.None,
-                out _))
-            issues.Add(new("end_time", "وقت الانتهاء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC."));
+        if (!string.IsNullOrWhiteSpace(request.EndTime))
+        {
+            if (!TimeOnly.TryParseExact(
+                    request.EndTime,
+                    "HH:mm:ss",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var endTime))
+            {
+                issues.Add(new("end_time", "وقت الانتهاء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC."));
+            }
+            else if (TimeOnly.TryParseExact(
+                         request.StartTime,
+                         "HH:mm:ss",
+                         CultureInfo.InvariantCulture,
+                         DateTimeStyles.None,
+                         out var startTime) &&
+                     endTime < startTime)
+            {
+                issues.Add(new("end_time", "وقت الانتهاء لا يجوز أن يسبق وقت البدء في اليوم نفسه."));
+            }
+        }
 
         return issues;
     }
