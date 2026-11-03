@@ -162,3 +162,13 @@ The final CI result for the latest branch head is pending verification; do not i
 - `metra_api_runtime` can execute the private submission and approval RPCs.
 - `service_role`, `anon` and `authenticated` cannot execute the private submission RPC.
 - Security advisor remains at 0 findings after moving the submission function into the unexposed schema.
+
+
+## Database-backed authorization increment
+
+- Added `NpgsqlMetraAuthorizationDataSources` implementing permission-grant, resource-access and combined actor/resource authorization data sources.
+- All three reads use repeatable-read PostgreSQL snapshots. The combined resource/action check loads actor lifecycle, explicit permission grant, canonical station and approved station assignments from one consistent snapshot.
+- Wired the authoritative permission evaluator, resource evaluator and combined actor authorization provider only when the database connection is configured. The deny-all implementations remain the default when no database is configured.
+- Permission evaluation checks current METRA account state and explicit, approved, time-bounded permission grants. It does not infer permissions from role names or JWT user metadata.
+- Resource evaluation ignores the caller-provided station ID and independently resolves the canonical station from the database. The initial persistence adapter supports the `station` resource type only; all unknown resource types fail closed until reviewed mappings are added.
+- Existing runtime SELECT grants and RLS policies cover the required account, grant, assignment, station and authority records; no new public access was granted.
