@@ -1,4 +1,6 @@
-import 'package:flutter/material.dart';\nimport 'core/api/metra_api_client.dart';\nimport 'features/stations/station_directory_screen.dart';
+import 'package:flutter/material.dart';
+import 'core/api/metra_api_client.dart';
+import 'features/stations/station_directory_screen.dart';
 
 void main() => runApp(const MetraApp());
 

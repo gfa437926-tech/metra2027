@@ -38,7 +38,8 @@ class ObservationQueueItem {
   }
 }
 
-/// API wrapper. Supply a current Supabase access token from the auth layer.\nclass StationDirectoryItem {
+/// API wrapper. Supply a current Supabase access token from the auth layer.
+class StationDirectoryItem {
   const StationDirectoryItem({required this.id, required this.localCode,
     required this.nameArabic, required this.nameEnglish, required this.stationType,
     required this.operationalStatus, required this.approvalStatus, required this.isDemo,
