@@ -29,12 +29,17 @@ class StationCatalogueItem {
     final name = json['displayName'];
     final latitude = _optionalNumber(json['latitude'], 'latitude');
     final longitude = _optionalNumber(json['longitude'], 'longitude');
-    final elevation = _optionalNumber(json['elevationMetres'], 'elevationMetres');
-    final sourceType = _optionalText(json['sourceStationType'], 'sourceStationType', 128);
+    final elevation =
+        _optionalNumber(json['elevationMetres'], 'elevationMetres');
+    final sourceType =
+        _optionalText(json['sourceStationType'], 'sourceStationType', 128);
     final sourceCode = _optionalText(json['sourceCode'], 'sourceCode', 128);
 
-    if (id is! String || !RegExp(r'^[A-Za-z0-9._:-]{1,128}$').hasMatch(id) ||
-        name is! String || name.trim().isEmpty || name.length > 256 ||
+    if (id is! String ||
+        !RegExp(r'^[A-Za-z0-9._:-]{1,128}$').hasMatch(id) ||
+        name is! String ||
+        name.trim().isEmpty ||
+        name.length > 256 ||
         _hasControl(name) ||
         (latitude == null) != (longitude == null) ||
         (latitude != null && (latitude < -90 || latitude > 90)) ||
@@ -102,14 +107,22 @@ class StationCataloguePage {
     final rawItems = json['items'];
     final hasMore = json['hasMore'];
     final rawCursor = json['nextCursor'];
-    if (rawItems is! List || rawItems.length > requestedPageSize ||
+    if (rawItems is! List ||
+        rawItems.length > requestedPageSize ||
         hasMore is! bool ||
-        (hasMore && (rawItems.isEmpty || rawCursor is! String || rawCursor.trim().isEmpty)) ||
+        (hasMore &&
+            (rawItems.isEmpty ||
+                rawCursor is! String ||
+                rawCursor.trim().isEmpty)) ||
         (!hasMore && rawCursor != null) ||
         (rawCursor != null &&
-          (rawCursor is! String || rawCursor.isEmpty || rawCursor.length > 2048 ||
-           rawCursor.trim() != rawCursor || rawCursor == requestedCursor ||
-           rawCursor.codeUnits.any((unit) => unit < 32 || (unit >= 127 && unit <= 159))))) {
+            (rawCursor is! String ||
+                rawCursor.isEmpty ||
+                rawCursor.length > 2048 ||
+                rawCursor.trim() != rawCursor ||
+                rawCursor == requestedCursor ||
+                rawCursor.codeUnits.any(
+                    (unit) => unit < 32 || (unit >= 127 && unit <= 159))))) {
       throw const FormatException('Invalid station catalogue page.');
     }
 
