@@ -94,3 +94,25 @@ The following changes have now been applied to the new Supabase project and comm
 5. Complete current-user context, administration queue and suspension/revocation persistence before production activation.
 
 No legacy database operation was performed. The old project remains outside this migration path.
+
+
+## Current-user context and runtime least-privilege increment
+
+- Added the authenticated `GET /api/v1/identity/me` endpoint. It derives issuer and subject only from the validated server principal.
+- Added an Npgsql data source that resolves the configured Supabase issuer plus UUID subject and reads account state, profile, approved station assignments and approved permission grants in one repeatable-read snapshot.
+- Added explicit mapping for the database's `disabled` lifecycle state; unknown states remain fail-closed.
+- Kept current-user data reads within the METRA public schema; provider email is not read from `auth.users` by the runtime query.
+- Created the non-login PostgreSQL role `metra_api_runtime`. It has only scoped SELECT access to the required METRA tables and EXECUTE on the registration RPC. Direct EXECUTE was revoked from `service_role`, `anon` and `authenticated`.
+- The actual managed LOGIN role and secret have not been provisioned. Deployment must create a dedicated login, grant membership in `metra_api_runtime`, and configure the API connection string with that login before enabling database-backed endpoints.
+
+### Latest database checks
+
+- 15 public tables; all 15 have RLS enabled.
+- Security advisor: 0 findings.
+- Function privilege probe: `metra_api_runtime` can execute the registration RPC; `service_role`, `anon` and `authenticated` cannot.
+- Registration catalogue remains empty by design: 0 requestable roles and 0 selectable stations. No registration can be accepted until approved catalogue data is entered.
+
+### CI state
+
+- Backend build for commit `b7ce0357cd7ae7f0bd3497a86993d5c4f6c2c2fe`: success.
+- .NET CI for the current backend increment was still running at the time of this update; do not treat it as passed until GitHub reports completion.
