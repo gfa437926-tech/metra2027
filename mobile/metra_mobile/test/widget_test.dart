@@ -28,6 +28,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('مراجعة الرصدات'), findsOneWidget);
-    expect(find.textContaining('جلسة Supabase'), findsOneWidget);
+    expect(find.textContaining('تجديد رمز Supabase'), findsOneWidget);
   });
 }
