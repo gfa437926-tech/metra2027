@@ -1,6 +1,6 @@
 # METRA 2027 — Authentication and Session Security Design
 
-Status: Supabase Auth is the recommended identity provider; no production token validator, session store, or sign-in endpoint is enabled. Activation remains gated on read-only Auth settings and signing-key review.
+Status: Supabase Auth remains the recommended but not activated identity provider. Registration/current-user API routes and PostgreSQL identity adapters now exist, but the production token validator, BFF/session store and sign-in/recovery flows remain disabled pending issuer, signing-key and session-policy review.
 
 ## 1. Current verified state
 
@@ -10,15 +10,15 @@ Status: Supabase Auth is the recommended identity provider; no production token 
 - The Angular Supabase client configuration is blank and must not be populated with a privileged key. Supabase Auth is recommended but not yet activated; Auth provider settings and JWT signing-key configuration still require read-only review.
 - No production session persistence or revocation service exists.
 - The GitHub Pages workflow publishes only the Angular build artifact from `angular-app`; root-level legacy `index.html`, `login.js` and `auth-manager.js` are not included in that workflow's Pages artifact. They remain unsafe legacy source and must not be used as a production sign-in path.
-- Angular currently has no authentication route guards or API identity integration; its user-administration page is a static placeholder. The Pages UI is a preview, not a protected operational application.
+- Angular has a feature-flagged current-user-context client, but identity integration defaults to disabled and there are still no authentication route guards. Its user-administration page remains a static placeholder. The Pages UI is a preview, not a protected operational application.
 
 The Angular shell now displays a clear preview-only notice and warns users not to enter real operational or personal data until authentication and API authorization are implemented. A pull-request Angular production-build workflow was added so frontend changes are compiled independently of the backend CI.
 
 ## 2. API default-deny authentication boundary
 
-The API registers a fallback authorization policy requiring an authenticated principal. New endpoints inherit this requirement unless they explicitly use anonymous metadata. The current health endpoint and pure observation-validation endpoints are explicitly anonymous because they do not expose or mutate user data. Keep data access, persistence, mutation, export, approval and administration endpoints protected by default.
+The API registers a fallback authorization policy requiring an authenticated principal and a named unconfigured authentication handler that never authenticates a request. New endpoints inherit this requirement unless they explicitly use anonymous metadata. Health and pure observation-validation endpoints are explicitly anonymous. Identity, registration submission, approval queue and approval-decision routes are mapped when the database is configured, but remain inaccessible to real users until the approved identity provider is configured. Keep data access, persistence, mutation, export, approval and administration endpoints protected by default.
 
-Until an identity provider is approved, the API uses a named unconfigured authentication handler that always returns no authentication result. It does not parse or accept bearer tokens and does not manufacture a test identity. This allows unauthenticated protected requests to be challenged rather than silently treating authorization registration as authentication. Replace the placeholder with the approved maintained OIDC/JWT adapter before protected production operations are enabled. Test principals are permitted only in isolated automated tests.
+The API currently uses a named unconfigured authentication handler that always returns no authentication result. It does not parse or accept bearer tokens and does not manufacture a test identity. This allows unauthenticated protected requests to be challenged rather than silently treating authorization registration as authentication. Replace the placeholder with the approved maintained OIDC/JWT adapter before protected production operations are enabled. Test principals are permitted only in isolated automated tests.
 
 ## 3. Identity-provider boundary
 
@@ -118,9 +118,9 @@ Angular and Flutter now use the same explicit session-state vocabulary: `unconfi
 `loading`, `unauthenticated`, `active`, `pendingApproval`, `suspended`,
 `forbidden`, `unavailable`, and `unknownAccountState`.
 
-- Angular's `CurrentUserContextService` calls `GET /api/v1/identity/me` only when the
+- Angular's `CurrentUserContextService` calls the mapped `GET /api/v1/identity/me` route only when the
   `IDENTITY_CONTEXT_ENDPOINT_ENABLED` injection token is explicitly enabled. Its default is
-  false. The default API base path is same-origin `/api/v1`.
+  false. The default API base path is same-origin `/api/v1`. The route is still protected by the unconfigured authentication boundary.
 - Flutter's `CurrentUserContextClient` calls the same endpoint only when
   `METRA_IDENTITY_CONTEXT_ENABLED=true` is supplied at build/run time. Its default is false.
   Native bearer tokens are supplied through an `AccessTokenProvider` abstraction; no token
