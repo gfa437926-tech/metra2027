@@ -59,7 +59,17 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       located.map((s) => s.latitude!).reduce((a,b) => a+b) / located.length,
       located.map((s) => s.longitude!).reduce((a,b) => a+b) / located.length);
     return Stack(children: [
-      FlutterMap(options: MapOptions(initialCenter: center, initialZoom: 5), children: [
+      FlutterMap(options: MapOptions(
+        initialCenter: center,
+        initialZoom: located.length == 1 ? 6 : 5,
+        initialCameraFit: located.length > 1
+          ? CameraFit.bounds(
+              bounds: LatLngBounds.fromPoints(located
+                .map((s) => LatLng(s.latitude!, s.longitude!)).toList()),
+              padding: const EdgeInsets.all(48),
+            )
+          : null,
+      ), children: [
         TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'org.metra.metra2027'),
         MarkerLayer(markers: located.map((station) => Marker(
