@@ -50,7 +50,7 @@ public sealed record RegistrationApprovalQueueReadResult(
     public bool Succeeded => Status == RegistrationApprovalQueueReadStatus.Succeeded;
 }
 
-public sealed class RegistrationApprovalQueueInvalidCursorException : Exception;
+public sealed class RegistrationApprovalQueueInvalidCursorException : Exception { }
 
 /// <summary>
 /// Store contract: enforce the exact queue-read permission and approved station
