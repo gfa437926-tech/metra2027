@@ -10,6 +10,9 @@ public sealed class ObservationDecisionRequestGuardTests
     [InlineData("", null, true)]
     [InlineData("approve", null, false)]
     [InlineData("return_for_correction", "سبب واضح", false)]
+    [InlineData("return_for_correction", null, true)]
+    [InlineData("return_for_correction", "   ", true)]
+    [InlineData("approve", " سبب ", true)]
     [InlineData("reject", null, true)]
     [InlineData("approve", "x", false)]
     public void Decision_endpoint_validation_accepts_only_supported_decisions_and_bounded_notes(
