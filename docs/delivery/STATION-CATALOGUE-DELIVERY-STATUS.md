@@ -151,3 +151,18 @@ Read-only verification against `tbdnklyxjvbrilvnwgmq` returned:
 
 ### Remaining production gates
 The station routes are still deliberately unavailable until the trusted PostgreSQL read adapters and actor/permission/station-scope checks are implemented and registered. The 65 station rows are not an assertion that all imported stations are approved or operational. The 12 missing coordinate records must remain unplotted until verified source coordinates are supplied. The 1,251 unlinked observations require evidence-backed reconciliation. No production deployment or 100% completion is claimed.
+
+## Coordinate coverage audit — 2026-11-03
+
+Read-only query against the destination catalogue and effective coordinate table found:
+
+| Station type | Catalogue rows | Rows with coordinates | Pending review |
+|---|---:|---:|---:|
+| Classic | 30 | 17 | 30 |
+| Automatic | 34 | 33 | 34 |
+| Synoptic | 1 | 0 | 1 |
+| **Total** | **65** | **50** | **65** |
+
+The 13 classic records without coordinate rows comprise 12 imported source records plus the explicitly marked demo row. The 12 source records requiring authoritative coordinate evidence are: مركز بحوث الغاب، صحنايا، البوكمال، دير الزور، حمام واصل، الإدارة العامة، درعا، بوقا، حلب الجامعية، زاهد، عين العرب الجنوبية، ومحطة حماه.
+
+All 65 records remain pending and unverified. A station without a complete verified coordinate pair remains in the directory/list but must not be plotted. No coordinates were guessed or inserted in this audit.
