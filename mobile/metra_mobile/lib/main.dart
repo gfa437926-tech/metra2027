@@ -6,7 +6,13 @@ const _blue = Color(0xFF087CF0);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (isMetraSupabaseConfigured) {
-    await Supabase.initialize(url: metraSupabaseUrl, publishableKey: metraSupabasePublishableKey);
+    await Supabase.initialize(
+      url: metraSupabaseUrl,
+      publishableKey: metraSupabasePublishableKey,
+      authOptions: FlutterAuthClientOptions(
+        localStorage: MetraSecureSessionStorage(),
+      ),
+    );
   }
   runApp(const MetraApp());
 }

@@ -53,7 +53,7 @@ Not yet connected end-to-end:
 - Station selection in the mobile shell. The API remains the authority for station-level permissions; selecting a catalogue record does not grant review rights.
 - Live weather feed, complete station map, alerts and reports.
 
-The app initializes Supabase only when both Supabase compile-time values are present. The login screen uses the existing account flow; it does not create users. A persisted Supabase session is restored on startup, token refresh is managed by the SDK, and sign-out clears the session. The API token provider reads the current access token at request time. Configure the API origin separately with METRA_API_BASE_URL. Only a Supabase publishable key belongs in the mobile binary; never pass a service-role or secret key to Flutter.
+The app initializes Supabase only when both Supabase compile-time values are present. The login screen uses the existing account flow; it does not create users. The Supabase session is stored through flutter_secure_storage (Android encrypted storage / iOS Keychain), restored on startup, refreshed by the SDK, and removed on sign-out. The PKCE verifier storage remains managed by Supabase's Flutter adapter. The API token provider reads the current access token at request time. Configure the API origin separately with METRA_API_BASE_URL. Only a Supabase publishable key belongs in the mobile binary; never pass a service-role or secret key to Flutter.
 
 The app deliberately shows explicit unavailable/connection states instead of sample temperatures, invented station coordinates, or fake operational records. Do not bypass authorization by inserting a fixed station ID or token.
 
