@@ -178,6 +178,19 @@ public sealed class RegistrationApprovalApplicationServiceTests
     }
 
     [Fact]
+    public async Task Requires_reason_before_recording_rejection()
+    {
+        var actorProvider = new FakeActorProvider(null);
+        var store = new FakeStore(Request());
+        var service = new RegistrationApprovalApplicationService(actorProvider, store);
+        var result = await service.DecideAsync(new(
+            "request-1", RegistrationApprovalDecision.Reject, "  "));
+        Assert.Equal("note_required", result.Code);
+        Assert.Equal(0, actorProvider.Calls);
+        Assert.Equal(0, store.FindCalls);
+    }
+
+    [Fact]
     public async Task Rejects_control_characters_in_decision_note()
     {
         var actorProvider = new FakeActorProvider(null);
