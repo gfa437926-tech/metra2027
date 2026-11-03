@@ -14,9 +14,11 @@ var audience = builder.Configuration["Authentication:Audience"] ?? "authenticate
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpClient(nameof(SupabaseStationAuthorizationService));
+builder.Services.AddHttpClient(nameof(SupabaseObservationQueueService));
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
+builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddOpenApi();
 
 builder.Services
@@ -76,6 +78,7 @@ if (app.Environment.IsDevelopment())
 app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
+app.MapObservationQueueEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
