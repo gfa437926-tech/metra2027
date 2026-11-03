@@ -115,4 +115,4 @@ No legacy database operation was performed. The old project remains outside this
 ### CI state
 
 - Backend build for commit `b7ce0357cd7ae7f0bd3497a86993d5c4f6c2c2fe`: success.
-- .NET CI for the current backend increment was still running at the time of this update; do not treat it as passed until GitHub reports completion.
+- .NET CI for commit `cda3634dddb7d8ec911f6317caf7e240038b012b`: **success** (restore, build and tests).
