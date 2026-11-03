@@ -54,3 +54,20 @@ Supabase's security advisor reports 22 legacy public tables with RLS disabled. P
 - Validate measurement units/ranges and define retention rules for any remaining descriptive text.
 - Run this report's integrity test after each future import.
 - This import is a data migration milestone, not a claim that the whole METRA application is production complete.
+
+### Unlinked-label breakdown verified on destination — 2026-11-03
+
+A read-only grouped query over the 1,251 currently unlinked rows returned:
+
+| Source table | Original station label | Rows |
+|---|---|---:|
+| hourly_reports | مطار اللاذقية | 999 |
+| daily_reports | مطار اللاذقية | 102 |
+| hourly_reports | غير محدد | 105 |
+| hourly_reports | محطة حلب | 38 |
+| hourly_reports | الكريم | 4 |
+| climate_reports | دمشق | 1 |
+| climate_reports | مطار اللاذقية | 1 |
+| daily_reports | (missing) | 1 |
+
+The catalogue currently contains a classic station named `اللاذقية`, but `مطار اللاذقية` is not among the five previously reviewed aliases. I deliberately did not equate an airport label with a city-station label without authoritative confirmation. Likewise, `محطة حلب` and `الكريم` remain unresolved. The unlinked records are preserved unchanged.
