@@ -63,7 +63,8 @@ void main() {
       client.close();
     });
 
-    test('rejects invalid page bounds and control characters before HTTP', () async {
+    test('rejects invalid page bounds and control characters before HTTP',
+        () async {
       var calls = 0;
       final client = StationCatalogueClient(
         client: MockClient((_) async {
