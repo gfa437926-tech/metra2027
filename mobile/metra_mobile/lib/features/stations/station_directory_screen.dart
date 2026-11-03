@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 
 class StationDirectoryScreen extends StatefulWidget {
-  const StationDirectoryScreen({super.key, required this.api});
+  const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
   final MetraApiClient api;
+  final String? selectedStationId;
+  final ValueChanged<String>? onStationSelected;
   @override
   State<StationDirectoryScreen> createState() => _StationDirectoryScreenState();
 }
@@ -46,12 +48,15 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     final operation = station.operationalStatus == 'unverified' ? 'غير متحقق منها' : station.operationalStatus;
     final coords = station.hasCoordinates ? 'الإحداثيات متوفرة' : 'لا توجد إحداثيات موثقة';
     return Card(elevation: 0, child: ListTile(
+      selected: station.id == widget.selectedStationId,
+      onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
       leading: CircleAvatar(backgroundColor: classic ? const Color(0xFFEAF2FF) : const Color(0xFFE7F8F2),
         child: Icon(classic ? Icons.cell_tower : Icons.sensors,
           color: classic ? const Color(0xFF2463B5) : const Color(0xFF16835D))),
       title: Text(station.nameArabic, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('$type • ${station.localCode}\n$approval • $operation\n$coords'),
-      isThreeLine: true));
+      isThreeLine: true,
+      trailing: widget.onStationSelected == null ? null : Icon(station.id == widget.selectedStationId ? Icons.check_circle : Icons.chevron_left)));
   }
   Widget _empty(IconData icon, String title, String detail, [Widget? action]) =>
     Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [
