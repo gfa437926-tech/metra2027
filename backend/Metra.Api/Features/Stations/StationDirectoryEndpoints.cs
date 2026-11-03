@@ -11,7 +11,7 @@ public interface IStationDirectoryService
 }
 
 /// <summary>
-/// Read-only public directory projection. Only non-demo catalogue records
+/// Read-only authenticated directory projection. Only non-demo catalogue records
 /// are returned; operational membership and write permissions remain server-side.
 /// </summary>
 public sealed class SupabaseStationDirectoryService(
@@ -97,7 +97,7 @@ public static class StationDirectoryEndpoints
                     title: "Station directory unavailable",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            var stations = await directory.GetApprovedStationsAsync(
+            var stations = await directory.GetStationsAsync(
                 take, skip, stationType, cancellationToken);
             if (stations is null)
                 return Results.Problem(
