@@ -115,7 +115,7 @@ public static class ObservationSubmissionEndpoints
                         statusCode: StatusCodes.Status503ServiceUnavailable);
 
                 var result = await submission.SubmitAsync(
-                    userId, stationId, request, cancellationToken);
+                    userId, stationId, request!, cancellationToken);
 
                 if (!result.Succeeded)
                 {
