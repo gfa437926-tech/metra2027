@@ -155,7 +155,8 @@ public sealed class NpgsqlRegistrationApprovalStore(
               (r.status='pending_system_approval' and exists (
                 select 1 from public.permission_grants g
                 where g.user_id=@actor_id and g.permission_code='registrations.system.approve'
-                  and g.approval_status='approved' and g.revoked_at is null
+                  and g.approval_status='approved'
+                  and (g.revoked_at is null or g.revoked_at > now())
                   and g.valid_from <= now() and (g.valid_to is null or g.valid_to > now())
               ))
               or
@@ -163,7 +164,8 @@ public sealed class NpgsqlRegistrationApprovalStore(
                and exists (
                  select 1 from public.permission_grants g
                  where g.user_id=@actor_id and g.permission_code='registrations.station.approve'
-                   and g.approval_status='approved' and g.revoked_at is null
+                   and g.approval_status='approved'
+                  and (g.revoked_at is null or g.revoked_at > now())
                    and g.valid_from <= now() and (g.valid_to is null or g.valid_to > now())
                )
                and exists (
