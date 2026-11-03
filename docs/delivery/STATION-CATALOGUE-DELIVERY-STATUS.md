@@ -16,7 +16,7 @@
 - Expanded the append-only audit entity taxonomy for account state, authority membership, station assignment and permission grant events.
 - All 28 applied remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
 - Supabase security advisor now returns **zero findings**.
-- The performance advisor reports unused-index notices on empty tables only; the one remaining requester foreign-key index was added in the ninth migration.
+- The performance advisor reports 41 informational unused-index notices on this newly populated but low-traffic application; no indexes were removed. Foreign-key indexes were reviewed and the registration foreign-key indexes were added in the latest migration set.
 - Existing rollback-only station integrity checks remain in `supabase/tests/station_catalogue_integrity.sql`. Read-only identity schema contract checks are in `supabase/tests/identity_schema_contract.sql` and passed against the remote project.
 - Rechecked all 15 public tables: RLS is enabled. The destination now contains 65 station catalogue rows (62 imported source rows plus 3 explicitly marked demo rows) and 58,059 imported observations. Identity lifecycle, membership, assignment, permission, registration request and audit tables remain empty; no synthetic active users, roles, permission grants or approvals were inserted.
 
@@ -54,7 +54,7 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 - **Flutter:** current-user context and station catalogue client foundations exist; formatting, static analysis and all 13 tests pass on Flutter 3.47.9 with the committed lockfile enforced. No real sign-in/token provider is wired.
 - **Production release:** not ready. PR #1 remains a draft; no production deployment or public preview is claimed.
 
-## Remote migration history
+## Initial schema migration history
 
 - `20261102154652_create_independent_station_catalogue`
 - `20261102155101_index_station_catalogue_foreign_keys`
@@ -65,6 +65,8 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 - `20261102165505_lock_identity_tables_and_index_foreign_keys`
 - `20261102165724_add_user_profile_and_align_account_lifecycle`
 - `20261102165758_index_account_state_requester`
+
+These are the initial schema/bootstrap versions. The complete destination migration history now contains 28 applied versions, mirrored under `supabase/migrations/`.
 
 Compare local files and remote history before any CLI push/pull. Never blindly replay or reset the project database.
 
