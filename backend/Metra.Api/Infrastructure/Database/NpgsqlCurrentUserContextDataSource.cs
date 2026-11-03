@@ -67,6 +67,7 @@ public sealed class NpgsqlCurrentUserContextDataSource(
             "active" => MetraAccountState.Active,
             "suspended" => MetraAccountState.Suspended,
             "rejected" => MetraAccountState.Rejected,
+            "disabled" => MetraAccountState.Disabled,
             _ => (MetraAccountState?)null
         };
         if (accountState is null)
