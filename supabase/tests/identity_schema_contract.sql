@@ -34,9 +34,31 @@ begin
     select 1 from pg_policies
     where schemaname = 'public'
       and tablename in ('metra_account_states','authority_memberships','station_assignments','permission_grants')
-      and policyname not like '%deny_clients%'
+      and not (
+        (policyname=tablename||'_deny_clients'
+          and roles::text='{anon,authenticated}' and cmd='ALL'
+          and qual='false' and with_check='false')
+        or
+        (policyname=tablename||'_api_runtime_read'
+          and tablename in ('metra_account_states','station_assignments','permission_grants')
+          and roles::text='{metra_api_runtime}' and cmd='SELECT' and qual='true')
+      )
   ) then
     raise exception 'Unexpected identity policy exists';
+  end if;
+
+  if (
+    select count(*) from pg_policies
+    where schemaname='public'
+      and tablename in ('metra_account_states','authority_memberships','station_assignments','permission_grants')
+      and policyname like '%_deny_clients'
+  ) <> 4 or (
+    select count(*) from pg_policies
+    where schemaname='public'
+      and tablename in ('metra_account_states','station_assignments','permission_grants')
+      and policyname like '%_api_runtime_read'
+  ) <> 3 then
+    raise exception 'Expected identity client-deny or runtime-read policies are missing';
   end if;
 
   if exists (
