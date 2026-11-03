@@ -199,8 +199,9 @@ public static class ObservationDecisionEndpoints
   endpoints.MapPost("/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
    async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,CancellationToken ct)=>{
     if(!Guid.TryParse(http.User.FindFirstValue("sub"),out var userId)) return Results.Unauthorized();
-    if(request is null || request.Decision is not ("approve" or "return_for_correction") || (request.Note?.Length??0)>2000)
-      return Results.BadRequest(new {error="invalid_observation_decision"});
+    var validationError = ObservationDecisionRequestGuard.GetError(request);
+    if (validationError is not null)
+      return Results.BadRequest(new { error = validationError });
     if(!service.IsConfigured) return Results.Problem(title="Observation service unavailable",statusCode=503);
     var result=await service.DecideAsync(userId,stationId,observationId,request,ct);
     if(!result.Succeeded) {
@@ -214,4 +215,16 @@ public static class ObservationDecisionEndpoints
    }).WithTags("Observations").WithName("DecideStationObservation");
   return endpoints;
  }
+}
+
+public static class ObservationDecisionRequestGuard
+{
+    public static string? GetError(ObservationDecisionRequest? request)
+    {
+        if (request is null || request.Decision is not ("approve" or "return_for_correction"))
+            return "invalid_observation_decision";
+        if (request.Note is not null && request.Note.Length > 2000)
+            return "decision_note_too_long";
+        return null;
+    }
 }
