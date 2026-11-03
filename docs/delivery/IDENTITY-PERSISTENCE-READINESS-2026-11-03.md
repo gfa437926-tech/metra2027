@@ -62,3 +62,35 @@ The current public schema does not include a registration-request table or a ded
 - Never trust JWT user metadata, request JSON, client storage, or client-provided role/station identifiers for authorization.
 - Keep audit history append-only and write audit events in the same transaction as the business mutation they describe.
 - Do not claim CI or integration tests passed unless a workflow/test result confirms it.
+
+
+## Registration persistence increment — completed 2026-11-03
+
+The following changes have now been applied to the new Supabase project and committed to this branch:
+
+- Added `metra_role_catalogue`, `registration_requests`, and `registration_audit_events` with RLS enabled and client roles denied.
+- Added one-open-request-per-user and per-user idempotency unique indexes.
+- Added an append-only trigger that rejects registration audit UPDATE/DELETE.
+- Added a database trigger that requires an approved, active, non-demo station owned by an active authority and an active requestable role.
+- Added an atomic `submit_metra_registration` security-definer function, executable only by `service_role`; it writes profile, pending account state, request and audit event as one statement/transaction.
+- Idempotency compares a server-computed SHA-256 digest of the normalized request payload. Reuse with a different payload is a conflict.
+- Added Npgsql store and authoritative role/station catalogue adapters to the .NET API and wired the registration endpoint only when the database connection is configured.
+- Added the exact applied SQL migrations to `supabase/migrations` for repository reproducibility.
+
+### Validation performed
+
+- .NET 10 GitHub Actions run for commit `38b595c7ff1d434e77676d1b8c47fa28c8ca24bf`: **success** (restore, build and tests).
+- Supabase security advisor after the new tables: **0 findings**.
+- All 15 public tables report RLS enabled.
+- A non-mutating registration probe using a deliberately nonexistent station returned `station_not_available`; no account, request or audit rows were created.
+- The role catalogue currently has 0 requestable roles and the station catalogue has 0 selectable stations (all 65 current stations are still pending/unverified). This is intentional fail-closed behavior, not a completed onboarding rollout.
+
+### Remaining blockers before real registrations
+
+1. Reconcile and approve canonical role codes and Arabic labels against the legacy role evidence; do not infer permissions from role names.
+2. Verify and approve station records/coordinates and their owning authority; do not promote the current pending/unverified station rows automatically.
+3. Add and test the two-stage approval persistence and trusted approver authorization adapter.
+4. Add isolated PostgreSQL integration tests for idempotency races, transaction rollback and audit immutability; current CI is unit/build coverage, not database integration coverage.
+5. Complete current-user context, administration queue and suspension/revocation persistence before production activation.
+
+No legacy database operation was performed. The old project remains outside this migration path.
