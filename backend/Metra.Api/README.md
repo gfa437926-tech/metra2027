@@ -63,3 +63,19 @@ routes until the host secret is configured and integration tests cover pending
 accounts, expired memberships/assignments/grants, cross-station access,
 self-elevation, and demo/unapproved stations. Generic observation validation
 routes are not station-scoped operational write routes.
+
+
+## Station directory
+
+`GET /api/v1/stations?limit=250&offset=0&stationType=classic` returns the authenticated
+read-only station directory. It exposes only the catalogue's non-demo station
+projection: station identifiers/codes, bilingual names, station type, operational
+and approval states, elevation, and current coordinate records. It does not expose
+account, membership, assignment, grant, or audit fields.
+
+The `stationType` filter accepts `classic`, `automatic`, or `synoptic`.
+Pagination is bounded to 500 rows. Both classic and automatic records are included
+when no type filter is supplied. Pending or unverified records remain visibly
+labelled in the response; consumers must not treat them as approved/operational.
+The server-side service-role key is used only by the API host. The mobile client
+must send a valid Supabase access token and must never call the database directly.
