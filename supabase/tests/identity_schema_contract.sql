@@ -146,7 +146,7 @@ begin
   ) <> 1 then
     raise exception 'The expected-state approval RPC overload is missing or duplicated';
   end if;
-end $;
+end $contract$;
 
 select
   (select count(*) from public.metra_account_states) as account_states,
