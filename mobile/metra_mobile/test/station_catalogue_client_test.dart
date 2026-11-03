@@ -68,7 +68,7 @@ void main() {
       final client = StationCatalogueClient(
         client: MockClient((request) async {
           expect(request.url.path, '/api/v1/stations');
-          expect(request.headers['authorization'], '***');
+          expect(request.headers['authorization'], 'Bearer test-token');
           expect(request.url.queryParameters['pageSize'], '50');
           return http.Response(
               jsonEncode({
