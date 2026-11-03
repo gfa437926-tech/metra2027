@@ -68,4 +68,4 @@ flutter run \
   --dart-define=METRA_STATION_CATALOGUE_ENABLED=true
 ```
 
-No real host, credential, token or key is committed. The Flutter CI workflow pins its SDK version, resolves dependencies, checks Dart formatting, runs static analysis and executes unit tests. A short-lived artifact preserves the generated `pubspec.lock` so it can be committed for reproducible builds.
+No real host, credential, token or key is committed. The Flutter SDK is pinned in CI, and the generated `pubspec.lock` is committed. CI runs `flutter pub get --enforce-lockfile`, checks Dart formatting, runs static analysis and executes unit tests.
