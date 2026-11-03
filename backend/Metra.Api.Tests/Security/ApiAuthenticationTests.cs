@@ -26,7 +26,8 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/daily/validate")]
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
-    public async Task Every_observation_validation_endpoint_requires_authentication(string path)
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
+    public async Task Every_observation_endpoint_requires_authentication(string path)
     {
         using var content = new StringContent("{}", Encoding.UTF8, "application/json");
         using var response = await _client.PostAsync(path, content);
@@ -38,7 +39,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/daily/validate")]
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
-    public async Task Malformed_bearer_token_is_rejected(string path)
+    public async Task Malformed_bearer_token_is_rejected_for_observation_endpoints(string path)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, path);
         request.Headers.Authorization =
