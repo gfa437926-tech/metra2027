@@ -6,12 +6,12 @@ namespace Metra.Api.Features.Stations;
 public interface IStationDirectoryService
 {
     bool IsConfigured { get; }
-    Task<JsonElement?> GetApprovedStationsAsync(
+    Task<JsonElement?> GetStationsAsync(
         int limit, int offset, string? stationType, CancellationToken cancellationToken);
 }
 
 /// <summary>
-/// Read-only public directory projection. Only approved, non-demo station records
+/// Read-only public directory projection. Only non-demo catalogue records
 /// are returned; operational membership and write permissions remain server-side.
 /// </summary>
 public sealed class SupabaseStationDirectoryService(
@@ -26,7 +26,7 @@ public sealed class SupabaseStationDirectoryService(
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
 
-    public async Task<JsonElement?> GetApprovedStationsAsync(
+    public async Task<JsonElement?> GetStationsAsync(
         int limit, int offset, string? stationType, CancellationToken cancellationToken)
     {
         if (!IsConfigured || limit is < 1 or > 500 || offset < 0)
@@ -34,8 +34,8 @@ public sealed class SupabaseStationDirectoryService(
 
         var query =
             "select=id,local_station_code,wmo_station_id,name_ar,name_en,station_type," +
-            "operational_status,elevation_m,station_coordinates(latitude,longitude,coordinate_source,accuracy_m)" +
-            "&approval_status=eq.approved&is_demo=eq.false" +
+            "operational_status,approval_status,is_demo,elevation_m,station_coordinates(latitude,longitude,coordinate_source,accuracy_m)" +
+            "&is_demo=eq.false" +
             "&order=name_ar.asc&limit=" + limit + "&offset=" + offset;
         if (!string.IsNullOrWhiteSpace(stationType))
             query += "&station_type=eq." + Uri.EscapeDataString(stationType);
@@ -107,7 +107,7 @@ public static class StationDirectoryEndpoints
             return Results.Ok(stations.Value);
         })
         .WithTags("Stations")
-        .WithName("GetApprovedStationDirectory");
+        .WithName("GetStationDirectory");
 
         return endpoints;
     }
