@@ -197,11 +197,18 @@ public static class ObservationDecisionEndpoints
  public static IEndpointRouteBuilder MapObservationDecisionEndpoints(this IEndpointRouteBuilder endpoints)
  {
   endpoints.MapPost("/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
-   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,CancellationToken ct)=>{
+   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,IStationAuthorizationService authorization,CancellationToken ct)=>{
     if(!Guid.TryParse(http.User.FindFirstValue("sub"),out var userId)) return Results.Unauthorized();
     var validationError = ObservationDecisionRequestGuard.GetError(request);
     if (validationError is not null)
       return Results.BadRequest(new { error = validationError });
+    if (!authorization.IsConfigured)
+      return Results.Problem(title: "Authorization service unavailable", statusCode: 503);
+    var requiredPermission = request!.Decision == "approve"
+      ? "observation.approve"
+      : "observation.return_for_correction";
+    var allowed = await authorization.HasStationPermissionAsync(userId, stationId, requiredPermission, ct);
+    if (!allowed) return Results.Forbid();
     if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
     var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
     if(!result.Succeeded) {
