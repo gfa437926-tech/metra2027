@@ -51,7 +51,7 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 - **Station records:** 65 catalogue rows (29 imported classic, 33 imported automatic, 3 demo); all pending/unverified. Fifty coordinate rows exist; 12 imported classic rows lack coordinates.
 - **Backend API:** identity registration/approval routes and authorization adapters exist. Station list/detail contracts are protected but intentionally return 503 until the trusted station read store and explicit read permission are approved and registered.
 - **Angular:** unified classic/automatic directory, paged query client, filters and coordinate-only preview exist. The preview is not a basemap; production API access and map-provider integration are not complete.
-- **Flutter:** current-user context and station catalogue client foundations exist; formatting, static analysis and 13 tests are being verified in CI. No real sign-in/token provider is wired.
+- **Flutter:** current-user context and station catalogue client foundations exist; formatting, static analysis and all 13 tests pass on Flutter 3.47.9 with the committed lockfile enforced. No real sign-in/token provider is wired.
 - **Production release:** not ready. PR #1 remains a draft; no production deployment or public preview is claimed.
 
 ## Remote migration history
@@ -170,3 +170,11 @@ All 65 records remain pending and unverified. A station without a complete verif
 All 50 stored coordinate rows currently have `coordinate_source=other`, a non-empty source reference, and an effective validity window that has started and has not expired. This confirms provenance fields and temporal shape are populated; it does **not** certify the source itself or the positional accuracy. Coordinates and their station records remain pending owner review.
 
 The same audit found that all 50 rows have distinct source references, but `accuracy_m` is null on all 50. Do not interpret a present coordinate or provenance string as a surveyed/verified coordinate; positional accuracy still needs an authoritative value or explicit owner validation.
+
+## Latest full CI verification — 2026-11-03
+
+All four workflows passed on code-bearing head `ce34b462ec77577650da6e1d6a80ec4c37dc76dc`:
+- .NET CI: success.
+- Backend build: success.
+- Angular build: success.
+- Flutter CI: success — locked dependency resolution, Dart format, analyzer and 13/13 tests.
