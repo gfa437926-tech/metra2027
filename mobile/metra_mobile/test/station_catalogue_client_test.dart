@@ -79,11 +79,11 @@ void main() {
         StationCatalogueLoadState.unavailable,
       );
       expect(
-        (await client.loadPage(cursor: 'bad\\u0085cursor')).state,
+        (await client.loadPage(cursor: 'bad\u0085cursor')).state,
         StationCatalogueLoadState.unavailable,
       );
       expect(
-        (await client.loadPage(namePrefix: 'محطة\\u009f')).state,
+        (await client.loadPage(namePrefix: 'محطة\u009f')).state,
         StationCatalogueLoadState.unavailable,
       );
       expect(calls, 0);
