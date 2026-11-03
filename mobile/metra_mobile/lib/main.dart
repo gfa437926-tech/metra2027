@@ -6,7 +6,8 @@ const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
 
 class MetraApp extends StatelessWidget {
-  const MetraApp({super.key});
+  const MetraApp({super.key, this.api});
+  final MetraApiClient? api;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -22,7 +23,8 @@ class MetraApp extends StatelessWidget {
 }
 
 class MetraHome extends StatefulWidget {
-  const MetraHome({super.key});
+  const MetraHome({super.key, this.api});
+  final MetraApiClient? api;
 
   @override
   State<MetraHome> createState() => _MetraHomeState();
@@ -35,12 +37,13 @@ class _MetraHomeState extends State<MetraHome> {
   Widget build(BuildContext context) {
     final pages = [
       _HomeOverview(onOpenStations: () => setState(() => _index = 1)),
-      const _InformationPage(
-        icon: Icons.map_outlined,
-        title: 'دليل المحطات',
-        message:
-            'سيظهر هنا فهرس المحطات وإحداثياتها بعد إتاحة واجهة المحطات المصرّح بها. لم تتم إضافة محطات أو إحداثيات افتراضية.',
-      ),
+      widget.api == null
+          ? const _InformationPage(
+              icon: Icons.lock_outline,
+              title: 'دليل المحطات',
+              message: 'يلزم تسجيل الدخول وربط جلسة API صالحة لعرض الدليل. لا يتم استخدام رمز دخول أو محطة افتراضية.',
+            )
+          : StationDirectoryScreen(api: widget.api!),
       const _InformationPage(
         icon: Icons.fact_check_outlined,
         title: 'مراجعة الرصدات',
