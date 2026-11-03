@@ -58,7 +58,9 @@ class StationCatalogueClient {
         (cursor != null &&
             (cursor.isEmpty ||
                 cursor.length > 2048 ||
-                cursor.trim() != cursor))) {
+                cursor.trim() != cursor ||
+                cursor.codeUnits.any(
+                    (unit) => unit < 32 || (unit >= 127 && unit <= 159)))) {
       return const StationCatalogueResult(
           StationCatalogueLoadState.unavailable);
     }
@@ -70,7 +72,7 @@ class StationCatalogueClient {
       return const StationCatalogueResult(
           StationCatalogueLoadState.unavailable);
     }
-    if (token == null || token.isEmpty) {
+    if (token == null || token.trim().isEmpty) {
       return const StationCatalogueResult(
           StationCatalogueLoadState.unauthenticated);
     }
