@@ -12,7 +12,7 @@ METRA 2027 is organized as three independently runnable applications:
 
 Each application has its own project files, dependencies, startup command, and development lifecycle. You can run and develop any one without starting the other two.
 
-The Angular and Flutter clients will use the ASP.NET Core API when API integration is implemented. The API is a separate service. The current client scaffolds can launch in UI-only mode without it.
+The API is a separate service. Angular and Flutter currently launch in UI/demo mode; full client authentication and API integration are still in progress. The backend provides health checks, observation validation, and an authenticated station-scoped operational observation submission route.
 
 ## Run only the web application
 
@@ -62,4 +62,4 @@ The launch profile listens on http://localhost:5000. Health endpoint: `GET http:
 
 ## Current scope
 
-The repository contains independent application entry points and starter interfaces. Full climate-record workflows, authentication, API integration, and persistence are subsequent implementation tasks and are not represented as completed.
+The repository includes independent Angular, Flutter, and ASP.NET Core applications, backend authentication/authorization scaffolding, validation rules, a persisted registration workflow, and the first secured operational observation submission path. Angular/Flutter login and data integration, observation listing/editing/review/approval, complete report-domain persistence, deployment configuration, and end-to-end production verification remain unfinished. Some displayed weather and workflow values are explicitly demo data; they are not live meteorological observations.
