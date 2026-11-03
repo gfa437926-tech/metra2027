@@ -1,6 +1,6 @@
 # METRA 2027 — Identity API Contract
 
-Status: API contract proposed; Supabase Auth is the recommended identity provider; production authentication and persistence remain gated on configuration and schema review.
+Status: Partial implementation (2026-11-03). The registration submission, two-stage approval, approval-queue and current-user-context HTTP routes plus PostgreSQL persistence adapters are implemented behind authenticated API boundaries. Production authentication remains disabled pending provider approval/configuration; role/station catalogue readiness and deployment gates remain open.
 
 Related decision record: `IDENTITY-MIGRATION.md`.
 
@@ -18,17 +18,20 @@ Use Supabase Auth in project metra2027-angular for credential handling, identity
 - Do not use browser local storage as an authorization source.
 - Preserve the existing Arabic labels and original field meanings; JSON property names below are stable API names, not a request to rename legacy database columns.
 
-## 3. Proposed endpoint inventory
+## 3. Endpoint inventory and implementation status
 
-All paths are under `/api/v1`. These are design contracts, not implemented routes.
+All paths are under `/api/v1`. The first four routes below are implemented when the API database connection is configured. Their authorization boundary remains fail-closed because a production identity provider is not yet configured.
 
 | Method | Path | Purpose | Authentication |
 |---|---|---|---|
-| GET | `/identity/me` | Current profile, account state and effective access summary | Required |
-| POST | `/registration-requests` | Submit a request for account access | Provider-specific pre-authenticated/verified flow; final policy TBD |
-| GET | `/registration-requests/{requestId}` | Read own request status, or an authorized review item | Required |
-| POST | `/registration-requests/{requestId}/station-decision` | First-stage station-manager decision | Required |
-| POST | `/registration-requests/{requestId}/system-decision` | Second-stage system-manager decision | Required |
+| GET | `/identity/me` | Current profile, account state and effective access summary | Implemented; authentication provider pending |
+| POST | `/registration-requests` | Submit a request for account access | Implemented; authenticated API principal required |
+| GET | `/registration-requests/approval-queue` | Read bounded, station-scoped approval queue | Implemented; explicit live permission and station scope required |
+| POST | `/registration-requests/{requestId}/decision` | Atomic station or system-stage decision | Implemented; stage-specific permission and separation of duties required |
+| GET | `/registration-requests/{requestId}` | Read own request status | Deferred |
+| POST | `/identity/sign-out` | Optional API sign-out/revocation orchestration | Deferred; provider decision required |
+| POST | `/identity/recovery/start` | Start provider-managed recovery | Deferred; provider decision required |
+| POST | `/identity/recovery/complete` | Complete provider-managed recovery | Deferred; provider decision required |
 | POST | `/identity/sign-out` | Optional API sign-out/revocation orchestration if required by provider | Required |
 | POST | `/identity/recovery/start` | Start provider-managed recovery | Anonymous, rate-limited |
 | POST | `/identity/recovery/complete` | Complete provider-managed recovery | Provider token required |
@@ -120,7 +123,7 @@ client models are defined in
 
 Angular and Flutter model types intentionally mirror the same camelCase field names and nullability. A client must treat missing required fields, invalid timestamps and unknown account states as a contract error rather than silently substituting a privileged/default identity.
 
-The endpoint remains a proposed contract and is not mapped. There is no production identity provider, account repository or assignment/permission adapter. The new DTO and client model files establish type parity only; they do not create a current-user session or return fabricated data. Do not wire a demo identity or static permission list into either client.
+`GET /api/v1/identity/me` is mapped when a database connection is configured and uses the Npgsql current-user-context adapter. It is protected by the API's authentication boundary, but the production identity provider is still unconfigured, so the endpoint cannot establish a real user session yet. Angular and Flutter clients remain feature-disabled by default and do not fabricate identity data.
 
 ### Refresh and stale-context behavior
 
@@ -192,26 +195,26 @@ No role, station, account state, actor identifier or permission supplied in JSON
 
 The API registers the policy `metra:resource-access` and a resource authorization handler. Application/endpoint code must call `IAuthorizationService.AuthorizeAsync(User, resourceDescriptor, MetraResourceAuthorizationPolicies.ResourceAccess)` for each read, update, delete, export and workflow operation that targets an individual resource. A route identifier alone never grants access.
 
-The handler obtains the actor subject only from the authenticated server principal (`sub`, with `NameIdentifier` fallback) and delegates the decision to `IMetraResourceAccessEvaluator`. Until a production adapter is supplied, the registered bootstrap evaluator denies every resource request. The future evaluator must load the resource's actual station relationship and the actor's station assignment records from authoritative persistence; it must not trust the descriptor's station identifier as proof of ownership. Assignment validity must be evaluated at the request's current UTC instant using the assignment start, optional end and revocation instants; an assignment is active only when its start is at or before now and both its end and revocation are absent or strictly after now. Missing resources, unknown assignments, inactive actors and evaluator/data failures must never result in an allow decision.
+The handler obtains the actor subject only from the authenticated server principal (`sub`, with `NameIdentifier` fallback) and delegates the decision to `IMetraResourceAccessEvaluator`. When database configuration is present, `NpgsqlMetraAuthorizationDataSources` supplies repeatable-read account, grant, canonical station and assignment facts to the authoritative evaluators. Resource resolution is deliberately limited to canonical `station` resources; unknown resource types fail closed. Assignment validity uses inclusive start and exclusive end/revocation boundaries. Missing resources, unknown assignments, inactive actors and evaluator/data failures never result in an allow decision.
 
-No production evaluator, persistence adapter or endpoint-level invocation has been connected yet. Do not expose sensitive resource endpoints until these components and cross-station integration tests exist.
+The database-backed evaluator is registered only when the API database connection is configured. No sensitive observation CRUD/export endpoint is currently wired to this policy; add endpoint-level authorization and cross-station integration tests before exposing those operations.
 
-A reusable fail-closed implementation boundary is now present in `backend/Metra.Api/Security/AuthoritativeMetraResourceAccessEvaluator.cs`. It consumes a single authoritative facts result from `IMetraResourceAuthorizationDataSource` and allows only when the actor is active, the resource exists, the resource has a canonical persisted station ID, and at least one assignment has an exact ordinal station-ID match and is valid at the evaluator's current UTC instant. Start is inclusive; end and revocation are exclusive. The optional station ID on `MetraResourceDescriptor` is deliberately ignored; it is request/application metadata and cannot override persisted ownership. Missing facts and data-source failures deny access, while request cancellation is propagated. This implementation is not registered as the production evaluator because no authoritative data-source adapter exists yet; the default deny-all evaluator remains active. The data-source adapter must resolve the resource type through a server-side allowlist, derive canonical resource-to-station ownership from persistence, and return the actor's assignment records and account state in a consistent read. The evaluator applies start/end/revocation checks using an injected TimeProvider so the decision is testable and does not rely on stale client state. Endpoint-specific permission checks remain separate and mandatory.
+A reusable fail-closed implementation boundary is now present in `backend/Metra.Api/Security/AuthoritativeMetraResourceAccessEvaluator.cs`. It consumes a single authoritative facts result from `IMetraResourceAuthorizationDataSource` and allows only when the actor is active, the resource exists, the resource has a canonical persisted station ID, and at least one assignment has an exact ordinal station-ID match and is valid at the evaluator's current UTC instant. Start is inclusive; end and revocation are exclusive. The optional station ID on `MetraResourceDescriptor` is deliberately ignored; it is request/application metadata and cannot override persisted ownership. Missing facts and data-source failures deny access, while request cancellation is propagated. This evaluator is registered with the Npgsql authoritative data-source adapter when database configuration is present. The adapter resolves only the `station` resource type through a server-side allowlist, derives canonical station ownership from persisted catalogue rows, and returns the actor's assignment records and account state in a repeatable-read snapshot. The evaluator applies start/end/revocation checks using an injected TimeProvider so the decision is testable and does not rely on stale client state. Endpoint-specific permission checks remain separate and mandatory.
 
 
 The API registers a provider-neutral permission catalogue in `backend/Metra.Api/Security/MetraAuthorization.cs`. It defines exact permission identifiers for station approval, system approval and daily-observation creation. A named permission policy requires an authenticated principal and delegates the requested permission to `IMetraPermissionGrantEvaluator`; the handler derives the immutable subject from the validated principal and does not trust role claims or `metra_permission` claims as authorization evidence. The reusable `AuthoritativeMetraPermissionGrantEvaluator` queries one authoritative grant source for the actor's current account state and requested permission, then checks grant start, optional end and revocation instants using an injected `TimeProvider`. A permission is granted only when the account is active, the grant exists, its start is at or before now, and its end/revocation are absent or strictly after now. This permits revocation to take effect on the next authorization evaluation without waiting for an old token to expire.
 
-The authoritative evaluator is deliberately not registered as the production implementation because no persistence adapter or verified permission schema exists. `DenyAllMetraPermissionGrantEvaluator` remains the registered default, so no action permission is granted until a trusted adapter is explicitly supplied. Missing facts and data-source failures deny; request cancellation propagates. Endpoint-level permission mapping, authentication provider integration, production resource authorization and cross-station integration tests remain pending. Permission checks and resource/station checks are separate requirements and must both pass where applicable.
+The authoritative permission evaluator and its Npgsql data-source adapter are registered when database configuration is present. The adapter reads active account state and approved permission-grant validity from PostgreSQL on each evaluation; unknown permission codes and data-source failures deny. The deny-all evaluator remains the fallback when no database is configured. Production authentication, endpoint-level permission mapping for future business operations and cross-station integration tests remain pending. Permission checks and resource/station checks are separate requirements and must both pass where applicable.
 
-The inspected `backend/Metra.Api/Program.cs` currently registers Problem Details, OpenAPI, the permission and resource authorization foundations, CORS and rate limiting, and maps health and observation-validation endpoints. It calls `UseAuthorization()` but does not yet register authentication middleware/scheme, an identity-provider integration, identity endpoints or persistence. The authorization handlers therefore remain foundations and do not authenticate requests by themselves. The observation validation endpoints are validation-only and must not be mistaken for protected submission endpoints.
+`backend/Metra.Api/Program.cs` registers authentication/authorization middleware with a deliberately unconfigured authentication handler that never manufactures an identity. When the database connection is configured it registers the Npgsql identity, registration and authorization adapters and maps `/identity/me`, registration submission, approval queue and decision routes. These routes still cannot accept production identities until the approved OIDC provider/token validation configuration is deployed. Observation validation remains validation-only and is not an observation persistence endpoint.
 
 A provider-neutral domain foundation now exists in `backend/Metra.Api/Domain/Identity/`: a pure two-stage registration state machine and an authorization policy that accepts server-resolved actor/request facts. Unit tests cover the stage transitions, terminal states, station scope and explicit system-approval permission.
 
 The application orchestration boundary is now defined in `backend/Metra.Api/Features/Identity/RegistrationApprovalApplicationService.cs`. It resolves the actor through an injected trusted-context provider, loads the request through a store interface, checks authorization and transition rules, and delegates the write to an atomic compare-and-set store operation. The store contract explicitly requires the status change, decision audit event and final-stage account/assignment activation to commit in one transaction. A concurrent status change is returned as a conflict. Unit tests cover the orchestration and ensure denied requests do not reach the commit boundary.
 
-These contracts are not yet registered in dependency injection or wired to HTTP endpoints, identity claims, a repository or audit persistence; they do not activate accounts or write data. A production store and actor-context provider remain mandatory before enabling the flow.
+The registration approval application service, Npgsql store and actor-context provider are registered when database configuration is present and are wired to the approval decision route. The database RPC atomically revalidates actor state, explicit permission, station scope and separation of duties, then records the transition and audit event. Production authentication configuration and disposable PostgreSQL integration tests remain mandatory release gates.
 
-Implementation of protected identity endpoints is intentionally deferred until the identity provider and the account/assignment persistence model are approved. This avoids adding a fake authentication layer or choosing a provider by assumption.
+The HTTP routes and persistence adapters are implemented, but production identity-provider integration remains intentionally disabled until issuer, audience, signing-key and session policy are approved. The unconfigured handler fails closed; no fake authentication layer or test identity is enabled outside tests.
 
 ## 9. Contract acceptance tests
 
@@ -237,7 +240,7 @@ Implementation of protected identity endpoints is intentionally deferred until t
 5. Approve the source of truth for station identifiers and station assignments.
 6. Approve the persistence model and migration treatment of legacy users and pending registration requests.
 
-Until these decisions are approved, keep this contract provider-neutral and do not change Supabase Auth, PostgreSQL schema, RLS, policies or existing user records.
+Until these decisions are approved, keep production sign-in disabled, do not invent role/permission codes or promote unverified station records, and do not change Supabase Auth settings. Existing schema changes are limited to the new METRA 2027 target project; the legacy database remains untouched.
 
 
 ### Combined authorization policy
