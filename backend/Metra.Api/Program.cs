@@ -36,6 +36,13 @@ if (hasDatabase)
     builder.Services.AddScoped<RegistrationApprovalQueueQueryService>();
     builder.Services.AddScoped<ICurrentUserContextDataSource, NpgsqlCurrentUserContextDataSource>();
     builder.Services.AddScoped<CurrentUserContextApplicationService>();
+    builder.Services.AddScoped<NpgsqlMetraAuthorizationDataSources>();
+    builder.Services.AddScoped<IMetraPermissionAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
+    builder.Services.AddScoped<IMetraResourceAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
+    builder.Services.AddScoped<IMetraActorAuthorizationContextDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
+    builder.Services.AddScoped<IMetraPermissionGrantEvaluator, AuthoritativeMetraPermissionGrantEvaluator>();
+    builder.Services.AddScoped<IMetraResourceAccessEvaluator, AuthoritativeMetraResourceAccessEvaluator>();
+    builder.Services.AddScoped<IMetraActorAuthorizationContextProvider, AuthoritativeMetraActorAuthorizationContextProvider>();
 }
 
 var allowedOrigins = builder.Configuration
