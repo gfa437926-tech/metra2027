@@ -1,6 +1,6 @@
 -- Read-only structural regression checks for the deployed METRA identity schema.
 -- Safe to run against the target project: no rows are inserted or changed.
-do $$
+do $contract$
 declare
   v_missing text;
 begin
