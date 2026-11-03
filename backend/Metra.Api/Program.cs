@@ -16,9 +16,18 @@ builder.Services.AddMetraConfiguredAuthentication(builder.Configuration, builder
 builder.Services.AddMetraAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IRegistrationSubmissionActorContextProvider, HttpRegistrationSubmissionActorContextProvider>();
-builder.Services.AddSingleton<IRegistrationSubmissionCatalogue, ConfigurationRegistrationSubmissionCatalogue>();
 builder.Services.AddMetraResourceAuthorization();
 builder.Services.AddMetraDatabase(builder.Configuration, builder.Environment);
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+
+var hasDatabase = !string.IsNullOrWhiteSpace(
+    builder.Configuration.GetConnectionString("MetraDatabase"));
+if (hasDatabase)
+{
+    builder.Services.AddScoped<IRegistrationSubmissionCatalogue, NpgsqlRegistrationSubmissionCatalogue>();
+    builder.Services.AddScoped<IRegistrationSubmissionStore, NpgsqlRegistrationSubmissionStore>();
+    builder.Services.AddScoped<RegistrationSubmissionApplicationService>();
+}
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
@@ -106,6 +115,10 @@ if (app.Environment.IsDevelopment())
 var api = app.MapGroup("/api/v1");
 app.MapObservationValidationEndpoints();
 app.MapStationEndpoints();
+if (hasDatabase)
+{
+    app.MapRegistrationSubmissionEndpoints();
+}
 
 api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancellationToken) =>
 {
