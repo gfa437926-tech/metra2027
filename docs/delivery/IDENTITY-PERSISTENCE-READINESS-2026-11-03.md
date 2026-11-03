@@ -134,7 +134,7 @@ No legacy database operation was performed. The old project remains outside this
 - Added endpoints: `GET /api/v1/registration-requests/approval-queue` and `POST /api/v1/registration-requests/{requestId}/decision`. They are mapped only when the database connection is configured.
 - Runtime database role now has narrowly scoped SELECT access to registration requests and approval audit evidence under RLS policies. Browser roles remain denied.
 - Moved the submission RPC into the unexposed `private` schema and restricted execution to `metra_api_runtime`; service_role, anon and authenticated cannot execute it.
-- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`, `20261103001654`.
+- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`, `20261103001654`, `20261103001743`.
 
 ### Database verification after approval changes
 
@@ -181,7 +181,7 @@ A catalog-level privilege check found that replacing the approval function signa
 - `metra_api_runtime`: EXECUTE on the six-argument approval RPC.
 - `anon`, `authenticated`, and `service_role`: no EXECUTE on that RPC.
 - `anon`, `authenticated`, and `service_role`: no USAGE on the `private` schema.
-- The private submission RPC remains executable only by `metra_api_runtime`.
+- Among application roles, only `metra_api_runtime` can execute the private submission RPC; the PostgreSQL owner retains its inherent owner privileges.
 
 
 ### Runtime credential enforcement
