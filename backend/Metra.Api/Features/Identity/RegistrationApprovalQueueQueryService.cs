@@ -87,7 +87,10 @@ public sealed class RegistrationApprovalQueueQueryService(
             query.StationId?.Any(char.IsControl) == true)
             return InvalidQuery();
 
-        if (query.Status is { } status && !Enum.IsDefined(status))
+        if (query.Status is { } status &&
+            (!Enum.IsDefined(status) || status is not (
+                RegistrationApprovalStatus.PendingStationApproval or
+                RegistrationApprovalStatus.PendingSystemApproval)))
             return InvalidQuery();
 
         var stationId = query.StationId?.Trim();
