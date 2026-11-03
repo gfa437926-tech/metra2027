@@ -30,8 +30,7 @@ class _MetraHomeState extends State<MetraHome> {
       const _InformationPage(icon: Icons.analytics_outlined, title: 'التقارير والتحليلات',
         message: 'التقارير التشغيلية غير مفعلة حتى ربط مصدر موثق للرصدات المعتمدة.'),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
-        message: 'الحساب: ' + (widget.userEmail ?? 'مستخدم مسجل') +
-          '\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
+        message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
           onPressed: widget.onSignOut, icon: const Icon(Icons.logout), label: const Text('تسجيل الخروج'))),
     ];

@@ -68,37 +68,102 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
     } finally { if (mounted) setState(() => _busy = false); }
   }
   @override
-  Widget build(BuildContext context) => Directionality(textDirection: TextDirection.rtl,
-    child: Scaffold(body: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420),
-        child: Card(child: Padding(padding: const EdgeInsets.all(24),
-          child: Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Icon(Icons.cloud_outlined, size: 48),
-            const SizedBox(height: 12),
-            const Text('METRA 2027', textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text('سجّل الدخول بحسابك المعتمد للوصول إلى المحطات والرصد.', textAlign: TextAlign.center),
-            const SizedBox(height: 24),
-            TextFormField(controller: _email, keyboardType: TextInputType.emailAddress,
-              autofillHints: const [AutofillHints.username, AutofillHints.email],
-              decoration: const InputDecoration(labelText: 'البريد الإلكتروني', border: OutlineInputBorder()),
-              validator: (v) => (v?.trim().contains('@') ?? false) ? null : 'أدخل بريداً إلكترونياً صحيحاً'),
-            const SizedBox(height: 14),
-            TextFormField(controller: _password, obscureText: _obscure,
-              autofillHints: const [AutofillHints.password], onFieldSubmitted: (_) => _signIn(),
-              decoration: InputDecoration(labelText: 'كلمة المرور', border: const OutlineInputBorder(),
-                suffixIcon: IconButton(onPressed: () => setState(() => _obscure = !_obscure),
-                  icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off))),
-              validator: (v) => (v?.isNotEmpty ?? false) ? null : 'أدخل كلمة المرور'),
-            if (_error != null) ...[const SizedBox(height: 12), Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.red))],
-            const SizedBox(height: 20),
-            FilledButton(onPressed: _busy ? null : _signIn,
-              child: _busy ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('تسجيل الدخول')),
-            const SizedBox(height: 12),
-            const Text('لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.black54)),
-          ]))))))));
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Icon(Icons.cloud_outlined, size: 48),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'METRA 2027',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'سجّل الدخول بحسابك المعتمد للوصول إلى المحطات والرصد.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.username, AutofillHints.email],
+                          decoration: const InputDecoration(
+                            labelText: 'البريد الإلكتروني',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) =>
+                              (value?.trim().contains('@') ?? false)
+                                  ? null
+                                  : 'أدخل بريداً إلكترونياً صحيحاً',
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _password,
+                          obscureText: _obscure,
+                          autofillHints: const [AutofillHints.password],
+                          onFieldSubmitted: (_) => _signIn(),
+                          decoration: InputDecoration(
+                            labelText: 'كلمة المرور',
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              onPressed: () => setState(() => _obscure = !_obscure),
+                              icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                            ),
+                          ),
+                          validator: (value) =>
+                              (value?.isNotEmpty ?? false) ? null : 'أدخل كلمة المرور',
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        FilledButton(
+                          onPressed: _busy ? null : _signIn,
+                          child: _busy
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('تسجيل الدخول'),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MetraConfigurationScreen extends StatelessWidget {
