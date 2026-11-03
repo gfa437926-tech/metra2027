@@ -87,7 +87,7 @@ class StationCatalogueClient {
       final uri = Uri.parse('$base/stations').replace(queryParameters: query);
       final response = await _client.get(uri, headers: {
         'Accept': 'application/json',
-        'Authorization': '***',
+        'Authorization': 'Bearer $token',
       }).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 401) {
