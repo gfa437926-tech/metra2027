@@ -27,6 +27,8 @@ if (hasDatabase)
     builder.Services.AddScoped<IRegistrationSubmissionCatalogue, NpgsqlRegistrationSubmissionCatalogue>();
     builder.Services.AddScoped<IRegistrationSubmissionStore, NpgsqlRegistrationSubmissionStore>();
     builder.Services.AddScoped<RegistrationSubmissionApplicationService>();
+    builder.Services.AddScoped<ICurrentUserContextDataSource, NpgsqlCurrentUserContextDataSource>();
+    builder.Services.AddScoped<CurrentUserContextApplicationService>();
 }
 
 var allowedOrigins = builder.Configuration
@@ -118,6 +120,7 @@ app.MapStationEndpoints();
 if (hasDatabase)
 {
     app.MapRegistrationSubmissionEndpoints();
+    app.MapCurrentUserContextEndpoints();
 }
 
 api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancellationToken) =>
