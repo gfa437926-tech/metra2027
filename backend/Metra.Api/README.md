@@ -33,3 +33,33 @@ Supabase does not publish symmetric HS256 secrets through JWKS. If the project s
 ## Authorization boundary
 
 A valid JWT proves identity only. It does not establish METRA job role, account approval, authority membership, station assignment, or station scope. Those checks must be implemented server-side against METRA's trusted records before exposing operational data or mutations. Never authorize using user-editable `user_metadata`, client-supplied role codes, or client-supplied station ownership.
+
+
+## Station-scoped authorization
+
+Operational endpoints must apply `RequireStationPermission("permission.code")`
+and include a `{stationId:guid}` route parameter. The filter reads the authenticated
+Supabase JWT `sub` claim and never accepts a user ID, role, or station scope from
+the request body as proof of authority.
+
+The API calls the narrowly scoped
+`public.metra_user_has_station_permission(uuid, uuid, text)` RPC using the
+server-only Supabase service-role key. Configure these hosting secrets:
+
+- `Supabase__Url`: project URL.
+- `Supabase__ServiceRoleKey`: service-role secret, stored only in the API host's
+  secret manager/environment. Never add it to source control, Angular, or Flutter.
+
+The RPC requires an active METRA account, an approved and current authority
+membership, an approved and current assignment to the exact station, an active
+catalogue role, an approved explicit permission grant, an active authority and
+country, and an approved active non-demo station. It returns false for any
+missing, expired, revoked, pending, or mismatched record. The function is
+SECURITY DEFINER with a fixed search_path; execution is revoked from PUBLIC,
+anon, and authenticated and granted only to service_role.
+
+A missing API secret or failed RPC is fail-closed. Do not expose operational
+routes until the host secret is configured and integration tests cover pending
+accounts, expired memberships/assignments/grants, cross-station access,
+self-elevation, and demo/unapproved stations. Generic observation validation
+routes are not station-scoped operational write routes.
