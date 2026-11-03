@@ -222,3 +222,14 @@ A catalog-level privilege check found that replacing the approval function signa
 - Executed `supabase/tests/observation_import_integrity.sql` against the METRA destination. The assertion block completed without exception: no duplicate imported source identities, non-object payloads, checked identity/contact keys, demo-flagged imported observations, or missing source provenance.
 - Read-only coordinate/catalogue audit: 0 orphan coordinate rows, 0 out-of-range coordinate rows, 0 partial coordinate pairs, 0 station rows missing both Arabic and English names, and 0 station rows outside the pending/unverified review state.
 - These checks validate structural consistency only. They do not verify the truth of source coordinates/names or authorize station approval. All station records remain pending.
+
+### Full public-schema exposure audit — 2026-11-03
+
+A read-only PostgreSQL catalogue query reconfirmed:
+
+- Public base tables: 15.
+- Public base tables with RLS enabled: 15.
+- Direct table grants to `anon` or `authenticated`: 0.
+- Public-schema SECURITY DEFINER functions: 0.
+
+This supplements the Supabase Security Advisor's zero findings. It does not grant the browser clients access; Angular and Flutter remain API-only.
