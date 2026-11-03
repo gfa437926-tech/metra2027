@@ -32,13 +32,13 @@ void main() {
       accessTokenProvider: () async => 'directory-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode([{
+        return http.Response.bytes(utf8.encode(jsonEncode([{
           'id': stationId, 'local_station_code': 'ST-001',
           'name_ar': 'محطة اختبار', 'name_en': 'Test station',
           'station_type': 'classic', 'operational_status': 'unverified',
           'approval_status': 'pending', 'is_demo': false,
           'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}]
-        }]), 200);
+        }])), 200);
       }));
     final rows = await client.getStationDirectory(stationType: 'classic');
     expect(captured.url.path, '/api/v1/stations');
