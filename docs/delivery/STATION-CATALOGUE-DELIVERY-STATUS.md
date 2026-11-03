@@ -1,6 +1,6 @@
 # METRA 2027 — Station catalogue and identity foundation
 
-**Updated:** 2026-11-02  
+**Updated:** 2026-11-03  
 **Supabase project:** `tbdnklyxjvbrilvnwgmq` (eu-west-2)
 
 ## Completed and remotely verified
@@ -11,20 +11,20 @@
 - Added database checks for account/membership/assignment/permission states, validity windows, reviewer consistency, reason requirements and prohibition of self-approval.
 - Added exclusion constraints to prevent overlapping pending/approved membership, station-assignment and permission periods for the same subject/resource.
 - Added indexes for foreign-key and authorization lookup paths.
-- Enabled RLS on all eleven public tables. Browser roles `anon` and `authenticated` have no table privileges and explicit deny-all policies on the new identity tables; existing catalogue tables remain similarly locked.
+- Enabled RLS on all 15 public tables. Read-only audit confirms zero direct table grants to `anon` or `authenticated`; browser clients remain API-only.
 - Added update timestamp triggers to mutable identity records.
 - Expanded the append-only audit entity taxonomy for account state, authority membership, station assignment and permission grant events.
-- All nine remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
+- All 28 applied remote migrations are mirrored under `supabase/migrations/` with matching version prefixes.
 - Supabase security advisor now returns **zero findings**.
 - The performance advisor reports unused-index notices on empty tables only; the one remaining requester foreign-key index was added in the ninth migration.
 - Existing rollback-only station integrity checks remain in `supabase/tests/station_catalogue_integrity.sql`. Read-only identity schema contract checks are in `supabase/tests/identity_schema_contract.sql` and passed against the remote project.
-- Rechecked all eleven tables: they exist, RLS is enabled and the catalogue/identity tables contain zero rows. This is intentional; no invented or legacy station data was loaded.
+- Rechecked all 15 public tables: RLS is enabled. The destination now contains 65 station catalogue rows (62 imported source rows plus 3 explicitly marked demo rows) and 58,059 imported observations. Identity lifecycle, membership, assignment, permission, registration request and audit tables remain empty; no synthetic active users, roles, permission grants or approvals were inserted.
 
 ## Operational data rule
 
 `station_catalogue` is the sole intended operational source for station directory, search, filters and map markers. Coordinates are separately stored with provenance and effective dates. A station without verified coordinates must remain visible in lists but must not be plotted at a fabricated location.
 
-Historical/legacy station datasets are not an operational source. No legacy import, transformation, join, fallback or inferred identity mapping is authorized.
+The legacy project is not an operational runtime dependency and is never queried by the application. A one-time, privacy-filtered import from the user-authorized legacy source was performed using read-only source access and writes only to the new METRA destination. No ongoing fallback, live join, or guessed identity mapping is permitted.
 
 ## Security and authorization boundary
 
@@ -34,27 +34,25 @@ Browser clients remain denied. Never expose Supabase `service_role` or secret ke
 
 ## Remaining work before production handover
 
-1. Build the Npgsql repositories and transaction-scoped authorization context against the new tables.
-2. Implement account registration/review/suspension/recovery and identity-linking persistence.
-3. Implement authority membership request/review, station assignment request/review, permission grant/revoke and self-approval prevention in application workflows.
-4. Implement station create/edit/submit/review/approve/reject and coordinate versioning with immutable audit events.
-5. Replace the Classic/Automatic prototype projection with the independent operational station model in API contracts and Angular screens.
-6. Add the actual API endpoints for station catalogue, detail, map, administration and authorization-aware pagination.
-7. Connect Angular to the protected API; never query the protected tables directly from the browser.
-8. Complete Flutter sign-in, current-user context and feature workflows against the same API.
-9. Add disposable PostgreSQL integration tests, authenticated end-to-end tests, concurrency tests and migration replay tests.
-10. Load only verified country/authority/station data with source provenance after owner review. The station catalogue remains empty until that source material is approved.
-11. Complete CI, dependency remediation, staging deployment, backup/restore rehearsal, monitoring and operational acceptance.
+1. Register the trusted Npgsql station catalogue/detail read store and enforce the owner-approved explicit catalogue-read permission plus station scope on every page. Until then, station endpoints remain 503.
+2. Inspect Supabase Auth settings and signing-key mode, verify issuer/audience/JWKS using a real non-production access token, and only then activate the configured JWT bearer handler. No provider settings or signing keys were changed.
+3. Provision the dedicated non-superuser, non-BYPASSRLS LOGIN for the API runtime role and a shared persistent ASP.NET Data Protection key ring; configure secrets only in the deployment environment.
+4. Review the 62 imported station records and 3 demo rows. All 65 remain pending/unverified. Twelve imported classic stations have no coordinates; all 50 existing coordinate rows lack accuracy_m. No station can be promoted without authoritative owner review.
+5. Reconcile 1,251 unlinked observations using owner-confirmed station aliases only. In particular, do not assume مطار اللاذقية is the same physical station as اللاذقية.
+6. Select and approve a production basemap/tile provider. The Angular page currently offers a coordinate plot, explicitly not a geographic basemap; actual tile rendering and provider attribution remain pending.
+7. Complete Flutter sign-in/token storage and wire the tested station client to the authenticated UI only after the API permission and repository gates are met. Its station feature flag remains false by default.
+8. Add disposable PostgreSQL integration tests for both registration approval stages, transaction rollback, revocation races and audit append-only behavior; add authenticated end-to-end and map/pagination tests.
+9. Complete staging deployment, backup/restore rehearsal, observability, performance tests and operational acceptance.
 
 ## Release status
 
-- **Database and security foundation:** deployed and verified.
-- **Identity persistence foundation:** deployed and verified structurally; application workflows and transaction-level enforcement remain.
-- **Station records:** empty by design.
-- **Backend API:** protected contracts exist; the trusted operational repository is not registered. Station routes must remain unavailable (503) rather than leak data or bypass authorization.
-- **Angular:** station screen and query client exist; production API integration is not verified.
-- **Flutter:** scaffold and identity-context client exist; full operational workflows are not complete.
-- **Production release:** not ready. No merge, deployment or public preview is claimed.
+- **Database/security foundation:** 15 public tables, all RLS-enabled; zero direct browser table grants; Supabase Security Advisor reports zero findings.
+- **Identity persistence and approval:** database RPCs, least-privilege runtime role, registration submission and two-stage approval persistence are implemented. Runtime credentials and real identity-provider configuration remain deployment gates.
+- **Station records:** 65 catalogue rows (29 imported classic, 33 imported automatic, 3 demo); all pending/unverified. Fifty coordinate rows exist; 12 imported classic rows lack coordinates.
+- **Backend API:** identity registration/approval routes and authorization adapters exist. Station list/detail contracts are protected but intentionally return 503 until the trusted station read store and explicit read permission are approved and registered.
+- **Angular:** unified classic/automatic directory, paged query client, filters and coordinate-only preview exist. The preview is not a basemap; production API access and map-provider integration are not complete.
+- **Flutter:** current-user context and station catalogue client foundations exist; formatting, static analysis and 13 tests are being verified in CI. No real sign-in/token provider is wired.
+- **Production release:** not ready. PR #1 remains a draft; no production deployment or public preview is claimed.
 
 ## Remote migration history
 
@@ -74,8 +72,8 @@ Compare local files and remote history before any CLI push/pull. Never blindly r
 ## Follow-up engineering increment — 2026-11-02
 
 - Added `.github/workflows/flutter-ci.yml` on the delivery branch. It installs Flutter stable, resolves dependencies, checks Dart formatting, runs `flutter analyze`, and executes the committed Flutter tests.
-- The workflow was observed entering the GitHub Actions queue on commit `a97a07686d5e986e58f234ff429d57b866dfc2dd`; its final result must be checked before release.
-- This adds automated mobile validation but does not complete mobile feature integration or establish a committed dependency lockfile.
+- The workflow now pins Flutter 3.47.9, enforces the committed pubspec.lock, checks Dart formatting, runs flutter analyze, and executes the Flutter tests.
+- The lockfile is committed and enforced. The station API client foundation is tested, but no production token provider or enabled station feature flag exists.
 - The current station HTTP endpoints remain intentionally fail-closed: `IStationCatalogueReadStore` and trusted identity context are not yet registered, so the endpoints return 503 rather than bypass authorization.
 - Remaining release gates in this document are unchanged. Do not mark production complete until the trusted PostgreSQL repositories, transactional authorization/audit, verified station data, end-to-end tests, Flutter feature workflows, deployment and restore rehearsal are complete.
 
