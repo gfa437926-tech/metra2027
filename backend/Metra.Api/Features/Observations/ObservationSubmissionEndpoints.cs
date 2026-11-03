@@ -202,14 +202,14 @@ public static class ObservationDecisionEndpoints
     var validationError = ObservationDecisionRequestGuard.GetError(request);
     if (validationError is not null)
       return Results.BadRequest(new { error = validationError });
-    if(!service.IsConfigured) return Results.Problem(title="Observation service unavailable",statusCode=503);
-    var result=await service.DecideAsync(userId,stationId,observationId,request,ct);
+    if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
+    var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
     if(!result.Succeeded) {
       if(result.StatusCode==HttpStatusCode.Forbidden) return Results.Forbid();
       if(result.StatusCode==HttpStatusCode.NotFound) return Results.NotFound();
       if(result.StatusCode==HttpStatusCode.BadRequest || result.StatusCode==HttpStatusCode.Conflict)
         return Results.Conflict(new {error="observation_decision_rejected"});
-      return Results.Problem(title="Observation decision unavailable",statusCode=503);
+      return Results.Problem(title: "Observation decision unavailable", statusCode: 503);
     }
     return Results.Ok(result.Data);
    }).WithTags("Observations").WithName("DecideStationObservation");
