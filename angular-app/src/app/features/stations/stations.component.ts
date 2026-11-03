@@ -203,8 +203,40 @@ export class StationsComponent {
       this.hasMore.set(page.hasMore);
       this.nextCursor.set(page.nextCursor);
       this.state.set('loaded');
+      await this.loadRemainingPages(generation);
     } catch (error: unknown) {
       if (generation === this.requestGeneration) this.setErrorState(error);
+    }
+  }
+
+  private async loadRemainingPages(generation: number): Promise<void> {
+    const maximumPages = 100;
+    const maximumItems = 5000;
+    let loadedPages = 1;
+
+    while (generation === this.requestGeneration &&
+           this.state() === 'loaded' &&
+           this.hasMore() &&
+           loadedPages < maximumPages &&
+           this.items().length < maximumItems) {
+      const previousCount = this.items().length;
+      await this.loadMore();
+      if (generation !== this.requestGeneration ||
+          this.state() !== 'loaded' ||
+          this.loadMoreError() ||
+          this.items().length === previousCount) {
+        return;
+      }
+      loadedPages++;
+    }
+
+    if (generation === this.requestGeneration &&
+        this.state() === 'loaded' &&
+        this.hasMore() &&
+        !this.loadMoreError()) {
+      this.errorMessage.set('تجاوز دليل المحطات الحد الآمن للتحميل التلقائي؛ يمكنك متابعة تحميل الصفحات يدوياً.');
+      this.loadMoreError.set(true);
+      this.loadMoreErrorRequiresReload.set(false);
     }
   }
 
