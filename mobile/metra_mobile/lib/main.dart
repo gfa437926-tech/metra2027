@@ -75,7 +75,7 @@ class _WeatherHomeState extends State<WeatherHome> {
               _HourCard(time:'الآن',icon:Icons.wb_sunny,temp:'29°',selected:true),_HourCard(time:'12 PM',icon:Icons.wb_sunny,temp:'30°'),_HourCard(time:'3 PM',icon:Icons.cloud_queue,temp:'33°'),_HourCard(time:'6 PM',icon:Icons.cloud,temp:'29°'),_HourCard(time:'9 PM',icon:Icons.nightlight_round,temp:'26°'),
             ])),
             const SizedBox(height:18),
-            const Row(children:[const Expanded(child:Text('مؤشرات الطقس',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold,color:Color(0xFF14264A)))),const Icon(Icons.tune,color:blue)]),
+            const Row(children:[Expanded(child:Text('مؤشرات الطقس',style:TextStyle(fontSize:18,fontWeight:FontWeight.bold,color:Color(0xFF14264A)))),Icon(Icons.tune,color:blue)]),
             const SizedBox(height:12),
             GridView.count(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),crossAxisCount:2,mainAxisSpacing:11,crossAxisSpacing:11,childAspectRatio:1.55,children:const [
               _InfoTile(icon:Icons.thermostat,title:'درجة الحرارة',value:'29° C',sub:'شعور فعلي 31°',color:Color(0xFFFF9B43)),
