@@ -40,9 +40,6 @@ jobs:
       - name: Resolve Flutter dependencies
         run: flutter pub get
 
-      - name: Preview Dart formatter output for changed mobile files
-        run: dart format --output=show lib/models/station_catalogue.dart lib/services/station_catalogue_client.dart test/station_catalogue_client_test.dart
-
       - name: Check Dart formatting
         run: dart format --output=none --set-exit-if-changed lib test
 
