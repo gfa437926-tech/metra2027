@@ -149,8 +149,18 @@ api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancell
     try
     {
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-        await using var command = new NpgsqlCommand("SELECT 1", connection);
-        await command.ExecuteScalarAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
+            """
+            select not r.rolsuper
+               and not r.rolbypassrls
+               and pg_has_role(current_user, 'metra_api_runtime', 'member')
+            from pg_roles r
+            where r.rolname = current_user
+            """,
+            connection);
+        var leastPrivilegeRuntime = await command.ExecuteScalarAsync(cancellationToken);
+        if (leastPrivilegeRuntime is not true)
+            return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
         return Results.Ok(new { status = "ready", service = "metra-api" });
     }
     catch (NpgsqlException)
