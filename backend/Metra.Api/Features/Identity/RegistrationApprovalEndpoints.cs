@@ -69,7 +69,7 @@ public static class RegistrationApprovalEndpoints
                 {
                     "unauthenticated" => StatusCodes.Status401Unauthorized,
                     "registration_request_not_found" => StatusCodes.Status404NotFound,
-                    "invalid_request" or "invalid_decision" or "note_too_long" or "note_invalid"
+                    "invalid_request" or "invalid_decision" or "note_too_long" or "note_invalid" or "note_required"
                         => StatusCodes.Status400BadRequest,
                     "inactive_actor" or "self_approval_forbidden" or
                     "station_approval_permission_required" or "station_scope_violation" or
