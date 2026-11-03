@@ -89,6 +89,9 @@ public sealed class RegistrationApprovalApplicationService(
             return Failure("note_too_long", "ملاحظة القرار تتجاوز الحد المسموح.");
         if (command.Note?.Any(char.IsControl) == true)
             return Failure("note_invalid", "ملاحظة القرار تحتوي على محارف غير مسموح بها.");
+        if (command.Decision == RegistrationApprovalDecision.Reject &&
+            string.IsNullOrWhiteSpace(command.Note))
+            return Failure("note_required", "يجب توضيح سبب رفض طلب التسجيل.");
 
         var actor = await actorContextProvider.GetCurrentActorAsync(cancellationToken);
         if (actor is null || string.IsNullOrWhiteSpace(actor.UserId))
