@@ -61,6 +61,11 @@ public sealed class SupabaseStationAuthorizationService(
             // A malformed or empty RPC response must never authorize access.
             return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken);
         }
+        catch (JsonException)
+        {
+            // Invalid JSON or a response with the wrong shape must never authorize access.
+            return false;
+        }
         catch (HttpRequestException)
         {
             // Supabase/network failures are authorization failures: deny by default.
