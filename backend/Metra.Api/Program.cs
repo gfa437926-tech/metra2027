@@ -16,6 +16,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHttpClient(nameof(SupabaseStationAuthorizationService));
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
+builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
 builder.Services.AddOpenApi();
 
 builder.Services
@@ -74,6 +75,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
+app.MapObservationDecisionEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
