@@ -175,8 +175,8 @@ The same audit found that all 50 rows have distinct source references, but `accu
 
 ## Latest full CI verification — 2026-11-03
 
-All four workflows passed on code-bearing head `ce34b462ec77577650da6e1d6a80ec4c37dc76dc`:
+All four workflows passed on code-bearing head `74d14671d0d66121dbbc9a54145da084ee5c68b8`:
 - .NET CI: success.
 - Backend build: success.
-- Angular build: success.
+- Angular build: success — 13/13 unit tests and production bundle.
 - Flutter CI: success — locked dependency resolution, Dart format, analyzer and 13/13 tests.
