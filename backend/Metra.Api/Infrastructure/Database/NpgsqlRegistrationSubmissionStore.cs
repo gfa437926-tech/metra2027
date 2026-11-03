@@ -30,7 +30,7 @@ public sealed class NpgsqlRegistrationSubmissionStore(NpgsqlDataSource dataSourc
                 await using var command = new NpgsqlCommand(
                     """
                     select result_status, account_id, request_id
-                    from public.submit_metra_registration(
+                    from private.submit_metra_registration(
                         @auth_user_id, @first_name, @father_name, @last_name,
                         @phone, @role_code, @station_id, @terms_version,
                         @submitted_at, @idempotency_key)
