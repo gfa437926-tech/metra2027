@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.RateLimiting;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
+builder.Services.AddDataProtection();
 builder.Services.AddOpenApi();
 builder.Services.AddMetraConfiguredAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddMetraAuthorization();
@@ -27,6 +28,12 @@ if (hasDatabase)
     builder.Services.AddScoped<IRegistrationSubmissionCatalogue, NpgsqlRegistrationSubmissionCatalogue>();
     builder.Services.AddScoped<IRegistrationSubmissionStore, NpgsqlRegistrationSubmissionStore>();
     builder.Services.AddScoped<RegistrationSubmissionApplicationService>();
+    builder.Services.AddScoped<IRegistrationApprovalActorContextProvider, NpgsqlRegistrationApprovalActorContextProvider>();
+    builder.Services.AddScoped<NpgsqlRegistrationApprovalStore>();
+    builder.Services.AddScoped<IRegistrationApprovalStore>(sp => sp.GetRequiredService<NpgsqlRegistrationApprovalStore>());
+    builder.Services.AddScoped<IRegistrationApprovalQueueReadStore>(sp => sp.GetRequiredService<NpgsqlRegistrationApprovalStore>());
+    builder.Services.AddScoped<RegistrationApprovalApplicationService>();
+    builder.Services.AddScoped<RegistrationApprovalQueueQueryService>();
     builder.Services.AddScoped<ICurrentUserContextDataSource, NpgsqlCurrentUserContextDataSource>();
     builder.Services.AddScoped<CurrentUserContextApplicationService>();
 }
@@ -120,6 +127,7 @@ app.MapStationEndpoints();
 if (hasDatabase)
 {
     app.MapRegistrationSubmissionEndpoints();
+    app.MapRegistrationApprovalEndpoints();
     app.MapCurrentUserContextEndpoints();
 }
 
