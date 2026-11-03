@@ -77,6 +77,11 @@ public sealed class SupabaseObservationSubmissionService(
                 cancellationToken: cancellationToken);
             return new(true, true, response.StatusCode, data);
         }
+        catch (JsonException)
+        {
+            // A malformed success body is not a successful persistence result.
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
         catch (HttpRequestException)
         {
             return new(true, false, HttpStatusCode.ServiceUnavailable, null);
@@ -188,7 +193,10 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
           if(!response.IsSuccessStatusCode) return new(true,false,response.StatusCode,null);
           var data=await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken:cancellationToken);
           return new(true,true,response.StatusCode,data);
-        } catch(HttpRequestException) { return new(true,false,HttpStatusCode.ServiceUnavailable,null); }
+        } catch(JsonException) {
+            // Do not report success when the database response cannot be parsed.
+            return new(true,false,HttpStatusCode.ServiceUnavailable,null);
+          } catch(HttpRequestException) { return new(true,false,HttpStatusCode.ServiceUnavailable,null); }
           catch(TaskCanceledException) when(!cancellationToken.IsCancellationRequested) { return new(true,false,HttpStatusCode.ServiceUnavailable,null); }
     }
 }
@@ -230,8 +238,13 @@ public static class ObservationDecisionRequestGuard
     {
         if (request is null || request.Decision is not ("approve" or "return_for_correction"))
             return "invalid_observation_decision";
-        if (request.Note is not null && request.Note.Length > 2000)
+        if (request.Note is { Length: > 2000 })
             return "decision_note_too_long";
+        if (request.Decision == "return_for_correction" &&
+            string.IsNullOrWhiteSpace(request.Note))
+            return "decision_note_required";
+        if (request.Note is not null && request.Note != request.Note.Trim())
+            return "invalid_decision_note";
         return null;
     }
 }
