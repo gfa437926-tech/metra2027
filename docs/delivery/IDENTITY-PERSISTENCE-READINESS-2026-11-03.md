@@ -208,3 +208,11 @@ A catalog-level privilege check found that replacing the approval function signa
 - Read-only station/observation linkage audit: 65 station rows (34 automatic, 30 classic, 1 synoptic), all pending; 50 distinct stations have coordinate rows; 1,251 observation rows have no station_id; 0 observation rows reference a non-existent station. These unlinked observations are preserved and must not be assigned to stations by name guessing.
 - All four CI workflows passed on the immediately preceding commit `38543f998f256207d2bb2aafb34e9310eb6d2b3d`. The SQL-contract delimiter correction is commit `813ca1a6b1f3a7bdca4537b59b2b2dbf5cd94de0`; its four CI workflows were still running at the time of this update.
 - No legacy database was accessed. No rows were inserted, updated or deleted during these checks.
+
+### Flutter station-catalogue client increment — 2026-11-03
+
+- Added a typed mobile station-catalogue model that preserves source-qualified identity (classic and automatic remain distinct even when display names match).
+- Added a paged HTTP client with bearer-token injection through the existing access-token provider contract, bounded query validation, strict cursor checks, duplicate identity rejection, coordinate-pair validation and explicit 401/403/unavailable states.
+- Added six client/model tests covering disabled-by-default behavior, missing token, mixed source rows, pagination filters, malformed coordinate/duplicate data, and forbidden/unavailable responses.
+- Added `METRA_STATION_CATALOGUE_ENABLED`, default false. The client cannot be activated until the backend trusted read-store, approved station-read permission, station scope and real mobile token provider are deployed.
+- This is a client foundation only: it does not make the station endpoint available, does not enable station access, and does not replace the existing fail-closed API behavior.
