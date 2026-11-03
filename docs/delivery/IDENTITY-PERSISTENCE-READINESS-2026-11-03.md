@@ -157,7 +157,7 @@ No legacy database operation was performed. The old project remains outside this
 
 - .NET 10 CI: **success** (restore, build and tests).
 - Backend build: **success** (API build and domain tests).
-- Angular build: still in progress at the time of this record.
+- Angular build: **success** (dependency audit, test-source type-check, unit tests and production bundle).
 - Flutter CI: pending; not yet claimed as passed.
 
 
