@@ -236,7 +236,7 @@ This supplements the Supabase Security Advisor's zero findings. It does not gran
 
 ### Final CI and Flutter lockfile verification — 2026-11-03 01:25 UTC
 
-- Latest code-bearing head `ce34b462ec77577650da6e1d6a80ec4c37dc76dc`: .NET CI, Backend build, Angular build and Flutter CI all completed successfully.
+- Latest code-bearing head `74d14671d0d66121dbbc9a54145da084ee5c68b8`: .NET CI, Backend build, Angular build and Flutter CI all completed successfully.
 - Flutter CI used pinned Flutter 3.47.9; `flutter pub get --enforce-lockfile`, Dart formatting, `flutter analyze` and all 13 Flutter tests passed.
 - Committed the exact resolved `mobile/metra_mobile/pubspec.lock`; CI enforces it rather than silently resolving a new dependency graph.
 - PR #1 remains open and draft; it is not merged or deployed.
