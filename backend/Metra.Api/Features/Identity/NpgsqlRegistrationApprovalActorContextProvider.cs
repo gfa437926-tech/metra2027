@@ -53,7 +53,8 @@ public sealed class NpgsqlRegistrationApprovalActorContextProvider(
             select distinct permission_code
             from public.permission_grants
             where user_id=@user_id and approval_status='approved'
-              and revoked_at is null and valid_from <= @now
+              and (revoked_at is null or revoked_at > @now)
+              and valid_from <= @now
               and (valid_to is null or valid_to > @now)
               and permission_code in ('registrations.station.approve','registrations.system.approve')
             """, connection, transaction))
