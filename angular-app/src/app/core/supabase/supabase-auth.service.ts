@@ -15,6 +15,12 @@ export class SupabaseAuthService {
     return this.client !== null;
   }
 
+  async signInWithPassword(email: string, password: string): Promise<void> {
+    if (!this.client) throw new Error('إعدادات Supabase العامة غير مكتملة.');
+    const { error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) throw new Error('تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور وحالة الحساب.');
+  }
+
   async getAccessToken(): Promise<string | null> {
     if (!this.client) return null;
     const { data, error } = await this.client.auth.getSession();
