@@ -36,6 +36,23 @@ public sealed class AuthoritativeMetraPermissionGrantEvaluatorTests
         Assert.False(allowed);
     }
 
+    [Fact]
+    public async Task Allows_grant_until_a_future_exclusive_revocation_instant()
+    {
+        var facts = new MetraPermissionGrantFacts(
+            true,
+            true,
+            Now.AddDays(-1),
+            null,
+            Now.AddSeconds(1));
+        var evaluator = Evaluator(new FakeDataSource(facts));
+
+        var allowed = await evaluator.HasPermissionAsync(
+            "subject-42", MetraPermissions.DailyObservationCreate, CancellationToken.None);
+
+        Assert.True(allowed);
+    }
+
     [Theory]
     [InlineData("2026-11-02T12:00:01+00:00", null, null)]
     [InlineData("2026-11-01T00:00:00+00:00", "2026-11-02T12:00:00+00:00", null)]
