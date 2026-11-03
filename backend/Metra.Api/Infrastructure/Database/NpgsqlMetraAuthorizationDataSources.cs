@@ -158,6 +158,9 @@ public sealed class NpgsqlMetraAuthorizationDataSources(NpgsqlDataSource dataSou
             from public.permission_grants
             where user_id=@user_id and permission_code=@permission
               and approval_status='approved'
+              and valid_from <= now()
+              and (valid_to is null or valid_to > now())
+              and (revoked_at is null or revoked_at > now())
             order by valid_from desc
             limit 1
             """, connection, transaction);
