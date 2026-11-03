@@ -21,13 +21,8 @@ public sealed class ObservationValidationRequestGuardTests
     [Fact]
     public void Accepts_payload_at_field_and_value_limits()
     {
-        var values = Enumerable.Range(0, ObservationValidationRequestGuard.MaximumFields)
-            .ToDictionary(
-                i => new string('f', ObservationValidationRequestGuard.MaximumFieldNameLength - 1) + i.ToString("D2"),
-                _ => (string?)new string('v', ObservationValidationRequestGuard.MaximumValueLength));
-
         // Keep field names within the documented limit while preserving unique keys.
-        values = Enumerable.Range(0, ObservationValidationRequestGuard.MaximumFields)
+        var values = Enumerable.Range(0, ObservationValidationRequestGuard.MaximumFields)
             .ToDictionary(i => $"f{i:D2}", _ => (string?)new string('v', ObservationValidationRequestGuard.MaximumValueLength));
 
         Assert.Null(ObservationValidationRequestGuard.GetError(values));
