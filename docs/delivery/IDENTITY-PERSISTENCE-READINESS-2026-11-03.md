@@ -216,3 +216,9 @@ A catalog-level privilege check found that replacing the approval function signa
 - Added six client/model tests covering disabled-by-default behavior, missing token, mixed source rows, pagination filters, malformed coordinate/duplicate data, and forbidden/unavailable responses.
 - Added `METRA_STATION_CATALOGUE_ENABLED`, default false. The client cannot be activated until the backend trusted read-store, approved station-read permission, station scope and real mobile token provider are deployed.
 - This is a client foundation only: it does not make the station endpoint available, does not enable station access, and does not replace the existing fail-closed API behavior.
+
+### Additional destination data-integrity verification — 2026-11-03
+
+- Executed `supabase/tests/observation_import_integrity.sql` against the METRA destination. The assertion block completed without exception: no duplicate imported source identities, non-object payloads, checked identity/contact keys, demo-flagged imported observations, or missing source provenance.
+- Read-only coordinate/catalogue audit: 0 orphan coordinate rows, 0 out-of-range coordinate rows, 0 partial coordinate pairs, 0 station rows missing both Arabic and English names, and 0 station rows outside the pending/unverified review state.
+- These checks validate structural consistency only. They do not verify the truth of source coordinates/names or authorize station approval. All station records remain pending.
