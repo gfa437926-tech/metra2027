@@ -89,6 +89,17 @@ public sealed class RegistrationApprovalQueueQueryServiceTests
         Assert.Equal(0, store.Calls);
     }
 
+    [Theory]
+    [InlineData(RegistrationApprovalStatus.Active)]
+    [InlineData(RegistrationApprovalStatus.Rejected)]
+    public async Task Rejects_terminal_status_filters(RegistrationApprovalStatus status)
+    {
+        var store = new FakeStore(Page());
+        var result = await Create(Actor(), store).ReadAsync(new(Status: status));
+        Assert.Equal(RegistrationApprovalQueueReadStatus.InvalidQuery, result.Status);
+        Assert.Equal(0, store.Calls);
+    }
+
     [Fact]
     public async Task Rejects_oversized_or_control_character_cursor()
     {
