@@ -44,7 +44,7 @@ public sealed class NpgsqlMetraAuthorizationDataSources(NpgsqlDataSource dataSou
         return grant is null
             ? new MetraPermissionGrantFacts(actorActive.Value, false, DateTimeOffset.UnixEpoch, null, null)
             : new MetraPermissionGrantFacts(
-                actorActive.Value, true, grant.Value.ValidFrom, grant.Value.ValidTo, grant.Value.RevokedAt);
+                actorActive.Value, true, grant.ValidFrom, grant.ValidTo, grant.RevokedAt);
     }
 
     public async Task<MetraResourceAuthorizationFacts?> GetFactsAsync(
@@ -112,7 +112,7 @@ public sealed class NpgsqlMetraAuthorizationDataSources(NpgsqlDataSource dataSou
         var grantFacts = grant is null
             ? new MetraPermissionGrantFacts(actorActive.Value, false, DateTimeOffset.UnixEpoch, null, null)
             : new MetraPermissionGrantFacts(
-                actorActive.Value, true, grant.Value.ValidFrom, grant.Value.ValidTo, grant.Value.RevokedAt);
+                actorActive.Value, true, grant.ValidFrom, grant.ValidTo, grant.RevokedAt);
 
         var canonicalStationId = await ReadSelectableStationAsync(
             connection, transaction, stationId, cancellationToken);
