@@ -53,6 +53,8 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('القائمة'));
+    await tester.pumpAndSettle();
     expect(find.text('محطة كلاسيكية'), findsOneWidget);
     expect(find.text('محطة آلية'), findsOneWidget);
     await tester.tap(find.text('محطة آلية'));
