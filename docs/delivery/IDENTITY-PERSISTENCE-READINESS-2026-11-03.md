@@ -233,3 +233,10 @@ A read-only PostgreSQL catalogue query reconfirmed:
 - Public-schema SECURITY DEFINER functions: 0.
 
 This supplements the Supabase Security Advisor's zero findings. It does not grant the browser clients access; Angular and Flutter remain API-only.
+
+### Final CI and Flutter lockfile verification — 2026-11-03 01:25 UTC
+
+- Latest code-bearing head `d645b9009397848e700866f9725f79ada4d596f5`: .NET CI, Backend build, Angular build and Flutter CI all completed successfully.
+- Flutter CI used pinned Flutter 3.47.9; `flutter pub get --enforce-lockfile`, Dart formatting, `flutter analyze` and all 11 Flutter tests passed.
+- Committed the exact resolved `mobile/metra_mobile/pubspec.lock`; CI enforces it rather than silently resolving a new dependency graph.
+- PR #1 remains open and draft; it is not merged or deployed.
