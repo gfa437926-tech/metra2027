@@ -134,7 +134,7 @@ No legacy database operation was performed. The old project remains outside this
 - Added endpoints: `GET /api/v1/registration-requests/approval-queue` and `POST /api/v1/registration-requests/{requestId}/decision`. They are mapped only when the database connection is configured.
 - Runtime database role now has narrowly scoped SELECT access to registration requests and approval audit evidence under RLS policies. Browser roles remain denied.
 - Moved the submission RPC into the unexposed `private` schema and restricted execution to `metra_api_runtime`; service_role, anon and authenticated cannot execute it.
-- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`.
+- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`, `20261103001654`.
 
 ### Database verification after approval changes
 
@@ -172,3 +172,13 @@ The final CI result for the latest branch head is pending verification; do not i
 - Permission evaluation checks current METRA account state and explicit, approved, time-bounded permission grants. It does not infer permissions from role names or JWT user metadata.
 - Resource evaluation ignores the caller-provided station ID and independently resolves the canonical station from the database. The initial persistence adapter supports the `station` resource type only; all unknown resource types fail closed until reviewed mappings are added.
 - Existing runtime SELECT grants and RLS policies cover the required account, grant, assignment, station and authority records; no new public access was granted.
+
+
+### Final private RPC ACL verification
+
+A catalog-level privilege check found that replacing the approval function signature had created a fresh PostgreSQL default `PUBLIC EXECUTE` ACL on the new overload. This was immediately revoked in migration `20261103001654`. The post-fix check confirms:
+
+- `metra_api_runtime`: EXECUTE on the six-argument approval RPC.
+- `anon`, `authenticated`, and `service_role`: no EXECUTE on that RPC.
+- `anon`, `authenticated`, and `service_role`: no USAGE on the `private` schema.
+- The private submission RPC remains executable only by `metra_api_runtime`.
