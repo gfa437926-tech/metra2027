@@ -57,7 +57,74 @@ begin
   ) then
     raise exception 'An expected identity integrity constraint is missing';
   end if;
-end $$;
+
+  if not exists (
+    select 1 from pg_roles
+    where rolname='metra_api_runtime'
+      and rolcanlogin=false and rolsuper=false and rolbypassrls=false
+  ) then
+    raise exception 'The dedicated API runtime role is missing or over-privileged';
+  end if;
+
+  if not has_schema_privilege('metra_api_runtime','private','USAGE') then
+    raise exception 'The API runtime role cannot use the private RPC schema';
+  end if;
+
+  if has_schema_privilege('anon','private','USAGE')
+     or has_schema_privilege('authenticated','private','USAGE')
+     or has_schema_privilege('service_role','private','USAGE') then
+    raise exception 'A client or service role can access the private RPC schema';
+  end if;
+
+  if not has_function_privilege(
+       'metra_api_runtime',
+       'private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamptz,text)',
+       'EXECUTE')
+     or not has_function_privilege(
+       'metra_api_runtime',
+       'private.decide_metra_registration(uuid,text,uuid,text,text,timestamptz)',
+       'EXECUTE') then
+    raise exception 'The API runtime role lacks a required private RPC grant';
+  end if;
+
+  if has_function_privilege(
+       'anon',
+       'private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamptz,text)',
+       'EXECUTE')
+     or has_function_privilege(
+       'authenticated',
+       'private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamptz,text)',
+       'EXECUTE')
+     or has_function_privilege(
+       'service_role',
+       'private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamptz,text)',
+       'EXECUTE')
+     or has_function_privilege(
+       'anon',
+       'private.decide_metra_registration(uuid,text,uuid,text,text,timestamptz)',
+       'EXECUTE')
+     or has_function_privilege(
+       'authenticated',
+       'private.decide_metra_registration(uuid,text,uuid,text,text,timestamptz)',
+       'EXECUTE')
+     or has_function_privilege(
+       'service_role',
+       'private.decide_metra_registration(uuid,text,uuid,text,text,timestamptz)',
+       'EXECUTE') then
+    raise exception 'A client or service role can execute a private registration RPC';
+  end if;
+
+  if (
+    select count(*) from pg_proc p
+    join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='private'
+      and p.proname='decide_metra_registration'
+      and pg_get_function_identity_arguments(p.oid) =
+        'p_request_id uuid, p_expected_status text, p_actor_user_id uuid, p_decision text, p_note text, p_occurred_at timestamp with time zone'
+  ) <> 1 then
+    raise exception 'The expected-state approval RPC overload is missing or duplicated';
+  end if;
+end $;
 
 select
   (select count(*) from public.metra_account_states) as account_states,
