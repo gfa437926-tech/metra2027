@@ -200,3 +200,11 @@ A catalog-level privilege check found that replacing the approval function signa
 
 - Corrected the database submission function so an already-pending request is returned as `existing_pending` before the generic linked-account check. The initial pending workflow intentionally creates the profile and account-state rows, so the previous order masked the correct outcome.
 - Verified the function definition now evaluates the pending-request check before the linked-account check. No synthetic account or request rows were inserted to perform this verification.
+
+### Verification update — 2026-11-03 01:07 UTC
+
+- Executed the current `supabase/tests/identity_schema_contract.sql` against the target project after correcting its dollar-quote terminator. The block completed without exceptions. The identity tables correctly contain 0 account states, 0 authority memberships, 0 station assignments and 0 permission grants; no test data was written.
+- Re-ran Supabase advisors: **0 security findings**. Performance advisor reports 41 informational unused-index notices on this newly provisioned/low-traffic database. No indexes were removed; usage statistics are not yet representative.
+- Read-only station/observation linkage audit: 65 station rows (34 automatic, 30 classic, 1 synoptic), all pending; 50 distinct stations have coordinate rows; 1,251 observation rows have no station_id; 0 observation rows reference a non-existent station. These unlinked observations are preserved and must not be assigned to stations by name guessing.
+- All four CI workflows passed on the immediately preceding commit `38543f998f256207d2bb2aafb34e9310eb6d2b3d`. The SQL-contract delimiter correction is commit `813ca1a6b1f3a7bdca4537b59b2b2dbf5cd94de0`; its four CI workflows were still running at the time of this update.
+- No legacy database was accessed. No rows were inserted, updated or deleted during these checks.
