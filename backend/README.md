@@ -17,7 +17,7 @@ Health: `GET /api/v1/health`. Readiness: `GET /api/v1/ready`. In Development, Op
 
 Configure `ConnectionStrings__MetraDatabase` only in the API hosting environment, using a managed secret store. The connection must use a dedicated least-privilege runtime database identity, TLS hostname/certificate verification (`SSL Mode=VerifyFull`), bounded timeouts and connection pooling. Never use a project-owner or migration credential as the application runtime identity. Never put a PostgreSQL connection string or Supabase service-role/secret key in Angular or Flutter.
 
-Production/staging startup fails if the database connection is missing or incomplete. The readiness endpoint checks connectivity without returning credentials or connection details.
+Production/staging startup fails if the database connection is missing or incomplete. The readiness endpoint checks connectivity without returning credentials or connection details. The new database migration creates the non-login role `metra_api_runtime` with narrowly scoped read grants and execution of the atomic registration function. Provision a separate managed LOGIN role, grant it membership in `metra_api_runtime`, and use only that login in `ConnectionStrings:MetraDatabase`. Do not connect the API as `postgres`, `service_role`, or a migration owner. The login/secret provisioning and connection test remain deployment tasks; do not enable the feature until they are complete.
 
 ## Identity and authorization
 
