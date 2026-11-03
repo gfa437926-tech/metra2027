@@ -48,7 +48,7 @@ class MetraApiClient {
   final Uri? _baseUri;
   final http.Client _client;
   bool get isConfigured => _baseUri != null &&
-      _baseUri?.scheme == 'https' && _baseUri?.host.isNotEmpty == true;
+      _baseUri.scheme == 'https' && _baseUri.host.isNotEmpty;
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
