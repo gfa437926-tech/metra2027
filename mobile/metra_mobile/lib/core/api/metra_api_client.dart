@@ -94,7 +94,7 @@ class MetraApiClient {
     }
     final filter = stationType == null ? '' : '&stationType=$stationType';
     final response = await _send('GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw const FormatException('invalid_station_directory');
     return decoded.map((item) => StationDirectoryItem.fromJson(
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
@@ -104,7 +104,7 @@ class MetraApiClient {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw const FormatException('invalid_observation_queue');
     return decoded.map((item) => ObservationQueueItem.fromJson(
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
