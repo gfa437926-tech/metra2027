@@ -105,10 +105,11 @@ public static class ObservationQueueEndpoints
                     return Results.Forbid();
 
                 var data = await queue.GetSubmittedAsync(stationId, take, cancellationToken);
-                return data is null
-                    ? Results.Problem(title: "Observation queue read failed",
-                        statusCode: StatusCodes.Status503ServiceUnavailable)
-                    : Results.Ok(data.Value);
+                if (data is null)
+                    return Results.Problem(title: "Observation queue read failed",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                return Results.Ok(data.Value);
             })
             .WithTags("Observations")
             .WithName("GetStationObservationReviewQueue");
