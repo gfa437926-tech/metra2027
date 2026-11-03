@@ -130,7 +130,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
         ),
       );
       controller.dispose();
-      if (note == null || note!.isEmpty) return;
+      if (note == null || note.isEmpty) return;
     } else {
       final confirmed = await showDialog<bool>(
         context: context,
