@@ -50,7 +50,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   ]);
   Widget _map(List<StationDirectoryItem> rows, List<StationDirectoryItem> located) {
     if (located.isEmpty) return _empty(Icons.location_off, 'لا توجد إحداثيات موثقة',
-      'يعرض الدليل \${rows.length} محطة، لكن لا توجد إحداثيات صالحة لرسمها. راجع القائمة للتفاصيل.');
+      'يعرض الدليل ${rows.length} محطة، لكن لا توجد إحداثيات صالحة لرسمها. راجع القائمة للتفاصيل.');
     final center = LatLng(
       located.map((s) => s.latitude!).reduce((a,b) => a+b) / located.length,
       located.map((s) => s.longitude!).reduce((a,b) => a+b) / located.length);
@@ -61,7 +61,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         MarkerLayer(markers: located.map((station) => Marker(
           point: LatLng(station.latitude!, station.longitude!), width: 48, height: 58,
           alignment: Alignment.topCenter,
-          child: Tooltip(message: '\${station.nameArabic} • \${station.localCode}',
+          child: Tooltip(message: '${station.nameArabic} • ${station.localCode}',
             child: GestureDetector(
               onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
               child: Icon(station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
@@ -77,10 +77,10 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
             _legend(Icons.cell_tower, const Color(0xFF2463B5), 'كلاسيكية'),
             _legend(Icons.sensors, const Color(0xFF16835D), 'آلية / أخرى'),
             const SizedBox(height: 4),
-            Text('المعروضة: \${located.length} من \${rows.length}',
+            Text('المعروضة: ${located.length} من ${rows.length}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
             if (located.length != rows.length)
-              Text('بلا إحداثيات: \${rows.length-located.length}', style: const TextStyle(fontSize: 11)),
+              Text('بلا إحداثيات: ${rows.length-located.length}', style: const TextStyle(fontSize: 11)),
           ],
         ),
       ))),
@@ -107,7 +107,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         child: Icon(classic ? Icons.cell_tower : Icons.sensors,
           color: classic ? const Color(0xFF2463B5) : const Color(0xFF16835D))),
       title: Text(station.nameArabic, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text('\$type • \${station.localCode}\\n\$approval • \$operation\\n\$coords'),
+      subtitle: Text('$type • ${station.localCode}\\n$approval • $operation\\n$coords'),
       isThreeLine: true,
       trailing: widget.onStationSelected == null ? null : Icon(station.id == widget.selectedStationId ? Icons.check_circle : Icons.chevron_left)));
   }
