@@ -18,13 +18,22 @@ flutter create --platforms=android,ios .
 flutter pub get
 flutter analyze
 flutter test
-flutter run --dart-define=METRA_API_BASE_URL=https://your-api-host
+flutter run \\
+  --dart-define=METRA_API_BASE_URL=https://your-api-host \\
+  --dart-define=METRA_SUPABASE_URL=https://your-project.supabase.co \\
+  --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
 ## Build
 ```bash
-flutter build apk --dart-define=METRA_API_BASE_URL=https://your-api-host
-flutter build appbundle --dart-define=METRA_API_BASE_URL=https://your-api-host
+flutter build apk \\
+  --dart-define=METRA_API_BASE_URL=https://your-api-host \\
+  --dart-define=METRA_SUPABASE_URL=https://your-project.supabase.co \\
+  --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+flutter build appbundle \\
+  --dart-define=METRA_API_BASE_URL=https://your-api-host \\
+  --dart-define=METRA_SUPABASE_URL=https://your-project.supabase.co \\
+  --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 # On macOS:
 flutter build ios --dart-define=METRA_API_BASE_URL=https://your-api-host
 ```
@@ -40,9 +49,11 @@ Implemented client capabilities:
 - Review screen with loading, empty, error, confirmation and refresh states.
 
 Not yet connected end-to-end:
-- Supabase sign-in, persisted session and secure token refresh.
-- Authorized station discovery/selection and role-aware navigation.
+- Supabase email/password sign-in, persisted session restoration and SDK-managed token refresh.
+- Station selection in the mobile shell. The API remains the authority for station-level permissions; selecting a catalogue record does not grant review rights.
 - Live weather feed, complete station map, alerts and reports.
+
+The app initializes Supabase only when both Supabase compile-time values are present. The login screen uses the existing account flow; it does not create users. A persisted Supabase session is restored on startup, token refresh is managed by the SDK, and sign-out clears the session. The API token provider reads the current access token at request time. Configure the API origin separately with METRA_API_BASE_URL. Only a Supabase publishable key belongs in the mobile binary; never pass a service-role or secret key to Flutter.
 
 The app deliberately shows explicit unavailable/connection states instead of sample temperatures, invented station coordinates, or fake operational records. Do not bypass authorization by inserting a fixed station ID or token.
 
