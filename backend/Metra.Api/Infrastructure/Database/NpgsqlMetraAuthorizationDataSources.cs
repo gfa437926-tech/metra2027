@@ -224,9 +224,12 @@ public sealed class NpgsqlMetraAuthorizationDataSources(NpgsqlDataSource dataSou
         string resourceType,
         string resourceId,
         out Guid stationId)
-        => string.Equals(resourceType, "station", StringComparison.Ordinal) &&
-           Guid.TryParse(resourceId, out stationId) &&
-           stationId != Guid.Empty;
+    {
+        stationId = Guid.Empty;
+        return string.Equals(resourceType, "station", StringComparison.Ordinal) &&
+            Guid.TryParse(resourceId, out stationId) &&
+            stationId != Guid.Empty;
+    }
 
     private sealed record PermissionGrantRow(
         DateTimeOffset ValidFrom,
