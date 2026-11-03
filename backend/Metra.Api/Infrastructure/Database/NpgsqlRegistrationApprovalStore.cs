@@ -198,7 +198,7 @@ public sealed class NpgsqlRegistrationApprovalStore(
         if (hasMore && items.Count > 0)
         {
             var last = items[^1];
-            nextCursor = _cursorProtector.Protect(JsonSerializer.SerializeToUtf8Bytes(
+            nextCursor = _cursorProtector.Protect(JsonSerializer.Serialize(
                 new QueueCursor(actorId, query.Status, query.StationId, query.PageSize,
                     last.SubmittedAtUtc, last.RequestId)));
         }
