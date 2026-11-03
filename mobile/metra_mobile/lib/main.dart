@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'models/current_user_context.dart';
+import 'services/current_user_context_client.dart';
+
 void main() {
   runApp(const MetraMobileApp());
 }
@@ -42,6 +45,54 @@ class MetraHomePage extends StatefulWidget {
 
 class _MetraHomePageState extends State<MetraHomePage> {
   int selectedIndex = 0;
+  final CurrentUserContextClient _identityClient = CurrentUserContextClient();
+  CurrentUserSessionState _sessionState = CurrentUserSessionState.unconfigured;
+  CurrentUserContext? _currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionState = CurrentUserSessionState.loading;
+    _loadCurrentUser();
+  }
+
+  Future<void> _loadCurrentUser() async {
+    final result = await _identityClient.load();
+    if (!mounted) return;
+    setState(() {
+      _sessionState = result.state;
+      _currentUser = result.context;
+    });
+  }
+
+  @override
+  void dispose() {
+    _identityClient.close();
+    super.dispose();
+  }
+
+  String get _sessionLabel {
+    switch (_sessionState) {
+      case CurrentUserSessionState.loading:
+        return 'جارٍ التحقق من الجلسة';
+      case CurrentUserSessionState.unauthenticated:
+        return 'غير مسجل الدخول';
+      case CurrentUserSessionState.active:
+        return 'الحساب نشط';
+      case CurrentUserSessionState.pendingApproval:
+        return 'الحساب بانتظار الموافقة';
+      case CurrentUserSessionState.suspended:
+        return 'الحساب موقوف أو غير مفعّل';
+      case CurrentUserSessionState.forbidden:
+        return 'لا توجد صلاحية للوصول';
+      case CurrentUserSessionState.unavailable:
+        return 'خدمة الهوية غير متاحة';
+      case CurrentUserSessionState.unknownAccountState:
+        return 'حالة الحساب غير معروفة';
+      case CurrentUserSessionState.unconfigured:
+        return 'نسخة معاينة — المصادقة غير مهيأة';
+    }
+  }
 
   static const sections = <_MobileSection>[
     _MobileSection('الرئيسية', Icons.dashboard_outlined),
@@ -66,20 +117,44 @@ class _MetraHomePageState extends State<MetraHomePage> {
           ],
         ),
         body: SafeArea(
-          child: IndexedStack(
-            index: selectedIndex,
-            children: const [
-              _DashboardMobileView(),
-              _RecordsMobileView(),
-              _PlaceholderMobileView(
-                title: 'المحطة',
-                description: 'ستظهر هنا بيانات المحطة المرتبطة بحساب المستخدم.',
-                icon: Icons.location_on_outlined,
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF6E5),
+                  border: Border.all(color: const Color(0xFFD6A54B)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$_sessionLabel. لا تُدخل بيانات تشغيلية أو شخصية حقيقية في نسخة المعاينة.',
+                  style: const TextStyle(color: Color(0xFF624512)),
+                ),
               ),
-              _PlaceholderMobileView(
-                title: 'حسابي',
-                description: 'إعدادات الحساب والصلاحيات.',
-                icon: Icons.person_outline,
+              Expanded(
+                child: IndexedStack(
+                  index: selectedIndex,
+                  children: [
+                    const _DashboardMobileView(),
+                    const _RecordsMobileView(),
+                    _PlaceholderMobileView(
+                      title: 'المحطة',
+                      description: _currentUser == null
+                          ? 'لا توجد محطة مرتبطة بجلسة موثقة.'
+                          : 'تعرض المحطات الفعالة بعد تحميلها من خدمة الهوية.',
+                      icon: Icons.location_on_outlined,
+                    ),
+                    _PlaceholderMobileView(
+                      title: 'حسابي',
+                      description: _currentUser == null
+                          ? _sessionLabel
+                          : '${_currentUser!.profile.firstName} ${_currentUser!.profile.lastName}',
+                      icon: Icons.person_outline,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

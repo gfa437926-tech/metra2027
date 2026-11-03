@@ -47,6 +47,11 @@ export const routes: Routes = [
       .then((m) => m.SoilTemperatureComponent)
   },
   {
+    path: 'stations',
+    loadComponent: () => import('./features/stations/stations.component')
+      .then((m) => m.StationsComponent)
+  },
+  {
     path: 'users',
     loadComponent: () => import('./features/users/users.component')
       .then((m) => m.UsersComponent)

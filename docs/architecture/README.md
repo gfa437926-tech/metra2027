@@ -53,6 +53,9 @@ A shared sidebar and design tokens are defined once in the shell. Feature pages 
 8. Report submission and approval transitions are transactional and state-checked on the server.
 9. No silent fallback to local storage for authoritative records or permissions.
 10. Preserve the original visual behavior while replacing unsafe or duplicated implementation details.
+11. Apply the mandatory cybersecurity and cryptography baseline in `SECURITY-CRYPTOGRAPHY-BASELINE.md`; security controls are release gates, not optional hardening.
+12. Require TLS, managed secrets and key lifecycle, encryption at rest for databases/files/backups/logs, least-privilege access, MFA for privileged users, secure sessions, abuse protection, tamper-resistant audit, security scanning and independent penetration testing before production.
+13. Never claim the platform is fully secure or certified without independent evidence and an explicit scope.
 
 ## Refactoring method
 
@@ -73,8 +76,42 @@ For each legacy workflow:
 - Stage 3 — climate, rainfall, agricultural and soil-temperature records.
 - Stage 4 — review, correction, approval, audit and archival.
 - Stage 5 — search, statistics, reports, printing and exports.
-- Stage 6 — station/user administration, Flutter parity, security and operational testing.
+- Stage 6 — station/user administration and Flutter parity.
+- Stage 7 — security architecture, threat modelling, cryptography/key management, secure operations and independent security verification; production release is blocked until the mandatory security gates pass.
 
 ## Database and deployment guardrails
 
-The new Supabase project is not yet approved for schema changes. Until a schema and migration plan are explicitly approved, do not create tables, alter RLS, change policies, or migrate legacy data. The existing GitHub Pages deployment serves only the Angular frontend; it does not host the API or database.
+The selected Supabase PostgreSQL target and its read-only baseline are recorded in `SUPABASE-TARGET-PROJECT.md`. The project has no application tables in `public` at inspection time. Supabase Auth is now the recommended provider selected for implementation planning; its Auth settings and signing-key configuration still require read-only review. Neither this selection nor the database target approves schema changes or legacy-data migration. Until the schema, identity mapping, least-privilege roles and migration plan are approved, do not create tables, alter RLS, change policies, or migrate legacy data. The existing GitHub Pages deployment serves only the Angular frontend; it does not host the API or database.
+
+Security baseline: `SECURITY-CRYPTOGRAPHY-BASELINE.md` is mandatory for all new work. Authentication and session requirements are specified in `AUTHENTICATION-SESSION-SECURITY-DESIGN.md`; Supabase Auth is selected for implementation planning, while production activation remains blocked pending issuer/JWKS/signing-key verification and operational approval. The current repository is not yet production-secure; no production security certification or completed encryption configuration is claimed.
+Effective permission and exact station-scope evaluation rules are specified in `ROLE-PERMISSION-STATION-ACCESS-CONTRACT.md`; the provider-independent domain evaluator and unit tests exist, but role mappings and persistence remain unapproved.
+Identity linking and storage invariants are specified in `IDENTITY-LINK-PERSISTENCE-CONTRACT.md`. It is a proposed contract only; no database migration or identity-link persistence adapter is enabled.
+
+The repository inspection and decision not to introduce a speculative database adapter or migration are recorded in `IDENTITY-PERSISTENCE-IMPLEMENTATION-DECISION.md`. The Supabase Auth + ASP.NET Core logical data model and its remaining decisions are documented in `CANONICAL-DATA-MODEL-PROPOSAL.md`; it is a review proposal, not an approved physical schema.
+
+
+The legacy Supabase project `INSERT` has been inspected read-only and remains separate from the new target. Its schema, classic/automatic station counts, scientific record counts, and security-advisor findings are documented in `LEGACY-SUPABASE-READ-ONLY-REVIEW.md`. No legacy or target database objects were changed.
+
+Supabase bearer-token validation configuration and its asymmetric-signing prerequisite are specified in `SUPABASE-JWT-AUTHENTICATION-CONFIGURATION.md`. The initial-registration actor context is now derived only from the authenticated JWT `sub` claim and accepts only a non-empty UUID; its provider is registered in the API composition root, but registration HTTP mapping and persistence/catalogue adapters remain disabled. The API now supports configuration-driven JWT bearer validation; without provider settings in Development it remains fail-closed, and production startup requires explicit issuer and audience settings. Production token validation still requires runtime verification against the selected Supabase Auth project.
+
+Registration approval queue filtering, actor binding, station-scoped visibility, redacted projections and opaque keyset cursors are specified in `REGISTRATION-APPROVAL-QUEUE-READ-CONTRACT.md`; the read-only application query service and validation tests exist, but the production read store and endpoint remain disabled.\n\nRegistration submission HTTP semantics and security requirements are specified in `REGISTRATION-SUBMISSION-API-CONTRACT.md`. The required single-transaction PostgreSQL behavior, idempotency/concurrency rules, rollback guarantees and integration-test gates are specified in `REGISTRATION-ATOMIC-PERSISTENCE-DESIGN.md`; this is a design contract only and does not authorize schema or database changes. The application service exists, the JWT `sub` actor provider is registered, and a fail-closed configuration-backed catalogue adapter is registered. The atomic store and authoritative active-catalogue integration remain pending; the HTTP endpoint is deliberately unmapped until all release gates pass.
+
+
+The provider-independent role/permission catalogue structure and validation rules are specified in `AUTHORIZATION-CATALOGUE-CONTRACT.md`. A pure validator and unit tests now reject malformed/duplicate definitions and dangling or duplicate mappings. No concrete METRA role codes, permission codes, role mappings, seed data, or database objects have been selected or created.
+
+## Authorization governance additions
+
+- `AUTHORIZATION-CATALOGUE-CONTRACT.md` — provider-independent role/permission catalogue structure and structural validation, without preselecting METRA role codes or mappings.
+- `ACCOUNT-LIFECYCLE-AND-ACCESS-MUTATION-CONTRACT.md` — explicit account lifecycle transitions, station assignment and permission grant/revoke application contracts, effective-access consequences, concurrency checks, and transactional audit requirements. `MetraAdministrativeAuditEventPolicy` validates immutable audit event structure. `MetraAdministrativeAuditQueryService` provides bounded, authorized, read-only audit search with deterministic keyset pagination, response-integrity checks, and a redacted list projection that excludes free-text notes and before/after values.
+- `CURRENT-USER-CONTEXT-AND-AUDIT-READ-CONTRACT.md` — authoritative current-user snapshot validation, effective assignment/permission projection, read-only administrative audit query security, redaction and activation gates. Both services remain unregistered and unmapped pending an approved persistence adapter.
+- `ACCOUNT-DIRECTORY-READ-CONTRACT.md` — minimal administrative account listing with server-resolved actor identity, bounded state/station/prefix filters, actor/filter-bound opaque keyset cursor requirements, station-scope enforcement, response validation and privacy redaction. The read-only application service and unit tests exist; no endpoint, production store, schema or database object is enabled.
+Station catalogue read contract: `STATION-CATALOGUE-READ-CONTRACT.md` defines one source-preserving read projection for classic and automatic stations, nullable verified coordinates, stable source-local identity, bounded keyset paging and the explicit prohibition on name-only deduplication. Its application service, unit tests, and protected HTTP routes exist; the routes return 503 until the approved actor context and permission-enforcing read store are registered. No schema or database access is enabled.
+
+
+Station detail read contract: `StationDetailQueryService` and its tests resolve one record only by the source-qualified pair (Classic/Automatic + source-local ID). The trusted store contract requires permission and station-scope enforcement in the read itself, returns the same not-found outcome for absent and out-of-scope records, and cannot fall back by name or across source classes. The protected detail route is mapped but returns 503 until the approved actor context and permission-enforcing detail store are registered. No production adapter, DI registration, or database access is enabled.
+
+
+The Angular station catalogue screen is available at `/stations`. Its client models, guarded HTTP service, source-preserving list UI, and explicit unconfigured state are documented in `STATION-CATALOGUE-READ-CONTRACT.md`. API activation and geographic map rendering remain gated on approved server-side permission enforcement and map-provider selection.
+
+
+The station catalogue has a unified Angular screen at `/stations` and protected HTTP routes at `GET /api/v1/stations` and `GET /api/v1/stations/{sourceKind}/{sourceRecordId}`. The routes return 503 until approved actor-context and permission-enforcing read-store dependencies are registered. Geographic map rendering remains gated on map-provider selection.

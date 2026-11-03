@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { CurrentUserContextService } from './core/identity/current-user-context.service';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 @Component({
@@ -18,8 +19,8 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </header>
         <section class="user-card">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-          <div class="user-name" id="sidebarUser">مستخدم</div>
-          <div class="user-details" id="sidebarStation">محطة</div>
+          <div class="user-name" id="sidebarUser">{{ identity.context()?.profile?.firstName || 'لا توجد جلسة مستخدم' }}</div>
+          <div class="user-details" id="sidebarStation">{{ sessionLabel }}</div>
         </section>
         <div id="sidebarMenu">
         <div class="section-title">الإدارة</div>
@@ -44,12 +45,16 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>دورة النشرات (معاينة)</span></a>
         <div class="section-title">إدارة النظام</div>
         <nav>
+          <a class="nav-link" routerLink="/stations" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-map-location-dot users"></i><span>دليل المحطات</span></a>
           <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
         </nav>
         </div>
       </div>
     </aside>
     <main class="content-area">
+      <div class="security-notice" role="status" aria-live="polite">
+        <strong>{{ sessionTitle }}</strong> {{ sessionDescription }}
+      </div>
       <router-outlet />
       <footer>METRA 2027 · نظام إدارة السجلات المناخية</footer>
     </main>
@@ -70,12 +75,43 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     .nav-link i{width:20px;text-align:center;font-size:15px;color:#27ae60}.nav-link i.hourly{color:#bb8fce}.nav-link i.climate{color:#1abc9c}.nav-link i.daily{color:#f39c12}.nav-link i.soil{color:#af7ac5}.nav-link i.agriculture{color:#2ecc71}.nav-link i.users{color:#d7bde2}
     .nav-link:hover{background:rgba(255,255,255,.1);transform:translateX(-3px);color:#fff}.nav-link.active{background:#2980b9;color:#fff;box-shadow:0 4px 12px rgba(41,128,185,.3)}.nav-link.active i{color:#fff}
     .content-area{margin-right:300px;padding:30px;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
+    .security-notice{margin:0 0 20px;padding:13px 16px;border:1px solid #d6a54b;border-right:4px solid #b7791f;border-radius:9px;background:#fff8e8;color:#624512;font-size:13px;line-height:1.7}
     footer{margin-top:auto;text-align:center;padding:24px 8px 0;color:#83929b;font-size:11px}
     .mobile-menu,.sidebar-backdrop{display:none}
     @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(300px,85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:#2980b9;color:white;box-shadow:0 4px 14px rgba(41,128,185,.25)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  readonly identity = inject(CurrentUserContextService);
   sidebarOpen = false;
+
+  get sessionLabel(): string {
+    return this.sessionTitle;
+  }
+
+  get sessionTitle(): string {
+    switch (this.identity.state()) {
+      case 'loading': return 'جارٍ التحقق من الجلسة';
+      case 'unauthenticated': return 'غير مسجل الدخول';
+      case 'active': return 'الحساب نشط';
+      case 'pendingApproval': return 'الحساب بانتظار الموافقة';
+      case 'suspended': return 'الحساب موقوف أو غير مفعّل';
+      case 'forbidden': return 'لا توجد صلاحية للوصول';
+      case 'unknownAccountState': return 'حالة الحساب غير معروفة';
+      case 'unavailable': return 'خدمة الهوية غير متاحة';
+      default: return 'نسخة معاينة — المصادقة غير مهيأة';
+    }
+  }
+
+  get sessionDescription(): string {
+    return this.identity.state() === 'active'
+      ? 'يتم عرض بيانات الحساب من واجهة API. وتظل كل عملية محمية خاضعة لفحص الصلاحيات على الخادم.'
+      : 'لا توجد جلسة مستخدم موثقة في هذه النسخة. لا تُدخل بيانات تشغيلية أو شخصية حقيقية.';
+  }
+
+  ngOnInit(): void {
+    void this.identity.refresh();
+  }
+
   closeSidebar(): void { this.sidebarOpen = false; }
 }
