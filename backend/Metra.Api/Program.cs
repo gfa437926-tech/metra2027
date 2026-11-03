@@ -153,7 +153,7 @@ api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancell
             """
             select not r.rolsuper
                and not r.rolbypassrls
-               and pg_has_role(current_user, 'metra_api_runtime', 'member')
+               and pg_has_role(current_user, 'metra_api_runtime', 'USAGE')
             from pg_roles r
             where r.rolname = current_user
             """,
