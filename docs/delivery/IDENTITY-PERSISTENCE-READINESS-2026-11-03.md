@@ -75,7 +75,7 @@ The following changes have now been applied to the new Supabase project and comm
 - Added one-open-request-per-user and per-user idempotency unique indexes.
 - Added an append-only trigger that rejects registration audit UPDATE/DELETE.
 - Added a database trigger that requires an approved, active, non-demo station owned by an active authority and an active requestable role.
-- Added an atomic `submit_metra_registration` security-definer function, executable only by `service_role`; it writes profile, pending account state, request and audit event as one statement/transaction.
+- Added an atomic `submit_metra_registration` security-definer function. It was subsequently moved from `public` into the unexposed `private` schema; only `metra_api_runtime` can execute it. It writes profile, pending account state, request and audit event as one statement/transaction.
 - Idempotency compares a server-computed SHA-256 digest of the normalized request payload. Reuse with a different payload is a conflict.
 - Added Npgsql store and authoritative role/station catalogue adapters to the .NET API and wired the registration endpoint only when the database connection is configured.
 - Added the exact applied SQL migrations to `supabase/migrations` for repository reproducibility.
@@ -105,7 +105,7 @@ No legacy database operation was performed. The old project remains outside this
 - Added an Npgsql data source that resolves the configured Supabase issuer plus UUID subject and reads account state, profile, approved station assignments and approved permission grants in one repeatable-read snapshot.
 - Added explicit mapping for the database's `disabled` lifecycle state; unknown states remain fail-closed.
 - Kept current-user data reads within the METRA public schema; provider email is not read from `auth.users` by the runtime query.
-- Created the non-login PostgreSQL role `metra_api_runtime`. It has only scoped SELECT access to the required METRA tables and EXECUTE on the registration RPC. Direct EXECUTE was revoked from `service_role`, `anon` and `authenticated`.
+- Created the non-login PostgreSQL role `metra_api_runtime`. It has only scoped SELECT access to required METRA tables and EXECUTE on the private registration and approval RPCs. Direct EXECUTE was revoked from `service_role`, `anon` and `authenticated`.
 - The actual managed LOGIN role and secret have not been provisioned. Deployment must create a dedicated login, grant membership in `metra_api_runtime`, and configure the API connection string with that login before enabling database-backed endpoints.
 
 ### Latest database checks
@@ -124,7 +124,7 @@ No legacy database operation was performed. The old project remains outside this
 ## Two-stage registration approval increment — 2026-11-03
 
 - Added the private-schema `private.decide_metra_registration` database function. It locks the request and account state, checks the live active approver account, explicit stage-specific permission grant, station assignment scope, and persisted first-stage audit evidence.
-- The decision RPC now requires the expected prior status. Stale application reads cannot accidentally be interpreted as approval at the next stage.
+- The decision RPC now requires the expected prior status and uses the PostgreSQL clock for validity checks and audit timestamps. Stale application reads cannot accidentally be interpreted as approval at the next stage.
 - Station-stage approval rechecks that the requested station is still approved, active, non-demo and owned by an active authority, and that the requested role remains active/requestable.
 - Final approval requires a distinct system approver, rechecks station and role eligibility, creates the approved station assignment, activates the account, closes the registration request and appends the immutable audit event in the same transaction.
 - Rejection requires a non-empty reason; both decision stages retain the note in append-only audit history.
@@ -133,7 +133,8 @@ No legacy database operation was performed. The old project remains outside this
 - Added a redacted approval queue with keyset pagination and protected cursors. Queue SQL revalidates the active account, current stage permission and station scope in the same read statement.
 - Added endpoints: `GET /api/v1/registration-requests/approval-queue` and `POST /api/v1/registration-requests/{requestId}/decision`. They are mapped only when the database connection is configured.
 - Runtime database role now has narrowly scoped SELECT access to registration requests and approval audit evidence under RLS policies. Browser roles remain denied.
-- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`.
+- Moved the submission RPC into the unexposed `private` schema and restricted execution to `metra_api_runtime`; service_role, anon and authenticated cannot execute it.
+- Mirrored applied migrations using the exact Supabase migration versions: `20261103000835`, `20261103000914`, `20261103001045`, `20261103001209`, `20261103001354`, `20261103001407`.
 
 ### Database verification after approval changes
 
@@ -153,3 +154,11 @@ No legacy database operation was performed. The old project remains outside this
 5. Validate deployment configuration and complete Angular/Flutter workflow integration and authenticated E2E tests before production activation.
 
 The final CI result for the latest branch head is pending verification; do not interpret earlier green runs as validation of the newest commits.
+
+
+### Latest RPC privilege verification
+
+- `private.submit_metra_registration` exists; the exposed `public.submit_metra_registration` no longer exists.
+- `metra_api_runtime` can execute the private submission and approval RPCs.
+- `service_role`, `anon` and `authenticated` cannot execute the private submission RPC.
+- Security advisor remains at 0 findings after moving the submission function into the unexposed schema.
