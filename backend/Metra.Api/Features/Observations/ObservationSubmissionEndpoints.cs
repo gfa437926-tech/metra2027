@@ -105,18 +105,9 @@ public static class ObservationSubmissionEndpoints
                 if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
                     return Results.Unauthorized();
 
-                if (request is null ||
-                    string.IsNullOrWhiteSpace(request.IdempotencyKey) ||
-                    request.IdempotencyKey.Length > 128 ||
-                    request.IdempotencyKey != request.IdempotencyKey.Trim() ||
-                    request.ObservationType is not ("daily" or "hourly" or "phenomenon") ||
-                    request.ObservedAt is null ||
-                    request.Payload is null ||
-                    request.Payload.Value.ValueKind != JsonValueKind.Object ||
-                    request.Payload.Value.GetRawText().Length > 65536)
-                {
-                    return Results.BadRequest(new { error = "invalid_observation_request" });
-                }
+                var validationError = ObservationSubmissionRequestGuard.GetError(request);
+                if (validationError is not null)
+                    return Results.BadRequest(new { error = validationError });
 
                 if (!submission.IsConfigured)
                     return Results.Problem(
@@ -147,5 +138,28 @@ public static class ObservationSubmissionEndpoints
             .WithName("SubmitStationObservation");
 
         return endpoints;
+    }
+}
+
+public static class ObservationSubmissionRequestGuard
+{
+    public static string? GetError(ObservationSubmissionRequest? request)
+    {
+        if (request is null ||
+            string.IsNullOrWhiteSpace(request.IdempotencyKey) ||
+            request.IdempotencyKey.Length > 128 ||
+            request.IdempotencyKey != request.IdempotencyKey.Trim())
+            return "invalid_idempotency_key";
+
+        if (request.ObservationType is not ("daily" or "hourly" or "phenomenon"))
+            return "invalid_observation_type";
+
+        if (request.ObservedAt is null ||
+            request.Payload is null ||
+            request.Payload.Value.ValueKind != JsonValueKind.Object ||
+            request.Payload.Value.GetRawText().Length > 65536)
+            return "invalid_observation_payload";
+
+        return null;
     }
 }
