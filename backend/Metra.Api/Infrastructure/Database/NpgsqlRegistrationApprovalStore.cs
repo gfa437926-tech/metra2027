@@ -71,9 +71,10 @@ public sealed class NpgsqlRegistrationApprovalStore(
                 """
                 select result_status, resulting_status
                 from private.decide_metra_registration(
-                  @request_id,@actor_id,@decision,@note,@occurred_at)
+                  @request_id,@expected_status,@actor_id,@decision,@note,@occurred_at)
                 """, connection);
             command.Parameters.Add("request_id", NpgsqlDbType.Uuid).Value = requestGuid;
+            command.Parameters.Add("expected_status", NpgsqlDbType.Text).Value = ToDatabaseStatus(expectedStatus);
             command.Parameters.Add("actor_id", NpgsqlDbType.Uuid).Value = actorGuid;
             command.Parameters.Add("decision", NpgsqlDbType.Text).Value =
                 transition.Decision == RegistrationApprovalDecision.Approve ? "approve" : "reject";
