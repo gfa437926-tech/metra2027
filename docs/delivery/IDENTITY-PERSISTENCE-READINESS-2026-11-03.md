@@ -182,3 +182,10 @@ A catalog-level privilege check found that replacing the approval function signa
 - `anon`, `authenticated`, and `service_role`: no EXECUTE on that RPC.
 - `anon`, `authenticated`, and `service_role`: no USAGE on the `private` schema.
 - The private submission RPC remains executable only by `metra_api_runtime`.
+
+
+### Runtime credential enforcement
+
+- The API readiness endpoint now verifies that the actual PostgreSQL login is a member of `metra_api_runtime`, and that the login is neither SUPERUSER nor BYPASSRLS.
+- A database connection that uses `postgres`, `service_role`, or an unrelated login will remain unready instead of silently operating with excessive privileges.
+- Deployment must provision a dedicated non-superuser, non-BYPASSRLS LOGIN role, grant membership in `metra_api_runtime`, and configure that login in the API connection string.
