@@ -50,6 +50,40 @@ void main() {
     client.close();
   });
 
+
+  test('station directory fetches every page instead of silently hiding stations', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        requests++;
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final count = offset == 0 ? 500 : 1;
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+    final rows = await client.getAllStationDirectory(stationType: 'classic');
+    expect(requests, 2);
+    expect(rows, hasLength(501));
+    expect(rows.last.localCode, 'ST-500');
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,

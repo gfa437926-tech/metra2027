@@ -100,6 +100,24 @@ class MetraApiClient {
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
   }
 
+  Future<List<StationDirectoryItem>> getAllStationDirectory({
+    String? stationType,
+  }) async {
+    const pageSize = 500;
+    const maximumRows = 10000;
+    final stations = <StationDirectoryItem>[];
+    for (var offset = 0; offset < maximumRows; offset += pageSize) {
+      final page = await getStationDirectory(
+        limit: pageSize,
+        offset: offset,
+        stationType: stationType,
+      );
+      stations.addAll(page);
+      if (page.length < pageSize) return stations;
+    }
+    throw const MetraApiException(413, 'station_directory_limit_exceeded');
+  }
+
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',

@@ -14,7 +14,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   late Future<List<StationDirectoryItem>> _stations;
   @override
   void initState() { super.initState(); _load(); }
-  void _load() { _stations = widget.api.getStationDirectory(stationType: _type); }
+  void _load() { _stations = widget.api.getAllStationDirectory(stationType: _type); }
   @override
   Widget build(BuildContext context) => Column(children: [
     Padding(padding: const EdgeInsets.all(12), child: Wrap(spacing: 8, children: [
