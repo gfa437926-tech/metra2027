@@ -59,8 +59,7 @@ public sealed class SupabaseStationAuthorizationService(
                 return false;
 
             // A malformed or empty RPC response must never authorize access.
-            return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken)
-                ?? false;
+            return await response.Content.ReadFromJsonAsync<bool>(cancellationToken: cancellationToken);
         }
         catch (HttpRequestException)
         {
