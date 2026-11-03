@@ -84,7 +84,7 @@ void main() {
                 'nextCursor': null,
               }),
               200,
-              encoding: utf8);
+              headers: {'content-type': 'application/json; charset=utf-8'});
         }),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
@@ -114,7 +114,7 @@ void main() {
                 'nextCursor': null,
               }),
               200,
-              encoding: utf8);
+              headers: {'content-type': 'application/json; charset=utf-8'});
         }),
         tokenProvider: _TokenProvider('test-token'),
         endpointEnabled: true,
