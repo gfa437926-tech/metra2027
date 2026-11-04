@@ -5,10 +5,16 @@ on:
     branches: [main]
     paths:
       - "backend/**"
+      - "database/migrations/**"
+      - "database/tests/**"
+      - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
       - "backend/**"
+      - "database/migrations/**"
+      - "database/tests/**"
+      - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
@@ -27,6 +33,8 @@ jobs:
           dotnet-version: 10.0.x
       - name: Restore and fail on high/critical NuGet advisories
         run: dotnet restore backend/Metra.Api/Metra.Api.csproj -p:NuGetAudit=true -p:NuGetAuditLevel=high -p:WarningsAsErrors=NU1903%3BNU1904
+      - name: Verify station authorization SQL contract
+        run: bash database/tests/verify_station_permission_rpc.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
