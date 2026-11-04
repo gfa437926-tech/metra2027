@@ -25,8 +25,8 @@ builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecis
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
-builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService));
-builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService));
+builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService), client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
@@ -112,13 +112,19 @@ app.MapGet("/api/v1/ready", async (
     IObservationDecisionService decision,
     IObservationQueueService queue,
     IStationDirectoryService directory,
+    IStationCatalogueReviewService stationReview,
+    IRegistrationReviewService registrationReview,
+    IRegistrationSubmissionService registrationSubmission,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
         submission.IsConfigured &&
         decision.IsConfigured &&
         queue.IsConfigured &&
-        directory.IsConfigured;
+        directory.IsConfigured &&
+        stationReview.IsConfigured &&
+        registrationReview.IsConfigured &&
+        registrationSubmission.IsConfigured;
 
     if (!configured)
         return Results.Problem(
