@@ -23,6 +23,14 @@ This is deliberately not a global administrator bypass. Additional
 permissions must be reviewed against the role's approved responsibilities
 before being added through a versioned database migration.
 
+## Station audit log
+
+Station catalogue and station-assignment events are exposed through the
+station-scoped `GET /api/v1/stations/{stationId}/audit-log` route. The route
+requires `users.station.view`, which is explicitly assigned to `station_head`
+and `system_admin`; the service-role RPC returns a constrained projection
+rather than the raw audit table. Browser roles cannot execute the RPC directly.
+
 ## Station catalogue review
 
 The `network_director` allow-list entry for `stations.catalogue.review` is
