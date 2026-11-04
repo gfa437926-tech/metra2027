@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
+import { StationUserDirectoryApiService, StationUserItem } from '../../core/api/station-user-directory-api.service';
 import {
   RegistrationAuditItem,
   RegistrationDecision,
@@ -42,6 +43,7 @@ import {
             <button type="button" [class.active]="stage === 'station' && viewMode === 'queue'" [attr.aria-pressed]="stage === 'station' && viewMode === 'queue'" (click)="setStage('station')">اعتماد المحطة</button>
             <button type="button" [class.active]="stage === 'system' && viewMode === 'queue'" [attr.aria-pressed]="stage === 'system' && viewMode === 'queue'" (click)="setStage('system')">الاعتماد النظامي</button>
             <button type="button" [class.active]="viewMode === 'audit'" [attr.aria-pressed]="viewMode === 'audit'" (click)="setView('audit')">سجل التدقيق</button>
+            <button type="button" [class.active]="viewMode === 'users'" [attr.aria-pressed]="viewMode === 'users'" (click)="setView('users')">المستخدمون المسندون</button>
           </div>
         </div>
 
@@ -54,6 +56,29 @@ import {
           <div class="empty">اختر محطة لعرض الطلبات التي تقع ضمن نطاق صلاحياتك.</div>
         } @else if (loadingQueue) {
           <div class="empty">جارٍ تحميل طلبات التسجيل…</div>
+
+        } @else if (viewMode === 'users') {
+          @if (stationUsers.length === 0) {
+            <div class="empty">لا توجد تكليفات مسجلة لهذه المحطة.</div>
+          } @else {
+            <div class="queue-meta">{{ stationUsers.length }} مستخدم/تكليف — عرض للقراءة فقط</div>
+            <div class="user-directory-wrap">
+              <table class="user-directory">
+                <thead><tr><th>المستخدم</th><th>الدور</th><th>حالة الحساب</th><th>حالة التكليف</th><th>سريان التكليف</th></tr></thead>
+                <tbody>
+                  @for (user of stationUsers; track user.assignment_id) {
+                    <tr>
+                      <td><strong>{{ stationUserName(user) }}</strong><small>{{ user.phone || 'لا يوجد هاتف' }}</small></td>
+                      <td>{{ user.role_name_ar || user.assignment_role_code }}</td>
+                      <td><span class="state-tag">{{ accountStateLabel(user.account_state) }}</span></td>
+                      <td>{{ assignmentStateLabel(user.assignment_status) }}</td>
+                      <td>{{ formatDate(user.valid_from) }}<small>{{ user.valid_to ? 'حتى ' + formatDate(user.valid_to) : 'دون تاريخ انتهاء' }}</small></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
         } @else if (viewMode === 'audit') {
           @if (auditEvents.length === 0) {
             <div class="empty">لا توجد أحداث تدقيق مسجلة لهذه المحطة.</div>
@@ -119,18 +144,20 @@ import {
     .filters{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}.filters label,.decision label{display:grid;gap:6px;min-width:min(100%,300px);font-size:12px;color:#647682;font-weight:700}.filters select{min-width:300px;max-width:100%;padding:10px;border:1px solid #dce5ea;border-radius:8px;background:#fff;color:#304b5b}
     .stage-switch{display:flex;gap:5px;background:#f0f4f6;padding:4px;border-radius:9px}.stage-switch button{border:0;background:transparent;color:#687985;padding:8px 12px;border-radius:7px;font-size:12px;cursor:pointer}.stage-switch button.active{background:#fff;color:#176b9c;box-shadow:0 1px 5px #22334418;font-weight:800}
     .notice{padding:11px 13px;border-radius:8px;font-size:12px;margin:12px 0}.warning{background:#fff8e9;color:#795a20}.error{background:#fff0ef;color:#a33d35}.success{background:#eaf7ef;color:#247247}
-    .empty{padding:28px 14px;text-align:center;background:#f8fafb;border:1px dashed #d8e2e8;border-radius:10px;color:#7b8992;font-size:13px}.queue-meta{font-size:11px;color:#84919a;margin:8px 0}.audit-list{display:grid;gap:9px}.audit-item{border:1px solid #e6edf1;border-right:3px solid #6b9fbd;border-radius:9px;padding:12px 14px}.audit-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.audit-top strong{font-size:12px;color:#31566d}.audit-top time{font-size:10px;color:#87939b}.audit-item p{font-size:12px;color:#536774;margin:8px 0}.audit-item small{font-size:10px;color:#87939b;overflow-wrap:anywhere}.request-list{display:grid;gap:12px}.request-card{border:1px solid #e6edf1;border-radius:10px;padding:15px;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.8fr);gap:18px}.person{display:grid;gap:5px}.person strong{font-size:14px}.person span{font-size:12px;color:#287caf}.details{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:12px}.details span{font-size:11px;color:#71808b}.decision{display:grid;gap:9px}.decision textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #dce5ea;border-radius:8px;padding:9px;color:#304b5b;font-size:12px}.actions{display:flex;gap:8px;justify-content:flex-start}.actions button{border:0;border-radius:7px;padding:8px 15px;font-size:12px;font-weight:800;cursor:pointer}.approve{background:#e7f5ec;color:#26754a}.reject{background:#fff0ef;color:#a33d35}.security-note{margin:14px 0 0;color:#85929a;font-size:10px;line-height:1.8}
+    .empty{padding:28px 14px;text-align:center;background:#f8fafb;border:1px dashed #d8e2e8;border-radius:10px;color:#7b8992;font-size:13px}.queue-meta{font-size:11px;color:#84919a;margin:8px 0}.user-directory-wrap{overflow:auto;border:1px solid #e6edf1;border-radius:9px}.user-directory{width:100%;border-collapse:collapse;min-width:680px}.user-directory th{text-align:right;background:#f5f8fa;color:#70808b;font-size:11px;padding:11px}.user-directory td{padding:11px;border-top:1px solid #edf1f3;font-size:11px;vertical-align:top}.user-directory small{display:block;color:#87939b;font-size:10px;margin-top:4px;overflow-wrap:anywhere}.state-tag{display:inline-block;border-radius:20px;background:#eef4f7;padding:4px 8px;font-size:10px}.audit-list{display:grid;gap:9px}.audit-item{border:1px solid #e6edf1;border-right:3px solid #6b9fbd;border-radius:9px;padding:12px 14px}.audit-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.audit-top strong{font-size:12px;color:#31566d}.audit-top time{font-size:10px;color:#87939b}.audit-item p{font-size:12px;color:#536774;margin:8px 0}.audit-item small{font-size:10px;color:#87939b;overflow-wrap:anywhere}.request-list{display:grid;gap:12px}.request-card{border:1px solid #e6edf1;border-radius:10px;padding:15px;display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.8fr);gap:18px}.person{display:grid;gap:5px}.person strong{font-size:14px}.person span{font-size:12px;color:#287caf}.details{display:flex;flex-wrap:wrap;gap:7px 16px;margin-top:12px}.details span{font-size:11px;color:#71808b}.decision{display:grid;gap:9px}.decision textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #dce5ea;border-radius:8px;padding:9px;color:#304b5b;font-size:12px}.actions{display:flex;gap:8px;justify-content:flex-start}.actions button{border:0;border-radius:7px;padding:8px 15px;font-size:12px;font-weight:800;cursor:pointer}.approve{background:#e7f5ec;color:#26754a}.reject{background:#fff0ef;color:#a33d35}.security-note{margin:14px 0 0;color:#85929a;font-size:10px;line-height:1.8}
     @media(max-width:760px){.review-panel{padding:14px}.review-heading{flex-direction:column}.filters{align-items:stretch}.filters select{min-width:0;width:100%}.stage-switch button{flex:1}.request-card{grid-template-columns:1fr}.actions button{flex:1}}
   `]
 })
 export class RegistrationReviewComponent implements OnInit {
   readonly api = inject(RegistrationReviewApiService);
   private readonly stationsApi = inject(ObservationApiService);
+  private readonly userDirectoryApi = inject(StationUserDirectoryApiService);
 
   stations: StationDirectoryItem[] = [];
   requests: RegistrationRequestItem[] = [];
   auditEvents: RegistrationAuditItem[] = [];
-  viewMode: 'queue' | 'audit' = 'queue';
+  stationUsers: StationUserItem[] = [];
+  viewMode: 'queue' | 'audit' | 'users' = 'queue';
   selectedStationId = '';
   stage: RegistrationReviewStage = 'station';
   loadingStations = false;
@@ -169,7 +196,7 @@ export class RegistrationReviewComponent implements OnInit {
     await this.loadQueue();
   }
 
-  async setView(view: 'audit'): Promise<void> {
+  async setView(view: 'audit' | 'users'): Promise<void> {
     this.viewMode = view;
     this.notice = '';
     await this.loadQueue();
@@ -178,6 +205,8 @@ export class RegistrationReviewComponent implements OnInit {
   async loadQueue(): Promise<void> {
     if (!this.selectedStationId || !this.api.isConfigured) {
       this.requests = [];
+      this.auditEvents = [];
+      this.stationUsers = [];
       return;
     }
     this.loadingQueue = true;
@@ -186,13 +215,20 @@ export class RegistrationReviewComponent implements OnInit {
       if (this.viewMode === 'audit') {
         this.auditEvents = await this.api.getAudit(this.selectedStationId, this.stage);
         this.requests = [];
+        this.stationUsers = [];
+      } else if (this.viewMode === 'users') {
+        this.stationUsers = await this.userDirectoryApi.getUsers(this.selectedStationId);
+        this.requests = [];
+        this.auditEvents = [];
       } else {
         this.requests = await this.api.getQueue(this.selectedStationId, this.stage);
         this.auditEvents = [];
+        this.stationUsers = [];
       }
     } catch (error) {
       this.requests = [];
       this.auditEvents = [];
+      this.stationUsers = [];
       this.error = this.errorMessage(error);
     } finally {
       this.loadingQueue = false;
@@ -213,6 +249,33 @@ export class RegistrationReviewComponent implements OnInit {
     } finally {
       this.busyRequestId = null;
     }
+  }
+
+
+  stationUserName(user: StationUserItem): string {
+    return [user.first_name, user.father_name, user.last_name].filter(Boolean).join(' ');
+  }
+
+  accountStateLabel(state: string | null): string {
+    const labels: Record<string, string> = {
+      active: 'فعال',
+      pending_station_approval: 'بانتظار المحطة',
+      pending_system_approval: 'بانتظار النظام',
+      rejected: 'مرفوض',
+      suspended: 'موقوف',
+      disabled: 'معطل'
+    };
+    return state ? labels[state] ?? state : 'غير محدد';
+  }
+
+  assignmentStateLabel(state: string): string {
+    const labels: Record<string, string> = {
+      approved: 'معتمد',
+      pending: 'معلق',
+      rejected: 'مرفوض',
+      revoked: 'ملغى'
+    };
+    return labels[state] ?? state;
   }
 
   eventLabel(eventType: string): string {
