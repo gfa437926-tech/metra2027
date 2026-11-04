@@ -16,7 +16,8 @@ var audience = builder.Configuration["Authentication:Audience"] ?? "authenticate
 builder.Services.AddProblemDetails();
 builder.Services.AddHttpClient(nameof(SupabaseStationAuthorizationService));
 builder.Services.AddHttpClient(nameof(SupabaseObservationQueueService));
-builder.Services.AddHttpClient(nameof(SupabaseStationDirectoryService));
+builder.Services.AddHttpClient(nameof(SupabaseStationDirectoryService), client =>
+    client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
@@ -93,8 +94,8 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
 .AllowAnonymous()
 .WithName("GetApiHealth");
 
-// Readiness is deliberately separate from liveness. It reports only whether
-// server-side Supabase integration is configured; it never exposes secret values.
+// Readiness is separate from liveness: it verifies server configuration and a
+// bounded, server-authenticated Supabase catalogue request without exposing secrets.
 app.MapGet("/api/v1/ready", async (
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,

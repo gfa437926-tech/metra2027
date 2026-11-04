@@ -2,6 +2,11 @@ using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Metra.Api.Features.Stations;
+using System.Text.Json;
 using Xunit;
 
 namespace Metra.Api.Tests.Security;
@@ -34,15 +39,9 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task Readiness_endpoint_fails_when_supabase_probe_cannot_be_completed_even_if_credentials_are_present()
+    public async Task Readiness_endpoint_fails_when_supabase_probe_fails_even_if_credentials_are_present()
     {
-        using var configuredFactory = _factory.WithWebHostBuilder(builder =>
-            builder.ConfigureAppConfiguration((_, configuration) =>
-                configuration.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["Supabase:Url"] = "https://tbdnklyxjvbrilvnwgmq.supabase.co",
-                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder"
-                })));
+        using var configuredFactory = CreateConfiguredReadinessFactory(stations: null);
         using var client = configuredFactory.CreateClient();
 
         using var response = await client.GetAsync("/api/v1/ready");
@@ -50,6 +49,47 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
         Assert.DoesNotContain("test-only-placeholder", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_probe_succeeds()
+    {
+        using var configuredFactory = CreateConfiguredReadinessFactory(JsonDocument.Parse("[]").RootElement.Clone());
+        using var client = configuredFactory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"status\":\"ready\"", body, StringComparison.Ordinal);
+    }
+
+    private WebApplicationFactory<Program> CreateConfiguredReadinessFactory(JsonElement? stations)
+    {
+        return _factory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Supabase:Url"] = "https://tbdnklyxjvbrilvnwgmq.supabase.co",
+                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder"
+                }));
+            builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IStationDirectoryService>();
+                services.AddSingleton<IStationDirectoryService>(
+                    new ReadinessStationDirectoryStub(stations));
+            });
+        });
+    }
+
+    private sealed class ReadinessStationDirectoryStub(JsonElement? stations) : IStationDirectoryService
+    {
+        public bool IsConfigured => true;
+
+        public Task<JsonElement?> GetStationsAsync(
+            int limit, int offset, string? stationType, CancellationToken cancellationToken) =>
+            Task.FromResult(stations);
     }
 
     [Theory]
