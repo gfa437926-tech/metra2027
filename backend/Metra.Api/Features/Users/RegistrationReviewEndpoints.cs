@@ -13,8 +13,8 @@ public sealed record RegistrationDecisionOutcome(bool IsConfigured, bool Succeed
 public interface IRegistrationReviewService
 {
     bool IsConfigured { get; }
-    Task<JsonElement?> GetPendingForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken);
-    Task<RegistrationDecisionOutcome> DecideAsync(Guid stationId, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken);
+    Task<JsonElement?> GetPendingForStationAsync(Guid stationId, string expectedStatus, int limit, CancellationToken cancellationToken);
+    Task<RegistrationDecisionOutcome> DecideAsync(Guid stationId, string expectedStatus, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken);
 }
 
 public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients, IConfiguration configuration) : IRegistrationReviewService
@@ -27,15 +27,16 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
 
-    public async Task<JsonElement?> GetPendingForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken)
+    public async Task<JsonElement?> GetPendingForStationAsync(Guid stationId, string expectedStatus, int limit, CancellationToken cancellationToken)
     {
-        if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 100) return null;
+        if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 100 ||
+            expectedStatus is not ("pending_station_approval" or "pending_system_approval")) return null;
 
         // Deliberately omit email/auth fields. Return only the minimum profile,
         // request, station and role data needed for the station approval decision.
         var query = "select=id,user_id,requested_station_id,requested_role_code,status,phone_snapshot,terms_version,submitted_at,metra_user_profiles(first_name,father_name,last_name),metra_role_catalogue(name_ar,name_en),station_catalogue(name_ar,name_en,local_station_code)" +
             "&requested_station_id=eq." + stationId.ToString("D") +
-            "&status=eq.pending_station_approval&order=submitted_at.asc&limit=" + limit;
+            "&status=eq." + expectedStatus + "&order=submitted_at.asc&limit=" + limit;
         using var message = new HttpRequestMessage(HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/registration_requests?{query}");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
@@ -52,7 +53,7 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
     }
 
     public async Task<RegistrationDecisionOutcome> DecideAsync(
-        Guid stationId, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken)
+        Guid stationId, string expectedStatus, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken)
     {
         if (!IsConfigured) return new(false, false, null, null);
         using var message = new HttpRequestMessage(HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/decide_metra_registration_for_station");
@@ -62,7 +63,7 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
         {
             p_request_id = requestId,
             p_station_id = stationId,
-            p_expected_status = "pending_station_approval",
+            p_expected_status = expectedStatus,
             p_actor_user_id = actorUserId,
             p_decision = request.Decision,
             p_note = request.Note,
@@ -110,7 +111,7 @@ public static class RegistrationReviewEndpoints
                 return Results.BadRequest(new { error = "invalid_limit", maximum = 100 });
             if (!review.IsConfigured)
                 return Results.Problem(title: "Registration review unavailable", statusCode: 503);
-            var result = await review.GetPendingForStationAsync(stationId, take, cancellationToken);
+            var result = await review.GetPendingForStationAsync(stationId, "pending_station_approval", take, cancellationToken);
             return result is null
                 ? Results.Problem(title: "Registration queue read failed", statusCode: 503)
                 : Results.Ok(result.Value);
@@ -133,7 +134,7 @@ public static class RegistrationReviewEndpoints
             // The request must belong to the station in the route. The RPC independently
             // locks the request, checks its stage, prevents self-review, and validates
             // the actor's approved station assignment and individual permission grant.
-            var outcome = await review.DecideAsync(stationId, requestId, actorUserId, request!, cancellationToken);
+            var outcome = await review.DecideAsync(stationId, "pending_station_approval", requestId, actorUserId, request!, cancellationToken);
             if (!outcome.Succeeded)
             {
                 if (outcome.StatusCode == HttpStatusCode.Forbidden) return Results.Forbid();
@@ -158,6 +159,61 @@ public static class RegistrationReviewEndpoints
         .RequireStationPermission("registrations.station.approve")
         .WithTags("Users")
         .WithName("DecideStationRegistrationRequest");
+
+
+        endpoints.MapGet("/api/v1/stations/{stationId:guid}/system-registration-requests", async (
+            Guid stationId, int? limit, IRegistrationReviewService review, CancellationToken cancellationToken) =>
+        {
+            var take = limit ?? 50;
+            if (take is < 1 or > 100)
+                return Results.BadRequest(new { error = "invalid_limit", maximum = 100 });
+            if (!review.IsConfigured)
+                return Results.Problem(title = "System registration review unavailable", statusCode: 503);
+            var result = await review.GetPendingForStationAsync(stationId, "pending_system_approval", take, cancellationToken);
+            return result is null
+                ? Results.Problem(title: "System registration queue read failed", statusCode: 503)
+                : Results.Ok(result.Value);
+        })
+        .RequireStationPermission("registrations.system.approve")
+        .WithTags("Users")
+        .WithName("GetSystemRegistrationRequests");
+
+        endpoints.MapPost("/api/v1/stations/{stationId:guid}/system-registration-requests/{requestId:guid}/decision", async (
+            Guid stationId, Guid requestId, RegistrationDecisionRequest? request, HttpContext http,
+            IRegistrationReviewService review, CancellationToken cancellationToken) =>
+        {
+            if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var actorUserId))
+                return Results.Unauthorized();
+            var error = RegistrationDecisionRequestGuard.GetError(request);
+            if (error is not null) return Results.BadRequest(new { error });
+            if (!review.IsConfigured)
+                return Results.Problem(title: "System registration review unavailable", statusCode: 503);
+
+            var outcome = await review.DecideAsync(
+                stationId, "pending_system_approval", requestId, actorUserId, request!, cancellationToken);
+            if (!outcome.Succeeded)
+            {
+                if (outcome.StatusCode == HttpStatusCode.Forbidden) return Results.Forbid();
+                if (outcome.StatusCode == HttpStatusCode.NotFound) return Results.NotFound();
+                if (outcome.StatusCode == HttpStatusCode.Conflict)
+                    return Results.Conflict(new { error = "registration_state_conflict" });
+                if (outcome.StatusCode == HttpStatusCode.BadRequest)
+                    return Results.BadRequest(new { error = "registration_decision_rejected" });
+                return Results.Problem(title: "System registration decision unavailable", statusCode: 503);
+            }
+
+            var rpcStatus = RegistrationDecisionRpcResult.GetStatus(outcome.Data);
+            if (rpcStatus == "unauthorized") return Results.Forbid();
+            if (rpcStatus == "not_found") return Results.NotFound();
+            if (rpcStatus == "conflict") return Results.Conflict(new { error = "registration_state_conflict" });
+            if (rpcStatus != "committed")
+                return Results.Problem(title: "Unexpected system registration decision response", statusCode: 503);
+
+            return Results.Ok(outcome.Data);
+        })
+        .RequireStationPermission("registrations.system.approve")
+        .WithTags("Users")
+        .WithName("DecideSystemRegistrationRequest");
 
         return endpoints;
     }
