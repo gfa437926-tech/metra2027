@@ -35,7 +35,10 @@ flutter build appbundle \\
   --dart-define=METRA_SUPABASE_URL=https://your-project.supabase.co \\
   --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 # On macOS:
-flutter build ios --dart-define=METRA_API_BASE_URL=https://your-api-host
+flutter build ios \
+  --dart-define=METRA_API_BASE_URL=https://your-api-host \
+  --dart-define=METRA_SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
 ## API, authentication and operational boundaries
@@ -49,11 +52,10 @@ Implemented client capabilities:
 - Review screen with loading, empty, error, confirmation and refresh states.
 
 Not yet connected end-to-end:
-- Supabase email/password sign-in, persisted session restoration and SDK-managed token refresh.
 - Station selection in the mobile shell. The API remains the authority for station-level permissions; selecting a catalogue record does not grant review rights.
 - Live weather feed, alerts and operational reports remain pending.
 
-The app initializes Supabase only when both Supabase compile-time values are present. The login screen uses the existing account flow; it does not create users. The Supabase session is stored through flutter_secure_storage (Android encrypted storage / iOS Keychain), restored on startup, refreshed by the SDK, and removed on sign-out. The PKCE verifier storage remains managed by Supabase's Flutter adapter. The API token provider reads the current access token at request time. Configure the API origin separately with METRA_API_BASE_URL. Only a Supabase publishable key belongs in the mobile binary; never pass a service-role or secret key to Flutter.
+The app requires both valid Supabase settings and a deployed HTTPS API origin before showing the login screen. If either side is missing, it displays the exact missing build-time settings instead of allowing a sign-in that cannot reach operational APIs. Email/password sign-in uses existing provisioned accounts; the app does not create users. The Supabase session is stored through flutter_secure_storage (Android encrypted storage / iOS Keychain), restored on startup, refreshed by the SDK, and removed on sign-out. The PKCE verifier storage remains managed by Supabase's Flutter adapter. The API token provider reads the current access token at request time. Configure the API origin separately with METRA_API_BASE_URL (without `/api/v1`). Only a Supabase publishable key belongs in the mobile binary; never pass a service-role or secret key to Flutter.
 
 The app deliberately shows explicit unavailable/connection states instead of sample temperatures, invented station coordinates, or fake operational records. Do not bypass authorization by inserting a fixed station ID or token.
 
