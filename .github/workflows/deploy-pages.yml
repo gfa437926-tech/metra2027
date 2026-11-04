@@ -58,8 +58,13 @@ jobs:
           try { parsed = new URL(apiBaseUrl); } catch {
             throw new Error('METRA_API_BASE_URL must be a valid absolute URL.');
           }
-          if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+          const isLocalHttp = parsed.protocol === 'http:' &&
+            (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+          if (parsed.protocol !== 'https:' && !isLocalHttp) {
             throw new Error('Deployed API must use HTTPS (HTTP is permitted only for localhost).');
+          }
+          if (!parsed.hostname) {
+            throw new Error('METRA_API_BASE_URL must include a hostname.');
           }
           if (parsed.username || parsed.password || parsed.search || parsed.hash) {
             throw new Error('METRA_API_BASE_URL must not contain credentials, query parameters, or fragments.');
