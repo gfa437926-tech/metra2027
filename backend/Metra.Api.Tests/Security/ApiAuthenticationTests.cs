@@ -39,7 +39,8 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             "SupabaseRegistrationSubmissionService",
             "SupabaseStationUserDirectoryService",
             "SupabaseStationAuditService",
-            "SupabaseStationAssignmentService"
+            "SupabaseStationAssignmentService",
+            "SupabaseAuthorityAccessService"
         };
 
         foreach (var name in names)
