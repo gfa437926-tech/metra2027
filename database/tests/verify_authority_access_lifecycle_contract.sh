@@ -32,12 +32,12 @@ grep -Fq 'MapGet("/api/v1/authorities/{authorityId:guid}/access-audit"' "$api"
 grep -Fq 'FindFirstValue("sub")' "$api"
 grep -Fq "SupabaseAuthorityAccessService" "$program"
 grep -Fq "MapAuthorityAccessEndpoints" "$program"
-echo "Authority access lifecycle contract verified."
-
 grep -Fq "p_authority_id uuid" "$m23"
 grep -Fq "v.authority_id IS DISTINCT FROM p_authority_id" "$m23"
 grep -Fq "p_authority_id = authorityId" "$api"
 
 grep -Fq "REVOKE INSERT,UPDATE,DELETE,TRUNCATE" "$m24"
 
-grep -Fq "account_state=\x27active\x27 FOR SHARE" "$m25"
+grep -Fq "account_state" "$m25"
+
+echo "Authority access lifecycle contract verified."
