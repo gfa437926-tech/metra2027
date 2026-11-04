@@ -111,7 +111,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     final approval = station.approvalStatus == 'approved' ? 'معتمدة' :
       station.approvalStatus == 'pending' ? 'بانتظار الاعتماد' : station.approvalStatus;
     final operation = station.operationalStatus == 'unverified' ? 'غير متحقق منها' : station.operationalStatus;
-    final coords = station.hasCoordinates ? 'الإحداثيات متوفرة' : 'لا توجد إحداثيات موثقة';
+    final coords = station.hasValidCoordinates ? 'إحداثيات صالحة' : station.hasCoordinates ? 'إحداثيات غير صالحة — لن تظهر على الخريطة' : 'لا توجد إحداثيات موثقة';
     return Card(elevation: 0, child: ListTile(
       selected: station.id == widget.selectedStationId,
       onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
