@@ -165,3 +165,21 @@ secrets; it returns only the profile and request fields required for review.
 This workflow does not provide a general role-grant or privilege-escalation
 endpoint. Non-requestable administrative roles and individual permission
 grants must remain separate, explicitly reviewed operations.
+
+## User registration submission and account status
+
+- `GET /api/v1/registration-roles` returns only active requestable roles.
+- `POST /api/v1/registration-requests` submits a registration for the user in
+  the verified JWT `sub`; the client cannot submit for another user.
+- `GET /api/v1/account/registration-status` returns only the caller's own
+  account and latest registration state.
+- `GET /api/v1/stations/{stationId}/users` returns the station-scoped
+  read-only user/assignment directory and requires `users.station.view`.
+
+The submission RPC accepts only an approved, active, non-demo station and a
+currently requestable role. It uses an idempotency key and records the
+registration-submitted audit event atomically with profile, account-state and
+request creation. The public wrapper and status read model are executable only
+by `service_role`; the API supplies the caller identity from the verified JWT.
+The browser never receives the service-role key. The station directory omits
+email and authentication-provider fields and exposes no grant/revoke controls.
