@@ -61,14 +61,27 @@ jobs:
           if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
             throw new Error('Deployed API must use HTTPS (HTTP is permitted only for localhost).');
           }
+          if (parsed.username || parsed.password || parsed.search || parsed.hash) {
+            throw new Error('METRA_API_BASE_URL must not contain credentials, query parameters, or fragments.');
+          }
           if (!apiBaseUrl.endsWith('/api/v1')) {
             throw new Error('METRA_API_BASE_URL must end with /api/v1.');
           }
-          const config = {
-            apiBaseUrl,
-            supabaseUrl: (process.env.METRA_SUPABASE_URL || 'https://tbdnklyxjvbrilvnwgmq.supabase.co').trim(),
-            supabaseAnonKey: (process.env.METRA_SUPABASE_ANON_KEY || '').trim()
-          };
+          const supabaseUrl = (process.env.METRA_SUPABASE_URL || 'https://tbdnklyxjvbrilvnwgmq.supabase.co').trim();
+          const supabaseAnonKey = (process.env.METRA_SUPABASE_ANON_KEY || '').trim();
+          let parsedSupabase;
+          try { parsedSupabase = new URL(supabaseUrl); } catch {
+            throw new Error('METRA_SUPABASE_URL must be a valid absolute URL.');
+          }
+          if (parsedSupabase.protocol !== 'https:' || !parsedSupabase.hostname ||
+              parsedSupabase.username || parsedSupabase.password ||
+              parsedSupabase.search || parsedSupabase.hash) {
+            throw new Error('METRA_SUPABASE_URL must be a clean HTTPS origin without credentials, query, or fragment.');
+          }
+          if (!supabaseAnonKey) {
+            throw new Error('METRA_SUPABASE_ANON_KEY is required; configure the public publishable/anon key as a Pages secret.');
+          }
+          const config = { apiBaseUrl, supabaseUrl, supabaseAnonKey };
           fs.writeFileSync(
             path,
             'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\n',
