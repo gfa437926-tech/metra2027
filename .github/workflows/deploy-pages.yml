@@ -51,8 +51,8 @@ jobs:
           const path = 'dist/metra2027/browser/metra-config.js';
           const config = {
             apiBaseUrl: process.env.METRA_API_BASE_URL || '',
-            supabaseUrl: process.env.METRA_SUPABASE_URL || '',
-            supabaseAnonKey: process.env.METRA_SUPABASE_ANON_KEY || ''
+            supabaseUrl: process.env.METRA_SUPABASE_URL || 'https://tbdnklyxjvbrilvnwgmq.supabase.co',
+            supabaseAnonKey: process.env.METRA_SUPABASE_ANON_KEY || 'sb_publishable__CAwA8NQjhIOP_GonG2wGg_IVzVzgeU'
           };
           fs.writeFileSync(
             path,
