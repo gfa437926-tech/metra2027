@@ -63,7 +63,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
         </section>
         <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة. كما أتعهد بأن أي خطأ في البيانات سيكون تحت مسؤوليتي الشخصية.</label>
         <div class="actions">
-          <button class="secondary" type="button" (click)="saveDraft($event, dailyForm)"><i class="fa-solid fa-save"></i> حفظ مسودة</button>
+          <button class="secondary" type="button" (click)="saveDraft($event, dailyForm)"><i class="fa-solid fa-save"></i> حفظ مسودة محلية للمعاينة</button>
           <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
           <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
           <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
@@ -343,8 +343,7 @@ export class DailyReportsComponent {
     this.message = 'هذه معاينة للنص فقط؛ لم يتم إرسال التقرير أو حفظه.';
   }
   private clearPreview(): void { this.reportPreview='';this.whatsAppUrl=''; }
-    sendForReview(_item: DailyPreview): void { this.message = 'هذه مسودة محلية للمعاينة وليست محفوظة على الخادم. أعد فتح النموذج وأرسلها عبر زر الإرسال للمراجعة.'; }
-
+  
   private label(key: string): string {
     const labels: Record<string,string> = {minTemp:'الحرارة الصغرى',maxTemp:'الحرارة العظمى',precipitation:'الهطول',snowThickness:'سماكة الثلوج',evaporation:'التبخر',sunshineDuration:'مدة سطوع الشمس',sunshinePercentage:'نسبة سطوع الشمس',maxGustSpeed:'سرعة هبات الرياح',maxGustDirection:'اتجاه الهبات',maxGustTime:'وقت الهبات القصوى',maxHumidity:'الرطوبة العظمى',maxHumidityTime:'وقت الرطوبة العظمى',minHumidity:'الرطوبة الصغرى',minHumidityTime:'وقت الرطوبة الصغرى'};
     return labels[key] ?? key;

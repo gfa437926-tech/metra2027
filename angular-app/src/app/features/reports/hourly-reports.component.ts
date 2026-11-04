@@ -387,10 +387,6 @@ export class HourlyReportsComponent {
     }
   }
 
-  sendForReview(_item: HourlyPreview): void {
-    this.message = 'لا يمكن تغيير حالة النشرة محلياً. يجب إرسالها إلى الخادم وتلقي تأكيد الحفظ.';
-  }
-
   private label(key: string): string {
     const labels: Record<string, string> = {
       dryTemp:'الحرارة الجافة',wetTemp:'الحرارة الرطبة',stationPressure:'ضغط المحطة',
