@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Metra.Api.Tests.Security;
@@ -8,9 +9,11 @@ namespace Metra.Api.Tests.Security;
 public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
+    private readonly WebApplicationFactory<Program> _factory;
 
     public ApiAuthenticationTests(WebApplicationFactory<Program> factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
     }
 
@@ -28,6 +31,26 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         using var response = await _client.GetAsync("/api/v1/ready");
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Readiness_endpoint_returns_ready_when_all_server_integrations_are_configured()
+    {
+        using var configuredFactory = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Supabase:Url"] = "https://tbdnklyxjvbrilvnwgmq.supabase.co",
+                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder"
+                })));
+        using var client = configuredFactory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("ready", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("test-only-placeholder", body, StringComparison.Ordinal);
     }
 
     [Theory]
