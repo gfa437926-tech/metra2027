@@ -11,13 +11,13 @@ individual permission grant, and an approved, active, non-demo station.
 | Role | Permission codes |
 |---|---|
 | `observer` | `observation.create`, `observation.edit_own_draft`, `observation.submit` |
-| `station_head` | `observation.review`, `observation.return_for_correction` |
+| `station_head` | `observation.review`, `observation.return_for_correction`, `registrations.station.approve` |
 | `station_auditor` | `observation.review`, `observation.return_for_correction` |
 | `chief_auditor` | `observation.approve`, `observation.return_for_correction` |
 | `network_director` | No observation permission assigned; `stations.catalogue.review` for station catalogue review |
 | `statistics_director` | No observation permission assigned |
 | `aftn_operator` | No observation permission assigned |
-| `system_admin` | No observation permission assigned |
+| `system_admin` | No observation permission assigned; `registrations.system.approve` for second-stage registration approval |
 
 This is deliberately not a global administrator bypass. Additional
 permissions must be reviewed against the role's approved responsibilities
@@ -47,3 +47,28 @@ permission code, and persist through a server-only database operation.
 
 No station is made operational or approved by this policy. Demo records and
 unapproved stations remain ineligible for operational authorization.
+
+## Two-stage registration approval
+
+Registration requests remain pending until two distinct reviewers complete the
+workflow. A station head can review only requests for a station to which the
+reviewer has an approved, current assignment and an approved individual grant
+for `registrations.station.approve`. A second-stage system reviewer must have
+the `system_admin` role allow-list entry, a station-scoped assignment, and a
+separate approved individual grant for `registrations.system.approve`.
+The database function rejects self-review and requires the second reviewer to
+differ from the station approver.
+
+The API uses
+`public.decide_metra_registration_for_station`, which locks the request row
+and verifies that its requested station matches the route station before
+delegating to the existing transactional decision function. The wrapper is
+executable only by `service_role`; `anon` and `authenticated` cannot invoke
+it directly. Successful decisions write `registration_audit_events` in the
+same database transaction. The station-scoped audit endpoints expose only
+decision metadata and are protected by the corresponding stage permission.
+
+The final system approval creates the approved station assignment and changes
+the account state to active atomically. It does not create an unrestricted
+global administrator grant. Administrative role assignment and permission
+grant/revocation remain separate controlled workflows.
