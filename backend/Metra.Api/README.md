@@ -51,7 +51,7 @@ Do not put the Supabase service-role/secret key or JWT signing secret in Angular
 
 - `GET /api/v1/health` is an anonymous liveness endpoint. It confirms that the process is responding.
 - `GET /api/v1/ready` is an anonymous readiness endpoint. It returns 200 only when the server-side Supabase URL and service-role integration are configured for authorization, submission, decisions, review queue, and station directory; otherwise it returns 503.
-- Readiness checks configuration, not a live Supabase network query. Monitor Supabase connectivity separately and do not interpret readiness as proof that every database migration has been applied.
+- Readiness performs a bounded server-side PostgREST round trip against the station catalogue. It verifies basic connectivity and credentials, but does not prove that every workflow migration or every RPC is operational.
 
 ## Signing-key prerequisite
 
@@ -85,6 +85,26 @@ routes until the host secret is configured and integration tests cover pending
 accounts, expired memberships/assignments/grants, cross-station access,
 self-elevation, and demo/unapproved stations. Generic observation validation
 routes are not station-scoped operational write routes.
+
+## Station catalogue review
+
+`POST /api/v1/stations/{stationId}/review` requires the exact
+`stations.catalogue.review` station permission. The authenticated JWT `sub`
+is the only actor identity source; clients cannot choose the reviewer ID.
+Requests must carry `expectedStatus: pending`, one of `approved`, `rejected`,
+or `changes_requested`, and a trimmed reason of 5–2000 characters. The API
+calls `public.decide_station_catalogue_review` using the server-only key.
+The database function rechecks active account state, the approved and
+unrevoked time-valid individual permission grant, locks the station row,
+checks expected state to prevent stale decisions, and writes before/after
+state to `station_audit_log` atomically. The public RPC is executable only
+by `service_role`; direct anon/authenticated execution is denied.
+
+The `network_director` role is included in the explicit role allow-list for
+this permission. That role allow-list is not sufficient on its own: the
+reviewer must also have an approved, current station assignment and the
+individual permission grant. No self-grant or self-approval endpoint is
+provided by this route.
 
 ## Station directory
 
