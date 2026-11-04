@@ -318,6 +318,6 @@ export class AgricultureComponent implements AfterViewInit {
     for (const item of this.phenomena) labels[item.id] = item.label;
     const lines = Object.entries(labels).map(([id,label]) => `${label}: ${String(data.get(id) ?? '—')}`);
     lines.push('تأكيد المسؤولية: تم التأكيد');
-    this.previewText = lines.join('\\n');
+    this.previewText = lines.join('\n');
   }
 }
