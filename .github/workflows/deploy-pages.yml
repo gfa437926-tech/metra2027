@@ -71,7 +71,7 @@ jobs:
           };
           fs.writeFileSync(
             path,
-            'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\\n',
+            'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\n',
             { mode: 0o644 }
           );
           console.log('Runtime configuration validated and injected; values are not printed.');
