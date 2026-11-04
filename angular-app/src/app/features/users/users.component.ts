@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { RegistrationReviewComponent } from './registration-review.component';
 
 interface RoleDefinition {
   code: string;
@@ -10,6 +11,7 @@ interface RoleDefinition {
 
 @Component({
   standalone: true,
+  imports: [RegistrationReviewComponent],
   template: `
     <main class="page" dir="rtl">
       <header>
@@ -17,6 +19,8 @@ interface RoleDefinition {
         <h1>المستخدمون والأدوار</h1>
         <p>مرجع الأدوار المعتمدة في METRA 2027 وحدود طلبها ومنحها.</p>
       </header>
+
+      <metra-registration-review></metra-registration-review>
 
       <section class="notice" role="note">
         <strong>حالة الوحدة: مرجع الأدوار فقط</strong>
