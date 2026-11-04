@@ -39,7 +39,7 @@ import {
             </select>
           </label>
           <div class="stage-switch" role="group" aria-label="مرحلة الاعتماد">
-            <button type="button" [class.active]="stage === 'station'" [attr.aria-pressed]="stage === 'station'" (click)="setStage('station')">اعتماد المحطة</button>
+            <button type="button" [class.active]="stage === 'station' && viewMode === 'queue'" [attr.aria-pressed]="stage === 'station' && viewMode === 'queue'" (click)="setStage('station')">اعتماد المحطة</button>
             <button type="button" [class.active]="stage === 'system' && viewMode === 'queue'" [attr.aria-pressed]="stage === 'system' && viewMode === 'queue'" (click)="setStage('system')">الاعتماد النظامي</button>
             <button type="button" [class.active]="viewMode === 'audit'" [attr.aria-pressed]="viewMode === 'audit'" (click)="setView('audit')">سجل التدقيق</button>
           </div>
