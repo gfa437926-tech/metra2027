@@ -24,7 +24,7 @@ export interface AuthorityMembershipRole {
   display_order: number;
 }
 export interface AuthorityPermissionOption { permission_code: string; }
-export type AuthorityAccessKind = 'membership' | 'permission_grant';
+export type AuthorityAccessKind = 'membership' | 'permission_grant' | 'membership_active' | 'permission_grant_active';
 export interface AuthorityAccessQueueItem {
   id: string;
   user_id: string;
@@ -121,6 +121,23 @@ export class AuthorityAccessApiService {
     return firstValueFrom(this.http.post(
       `${metraConfig.apiBaseUrl}/api/v1/authorities/${encodeURIComponent(authorityId)}/permission-grants/${encodeURIComponent(id)}/decision`,
       { decision, reason }, { headers }
+    ));
+  }
+
+
+  async revokeMembership(authorityId: string, id: string, reason: string): Promise<unknown> {
+    const headers = await this.authHeaders();
+    return firstValueFrom(this.http.post(
+      `${metraConfig.apiBaseUrl}/api/v1/authorities/${encodeURIComponent(authorityId)}/memberships/${encodeURIComponent(id)}/revocation`,
+      { reason }, { headers }
+    ));
+  }
+
+  async revokePermissionGrant(authorityId: string, id: string, reason: string): Promise<unknown> {
+    const headers = await this.authHeaders();
+    return firstValueFrom(this.http.post(
+      `${metraConfig.apiBaseUrl}/api/v1/authorities/${encodeURIComponent(authorityId)}/permission-grants/${encodeURIComponent(id)}/revocation`,
+      { reason }, { headers }
     ));
   }
 

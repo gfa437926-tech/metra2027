@@ -172,7 +172,7 @@ public static class AuthorityAccessEndpoints
         {
             if (!TryActor(http, out var actor)) return Results.Unauthorized();
             var take = limit ?? 50;
-            if (authorityId == Guid.Empty || kind is not ("membership" or "permission_grant") || take is < 1 or > 100)
+            if (authorityId == Guid.Empty || kind is not ("membership" or "permission_grant" or "membership_active" or "permission_grant_active") || take is < 1 or > 100)
                 return Results.BadRequest(new { error = "invalid_authority_access_queue_request" });
             if (!service.IsConfigured) return Unavailable();
             var result = await service.CallAsync("get_authority_access_queue", new
