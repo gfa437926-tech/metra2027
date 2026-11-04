@@ -233,11 +233,15 @@ export class DailyReportsComponent {
     const labels: Record<string,string> = {currentDate:'التاريخ',station:'المحطة',observer:'اسم الراصد',minTemp:'القيمة الصغرى في النهايات (سْ)',maxTemp:'القيمة العظمى في النهايات (سْ)',precipitation:'كمية الهطول لأقرب مم',snowThickness:'أكبر سماكة ثلج لأقرب سم',precipitationTrace:'الأثر (T)',evaporation:'مجموع التبخر اليومي لأقرب عشر مم',sunshineDuration:'مجموع مدة سطوع الشمس الحقيقي',sunshinePercentage:'النسبة المئوية لسطوع الشمس',maxGustSpeed:'أكبر نفحة للرياح (م/ثا)',maxGustDirection:'اتجاه أكبر نفحة للرياح (درجة)',maxGustTime:'وقت حدوث أكبر نفحة (ساعة)',maxHumidity:'أكبر كمية رطوبة (%)',maxHumidityTime:'زمن حدوث أكبر رطوبة النسبة (ساعة)',minHumidity:'أصغر كمية رطوبة (%)',minHumidityTime:'زمن حدوث أصغر رطوبة النسبة (ساعة)',observerNotes:'ملاحظات الراصد'};
     const lines=['النشرات اليومية - '+this.typeLabel(this.reportType)];
     for (const [key,label] of Object.entries(labels)) if(values[key]) lines.push(label+': '+values[key]);
-    return lines.join('\\n');
+    return lines.join('\n');
   }
   saveDraft(event: Event, form: HTMLFormElement): void {
-    event.preventDefault(); this.submit(event,form);
-    if(this.previews.length && this.previews[0].status==='draft') this.message='تم حفظ المسودة في ذاكرة الصفحة الحالية فقط؛ لا تُحفظ بعد إغلاق الصفحة.';
+    event.preventDefault();
+    const previousCount = this.previews.length;
+    this.submit(event, form);
+    if (this.previews.length > previousCount && this.previews[0]?.status === 'draft') {
+      this.message = 'تم حفظ المسودة في ذاكرة الصفحة الحالية فقط؛ لا تُحفظ بعد إغلاق الصفحة.';
+    }
   }
   fillTestData(form: HTMLFormElement): void {
     const sample: Record<string,string>={minTemp:'-05.3',maxTemp:'25.7',precipitation:'012.5',snowThickness:'015',precipitationTrace:'T',evaporation:'12.5',sunshineDuration:'08.5',sunshinePercentage:'075',maxGustSpeed:'15',maxGustDirection:'25',maxGustTime:'14.5',maxHumidity:'085',maxHumidityTime:'06.0',minHumidity:'35',minHumidityTime:'14.0',observerNotes:'بيانات تجريبية لأغراض الاختبار'};
