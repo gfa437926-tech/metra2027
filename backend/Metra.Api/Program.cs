@@ -1,6 +1,7 @@
 using Metra.Api.Features.Observations;
 using Metra.Api.Security;
 using Metra.Api.Features.Stations;
+using Metra.Api.Features.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -24,6 +25,8 @@ builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecis
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
+builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService));
+builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
 builder.Services.AddOpenApi();
 
@@ -87,6 +90,7 @@ app.MapObservationDecisionEndpoints();
 app.MapObservationQueueEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
+app.MapRegistrationReviewEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
