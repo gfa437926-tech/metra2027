@@ -28,9 +28,11 @@ builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
 builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddHttpClient(nameof(SupabaseStationUserDirectoryService), client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddHttpClient(nameof(SupabaseStationAuditService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddHttpClient(nameof(SupabaseStationAssignmentService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
+builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
@@ -99,6 +101,7 @@ app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();
 app.MapRegistrationSubmissionEndpoints();
 app.MapStationUserDirectoryEndpoints();
+app.MapStationAuditEndpoints();
 app.MapStationAssignmentEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
