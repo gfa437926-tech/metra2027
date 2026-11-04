@@ -15,6 +15,14 @@ export class SupabaseAuthService {
     return this.client !== null;
   }
 
+  async signUpWithPassword(email: string, password: string): Promise<boolean> {
+    if (!this.client) throw new Error('إعدادات Supabase العامة غير مكتملة.');
+    const { data, error } = await this.client.auth.signUp({ email, password });
+    if (error) throw new Error('تعذر إنشاء الحساب. تحقق من البريد الإلكتروني وسياسة كلمة المرور.');
+    if (!data.user) throw new Error('لم يؤكد مزود الهوية إنشاء الحساب.');
+    return Boolean(data.session?.access_token);
+  }
+
   async signInWithPassword(email: string, password: string): Promise<void> {
     if (!this.client) throw new Error('إعدادات Supabase العامة غير مكتملة.');
     const { error } = await this.client.auth.signInWithPassword({ email, password });
