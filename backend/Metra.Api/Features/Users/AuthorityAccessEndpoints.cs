@@ -198,6 +198,15 @@ public static class AuthorityAccessEndpoints
         }).WithTags("Authority access").WithName("GetAuthorityAccessAudit");
 
 
+
+        endpoints.MapGet("/api/v1/authorities", async (
+            IAuthorityAccessService service, CancellationToken ct) =>
+        {
+            if (!service.IsConfigured) return Unavailable();
+            var result = await service.CallAsync("get_authority_catalogue", new { }, ct);
+            return ReadResult(result, "authority_catalogue_unavailable");
+        }).WithTags("Authority access").WithName("GetAuthorityCatalogue");
+
         endpoints.MapGet("/api/v1/authorities/{authorityId:guid}/membership-roles", async (
             Guid authorityId, IAuthorityAccessService service, CancellationToken ct) =>
         {
