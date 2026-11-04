@@ -41,7 +41,7 @@ import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
             <button class="primary" type="submit" [disabled]="busy || !email.trim() || password.length < 8">
               {{ busy ? 'جارٍ إنشاء الحساب…' : 'إنشاء حساب الدخول' }}
             </button>
-            <p class="helper">لديك حساب بالفعل؟ <a routerLink="/login">تسجيل الدخول</a></p>
+            <p class="helper">لديك حساب بالفعل؟ <a routerLink="/login" [queryParams]="{returnUrl: '/register'}">تسجيل الدخول</a></p>
           </form>
         } @else if (loading) {
           <div class="loading">جارٍ تحميل بيانات التسجيل وحالة الحساب…</div>
