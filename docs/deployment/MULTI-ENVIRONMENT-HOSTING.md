@@ -91,3 +91,17 @@ A published image or Blueprint does not mean a cloud service exists. Record a pr
 - API readiness returns 503 until server-side Supabase dependencies are configured and the catalogue probe succeeds.
 - Local build/tests or image publishing do not mean production is deployed.
 - Do not generate operational fake observations; use dedicated clearly marked test data only.
+
+## GitHub Pages deployment prerequisites
+
+The Pages workflow fails closed before publishing if its runtime configuration is missing or unsafe. Configure these repository Actions secrets before expecting a Pages deployment to succeed:
+
+| Secret | Required value |
+|---|---|
+| `METRA_API_BASE_URL` | The deployed API's HTTPS base URL ending in `/api/v1`, for example `https://api.example.gov.sy/api/v1`. Do not use the Pages URL, a Supabase URL, localhost, or an unprovisioned example hostname. |
+| `METRA_SUPABASE_ANON_KEY` | The new Supabase project's public publishable/anon key. This key is designed for client use; it is not the service-role key. |
+| `METRA_SUPABASE_URL` | Optional override for the new environment's clean HTTPS Supabase origin. If omitted, the workflow uses the configured new-project URL in the workflow file. |
+
+Add them under **GitHub repository → Settings → Secrets and variables → Actions → Repository secrets**. Never store the Supabase service-role key in GitHub Pages secrets or any browser/mobile configuration.
+
+Current repository verification (2026-11-04): the post-merge Pages run failed at runtime-config validation because `METRA_API_BASE_URL` was empty. The API host has not yet been provisioned, so do not substitute a placeholder. Once a real HTTPS API host exists and the public client key is configured, rerun **Deploy Angular app to GitHub Pages** and verify `/api/v1/health` and `/api/v1/ready` against that host before calling the site integrated.
