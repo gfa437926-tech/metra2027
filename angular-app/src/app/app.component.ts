@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
 
 @Component({
   selector: 'metra-root',
@@ -18,8 +19,9 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
         </header>
         <section class="user-card">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-          <div class="user-name" id="sidebarUser">مستخدم</div>
-          <div class="user-details" id="sidebarStation">محطة</div>
+          <div class="user-name" id="sidebarUser">{{ currentUserEmail || 'لم يتم تسجيل الدخول' }}</div>
+          <div class="user-details" id="sidebarStation">{{ currentUserEmail ? 'جلسة Supabase نشطة' : 'وضع العرض / غير متصل' }}</div>
+          @if (currentUserEmail) { <button class="signout" type="button" (click)="signOut()">تسجيل الخروج</button> }
         </section>
         <div id="sidebarMenu">
         <div class="section-title">الإدارة</div>
@@ -66,7 +68,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     .sidebar-header h1{font-size:17px;font-weight:800;margin:0;color:#fff}.sidebar-header p{font-size:12px;color:rgba(255,255,255,.7);margin:6px 0 0;letter-spacing:1px}
     .user-card{background:rgba(255,255,255,.05);border-radius:10px;padding:14px 10px;margin:0 15px 18px;border-right:4px solid #2980b9;text-align:center}
     .user-avatar{width:42px;height:42px;background:#2980b9;border-radius:50%;display:grid;place-items:center;margin:0 auto 8px;font-size:18px}
-    .user-name{font-weight:700;font-size:14px}.user-details{font-size:11px;opacity:.78;margin-top:4px}
+    .user-name{font-weight:700;font-size:12px;overflow-wrap:anywhere}.user-details{font-size:11px;opacity:.78;margin-top:4px}.signout{margin-top:10px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:6px;padding:6px 12px;font:inherit;font-size:11px;cursor:pointer}.signout:hover{background:rgba(255,255,255,.12)}
     .section-title{color:rgba(255,255,255,.62);font-size:12px;font-weight:700;padding:13px 20px 7px;margin:8px 15px 4px;border-bottom:1px solid rgba(255,255,255,.1)}
     nav{display:flex;flex-direction:column}
     .nav-link{color:#ecf0f1;text-decoration:none;display:flex;align-items:center;gap:12px;padding:11px 16px;margin:3px 15px;border-radius:8px;font-size:13px;transition:background .2s,transform .2s}
@@ -78,7 +80,29 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(300px,85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:#2980b9;color:white;box-shadow:0 4px 14px rgba(41,128,185,.25)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
   `]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  private readonly auth = inject(SupabaseAuthService);
+  private readonly router = inject(Router);
   sidebarOpen = false;
+  currentUserEmail: string | null = null;
+
+  ngOnInit(): void { void this.refreshSession(); }
+
+  async refreshSession(): Promise<void> {
+    try { this.currentUserEmail = await this.auth.getCurrentUserEmail(); }
+    catch { this.currentUserEmail = null; }
+  }
+
+  async signOut(): Promise<void> {
+    try {
+      await this.auth.signOut();
+      this.currentUserEmail = null;
+      this.closeSidebar();
+      await this.router.navigateByUrl('/login');
+    } catch {
+      // Keep the current UI state if Supabase cannot confirm sign-out.
+    }
+  }
+
   closeSidebar(): void { this.sidebarOpen = false; }
 }
