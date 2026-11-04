@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { StationAssignmentApiService, AssignableStationRole } from '../../core/api/station-assignment-api.service';
 import { StationUserDirectoryApiService, StationUserItem } from '../../core/api/station-user-directory-api.service';
+import { StationAuditApiService, StationAuditItem } from '../../core/api/station-audit-api.service';
 import {
   RegistrationAuditItem,
   RegistrationDecision,
@@ -129,21 +130,44 @@ import {
             </div>
           }
         } @else if (viewMode === 'audit') {
-          @if (auditEvents.length === 0) {
+          @if (stationAuditEvents.length === 0 && auditEvents.length === 0) {
             <div class="empty">لا توجد أحداث تدقيق مسجلة لهذه المحطة.</div>
           } @else {
-            <div class="audit-list">
-              @for (event of auditEvents; track event.id) {
-                <article class="audit-item">
-                  <div class="audit-top">
-                    <strong>{{ eventLabel(event.event_type) }}</strong>
-                    <time>{{ formatDate(event.occurred_at) }}</time>
-                  </div>
-                  <p>{{ event.decision_note || 'لم تُسجل ملاحظة للقرار.' }}</p>
-                  <small>رقم الطلب: {{ event.request_id }} · المنفذ: {{ shortId(event.actor_user_id) }} · إصدار الشروط: {{ event.terms_version }}</small>
-                </article>
-              }
-            </div>
+            @if (stationAuditEvents.length > 0) {
+              <h3 class="audit-section-title">سجل عمليات المحطة والتكليفات</h3>
+              <div class="audit-list">
+                @for (event of stationAuditEvents; track event.id) {
+                  <article class="audit-item">
+                    <div class="audit-top">
+                      <strong>{{ stationAuditLabel(event.action) }}</strong>
+                      <time>{{ formatDate(event.occurred_at) }}</time>
+                    </div>
+                    <p>{{ event.reason || 'لم يُسجل سبب للعملية.' }}</p>
+                    <small>
+                      المنفذ: {{ shortId(event.actor_id || '') }}
+                      @if (event.target_user_id) { · المستخدم المستهدف: {{ shortId(event.target_user_id) }} }
+                      @if (event.role_code) { · الدور: {{ event.role_code }} }
+                      @if (event.previous_status || event.resulting_status) { · الحالة: {{ event.previous_status || '—' }} ← {{ event.resulting_status || '—' }} }
+                    </small>
+                  </article>
+                }
+              </div>
+            }
+            @if (auditEvents.length > 0) {
+              <h3 class="audit-section-title">سجل قرارات طلبات التسجيل</h3>
+              <div class="audit-list">
+                @for (event of auditEvents; track event.id) {
+                  <article class="audit-item">
+                    <div class="audit-top">
+                      <strong>{{ eventLabel(event.event_type) }}</strong>
+                      <time>{{ formatDate(event.occurred_at) }}</time>
+                    </div>
+                    <p>{{ event.decision_note || 'لم تُسجل ملاحظة للقرار.' }}</p>
+                    <small>رقم الطلب: {{ event.request_id }} · المنفذ: {{ shortId(event.actor_user_id) }} · إصدار الشروط: {{ event.terms_version }}</small>
+                  </article>
+                }
+              </div>
+            }
           }
         } @else if (requests.length === 0) {
           <div class="empty">لا توجد طلبات معلّقة في هذه المرحلة لهذه المحطة.</div>
@@ -202,11 +226,13 @@ export class RegistrationReviewComponent implements OnInit {
   readonly api = inject(RegistrationReviewApiService);
   private readonly stationsApi = inject(ObservationApiService);
   private readonly userDirectoryApi = inject(StationUserDirectoryApiService);
+  private readonly stationAuditApi = inject(StationAuditApiService);
   private readonly assignmentApi = inject(StationAssignmentApiService);
 
   stations: StationDirectoryItem[] = [];
   requests: RegistrationRequestItem[] = [];
   auditEvents: RegistrationAuditItem[] = [];
+  stationAuditEvents: StationAuditItem[] = [];
   stationUsers: StationUserItem[] = [];
   assignableRoles: AssignableStationRole[] = [];
   canManageAssignments = false;
@@ -272,6 +298,7 @@ export class RegistrationReviewComponent implements OnInit {
     if (!this.selectedStationId || !this.api.isConfigured) {
       this.requests = [];
       this.auditEvents = [];
+      this.stationAuditEvents = [];
       this.stationUsers = [];
       return;
     }
@@ -279,13 +306,19 @@ export class RegistrationReviewComponent implements OnInit {
     this.error = '';
     try {
       if (this.viewMode === 'audit') {
-        this.auditEvents = await this.api.getAudit(this.selectedStationId, this.stage);
+        const [registrationEvents, stationEvents] = await Promise.all([
+          this.api.getAudit(this.selectedStationId, this.stage),
+          this.stationAuditApi.getAudit(this.selectedStationId)
+        ]);
+        this.auditEvents = registrationEvents;
+        this.stationAuditEvents = stationEvents;
         this.requests = [];
         this.stationUsers = [];
       } else if (this.viewMode === 'users') {
         this.stationUsers = await this.userDirectoryApi.getUsers(this.selectedStationId);
         this.requests = [];
         this.auditEvents = [];
+        this.stationAuditEvents = [];
         try {
           this.assignableRoles = await this.assignmentApi.getAssignableRoles(this.selectedStationId);
           this.canManageAssignments = this.assignableRoles.length > 0;
@@ -296,11 +329,13 @@ export class RegistrationReviewComponent implements OnInit {
       } else {
         this.requests = await this.api.getQueue(this.selectedStationId, this.stage);
         this.auditEvents = [];
+        this.stationAuditEvents = [];
         this.stationUsers = [];
       }
     } catch (error) {
       this.requests = [];
       this.auditEvents = [];
+      this.stationAuditEvents = [];
       this.stationUsers = [];
       this.error = this.errorMessage(error);
     } finally {
@@ -424,6 +459,19 @@ export class RegistrationReviewComponent implements OnInit {
       system_rejected: 'رفض الاعتماد النظامي'
     };
     return labels[eventType] ?? eventType;
+  }
+
+  stationAuditLabel(action: string): string {
+    const labels: Record<string, string> = {
+      catalogue_approved: 'اعتماد بيانات المحطة',
+      catalogue_rejected: 'رفض بيانات المحطة',
+      catalogue_changes_requested: 'طلب تعديل بيانات المحطة',
+      assignment_requested: 'إنشاء طلب تكليف',
+      assignment_approved: 'اعتماد التكليف',
+      assignment_rejected: 'رفض التكليف',
+      assignment_revoked: 'إلغاء التكليف'
+    };
+    return labels[action] ?? action;
   }
 
   shortId(value: string): string {
