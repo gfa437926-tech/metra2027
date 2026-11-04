@@ -56,3 +56,17 @@ public sealed class StationAssignmentDecisionRequestGuardTests
                 : new StationAssignmentDecisionRequest(decision, note)));
     }
 }
+
+public sealed class StationAssignmentRevocationRequestGuardTests
+{
+    [Theory]
+    [InlineData("سبب إلغاء موثق", null)]
+    [InlineData("", "invalid_assignment_revocation_reason")]
+    [InlineData("   ", "invalid_assignment_revocation_reason")]
+    [InlineData(" سبب غير منسق ", "invalid_assignment_revocation_reason")]
+    public void Validates_revocation_reason(string reason, string? expected)
+    {
+        Assert.Equal(expected, StationAssignmentRevocationRequestGuard.GetError(
+            new StationAssignmentRevocationRequest(reason)));
+    }
+}
