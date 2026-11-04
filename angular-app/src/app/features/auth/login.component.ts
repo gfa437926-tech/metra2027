@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <main class="login" dir="rtl">
       <section class="panel">
@@ -18,6 +18,7 @@ import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
           <label>كلمة المرور<input type="password" name="password" [(ngModel)]="password" autocomplete="current-password" required></label>
           <p class="error" *ngIf="error" role="alert">{{ error }}</p>
           <button type="submit" [disabled]="busy || !auth.isConfigured">{{ busy ? 'جارٍ التحقق...' : 'تسجيل الدخول' }}</button>
+          <p class="hint">ليس لديك حساب؟ <a routerLink="/register" [queryParams]="{returnUrl: '/register'}">إنشاء حساب وطلب الانضمام</a></p>
         </form>
         <p class="hint" *ngIf="!auth.isConfigured">إعدادات Supabase العامة غير مهيأة في بيئة النشر.</p>
       </section>
