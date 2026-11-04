@@ -48,11 +48,13 @@ flutter run
 
 On Windows or Linux, generate Android only with `flutter create --platforms=android .`. iOS builds require macOS and Xcode.
 
-Supply the API base URL at build/run time, for example on the Android emulator:
+Supply the API origin at build/run time (scheme + host, optional port; do not append `/api/v1`). The current Flutter client intentionally accepts HTTPS only, including during development. Use an HTTPS development endpoint or reverse proxy reachable from the device:
 
 ```bash
-flutter run --dart-define=METRA_API_BASE_URL=http://10.0.2.2:5000/api/v1
+flutter run --dart-define=METRA_API_BASE_URL=https://your-development-api.example.test
 ```
+
+The API client appends `/api/v1` automatically. Do not use `localhost` from a physical device, and do not weaken the production HTTPS validation for emulator convenience.
 
 ## Run only the backend API
 
