@@ -50,7 +50,7 @@ Do not put the Supabase service-role/secret key or JWT signing secret in Angular
 ## Health and readiness
 
 - `GET /api/v1/health` is an anonymous liveness endpoint. It confirms that the process is responding.
-- `GET /api/v1/ready` is an anonymous readiness endpoint. It returns 200 only when the server-side Supabase URL and service-role integration are configured for authorization, submission, decisions, review queue, and station directory; otherwise it returns 503.
+- `GET /api/v1/ready` is an anonymous readiness endpoint. It returns 200 only when the server-side Supabase URL and service-role integration are configured for authorization, observation submission and decisions, review queue, station directory, station catalogue review, registration review and submission, station user directory, station assignment management, and station audit; otherwise it returns 503.
 - Readiness performs a bounded server-side PostgREST round trip against the station catalogue. It verifies basic connectivity and credentials, but does not prove that every workflow migration or every RPC is operational.
 
 ## Signing-key prerequisite
