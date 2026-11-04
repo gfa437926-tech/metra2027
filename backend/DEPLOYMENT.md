@@ -45,7 +45,7 @@ No production host is currently specified in this repository. Do not infer one o
 Run these checks against the real HTTPS host:
 
 - `GET /api/v1/health` returns HTTP 200 and `status: healthy`.
-- `GET /api/v1/ready` returns HTTP 200 and `status: ready`.
+- `GET /api/v1/ready` returns HTTP 200 and `status: ready` only after a live server-authenticated read from the station catalogue succeeds. Missing/invalid credentials, unreachable Supabase, or an unavailable catalogue projection must return HTTP 503.
 - An invalid/missing bearer token cannot access protected station/observation routes.
 - A valid authenticated user can read only the station directory allowed by the API policy.
 - A user without station permission cannot submit or review an observation.

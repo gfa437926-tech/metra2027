@@ -23,7 +23,7 @@ The launch profile listens on `http://localhost:5000`. Health: `GET /api/v1/heal
 - Idempotent observation submission and observation review/decision routes.
 - Request validation and separate liveness/readiness endpoints.
 
-The readiness endpoint verifies that required Supabase-backed services have their server-side configuration. It does not prove that credentials are valid or that every database object is reachable; authenticated smoke tests are still required.
+The readiness endpoint first verifies server-side configuration and then performs a live, server-authenticated PostgREST read against the station catalogue. It therefore detects missing/invalid credentials, network failures, and an unavailable catalogue projection. It is still not a substitute for authenticated end-to-end permission and write-path tests.
 
 ## Configuration
 

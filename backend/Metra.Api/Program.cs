@@ -95,23 +95,33 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
 
 // Readiness is deliberately separate from liveness. It reports only whether
 // server-side Supabase integration is configured; it never exposes secret values.
-app.MapGet("/api/v1/ready", (
+app.MapGet("/api/v1/ready", async (
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,
     IObservationDecisionService decision,
     IObservationQueueService queue,
-    IStationDirectoryService directory) =>
+    IStationDirectoryService directory,
+    CancellationToken cancellationToken) =>
 {
-    var ready = authorization.IsConfigured &&
+    var configured = authorization.IsConfigured &&
         submission.IsConfigured &&
         decision.IsConfigured &&
         queue.IsConfigured &&
         directory.IsConfigured;
 
-    return ready
+    if (!configured)
+        return Results.Problem(
+            title: "API dependencies are not configured",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+
+    // Verify an authenticated server-side PostgREST round trip, not merely
+    // non-empty environment variables. A schema, credential, or network
+    // failure must keep the instance out of service.
+    var probe = await directory.GetStationsAsync(1, 0, null, cancellationToken);
+    return probe is not null
         ? Results.Ok(new { status = "ready", service = "metra-api" })
         : Results.Problem(
-            title: "API dependencies are not configured",
+            title: "Supabase readiness probe failed",
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
