@@ -49,7 +49,14 @@ interface ClimateDraft { id:string; hour:string; date:string; status:'draft'|'su
  `]
 })
 export class ClimateReportsComponent {
- station='';observer='';date=new Date().toISOString().slice(0,10);
+  private localDate(value: Date): string {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+ station='';observer='';date=this.localDate(new Date());
  readonly hours=['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
  issues:string[]=[];message='';drafts:ClimateDraft[]=[];private sequence=1;
  relationMessage='';enableWhatsAppShare=true;includeMissingFields=false;whatsAppText='';shareReady=false;
