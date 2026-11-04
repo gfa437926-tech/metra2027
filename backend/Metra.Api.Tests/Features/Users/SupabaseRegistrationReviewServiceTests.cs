@@ -16,9 +16,11 @@ public sealed class SupabaseRegistrationReviewServiceTests
     {
         var actor = Guid.NewGuid();
         HttpRequestMessage? captured = null;
+        string? capturedBody = null;
         var service = CreateService(request =>
         {
             captured = request;
+            capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return Ok();
         });
 
@@ -28,7 +30,7 @@ public sealed class SupabaseRegistrationReviewServiceTests
         Assert.NotNull(result);
         Assert.NotNull(captured);
         Assert.Equal(expectedPath, captured.RequestUri!.AbsolutePath);
-        using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        using var body = JsonDocument.Parse(capturedBody!);
         Assert.Equal(stage, body.RootElement.GetProperty("p_expected_status").GetString());
         Assert.Equal(expectsActor, body.RootElement.TryGetProperty("p_actor_user_id", out var actorValue));
         if (expectsActor) Assert.Equal(actor, actorValue.GetGuid());
@@ -41,9 +43,11 @@ public sealed class SupabaseRegistrationReviewServiceTests
     {
         var actor = Guid.NewGuid();
         HttpRequestMessage? captured = null;
+        string? capturedBody = null;
         var service = CreateService(request =>
         {
             captured = request;
+            capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return Ok();
         });
 
@@ -53,7 +57,7 @@ public sealed class SupabaseRegistrationReviewServiceTests
         Assert.NotNull(result);
         Assert.NotNull(captured);
         Assert.Equal(expectedPath, captured.RequestUri!.AbsolutePath);
-        using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        using var body = JsonDocument.Parse(capturedBody!);
         Assert.Equal(systemStage, body.RootElement.TryGetProperty("p_actor_user_id", out var actorValue));
         if (systemStage) Assert.Equal(actor, actorValue.GetGuid());
     }
