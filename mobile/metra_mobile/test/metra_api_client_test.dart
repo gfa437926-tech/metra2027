@@ -51,6 +51,17 @@ void main() {
   });
 
 
+  test('station coordinates distinguish missing, valid and out-of-range values', () {
+    StationDirectoryItem station(double? latitude, double? longitude) => StationDirectoryItem(
+      id: stationId, localCode: 'ST-001', nameArabic: 'اختبار', nameEnglish: 'Test',
+      stationType: 'classic', operationalStatus: 'unverified', approvalStatus: 'pending',
+      isDemo: false, latitude: latitude, longitude: longitude);
+    expect(station(24.7, 46.7).hasValidCoordinates, isTrue);
+    expect(station(null, 46.7).hasValidCoordinates, isFalse);
+    expect(station(91, 46.7).hasValidCoordinates, isFalse);
+    expect(station(24.7, -181).hasValidCoordinates, isFalse);
+  });
+
   test('station directory fetches every page instead of silently hiding stations', () async {
     var requests = 0;
     final client = MetraApiClient(
