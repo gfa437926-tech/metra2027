@@ -51,13 +51,13 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
             <thead><tr><th>معرّف النشرة</th><th>نوع النشرة</th><th>وقت الرصد</th><th>وقت الإرسال</th><th>معرّف الراصد</th><th>الحالة</th><th>الإجراء</th></tr></thead>
             <tbody>
               <tr *ngFor="let row of rows">
-                <td><code>{{ row.id }}</code></td>
-                <td>{{ typeLabel(row.observation_type) }}</td>
-                <td>{{ dateLabel(row.observed_at) }}</td>
-                <td>{{ dateLabel(row.submitted_at) }}</td>
-                <td><code>{{ row.created_by }}</code></td>
-                <td><span class="status">بانتظار المراجعة</span></td>
-                <td class="actions">
+                <td data-label="معرّف النشرة"><code>{{ row.id }}</code></td>
+                <td data-label="نوع النشرة">{{ typeLabel(row.observation_type) }}</td>
+                <td data-label="وقت الرصد">{{ dateLabel(row.observed_at) }}</td>
+                <td data-label="وقت الإرسال">{{ dateLabel(row.submitted_at) }}</td>
+                <td data-label="معرّف الراصد"><code>{{ row.created_by }}</code></td>
+                <td data-label="الحالة"><span class="status">بانتظار المراجعة</span></td>
+                <td class="actions" data-label="الإجراء">
                   <button type="button" class="approve" (click)="decide(row, 'approve')" [disabled]="busyId !== null">اعتماد</button>
                   <button type="button" class="return" (click)="decide(row, 'return_for_correction')" [disabled]="busyId !== null">إرجاع</button>
                 </td>
