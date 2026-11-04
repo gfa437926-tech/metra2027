@@ -49,6 +49,9 @@ class StationDirectoryItem {
   final double? latitude, longitude;
   final String? wmoStationId;
   bool get hasCoordinates => latitude != null && longitude != null;
+  bool get hasValidCoordinates => hasCoordinates &&
+      latitude! >= -90 && latitude! <= 90 &&
+      longitude! >= -180 && longitude! <= 180;
   factory StationDirectoryItem.fromJson(Map<String, dynamic> json) {
     for (final key in ['id','local_station_code','name_ar','name_en','station_type','operational_status','approval_status']) {
       if (json[key] is! String) throw const FormatException('invalid_station_directory_item');
