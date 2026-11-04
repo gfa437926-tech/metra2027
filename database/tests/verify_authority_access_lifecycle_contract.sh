@@ -6,9 +6,10 @@ m22="database/migrations/022_harden_authority_access_revocation_and_audit_index.
 m23="database/migrations/023_bind_authority_access_decisions_to_route_scope.sql"
 m24="database/migrations/024_revoke_direct_service_role_writes_to_authority_audit.sql"
 m25="database/migrations/025_require_active_subject_for_authority_approval.sql"
+m26="database/migrations/026_add_authority_access_catalogue_read_models.sql"
 api="backend/Metra.Api/Features/Users/AuthorityAccessEndpoints.cs"
 program="backend/Metra.Api/Program.cs"
-[[ -f "$m20" && -f "$m21" && -f "$m22" && -f "$m23" && -f "$m24" && -f "$m25" && -f "$api" ]]
+[[ -f "$m20" && -f "$m21" && -f "$m22" && -f "$m23" && -f "$m24" && -f "$m25" && -f "$m26" && -f "$api" ]]
 grep -Fq "ADD COLUMN authority_id uuid" "$m20"
 grep -Fq "authority_access_audit_events" "$m20"
 grep -Fq "REVOKE INSERT,UPDATE,DELETE" "$m20"
@@ -41,3 +42,8 @@ grep -Fq "REVOKE INSERT,UPDATE,DELETE,TRUNCATE" "$m24"
 grep -Fq "account_state" "$m25"
 
 echo "Authority access lifecycle contract verified."
+
+grep -Fq "get_authority_membership_roles" "$m26"
+grep -Fq "get_authority_permission_options" "$m26"
+grep -Fq "/membership-roles" "$api"
+grep -Fq "/permission-options" "$api"
