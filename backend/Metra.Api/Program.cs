@@ -28,6 +28,8 @@ builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
 builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddHttpClient(nameof(SupabaseStationUserDirectoryService), client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddHttpClient(nameof(SupabaseStationAssignmentService), client => client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
@@ -97,6 +99,7 @@ app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();
 app.MapRegistrationSubmissionEndpoints();
 app.MapStationUserDirectoryEndpoints();
+app.MapStationAssignmentEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
@@ -119,6 +122,7 @@ app.MapGet("/api/v1/ready", async (
     IRegistrationReviewService registrationReview,
     IRegistrationSubmissionService registrationSubmission,
     IStationUserDirectoryService stationUsers,
+    IStationAssignmentService stationAssignments,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -129,7 +133,8 @@ app.MapGet("/api/v1/ready", async (
         stationReview.IsConfigured &&
         registrationReview.IsConfigured &&
         registrationSubmission.IsConfigured &&
-        stationUsers.IsConfigured;
+        stationUsers.IsConfigured &&
+        stationAssignments.IsConfigured;
 
     if (!configured)
         return Results.Problem(
