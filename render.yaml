@@ -1,0 +1,31 @@
+# Render Blueprint for the METRA 2027 ASP.NET Core API.
+# Import this Blueprint in the Render Dashboard only after reviewing the
+# service plan and supplying the server-only Supabase secret.
+services:
+  - type: web
+    name: metra-api
+    runtime: docker
+    repo: https://github.com/gfa437926-tech/metra2027
+    branch: main
+    region: frankfurt
+    dockerfilePath: ./backend/Metra.Api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - backend/Metra.Api/**
+        - render.yaml
+    envVars:
+      - key: ASPNETCORE_HTTP_PORTS
+        value: "10000"
+      - key: Supabase__Url
+        value: https://tbdnklyxjvbrilvnwgmq.supabase.co
+      - key: Supabase__ServiceRoleKey
+        sync: false
+      - key: Authentication__Authority
+        value: https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1
+      - key: Authentication__Audience
+        value: authenticated
+      - key: Cors__AllowedOrigins__0
+        value: https://gfa437926-tech.github.io
