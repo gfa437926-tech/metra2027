@@ -150,21 +150,21 @@ export class AgricultureComponent implements AfterViewInit {
       this.temp('minSoilSurfaceTemp','القيمة الصغرى لدرجة حرارة سطح التربة (سْ)','+15.6')
     ]},
     { title: 'الرطوبة والحسابات', fields: [
-      this.field('avgHumidity','معدل الرطوبة النسبية (%)','075 أو 085 أو 100',3,'^\d{3}$',true,0,100),
-      this.field('minHumidity','القيمة الصغرى الرطوبة النسبية (%)','045',3,'^\d{3}$',false,0,100),
-      this.field('avgEsE','معدل es-e','12.3',4,'^\d{1,2}\.\d$',false,0,99.9),
-      this.field('minEsE','القيمة الصغرى لes-e','08.7',4,'^\d{1,2}\.\d$',false,0,99.9)
+      this.field('avgHumidity','معدل الرطوبة النسبية (%)','075 أو 085 أو 100',3,'^\\d{3}$',true,0,100),
+      this.field('minHumidity','القيمة الصغرى الرطوبة النسبية (%)','045',3,'^\\d{3}$',false,0,100),
+      this.field('avgEsE','معدل es-e','12.3',4,'^\\d{1,2}\\.\\d$',false,0,99.9),
+      this.field('minEsE','القيمة الصغرى لes-e','08.7',4,'^\\d{1,2}\\.\\d$',false,0,99.9)
     ]},
     { title: 'السطوع الشمسي والغيوم', fields: [
-      this.field('sunshineHours','مدة السطوع الشمس - ساعة','09.5',4,'^\d{1,2}\.\d$',false,0,12),
-      this.field('totalCloudCover','معدل التغطية الكلية','03',2,'^\d{1,2}$',false,0,8),
-      this.field('lowCloudCover','معدل تغطية الغيوم المنخفضة','02',2,'^\d{1,2}$',false,0,8)
+      this.field('sunshineHours','مدة السطوع الشمس - ساعة','09.5',4,'^\\d{1,2}\\.\\d$',false,0,12),
+      this.field('totalCloudCover','معدل التغطية الكلية','03',2,'^\\d{1,2}$',false,0,8),
+      this.field('lowCloudCover','معدل تغطية الغيوم المنخفضة','02',2,'^\\d{1,2}$',false,0,8)
     ]},
     { title: 'الهطول والرياح', fields: [
-      this.field('precipitation','الهطول (مم)','000.0',5,'^\d{1,3}\.\d$',false,0,999.9),
-      this.field('maxWindSpeed','أكبر سرعة رياح من المخطط','15',2,'^\d{1,2}$',false,0,36),
-      this.field('classAEvaporation','التبخر من CLASS-A','08.2',4,'^\d{1,2}\.\d$',false,0,99.9),
-      this.field('avgWindSpeed2m','معدل سرعة الرياح على ارتفاع 2 م','05.7',4,'^\d{1,2}\.\d$',false,0,36)
+      this.field('precipitation','الهطول (مم)','000.0',5,'^\\d{1,3}\\.\\d$',false,0,999.9),
+      this.field('maxWindSpeed','أكبر سرعة رياح من المخطط','15',2,'^\\d{1,2}$',false,0,36),
+      this.field('classAEvaporation','التبخر من CLASS-A','08.2',4,'^\\d{1,2}\\.\\d$',false,0,99.9),
+      this.field('avgWindSpeed2m','معدل سرعة الرياح على ارتفاع 2 م','05.7',4,'^\\d{1,2}\\.\\d$',false,0,36)
     ]},
     { title: 'درجات حرارة التربة', fields: [
       this.temp('avgSoilTemp5cm','معدل حرارة تربة على عمق 5 سم (سْ)','+24.3'),
@@ -173,7 +173,7 @@ export class AgricultureComponent implements AfterViewInit {
       this.temp('avgSoilTemp50cm','معدل درجة حرارة تربة على عمق 50 سم (سْ)','+20.5'),
       this.temp('fieldSoilTemp5cm','درجة حرارة تربة الحقل على عمق 5 سم (سْ)','+25.1'),
       this.temp('fieldSoilTemp10cm','حرارة تربة الحقل على عمق 10 سم (سْ)','+23.9'),
-      this.field('logEvaporation','التبخر من السجل','07.5',4,'^\d{1,2}\.\d$',false,0,99.9)
+      this.field('logEvaporation','التبخر من السجل','07.5',4,'^\\d{1,2}\\.\\d$',false,0,99.9)
     ]}
   ];
 
@@ -208,7 +208,7 @@ export class AgricultureComponent implements AfterViewInit {
   }
 
   private temp(id: string, label: string, placeholder: string, required = false): AgricultureField {
-    return { id, label, placeholder, maxLength: 6, pattern: '^[+-]?\d{1,2}(\.\d)?$', required, min: -20, max: 60, temperature: true, title: 'درجة الحرارة: ±dd.d أو ±d.d' } as AgricultureField;
+    return { id, label, placeholder, maxLength: 6, pattern: '^[+-]?\\d{1,2}(\\.\\d)?$', required, min: -20, max: 60, temperature: true, title: 'درجة الحرارة: ±dd.d أو ±d.d' } as AgricultureField;
   }
 
   private toDateInput(date: Date): string {
