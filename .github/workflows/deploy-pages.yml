@@ -79,6 +79,7 @@ jobs:
             throw new Error('METRA_SUPABASE_URL must be a valid absolute URL.');
           }
           if (parsedSupabase.protocol !== 'https:' || !parsedSupabase.hostname ||
+              (parsedSupabase.pathname !== '' && parsedSupabase.pathname !== '/') ||
               parsedSupabase.username || parsedSupabase.password ||
               parsedSupabase.search || parsedSupabase.hash) {
             throw new Error('METRA_SUPABASE_URL must be a clean HTTPS origin without credentials, query, or fragment.');
