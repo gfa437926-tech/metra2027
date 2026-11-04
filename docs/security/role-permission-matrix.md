@@ -11,13 +11,13 @@ individual permission grant, and an approved, active, non-demo station.
 | Role | Permission codes |
 |---|---|
 | `observer` | `observation.create`, `observation.edit_own_draft`, `observation.submit` |
-| `station_head` | `observation.review`, `observation.return_for_correction`, `registrations.station.approve`, `users.station.view` |
+| `station_head` | `observation.review`, `observation.return_for_correction`, `registrations.station.approve`, `users.station.view`, `users.station.manage` |
 | `station_auditor` | `observation.review`, `observation.return_for_correction` |
 | `chief_auditor` | `observation.approve`, `observation.return_for_correction` |
 | `network_director` | No observation permission assigned; `stations.catalogue.review` for station catalogue review |
 | `statistics_director` | No observation permission assigned |
 | `aftn_operator` | No observation permission assigned |
-| `system_admin` | No observation permission assigned; `registrations.system.approve` for second-stage registration approval; `users.station.view` for station-scoped staff directory |
+| `system_admin` | No observation permission assigned; `registrations.system.approve` for second-stage registration approval; `users.station.view`, `users.station.manage` for station-scoped staff directory and limited assignments |
 
 This is deliberately not a global administrator bypass. Additional
 permissions must be reviewed against the role's approved responsibilities
@@ -85,3 +85,26 @@ cannot execute it directly. The permission allow-list is limited to
 requires an approved current assignment and a separate approved individual
 permission grant. The directory does not expose email addresses, auth-provider
 metadata, passwords, tokens or permission-grant management controls.
+
+## Station assignment lifecycle
+
+`users.station.manage` is allow-listed only for `station_head` and
+`system_admin`. The API supports request, second-person approval/rejection,
+and audited revocation of station assignments. This station-manager workflow
+is deliberately restricted to `observer` and `station_auditor`; it cannot
+assign `station_head`, `chief_auditor`, `network_director`,
+`statistics_director`, `aftn_operator`, or `system_admin`.
+
+The target must have an active account and an approved, current membership in
+the station's authority. The requester cannot assign themselves, the requester
+cannot approve their own request, and the target cannot approve or revoke
+their own assignment. The database locks pending assignment rows, rejects
+overlapping validity periods, and writes request/decision/revocation events to
+the append-only `station_audit_log`. Each RPC is executable only by
+`service_role`; the API checks the actor's station-scoped permission and
+derives the actor from the verified JWT.
+
+Authority membership administration and individual permission-grant/revoke
+administration are not exposed through this station workflow. Permission
+grants remain separate, explicitly approved records; no assignment endpoint
+creates or broadens a permission grant.
