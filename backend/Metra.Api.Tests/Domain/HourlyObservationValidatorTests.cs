@@ -61,6 +61,45 @@ public sealed class HourlyObservationValidatorTests
     }
 
     [Fact]
+    public void Rejects_required_fields_missing_from_the_submitted_dictionary()
+    {
+        var values = ValidReport();
+        values.Remove("dryTemp");
+        values.Remove("totalCloudCover");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "dryTemp");
+        Assert.Contains(issues, issue => issue.Field == "totalCloudCover");
+    }
+
+    [Fact]
+    public void Requires_conditional_fields_even_when_the_keys_are_absent()
+    {
+        var values = ValidReport("00");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "precipitationAmount");
+        Assert.Contains(issues, issue => issue.Field == "pressureSlope");
+        Assert.Contains(issues, issue => issue.Field == "pressureShape");
+        Assert.Contains(issues, issue => issue.Field == "pastWeather");
+    }
+
+    [Fact]
+    public void Accepts_explicit_no_data_marker_for_required_hourly_fields()
+    {
+        var values = ValidReport();
+        values["dryTemp"] = "#";
+        values["totalCloudCover"] = "#";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.DoesNotContain(issues, issue => issue.Field == "dryTemp");
+        Assert.DoesNotContain(issues, issue => issue.Field == "totalCloudCover");
+    }
+
+    [Fact]
     public void Rejects_dry_temperature_lower_than_wet_temperature()
     {
         var values = ValidReport();
