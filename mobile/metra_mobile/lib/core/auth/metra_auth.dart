@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/metra_api_client.dart';
+import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
@@ -34,6 +35,7 @@ class MetraSecureSessionStorage extends LocalStorage {
 }
 
 bool get isMetraSupabaseConfigured => metraSupabaseUrl.startsWith('https://') && metraSupabasePublishableKey.isNotEmpty;
+bool get isMetraApiConfigured => ApiConfig.isConfigured;
 
 class MetraAuthGate extends StatefulWidget {
   const MetraAuthGate({super.key});
@@ -196,7 +198,50 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
 class MetraConfigurationScreen extends StatelessWidget {
   const MetraConfigurationScreen({super.key});
   @override
-  Widget build(BuildContext context) => const Directionality(textDirection: TextDirection.rtl,
-    child: Scaffold(body: Center(child: Padding(padding: EdgeInsets.all(28),
-      child: Text('لم يتم إعداد Supabase لهذا الإصدار. أعد البناء باستخدام METRA_SUPABASE_URL وMETRA_SUPABASE_PUBLISHABLE_KEY. لا تضع مفتاح service_role في تطبيق الهاتف.', textAlign: TextAlign.center)))));
+  Widget build(BuildContext context) {
+    final missing = <String>[];
+    if (!isMetraSupabaseConfigured) {
+      missing.add('METRA_SUPABASE_URL و METRA_SUPABASE_PUBLISHABLE_KEY');
+    }
+    if (!isMetraApiConfigured) {
+      missing.add('METRA_API_BASE_URL (عنوان API منشور يعمل عبر HTTPS)');
+    }
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(28),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.settings_suggest_outlined, size: 48),
+                      const SizedBox(height: 16),
+                      const Text('إعداد تطبيق METRA 2027',
+                        style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      const Text('لا يمكن تشغيل التطبيق تشغيلياً قبل ضبط إعدادات الاتصال المطلوبة.',
+                        textAlign: TextAlign.center),
+                      const SizedBox(height: 12),
+                      Text('الإعدادات الناقصة أو غير الصالحة:\n• ${missing.join('\n• ')}',
+                        textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      const Text('استخدم عنوان API الحقيقي المنشور عبر HTTPS. لا تستخدم عنوان المحاكي الافتراضي، ولا تضع مفتاح service_role داخل تطبيق الهاتف.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.black54)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -23,5 +23,7 @@ class MetraApp extends StatelessWidget {
     title: 'METRA 2027', debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: _blue),
       scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
-    home: isMetraSupabaseConfigured ? const MetraAuthGate() : const MetraConfigurationScreen());
+    home: isMetraSupabaseConfigured && isMetraApiConfigured
+        ? const MetraAuthGate()
+        : const MetraConfigurationScreen());
 }

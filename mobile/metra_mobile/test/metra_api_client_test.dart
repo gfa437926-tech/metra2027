@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
+import 'package:metra_mobile/api_config.dart';
 
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
@@ -121,4 +122,21 @@ void main() {
       throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit')));
     client.close();
   });
+  test('API is not configured when the build-time URL is missing', () {
+    final client = MetraApiClient(
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+    expect(client.isConfigured, isFalse);
+    expect(ApiConfig.isConfigured, isFalse);
+    client.close();
+  });
+
+  test('rejects API URLs containing credentials, query or fragment', () {
+    expect(ApiConfig.isValidUrl('https://user:secret@api.example.test'), isFalse);
+    expect(ApiConfig.isValidUrl('https://api.example.test?token=secret'), isFalse);
+    expect(ApiConfig.isValidUrl('https://api.example.test#section'), isFalse);
+    expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
+  });
+
 }

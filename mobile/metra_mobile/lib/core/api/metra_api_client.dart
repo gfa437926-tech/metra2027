@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../api_config.dart';
 
-const metraApiBaseUrl = String.fromEnvironment('METRA_API_BASE_URL');
+const metraApiBaseUrl = ApiConfig.baseUrl;
 
 class MetraApiException implements Exception {
   const MetraApiException(this.statusCode, this.code);
@@ -83,8 +84,7 @@ class MetraApiClient {
   final Future<String?> Function() accessTokenProvider;
   final Uri? _baseUri;
   final http.Client _client;
-  bool get isConfigured => _baseUri != null &&
-      _baseUri.scheme == 'https' && _baseUri.host.isNotEmpty;
+  bool get isConfigured => ApiConfig.isValidUrl(_baseUri?.toString() ?? '');
 
   Future<List<StationDirectoryItem>> getStationDirectory({
     int limit = 250, int offset = 0, String? stationType,
