@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -23,7 +24,7 @@ interface HourlyPreview {
         <span class="preview-tag"><i class="fa-solid fa-flask"></i> وضع تجريبي</span>
       </header>
 
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>معاينة تجريبية وليست نظام حفظ فعلياً.</strong><span>تُفحص البيانات داخل الصفحة فقط. لا تُرسل إلى API ولا تُحفظ في قاعدة البيانات.</span></div></div>
+      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>إرسال النشرة يتم عبر API عند تهيئة الاتصال.</strong><span>لن تُعرض النشرة كمرسلة إلا بعد تأكيد الحفظ من الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
@@ -35,6 +36,7 @@ interface HourlyPreview {
         <section class="panel">
           <h2><i class="fa-solid fa-user-tie"></i> التعريف بالمحطة والراصد</h2>
           <div class="grid">
+            <label>المحطة<select name="stationId" required [value]="selectedStationId" (change)="setStation($any($event.target).value)"><option value="">اختر المحطة</option><option *ngFor="let station of stations" [value]="station.id">{{ station.name_ar }} — {{ station.local_station_code || station.wmo_station_id || station.station_type }}</option></select><small *ngIf="stationsLoading">جارٍ تحميل المحطات...</small></label>
             <label>التاريخ (ميلادي)<input type="text" name="observationDate" [value]="today" readonly></label>
             <label>الوقت الحالي<input type="text" [value]="now" readonly></label>
           </div>
@@ -113,7 +115,7 @@ interface HourlyPreview {
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
 
-        <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وإنشاء مسودة تجريبية</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
+        <div class="actions"><button class="primary" type="submit" [disabled]="saving || !apiReady || !selectedStationId"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
       </form>
 
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> يرجى تصحيح الملاحظات التالية</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
@@ -135,6 +137,34 @@ interface HourlyPreview {
   `]
 })
 export class HourlyReportsComponent {
+  readonly api = inject(ObservationApiService);
+  stations: StationDirectoryItem[] = [];
+  stationsLoading = false;
+  stationsError = '';
+  selectedStationId = '';
+  saving = false;
+
+  constructor() { void this.loadStations(); }
+
+  get apiReady(): boolean { return this.api.isConfigured; }
+  setStation(value: string): void { this.selectedStationId = value; }
+
+  private async loadStations(): Promise<void> {
+    if (!this.apiReady) {
+      this.stationsError = 'الاتصال الفعلي غير مهيأ: يلزم ضبط API وSupabase.';
+      return;
+    }
+    this.stationsLoading = true;
+    try {
+      this.stations = await this.api.getAllStations();
+      if (!this.stations.length) this.stationsError = 'لا توجد محطات تشغيلية متاحة في الدليل.';
+    } catch {
+      this.stationsError = 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
+    } finally {
+      this.stationsLoading = false;
+    }
+  }
+
   readonly today = this.localDate(new Date());
   private localDate(date: Date): string {
     const year = date.getFullYear();
@@ -246,10 +276,13 @@ export class HourlyReportsComponent {
     }
   }
 
-  submit(event: Event, form: HTMLFormElement): void {
+  async submit(event: Event, form: HTMLFormElement): Promise<void> {
     event.preventDefault();
     this.issues = [];
     this.message = '';
+    if (this.saving) return;
+    if (!this.apiReady) { this.message = 'لم يتم الإرسال: إعدادات API أو Supabase غير مكتملة.'; return; }
+    if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
     if (!form.reportValidity()) return;
 
     const formData = new FormData(form);
@@ -316,18 +349,41 @@ export class HourlyReportsComponent {
 
     if (this.issues.length) return;
 
-    const reference = 'H-' + String(this.nextReference++).padStart(4, '0');
-    this.previews.unshift({
-      reference,
-      date: values['observationDate'] ?? this.today,
-      hour: values['utcTime'] ?? this.selectedHour,
-      station: values['station'] ?? 'غير محددة',
-      status: 'draft',
-      values
-    });
-    this.message = 'اجتازت النشرة فحوص المعاينة وأنشئت كمسودة مؤقتة داخل هذه الصفحة فقط.';
-    form.reset();
-    this.selectedHour = '';
+    const station = this.stations.find(item => item.id === this.selectedStationId);
+    if (!station) { this.issues = ['المحطة المختارة غير موجودة في دليل المحطات الحالي.']; return; }
+    const payloadValues = { ...values };
+    delete payloadValues['stationId'];
+    const hour = values['utcTime'] ?? this.selectedHour;
+    const payload = { stationName: station.name_ar, utcHour: hour, values: payloadValues };
+    this.saving = true;
+    try {
+      const result = await this.api.submitObservation(this.selectedStationId, {
+        idempotencyKey: crypto.randomUUID(),
+        observationType: 'hourly',
+        observedAt: new Date((values['observationDate'] ?? this.today) + 'T' + hour + ':00:00.000Z').toISOString(),
+        payload,
+        submit: true
+      });
+      const id = result && typeof result === 'object' && 'id' in result
+        ? String((result as { id: unknown }).id) : '';
+      if (!id) throw new Error('استجابة الخادم لا تحتوي معرّف النشرة المحفوظة.');
+      this.previews.unshift({
+        reference: id,
+        date: values['observationDate'] ?? this.today,
+        hour,
+        station: station.name_ar,
+        status: 'submitted',
+        values
+      });
+      this.message = 'تم حفظ النشرة الساعية وإرسالها للمراجعة. رقم النشرة: ' + id;
+      form.reset();
+      this.selectedHour = '';
+      this.selectedStationId = '';
+    } catch (error) {
+      this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+    } finally {
+      this.saving = false;
+    }
   }
 
   sendForReview(item: HourlyPreview): void {
