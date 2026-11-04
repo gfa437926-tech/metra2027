@@ -7,8 +7,6 @@ public sealed class StationAssignmentRequestGuardTests
 {
     private static readonly Guid Actor = Guid.Parse("11111111-1111-4111-8111-111111111111");
     private static readonly Guid Target = Guid.Parse("22222222-2222-4222-8222-222222222222");
-    private static readonly Guid Station = Guid.Parse("33333333-3333-4333-8333-333333333333");
-
     private static StationAssignmentRequest Valid() => new(
         Target, "observer", "احتياج تشغيلي موثق",
         DateTimeOffset.Parse("2026-11-04T08:00:00Z"), null);
