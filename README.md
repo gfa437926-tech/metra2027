@@ -68,6 +68,10 @@ The launch profile listens on http://localhost:5000. Health endpoint: `GET http:
 
 For deployment, required environment variables, container details, and verification steps, see [Backend deployment guide](backend/DEPLOYMENT.md).
 
+## Station data quality
+
+A read-only audit of station coordinates is maintained in [Station coordinate completeness audit](docs/data-quality/station-coordinate-audit.md). It identifies catalogue records that remain visible in the directory but cannot yet be plotted because verified coordinates are missing.
+
 ## Data protection and configuration
 
 - The new Supabase project is the intended target: `https://tbdnklyxjvbrilvnwgmq.supabase.co`.
