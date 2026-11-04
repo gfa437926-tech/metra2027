@@ -12,6 +12,7 @@ public sealed record StationAssignmentRequest(
     DateTimeOffset? ValidFrom, DateTimeOffset? ValidTo);
 
 public sealed record StationAssignmentDecisionRequest(string? Decision, string? Note);
+public sealed record StationAssignmentRevocationRequest(string? Reason);
 public sealed record StationAssignmentOutcome(bool IsConfigured, bool Succeeded, HttpStatusCode? StatusCode, JsonElement? Data);
 
 public interface IStationAssignmentService
@@ -23,6 +24,9 @@ public interface IStationAssignmentService
     Task<StationAssignmentOutcome> DecideAsync(
         Guid stationId, Guid assignmentId, Guid actorUserId,
         StationAssignmentDecisionRequest request, CancellationToken cancellationToken);
+    Task<StationAssignmentOutcome> RevokeAsync(
+        Guid stationId, Guid assignmentId, Guid actorUserId,
+        StationAssignmentRevocationRequest request, CancellationToken cancellationToken);
 }
 
 public sealed class SupabaseStationAssignmentService(
@@ -77,6 +81,24 @@ public sealed class SupabaseStationAssignmentService(
             p_actor_user_id = actorUserId,
             p_decision = request.Decision,
             p_note = request.Note,
+            p_occurred_at = DateTimeOffset.UtcNow
+        });
+        return await SendOutcomeAsync(message, cancellationToken);
+    }
+
+
+    public async Task<StationAssignmentOutcome> RevokeAsync(
+        Guid stationId, Guid assignmentId, Guid actorUserId,
+        StationAssignmentRevocationRequest request, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return new(false, false, null, null);
+        using var message = CreateRequest(HttpMethod.Post, "/rest/v1/rpc/revoke_station_assignment");
+        message.Content = JsonContent.Create(new
+        {
+            p_assignment_id = assignmentId,
+            p_station_id = stationId,
+            p_actor_user_id = actorUserId,
+            p_reason = request.Reason,
             p_occurred_at = DateTimeOffset.UtcNow
         });
         return await SendOutcomeAsync(message, cancellationToken);
@@ -145,6 +167,20 @@ public static class StationAssignmentDecisionRequestGuard
             return "invalid_assignment_note";
         if (request.Decision == "reject" && string.IsNullOrWhiteSpace(request.Note))
             return "assignment_rejection_reason_required";
+        return null;
+    }
+}
+
+
+public static class StationAssignmentRevocationRequestGuard
+{
+    public static string? GetError(StationAssignmentRevocationRequest? request)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Reason) ||
+            request.Reason != request.Reason.Trim() ||
+            request.Reason.Length is < 5 or > 2000 ||
+            request.Reason.Any(char.IsControl))
+            return "invalid_assignment_revocation_reason";
         return null;
     }
 }
@@ -218,6 +254,32 @@ public static class StationAssignmentEndpoints
         .RequireStationPermission("users.station.manage")
         .WithTags("Users")
         .WithName("DecideStationAssignment");
+
+
+        endpoints.MapPost("/api/v1/stations/{stationId:guid}/assignments/{assignmentId:guid}/revoke", async (
+            Guid stationId, Guid assignmentId, StationAssignmentRevocationRequest? request, HttpContext http,
+            IStationAssignmentService service, CancellationToken cancellationToken) =>
+        {
+            if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var actorUserId))
+                return Results.Unauthorized();
+            var error = StationAssignmentRevocationRequestGuard.GetError(request);
+            if (error is not null) return Results.BadRequest(new { error });
+            if (!service.IsConfigured)
+                return Results.Problem(title: "Station assignment service unavailable", statusCode: 503);
+
+            var outcome = await service.RevokeAsync(stationId, assignmentId, actorUserId, request!, cancellationToken);
+            if (!outcome.Succeeded)
+                return Results.Problem(title: "Station assignment revocation unavailable", statusCode: 503);
+            var result = RegistrationDecisionRpcResult.GetStatus(outcome.Data);
+            if (result == "committed") return Results.Ok(outcome.Data);
+            if (result == "unauthorized") return Results.Forbid();
+            if (result == "not_found") return Results.NotFound();
+            if (result == "conflict") return Results.Conflict(new { error = result });
+            return Results.Problem(title: "Unexpected assignment revocation response", statusCode: 503);
+        })
+        .RequireStationPermission("users.station.manage")
+        .WithTags("Users")
+        .WithName("RevokeStationAssignment");
 
         return endpoints;
     }
