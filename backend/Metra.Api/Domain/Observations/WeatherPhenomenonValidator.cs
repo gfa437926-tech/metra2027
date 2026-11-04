@@ -19,6 +19,11 @@ public static class WeatherPhenomenonValidator
 
         if (string.IsNullOrWhiteSpace(request.PhenomenonType))
             issues.Add(new("phenomenon_type", "حقل نوع الظاهرة الجوية مطلوب."));
+        else if (request.PhenomenonType.Length > 64)
+            issues.Add(new("phenomenon_type", "نوع الظاهرة الجوية يتجاوز الحد الأقصى المسموح (64 حرفاً)."));
+
+        if (request.GeneralNotes is { Length: > 2000 })
+            issues.Add(new("general_notes", "ملاحظات الظاهرة تتجاوز الحد الأقصى المسموح (2000 حرف)."));
 
         if (!DateOnly.TryParseExact(
                 request.PhenomenonDate,
