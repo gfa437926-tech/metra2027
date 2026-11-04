@@ -250,8 +250,9 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.lastUpdateTime = this.currentTime;
   }
   private updateDuration(): void {
-    if (!this.activePhenomenon || this.isPaused) return;
-    this.currentDuration = this.formatDuration(this.accumulatedDurationMs + Date.now() - this.startedAt);
+    if (!this.activePhenomenon) return;
+    const runningDuration = this.isPaused ? 0 : Date.now() - this.startedAt;
+    this.currentDuration = this.formatDuration(this.accumulatedDurationMs + runningDuration);
   }
   showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     const id = ++this.notificationSequence;
