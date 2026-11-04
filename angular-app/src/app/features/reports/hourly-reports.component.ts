@@ -21,7 +21,7 @@ interface HourlyPreview {
       <header class="page-head">
         <div class="head-icon"><i class="fa-regular fa-clock"></i></div>
         <div><h1>النشرات الساعية</h1><p>إدخال بيانات الرصد والتحقق منها قبل إرسالها للمراجعة</p></div>
-        <span class="preview-tag"><i class="fa-solid fa-flask"></i> وضع تجريبي</span>
+        <span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span>
       </header>
 
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>إرسال النشرة يتم عبر API عند تهيئة الاتصال.</strong><span>لن تُعرض النشرة كمرسلة إلا بعد تأكيد الحفظ من الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
@@ -122,11 +122,11 @@ interface HourlyPreview {
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
       <section class="panel preview-panel" *ngIf="previews.length">
-        <h2><i class="fa-solid fa-inbox"></i> مسودات النشرات التجريبية</h2>
+        <h2><i class="fa-solid fa-inbox"></i> سجل الإرسال المؤكد</h2>
         <article class="preview-row" *ngFor="let item of previews">
           <div><strong>{{ item.reference }}</strong><p>{{ item.station }} · {{ item.date }} · {{ item.hour }} UTC</p></div>
           <span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span>
-          <button *ngIf="item.status === 'draft'" type="button" class="send-btn" (click)="sendForReview(item)">إرسال للمراجعة</button>
+          
         </article>
       </section>
       <p class="footnote">قواعد الحقول المشروطة والتنسيقات هنا مبنية على نموذج الرصد الساعي الأصلي. يلزم إكمال المطابقة والاختبار مع واجهة API قبل استخدامها تشغيلياً.</p>
@@ -387,9 +387,8 @@ export class HourlyReportsComponent {
     }
   }
 
-  sendForReview(item: HourlyPreview): void {
-    item.status = 'submitted';
-    this.message = 'تم تغيير حالة ' + item.reference + ' إلى بانتظار المراجعة في المعاينة فقط.';
+  sendForReview(_item: HourlyPreview): void {
+    this.message = 'لا يمكن تغيير حالة النشرة محلياً. يجب إرسالها إلى الخادم وتلقي تأكيد الحفظ.';
   }
 
   private label(key: string): string {

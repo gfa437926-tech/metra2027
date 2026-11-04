@@ -11,7 +11,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
   imports: [CommonModule],
   template: `
     <div class="page" dir="rtl">
-      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-flask"></i> وضع تجريبي</span></header>
+      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>الإرسال الفعلي متاح عند اكتمال إعداد API وSupabase واختيار محطة مخوّلة؛ لا تُعرض رسالة نجاح قبل تأكيد الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
@@ -76,8 +76,8 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات التحقق</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
-      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> مسودات النشرات التجريبية</h2>
-        <article class="preview-row" *ngFor="let item of previews"><div><strong>{{ item.reference }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.station }} · {{ item.date }}</p></div><span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span><button *ngIf="item.status === 'draft'" type="button" class="send-btn" (click)="sendForReview(item)">إرسال للمراجعة</button></article>
+      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> مسودات المعاينة المحلية</h2>
+        <article class="preview-row" *ngFor="let item of previews"><div><strong>{{ item.reference }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.station }} · {{ item.date }}</p></div><span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span></article>
       </section>
       <p class="footnote">تمت مواءمة الحقول المطلوبة وأنماط الترميز مع نموذج daily.html وملف daily_validation.js الأصلي. لا تزال هذه المعاينة بحاجة إلى اختبار ميداني ومطابقة قاعدة البيانات قبل التشغيل الفعلي.</p>
     </div>
@@ -343,7 +343,7 @@ export class DailyReportsComponent {
     this.message = 'هذه معاينة للنص فقط؛ لم يتم إرسال التقرير أو حفظه.';
   }
   private clearPreview(): void { this.reportPreview='';this.whatsAppUrl=''; }
-    sendForReview(item: DailyPreview): void { item.status = 'submitted'; this.message = 'تم إرسال ' + item.reference + ' للمراجعة في المعاينة فقط.'; }
+    sendForReview(_item: DailyPreview): void { this.message = 'هذه مسودة محلية للمعاينة وليست محفوظة على الخادم. أعد فتح النموذج وأرسلها عبر زر الإرسال للمراجعة.'; }
 
   private label(key: string): string {
     const labels: Record<string,string> = {minTemp:'الحرارة الصغرى',maxTemp:'الحرارة العظمى',precipitation:'الهطول',snowThickness:'سماكة الثلوج',evaporation:'التبخر',sunshineDuration:'مدة سطوع الشمس',sunshinePercentage:'نسبة سطوع الشمس',maxGustSpeed:'سرعة هبات الرياح',maxGustDirection:'اتجاه الهبات',maxGustTime:'وقت الهبات القصوى',maxHumidity:'الرطوبة العظمى',maxHumidityTime:'وقت الرطوبة العظمى',minHumidity:'الرطوبة الصغرى',minHumidityTime:'وقت الرطوبة الصغرى'};
