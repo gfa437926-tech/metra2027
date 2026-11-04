@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
 
 @Component({
@@ -86,7 +87,12 @@ export class AppComponent implements OnInit {
   sidebarOpen = false;
   currentUserEmail: string | null = null;
 
-  ngOnInit(): void { void this.refreshSession(); }
+  ngOnInit(): void {
+    void this.refreshSession();
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(() => {
+      void this.refreshSession();
+    });
+  }
 
   async refreshSession(): Promise<void> {
     try { this.currentUserEmail = await this.auth.getCurrentUserEmail(); }
