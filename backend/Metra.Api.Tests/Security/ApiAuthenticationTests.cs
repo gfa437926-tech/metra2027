@@ -22,6 +22,14 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Readiness_endpoint_is_anonymous_but_fails_when_server_dependencies_are_missing()
+    {
+        using var response = await _client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
     [Theory]
     [InlineData("/api/v1/observations/daily/validate")]
     [InlineData("/api/v1/observations/hourly/validate")]
@@ -30,7 +38,6 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     public async Task Every_observation_endpoint_requires_authentication(string path)
     {
-
         using var response = await SendUnauthenticated(path);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -54,6 +61,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
     [Theory]
     [InlineData("/api/v1/stations")]
     [InlineData("/api/v1/stations?limit=500&offset=0")]
@@ -69,5 +77,4 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             return _client.GetAsync(path);
         return _client.PostAsync(path, new StringContent("{}", Encoding.UTF8, "application/json"));
     }
-
 }

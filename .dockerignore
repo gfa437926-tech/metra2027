@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+.idea
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/.dart_tool
+**/build
+**/coverage
+**/*.user
+**/*.suo
+angular-app
+mobile

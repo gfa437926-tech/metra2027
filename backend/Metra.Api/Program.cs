@@ -93,6 +93,30 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
 .AllowAnonymous()
 .WithName("GetApiHealth");
 
+// Readiness is deliberately separate from liveness. It reports only whether
+// server-side Supabase integration is configured; it never exposes secret values.
+app.MapGet("/api/v1/ready", (
+    IStationAuthorizationService authorization,
+    IObservationSubmissionService submission,
+    IObservationDecisionService decision,
+    IObservationQueueService queue,
+    IStationDirectoryService directory) =>
+{
+    var ready = authorization.IsConfigured &&
+        submission.IsConfigured &&
+        decision.IsConfigured &&
+        queue.IsConfigured &&
+        directory.IsConfigured;
+
+    return ready
+        ? Results.Ok(new { status = "ready", service = "metra-api" })
+        : Results.Problem(
+            title: "API dependencies are not configured",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+})
+.AllowAnonymous()
+.WithName("GetApiReadiness");
+
 app.Run();
 
 public partial class Program;

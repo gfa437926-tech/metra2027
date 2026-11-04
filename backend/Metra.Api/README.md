@@ -1,4 +1,4 @@
-# METRA API — Authentication
+# METRA API — Authentication and deployment
 
 ## Supabase access tokens
 
@@ -7,22 +7,51 @@ The API validates Supabase Auth access tokens using ASP.NET Core JWT Bearer auth
 - Issuer: `https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1`
 - Audience: `authenticated`
 - Signature, issuer, audience, and expiration are validated.
-- All endpoints require an authenticated user by default. Only the health endpoint is anonymous.
+- All endpoints require an authenticated user by default. Only health and readiness endpoints are anonymous.
 - JWT claims are kept in their original names; `sub` is the user identifier.
 
-## Deployment configuration
+## Container build and run
+
+Build from the repository root so the Docker build context contains the API project:
+
+```sh
+docker build -f backend/Metra.Api/Dockerfile -t metra-api:local .
+```
+
+Run with secrets supplied by the deployment platform's secret manager (never put the service-role key in an image, Dockerfile, compose file committed to Git, or client application):
+
+```sh
+docker run --rm -p 8080:8080 \
+  -e ASPNETCORE_HTTP_PORTS=8080 \
+  -e Supabase__Url=https://tbdnklyxjvbrilvnwgmq.supabase.co \
+  -e Supabase__ServiceRoleKey="$METRA_SUPABASE_SERVICE_ROLE_KEY" \
+  -e Cors__AllowedOrigins__0=https://gfa437926-tech.github.io \
+  metra-api:local
+```
+
+The container listens on port 8080 and runs as the non-root `app` user supplied by the official .NET runtime image. The platform must terminate TLS and forward traffic securely to the container. Configure an HTTPS public API origin before setting `METRA_API_BASE_URL` in Angular/Flutter clients.
+
+## Hosting configuration
 
 Set these values in the API hosting environment (not in source control):
 
-| Variable | Purpose |
+| Environment variable | Purpose |
 |---|---|
 | `Supabase__Url` | Supabase project URL |
+| `Supabase__ServiceRoleKey` | Server-only service-role secret; required for database RPC and directory access |
 | `Authentication__Authority` | Optional override; defaults to `{Supabase__Url}/auth/v1` |
 | `Authentication__Audience` | Optional override; defaults to `authenticated` |
 | `Cors__AllowedOrigins__0` | First permitted browser origin |
-| `Cors__AllowedOrigins__1` | Additional browser origin, if needed |
+| `Cors__AllowedOrigins__1` | Additional permitted browser origin, if needed |
+| `ASPNETCORE_HTTP_PORTS` | Container HTTP port; defaults to 8080 in the supplied image |
 
 Do not put the Supabase service-role/secret key or JWT signing secret in Angular, Flutter, Git, or ordinary application settings.
+
+## Health and readiness
+
+- `GET /api/v1/health` is an anonymous liveness endpoint. It confirms that the process is responding.
+- `GET /api/v1/ready` is an anonymous readiness endpoint. It returns 200 only when the server-side Supabase URL and service-role integration are configured for authorization, submission, decisions, review queue, and station directory; otherwise it returns 503.
+- Readiness checks configuration, not a live Supabase network query. Monitor Supabase connectivity separately and do not interpret readiness as proof that every database migration has been applied.
 
 ## Signing-key prerequisite
 
@@ -34,7 +63,6 @@ Supabase does not publish symmetric HS256 secrets through JWKS. If the project s
 
 A valid JWT proves identity only. It does not establish METRA job role, account approval, authority membership, station assignment, or station scope. Those checks must be implemented server-side against METRA's trusted records before exposing operational data or mutations. Never authorize using user-editable `user_metadata`, client-supplied role codes, or client-supplied station ownership.
 
-
 ## Station-scoped authorization
 
 Operational endpoints must apply `RequireStationPermission("permission.code")`
@@ -44,26 +72,19 @@ the request body as proof of authority.
 
 The API calls the narrowly scoped
 `public.metra_user_has_station_permission(uuid, uuid, text)` RPC using the
-server-only Supabase service-role key. Configure these hosting secrets:
-
-- `Supabase__Url`: project URL.
-- `Supabase__ServiceRoleKey`: service-role secret, stored only in the API host's
-  secret manager/environment. Never add it to source control, Angular, or Flutter.
-
-The RPC requires an active METRA account, an approved and current authority
-membership, an approved and current assignment to the exact station, an active
-catalogue role, an approved explicit permission grant, an active authority and
-country, and an approved active non-demo station. It returns false for any
-missing, expired, revoked, pending, or mismatched record. The function is
-SECURITY DEFINER with a fixed search_path; execution is revoked from PUBLIC,
-anon, and authenticated and granted only to service_role.
+server-only Supabase service-role key. The RPC requires an active METRA account,
+an approved and current authority membership, an approved and current assignment
+to the exact station, an active catalogue role, an approved explicit permission
+grant, an active authority and country, and an approved active non-demo station.
+It returns false for any missing, expired, revoked, pending, or mismatched record.
+The function is SECURITY DEFINER with a fixed search_path; execution is revoked
+from PUBLIC, anon, and authenticated and granted only to service_role.
 
 A missing API secret or failed RPC is fail-closed. Do not expose operational
 routes until the host secret is configured and integration tests cover pending
 accounts, expired memberships/assignments/grants, cross-station access,
 self-elevation, and demo/unapproved stations. Generic observation validation
 routes are not station-scoped operational write routes.
-
 
 ## Station directory
 
