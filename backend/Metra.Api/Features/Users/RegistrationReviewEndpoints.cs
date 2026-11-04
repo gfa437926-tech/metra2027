@@ -168,7 +168,7 @@ public static class RegistrationReviewEndpoints
             if (take is < 1 or > 100)
                 return Results.BadRequest(new { error = "invalid_limit", maximum = 100 });
             if (!review.IsConfigured)
-                return Results.Problem(title = "System registration review unavailable", statusCode: 503);
+                return Results.Problem(title: "System registration review unavailable", statusCode: 503);
             var result = await review.GetPendingForStationAsync(stationId, "pending_system_approval", take, cancellationToken);
             return result is null
                 ? Results.Problem(title: "System registration queue read failed", statusCode: 503)
