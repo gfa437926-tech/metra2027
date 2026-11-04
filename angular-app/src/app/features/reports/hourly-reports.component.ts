@@ -135,7 +135,15 @@ interface HourlyPreview {
   `]
 })
 export class HourlyReportsComponent {
-  readonly today = new Date().toISOString().slice(0, 10);
+  readonly today = this.localDate(new Date());
+  private localDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+
   readonly now = new Intl.DateTimeFormat('ar', { hour: '2-digit', minute: '2-digit' }).format(new Date());
   readonly hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   readonly cloudValues = ['0','1','2','3','4','5','6','7','8'];
