@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+migration="database/migrations/012_station_assignment_workflow.sql"
+endpoint="backend/Metra.Api/Features/Users/StationAssignmentEndpoints.cs"
+program="backend/Metra.Api/Program.cs"
+
+grep -Fq "users.station.manage" "$migration"
+grep -Fq "p_role_code NOT IN ('observer', 'station_auditor')" "$migration"
+grep -Fq "p_user_id = p_actor_user_id" "$migration"
+grep -Fq "IS DISTINCT FROM true" "$migration"
+grep -Fq "target_authority_membership_required" "$migration"
+grep -Fq "FOR UPDATE" "$migration"
+grep -Fq "assignment_approved" "$migration"
+grep -Fq "assignment_rejected" "$migration"
+grep -Fq "REVOKE ALL" "$migration"
+grep -Fq "TO service_role" "$migration"
+grep -Fq '.RequireStationPermission("users.station.manage")' "$endpoint"
+grep -Fq "request_station_assignment" "$endpoint"
+grep -Fq "decide_station_assignment" "$endpoint"
+grep -Fq "app.MapStationAssignmentEndpoints();" "$program"
+grep -Fq "IStationAssignmentService, SupabaseStationAssignmentService" "$program"
+
+echo "Station assignment workflow security contract verified."
