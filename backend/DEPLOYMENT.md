@@ -42,7 +42,7 @@ No production host is currently specified in this repository. Do not infer one o
 
 ## Render Blueprint setup
 
-A repository-root `render.yaml` is provided for the API service. It uses the existing Dockerfile and build context, selects the Frankfurt region, binds the container to Render's public HTTP port, configures the exact GitHub Pages CORS origin, and uses the anonymous liveness endpoint for platform health checks.
+A repository-root `render.yaml` is provided for the API service. It uses the existing Dockerfile and build context, selects the Frankfurt region, binds the container to Render's public HTTP port, configures the exact GitHub Pages CORS origin, and uses the anonymous readiness endpoint for platform health checks, so an instance is not marked healthy until its server-side Supabase catalogue probe succeeds.
 
 To create the host:
 
@@ -52,7 +52,7 @@ To create the host:
 4. When prompted, provide the value for `Supabase__ServiceRoleKey` directly in Render's secret field. Never commit this value or paste it into chat.
 5. Create the Blueprint and wait for the first deployment to finish.
 6. Copy the actual `https://...` service URL assigned by Render. Do not assume a hostname from the service name.
-7. Verify `/api/v1/health` and then `/api/v1/ready`. The health check only proves the process is responding; readiness must prove the server can reach the new Supabase station catalogue.
+7. Verify `/api/v1/health` and then `/api/v1/ready`. The liveness endpoint proves the process is responding; the Render platform health check uses readiness and therefore also requires a successful server-side Supabase catalogue probe.
 8. Add the real API base URL (ending in `/api/v1`) to the GitHub Pages repository secret `METRA_API_BASE_URL`, and configure the matching mobile build setting. Keep the Supabase publishable key separate from the server-only service-role key.
 
 The Blueprint deliberately does not contain a service-role key. Render's `sync: false` prompts for it during initial Blueprint creation; if the Blueprint already exists, add or update the secret in the Render service's Environment settings. Creating this file in GitHub does not create a Render account, service, hostname, or deployment.
