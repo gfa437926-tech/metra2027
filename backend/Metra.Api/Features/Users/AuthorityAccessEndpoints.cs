@@ -94,7 +94,7 @@ public static class AuthorityAccessEndpoints
             if (!service.IsConfigured) return Unavailable();
             var result = await service.CallAsync("decide_authority_membership", new
             {
-                p_membership_id = membershipId, p_actor_user_id = actor,
+                p_membership_id = membershipId, p_authority_id = authorityId, p_actor_user_id = actor,
                 p_decision = request!.Decision, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
@@ -110,7 +110,7 @@ public static class AuthorityAccessEndpoints
             if (!service.IsConfigured) return Unavailable();
             var result = await service.CallAsync("revoke_authority_membership", new
             {
-                p_membership_id = membershipId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
+                p_membership_id = membershipId, p_authority_id = authorityId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
         }).WithTags("Authority access").WithName("RevokeAuthorityMembership");
@@ -145,7 +145,7 @@ public static class AuthorityAccessEndpoints
             if (!service.IsConfigured) return Unavailable();
             var result = await service.CallAsync("decide_authority_permission_grant", new
             {
-                p_grant_id = grantId, p_actor_user_id = actor,
+                p_grant_id = grantId, p_authority_id = authorityId, p_actor_user_id = actor,
                 p_decision = request!.Decision, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
@@ -161,7 +161,7 @@ public static class AuthorityAccessEndpoints
             if (!service.IsConfigured) return Unavailable();
             var result = await service.CallAsync("revoke_authority_permission_grant", new
             {
-                p_grant_id = grantId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
+                p_grant_id = grantId, p_authority_id = authorityId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
         }).WithTags("Authority access").WithName("RevokeAuthorityPermissionGrant");
