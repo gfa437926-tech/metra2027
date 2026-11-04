@@ -49,7 +49,8 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const path = 'dist/metra2027/browser/metra-config.js';
-          const apiBaseUrl = (process.env.METRA_API_BASE_URL || '').trim().replace(/\\/+$/, '');
+          const apiBaseUrl = (process.env.METRA_API_BASE_URL || '').trim();
+          while (apiBaseUrl.endsWith('/')) apiBaseUrl = apiBaseUrl.slice(0, -1);
           if (!apiBaseUrl) {
             throw new Error('METRA_API_BASE_URL is required. Configure the HTTPS API URL ending in /api/v1 in GitHub Actions secrets.');
           }
