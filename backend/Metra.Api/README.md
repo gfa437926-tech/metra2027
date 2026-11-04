@@ -183,3 +183,23 @@ request creation. The public wrapper and status read model are executable only
 by `service_role`; the API supplies the caller identity from the verified JWT.
 The browser never receives the service-role key. The station directory omits
 email and authentication-provider fields and exposes no grant/revoke controls.
+
+## Station assignment management
+
+- `GET /api/v1/stations/{stationId}/assignable-roles`
+- `POST /api/v1/stations/{stationId}/assignments`
+- `POST /api/v1/stations/{stationId}/assignments/{assignmentId}/decision`
+- `POST /api/v1/stations/{stationId}/assignments/{assignmentId}/revoke`
+
+All routes require `users.station.manage` for the exact station and a separate
+approved individual grant. The station-manager workflow can assign only
+`observer` and `station_auditor`; administrative and director roles cannot
+be assigned through it. A target must already have an active METRA account
+and approved, current membership in the station's authority. A different
+reviewer must approve or reject the pending assignment. Revocation requires
+a different authorized manager and a reason. Request, approval, rejection and
+revocation are appended to `station_audit_log` atomically with the state
+change. No station assignment operation creates or changes permission grants.
+
+Authority membership and individual permission-grant management remain
+separate controlled operations and are not exposed by these endpoints.
