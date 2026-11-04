@@ -65,6 +65,18 @@ public sealed class DailyObservationValidatorTests
     }
 
     [Fact]
+    public void Rejects_required_fields_missing_from_the_submitted_dictionary()
+    {
+        var values = new Dictionary<string, string?>();
+        var required = new HashSet<string> { "minTemp", "maxTemp" };
+
+        var issues = DailyObservationValidator.Validate(values, required);
+
+        Assert.Contains(issues, issue => issue.Field == "minTemp");
+        Assert.Contains(issues, issue => issue.Field == "maxTemp");
+    }
+
+    [Fact]
     public void Enforces_required_fields_when_supplied_by_report_type()
     {
         var values = new Dictionary<string, string?> { ["minTemp"] = "" };
