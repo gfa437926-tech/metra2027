@@ -26,6 +26,8 @@ builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueSer
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
 builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService));
+builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService));
+builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
 builder.Services.AddOpenApi();
@@ -91,6 +93,7 @@ app.MapObservationQueueEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();
+app.MapRegistrationSubmissionEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
