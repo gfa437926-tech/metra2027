@@ -61,6 +61,16 @@ export class StationAssignmentApiService {
     ));
   }
 
+
+  async revoke(stationId: string, assignmentId: string, reason: string): Promise<unknown> {
+    const headers = await this.authHeaders();
+    return firstValueFrom(this.http.post(
+      `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/assignments/${encodeURIComponent(assignmentId)}/revoke`,
+      { reason },
+      { headers }
+    ));
+  }
+
   private async authHeaders(): Promise<HttpHeaders> {
     if (!this.isConfigured) throw new Error('يلزم ضبط عنوان API وإعدادات Supabase العامة أولاً.');
     const token = await this.auth.getAccessToken();
