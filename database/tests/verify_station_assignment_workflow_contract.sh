@@ -2,6 +2,7 @@
 set -euo pipefail
 
 migration="database/migrations/012_station_assignment_workflow.sql"
+revoke_migration="database/migrations/013_station_assignment_revocation.sql"
 endpoint="backend/Metra.Api/Features/Users/StationAssignmentEndpoints.cs"
 program="backend/Metra.Api/Program.cs"
 
@@ -15,9 +16,15 @@ grep -Fq "assignment_approved" "$migration"
 grep -Fq "assignment_rejected" "$migration"
 grep -Fq "REVOKE ALL" "$migration"
 grep -Fq "TO service_role" "$migration"
+grep -Fq "assignment_revoked" "$revoke_migration"
+grep -Fq "IS DISTINCT FROM true" "$revoke_migration"
+grep -Fq "REVOKE ALL" "$revoke_migration"
+grep -Fq "TO service_role" "$revoke_migration"
 grep -Fq '.RequireStationPermission("users.station.manage")' "$endpoint"
 grep -Fq "request_station_assignment" "$endpoint"
 grep -Fq "decide_station_assignment" "$endpoint"
+grep -Fq "revoke_station_assignment" "$endpoint"
+grep -Fq "RevokeStationAssignment" "$endpoint"
 grep -Fq "app.MapStationAssignmentEndpoints();" "$program"
 grep -Fq "IStationAssignmentService, SupabaseStationAssignmentService" "$program"
 
