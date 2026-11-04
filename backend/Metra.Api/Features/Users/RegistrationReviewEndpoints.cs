@@ -33,14 +33,16 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
         if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 100 ||
             expectedStatus is not ("pending_station_approval" or "pending_system_approval")) return null;
 
-        // Deliberately omit email/auth fields. Return only the minimum profile,
-        // request, station and role data needed for the station approval decision.
-        var query = "select=id,user_id,requested_station_id,requested_role_code,status,phone_snapshot,terms_version,submitted_at,metra_user_profiles(first_name,father_name,last_name),metra_role_catalogue(name_ar,name_en),station_catalogue(name_ar,name_en,local_station_code)" +
-            "&requested_station_id=eq." + stationId.ToString("D") +
-            "&status=eq." + expectedStatus + "&order=submitted_at.asc&limit=" + limit;
-        using var message = new HttpRequestMessage(HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/registration_requests?{query}");
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/get_station_registration_queue");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+        message.Content = JsonContent.Create(new
+        {
+            p_station_id = stationId,
+            p_expected_status = expectedStatus,
+            p_limit = limit
+        });
         try
         {
             using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
@@ -53,16 +55,14 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return null; }
     }
 
-
     public async Task<JsonElement?> GetAuditForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken)
     {
         if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 200) return null;
-        var query = "select=id,request_id,user_id,actor_user_id,event_type,terms_version,decision_note,occurred_at,registration_requests!inner(requested_station_id)" +
-            "&registration_requests.requested_station_id=eq." + stationId.ToString("D") +
-            "&order=occurred_at.desc&limit=" + limit;
-        using var message = new HttpRequestMessage(HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/registration_audit_events?{query}");
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/get_station_registration_audit");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+        message.Content = JsonContent.Create(new { p_station_id = stationId, p_limit = limit });
         try
         {
             using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
