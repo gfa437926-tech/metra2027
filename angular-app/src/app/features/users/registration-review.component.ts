@@ -117,6 +117,9 @@ import {
                             <button type="button" class="approve" [disabled]="assignmentBusy" (click)="decideAssignment(user, 'approve', assignmentNote.value)">اعتماد</button>
                             <button type="button" class="reject" [disabled]="assignmentBusy" (click)="decideAssignment(user, 'reject', assignmentNote.value)">رفض</button>
                           </div>
+                        } @else if (canManageAssignments && user.assignment_status === 'approved') {
+                          <textarea #revokeReason rows="2" maxlength="2000" placeholder="سبب إلغاء التكليف"></textarea>
+                          <button type="button" class="reject" [disabled]="assignmentBusy" (click)="revokeAssignment(user, revokeReason.value)">إلغاء التكليف</button>
                         } @else { <small>—</small> }
                       </td>
                     </tr>
@@ -342,6 +345,27 @@ export class RegistrationReviewComponent implements OnInit {
       this.assignmentRole = '';
       this.assignmentReason = '';
       this.assignmentValidTo = '';
+      await this.loadQueue();
+    } catch (error) {
+      this.error = this.errorMessage(error);
+    } finally {
+      this.assignmentBusy = false;
+    }
+  }
+
+
+  async revokeAssignment(user: StationUserItem, reason: string): Promise<void> {
+    if (this.assignmentBusy || !this.selectedStationId) return;
+    if (!reason.trim()) {
+      this.error = 'سبب إلغاء التكليف مطلوب.';
+      return;
+    }
+    this.assignmentBusy = true;
+    this.error = '';
+    this.notice = '';
+    try {
+      await this.assignmentApi.revoke(this.selectedStationId, user.assignment_id, reason.trim());
+      this.notice = 'تم إلغاء التكليف وتسجيل القرار في سجل التدقيق.';
       await this.loadQueue();
     } catch (error) {
       this.error = this.errorMessage(error);
