@@ -53,6 +53,8 @@ jobs:
         run: bash database/tests/verify_station_assignment_workflow_contract.sh
       - name: Verify station audit read-model contract
         run: bash database/tests/verify_station_audit_contract.sh
+      - name: Verify authority access lifecycle contract
+        run: bash database/tests/verify_authority_access_lifecycle_contract.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
