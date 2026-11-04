@@ -1,6 +1,4 @@
 using System.Net.Http.Json;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 
 namespace Metra.Api.Security;
@@ -9,10 +7,11 @@ public interface IStationAuthorizationService
 {
     bool IsConfigured { get; }
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
-/// Calls a narrowly scoped, server-only Supabase RPC. The service-role key
+/// Calls narrowly scoped, server-only Supabase authorization RPCs. The service-role key
 /// must be injected by the hosting secret manager and must never reach clients.
 /// </summary>
 public sealed class SupabaseStationAuthorizationService(
@@ -27,11 +26,21 @@ public sealed class SupabaseStationAuthorizationService(
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_serviceKey);
 
-    public async Task<bool> HasStationPermissionAsync(
-        Guid userId,
-        Guid stationId,
-        string permissionCode,
-        CancellationToken cancellationToken = default)
+    public Task<bool> HasStationPermissionAsync(
+        Guid userId, Guid stationId, string permissionCode,
+        CancellationToken cancellationToken = default) =>
+        HasPermissionAsync(
+            "metra_user_has_station_permission", userId, stationId, permissionCode, cancellationToken);
+
+    public Task<bool> HasStationOwnerAuthorityPermissionAsync(
+        Guid userId, Guid stationId, string permissionCode,
+        CancellationToken cancellationToken = default) =>
+        HasPermissionAsync(
+            "metra_user_has_station_owner_authority_permission", userId, stationId, permissionCode, cancellationToken);
+
+    private async Task<bool> HasPermissionAsync(
+        string rpcName, Guid userId, Guid stationId, string permissionCode,
+        CancellationToken cancellationToken)
     {
         if (!IsConfigured || userId == Guid.Empty || stationId == Guid.Empty ||
             string.IsNullOrWhiteSpace(permissionCode))
@@ -39,8 +48,7 @@ public sealed class SupabaseStationAuthorizationService(
 
         var client = httpClientFactory.CreateClient(nameof(SupabaseStationAuthorizationService));
         using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"{_supabaseUrl!.TrimEnd('/')}/rest/v1/rpc/metra_user_has_station_permission");
+            HttpMethod.Post, $"{_supabaseUrl!.TrimEnd('/')}/rest/v1/rpc/{rpcName}");
 
         request.Headers.TryAddWithoutValidation("apikey", _serviceKey);
         request.Headers.Authorization =
@@ -63,17 +71,14 @@ public sealed class SupabaseStationAuthorizationService(
         }
         catch (JsonException)
         {
-            // Invalid JSON or a response with the wrong shape must never authorize access.
             return false;
         }
         catch (HttpRequestException)
         {
-            // Supabase/network failures are authorization failures: deny by default.
             return false;
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            // HttpClient timeout (distinct from caller cancellation) is fail-closed.
             return false;
         }
     }

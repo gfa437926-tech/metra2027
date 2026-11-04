@@ -6,7 +6,16 @@ public static class StationAuthorizationEndpointExtensions
 {
     public static RouteHandlerBuilder RequireStationPermission(
         this RouteHandlerBuilder builder,
-        string permissionCode)
+        string permissionCode) =>
+        AddStationPermissionFilter(builder, permissionCode, authorityScope: false);
+
+    public static RouteHandlerBuilder RequireStationOwnerAuthorityPermission(
+        this RouteHandlerBuilder builder,
+        string permissionCode) =>
+        AddStationPermissionFilter(builder, permissionCode, authorityScope: true);
+
+    private static RouteHandlerBuilder AddStationPermissionFilter(
+        RouteHandlerBuilder builder, string permissionCode, bool authorityScope)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(permissionCode);
 
@@ -26,8 +35,11 @@ public static class StationAuthorizationEndpointExtensions
                     detail: "The trusted METRA database connection is not configured.",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            var allowed = await authorization.HasStationPermissionAsync(
-                userId, stationId, permissionCode, http.RequestAborted);
+            var allowed = authorityScope
+                ? await authorization.HasStationOwnerAuthorityPermissionAsync(
+                    userId, stationId, permissionCode, http.RequestAborted)
+                : await authorization.HasStationPermissionAsync(
+                    userId, stationId, permissionCode, http.RequestAborted);
 
             return allowed ? await next(context) : Results.Forbid();
         });

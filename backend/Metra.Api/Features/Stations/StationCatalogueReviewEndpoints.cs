@@ -121,7 +121,7 @@ public static class StationCatalogueReviewEndpoints
 
             return Results.Ok(outcome.Data);
         })
-        .RequireStationPermission("stations.catalogue.review")
+        .RequireStationOwnerAuthorityPermission("stations.catalogue.review")
         .WithTags("Stations")
         .WithName("ReviewStationCatalogue");
 
