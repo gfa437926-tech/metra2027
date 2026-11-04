@@ -45,6 +45,8 @@ jobs:
         run: bash database/tests/verify_station_user_directory_contract.sh
       - name: Verify station assignment workflow contract
         run: bash database/tests/verify_station_assignment_workflow_contract.sh
+      - name: Verify station audit read-model contract
+        run: bash database/tests/verify_station_audit_contract.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
