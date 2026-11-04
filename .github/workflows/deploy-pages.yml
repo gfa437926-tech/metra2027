@@ -39,7 +39,7 @@ jobs:
         working-directory: angular-app
         run: npx ng build --configuration production --base-href /metra2027/
 
-      - name: Inject public runtime configuration
+      - name: Validate and inject public runtime configuration
         working-directory: angular-app
         env:
           METRA_API_BASE_URL: ${{ secrets.METRA_API_BASE_URL }}
@@ -49,17 +49,31 @@ jobs:
           node <<'NODE'
           const fs = require('node:fs');
           const path = 'dist/metra2027/browser/metra-config.js';
+          const apiBaseUrl = (process.env.METRA_API_BASE_URL || '').trim().replace(/\\/+$/, '');
+          if (!apiBaseUrl) {
+            throw new Error('METRA_API_BASE_URL is required. Configure the HTTPS API URL ending in /api/v1 in GitHub Actions secrets.');
+          }
+          let parsed;
+          try { parsed = new URL(apiBaseUrl); } catch {
+            throw new Error('METRA_API_BASE_URL must be a valid absolute URL.');
+          }
+          if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost' && parsed.hostname !== '127.0.0.1') {
+            throw new Error('Deployed API must use HTTPS (HTTP is permitted only for localhost).');
+          }
+          if (!apiBaseUrl.endsWith('/api/v1')) {
+            throw new Error('METRA_API_BASE_URL must end with /api/v1.');
+          }
           const config = {
-            apiBaseUrl: process.env.METRA_API_BASE_URL || '',
-            supabaseUrl: process.env.METRA_SUPABASE_URL || 'https://tbdnklyxjvbrilvnwgmq.supabase.co',
-            supabaseAnonKey: process.env.METRA_SUPABASE_ANON_KEY || 'sb_publishable__CAwA8NQjhIOP_GonG2wGg_IVzVzgeU'
+            apiBaseUrl,
+            supabaseUrl: (process.env.METRA_SUPABASE_URL || 'https://tbdnklyxjvbrilvnwgmq.supabase.co').trim(),
+            supabaseAnonKey: (process.env.METRA_SUPABASE_ANON_KEY || '').trim()
           };
           fs.writeFileSync(
             path,
-            'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\n',
+            'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\\n',
             { mode: 0o644 }
           );
-          console.log('Runtime configuration injected; values are not printed.');
+          console.log('Runtime configuration validated and injected; values are not printed.');
           NODE
 
       - name: Add SPA fallback for client-side routes
