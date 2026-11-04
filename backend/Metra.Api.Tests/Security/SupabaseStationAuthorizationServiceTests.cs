@@ -24,7 +24,7 @@ public sealed class SupabaseStationAuthorizationServiceTests
             configuration);
 
         Assert.False(service.IsConfigured);
-        Assert.False(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observations.create"));
+        Assert.False(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observation.create"));
     }
 
     [Theory]
@@ -41,7 +41,7 @@ public sealed class SupabaseStationAuthorizationServiceTests
         });
 
         Assert.True(service.IsConfigured);
-        Assert.False(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observations.create"));
+        Assert.False(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observation.create"));
     }
 
     [Fact]
@@ -52,7 +52,7 @@ public sealed class SupabaseStationAuthorizationServiceTests
             Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
         });
 
-        Assert.True(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observations.create"));
+        Assert.True(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observation.create"));
     }
 
     private static SupabaseStationAuthorizationService CreateService(
