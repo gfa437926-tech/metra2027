@@ -351,18 +351,29 @@ export class PhenomenaComponent {
   printDetail(): void {
     if (!this.selectedDetail) return;
     const p = this.selectedDetail;
-    const html = `<h3>معلومات الظاهرة</h3><p>نوع الظاهرة: ${this.typeName(p.phenomenon_type)}</p><p>التاريخ: ${p.phenomenon_date}</p><p>وقت البداية (UTC): ${p.start_time}</p><p>وقت النهاية (UTC): ${p.end_time}</p><p>المدة: ${p.phenomenon_duration || 'غير محددة'}</p><p>الشدة: ${this.intensityName(p.intensity)}</p>${this.tableHtml(p)}`;
+    const html = \`<h3>معلومات الظاهرة</h3><p>نوع الظاهرة: \${this.escapeHtml(this.typeName(p.phenomenon_type))}</p><p>التاريخ: \${this.escapeHtml(p.phenomenon_date)}</p><p>وقت البداية (UTC): \${this.escapeHtml(p.start_time)}</p><p>وقت النهاية (UTC): \${this.escapeHtml(p.end_time)}</p><p>المدة: \${this.escapeHtml(p.phenomenon_duration || 'غير محددة')}</p><p>الشدة: \${this.escapeHtml(this.intensityName(p.intensity))}</p>\${this.tableHtml(p)}\`;
     this.printContent('تفاصيل الظاهرة الجوية', html);
   }
 
+  private escapeHtml(value: unknown): string {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character] ?? character);
+  }
+
   private tableHtml(p: WeatherPhenomenon): string {
-    return `<table><thead><tr><th>الساعة (UTC)</th><th>كمية المطر (مم) ddd.d</th><th>كمية الثلج (سم) ddd</th><th>ملاحظات</th></tr></thead><tbody>${this.hours.map(h => `<tr><td>${h}:00</td><td>${this.rainAt(p,h)}</td><td>${this.snowAt(p,h)}</td><td>${this.notesAt(p,h)}</td></tr>`).join('')}</tbody></table>`;
+    return \`<table><thead><tr><th>الساعة (UTC)</th><th>كمية المطر (مم) ddd.d</th><th>كمية الثلج (سم) ddd</th><th>ملاحظات</th></tr></thead><tbody>\${this.hours.map(h => \`<tr><td>\${this.escapeHtml(h)}:00</td><td>\${this.escapeHtml(this.rainAt(p,h))}</td><td>\${this.escapeHtml(this.snowAt(p,h))}</td><td>\${this.escapeHtml(this.notesAt(p,h))}</td></tr>\`).join('')}</tbody></table>\`;
   }
 
   private printContent(title: string, html: string): void {
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:Arial,sans-serif;padding:20px}h2{text-align:center;color:#2c3e50}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:center}th{background:#2c3e50;color:#fff}</style></head><body><h2>${title}</h2>${html}</body></html>`);
+    const safeTitle = this.escapeHtml(title);
+    win.document.write(\`<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>\${safeTitle}</title><style>body{font-family:Arial,sans-serif;padding:20px}h2{text-align:center;color:#2c3e50}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:10px;text-align:center}th{background:#2c3e50;color:#fff}</style></head><body><h2>\${safeTitle}</h2>\${html}</body></html>\`);
     win.document.close(); win.focus(); win.print();
   }
 }
