@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { RegistrationReviewComponent } from './registration-review.component';
+import { AuthorityAccessComponent } from './authority-access.component';
 
 interface RoleDefinition {
   code: string;
@@ -11,7 +12,7 @@ interface RoleDefinition {
 
 @Component({
   standalone: true,
-  imports: [RegistrationReviewComponent],
+  imports: [RegistrationReviewComponent, AuthorityAccessComponent],
   template: `
     <main class="page" dir="rtl">
       <header>
@@ -21,10 +22,11 @@ interface RoleDefinition {
       </header>
 
       <metra-registration-review></metra-registration-review>
+      <metra-authority-access></metra-authority-access>
 
       <section class="notice" role="note">
-        <strong>حالة الوحدة: مرجع الأدوار فقط</strong>
-        <p>تعرض لوحة المراجعة أعلاه طلبات التسجيل المعلّقة وسجل قراراتها بحسب صلاحية المحطة والمرحلة. اعتماد التسجيل لا يمنح دوراً إدارياً؛ الأدوار غير القابلة للطلب تحتاج مسار إسناد إداري منفصلاً ومعتمداً.</p>
+        <strong>دورة العضويات والمنح والصلاحيات</strong>
+        <p>تعرض اللوحة طلبات التسجيل، وطلبات العضوية في السلطات، ومنح الصلاحيات الفردية، وقوائم المراجعة والإلغاء وسجلات التدقيق. كل قرار يخضع للتحقق من نطاق السلطة في API وقاعدة البيانات.</p>
       </section>
 
       <section class="summary" aria-label="ملخص الأدوار">
