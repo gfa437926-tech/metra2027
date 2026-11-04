@@ -55,6 +55,36 @@ public sealed class SupabaseStationAuthorizationServiceTests
         Assert.True(await service.HasStationPermissionAsync(Guid.NewGuid(), Guid.NewGuid(), "observation.create"));
     }
 
+    [Fact]
+    public async Task Authority_permission_uses_the_station_owner_authority_rpc()
+    {
+        var service = CreateService(request =>
+        {
+            Assert.EndsWith(
+                "/rest/v1/rpc/metra_user_has_station_owner_authority_permission",
+                request.RequestUri!.AbsolutePath,
+                StringComparison.Ordinal);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        Assert.True(await service.HasStationOwnerAuthorityPermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid(), "stations.catalogue.review"));
+    }
+
+    [Fact]
+    public async Task Authority_permission_fails_closed_for_empty_identity_or_station()
+    {
+        var service = CreateService(_ => throw new InvalidOperationException("RPC must not be called"));
+
+        Assert.False(await service.HasStationOwnerAuthorityPermissionAsync(
+            Guid.Empty, Guid.NewGuid(), "stations.catalogue.review"));
+        Assert.False(await service.HasStationOwnerAuthorityPermissionAsync(
+            Guid.NewGuid(), Guid.Empty, "stations.catalogue.review"));
+    }
+
     private static SupabaseStationAuthorizationService CreateService(
         Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
     {
