@@ -36,4 +36,20 @@ public sealed class ObservationDecisionRequestGuardTests
         var request = new ObservationDecisionRequest("approve", new string('x', 2000));
         Assert.Null(ObservationDecisionRequestGuard.GetError(request));
     }
+
+    [Theory]
+    [InlineData("approve", " note ")]
+    [InlineData("return_for_correction", " سبب ")]
+    public void Decision_note_with_surrounding_whitespace_is_rejected(string decision, string note)
+    {
+        var request = new ObservationDecisionRequest(decision, note);
+        Assert.Equal("invalid_decision_note", ObservationDecisionRequestGuard.GetError(request));
+    }
+
+    [Fact]
+    public void Correction_note_is_required_even_when_empty_string()
+    {
+        var request = new ObservationDecisionRequest("return_for_correction", string.Empty);
+        Assert.Equal("decision_note_required", ObservationDecisionRequestGuard.GetError(request));
+    }
 }
