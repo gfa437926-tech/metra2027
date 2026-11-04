@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -25,7 +26,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <form #dailyForm (submit)="submit($event, dailyForm)">
         <section class="panel"><h2><i class="fa-solid fa-calendar-check"></i> معلومات النشرة</h2><div class="grid">
           <label>التاريخ<input type="date" name="currentDate" [value]="today" required></label>
-          <label>المحطة<input name="station" required maxlength="50" placeholder="اسم أو رمز المحطة"></label>
+          <label>المحطة<select name="stationId" required [value]="selectedStationId" (change)="setStation($any($event.target).value)"><option value="">اختر المحطة</option><option *ngFor="let station of stations" [value]="station.id">{{ station.name_ar }} — {{ station.local_station_code || station.wmo_station_id || station.station_type }}</option></select><input type="hidden" name="station" [value]="selectedStationName"><small *ngIf="stationsLoading">جارٍ تحميل المحطات...</small></label>
           <label>اسم الراصد<input name="observer" required maxlength="100" placeholder="اسم الراصد"></label>
         </div></section>
 
@@ -66,7 +67,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
           <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
           <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
-          <button class="primary" type="submit" disabled title="يتطلب ربط API وقاعدة البيانات"><i class="fa-solid fa-paper-plane"></i> إرسال إلى قاعدة البيانات — غير متاح في المعاينة</button>
+          <button class="primary" type="button" [disabled]="saving || !apiReady || !selectedStationId" (click)="submitToServer($event, dailyForm)"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button>
           <button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button>
         </div>
       </form>
@@ -86,6 +87,75 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
   `]
 })
 export class DailyReportsComponent {
+  readonly api = inject(ObservationApiService);
+  stations: StationDirectoryItem[] = [];
+  stationsLoading = false;
+  stationsError = '';
+  selectedStationId = '';
+  saving = false;
+
+  constructor() { void this.loadStations(); }
+
+  get apiReady(): boolean { return this.api.isConfigured; }
+  get selectedStationName(): string {
+    return this.stations.find(station => station.id === this.selectedStationId)?.name_ar ?? '';
+  }
+  setStation(value: string): void { this.selectedStationId = value; }
+
+  private async loadStations(): Promise<void> {
+    if (!this.apiReady) {
+      this.stationsError = 'الاتصال الفعلي غير مهيأ: يلزم ضبط API وSupabase.';
+      return;
+    }
+    this.stationsLoading = true;
+    try {
+      this.stations = await this.api.getAllStations();
+      if (!this.stations.length) this.stationsError = 'لا توجد محطات تشغيلية متاحة في الدليل.';
+    } catch {
+      this.stationsError = 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
+    } finally {
+      this.stationsLoading = false;
+    }
+  }
+
+  async submitToServer(event: Event, form: HTMLFormElement): Promise<void> {
+    event.preventDefault();
+    this.issues = [];
+    this.message = '';
+    if (this.saving) return;
+    if (!this.apiReady) { this.message = 'لم يتم الإرسال: إعدادات API أو Supabase غير مكتملة.'; return; }
+    if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
+    if (!form.reportValidity()) return;
+    const values = this.readForm(form);
+    this.issues = this.validateValues(values);
+    if (this.issues.length) return;
+    const stationName = this.selectedStationName;
+    const payload = { reportType: this.reportType, stationName, observerName: values['observer'] ?? '', values };
+    this.saving = true;
+    try {
+      const result = await this.api.submitObservation(this.selectedStationId, {
+        idempotencyKey: crypto.randomUUID(),
+        observationType: 'daily',
+        observedAt: new Date((values['currentDate'] ?? this.today) + 'T00:00:00.000Z').toISOString(),
+        payload,
+        submit: true
+      });
+      const id = result && typeof result === 'object' && 'id' in result
+        ? String((result as { id: unknown }).id) : '';
+      if (!id) throw new Error('استجابة الخادم لا تحتوي معرّف النشرة المحفوظة.');
+      this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
+        reportType: this.reportType, station: stationName, status: 'submitted', values });
+      this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
+      this.resetState(form);
+      form.reset();
+      this.selectedStationId = '';
+    } catch (error) {
+      this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+    } finally {
+      this.saving = false;
+    }
+  }
+
   readonly today = this.localDate(new Date());
   private localDate(date: Date): string {
     const year = date.getFullYear();
