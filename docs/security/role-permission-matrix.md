@@ -11,13 +11,13 @@ individual permission grant, and an approved, active, non-demo station.
 | Role | Permission codes |
 |---|---|
 | `observer` | `observation.create`, `observation.edit_own_draft`, `observation.submit` |
-| `station_head` | `observation.review`, `observation.return_for_correction`, `registrations.station.approve` |
+| `station_head` | `observation.review`, `observation.return_for_correction`, `registrations.station.approve`, `users.station.view` |
 | `station_auditor` | `observation.review`, `observation.return_for_correction` |
 | `chief_auditor` | `observation.approve`, `observation.return_for_correction` |
 | `network_director` | No observation permission assigned; `stations.catalogue.review` for station catalogue review |
 | `statistics_director` | No observation permission assigned |
 | `aftn_operator` | No observation permission assigned |
-| `system_admin` | No observation permission assigned; `registrations.system.approve` for second-stage registration approval |
+| `system_admin` | No observation permission assigned; `registrations.system.approve` for second-stage registration approval; `users.station.view` for station-scoped staff directory |
 
 This is deliberately not a global administrator bypass. Additional
 permissions must be reviewed against the role's approved responsibilities
@@ -72,3 +72,16 @@ The final system approval creates the approved station assignment and changes
 the account state to active atomically. It does not create an unrestricted
 global administrator grant. Administrative role assignment and permission
 grant/revocation remain separate controlled workflows.
+
+## Station user directory
+
+The read-only endpoint
+`GET /api/v1/stations/{stationId}/users` is protected by
+`users.station.view` and returns only users with station assignments,
+their profile name/phone, account state, assignment role/status and validity
+period. The read model is a server-only RPC; `anon` and `authenticated`
+cannot execute it directly. The permission allow-list is limited to
+`station_head` and `system_admin`, and the station authorization RPC still
+requires an approved current assignment and a separate approved individual
+permission grant. The directory does not expose email addresses, auth-provider
+metadata, passwords, tokens or permission-grant management controls.
