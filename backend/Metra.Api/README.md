@@ -135,3 +135,33 @@ The workflow uses the repository-scoped `GITHUB_TOKEN`; no service-role key
 or Supabase credential is used during image publication. The image is a
 deployable artifact, not a live API deployment. A hosting platform, runtime
 secrets, HTTPS origin, and production CORS allow-list are still required.
+
+## Two-stage user registration review
+
+The station-scoped user review API exposes:
+- `GET /api/v1/stations/{stationId}/registration-requests`
+- `POST /api/v1/stations/{stationId}/registration-requests/{requestId}/decision`
+- `GET /api/v1/stations/{stationId}/system-registration-requests`
+- `POST /api/v1/stations/{stationId}/system-registration-requests/{requestId}/decision`
+- `GET /api/v1/stations/{stationId}/registration-audit`
+- `GET /api/v1/stations/{stationId}/system-registration-audit`
+
+The station stage requires `registrations.station.approve`; the second stage
+requires `registrations.system.approve`. Both are station-scoped and require
+an approved assignment and a separate time-valid individual permission grant.
+The final reviewer must differ from the station approver. The API derives the
+reviewer from the verified JWT `sub` claim and never accepts an actor ID from
+the request body.
+
+The station-bound RPC locks the registration request and verifies that its
+stored station equals the route station before invoking the transactional
+decision function. The database function rechecks stage and account state,
+prevents self-review, creates the approved station assignment only after the
+second-stage approval, updates the account state, and appends the audit event
+atomically. The RPC is callable only by the API's server-side `service_role`.
+The API queue intentionally omits authentication email and other auth-provider
+secrets; it returns only the profile and request fields required for review.
+
+This workflow does not provide a general role-grant or privilege-escalation
+endpoint. Non-requestable administrative roles and individual permission
+grants must remain separate, explicitly reviewed operations.
