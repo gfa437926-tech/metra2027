@@ -77,6 +77,39 @@ public sealed class WeatherPhenomenonValidatorTests
     }
 
     [Fact]
+    public void Rejects_phenomenon_type_longer_than_64_characters()
+    {
+        var request = new WeatherPhenomenonRequest(
+            new string('م', 65), "2026-11-01", "06:15:00", null, null);
+
+        var issues = WeatherPhenomenonValidator.Validate(request);
+
+        Assert.Contains(issues, issue => issue.Field == "phenomenon_type");
+    }
+
+    [Fact]
+    public void Rejects_general_notes_longer_than_2000_characters()
+    {
+        var request = new WeatherPhenomenonRequest(
+            "مطر", "2026-11-01", "06:15:00", null, new string('م', 2001));
+
+        var issues = WeatherPhenomenonValidator.Validate(request);
+
+        Assert.Contains(issues, issue => issue.Field == "general_notes");
+    }
+
+    [Fact]
+    public void Accepts_general_notes_at_2000_character_limit()
+    {
+        var request = new WeatherPhenomenonRequest(
+            "مطر", "2026-11-01", "06:15:00", null, new string('م', 2000));
+
+        var issues = WeatherPhenomenonValidator.Validate(request);
+
+        Assert.Empty(issues);
+    }
+
+    [Fact]
     public void Rejects_null_request()
     {
         var issues = WeatherPhenomenonValidator.Validate(null);
