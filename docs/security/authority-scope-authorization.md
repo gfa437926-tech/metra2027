@@ -14,7 +14,7 @@
 - SQL contract tests cover both authority predicates and the catalogue-review gate; API tests cover the authority RPC route and fail-closed invalid identity/station inputs.
 - `request_station_assignment` and `decide_station_assignment` deliberately permit only `observer` and `station_auditor`. Administrative roles are not assignable through this station-manager workflow.
 - The role allow-list includes authority/system responsibilities: `network_director` + `stations.catalogue.review`; `system_admin` + `registrations.system.approve`; and `station_head` + station-level registration and staff permissions.
-- System-stage registration routes still use station-scoped authorization and station-scoped queue/audit RPCs. The transactional registration decision still checks individual grants and distinct reviewers, but it has not yet been migrated to authority-scoped membership and role enforcement.
+- System-stage registration decision now locks the target station/authority/country, active reviewer account, exact approved/current authority membership, active role and role-permission mapping, and approved/unrevoked/current individual grant before invoking the existing two-stage transactional decision. The system queue and audit have dedicated owner-authority-gated RPCs; the API routes use the owner-authority permission filter and pass the authenticated subject to those RPCs. Station-stage registration remains station-assignment scoped.
 - The new METRA database currently has zero Auth users, account states, authority memberships, and permission grants. It has 62 non-demo station records, but no real administrator can be inferred or provisioned from the available data.
 
 ## Required target design
@@ -33,11 +33,11 @@ The authority predicate must not become a permissive fallback from station autho
 
 1. Complete the authority role-scope matrix and validate it with the domain owner.
 2. Add privileged membership request/review/revocation and permission-grant lifecycle workflows, including append-only audit events and concurrency-safe state transitions.
-3. Migrate system-stage registration decision, queue reads, and audit reads to exact owner-authority enforcement while retaining the distinct-reviewer and station/request binding checks.
+3. Verify migration 017 against real authority-member test identities, including cross-authority denial and concurrent grant revocation; complete the privileged membership and grant lifecycle.
 4. Add database/API negative tests for cross-authority access, expired/revoked grants, self-approval, and concurrent decisions.
 5. Apply reviewed migrations only to the new METRA Supabase project, verify grants/RLS/advisors, then run CI and deployment.
 6. Provision the first real administrator only after the owner supplies/creates a verified Auth identity and an out-of-band trusted approval path. Never fabricate `auth.users` records or credentials.
 
 ## Release gate
 
-Network-director station review has an authority-scoped transactional gate, but system registration approval, authority membership lifecycle, and initial administrator onboarding remain **not production-ready** until their workflows and real-user tests are implemented and verified. A successful build or container publish does not satisfy this gate.
+Network-director station review and system-stage registration review now have authority-scoped database gates. The feature remains **not production-ready**: authority membership and permission-grant lifecycle, real-user negative/concurrency tests, and initial administrator onboarding are still required. A successful build or container publish does not satisfy this gate.

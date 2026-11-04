@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+migration="database/migrations/017_authority_scoped_system_registration_review.sql"
+service="backend/Metra.Api/Features/Users/RegistrationReviewEndpoints.cs"
+grep -Fq "membership.authority_id = v_authority_id" "$migration"
+grep -Fq "registrations.system.approve" "$migration"
+grep -Fq "FOR SHARE OF m, r, rp" "$migration"
+grep -Fq "permission.revoked_at IS NULL" "$migration"
+grep -Fq "get_station_system_registration_queue" "$migration"
+grep -Fq "get_station_system_registration_audit" "$migration"
+grep -Fq "private" "$migration" && grep -Fq "decide_metra_registration(" "$migration"
+grep -Fq '.RequireStationOwnerAuthorityPermission("registrations.system.approve")' "$service"
+grep -Fq 'get_station_system_registration_queue' "$service"
+grep -Fq 'get_station_system_registration_audit' "$service"
+echo "Authority-scoped system registration review contract verified."
