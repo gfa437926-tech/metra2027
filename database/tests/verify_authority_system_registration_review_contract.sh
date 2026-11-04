@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 migration="database/migrations/017_authority_scoped_system_registration_review.sql"
+hardening="database/migrations/018_harden_authority_registration_decision_nulls.sql"
 service="backend/Metra.Api/Features/Users/RegistrationReviewEndpoints.cs"
 grep -Fq "m.authority_id = v_authority_id" "$migration"
+grep -Fq "p_expected_status IS NULL" "$hardening"
+grep -Fq "p_decision IS NULL" "$hardening"
+grep -Fq "p_occurred_at IS NULL" "$hardening"
 grep -Fq "registrations.system.approve" "$migration"
 grep -Fq "FOR SHARE OF m, r, rp" "$migration"
 grep -Fq "g.revoked_at IS NULL" "$migration"
