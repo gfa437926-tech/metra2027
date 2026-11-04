@@ -21,6 +21,13 @@ export class SupabaseAuthService {
     if (error) throw new Error('تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور وحالة الحساب.');
   }
 
+  async getCurrentUserEmail(): Promise<string | null> {
+    if (!this.client) return null;
+    const { data, error } = await this.client.auth.getUser();
+    if (error) throw new Error('تعذر التحقق من المستخدم الحالي.');
+    return data.user?.email ?? null;
+  }
+
   async getAccessToken(): Promise<string | null> {
     if (!this.client) return null;
     const { data, error } = await this.client.auth.getSession();
