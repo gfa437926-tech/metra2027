@@ -197,6 +197,28 @@ public static class AuthorityAccessEndpoints
             return ReadResult(result, "authority_access_audit_unavailable");
         }).WithTags("Authority access").WithName("GetAuthorityAccessAudit");
 
+
+        endpoints.MapGet("/api/v1/authorities/{authorityId:guid}/membership-roles", async (
+            Guid authorityId, IAuthorityAccessService service, CancellationToken ct) =>
+        {
+            if (authorityId == Guid.Empty) return Results.BadRequest(new { error = "invalid_authority_id" });
+            if (!service.IsConfigured) return Unavailable();
+            var result = await service.CallAsync("get_authority_membership_roles",
+                new { p_authority_id = authorityId }, ct);
+            return ReadResult(result, "authority_membership_roles_unavailable");
+        }).WithTags("Authority access").WithName("GetAuthorityMembershipRoles");
+
+        endpoints.MapGet("/api/v1/authorities/{authorityId:guid}/permission-options", async (
+            Guid authorityId, HttpContext http, IAuthorityAccessService service, CancellationToken ct) =>
+        {
+            if (!TryActor(http, out var actor)) return Results.Unauthorized();
+            if (authorityId == Guid.Empty) return Results.BadRequest(new { error = "invalid_authority_id" });
+            if (!service.IsConfigured) return Unavailable();
+            var result = await service.CallAsync("get_authority_permission_options",
+                new { p_authority_id = authorityId, p_actor_user_id = actor }, ct);
+            return ReadResult(result, "authority_permission_options_unavailable");
+        }).WithTags("Authority access").WithName("GetAuthorityPermissionOptions");
+
         return endpoints;
     }
 
