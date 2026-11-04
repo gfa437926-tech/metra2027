@@ -14,6 +14,7 @@ public interface IRegistrationReviewService
 {
     bool IsConfigured { get; }
     Task<JsonElement?> GetPendingForStationAsync(Guid stationId, string expectedStatus, int limit, CancellationToken cancellationToken);
+    Task<JsonElement?> GetAuditForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken);
     Task<RegistrationDecisionOutcome> DecideAsync(Guid stationId, string expectedStatus, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken);
 }
 
@@ -38,6 +39,28 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
             "&requested_station_id=eq." + stationId.ToString("D") +
             "&status=eq." + expectedStatus + "&order=submitted_at.asc&limit=" + limit;
         using var message = new HttpRequestMessage(HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/registration_requests?{query}");
+        message.Headers.TryAddWithoutValidation("apikey", _key);
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
+                .SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+        }
+        catch (HttpRequestException) { return null; }
+        catch (JsonException) { return null; }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return null; }
+    }
+
+
+    public async Task<JsonElement?> GetAuditForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 200) return null;
+        var query = "select=id,request_id,user_id,actor_user_id,event_type,terms_version,decision_note,occurred_at,registration_requests!inner(requested_station_id)" +
+            "&registration_requests.requested_station_id=eq." + stationId.ToString("D") +
+            "&order=occurred_at.desc&limit=" + limit;
+        using var message = new HttpRequestMessage(HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/registration_audit_events?{query}");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
         try
@@ -214,6 +237,41 @@ public static class RegistrationReviewEndpoints
         .RequireStationPermission("registrations.system.approve")
         .WithTags("Users")
         .WithName("DecideSystemRegistrationRequest");
+
+
+        endpoints.MapGet("/api/v1/stations/{stationId:guid}/registration-audit", async (
+            Guid stationId, int? limit, IRegistrationReviewService review, CancellationToken cancellationToken) =>
+        {
+            var take = limit ?? 100;
+            if (take is < 1 or > 200)
+                return Results.BadRequest(new { error = "invalid_limit", maximum = 200 });
+            if (!review.IsConfigured)
+                return Results.Problem(title: "Registration audit unavailable", statusCode: 503);
+            var result = await review.GetAuditForStationAsync(stationId, take, cancellationToken);
+            return result is null
+                ? Results.Problem(title: "Registration audit read failed", statusCode: 503)
+                : Results.Ok(result.Value);
+        })
+        .RequireStationPermission("registrations.station.approve")
+        .WithTags("Users")
+        .WithName("GetStationRegistrationAudit");
+
+        endpoints.MapGet("/api/v1/stations/{stationId:guid}/system-registration-audit", async (
+            Guid stationId, int? limit, IRegistrationReviewService review, CancellationToken cancellationToken) =>
+        {
+            var take = limit ?? 100;
+            if (take is < 1 or > 200)
+                return Results.BadRequest(new { error = "invalid_limit", maximum = 200 });
+            if (!review.IsConfigured)
+                return Results.Problem(title: "Registration audit unavailable", statusCode: 503);
+            var result = await review.GetAuditForStationAsync(stationId, take, cancellationToken);
+            return result is null
+                ? Results.Problem(title: "Registration audit read failed", statusCode: 503)
+                : Results.Ok(result.Value);
+        })
+        .RequireStationPermission("registrations.system.approve")
+        .WithTags("Users")
+        .WithName("GetSystemRegistrationAudit");
 
         return endpoints;
     }
