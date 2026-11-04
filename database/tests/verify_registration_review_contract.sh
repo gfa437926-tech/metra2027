@@ -26,6 +26,8 @@ grep -Fq '"pending_system_approval"' "$endpoint"
 grep -Fq 'RegistrationDecisionRpcResult.GetStatus(outcome.Data)' "$endpoint"
 grep -Fq '.RequireStationPermission("registrations.station.approve")' "$endpoint"
 grep -Fq '.RequireStationPermission("registrations.system.approve")' "$endpoint"
+grep -Fq 'GetStationRegistrationAudit' "$endpoint"
+grep -Fq 'GetSystemRegistrationAudit' "$endpoint"
 grep -Fq 'app.MapRegistrationReviewEndpoints();' "$program"
 grep -Fq 'IRegistrationReviewService, SupabaseRegistrationReviewService' "$program"
 
