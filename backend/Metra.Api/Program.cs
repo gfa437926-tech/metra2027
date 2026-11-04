@@ -31,6 +31,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationSubmission
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationUserDirectoryService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuditService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAssignmentService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAuthorityAccessService));
 
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
@@ -38,6 +39,7 @@ builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecis
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
+builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
@@ -110,6 +112,7 @@ app.MapRegistrationSubmissionEndpoints();
 app.MapStationUserDirectoryEndpoints();
 app.MapStationAuditEndpoints();
 app.MapStationAssignmentEndpoints();
+app.MapAuthorityAccessEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
@@ -134,6 +137,7 @@ app.MapGet("/api/v1/ready", async (
     IStationUserDirectoryService stationUsers,
     IStationAssignmentService stationAssignments,
     IStationAuditService stationAudit,
+    IAuthorityAccessService authorityAccess,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -146,7 +150,8 @@ app.MapGet("/api/v1/ready", async (
         registrationSubmission.IsConfigured &&
         stationUsers.IsConfigured &&
         stationAssignments.IsConfigured &&
-        stationAudit.IsConfigured;
+        stationAudit.IsConfigured &&
+        authorityAccess.IsConfigured;
 
     if (!configured)
         return Results.Problem(

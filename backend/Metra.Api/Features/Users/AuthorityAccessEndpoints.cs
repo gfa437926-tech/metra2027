@@ -79,7 +79,7 @@ public static class AuthorityAccessEndpoints
             {
                 p_user_id = target, p_authority_id = authorityId, p_role_code = request.RoleCode.Trim(),
                 p_requested_by = actor, p_reason = request.Reason!.Trim(),
-                p_valid_from = request.ValidFrom, p_valid_to = request.ValidTo
+                p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_membership_request_failed");
         }).WithTags("Authority access").WithName("RequestAuthorityMembership");
@@ -130,7 +130,7 @@ public static class AuthorityAccessEndpoints
             {
                 p_user_id = actor, p_authority_id = authorityId,
                 p_permission_code = request.PermissionCode.Trim(), p_reason = request.Reason!.Trim(),
-                p_valid_from = request.ValidFrom, p_valid_to = request.ValidTo
+                p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_permission_request_failed");
         }).WithTags("Authority access").WithName("RequestAuthorityPermissionGrant");
@@ -208,7 +208,7 @@ public static class AuthorityAccessEndpoints
         !reason.Any(char.IsControl);
 
     private static bool ValidDecision(AuthorityAccessDecisionRequest? request) =>
-        request is not null && request.Decision is "approve" or "reject" && ValidReason(request.Reason);
+        request is not null && (request.Decision is "approve" or "reject") && ValidReason(request.Reason);
 
     private static IResult Unavailable() =>
         Results.Problem(title: "Authority access service unavailable", statusCode: 503);
@@ -216,7 +216,7 @@ public static class AuthorityAccessEndpoints
     private static IResult RequestResult(AuthorityAccessRpcOutcome result, string error)
     {
         if (!result.IsConfigured || !result.Succeeded) return MapFailure(result, error);
-        return Results.Created("", result.Data);
+        return Results.Ok(new { id = result.Data });
     }
 
     private static IResult ReadResult(AuthorityAccessRpcOutcome result, string error)
