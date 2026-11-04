@@ -24,6 +24,29 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public void Every_supabase_dependency_client_has_a_bounded_timeout()
+    {
+        var clients = _factory.Services.GetRequiredService<IHttpClientFactory>();
+        var names = new[]
+        {
+            "SupabaseStationAuthorizationService",
+            "SupabaseObservationSubmissionService",
+            "SupabaseObservationDecisionService",
+            "SupabaseObservationQueueService",
+            "SupabaseStationDirectoryService",
+            "SupabaseStationCatalogueReviewService",
+            "SupabaseRegistrationReviewService",
+            "SupabaseRegistrationSubmissionService",
+            "SupabaseStationUserDirectoryService",
+            "SupabaseStationAuditService",
+            "SupabaseStationAssignmentService"
+        };
+
+        foreach (var name in names)
+            Assert.Equal(TimeSpan.FromSeconds(8), clients.CreateClient(name).Timeout);
+    }
+
+    [Fact]
     public async Task Health_endpoint_is_anonymous()
     {
         using var response = await _client.GetAsync("/api/v1/health");
