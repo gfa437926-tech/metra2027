@@ -1,3 +1,8 @@
+DROP FUNCTION IF EXISTS public.decide_authority_membership(uuid,uuid,text,text,timestamptz);
+DROP FUNCTION IF EXISTS public.revoke_authority_membership(uuid,uuid,text,timestamptz);
+DROP FUNCTION IF EXISTS public.decide_authority_permission_grant(uuid,uuid,text,text,timestamptz);
+DROP FUNCTION IF EXISTS public.revoke_authority_permission_grant(uuid,uuid,text,timestamptz);
+
 CREATE OR REPLACE FUNCTION public.decide_authority_membership(p_membership_id uuid, p_authority_id uuid, p_actor_user_id uuid, p_decision text, p_reason text, p_occurred_at timestamp with time zone DEFAULT clock_timestamp())
  RETURNS text
  LANGUAGE plpgsql
