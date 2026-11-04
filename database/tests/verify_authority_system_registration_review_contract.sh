@@ -2,7 +2,7 @@
 set -euo pipefail
 migration="database/migrations/017_authority_scoped_system_registration_review.sql"
 service="backend/Metra.Api/Features/Users/RegistrationReviewEndpoints.cs"
-grep -Fq "membership.authority_id = v_authority_id" "$migration"
+grep -Fq "m.authority_id = v_authority_id" "$migration"
 grep -Fq "registrations.system.approve" "$migration"
 grep -Fq "FOR SHARE OF m, r, rp" "$migration"
 grep -Fq "g.revoked_at IS NULL" "$migration"
