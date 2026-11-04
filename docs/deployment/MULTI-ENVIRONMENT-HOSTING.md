@@ -56,7 +56,7 @@ Do not commit real .env files, user secrets, publish-settings files, or provider
 
 ### Flutter
 - Supply METRA_API_BASE_URL with --dart-define at build/run time.
-- Android emulator to host API: http://10.0.2.2:<port>/api/v1; physical devices use a reachable LAN address, not localhost.
+- The current Flutter URL validator accepts HTTPS only. For Android emulator testing, use an HTTPS development reverse proxy; `http://10.0.2.2:<port>` is valid only after a deliberate development-only HTTP policy is implemented (it is not accepted by the current app). Physical devices likewise need a reachable HTTPS LAN endpoint, not localhost.
 - Production builds use the official HTTPS API host and production-safe client configuration.
 - Never embed server credentials in Dart constants or build defines.
 
