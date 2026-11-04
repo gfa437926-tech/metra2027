@@ -2,15 +2,16 @@
 
 The standalone Flutter app reads its API base URL from the compile-time
 environment variable `METRA_API_BASE_URL` through `String.fromEnvironment`.
-The value must be the HTTPS API base (including the `/api/v1` prefix), not the
-website URL and not a Supabase URL.
+The value must be the HTTPS API origin (scheme and host, with an optional port),
+not the website URL and not a Supabase URL. The Flutter API client appends
+`/api/v1` to this origin automatically; do not include that path in the define.
 
 ## Run against a deployed API
 
 ```powershell
 cd mobile/metra_mobile
 flutter pub get
-flutter run --dart-define=METRA_API_BASE_URL=https://api.example.gov.sy/api/v1
+flutter run --dart-define=METRA_API_BASE_URL=https://api.example.gov.sy
 ```
 
 Replace the example with the approved environment endpoint. Do not commit real
@@ -32,7 +33,7 @@ does not replace API authentication.
 - [ ] Confirm the API is reachable and `GET /api/v1/health` succeeds.
 - [ ] Confirm `GET /api/v1/ready` succeeds only after server-side Supabase and
       authentication settings are configured.
-- [ ] Use the correct environment's HTTPS API base ending in `/api/v1`.
+- [ ] Use the correct environment's HTTPS API base for the API origin (without `/api/v1`).
 - [ ] Never put the Supabase service-role key in Flutter compile-time defines.
 - [ ] Test login, authenticated API calls, logout, and expired-session behavior
       on the target device before distributing a release.
