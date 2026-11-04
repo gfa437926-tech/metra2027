@@ -178,14 +178,22 @@ export class DailyReportsComponent {
     this.issues = [];
     this.message = '';
     if (!form.reportValidity()) return;
-    const fd = new FormData(form);
-    const values: Record<string,string> = {};
-    fd.forEach((v,k) => { if (typeof v === 'string') values[k] = v.trim(); });
+    const values = this.readForm(form);
+    this.issues = this.validateValues(values);
+    if (this.issues.length) return;
 
+    const reference = 'D-' + String(this.nextReference++).padStart(4,'0');
+    this.previews.unshift({reference,date:values['currentDate'] ?? this.today,reportType:this.reportType,station:values['station'] ?? '',status:'draft',values});
+    this.message = 'اجتازت النشرة فحوص المعاينة وأُنشئت كمسودة مؤقتة داخل هذه الصفحة فقط.';
+    this.resetState(form); form.reset();
+  }
+
+  private validateValues(values: Record<string,string>): string[] {
+    const issues: string[] = [];
     const required = this.reportType === '24h'
       ? ['minTemp','maxTemp','precipitation','snowThickness','evaporation','sunshineDuration','sunshinePercentage','maxGustSpeed','maxGustDirection','maxGustTime','maxHumidity','maxHumidityTime','minHumidity','minHumidityTime']
       : ['minTemp','maxTemp','precipitation','snowThickness'];
-    for (const key of required) if (!values[key]) this.issues.push(this.label(key) + ': هذا الحقل مطلوب لهذا النوع من التقرير.');
+    for (const key of required) if (!values[key]) issues.push(this.label(key) + ': هذا الحقل مطلوب لهذا النوع من التقرير.');
 
     const rules: Record<string,{pattern:RegExp,min:number,max:number,label:string}> = {
       minTemp:{pattern:/^-?\d{2}\.\d$/,min:-20,max:50,label:'الحرارة الصغرى'},
@@ -204,24 +212,19 @@ export class DailyReportsComponent {
       minHumidityTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الرطوبة الصغرى'}
     };
     for (const [key,rule] of Object.entries(rules)) {
-      const v = values[key] ?? '';
-      if (!v || v === '#') continue;
-      const n = Number(v);
-      if (!rule.pattern.test(v) || !Number.isFinite(n) || n < rule.min || n > rule.max)
-        this.issues.push(rule.label + ': التنسيق أو القيمة خارج المجال المقبول.');
+      const value = values[key] ?? '';
+      if (!value || value === '#') continue;
+      const numeric = Number(value);
+      if (!rule.pattern.test(value) || !Number.isFinite(numeric) || numeric < rule.min || numeric > rule.max)
+        issues.push(rule.label + ': التنسيق أو القيمة خارج المجال المقبول.');
     }
     if (values['precipitationTrace'] && values['precipitationTrace'] !== '#' && !/^[Tt]$/.test(values['precipitationTrace']))
-      this.issues.push('أثر الهطول: أدخل T فقط أو اترك الحقل فارغاً.');
+      issues.push('أثر الهطول: أدخل T فقط أو اترك الحقل فارغاً.');
     if (values['minTemp'] && values['maxTemp'] && values['minTemp'] !== '#' && values['maxTemp'] !== '#' && Number(values['maxTemp']) < Number(values['minTemp']))
-      this.issues.push('درجة الحرارة العظمى يجب أن تكون أكبر من أو تساوي درجة الحرارة الصغرى.');
+      issues.push('درجة الحرارة العظمى يجب أن تكون أكبر من أو تساوي درجة الحرارة الصغرى.');
     if (values['maxHumidity'] && values['minHumidity'] && values['maxHumidity'] !== '#' && values['minHumidity'] !== '#' && Number(values['minHumidity']) > Number(values['maxHumidity']))
-      this.issues.push('الرطوبة الصغرى لا يمكن أن تتجاوز الرطوبة العظمى.');
-    if (this.issues.length) return;
-
-    const reference = 'D-' + String(this.nextReference++).padStart(4,'0');
-    this.previews.unshift({reference,date:values['currentDate'] ?? this.today,reportType:this.reportType,station:values['station'] ?? '',status:'draft',values});
-    this.message = 'اجتازت النشرة فحوص المعاينة وأُنشئت كمسودة مؤقتة داخل هذه الصفحة فقط.';
-    this.resetState(form); form.reset();
+      issues.push('الرطوبة الصغرى لا يمكن أن تتجاوز الرطوبة العظمى.');
+    return issues;
   }
 
   private readForm(form: HTMLFormElement): Record<string,string> {
@@ -251,10 +254,15 @@ export class DailyReportsComponent {
     this.noDataFields.clear();this.message='تمت تعبئة بيانات تجريبية؛ راجعها قبل الحفظ أو المعاينة.';
   }
   previewData(form: HTMLFormElement): void {
-    if(!form.reportValidity()) return;
-    const values=this.readForm(form);this.reportPreview=this.buildReportText(values);
-    this.whatsAppUrl='https://wa.me/?text='+encodeURIComponent(this.reportPreview);
-    this.message='هذه معاينة للنص فقط؛ لم يتم إرسال التقرير أو حفظه.';
+    this.issues = [];
+    this.message = '';
+    if (!form.reportValidity()) return;
+    const values = this.readForm(form);
+    this.issues = this.validateValues(values);
+    if (this.issues.length) return;
+    this.reportPreview = this.buildReportText(values);
+    this.whatsAppUrl = 'https://wa.me/?text=' + encodeURIComponent(this.reportPreview);
+    this.message = 'هذه معاينة للنص فقط؛ لم يتم إرسال التقرير أو حفظه.';
   }
   private clearPreview(): void { this.reportPreview='';this.whatsAppUrl=''; }
     sendForReview(item: DailyPreview): void { item.status = 'submitted'; this.message = 'تم إرسال ' + item.reference + ' للمراجعة في المعاينة فقط.'; }
