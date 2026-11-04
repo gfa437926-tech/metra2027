@@ -40,9 +40,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       }
       final rows = snapshot.data ?? const <StationDirectoryItem>[];
       if (rows.isEmpty) return _empty(Icons.location_off, 'لا توجد محطات', 'لا توجد سجلات مطابقة.');
-      final located = rows.where((s) => s.hasCoordinates &&
-        s.latitude! >= -90 && s.latitude! <= 90 &&
-        s.longitude! >= -180 && s.longitude! <= 180).toList();
+      final located = rows.where((s) => s.hasValidCoordinates).toList();
       if (_showMap) return _map(rows, located);
       return RefreshIndicator(onRefresh: () async => setState(_load),
         child: ListView.separated(padding: const EdgeInsets.all(12), itemCount: rows.length,
