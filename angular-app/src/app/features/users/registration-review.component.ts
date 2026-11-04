@@ -99,7 +99,7 @@ import {
                     <button type="button" class="approve" [disabled]="busyRequestId === item.id" (click)="decide(item, 'approve', note.value)">
                       {{ busyRequestId === item.id ? 'جارٍ الحفظ…' : 'اعتماد' }}
                     </button>
-                    <button type="button" class="reject" [disabled]="busyRequestId === item.id" (click)="decide(item, 'reject', note.value)">رفض</button>
+                    <button type="button" class="reject" [disabled]="busyRequestId !== null" (click)="decide(item, 'reject', note.value)">رفض</button>
                   </div>
                 </div>
               </article>
