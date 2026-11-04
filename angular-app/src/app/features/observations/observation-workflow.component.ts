@@ -120,7 +120,6 @@ export class ObservationWorkflowComponent implements OnInit {
     if (!this.stationId || !this.api.isConfigured || this.loading) return;
     this.loading = true;
     this.error = '';
-    this.feedback = '';
     try {
       this.rows = await this.api.getReviewQueue(this.stationId, 100);
     } catch (error: unknown) {
@@ -143,10 +142,10 @@ export class ObservationWorkflowComponent implements OnInit {
     this.feedback = '';
     try {
       await this.api.decide(this.stationId, row.id, decision, note);
-      this.feedback = decision === 'approve' ? 'تم إرسال قرار الاعتماد بنجاح.' : 'تم إرسال قرار الإرجاع بنجاح.';
       this.returnTarget = null;
       this.returnNote = '';
       await this.load();
+      this.feedback = decision === 'approve' ? 'تم إرسال قرار الاعتماد بنجاح.' : 'تم إرسال قرار الإرجاع بنجاح.';
     } catch (error: unknown) {
       this.error = this.errorMessage(error);
     } finally {
