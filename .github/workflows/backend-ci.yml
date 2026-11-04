@@ -29,5 +29,7 @@ jobs:
         run: dotnet restore backend/Metra.Api/Metra.Api.csproj
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
-      - name: Run domain tests
+      - name: Run domain and API tests
         run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release
+      - name: Build production container image
+        run: docker build --file backend/Metra.Api/Dockerfile --tag metra-api:ci .
