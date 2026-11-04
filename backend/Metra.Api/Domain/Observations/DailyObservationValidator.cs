@@ -72,6 +72,15 @@ public static class DailyObservationValidator
             }
         }
 
+        if (requiredFields is not null)
+        {
+            foreach (var field in requiredFields)
+            {
+                if (!values.ContainsKey(field))
+                    issues.Add(new(field, $"حقل {GetLabel(field)} مطلوب."));
+            }
+        }
+
         var min = GetValue(values, "minTemp");
         var max = GetValue(values, "maxTemp");
         if (min is not null && max is not null && min != "#" && max != "#" &&
