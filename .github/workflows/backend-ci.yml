@@ -9,6 +9,7 @@ on:
       - "database/tests/**"
       - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/publish-api-container.yml"
   pull_request:
     paths:
       - "backend/**"
@@ -16,6 +17,7 @@ on:
       - "database/tests/**"
       - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
+      - ".github/workflows/publish-api-container.yml"
   workflow_dispatch:
 
 permissions:
