@@ -37,13 +37,9 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
             HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/{(expectedStatus == "pending_system_approval" ? "get_station_system_registration_queue" : "get_station_registration_queue")}");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
-        message.Content = JsonContent.Create(new
-        {
-            p_station_id = stationId,
-            p_expected_status = expectedStatus,
-            p_limit = limit,
-            p_actor_user_id = actorUserId
-        });
+        message.Content = expectedStatus == "pending_system_approval"
+            ? JsonContent.Create(new { p_station_id = stationId, p_expected_status = expectedStatus, p_limit = limit, p_actor_user_id = actorUserId })
+            : JsonContent.Create(new { p_station_id = stationId, p_expected_status = expectedStatus, p_limit = limit });
         try
         {
             using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
@@ -63,7 +59,9 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
             HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/{(systemStage ? "get_station_system_registration_audit" : "get_station_registration_audit")}");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
-        message.Content = JsonContent.Create(new { p_station_id = stationId, p_limit = limit, p_actor_user_id = actorUserId });
+        message.Content = systemStage
+            ? JsonContent.Create(new { p_station_id = stationId, p_limit = limit, p_actor_user_id = actorUserId })
+            : JsonContent.Create(new { p_station_id = stationId, p_limit = limit });
         try
         {
             using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
@@ -235,7 +233,7 @@ public static class RegistrationReviewEndpoints
 
             return Results.Ok(outcome.Data);
         })
-        .RequireStationPermission("registrations.system.approve")
+        .RequireStationOwnerAuthorityPermission("registrations.system.approve")
         .WithTags("Users")
         .WithName("DecideSystemRegistrationRequest");
 
@@ -270,7 +268,7 @@ public static class RegistrationReviewEndpoints
                 ? Results.Problem(title: "Registration audit read failed", statusCode: 503)
                 : Results.Ok(result.Value);
         })
-        .RequireStationPermission("registrations.system.approve")
+        .RequireStationOwnerAuthorityPermission("registrations.system.approve")
         .WithTags("Users")
         .WithName("GetSystemRegistrationAudit");
 
