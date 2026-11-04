@@ -28,7 +28,7 @@ DECLARE
 BEGIN
   IF p_user_id IS NULL OR p_station_id IS NULL OR p_actor_user_id IS NULL
      OR p_user_id = p_actor_user_id
-     OR p_role_code NOT IN ('observer', 'station_auditor')
+     OR p_role_code IS NULL OR p_role_code NOT IN ('observer', 'station_auditor')
      OR p_reason IS NULL OR length(trim(p_reason)) NOT BETWEEN 5 AND 2000
      OR p_reason <> trim(p_reason) OR p_reason ~ '[[:cntrl:]]'
      OR p_valid_from IS NULL
@@ -36,9 +36,9 @@ BEGIN
     RAISE EXCEPTION 'invalid_station_assignment_request' USING ERRCODE = '22023';
   END IF;
 
-  IF NOT public.metra_user_has_station_permission(
+  IF public.metra_user_has_station_permission(
     p_actor_user_id, p_station_id, 'users.station.manage'
-  ) THEN
+  ) IS DISTINCT FROM true THEN
     RETURN QUERY SELECT 'unauthorized'::text, NULL::uuid;
     RETURN;
   END IF;
@@ -135,8 +135,8 @@ DECLARE
   v_next_status text;
 BEGIN
   IF p_assignment_id IS NULL OR p_station_id IS NULL OR p_actor_user_id IS NULL
-     OR p_expected_status <> 'pending'
-     OR p_decision NOT IN ('approve', 'reject')
+     OR p_expected_status IS DISTINCT FROM 'pending'
+     OR p_decision IS NULL OR p_decision NOT IN ('approve', 'reject')
      OR p_occurred_at IS NULL
      OR (p_note IS NOT NULL AND length(p_note) > 2000)
      OR (p_note IS NOT NULL AND p_note ~ '[[:cntrl:]]')
