@@ -86,6 +86,17 @@ accounts, expired memberships/assignments/grants, cross-station access,
 self-elevation, and demo/unapproved stations. Generic observation validation
 routes are not station-scoped operational write routes.
 
+## Station audit log
+
+`GET /api/v1/stations/{stationId}/audit-log?limit=100` returns a bounded,
+station-scoped projection of station catalogue and assignment audit events.
+It requires `users.station.view`; the API derives the caller from the verified
+JWT and checks the exact station permission before calling the server-only
+`get_station_audit_log` RPC. The RPC returns only selected audit fields and
+never exposes the raw audit table or arbitrary JSON snapshots to browser
+clients. Its execution is revoked from PUBLIC, anon, and authenticated and
+granted only to service_role.
+
 ## Station catalogue review
 
 `POST /api/v1/stations/{stationId}/review` requires the exact
