@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Metra.Api.Features.Stations;
+using Metra.Api.Features.Users;
 using System.Text.Json;
 using Xunit;
 
@@ -52,6 +53,18 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Readiness_endpoint_fails_when_station_audit_service_is_not_configured()
+    {
+        using var configuredFactory = CreateConfiguredReadinessFactory(
+            JsonDocument.Parse("[]").RootElement.Clone(), auditConfigured: false);
+        using var client = configuredFactory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_probe_succeeds()
     {
         using var configuredFactory = CreateConfiguredReadinessFactory(JsonDocument.Parse("[]").RootElement.Clone());
@@ -64,7 +77,8 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         Assert.Contains("\"status\":\"ready\"", body, StringComparison.Ordinal);
     }
 
-    private WebApplicationFactory<Program> CreateConfiguredReadinessFactory(JsonElement? stations)
+    private WebApplicationFactory<Program> CreateConfiguredReadinessFactory(
+        JsonElement? stations, bool auditConfigured = true)
     {
         return _factory.WithWebHostBuilder(builder =>
         {
@@ -79,8 +93,20 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 services.RemoveAll<IStationDirectoryService>();
                 services.AddSingleton<IStationDirectoryService>(
                     new ReadinessStationDirectoryStub(stations));
+                services.RemoveAll<IStationAuditService>();
+                services.AddSingleton<IStationAuditService>(
+                    new ReadinessStationAuditStub(auditConfigured));
             });
         });
+    }
+
+    private sealed class ReadinessStationAuditStub(bool isConfigured) : IStationAuditService
+    {
+        public bool IsConfigured => isConfigured;
+
+        public Task<JsonElement?> GetAuditAsync(
+            Guid stationId, int limit, CancellationToken cancellationToken) =>
+            Task.FromResult<JsonElement?>(JsonDocument.Parse("[]").RootElement.Clone());
     }
 
     private sealed class ReadinessStationDirectoryStub(JsonElement? stations) : IStationDirectoryService

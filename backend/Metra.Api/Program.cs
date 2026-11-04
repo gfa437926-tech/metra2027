@@ -126,6 +126,7 @@ app.MapGet("/api/v1/ready", async (
     IRegistrationSubmissionService registrationSubmission,
     IStationUserDirectoryService stationUsers,
     IStationAssignmentService stationAssignments,
+    IStationAuditService stationAudit,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -137,7 +138,8 @@ app.MapGet("/api/v1/ready", async (
         registrationReview.IsConfigured &&
         registrationSubmission.IsConfigured &&
         stationUsers.IsConfigured &&
-        stationAssignments.IsConfigured;
+        stationAssignments.IsConfigured &&
+        stationAudit.IsConfigured;
 
     if (!configured)
         return Results.Problem(
