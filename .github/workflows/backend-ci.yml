@@ -39,6 +39,8 @@ jobs:
         run: bash database/tests/verify_station_catalogue_review_contract.sh
       - name: Verify two-stage registration review contract
         run: bash database/tests/verify_registration_review_contract.sh
+      - name: Verify authenticated registration submission contract
+        run: bash database/tests/verify_registration_submission_contract.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
