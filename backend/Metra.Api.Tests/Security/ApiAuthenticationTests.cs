@@ -27,6 +27,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     public async Task Every_observation_endpoint_requires_authentication(string path)
     {
 
@@ -40,9 +41,11 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     public async Task Malformed_bearer_token_is_rejected_for_observation_and_station_endpoints(string path)
     {
-        using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
+        using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
         if (request.Method == HttpMethod.Post) request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
@@ -62,7 +65,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
     private Task<HttpResponseMessage> SendUnauthenticated(string path)
     {
-        if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal))
+        if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal))
             return _client.GetAsync(path);
         return _client.PostAsync(path, new StringContent("{}", Encoding.UTF8, "application/json"));
     }
