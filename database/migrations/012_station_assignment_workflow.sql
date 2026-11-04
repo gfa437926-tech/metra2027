@@ -163,9 +163,9 @@ BEGIN
     RETURN;
   END IF;
 
-  IF NOT public.metra_user_has_station_permission(
+  IF public.metra_user_has_station_permission(
     p_actor_user_id, p_station_id, 'users.station.manage'
-  ) THEN
+  ) IS DISTINCT FROM true THEN
     RETURN QUERY SELECT 'unauthorized'::text, v_assignment.approval_status;
     RETURN;
   END IF;
