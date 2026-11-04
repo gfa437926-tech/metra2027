@@ -48,6 +48,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
         <div class="section-title">إدارة النظام</div>
         <nav>
           <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
+          <a class="nav-link" routerLink="/register" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-plus users"></i><span>إنشاء حساب / استكمال التسجيل</span></a>
         </nav>
         <nav>
           <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
