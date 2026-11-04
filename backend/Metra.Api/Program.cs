@@ -15,21 +15,28 @@ var authority = builder.Configuration["Authentication:Authority"]
 var audience = builder.Configuration["Authentication:Audience"] ?? "authenticated";
 
 builder.Services.AddProblemDetails();
-builder.Services.AddHttpClient(nameof(SupabaseStationAuthorizationService));
-builder.Services.AddHttpClient(nameof(SupabaseObservationQueueService));
-builder.Services.AddHttpClient(nameof(SupabaseStationDirectoryService), client =>
-    client.Timeout = TimeSpan.FromSeconds(8));
+// Bound every server-side Supabase request. A stalled dependency must not
+// hold an API request or authorization decision open for HttpClient's 100s default.
+static void AddBoundedSupabaseClient(IServiceCollection services, string name) =>
+    services.AddHttpClient(name, client => client.Timeout = TimeSpan.FromSeconds(8));
+
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationReviewService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationSubmissionService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationUserDirectoryService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuditService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAssignmentService));
+
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
-builder.Services.AddHttpClient(nameof(SupabaseStationCatalogueReviewService));
-builder.Services.AddHttpClient(nameof(SupabaseRegistrationReviewService), client => client.Timeout = TimeSpan.FromSeconds(8));
-builder.Services.AddHttpClient(nameof(SupabaseRegistrationSubmissionService), client => client.Timeout = TimeSpan.FromSeconds(8));
-builder.Services.AddHttpClient(nameof(SupabaseStationUserDirectoryService), client => client.Timeout = TimeSpan.FromSeconds(8));
-builder.Services.AddHttpClient(nameof(SupabaseStationAuditService), client => client.Timeout = TimeSpan.FromSeconds(8));
-builder.Services.AddHttpClient(nameof(SupabaseStationAssignmentService), client => client.Timeout = TimeSpan.FromSeconds(8));
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
