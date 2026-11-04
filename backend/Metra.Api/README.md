@@ -100,3 +100,18 @@ when no type filter is supplied. Pending or unverified records remain visibly
 labelled in the response; consumers must not treat them as approved/operational.
 The server-side service-role key is used only by the API host. The mobile client
 must send a valid Supabase access token and must never call the database directly.
+
+## Automated container publishing
+
+Every change to `backend/Metra.Api/**` on `main` also triggers
+`.github/workflows/publish-api-container.yml`. After the backend build and
+tests pass independently, that workflow publishes the production Docker image
+to GitHub Container Registry:
+
+- `ghcr.io/gfa437926-tech/metra2027-api:latest` for the current main branch.
+- `ghcr.io/gfa437926-tech/metra2027-api:sha-<commit>` for an immutable commit build.
+
+The workflow uses the repository-scoped `GITHUB_TOKEN`; no service-role key
+or Supabase credential is used during image publication. The image is a
+deployable artifact, not a live API deployment. A hosting platform, runtime
+secrets, HTTPS origin, and production CORS allow-list are still required.
