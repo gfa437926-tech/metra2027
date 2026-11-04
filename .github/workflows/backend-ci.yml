@@ -35,6 +35,8 @@ jobs:
         run: dotnet restore backend/Metra.Api/Metra.Api.csproj -p:NuGetAudit=true -p:NuGetAuditLevel=high -p:WarningsAsErrors=NU1903%3BNU1904
       - name: Verify station authorization SQL contract
         run: bash database/tests/verify_station_permission_rpc.sh
+      - name: Verify authority authorization SQL contract
+        run: bash database/tests/verify_authority_permission_rpc.sh
       - name: Verify station catalogue review authorization contract
         run: bash database/tests/verify_station_catalogue_review_contract.sh
       - name: Verify two-stage registration review contract
