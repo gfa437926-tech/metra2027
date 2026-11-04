@@ -14,7 +14,7 @@ public interface IRegistrationReviewService
 {
     bool IsConfigured { get; }
     Task<JsonElement?> GetPendingForStationAsync(Guid stationId, int limit, CancellationToken cancellationToken);
-    Task<RegistrationDecisionOutcome> DecideAsync(Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken);
+    Task<RegistrationDecisionOutcome> DecideAsync(Guid stationId, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken);
 }
 
 public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients, IConfiguration configuration) : IRegistrationReviewService
@@ -52,15 +52,16 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
     }
 
     public async Task<RegistrationDecisionOutcome> DecideAsync(
-        Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken)
+        Guid stationId, Guid requestId, Guid actorUserId, RegistrationDecisionRequest request, CancellationToken cancellationToken)
     {
         if (!IsConfigured) return new(false, false, null, null);
-        using var message = new HttpRequestMessage(HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/decide_metra_registration");
+        using var message = new HttpRequestMessage(HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/decide_metra_registration_for_station");
         message.Headers.TryAddWithoutValidation("apikey", _key);
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
         message.Content = JsonContent.Create(new
         {
             p_request_id = requestId,
+            p_station_id = stationId,
             p_expected_status = "pending_station_approval",
             p_actor_user_id = actorUserId,
             p_decision = request.Decision,
@@ -132,7 +133,7 @@ public static class RegistrationReviewEndpoints
             // The request must belong to the station in the route. The RPC independently
             // locks the request, checks its stage, prevents self-review, and validates
             // the actor's approved station assignment and individual permission grant.
-            var outcome = await review.DecideAsync(requestId, actorUserId, request!, cancellationToken);
+            var outcome = await review.DecideAsync(stationId, requestId, actorUserId, request!, cancellationToken);
             if (!outcome.Succeeded)
             {
                 if (outcome.StatusCode == HttpStatusCode.Forbidden) return Results.Forbid();
@@ -144,7 +145,14 @@ public static class RegistrationReviewEndpoints
                 return Results.Problem(title: "Registration decision persistence unavailable", statusCode: 503);
             }
 
-            // Confirm the returned RPC row is committed before reporting success.
+            // PostgREST can return HTTP 200 while the transactional RPC reports a domain denial.
+            var rpcStatus = RegistrationDecisionRpcResult.GetStatus(outcome.Data);
+            if (rpcStatus == "unauthorized") return Results.Forbid();
+            if (rpcStatus == "not_found") return Results.NotFound();
+            if (rpcStatus == "conflict") return Results.Conflict(new { error = "registration_state_conflict" });
+            if (rpcStatus != "committed")
+                return Results.Problem(title: "Unexpected registration decision response", statusCode: 503);
+
             return Results.Ok(outcome.Data);
         })
         .RequireStationPermission("registrations.station.approve")
@@ -152,5 +160,24 @@ public static class RegistrationReviewEndpoints
         .WithName("DecideStationRegistrationRequest");
 
         return endpoints;
+    }
+}
+
+public static class RegistrationDecisionRpcResult
+{
+    public static string? GetStatus(JsonElement? data)
+    {
+        if (data is null) return null;
+        var value = data.Value;
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            if (value.GetArrayLength() == 0) return null;
+            value = value[0];
+        }
+        if (value.ValueKind != JsonValueKind.Object ||
+            !value.TryGetProperty("result_status", out var status) ||
+            status.ValueKind != JsonValueKind.String)
+            return null;
+        return status.GetString();
     }
 }
