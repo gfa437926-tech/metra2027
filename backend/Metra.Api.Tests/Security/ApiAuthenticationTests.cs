@@ -210,9 +210,16 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
     [Theory]
     [InlineData("GET", "/api/v1/authorities")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/membership-roles")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-options")]
     [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-queue?kind=membership")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-audit")]
     [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/revocation")]
     [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/revocation")]
     public async Task Malformed_bearer_token_is_rejected_for_authority_access_endpoints(string method, string path)
     {
         using var request = new HttpRequestMessage(new HttpMethod(method), path);
