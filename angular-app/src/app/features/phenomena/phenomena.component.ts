@@ -345,8 +345,15 @@ export class PhenomenaComponent {
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    try {
+      link.click();
+    } finally {
+      link.remove();
+      // Let the browser finish reading the Blob before releasing its object URL.
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
   }
 
   printRainfallTable(): void {
