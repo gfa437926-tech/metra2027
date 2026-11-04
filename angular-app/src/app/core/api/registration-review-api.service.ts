@@ -91,7 +91,7 @@ export class RegistrationReviewApiService {
     this.assertReady(stationId);
     if (!this.isUuid(requestId)) throw new Error('معرّف طلب التسجيل غير صالح.');
     if (decision === 'reject' && !note?.trim()) throw new Error('سبب الرفض مطلوب.');
-    if (note && (note.length > 2000 || note !== note.trim() || /[\\u0000-\\u001f\\u007f]/.test(note))) {
+    if (note && (note.length > 2000 || note !== note.trim() || Array.from(note).some(character => { const code = character.charCodeAt(0); return code < 32 || code === 127; }))) {
       throw new Error('ملاحظة المراجعة غير صالحة.');
     }
     const headers = await this.authHeaders();
