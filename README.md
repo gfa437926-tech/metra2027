@@ -85,6 +85,9 @@ A read-only audit of station coordinates is maintained in [Station coordinate co
 
 ## Verification status
 
-Latest backend CI run: [Backend build #766](https://github.com/gfa437926-tech/metra2027/actions/runs/41778894826) passed on commit `0f0cc07e037d9828ade09ed0ab3c887abf73396d`. It verified the authority access lifecycle contract (including scheduled approved access), built the API, passed domain/API tests, and built the production container image. Client CI and GitHub Pages deployment have also passed on a prior main commit; rerun them after relevant client changes.
+Latest post-merge checks on 2026-11-04:
+- [Backend build #773](https://github.com/gfa437926-tech/metra2027/actions/runs/41928372170) passed on commit `236a5fdbde9894bd39fa2ada1180d582d45d7362`. NuGet security restore, SQL contract checks, API build, domain/API tests, and production container build all passed.
+- [Client CI #136](https://github.com/gfa437926-tech/metra2027/actions/runs/41928363331) passed on commit `8ea65082e1c85dde4b77ece039247fb89df44f78`. Angular production build, Flutter analysis, and all 13 Flutter tests passed.
+- [GitHub Pages deployment #157](https://github.com/gfa437926-tech/metra2027/actions/runs/41928353967) failed closed because the repository Actions secret `METRA_API_BASE_URL` was empty. This is an environment-configuration blocker, not an Angular build failure. See [multi-environment hosting and Pages secret prerequisites](docs/deployment/MULTI-ENVIRONMENT-HOSTING.md).
 
-A successful CI run or container publish is not the same as a live API deployment. Production readiness requires a deployed HTTPS API, configured secrets and CORS, successful `/health` and `/ready` checks, and authenticated end-to-end tests. Real identity and authority-access tests, administrator onboarding, and verified missing station coordinates remain outstanding.
+A successful CI run or container publish is not the same as a live API deployment. Production readiness requires a deployed HTTPS API, configured server-side Supabase credentials and client runtime secrets, exact CORS, successful `/api/v1/health` and `/api/v1/ready` checks, and authenticated end-to-end tests. Real identity and authority-access tests, administrator onboarding, schema review/approval before applying migrations, and verified missing station coordinates remain outstanding.
