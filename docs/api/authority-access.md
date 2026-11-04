@@ -42,3 +42,8 @@ All routes require an authenticated METRA access token. The API derives the acto
 The authority ID in the route is checked again by the database decision/revocation RPCs against the target record. Membership and grant transitions use row locks and append-only audit events. Requesters and subjects cannot approve their own requests. The service-role key is held only by the ASP.NET server and is never returned to clients.
 
 Typical responses are 200 for successful transitions/reads, 400 for invalid input, 401 for missing identity, 403 for insufficient scope, 404 for unknown records, 409 for state conflicts, and 503 when the database service is unavailable. The database remains the final authority for every decision.
+
+
+## Scheduled access and revocation directory (migration 029)
+
+The approved membership and permission-grant directories include records whose `valid_from` is in the future, provided they are not expired (and permission grants are not revoked). This allows an authority reviewer with `authority.access.revoke` to revoke scheduled access before it becomes effective. Pending request queues remain separate; approved records with an expired `valid_to` are excluded from the revocation directory.
