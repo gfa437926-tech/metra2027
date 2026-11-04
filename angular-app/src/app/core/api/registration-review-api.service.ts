@@ -7,6 +7,17 @@ import { SupabaseAuthService } from '../supabase/supabase-auth.service';
 export type RegistrationReviewStage = 'station' | 'system';
 export type RegistrationDecision = 'approve' | 'reject';
 
+export interface RegistrationAuditItem {
+  id: number;
+  request_id: string;
+  user_id: string;
+  actor_user_id: string;
+  event_type: string;
+  terms_version: string;
+  decision_note: string | null;
+  occurred_at: string;
+}
+
 export interface RegistrationRequestItem {
   id: string;
   user_id: string;
@@ -50,6 +61,21 @@ export class RegistrationReviewApiService {
     const params = new HttpParams().set('limit', String(limit));
     const path = stage === 'station' ? 'registration-requests' : 'system-registration-requests';
     return firstValueFrom(this.http.get<RegistrationRequestItem[]>(
+      `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/${path}`,
+      { headers, params }
+    ));
+  }
+
+
+  async getAudit(stationId: string, stage: RegistrationReviewStage, limit = 100): Promise<RegistrationAuditItem[]> {
+    this.assertReady(stationId);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+      throw new Error('حد سجل التدقيق يجب أن يكون بين 1 و200.');
+    }
+    const headers = await this.authHeaders();
+    const params = new HttpParams().set('limit', String(limit));
+    const path = stage === 'station' ? 'registration-audit' : 'system-registration-audit';
+    return firstValueFrom(this.http.get<RegistrationAuditItem[]>(
       `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/${path}`,
       { headers, params }
     ));
