@@ -125,6 +125,7 @@ export class PhenomenaInputComponent implements OnDestroy {
   private notificationSequence = 0;
   private notificationTimers = new Map<number, ReturnType<typeof setTimeout>>();
   private startedAt = 0;
+  private accumulatedDurationMs = 0;
   private timer: ReturnType<typeof setInterval> | null = null;
   private clock: ReturnType<typeof setInterval> | null = null;
 
@@ -149,7 +150,7 @@ export class PhenomenaInputComponent implements OnDestroy {
   }
   get statusDetails(): string {
     if (!this.activePhenomenon) return 'قم ببدء ظاهرة جديدة';
-    return this.isPaused ? 'يستمر احتساب المدة أثناء الإيقاف المؤقت' : 'يتم احتساب المدة في المعاينة المحلية';
+    return this.isPaused ? 'تم تعليق احتساب المدة حتى استئناف التسجيل' : 'يتم احتساب المدة في المعاينة المحلية';
   }
   get visiblePhenomena(): LocalPhenomenon[] {
     return this.phenomena.filter(p => {
@@ -191,6 +192,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     const now = new Date();
     const local = this.localTime();
     this.startedAt = now.getTime();
+    this.accumulatedDurationMs = 0;
     this.isPaused = false;
     this.currentDuration = '00:00:00';
     this.activePhenomenon = {
@@ -215,8 +217,10 @@ export class PhenomenaInputComponent implements OnDestroy {
   togglePause(): void {
     if (!this.activePhenomenon) return;
     if (this.isPaused) {
+      this.startedAt = Date.now();
       this.isPaused = false;
     } else {
+      this.accumulatedDurationMs += Date.now() - this.startedAt;
       this.isPaused = true;
     }
     this.showNotification(this.isPaused ? 'تم إيقاف تسجيل الظاهرة مؤقتاً' : 'تم استئناف تسجيل الظاهرة', this.isPaused ? 'warning' : 'info');
@@ -226,7 +230,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     if (!this.activePhenomenon) return;
     const now = new Date();
     const local = this.localTime();
-    const elapsed = now.getTime() - this.startedAt;
+    const elapsed = this.accumulatedDurationMs + (this.isPaused ? 0 : now.getTime() - this.startedAt);
     const ended: LocalPhenomenon = {
       ...this.activePhenomenon,
       end_time: now.toISOString().slice(11, 19),
@@ -246,8 +250,8 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.lastUpdateTime = this.currentTime;
   }
   private updateDuration(): void {
-    if (!this.activePhenomenon) return;
-    this.currentDuration = this.formatDuration(Date.now() - this.startedAt);
+    if (!this.activePhenomenon || this.isPaused) return;
+    this.currentDuration = this.formatDuration(this.accumulatedDurationMs + Date.now() - this.startedAt);
   }
   showNotification(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info'): void {
     const id = ++this.notificationSequence;
@@ -275,6 +279,7 @@ export class PhenomenaInputComponent implements OnDestroy {
     this.isPaused = false;
     this.currentDuration = '00:00:00';
     this.startedAt = 0;
+    this.accumulatedDurationMs = 0;
     this.showNotification('تمت إعادة ضبط بيانات المعاينة المحلية.', 'info');
   }
   focusPhenomenonType(): void { document.getElementById('phenomenonType')?.focus(); }
