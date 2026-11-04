@@ -174,7 +174,11 @@ export class RegistrationReviewComponent implements OnInit {
     if (!this.api.isConfigured) return;
     this.loadingStations = true;
     try {
-      this.stations = await this.stationsApi.getAllStations();
+      this.stations = (await this.stationsApi.getAllStations()).filter(station =>
+        station.approval_status === 'approved' &&
+        station.operational_status === 'active' &&
+        !station.is_demo
+      );
     } catch (error) {
       this.error = this.errorMessage(error);
     } finally {
@@ -305,7 +309,7 @@ export class RegistrationReviewComponent implements OnInit {
   private errorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401) return 'انتهت جلسة الدخول أو لم يتم تسجيل الدخول.';
-      if (error.status === 403) return 'لا تملك صلاحية مراجعة هذه المحطة أو هذه المرحلة.';
+      if (error.status === 403) return 'لا تملك صلاحية الوصول إلى مستخدمي هذه المحطة أو مراجعة طلباتها في هذه المرحلة.';
       if (error.status === 404) return 'طلب التسجيل غير موجود.';
       if (error.status === 409) return 'تغيرت حالة الطلب؛ حدّث القائمة قبل اتخاذ قرار جديد.';
       if (error.status === 503) return 'خدمة المراجعة أو اتصال قاعدة البيانات غير متاح حالياً.';
