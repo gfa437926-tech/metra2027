@@ -30,7 +30,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     public async Task Every_observation_endpoint_requires_authentication(string path)
     {
 
-        using var response = await _client.PostAsync(path, content);
+        using var response = await SendUnauthenticated(path);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -39,7 +39,8 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/daily/validate")]
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
-    public async Task Malformed_bearer_token_is_rejected_for_observation_endpoints(string path)
+    [InlineData("/api/v1/stations")]
+    public async Task Malformed_bearer_token_is_rejected_for_observation_and_station_endpoints(string path)
     {
         using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
         request.Headers.Authorization =
