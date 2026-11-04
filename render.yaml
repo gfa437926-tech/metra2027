@@ -10,7 +10,7 @@ services:
     region: frankfurt
     dockerfilePath: ./backend/Metra.Api/Dockerfile
     dockerContext: .
-    healthCheckPath: /api/v1/health
+    healthCheckPath: /api/v1/ready
     autoDeployTrigger: commit
     buildFilter:
       paths:
