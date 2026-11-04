@@ -39,6 +39,29 @@ jobs:
         working-directory: angular-app
         run: npx ng build --configuration production --base-href /metra2027/
 
+      - name: Inject public runtime configuration
+        working-directory: angular-app
+        env:
+          METRA_API_BASE_URL: ${{ secrets.METRA_API_BASE_URL }}
+          METRA_SUPABASE_URL: ${{ secrets.METRA_SUPABASE_URL }}
+          METRA_SUPABASE_ANON_KEY: ${{ secrets.METRA_SUPABASE_ANON_KEY }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'dist/metra2027/browser/metra-config.js';
+          const config = {
+            apiBaseUrl: process.env.METRA_API_BASE_URL || '',
+            supabaseUrl: process.env.METRA_SUPABASE_URL || '',
+            supabaseAnonKey: process.env.METRA_SUPABASE_ANON_KEY || ''
+          };
+          fs.writeFileSync(
+            path,
+            'window.__METRA_CONFIG__ = Object.freeze(' + JSON.stringify(config) + ');\\n',
+            { mode: 0o644 }
+          );
+          console.log('Runtime configuration injected; values are not printed.');
+          NODE
+
       - name: Add SPA fallback for client-side routes
         run: cp angular-app/dist/metra2027/browser/index.html angular-app/dist/metra2027/browser/404.html
 
