@@ -10,7 +10,9 @@ import 'package:metra_mobile/features/stations/station_directory_screen.dart';
 void main() {
   testWidgets('configuration screen explains missing secure environment values', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: MetraConfigurationScreen()));
-    expect(find.textContaining('لم يتم إعداد Supabase'), findsOneWidget);
+    expect(find.textContaining('إعداد تطبيق METRA 2027'), findsOneWidget);
+    expect(find.textContaining('METRA_API_BASE_URL'), findsOneWidget);
+    expect(find.textContaining('METRA_SUPABASE_URL'), findsOneWidget);
     expect(find.textContaining('service_role'), findsOneWidget);
   });
 
