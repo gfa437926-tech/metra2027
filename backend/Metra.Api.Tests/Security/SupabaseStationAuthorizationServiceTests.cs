@@ -60,10 +60,9 @@ public sealed class SupabaseStationAuthorizationServiceTests
     {
         var service = CreateService(request =>
         {
-            Assert.EndsWith(
+            Assert.Equal(
                 "/rest/v1/rpc/metra_user_has_station_owner_authority_permission",
-                request.RequestUri!.AbsolutePath,
-                StringComparison.Ordinal);
+                request.RequestUri!.AbsolutePath);
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
