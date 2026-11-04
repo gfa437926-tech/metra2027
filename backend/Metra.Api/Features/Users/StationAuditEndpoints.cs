@@ -53,8 +53,11 @@ public static class StationAuditEndpoints
             Guid stationId, int? limit, IStationAuditService audit, CancellationToken cancellationToken) =>
         {
             var take = limit ?? 100;
-            if (take is < 1 or > 250)
-                return Results.BadRequest(new { error = "invalid_limit", maximum = 250 });
+            var validationError = StationAuditRequestGuard.GetError(stationId, take);
+            if (validationError == "invalid_station_id")
+                return Results.BadRequest(new { error = validationError });
+            if (validationError == "invalid_limit")
+                return Results.BadRequest(new { error = validationError, maximum = 250 });
             if (!audit.IsConfigured)
                 return Results.Problem(title: "Station audit service unavailable", statusCode: 503);
 
@@ -68,5 +71,15 @@ public static class StationAuditEndpoints
         .WithName("GetStationAuditLog");
 
         return endpoints;
+    }
+}
+
+public static class StationAuditRequestGuard
+{
+    public static string? GetError(Guid stationId, int limit)
+    {
+        if (stationId == Guid.Empty) return "invalid_station_id";
+        if (limit is < 1 or > 250) return "invalid_limit";
+        return null;
     }
 }
