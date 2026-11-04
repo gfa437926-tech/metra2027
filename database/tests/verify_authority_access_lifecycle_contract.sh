@@ -5,9 +5,10 @@ m21="database/migrations/021_authority_permission_grant_lifecycle.sql"
 m22="database/migrations/022_harden_authority_access_revocation_and_audit_index.sql"
 m23="database/migrations/023_bind_authority_access_decisions_to_route_scope.sql"
 m24="database/migrations/024_revoke_direct_service_role_writes_to_authority_audit.sql"
+m25="database/migrations/025_require_active_subject_for_authority_approval.sql"
 api="backend/Metra.Api/Features/Users/AuthorityAccessEndpoints.cs"
 program="backend/Metra.Api/Program.cs"
-[[ -f "$m20" && -f "$m21" && -f "$m22" && -f "$m23" && -f "$m24" && -f "$api" ]]
+[[ -f "$m20" && -f "$m21" && -f "$m22" && -f "$m23" && -f "$m24" && -f "$m25" && -f "$api" ]]
 grep -Fq "ADD COLUMN authority_id uuid" "$m20"
 grep -Fq "authority_access_audit_events" "$m20"
 grep -Fq "REVOKE INSERT,UPDATE,DELETE" "$m20"
@@ -38,3 +39,5 @@ grep -Fq "v.authority_id IS DISTINCT FROM p_authority_id" "$m23"
 grep -Fq "p_authority_id = authorityId" "$api"
 
 grep -Fq "REVOKE INSERT,UPDATE,DELETE,TRUNCATE" "$m24"
+
+grep -Fq "account_state=\x27active\x27 FOR SHARE" "$m25"
