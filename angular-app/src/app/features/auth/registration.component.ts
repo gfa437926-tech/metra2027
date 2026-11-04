@@ -45,12 +45,12 @@ import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
           </form>
         } @else if (loading) {
           <div class="loading">جارٍ تحميل بيانات التسجيل وحالة الحساب…</div>
-        } @else if (status?.account_state) {
+        } @else if (status.account_state) {
           <section class="status-panel">
             <span class="status-label">حالة حساب METRA</span>
-            <h2>{{ statusLabel(status.account_state) }}</h2>
+            <h2>{{ statusLabel(status.account_state ?? '') }}</h2>
             <p>{{ statusDescription(status) }}</p>
-            @if (status.submitted_at) { <small>تاريخ تقديم الطلب: {{ formatDate(status.submitted_at) }}</small> }
+            @if (status.submitted_at) { <small>تاريخ تقديم الطلب: {{ formatDate(status.submitted_at ?? '') }}</small> }
             @if (status.review_note || status.state_reason) {
               <div class="review-note"><strong>ملاحظة المراجعة</strong><p>{{ status.review_note || status.state_reason }}</p></div>
             }
@@ -131,7 +131,14 @@ export class RegistrationComponent implements OnInit {
   termsAccepted = false;
   stations: StationDirectoryItem[] = [];
   roles: RequestableRole[] = [];
-  status: RegistrationStatus | null = null;
+  status: RegistrationStatus = {
+    account_state: null,
+    state_reason: null,
+    request_id: null,
+    request_status: null,
+    submitted_at: null,
+    review_note: null
+  };
   loading = false;
   busy = false;
   needsEmailConfirmation = false;
