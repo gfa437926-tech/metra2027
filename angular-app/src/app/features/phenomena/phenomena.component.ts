@@ -330,8 +330,14 @@ export class PhenomenaComponent {
       ['الساعة (UTC)', 'كمية المطر (مم)', 'كمية الثلج (سم)', 'ملاحظات'],
       ...this.hours.map(h => [h + ':00', this.rainAt(p, h), this.snowAt(p, h), this.notesAt(p, h)])
     ];
-    const csv = '\uFEFF' + rows.map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const csv = '\uFEFF' + rows.map(row => row.map(value => this.csvCell(value)).join(',')).join('\r\n');
     this.download(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `تأشيرات_مطر_ثلج_${p.phenomenon_date}.csv`);
+  }
+
+  private csvCell(value: unknown): string {
+    const text = String(value ?? '');
+    const safe = /^[\\s\\u0000-\\u001f]*[=+\\-@]/.test(text) ? `'${text}` : text;
+    return `"${safe.replace(/"/g, '""')}"`;
   }
 
   private download(blob: Blob, filename: string): void {
