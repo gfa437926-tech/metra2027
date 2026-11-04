@@ -12,7 +12,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
   template: `
     <div class="page" dir="rtl">
       <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-flask"></i> وضع تجريبي</span></header>
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>معاينة تجريبية وليست نظام حفظ فعلياً.</strong><span>التحقق وإنشاء المسودات يتمان داخل الصفحة فقط؛ لا يوجد اتصال بقاعدة البيانات أو API.</span></div></div>
+      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>الإرسال الفعلي متاح عند اكتمال إعداد API وSupabase واختيار محطة مخوّلة؛ لا تُعرض رسالة نجاح قبل تأكيد الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">

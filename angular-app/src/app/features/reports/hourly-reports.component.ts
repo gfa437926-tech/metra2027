@@ -206,6 +206,7 @@ export class HourlyReportsComponent {
     this.issues = [];
     this.message = '';
     this.selectedHour = '';
+    this.selectedStationId = '';
   }
 
   formatField(event: FocusEvent): void {
