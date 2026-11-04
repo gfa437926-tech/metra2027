@@ -81,6 +81,8 @@ import {
           <div class="view-switch" role="group" aria-label="قائمة إدارة الوصول">
             <button type="button" [class.active]="view === 'membership'" (click)="setView('membership')">طلبات العضوية</button>
             <button type="button" [class.active]="view === 'permission_grant'" (click)="setView('permission_grant')">طلبات المنح</button>
+            <button type="button" [class.active]="view === 'membership_active'" (click)="setView('membership_active')">العضويات الفعالة</button>
+            <button type="button" [class.active]="view === 'permission_grant_active'" (click)="setView('permission_grant_active')">المنح الفعالة</button>
             <button type="button" [class.active]="view === 'audit'" (click)="setView('audit')">سجل التدقيق</button>
           </div>
 
@@ -118,8 +120,12 @@ import {
                     <textarea #decisionReason rows="2" maxlength="2000" placeholder="سبب الاعتماد أو الرفض (5 أحرف على الأقل)"></textarea>
                   </label>
                   <div class="actions">
-                    <button type="button" class="approve" [disabled]="busy || decisionReason.value.trim().length < 5" (click)="decide(item, 'approve', decisionReason.value)">اعتماد</button>
-                    <button type="button" class="reject" [disabled]="busy || decisionReason.value.trim().length < 5" (click)="decide(item, 'reject', decisionReason.value)">رفض</button>
+                    @if (view === 'membership_active' || view === 'permission_grant_active') {
+                      <button type="button" class="reject" [disabled]="busy || decisionReason.value.trim().length < 5" (click)="revoke(item, decisionReason.value)">إلغاء الصلاحية</button>
+                    } @else {
+                      <button type="button" class="approve" [disabled]="busy || decisionReason.value.trim().length < 5" (click)="decide(item, 'approve', decisionReason.value)">اعتماد</button>
+                      <button type="button" class="reject" [disabled]="busy || decisionReason.value.trim().length < 5" (click)="decide(item, 'reject', decisionReason.value)">رفض</button>
+                    }
                   </div>
                 </article>
               }
@@ -262,12 +268,26 @@ export class AuthorityAccessComponent implements OnInit {
 
   async decide(item: AuthorityAccessQueueItem, decision: 'approve' | 'reject', reason: string): Promise<void> {
     if (!this.selectedAuthorityId || reason.trim().length < 5) return;
+    if (this.view !== 'membership' && this.view !== 'permission_grant') return;
     await this.run(async () => {
       if (this.view === 'membership')
         await this.api.decideMembership(this.selectedAuthorityId, item.id, decision, reason.trim());
       else
         await this.api.decidePermissionGrant(this.selectedAuthorityId, item.id, decision, reason.trim());
       this.notice = decision === 'approve' ? 'تم اعتماد الطلب.' : 'تم رفض الطلب.';
+    });
+  }
+
+
+  async revoke(item: AuthorityAccessQueueItem, reason: string): Promise<void> {
+    if (!this.selectedAuthorityId || reason.trim().length < 5) return;
+    if (this.view !== 'membership_active' && this.view !== 'permission_grant_active') return;
+    await this.run(async () => {
+      if (this.view === 'membership_active')
+        await this.api.revokeMembership(this.selectedAuthorityId, item.id, reason.trim());
+      else
+        await this.api.revokePermissionGrant(this.selectedAuthorityId, item.id, reason.trim());
+      this.notice = 'تم إلغاء الصلاحية وتسجيل الحدث في سجل التدقيق.';
     });
   }
 
