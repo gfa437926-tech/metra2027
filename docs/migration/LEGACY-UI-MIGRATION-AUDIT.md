@@ -243,3 +243,10 @@ The support incident policy test suite now exercises the following validation an
 - supported review/assignment/progress/waiting/resolution/rework transitions, terminal closed/rejected states, and undefined lifecycle values.
 
 **CI evidence:** GitHub Actions Backend build #786 completed successfully for commit `027270604fac9c493058f52fe1f25e4fb7cb31a0`. This confirms that the domain test batch built and passed in CI. It does not establish API, database, authorization, or client-screen readiness. The later documentation-only contract update is not represented by that CI run.
+
+
+## Support incident optional asset validation hardening (2026-11-05)
+
+The support incident domain policy now treats the optional affected-asset label as follows: null remains valid; a supplied whitespace-only value is rejected; and a trimmed label longer than 160 characters is rejected. Added tests cover blank strings, whitespace-only strings, and the exact 160-character accepted boundary. This closes the gap where a non-null blank label previously passed policy validation.
+
+Commits: `9ecfc497db33e7fa5422d01491288b9ab015be72` (policy) and `a8fc6de2f7d813071a4ca9b94fb107ba2c702d3d` (tests). CI has not yet been checked for these commits; treat this as pending verification.
