@@ -110,6 +110,20 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     }
   }
 
+  void _resetForm() {
+    FocusScope.of(context).unfocus();
+    for (final controller in _controllers.values) {
+      controller.clear();
+    }
+    _formKey.currentState?.reset();
+    setState(() {
+      _date = DateTime.now();
+      _utcHour = '00';
+      _result = null;
+      _error = null;
+    });
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context, initialDate: _date,
@@ -172,12 +186,24 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 ('precipitationAmount', 'كمية الهطول', '000.0'),
               ]),
               const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy ? null : _validate,
-                icon: _busy
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.fact_check_outlined),
-                label: Text(_busy ? 'جارٍ التحقق...' : 'التحقق من النشرة'),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _busy ? null : _validate,
+                      icon: _busy
+                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.fact_check_outlined),
+                      label: Text(_busy ? 'جارٍ التحقق...' : 'التحقق من النشرة'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton.icon(
+                    onPressed: _busy ? null : _resetForm,
+                    icon: const Icon(Icons.restart_alt),
+                    label: const Text('تفريغ'),
+                  ),
+                ],
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),
