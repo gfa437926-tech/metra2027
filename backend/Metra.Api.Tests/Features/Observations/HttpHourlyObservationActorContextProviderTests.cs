@@ -34,6 +34,33 @@ public sealed class HttpHourlyObservationActorContextProviderTests
     }
 
     [Fact]
+    public async Task ExcludesPermissionGrantRevokedBeforeTheCurrentRequest()
+    {
+        var data = new FakeIdentityDataSource(ActiveFacts() with
+        {
+            PermissionGrants =
+            [
+                new CurrentUserPermissionGrantFacts(
+                    HourlyObservationApplicationService.SubmitPermission,
+                    Now.AddDays(-1), null, null),
+                new CurrentUserPermissionGrantFacts(
+                    HourlyObservationApplicationService.ReviewPermission,
+                    Now.AddDays(-2), null, Now.AddMinutes(-1))
+            ]
+        });
+        var provider = new HttpHourlyObservationActorContextProvider(
+            CreateAccessor(new Claim("iss", "https://identity.example"), new Claim("sub", "subject")),
+            data,
+            new FixedTimeProvider(Now));
+
+        var actor = await provider.GetCurrentActorAsync(CancellationToken.None);
+
+        Assert.NotNull(actor);
+        Assert.Contains(HourlyObservationApplicationService.SubmitPermission, actor.Permissions);
+        Assert.DoesNotContain(HourlyObservationApplicationService.ReviewPermission, actor.Permissions);
+    }
+
+    [Fact]
     public async Task ReturnsNullWhenPrincipalIsNotAuthenticated()
     {
         var data = new FakeIdentityDataSource(ActiveFacts());
