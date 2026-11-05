@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AssignedStationsComponent } from './features/stations/assigned-stations.component';
 
 export const routes: Routes = [
   {
@@ -45,6 +46,10 @@ export const routes: Routes = [
     path: 'soil-temperature',
     loadComponent: () => import('./features/soil/soil-temperature.component')
       .then((m) => m.SoilTemperatureComponent)
+  },
+  {
+    path: 'my-stations',
+    component: AssignedStationsComponent
   },
   {
     path: 'stations',
