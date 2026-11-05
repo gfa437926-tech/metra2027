@@ -52,4 +52,31 @@ void main() {
     expect(requests, 0);
     expect(find.text('هذا الحقل مطلوب'), findsWidgets);
   });
+  testWidgets('reset clears entered values and validation feedback',
+      (tester) async {
+    final client = MockClient((request) async =>
+        http.Response('{"isValid":true,"issues":[]}', 200));
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+      ),
+    ));
+
+    final dryTemperature = find.byWidgetPredicate((widget) =>
+        widget is TextFormField &&
+        widget.decoration?.labelText == 'الحرارة الجافة');
+    await tester.enterText(dryTemperature, '+21.0');
+    await tester.ensureVisible(find.text('تفريغ'));
+    await tester.tap(find.text('تفريغ'));
+    await tester.pump();
+
+    final field = tester.widget<TextFormField>(dryTemperature);
+    expect(field.controller!.text, isEmpty);
+    expect(find.text('تفريغ'), findsOneWidget);
+    expect(find.textContaining('اجتازت التحقق'), findsNothing);
+  });
+
 }
