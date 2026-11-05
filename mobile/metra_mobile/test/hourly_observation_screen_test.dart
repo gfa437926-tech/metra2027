@@ -37,6 +37,10 @@ void main() {
 
   testWidgets('blocks an empty form before calling the validation API',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     var requests = 0;
     final client = MockClient((request) async {
       requests++;
@@ -54,7 +58,6 @@ void main() {
     final submitButton = find.byType(FilledButton);
     await tester.scrollUntilVisible(submitButton, 250, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(submitButton);
-    await tester.drag(find.byType(ListView), const Offset(0, -220));
     await tester.pumpAndSettle();
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
