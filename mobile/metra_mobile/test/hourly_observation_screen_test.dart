@@ -54,6 +54,7 @@ void main() {
     final submitButton = find.byType(FilledButton);
     await tester.scrollUntilVisible(submitButton, 250, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(submitButton);
+    await tester.pumpAndSettle();
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
