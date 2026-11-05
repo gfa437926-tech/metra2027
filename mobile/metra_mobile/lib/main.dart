@@ -10,7 +10,9 @@ void main() {
 }
 
 class MetraMobileApp extends StatelessWidget {
-  const MetraMobileApp({super.key});
+  const MetraMobileApp({super.key, this.tokenProvider});
+
+  final AccessTokenProvider? tokenProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -33,13 +35,15 @@ class MetraMobileApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      home: const MetraHomePage(),
+      home: MetraHomePage(tokenProvider: tokenProvider),
     );
   }
 }
 
 class MetraHomePage extends StatefulWidget {
-  const MetraHomePage({super.key});
+  const MetraHomePage({super.key, this.tokenProvider});
+
+  final AccessTokenProvider? tokenProvider;
 
   @override
   State<MetraHomePage> createState() => _MetraHomePageState();
@@ -47,7 +51,7 @@ class MetraHomePage extends StatefulWidget {
 
 class _MetraHomePageState extends State<MetraHomePage> {
   int selectedIndex = 0;
-  final CurrentUserContextClient _identityClient = CurrentUserContextClient();
+  late final CurrentUserContextClient _identityClient;
   CurrentUserSessionState _sessionState = CurrentUserSessionState.unconfigured;
   CurrentUserContext? _currentUser;
 
@@ -55,6 +59,7 @@ class _MetraHomePageState extends State<MetraHomePage> {
   void initState() {
     super.initState();
     _sessionState = CurrentUserSessionState.loading;
+    _identityClient = CurrentUserContextClient(tokenProvider: widget.tokenProvider);
     _loadCurrentUser();
   }
 
@@ -140,7 +145,7 @@ class _MetraHomePageState extends State<MetraHomePage> {
                   index: selectedIndex,
                   children: [
                     _DashboardMobileView(onHourlyTap: () => setState(() => selectedIndex = 1)),
-                    const _RecordsMobileView(),
+                    _RecordsMobileView(accessTokenProvider: widget.tokenProvider),
                     AssignedStationsScreen(
                       sessionState: _sessionState,
                       userContext: _currentUser,
@@ -250,11 +255,13 @@ class _DashboardMobileView extends StatelessWidget {
 }
 
 class _RecordsMobileView extends StatelessWidget {
-  const _RecordsMobileView();
+  const _RecordsMobileView({this.accessTokenProvider});
+
+  final Future<String?> Function()? accessTokenProvider;
 
   @override
   Widget build(BuildContext context) {
-    return const HourlyObservationScreen();
+    return HourlyObservationScreen(accessTokenProvider: accessTokenProvider);
   }
 }
 
