@@ -164,6 +164,28 @@ public sealed class HourlyObservationApplicationServiceTests
         Assert.Equal(HourlyObservationStatus.PendingReview, store.ReviewCommand?.ExpectedStatus);
     }
 
+    [Fact]
+    public async Task Submit_ReturnsFieldSpecificDomainValidationIssues()
+    {
+        var store = new FakeStore();
+        var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
+        var service = CreateService(actor, store);
+        var request = ValidRequest() with
+        {
+            Values = new Dictionary<string, string?>(ValidRequest().Values!)
+            {
+                ["dryTemp"] = "invalid"
+            }
+        };
+
+        var result = await service.SubmitAsync(request);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("observation_validation_failed", result.Code);
+        Assert.Contains(result.Issues!, issue => issue.Field == "dryTemp");
+        Assert.Null(store.Created);
+    }
+
     private static HourlyObservationApplicationService CreateService(
         HourlyObservationActorContext actor,
         FakeStore store)
