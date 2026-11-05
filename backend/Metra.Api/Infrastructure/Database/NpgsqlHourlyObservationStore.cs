@@ -73,8 +73,15 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
             insert.Parameters.Add("utc_hour", NpgsqlDbType.Smallint).Value = command.UtcHour;
             insert.Parameters.Add("values", NpgsqlDbType.Jsonb).Value =
                 System.Text.Json.JsonSerializer.Serialize(command.Values);
-            submittedAt = (DateTimeOffset)(await insert.ExecuteScalarAsync(cancellationToken)
-                ?? throw new InvalidOperationException("Hourly observation insert returned no timestamp."));
+            var submittedAtValue = await insert.ExecuteScalarAsync(cancellationToken)
+                ?? throw new InvalidOperationException("Hourly observation insert returned no timestamp.");
+            submittedAt = submittedAtValue switch
+            {
+                DateTimeOffset timestamp => timestamp.ToUniversalTime(),
+                DateTime timestamp => new DateTimeOffset(
+                    DateTime.SpecifyKind(timestamp, DateTimeKind.Utc)),
+                _ => throw new InvalidOperationException("Hourly observation insert returned an invalid timestamp.")
+            };
         }
 
         const string auditSql = """
