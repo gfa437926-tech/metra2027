@@ -36,4 +36,23 @@ public sealed class MaintenanceAssignmentPolicyTests
         Assert.Contains(MaintenanceAssignmentPolicy.Validate(assignment, Now),
             x => x.Field == nameof(assignment.AssignmentNote));
     }
+    [Fact]
+    public void Rejects_assignment_time_too_far_in_future() {
+        var assignment = Valid() with { AssignedAt = Now.AddMinutes(6) };
+        Assert.Contains(MaintenanceAssignmentPolicy.Validate(assignment, Now),
+            x => x.Field == nameof(assignment.AssignedAt));
+    }
+
+    [Fact]
+    public void Rejects_expected_resolution_beyond_one_year() {
+        var assignment = Valid() with { ExpectedResolutionAt = Now.AddDays(366) };
+        Assert.Contains(MaintenanceAssignmentPolicy.Validate(assignment, Now),
+            x => x.Field == nameof(assignment.ExpectedResolutionAt));
+    }
+
+    [Fact]
+    public void Allows_optional_assignment_note_to_be_null() {
+        var assignment = Valid() with { AssignmentNote = null };
+        Assert.Empty(MaintenanceAssignmentPolicy.Validate(assignment, Now));
+    }
 }
