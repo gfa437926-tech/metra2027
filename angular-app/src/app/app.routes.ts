@@ -52,6 +52,11 @@ export const routes: Routes = [
     component: AssignedStationsComponent
   },
   {
+    path: 'my-registration',
+    loadComponent: () => import('./features/identity/registration-status.component')
+      .then((m) => m.RegistrationStatusComponent)
+  },
+  {
     path: 'stations',
     loadComponent: () => import('./features/stations/stations.component')
       .then((m) => m.StationsComponent)
