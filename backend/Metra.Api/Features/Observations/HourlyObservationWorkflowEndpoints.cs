@@ -29,7 +29,7 @@ public static class HourlyObservationWorkflowEndpoints
                     result.Value);
             }
 
-            return ToHttpResult(result.Code, result.Message);
+            return ToHttpResult(result.Code, result.Message, result.Issues);
         }).WithName("SubmitHourlyObservation");
 
         group.MapPost("/{observationId}/review", async (
@@ -47,7 +47,7 @@ public static class HourlyObservationWorkflowEndpoints
         return endpoints;
     }
 
-    private static IResult ToHttpResult(string code, string message)
+    private static IResult ToHttpResult(string code, string message, IReadOnlyList<Metra.Api.Domain.Observations.ValidationIssue>? resultIssues = null)
         => code switch
         {
             "unauthenticated" => Results.Problem(
@@ -67,6 +67,13 @@ public static class HourlyObservationWorkflowEndpoints
                 title: "Observation state conflict",
                 detail: message,
                 statusCode: StatusCodes.Status409Conflict),
+            "observation_validation_failed" when resultIssues is not null
+                => Results.ValidationProblem(resultIssues
+                    .GroupBy(issue => issue.Field, StringComparer.Ordinal)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.Select(issue => issue.Message).Distinct(StringComparer.Ordinal).ToArray(),
+                        StringComparer.Ordinal)),
             "invalid_observation_id" or "invalid_request" or "invalid_review"
                 or "station_context_required" or "observation_validation_failed"
                 => Results.ValidationProblem(
