@@ -185,6 +185,54 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Theory]
+    [InlineData("GET", "/api/v1/authorities")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/membership-roles")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-options")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-queue?kind=membership")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-audit")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/revocation")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/revocation")]
+    public async Task Every_authority_access_endpoint_requires_authentication(string method, string path)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+        if (request.Method == HttpMethod.Post)
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("GET", "/api/v1/authorities")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/membership-roles")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-options")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-queue?kind=membership")]
+    [InlineData("GET", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/access-audit")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/memberships/22222222-2222-2222-2222-222222222222/revocation")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("POST", "/api/v1/authorities/11111111-1111-1111-1111-111111111111/permission-grants/22222222-2222-2222-2222-222222222222/revocation")]
+    public async Task Malformed_bearer_token_is_rejected_for_authority_access_endpoints(string method, string path)
+    {
+        using var request = new HttpRequestMessage(new HttpMethod(method), path);
+        request.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
+        if (request.Method == HttpMethod.Post)
+            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private Task<HttpResponseMessage> SendUnauthenticated(string path)
     {
         if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal))

@@ -136,6 +136,8 @@ void main() {
     expect(ApiConfig.isValidUrl('https://user:secret@api.example.test'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test?token=secret'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test#section'), isFalse);
+    expect(ApiConfig.isValidUrl('https://api.example.test/api/v1'), isFalse);
+    expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
 

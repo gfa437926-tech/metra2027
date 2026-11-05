@@ -7,12 +7,14 @@ on:
       - "angular-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
+      - ".github/workflows/deploy-pages.yml"
   pull_request:
     branches: [main]
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:

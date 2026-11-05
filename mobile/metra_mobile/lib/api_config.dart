@@ -18,6 +18,7 @@ class ApiConfig {
         uri.isAbsolute &&
         uri.scheme == 'https' &&
         uri.host.isNotEmpty &&
+        (uri.path.isEmpty || uri.path == '/') &&
         uri.userInfo.isEmpty &&
         !uri.hasQuery &&
         !uri.hasFragment;
