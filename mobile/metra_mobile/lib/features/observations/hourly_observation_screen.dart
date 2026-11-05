@@ -160,6 +160,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                     initialValue: _utcHour,
                     decoration: const InputDecoration(
                       labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
+                      errorText: _fieldError('utcTime'),
                       border: OutlineInputBorder(),
                     ),
                     items: List.generate(24, (i) {
@@ -235,6 +236,13 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     );
   }
 
+  String? _fieldError(String field) {
+    for (final issue in _result?.issues ?? const <ObservationValidationIssue>[]) {
+      if (issue.field == field) return issue.message;
+    }
+    return null;
+  }
+
   Widget _section(String title, List<(String, String, String)> fields, {bool required = true}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -251,6 +259,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
               textDirection: TextDirection.ltr,
               decoration: InputDecoration(
                 labelText: f.$2, hintText: f.$3,
+                errorText: _fieldError(f.$1),
                 border: const OutlineInputBorder(), isDense: true,
               ),
               validator: (v) => required && (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
