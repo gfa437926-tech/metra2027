@@ -172,6 +172,60 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     }
   }
 
+  Future<void> _updateSelectedWorkflowStatus(String status) async {
+    final ids = Set<String>.from(_selectedDraftIds);
+    if (ids.isEmpty) return;
+    final now = DateTime.now().toIso8601String();
+    final next = _drafts.map((draft) {
+      if (!ids.contains(draft['id'].toString())) return draft;
+      final current = (draft['workflowStatus'] ?? 'new').toString();
+      if (current == status) return draft;
+      final history = List<Map<String, dynamic>>.from(
+        (draft['statusHistory'] as List? ?? const [])
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry)),
+      );
+      history.add({
+        'status': status,
+        'at': now,
+        'note': 'تحديث جماعي لحالة البلاغ',
+      });
+      return <String, dynamic>{
+        ...draft,
+        'workflowStatus': status,
+        'statusHistory': history,
+        'updatedAt': now,
+        'resolvedAt': status == 'resolved' ? now : null,
+      };
+    }).toList();
+    try {
+      await _storage.write(key: _draftKey, value: jsonEncode(next));
+      if (!mounted) return;
+      setState(() {
+        _drafts = next;
+        _selectedDraftIds.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم تحديث حالة البلاغات المحددة إلى «${_workflowStatusArabic(status)}».')),
+      );
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تحديث حالات البلاغات المحددة.')),
+      );
+    }
+  }
+
+  void _selectAllFilteredDrafts() {
+    final visibleIds = _filteredDrafts().map((draft) => draft['id'].toString()).toSet();
+    setState(() {
+      if (visibleIds.isNotEmpty && _selectedDraftIds.containsAll(visibleIds)) {
+        _selectedDraftIds.removeAll(visibleIds);
+      } else {
+        _selectedDraftIds.addAll(visibleIds);
+      }
+    });
+  }
+
   Future<void> _deleteSelectedDrafts() async {
     final ids = Set<String>.from(_selectedDraftIds);
     if (ids.isEmpty) return;
@@ -579,6 +633,44 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         const SizedBox(height: 8),
         if (_drafts.isEmpty)
           const Card(child: ListTile(leading: Icon(Icons.inbox_outlined), title: Text('لا توجد بلاغات محلية محفوظة'))),
+        if (_drafts.isNotEmpty) ...[
+          Card(
+            elevation: 0,
+            color: const Color(0xFFEAF1FF),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  Text('المحدد: ${_selectedDraftIds.length}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  TextButton.icon(
+                    onPressed: _selectAllFilteredDrafts,
+                    icon: const Icon(Icons.select_all),
+                    label: const Text('تحديد نتائج التصفية'),
+                  ),
+                  PopupMenuButton<String>(
+                    enabled: _selectedDraftIds.isNotEmpty,
+                    tooltip: 'تغيير حالة المحدد',
+                    onSelected: _updateSelectedWorkflowStatus,
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(value: 'new', child: Text('تعيين: جديد')),
+                      PopupMenuItem(value: 'in_progress', child: Text('تعيين: قيد المعالجة')),
+                      PopupMenuItem(value: 'resolved', child: Text('تعيين: تم الإصلاح')),
+                    ],
+                    child: const Chip(avatar: Icon(Icons.sync_alt), label: Text('تغيير الحالة')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _selectedDraftIds.isEmpty ? null : _deleteSelectedDrafts,
+                    icon: const Icon(Icons.delete_sweep_outlined),
+                    label: const Text('حذف المحدد'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         ..._filteredDrafts().map((draft) => Card(
           elevation: 0,
           child: ListTile(
