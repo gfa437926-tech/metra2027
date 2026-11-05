@@ -97,14 +97,17 @@ public sealed class HourlyObservationQueueQueryService(
             return new(HourlyObservationQueueReadStatus.Unauthenticated);
 
         if (!actor.IsActive ||
+            actor.Permissions is null ||
             !actor.Permissions.Contains(HourlyObservationApplicationService.ReviewPermission) ||
             !Guid.TryParseExact(actor.UserId, "D", out var actorId) ||
             !string.Equals(actorId.ToString("D"), actor.UserId, StringComparison.OrdinalIgnoreCase) ||
             actor.StationGrants is null ||
             actor.StationGrants.Any(grant => grant is null ||
                 !Guid.TryParseExact(grant.StationId, "D", out _) ||
+                string.IsNullOrWhiteSpace(grant.StationId) ||
                 grant.ValidFrom.Offset != TimeSpan.Zero ||
-                (grant.ValidTo is not null && grant.ValidTo.Value.Offset != TimeSpan.Zero) ||
+                (grant.ValidTo is not null &&
+                 (grant.ValidTo.Value.Offset != TimeSpan.Zero || grant.ValidTo.Value <= grant.ValidFrom)) ||
                 (grant.RevokedAt is not null && grant.RevokedAt.Value.Offset != TimeSpan.Zero)))
             return new(HourlyObservationQueueReadStatus.Unauthorized);
 
