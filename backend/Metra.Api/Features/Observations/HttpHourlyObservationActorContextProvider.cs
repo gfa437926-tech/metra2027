@@ -4,13 +4,14 @@ using Metra.Api.Features.Identity;
 namespace Metra.Api.Features.Observations;
 
 /// <summary>
-/// Builds observation authorization context from the validated HTTP principal
-/// and the same authoritative METRA identity snapshot used by /identity/me.
-/// No user, station, role, or permission identifier is accepted from request data.
+/// Resolves the current actor from the validated HTTP principal and the
+/// authoritative METRA identity data source. Request bodies cannot supply
+/// user IDs, station assignments, account state, or permissions.
 /// </summary>
 public sealed class HttpHourlyObservationActorContextProvider(
     IHttpContextAccessor httpContextAccessor,
-    CurrentUserContextApplicationService currentUserContextService)
+    ICurrentUserContextDataSource identityDataSource,
+    TimeProvider timeProvider)
     : IHourlyObservationActorContextProvider
 {
     public async Task<HourlyObservationActorContext?> GetCurrentActorAsync(
@@ -23,29 +24,44 @@ public sealed class HttpHourlyObservationActorContextProvider(
         var issuer = principal.FindFirst("iss")?.Value;
         var subject = principal.FindFirst("sub")?.Value
             ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         if (string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(subject))
             return null;
 
-        var context = await currentUserContextService.GetAsync(
+        var facts = await identityDataSource.FindByIdentitySubjectAsync(
             issuer, subject, cancellationToken);
-        if (context is null ||
-            !string.Equals(context.AccountState, MetraAccountState.Active.ToString(), StringComparison.Ordinal))
+        if (facts is null ||
+            facts.AccountState != MetraAccountState.Active ||
+            string.IsNullOrWhiteSpace(facts.UserId) ||
+            facts.Assignments is null ||
+            facts.PermissionGrants is null)
             return null;
 
-        var grants = context.Assignments
-            .Where(assignment => assignment.IsActive)
-            .Select(assignment => new HourlyObservationStationGrant(
-                assignment.StationId,
-                assignment.ValidFrom,
-                assignment.ValidTo,
-                null))
+        var now = timeProvider.GetUtcNow();
+        var grants = facts.Assignments
+            .Where(x => x is not null &&
+                x.ValidFrom.Offset == TimeSpan.Zero &&
+                x.ValidFrom <= now &&
+                (x.ValidTo is null || x.ValidTo.Value.Offset == TimeSpan.Zero && now < x.ValidTo.Value) &&
+                (x.RevokedAt is null || x.RevokedAt.Value.Offset == TimeSpan.Zero && now < x.RevokedAt.Value))
+            .Select(x => new HourlyObservationStationGrant(
+                x.StationId, x.ValidFrom, x.ValidTo, x.RevokedAt))
             .ToArray();
 
+        var permissions = facts.PermissionGrants
+            .Where(x => x is not null &&
+                x.ValidFrom.Offset == TimeSpan.Zero &&
+                x.ValidFrom <= now &&
+                (x.ValidTo is null || x.ValidTo.Value.Offset == TimeSpan.Zero && now < x.ValidTo.Value) &&
+                (x.RevokedAt is null || x.RevokedAt.Value.Offset == TimeSpan.Zero && now < x.RevokedAt.Value))
+            .Select(x => x.Permission)
+            .Where(x => x is HourlyObservationApplicationService.SubmitPermission
+                or HourlyObservationApplicationService.ReviewPermission)
+            .ToHashSet(StringComparer.Ordinal);
+
         return new HourlyObservationActorContext(
-            context.UserId,
+            facts.UserId,
             true,
             Array.AsReadOnly(grants),
-            new HashSet<string>(context.Permissions, StringComparer.Ordinal));
+            permissions);
     }
 }
