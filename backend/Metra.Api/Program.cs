@@ -35,6 +35,8 @@ if (hasDatabase)
     builder.Services.AddScoped<IRegistrationSubmissionCatalogue, NpgsqlRegistrationSubmissionCatalogue>();
     builder.Services.AddScoped<IRegistrationSubmissionStore, NpgsqlRegistrationSubmissionStore>();
     builder.Services.AddScoped<RegistrationSubmissionApplicationService>();
+    builder.Services.AddScoped<IRegistrationSubmissionStatusStore, NpgsqlRegistrationSubmissionStatusStore>();
+    builder.Services.AddScoped<RegistrationSubmissionStatusApplicationService>();
     builder.Services.AddScoped<IRegistrationApprovalActorContextProvider, NpgsqlRegistrationApprovalActorContextProvider>();
     builder.Services.AddScoped<NpgsqlRegistrationApprovalStore>();
     builder.Services.AddScoped<IRegistrationApprovalStore>(sp => sp.GetRequiredService<NpgsqlRegistrationApprovalStore>());
@@ -147,6 +149,7 @@ app.MapStationEndpoints();
 if (hasDatabase)
 {
     app.MapRegistrationSubmissionEndpoints();
+    app.MapRegistrationSubmissionStatusEndpoints();
     app.MapRegistrationApprovalEndpoints();
     app.MapCurrentUserContextEndpoints();
     if (hourlyObservationWorkflowEnabled)
