@@ -137,15 +137,25 @@ public sealed class HourlyObservationApplicationService(
                 "توجد أخطاء في قيم النشرة الساعية؛ راجع تفاصيل التحقق قبل الإرسال.",
                 Issues: Array.AsReadOnly(validationIssues.ToArray()));
 
-        var saved = await store.CreateAsync(
-            new PersistHourlyObservationCommand(
-                stationIds[0],
-                actor.UserId,
-                request.ObservationDate,
-                request.UtcHour,
-                new Dictionary<string, string?>(values, StringComparer.Ordinal),
-                now),
-            cancellationToken);
+        PersistedHourlyObservation saved;
+        try
+        {
+            saved = await store.CreateAsync(
+                new PersistHourlyObservationCommand(
+                    stationIds[0],
+                    actor.UserId,
+                    request.ObservationDate,
+                    request.UtcHour,
+                    new Dictionary<string, string?>(values, StringComparer.Ordinal),
+                    now),
+                cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Failure<HourlyObservationSubmissionResponse>(
+                "permission_denied",
+                "انتهت صلاحية الإرسال أو تكليف المحطة؛ حدّث الجلسة وحاول مجدداً.");
+        }
 
         var response = new HourlyObservationSubmissionResponse(
             saved.ObservationId,
