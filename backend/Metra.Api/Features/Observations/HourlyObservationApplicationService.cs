@@ -86,7 +86,8 @@ public sealed record HourlyObservationApplicationResult<T>(
     bool Succeeded,
     string Code,
     string Message,
-    T? Value = default);
+    T? Value = default,
+    IReadOnlyList<Metra.Api.Domain.Observations.ValidationIssue>? Issues = null);
 
 /// <summary>
 /// Application workflow for submission and station review. It contains no
@@ -130,9 +131,11 @@ public sealed class HourlyObservationApplicationService(
         var values = request!.Values!;
         var validationIssues = HourlyObservationValidator.Validate(values);
         if (validationIssues.Count > 0)
-            return Failure<HourlyObservationSubmissionResponse>(
+            return new(
+                false,
                 "observation_validation_failed",
-                "توجد أخطاء في قيم النشرة الساعية؛ راجع تفاصيل التحقق قبل الإرسال.");
+                "توجد أخطاء في قيم النشرة الساعية؛ راجع تفاصيل التحقق قبل الإرسال.",
+                Issues: Array.AsReadOnly(validationIssues.ToArray()));
 
         var saved = await store.CreateAsync(
             new PersistHourlyObservationCommand(
