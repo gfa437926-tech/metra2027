@@ -40,6 +40,39 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Submit_RejectsExpiredStationAssignment()
+    {
+        var store = new FakeStore();
+        var expired = new HourlyObservationStationGrant(
+            "station-expired", Now.AddDays(-10), Now.AddMinutes(-1), null);
+        var service = CreateService(ActiveActor(expired), store);
+
+        var result = await service.SubmitAsync(ValidRequest());
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("station_context_required", result.Code);
+        Assert.Null(store.Created);
+    }
+
+    [Fact]
+    public async Task Submit_RejectsActorWithoutSubmitPermission()
+    {
+        var store = new FakeStore();
+        var actor = new HourlyObservationActorContext(
+            "user-1",
+            true,
+            [new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)],
+            new HashSet<string>(StringComparer.Ordinal));
+        var service = CreateService(actor, store);
+
+        var result = await service.SubmitAsync(ValidRequest());
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("permission_denied", result.Code);
+        Assert.Null(store.Created);
+    }
+
+    [Fact]
     public async Task Submit_DerivesStationFromActorAndCreatesPendingReview()
     {
         var store = new FakeStore();
@@ -52,6 +85,22 @@ public sealed class HourlyObservationApplicationServiceTests
         Assert.Equal("station-owned", store.Created?.StationId);
         Assert.Equal("user-1", store.Created?.SubmittedBy);
         Assert.Equal(HourlyObservationStatus.PendingReview, result.Value?.Status);
+    }
+
+    [Fact]
+    public async Task Review_RejectsInvalidDecisionBeforeLoadingObservation()
+    {
+        var store = new FakeStore();
+        var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
+        var service = CreateService(actor, store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest((HourlyObservationReviewDecision)999, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("invalid_review", result.Code);
+        Assert.Null(store.ReviewCommand);
     }
 
     [Fact]
