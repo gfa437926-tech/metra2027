@@ -58,7 +58,8 @@ public enum HourlyObservationStoreResult
 {
     Committed = 0,
     NotFound = 1,
-    Conflict = 2
+    Conflict = 2,
+    Unauthorized = 3
 }
 
 /// <summary>
@@ -235,6 +236,10 @@ public sealed class HourlyObservationApplicationService(
 
         if (commit == HourlyObservationStoreResult.NotFound)
             return Failure<HourlyObservationReviewResponse>("not_found", "النشرة غير موجودة.");
+        if (commit == HourlyObservationStoreResult.Unauthorized)
+            return Failure<HourlyObservationReviewResponse>(
+                "permission_denied",
+                "انتهت صلاحية المراجعة أو تكليف المحطة؛ حدّث الجلسة وحاول مجدداً.");
         if (commit == HourlyObservationStoreResult.Conflict)
             return Failure<HourlyObservationReviewResponse>("review_conflict", "تمت مراجعة النشرة أو تغيرت صلاحياتك؛ أعد تحميل القائمة.");
 
