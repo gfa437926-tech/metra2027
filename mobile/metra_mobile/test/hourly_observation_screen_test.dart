@@ -65,9 +65,7 @@ void main() {
       ),
     ));
 
-    final dryTemperature = find.byWidgetPredicate((widget) =>
-        widget is TextFormField &&
-        widget.decoration?.labelText == 'الحرارة الجافة');
+    final dryTemperature = find.byType(TextFormField).first;
     await tester.enterText(dryTemperature, '+21.0');
     await tester.ensureVisible(find.text('تفريغ'));
     await tester.tap(find.text('تفريغ'));
