@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+import 'package:metra_mobile/features/observations/hourly_observation_screen.dart';
+import 'package:metra_mobile/services/observation_validation_client.dart';
+
+void main() {
+  testWidgets('shows conditional synoptic and precipitation fields at 00 UTC',
+      (tester) async {
+    final client = MockClient((request) async => http.Response(
+          '{"isValid":true,"issues":[]}',
+          200,
+          headers: {'content-type': 'application/json'},
+        ));
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+      ),
+    ));
+
+    expect(find.text('ميل الضغط'), findsOneWidget);
+    expect(find.text('شكل تغير الضغط'), findsOneWidget);
+    expect(find.text('الطقس السابق'), findsOneWidget);
+    expect(find.text('كمية الهطول'), findsOneWidget);
+    expect(find.text('التحقق من النشرة'), findsOneWidget);
+  });
+
+  testWidgets('blocks an empty form before calling the validation API',
+      (tester) async {
+    var requests = 0;
+    final client = MockClient((request) async {
+      requests++;
+      return http.Response('{"isValid":true,"issues":[]}', 200);
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+      ),
+    ));
+
+    await tester.tap(find.text('التحقق من النشرة'));
+    await tester.pump();
+
+    expect(requests, 0);
+    expect(find.text('هذا الحقل مطلوب'), findsWidgets);
+  });
+}
