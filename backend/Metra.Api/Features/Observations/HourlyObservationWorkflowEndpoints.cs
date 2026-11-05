@@ -16,6 +16,30 @@ public static class HourlyObservationWorkflowEndpoints
             .WithTags("Hourly observations")
             .RequireAuthorization();
 
+        group.MapGet("/review-queue", async (
+            string? stationId,
+            int? pageSize,
+            string? cursor,
+            HourlyObservationQueueQueryService service,
+            CancellationToken cancellationToken) =>
+        {
+            var result = await service.ReadAsync(
+                new HourlyObservationQueueQuery(stationId, pageSize ?? 50, cursor),
+                cancellationToken);
+
+            return result.Status switch
+            {
+                HourlyObservationQueueReadStatus.Succeeded => Results.Ok(result.Page),
+                HourlyObservationQueueReadStatus.Unauthenticated => Results.Unauthorized(),
+                HourlyObservationQueueReadStatus.Unauthorized => Results.Forbid(),
+                HourlyObservationQueueReadStatus.InvalidQuery =>
+                    Results.BadRequest(new { code = "invalid_query" }),
+                _ => Results.Problem(
+                    title: "تعذر قراءة قائمة مراجعة النشرات الساعية.",
+                    statusCode: StatusCodes.Status500InternalServerError)
+            };
+        }).WithName("GetHourlyObservationReviewQueue");
+
         group.MapPost("/", async (
             [FromBody] CreateHourlyObservationRequest? request,
             HourlyObservationApplicationService service,
