@@ -1,3 +1,5 @@
+using Metra.Api.Domain.Observations;
+
 namespace Metra.Api.Domain.Maintenance;
 
 /// <summary>
