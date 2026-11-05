@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/observation_validation.dart';
 import '../../services/observation_validation_client.dart';
 
-/// Validates an hourly observation through .NET. It does not save the record.
+/// Validates and, when an access-token provider is injected, submits hourly observations through .NET.
 class HourlyObservationScreen extends StatefulWidget {
   const HourlyObservationScreen({
     super.key,
@@ -295,7 +295,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 ],
               ],
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 widget.accessTokenProvider == null
                     ? 'الإرسال غير مفعّل: لم يتم ربط مزوّد جلسة دخول آمن بهذه الشاشة.'
                     : 'يتم التحقق أولاً ثم الإرسال إلى .NET. تعتمد صلاحية المحطة على هوية المستخدم في الخادم.',
