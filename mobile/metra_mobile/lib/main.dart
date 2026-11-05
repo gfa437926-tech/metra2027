@@ -223,7 +223,7 @@ class _DashboardMobileView extends StatelessWidget {
           subtitle: 'إدخال ومراجعة الرصد اليومي',
           icon: Icons.calendar_today_outlined,
         ),
-        const _RecordTypeTile(
+        _RecordTypeTile(
           title: 'السجلات الساعية',
           subtitle: 'قراءات الرصد كل ساعة',
           icon: Icons.schedule,
