@@ -125,5 +125,46 @@ The following root-level sources were inspected beyond title-only inventory. The
 - Do not carry over legacy direct Supabase privileged access, credentials, or test-data shortcuts into the new app.
 - No source HTML, existing database, or Supabase schema was modified during this inspection.
 
+
+### Client navigation and implementation gap — follow-up inspection
+
+The Angular router and shared shell were inspected directly against the legacy page inventory.
+
+**Angular routes currently present:** login, registration, dashboard, phenomena input/view, hourly, rainfall, daily, climate, agriculture, soil temperature, users, monthly, annual, and observation workflow.
+
+**Legacy destinations still without a dedicated confirmed route/component:**
+- Observation equipment faults (`fix.html`)
+- Communications/technology faults (`fix-tel.html`)
+- Software/IT problem reports (`it.html`)
+- IT manager statistics (`it-maneger.html`)
+- Integrated network/operations management (`manag-net.html`)
+- Telecom manager (`telecom-manager.html`)
+- Workshop/maintenance manager (`workshop-manager.html`)
+- Weather analytics (`weather_analytics.html`)
+- The full role-oriented manager dashboard (`manager-dashboard.html`)
+
+The Angular shared navigation has one sidebar, which is the correct structural approach, but it currently omits the above legacy destinations. Navigation should be expanded only alongside real feature routes and role-based visibility; adding dead links or placeholder routes would not count as migration.
+
+**Flutter implementation confirmed:** the app currently has five bottom-navigation destinations (home, stations, observation review, reports, account settings). The reports destination is explicitly an informational placeholder pending a trusted approved-observation data source. No dedicated mobile workflows for faults, IT/telecom management, workshop maintenance, or weather analytics were found in the inspected home/navigation files.
+
+### Security review items to resolve before exposing management pages
+
+- The Angular dashboard route (`path: ''`) currently has no `requireAuthenticatedUser` guard, unlike the feature routes. Confirm the intended public/anonymous landing behavior before changing it; do not assume that hiding navigation is sufficient protection.
+- Management routes must use explicit role/permission guards in the client for navigation and enforce the same authorization again in ASP.NET Core for every API operation.
+- Station-scoped users must not be able to query or mutate another station by changing request parameters.
+- User deletion, password reset, approval/rejection, report cancellation, bulk reminders, exports, backup access, and attachment retrieval are privileged operations and need server-side audit events.
+- Keep the current Supabase schema untouched until the user has reviewed and approved a proposed schema and migration plan.
+
+### Recommended implementation sequence after archive inspection
+
+1. Recover the RAR and extract a complete file/dependency inventory.
+2. Create an approved workflow specification and role/permission matrix for the nine missing or unclear destinations listed above.
+3. Implement ASP.NET Core API contracts and authorization/audit behavior for faults, maintenance, analytics, and management before connecting client actions.
+4. Build the Angular screens and connect them to those contracts; preserve the single shared sidebar.
+5. Port approved workflows into native Flutter screens and role-aware navigation.
+6. Run both clients' tests and verify role/station isolation end-to-end.
+
+This follow-up is a source/navigation audit only. It does not claim that any missing screen has been implemented or verified.
+
 ### Archive recovery
 The repository contains the RAR archive, but GitHub's text-file retrieval cannot extract binary archive contents. Local extraction-tool availability has not yet been confirmed. The archive remains untouched.
