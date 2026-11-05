@@ -234,7 +234,11 @@ public sealed class HourlyObservationApplicationServiceTests
                 ["relativeHumidity"] = "050",
                 ["dewPoint"] = "+10.0",
                 ["cover12"] = "3",
-                ["cover123"] = "4"
+                ["cover123"] = "4",
+                ["precipitationAmount"] = "000.0",
+                ["pressureSlope"] = "1.0",
+                ["pressureShape"] = "3",
+                ["pastWeather"] = "0"
             });
 
     private sealed class FakeActorProvider(HourlyObservationActorContext actor)
