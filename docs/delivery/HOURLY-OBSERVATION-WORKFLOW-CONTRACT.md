@@ -29,7 +29,7 @@ that persistence or the endpoints are deployed.
 
 ## Review rules
 
-- Only a pending report can be reviewed.
+- Only a pending report can be reviewed. The submitter cannot review their own report.
 - Rejection requires a non-empty reason. Notes are limited to 1,000 characters.
 - Reviewer identity and review time are server-generated.
 - Every decision must be recorded with an immutable audit event. Repeated or
