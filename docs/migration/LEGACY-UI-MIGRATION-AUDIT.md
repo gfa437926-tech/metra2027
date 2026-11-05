@@ -227,3 +227,19 @@ This is validation groundwork only. It does not implement assignment authorizati
 ## Authorization follow-up (2026-11-05)
 
 Added `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md` defining proposed server-side identity resolution, station isolation, support/maintenance permission names, mutation/audit requirements, attachment privacy, and readiness gates. This remains a design contract: no routes, database changes, or UI integrations were introduced by this document.
+
+
+## Support incident policy test checkpoint (2026-11-05)
+
+The support incident policy test suite now exercises the following validation and lifecycle cases:
+
+- valid IT and telecommunications reports;
+- missing station/reporter identifiers and undefined kind/severity enum values;
+- too-short and whitespace-only category/title/description values;
+- maximum-length overflow for category, title, description, and affected-asset label;
+- future occurrence timestamps, the exact five-minute future boundary, and a default timestamp;
+- operational impact paired with insufficient severity;
+- nullable affected-asset label and null report handling;
+- supported review/assignment/progress/waiting/resolution/rework transitions, terminal closed/rejected states, and undefined lifecycle values.
+
+**CI evidence:** GitHub Actions Backend build #786 completed successfully for commit `027270604fac9c493058f52fe1f25e4fb7cb31a0`. This confirms that the domain test batch built and passed in CI. It does not establish API, database, authorization, or client-screen readiness. The later documentation-only contract update is not represented by that CI run.
