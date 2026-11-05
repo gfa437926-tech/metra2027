@@ -37,7 +37,7 @@ public sealed class MaintenanceProgressPolicyTests
     [Fact]
     public void Resolved_fault_requires_full_progress()
     {
-        var update = Valid() with { Status = EquipmentFaultStatus.Resolved, ProgressPercent = 99 };
+        var update = Valid() with { CurrentStatus = EquipmentFaultStatus.InProgress, Status = EquipmentFaultStatus.Resolved, ProgressPercent = 99 };
         Assert.Contains(MaintenanceProgressPolicy.Validate(update, Now),
             x => x.Field == nameof(update.ProgressPercent));
     }
@@ -45,7 +45,7 @@ public sealed class MaintenanceProgressPolicyTests
     [Fact]
     public void Accepts_resolved_fault_at_full_progress()
     {
-        var update = Valid() with { Status = EquipmentFaultStatus.Resolved, ProgressPercent = 100 };
+        var update = Valid() with { CurrentStatus = EquipmentFaultStatus.InProgress, Status = EquipmentFaultStatus.Resolved, ProgressPercent = 100 };
         Assert.Empty(MaintenanceProgressPolicy.Validate(update, Now));
     }
 
