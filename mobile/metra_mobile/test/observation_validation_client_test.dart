@@ -66,7 +66,7 @@ void main() {
       client: MockClient((request) async => http.Response('Unavailable', 503)),
     );
 
-    expect(
+    await expectLater(
       client.validateHourly({'utcTime': '00'}),
       throwsA(isA<http.ClientException>()),
     );
@@ -79,8 +79,8 @@ void main() {
       client: MockClient((request) async => http.Response('[]', 200)),
     );
 
-    expect(
-      () => client.validateHourly({'utcTime': '00'}),
+    await expectLater(
+      client.validateHourly({'utcTime': '00'}),
       throwsA(isA<FormatException>()),
     );
     client.close();
