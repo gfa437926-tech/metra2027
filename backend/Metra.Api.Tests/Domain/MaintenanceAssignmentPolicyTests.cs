@@ -25,7 +25,7 @@ public sealed class MaintenanceAssignmentPolicyTests
 
     [Fact]
     public void Expected_resolution_must_follow_assignment() {
-        var assignment = Valid() with { ExpectedResolutionAt = Now.AddMinutes(-1) };
+        var assignment = Valid() with { ExpectedResolutionAt = Now.AddMinutes(-3) };
         Assert.Contains(MaintenanceAssignmentPolicy.Validate(assignment, Now),
             x => x.Field == nameof(assignment.ExpectedResolutionAt));
     }
