@@ -15,6 +15,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _equipment = TextEditingController();
   final _description = TextEditingController();
+  final _search = TextEditingController();
   String _category = 'أجهزة الرصد';
   String _severity = 'High';
   bool _blocking = false;
@@ -84,7 +85,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     final next = _drafts.where((draft) => draft['id'] != id).toList();
     try {
       await _storage.write(key: _draftKey, value: jsonEncode(next));
-      if (mounted) setState(() => _drafts = next);
+      if (mounted) setState(() { _drafts = next; if (_editingId == id) _resetFields(); });
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تعذر حذف المسودة المحلية.')),
@@ -108,6 +109,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   void dispose() {
     _equipment.dispose();
     _description.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -212,9 +214,19 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           Text('${_drafts.length}'),
         ]),
         const SizedBox(height: 8),
+        TextField(
+          controller: _search,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            labelText: 'بحث في البلاغات المحفوظة',
+            suffixIcon: IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _search.clear())),
+          ),
+          onChanged: (_) => setState(() {}),
+        ),
+        const SizedBox(height: 8),
         if (_drafts.isEmpty)
           const Card(child: ListTile(leading: Icon(Icons.inbox_outlined), title: Text('لا توجد بلاغات محلية محفوظة'))),
-        ..._drafts.map((draft) => Card(
+        ..._drafts.where((draft) {\n          final q = _search.text.trim().toLowerCase();\n          return q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));\n        }).map((draft) => Card(
           elevation: 0,
           child: ListTile(
             onTap: () {
