@@ -193,6 +193,17 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     super.dispose();
   }
 
+  Widget _summaryTile(String label, int count, Color background, Color foreground) => Container(
+    constraints: const BoxConstraints(minWidth: 105),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(14)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(count.toString(), style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: foreground)),
+      const SizedBox(height: 3),
+      Text(label, style: TextStyle(fontSize: 12, color: foreground)),
+    ]),
+  );
+
   @override
   Widget build(BuildContext context) => Directionality(
     textDirection: TextDirection.rtl,
@@ -290,10 +301,20 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         ),
         const SizedBox(height: 16),
         Row(children: [
-          const Expanded(child: Text('المسودات المحفوظة', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-          Text('${_drafts.length}'),
+          const Expanded(child: Text('ملخص البلاغات', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+          Text('${_drafts.length} إجمالي'),
         ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _summaryTile('كل البلاغات', _drafts.length, const Color(0xFFEAF1FF), const Color(0xFF173B78)),
+            _summaryTile('أعطال حرجة', _drafts.where((d) => d['severity'] == 'Critical').length, const Color(0xFFFFE9E7), const Color(0xFF9A2D25)),
+            _summaryTile('توقف العمل', _drafts.where((d) => d['blocking'] == true).length, const Color(0xFFFFF2D8), const Color(0xFF805500)),
+          ],
+        ),
+        const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: _exportDrafts,
           icon: const Icon(Icons.content_copy_outlined),
