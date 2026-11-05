@@ -41,7 +41,6 @@ public sealed class HourlyObservationContractValidatorTests
     [Fact]
     public void Submission_DoesNotAcceptClientStationIdentifier()
     {
-        var request = ValidSubmission();
         Assert.DoesNotContain("StationId", typeof(CreateHourlyObservationRequest)
             .GetProperties().Select(property => property.Name));
     }
