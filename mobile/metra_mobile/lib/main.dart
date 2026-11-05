@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'models/current_user_context.dart';
 import 'services/current_user_context_client.dart';
+import 'features/stations/assigned_stations_screen.dart';
 
 void main() {
   runApp(const MetraMobileApp());
@@ -139,12 +140,9 @@ class _MetraHomePageState extends State<MetraHomePage> {
                   children: [
                     const _DashboardMobileView(),
                     const _RecordsMobileView(),
-                    _PlaceholderMobileView(
-                      title: 'المحطة',
-                      description: _currentUser == null
-                          ? 'لا توجد محطة مرتبطة بجلسة موثقة.'
-                          : 'تعرض المحطات الفعالة بعد تحميلها من خدمة الهوية.',
-                      icon: Icons.location_on_outlined,
+                    AssignedStationsScreen(
+                      sessionState: _sessionState,
+                      userContext: _currentUser,
                     ),
                     _PlaceholderMobileView(
                       title: 'حسابي',
