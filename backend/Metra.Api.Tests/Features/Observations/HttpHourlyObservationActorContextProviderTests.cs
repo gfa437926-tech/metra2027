@@ -62,6 +62,45 @@ public sealed class HttpHourlyObservationActorContextProviderTests
         Assert.Null(actor);
     }
 
+    [Fact]
+    public async Task ReturnsNullWhenIdentitySnapshotContainsNonCanonicalUserId()
+    {
+        var facts = ActiveFacts() with { UserId = " metra-user-1 " };
+        var provider = new HttpHourlyObservationActorContextProvider(
+            CreateAccessor(new Claim("iss", "https://identity.example"), new Claim("sub", "subject")),
+            new FakeIdentityDataSource(facts),
+            new FixedTimeProvider(Now));
+
+        var actor = await provider.GetCurrentActorAsync(CancellationToken.None);
+
+        Assert.Null(actor);
+    }
+
+    [Fact]
+    public async Task ReturnsNullWhenIdentitySnapshotContainsInvalidStationAssignment()
+    {
+        var facts = ActiveFacts() with
+        {
+            Assignments =
+            [
+                new CurrentUserStationAssignmentFacts(
+                    "station-current", "Station Current", "observer",
+                    Now.AddDays(-1), null, null),
+                new CurrentUserStationAssignmentFacts(
+                    " station-injected ", "Station Injected", "observer",
+                    Now.AddDays(-1), null, null)
+            ]
+        };
+        var provider = new HttpHourlyObservationActorContextProvider(
+            CreateAccessor(new Claim("iss", "https://identity.example"), new Claim("sub", "subject")),
+            new FakeIdentityDataSource(facts),
+            new FixedTimeProvider(Now));
+
+        var actor = await provider.GetCurrentActorAsync(CancellationToken.None);
+
+        Assert.Null(actor);
+    }
+
     private static HttpContextAccessor CreateAccessor(params Claim[] claims)
     {
         var context = new DefaultHttpContext();
