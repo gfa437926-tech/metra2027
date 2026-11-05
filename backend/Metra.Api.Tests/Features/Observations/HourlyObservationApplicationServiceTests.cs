@@ -211,6 +211,46 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Review_RejectsMissingReasonBeforeLoadingObservation()
+    {
+        var store = new FakeStore();
+        var service = CreateService(
+            ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)),
+            store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Reject, "   "));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("invalid_review", result.Code);
+        Assert.Null(store.ReviewTarget);
+        Assert.Null(store.ReviewCommand);
+    }
+
+    [Fact]
+    public async Task Review_RecordsRejectionWithRequiredReason()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview)
+        };
+        var service = CreateService(
+            ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)),
+            store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Reject, "  درجة الحرارة غير متسقة  "));
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(HourlyObservationStatus.Rejected, result.Value?.Status);
+        Assert.Equal("درجة الحرارة غير متسقة", store.ReviewCommand?.Note);
+        Assert.Equal(HourlyObservationStatus.PendingReview, store.ReviewCommand?.ExpectedStatus);
+    }
+
+    [Fact]
     public async Task Review_ReportsConcurrentDecisionConflict()
     {
         var store = new FakeStore
