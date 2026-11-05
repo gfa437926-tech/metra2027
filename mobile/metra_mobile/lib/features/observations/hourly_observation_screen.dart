@@ -5,9 +5,14 @@ import '../../services/observation_validation_client.dart';
 
 /// Validates an hourly observation through .NET. It does not save the record.
 class HourlyObservationScreen extends StatefulWidget {
-  const HourlyObservationScreen({super.key, ObservationValidationClient? validationClient})
-      : _providedClient = validationClient;
+  const HourlyObservationScreen({
+    super.key,
+    ObservationValidationClient? validationClient,
+    this.accessTokenProvider,
+  }) : _providedClient = validationClient;
+
   final ObservationValidationClient? _providedClient;
+  final Future<String?> Function()? accessTokenProvider;
 
   @override
   State<HourlyObservationScreen> createState() => _HourlyObservationScreenState();
@@ -23,6 +28,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   bool _busy = false;
   ObservationValidationResult? _result;
   String? _error;
+  String? _submissionMessage;
 
   static const _baseFields = <(String, String, String)>[
     ('dryTemp', 'الحرارة الجافة', '+00.0'),
@@ -96,15 +102,59 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     return values;
   }
 
-  Future<void> _validate() async {
+  Future<ObservationValidationResult?> _runValidation() async {
     FocusScope.of(context).unfocus();
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return null;
     setState(() { _busy = true; _result = null; _error = null; });
     try {
       final result = await _client.validateHourly(_payload());
       if (mounted) setState(() => _result = result);
+      return result;
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة التحقق: $e');
+      return null;
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _validate() async {
+    await _runValidation();
+  }
+
+  Future<void> _submit() async {
+    final tokenProvider = widget.accessTokenProvider;
+    if (tokenProvider == null) return;
+
+    final validation = await _runValidation();
+    if (!mounted || validation == null || !validation.isValid) return;
+
+    setState(() {
+      _busy = true;
+      _submissionMessage = null;
+      _error = null;
+    });
+    try {
+      final token = await tokenProvider();
+      if (token == null || token.trim().isEmpty) {
+        throw StateError('لا توجد جلسة دخول صالحة. سجّل الدخول أولاً.');
+      }
+      final response = await _client.submitHourly(
+        accessToken: token,
+        observationDate: _date,
+        utcHour: int.parse(_utcHour),
+        values: _payload(),
+      );
+      if (mounted) {
+        setState(() {
+          _submissionMessage =
+              'تم إرسال النشرة بنجاح. رقم السجل: ' + response['observationId'].toString();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = 'تعذر إرسال النشرة: $e');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -121,6 +171,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       _utcHour = '00';
       _result = null;
       _error = null;
+      _submissionMessage = null;
     });
   }
 
@@ -172,6 +223,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                         setState(() {
                           _utcHour = v;
                           _result = null;
+                          _submissionMessage = null;
                         });
                       }
                     },
@@ -203,12 +255,25 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton.icon(
+                    onPressed: _busy || widget.accessTokenProvider == null
+                        ? null
+                        : _submit,
+                    icon: const Icon(Icons.cloud_upload_outlined),
+                    label: const Text('إرسال النشرة'),
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton.icon(
                     onPressed: _busy ? null : _resetForm,
                     icon: const Icon(Icons.restart_alt),
                     label: const Text('تفريغ'),
                   ),
                 ],
               ),
+              if (_submissionMessage != null) ...[
+                const SizedBox(height: 12),
+                _notice(_submissionMessage!, const Color(0xFFEAF7EF),
+                    const Color(0xFF16703D)),
+              ],
               if (_error != null) ...[
                 const SizedBox(height: 12),
                 _notice(_error!, const Color(0xFFFFF0F0), const Color(0xFFB42318)),
@@ -231,7 +296,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
               ],
               const SizedBox(height: 24),
               const Text(
-                'تنبيه: الشاشة تتحقق من القيم عبر واجهة .NET فقط. لا يوجد حفظ مركزي أو اعتماد للمحطة في هذه المرحلة.',
+                widget.accessTokenProvider == null
+                    ? 'الإرسال غير مفعّل: لم يتم ربط مزوّد جلسة دخول آمن بهذه الشاشة.'
+                    : 'يتم التحقق أولاً ثم الإرسال إلى .NET. تعتمد صلاحية المحطة على هوية المستخدم في الخادم.',
                 style: TextStyle(color: Colors.black54, fontSize: 12),
               ),
             ],
@@ -277,7 +344,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
               },
               onChanged: (_) {
                 if (_result != null || _error != null) {
-                  setState(() { _result = null; _error = null; });
+                  setState(() { _result = null; _error = null; _submissionMessage = null; });
                 }
               },
             ),
