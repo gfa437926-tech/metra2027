@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -41,13 +42,14 @@ void main() {
     final client = ObservationValidationClient(
       baseUrl: 'https://api.example.test/api/v1',
       client: MockClient((request) async => http.Response(
-        jsonEncode({
+        utf8.encode(jsonEncode({
           'isValid': false,
           'issues': [
             {'field': 'stationPressure', 'message': 'ضغط المحطة خارج المجال.'}
           ]
-        }),
+        })),
         200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
       )),
     );
 
