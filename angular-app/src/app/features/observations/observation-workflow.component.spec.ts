@@ -52,12 +52,13 @@ describe('ObservationWorkflowComponent server review queue', () => {
     });
     await fixture.whenStable();
 
-    await fixture.componentInstance.decide(item, 1);
+    const decisionPromise = fixture.componentInstance.decide(item, 1);
     const post = http.expectOne(req =>
       req.method === 'POST' && req.url.endsWith(`/observations/hourly/${item.observationId}/review`));
     expect(post.request.body).toEqual({ decision: 1, note: null });
     expect(post.request.withCredentials).toBeTrue();
     post.flush({ observationId: item.observationId, status: 'approved' });
+    await decisionPromise;
 
     expect(fixture.componentInstance.items.length).toBe(0);
     expect(fixture.componentInstance.message).toContain('اعتماد');
