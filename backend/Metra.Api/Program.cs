@@ -48,8 +48,11 @@ if (hasDatabase)
     builder.Services.AddScoped<IHourlyObservationActorContextProvider, HttpHourlyObservationActorContextProvider>();
     if (hourlyObservationWorkflowEnabled)
     {
-        builder.Services.AddScoped<IHourlyObservationStore, NpgsqlHourlyObservationStore>();
+        builder.Services.AddScoped<NpgsqlHourlyObservationStore>();
+        builder.Services.AddScoped<IHourlyObservationStore>(sp => sp.GetRequiredService<NpgsqlHourlyObservationStore>());
+        builder.Services.AddScoped<IHourlyObservationQueueReadStore>(sp => sp.GetRequiredService<NpgsqlHourlyObservationStore>());
         builder.Services.AddScoped<HourlyObservationApplicationService>();
+        builder.Services.AddScoped<HourlyObservationQueueQueryService>();
     }
     builder.Services.AddScoped<NpgsqlMetraAuthorizationDataSources>();
     builder.Services.AddScoped<IMetraPermissionAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
