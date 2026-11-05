@@ -145,6 +145,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       'blocking': _blocking,
       'description': _description.text.trim(),
       'createdAt': _drafts.where((d) => d['id'] == _editingId).map((d) => d['createdAt']).firstOrNull ?? DateTime.now().toIso8601String(),
+      'updatedAt': DateTime.now().toIso8601String(),
+      'resolvedAt': _workflowStatus == 'resolved' ? DateTime.now().toIso8601String() : null,
       'status': 'local_draft',
       'workflowStatus': _workflowStatus,
     };
@@ -194,6 +196,32 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم حذف ${ids.length} مسودة.')));
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر حذف البلاغات المحددة.')));
+    }
+  }
+
+  Future<void> _setWorkflowStatus(String id, String status) async {
+    final now = DateTime.now().toIso8601String();
+    final next = _drafts.map((draft) {
+      if (draft['id'].toString() != id) return draft;
+      return <String, dynamic>{
+        ...draft,
+        'workflowStatus': status,
+        'updatedAt': now,
+        if (status == 'resolved') 'resolvedAt': now,
+        if (status != 'resolved') 'resolvedAt': null,
+      };
+    }).toList();
+    try {
+      await _storage.write(key: _draftKey, value: jsonEncode(next));
+      if (!mounted) return;
+      setState(() => _drafts = next);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم تحديث حالة البلاغ إلى: ${_workflowStatusArabic(status)}')),
+      );
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تحديث حالة البلاغ.')),
+      );
     }
   }
 
@@ -532,6 +560,16 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                 tooltip: 'نسخ البلاغ',
                 icon: const Icon(Icons.copy_outlined),
                 onPressed: () => _duplicateDraft(draft),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'تغيير حالة المعالجة',
+                icon: const Icon(Icons.more_vert),
+                onSelected: (status) => _setWorkflowStatus(draft['id'].toString(), status),
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'new', child: Text('إعادة إلى: جديد')),
+                  PopupMenuItem(value: 'in_progress', child: Text('نقل إلى: قيد المعالجة')),
+                  PopupMenuItem(value: 'resolved', child: Text('إغلاق: تم الإصلاح')),
+                ],
               ),
               IconButton(
                 tooltip: 'حذف المسودة',
