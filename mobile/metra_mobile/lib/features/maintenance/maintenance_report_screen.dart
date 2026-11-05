@@ -19,6 +19,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   final _search = TextEditingController();
   String _category = 'أجهزة الرصد';
   String _severity = 'High';
+  String _severityFilter = 'الكل';
   bool _blocking = false;
   bool _saving = false;
   String? _editingId;
@@ -299,6 +300,19 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         const SizedBox(height: 8),
         OutlinedButton.icon(onPressed: _importDraftsFromClipboard, icon: const Icon(Icons.file_download_outlined), label: const Text('استيراد نسخة JSON من الحافظة')),
         const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _severityFilter,
+          decoration: const InputDecoration(labelText: 'تصفية حسب شدة العطل'),
+          items: const [
+            DropdownMenuItem(value: 'الكل', child: Text('كل الشدات')),
+            DropdownMenuItem(value: 'Low', child: Text('منخفض')),
+            DropdownMenuItem(value: 'Medium', child: Text('متوسط')),
+            DropdownMenuItem(value: 'High', child: Text('عالٍ')),
+            DropdownMenuItem(value: 'Critical', child: Text('حرج')),
+          ],
+          onChanged: (value) => setState(() => _severityFilter = value ?? 'الكل'),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _search,
           decoration: InputDecoration(
@@ -313,7 +327,9 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           const Card(child: ListTile(leading: Icon(Icons.inbox_outlined), title: Text('لا توجد بلاغات محلية محفوظة'))),
         ..._drafts.where((draft) {
           final q = _search.text.trim().toLowerCase();
-          return q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
+          final matchesSearch = q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
+          final matchesSeverity = _severityFilter == 'الكل' || draft['severity'] == _severityFilter;
+          return matchesSearch && matchesSeverity;
         }).map((draft) => Card(
           elevation: 0,
           child: ListTile(
