@@ -31,9 +31,16 @@ public sealed class HttpHourlyObservationActorContextProvider(
             issuer, subject, cancellationToken);
         if (facts is null ||
             facts.AccountState != MetraAccountState.Active ||
-            string.IsNullOrWhiteSpace(facts.UserId) ||
+            !IsCanonicalIdentifier(facts.UserId) ||
             facts.Assignments is null ||
-            facts.PermissionGrants is null)
+            facts.PermissionGrants is null ||
+            facts.Assignments.Any(x => x is null ||
+                !IsCanonicalIdentifier(x.StationId) ||
+                !IsCanonicalCode(x.RoleCode) ||
+                !IsValidUtcWindow(x.ValidFrom, x.ValidTo, x.RevokedAt)) ||
+            facts.PermissionGrants.Any(x => x is null ||
+                !IsCanonicalCode(x.Permission) ||
+                !IsValidUtcWindow(x.ValidFrom, x.ValidTo, x.RevokedAt)))
             return null;
 
         var now = timeProvider.GetUtcNow();
@@ -64,4 +71,26 @@ public sealed class HttpHourlyObservationActorContextProvider(
             Array.AsReadOnly(grants),
             permissions);
     }
+
+    private static bool IsCanonicalIdentifier(string? value)
+        => !string.IsNullOrWhiteSpace(value) &&
+           value.Length <= 128 &&
+           value == value.Trim() &&
+           value.All(character => char.IsAsciiLetterOrDigit(character) ||
+               character is '-' or '_' or '.' or ':');
+
+    private static bool IsCanonicalCode(string? value)
+        => !string.IsNullOrEmpty(value) &&
+           value.Length <= 128 &&
+           value == value.Trim() &&
+           value.All(character => character is >= 'a' and <= 'z' or >= '0' and <= '9'
+               or '.' or '_' or '-');
+
+    private static bool IsValidUtcWindow(
+        DateTimeOffset validFrom,
+        DateTimeOffset? validTo,
+        DateTimeOffset? revokedAt)
+        => validFrom.Offset == TimeSpan.Zero &&
+           (validTo is null || validTo.Value.Offset == TimeSpan.Zero && validTo.Value > validFrom) &&
+           (revokedAt is null || revokedAt.Value.Offset == TimeSpan.Zero);
 }
