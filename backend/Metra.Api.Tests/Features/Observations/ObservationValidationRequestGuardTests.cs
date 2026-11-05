@@ -16,7 +16,7 @@ public sealed class ObservationValidationRequestGuardTests
     [Fact]
     public void RejectsFieldNamesContainingUnexpectedCharacters()
     {
-        var values = new Dictionary<string, string?> { ["dryTemp\\nInjected"] = "+20.0" };
+        var values = new Dictionary<string, string?> { ["dryTemp\nInjected"] = "+20.0" };
 
         Assert.NotNull(ObservationValidationRequestGuard.GetError(values));
     }
@@ -24,7 +24,7 @@ public sealed class ObservationValidationRequestGuardTests
     [Fact]
     public void RejectsControlCharactersInValues()
     {
-        var values = new Dictionary<string, string?> { ["dryTemp"] = "+20.0\\0" };
+        var values = new Dictionary<string, string?> { ["dryTemp"] = "+20.0\0" };
 
         Assert.NotNull(ObservationValidationRequestGuard.GetError(values));
     }
