@@ -1,18 +1,25 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Component, OnInit, inject } from '@angular/core';
+import { firstValueFrom, timeout } from 'rxjs';
+import { METRA_API_BASE_URL } from '../../core/identity/current-user-context.service';
 
-type ReportStatus = 'draft' | 'submitted' | 'returned' | 'approved';
-type ReportAction = 'submit' | 'return' | 'approve' | 'resubmit';
-
-interface ReportRow {
-  id: number;
-  type: string;
-  station: string;
+interface HourlyReviewQueueItem {
+  observationId: string;
+  stationId: string;
   observationDate: string;
-  createdBy: string;
-  status: ReportStatus;
-  note: string;
+  utcHour: number;
+  submittedBy: string;
+  submittedAtUtc: string;
 }
+
+interface HourlyReviewQueuePage {
+  items: HourlyReviewQueueItem[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+type ReviewDecision = 1 | 2;
 
 @Component({
   standalone: true,
@@ -22,150 +29,249 @@ interface ReportRow {
       <header class="page-heading">
         <div>
           <div class="eyebrow"><i class="fa-solid fa-list-check"></i> إدارة ومتابعة السجلات</div>
-          <h1>دورة النشرات الجوية</h1>
-          <p>معاينة مرئية لمسار إدخال النشرات ومراجعتها واعتمادها.</p>
+          <h1>مراجعة النشرات الساعية</h1>
+          <p>قائمة حقيقية من الخادم للنشرات المعلقة ضمن المحطات المسندة إلى حساب المراجع.</p>
         </div>
-        <span class="demo-label"><i class="fa-solid fa-flask"></i> معاينة تجريبية</span>
+        <button class="refresh-btn" type="button" (click)="refreshQueue()" [disabled]="isLoading">
+          <i class="fa-solid" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
+          تحديث القائمة
+        </button>
       </header>
 
       <div class="notice" role="note">
-        <i class="fa-solid fa-circle-info"></i>
-        <div><strong>هذه بيانات تجريبية للعرض فقط.</strong><span>التغييرات هنا مؤقتة داخل الصفحة، ولا يتم حفظها في قاعدة البيانات أو إرسالها إلى الخادم.</span></div>
+        <i class="fa-solid fa-shield-halved"></i>
+        <div>
+          <strong>الوصول محكوم بصلاحيات الخادم.</strong>
+          <span>لا يرسل المتصفح معرف المستخدم أو المحطة المصرح بها. الخادم يستخرج الهوية والتكليفات ويتحقق منها عند كل قراءة واعتماد.</span>
+        </div>
       </div>
 
-      <section class="summary-grid" aria-label="ملخص النشرات">
-        <article class="summary-card"><span>كل النشرات</span><strong>{{ reports.length }}</strong><i class="fa-solid fa-layer-group"></i></article>
-        <article class="summary-card submitted"><span>بانتظار المراجعة</span><strong>{{ count('submitted') }}</strong><i class="fa-solid fa-hourglass-half"></i></article>
-        <article class="summary-card returned"><span>معادة للتصحيح</span><strong>{{ count('returned') }}</strong><i class="fa-solid fa-rotate-left"></i></article>
-        <article class="summary-card approved"><span>معتمدة</span><strong>{{ count('approved') }}</strong><i class="fa-solid fa-circle-check"></i></article>
-      </section>
-
-      <section class="workflow-card">
-        <div class="section-heading"><div><h2>مسار العمل</h2><p>انتقالات الحالات المتاحة في نموذج المعاينة</p></div></div>
-        <div class="steps">
-          <div class="step"><span>1</span><strong>مسودة</strong><small>إدخال وتعديل</small></div><i class="fa-solid fa-arrow-left"></i>
-          <div class="step"><span>2</span><strong>قيد المراجعة</strong><small>فحص البيانات</small></div><i class="fa-solid fa-arrow-left"></i>
-          <div class="step"><span>3</span><strong>إرجاع أو اعتماد</strong><small>قرار المراجع</small></div><i class="fa-solid fa-arrow-left"></i>
-          <div class="step"><span>4</span><strong>معتمدة</strong><small>مرحلة نهائية</small></div>
-        </div>
+      <section class="summary-grid" aria-label="ملخص قائمة المراجعة">
+        <article class="summary-card">
+          <span>النشرات المعروضة</span><strong>{{ items.length }}</strong>
+          <i class="fa-solid fa-inbox"></i>
+        </article>
+        <article class="summary-card pending">
+          <span>الحالة</span><strong>{{ isLoading ? 'جارٍ التحميل' : hasMore ? 'توجد صفحات أخرى' : 'نهاية القائمة' }}</strong>
+          <i class="fa-solid fa-hourglass-half"></i>
+        </article>
       </section>
 
       <section class="workflow-card">
         <div class="toolbar">
-          <div><h2>سجل النشرات</h2><p>اختر نشرة لعرض الإجراءات الممكنة</p></div>
-          <label class="filter">تصفية الحالة
-            <select [value]="filter" (change)="setFilter($any($event.target).value)">
-              <option value="all">جميع الحالات</option>
-              <option value="draft">مسودة</option>
-              <option value="submitted">بانتظار المراجعة</option>
-              <option value="returned">معادة للتصحيح</option>
-              <option value="approved">معتمدة</option>
-            </select>
-          </label>
+          <div><h2>النشرات بانتظار المراجعة</h2><p>تعرض هذه القائمة بيانات تعريفية فقط، ولا تعرض قيم الرصد الحساسة.</p></div>
+          <span class="count-pill">{{ items.length }} نشرة</span>
         </div>
 
-        <div class="table-wrap">
+        <div class="state-panel loading" *ngIf="isLoading && items.length === 0" role="status">
+          <i class="fa-solid fa-spinner fa-spin"></i><span>جارٍ جلب قائمة النشرات من الخادم...</span>
+        </div>
+        <div class="state-panel error" *ngIf="errorMessage" role="alert">
+          <i class="fa-solid fa-triangle-exclamation"></i><span>{{ errorMessage }}</span>
+        </div>
+        <div class="state-panel success" *ngIf="message" role="status">
+          <i class="fa-solid fa-circle-check"></i><span>{{ message }}</span>
+        </div>
+
+        <div class="table-wrap" *ngIf="items.length > 0">
           <table>
-            <thead><tr><th>رقم النشرة</th><th>النوع</th><th>المحطة</th><th>التاريخ</th><th>المدخل</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let report of visibleReports" [class.selected]="selectedId === report.id">
-                <td data-label="رقم النشرة">MET-{{ report.id }}</td>
-                <td data-label="النوع">{{ report.type }}</td>
-                <td data-label="المحطة">{{ report.station }}</td>
-                <td data-label="التاريخ">{{ report.observationDate }}</td>
-                <td data-label="المدخل">{{ report.createdBy }}</td>
-                <td data-label="الحالة"><span class="status" [ngClass]="report.status">{{ statusLabel(report.status) }}</span></td>
-                <td data-label="الإجراءات"><button class="view-btn" type="button" (click)="select(report.id)">عرض الإجراءات</button></td>
+            <thead>
+              <tr>
+                <th>معرّف النشرة</th><th>معرّف المحطة</th><th>تاريخ الرصد</th>
+                <th>ساعة UTC</th><th>معرّف الراصد</th><th>وقت الإرسال</th><th>الإجراء</th>
               </tr>
-              <tr *ngIf="visibleReports.length === 0"><td colspan="7" class="empty">لا توجد نشرات بهذه الحالة.</td></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of items; trackBy: trackByObservationId">
+                <td data-label="معرّف النشرة"><code>{{ item.observationId }}</code></td>
+                <td data-label="معرّف المحطة"><code>{{ item.stationId }}</code></td>
+                <td data-label="تاريخ الرصد">{{ item.observationDate }}</td>
+                <td data-label="ساعة UTC">{{ item.utcHour.toString().padStart(2, '0') }}:00</td>
+                <td data-label="معرّف الراصد"><code>{{ item.submittedBy }}</code></td>
+                <td data-label="وقت الإرسال">{{ item.submittedAtUtc | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC</td>
+                <td data-label="الإجراء">
+                  <div class="row-actions">
+                    <button class="approve" type="button" (click)="decide(item, 1)" [disabled]="workingId === item.observationId || isLoading">
+                      <i class="fa-solid fa-check"></i> اعتماد
+                    </button>
+                    <button class="reject" type="button" (click)="prepareReject(item)" [disabled]="workingId === item.observationId || isLoading">
+                      <i class="fa-solid fa-rotate-left"></i> رفض
+                    </button>
+                  </div>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        <div class="empty-state" *ngIf="!isLoading && !errorMessage && items.length === 0">
+          <i class="fa-regular fa-folder-open"></i>
+          <strong>لا توجد نشرات بانتظار المراجعة</strong>
+          <span>ستظهر هنا النشرات المرسلة إلى المحطات المسندة إليك بعد تفعيل خدمة الحفظ على الخادم.</span>
+        </div>
+
+        <div class="load-more" *ngIf="hasMore">
+          <button type="button" (click)="loadMore()" [disabled]="isLoading">
+            {{ isLoading ? 'جارٍ التحميل...' : 'تحميل المزيد' }}
+          </button>
+        </div>
       </section>
 
-      <section class="workflow-card action-panel" *ngIf="selectedReport as report">
+      <section class="workflow-card reject-panel" *ngIf="rejectTarget as target">
         <div class="toolbar">
-          <div><h2>إجراءات النشرة MET-{{ report.id }}</h2><p>{{ report.type }} · {{ report.station }} · {{ report.observationDate }}</p></div>
-          <span class="status" [ngClass]="report.status">{{ statusLabel(report.status) }}</span>
+          <div><h2>رفض النشرة</h2><p>النشرة: {{ target.observationId }}</p></div>
+          <button class="close-btn" type="button" (click)="cancelReject()" aria-label="إلغاء">×</button>
         </div>
-        <p class="report-note" *ngIf="report.note"><i class="fa-regular fa-comment-dots"></i> {{ report.note }}</p>
-        <div class="actions">
-          <button *ngIf="report.status === 'draft'" class="primary" (click)="apply(report, 'submit')"><i class="fa-solid fa-paper-plane"></i> إرسال للمراجعة</button>
-          <button *ngIf="report.status === 'submitted'" class="warning" (click)="apply(report, 'return')"><i class="fa-solid fa-rotate-left"></i> إرجاع للتصحيح</button>
-          <button *ngIf="report.status === 'submitted'" class="success" (click)="apply(report, 'approve')"><i class="fa-solid fa-check"></i> اعتماد النشرة</button>
-          <button *ngIf="report.status === 'returned'" class="primary" (click)="apply(report, 'resubmit')"><i class="fa-solid fa-paper-plane"></i> إعادة الإرسال</button>
-          <span *ngIf="report.status === 'approved'" class="terminal"><i class="fa-solid fa-lock"></i> النشرة معتمدة ولا توجد إجراءات أخرى في هذا المسار.</span>
+        <label class="note-field">سبب الرفض (إلزامي)
+          <textarea rows="3" maxlength="1000" [(ngModel)]="rejectNote" placeholder="اكتب سبب الرفض ليظهر ضمن سجل المراجعة..."></textarea>
+        </label>
+        <div class="row-actions">
+          <button class="reject" type="button" (click)="confirmReject()" [disabled]="!rejectNote.trim() || workingId === target.observationId">تأكيد الرفض</button>
+          <button class="cancel" type="button" (click)="cancelReject()">إلغاء</button>
         </div>
-        <div class="feedback" *ngIf="feedback" role="status">{{ feedback }}</div>
       </section>
     </div>
   `,
   styles: [`
     :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;color:#2c3e50}
-    .workflow-page{max-width:1500px;margin:0 auto}.page-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}.eyebrow{color:#2980b9;font-weight:700;font-size:13px}.eyebrow i{margin-left:7px}h1{font-size:clamp(24px,3vw,32px);margin:7px 0;font-weight:800}h2{font-size:19px;margin:0 0 5px}p{margin:0;color:#7b8790;font-size:13px}.demo-label{background:#fff3cd;color:#856404;border:1px solid #ffe69c;padding:9px 13px;border-radius:9px;font-size:12px;font-weight:700;white-space:nowrap}.demo-label i{margin-left:6px}
+    .workflow-page{max-width:1500px;margin:0 auto}.page-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:22px}
+    .eyebrow{color:#2980b9;font-weight:700;font-size:13px}.eyebrow i{margin-left:7px}h1{font-size:clamp(24px,3vw,32px);margin:7px 0;font-weight:800}h2{font-size:19px;margin:0 0 5px}p{margin:0;color:#7b8790;font-size:13px}
+    .refresh-btn,.load-more button{border:0;border-radius:9px;background:#287fb5;color:white;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer}.refresh-btn:disabled,.row-actions button:disabled,.load-more button:disabled{opacity:.55;cursor:wait}
     .notice{display:flex;gap:12px;align-items:flex-start;background:#eaf4fb;border:1px solid #c9e2f3;border-right:4px solid #3498db;border-radius:10px;padding:14px 16px;margin-bottom:20px;color:#245575}.notice>i{font-size:20px;margin-top:2px}.notice div{display:grid;gap:4px}.notice span{font-size:12px}
-    .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:20px}.summary-card{background:white;border-radius:12px;padding:18px;box-shadow:0 5px 18px #2233440c;position:relative;display:grid;gap:8px;border-bottom:3px solid #3498db}.summary-card span{font-size:13px;color:#71808b}.summary-card strong{font-size:27px}.summary-card>i{position:absolute;left:18px;top:20px;color:#3498db;font-size:22px;opacity:.7}.summary-card.submitted{border-color:#e6a23c}.summary-card.submitted>i{color:#e6a23c}.summary-card.returned{border-color:#e67e22}.summary-card.returned>i{color:#e67e22}.summary-card.approved{border-color:#27ae60}.summary-card.approved>i{color:#27ae60}
-    .workflow-card{background:#fff;border-radius:13px;padding:22px;margin-bottom:20px;box-shadow:0 5px 18px #2233440c}.section-heading,.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.steps{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 2px}.steps>i{color:#aab5bd;font-size:15px}.step{display:grid;justify-items:center;gap:5px;min-width:90px;text-align:center}.step>span{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#eaf4fb;color:#2980b9;font-weight:800}.step strong{font-size:13px}.step small{font-size:11px;color:#89949c}
-    .filter{display:grid;gap:5px;font-size:12px;color:#697781}.filter select{font:inherit;min-width:170px;padding:9px 12px;border:1px solid #dce3e8;border-radius:8px;background:#fff;color:#34495e}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;font-weight:700;padding:13px 12px}td{padding:14px 12px;border-bottom:1px solid #edf0f2;font-size:13px}tbody tr:hover,tbody tr.selected{background:#f5faff}.status{display:inline-flex;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700}.status.draft{background:#edf0f2;color:#59636b}.status.submitted{background:#fff3cd;color:#946200}.status.returned{background:#fff0e2;color:#b85c00}.status.approved{background:#e4f6eb;color:#218348}.view-btn{border:1px solid #cbd8e2;background:#fff;color:#2876a8;padding:7px 11px;border-radius:7px;cursor:pointer;font:inherit;font-size:12px}.empty{text-align:center;color:#89949c;padding:30px}
-    .action-panel{border-top:3px solid #3498db}.report-note{background:#fff8e9;padding:10px 12px;border-radius:8px;color:#855b18;margin:12px 0}.report-note i{margin-left:6px}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.actions button{border:0;border-radius:8px;padding:11px 16px;color:white;font:inherit;font-weight:700;cursor:pointer}.actions button i{margin-left:7px}.primary{background:#2980b9}.warning{background:#e67e22}.success{background:#27ae60}.terminal{color:#218348;font-size:13px}.terminal i{margin-left:6px}.feedback{margin-top:14px;padding:10px 12px;background:#eaf7ef;color:#218348;border-radius:8px;font-size:13px}
-    @media(max-width:900px){.summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.steps{flex-wrap:wrap;justify-content:center}.steps>i{transform:rotate(180deg)}}
-    @media(max-width:650px){.page-heading{align-items:flex-start;flex-direction:column}.summary-grid{gap:9px}.summary-card{padding:14px}.summary-card strong{font-size:23px}.summary-card>i{left:12px;top:16px;font-size:17px}.workflow-card{padding:15px}.toolbar{align-items:flex-start;flex-direction:column}.filter,.filter select{width:100%}table,thead,tbody,tr,td{display:block}thead{display:none}tbody tr{border:1px solid #e8edf0;border-radius:9px;margin-bottom:12px;padding:8px}td{display:flex;justify-content:space-between;gap:10px;padding:8px 5px;white-space:normal;border-bottom:1px solid #f0f2f4}td:before{content:attr(data-label);font-weight:700;color:#77838c}.empty{display:block}.empty:before{display:none}}
+    .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-bottom:20px}.summary-card{background:white;border-radius:12px;padding:18px;box-shadow:0 5px 18px #2233440c;position:relative;display:grid;gap:8px;border-bottom:3px solid #3498db}.summary-card span{font-size:13px;color:#71808b}.summary-card strong{font-size:20px}.summary-card>i{position:absolute;left:18px;top:20px;color:#3498db;font-size:22px;opacity:.7}.summary-card.pending{border-color:#e6a23c}.summary-card.pending>i{color:#e6a23c}
+    .workflow-card{background:#fff;border-radius:13px;padding:22px;margin-bottom:20px;box-shadow:0 5px 18px #2233440c}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.count-pill{border-radius:20px;background:#eaf4fb;color:#2876a8;padding:7px 12px;font-size:12px;font-weight:700;white-space:nowrap}
+    .state-panel{display:flex;gap:10px;align-items:center;padding:13px 15px;border-radius:9px;margin:12px 0;font-size:13px}.loading{background:#eef6fc;color:#2876a8}.error{background:#fff0ef;color:#a52c2c}.success{background:#eaf7ef;color:#218348}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;font-weight:700;padding:13px 12px}td{padding:13px 12px;border-bottom:1px solid #edf0f2;font-size:12px}tbody tr:hover{background:#f7fbfe}code{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:#526575}
+    .row-actions{display:flex;gap:7px;flex-wrap:wrap}.row-actions button{border:0;border-radius:7px;padding:8px 11px;color:white;cursor:pointer;font:inherit;font-size:12px;font-weight:700}.row-actions i{margin-left:5px}.approve{background:#24965a}.reject{background:#d65a50}.cancel{background:#edf0f2;color:#52616c!important}
+    .empty-state{display:grid;justify-items:center;gap:9px;padding:45px 15px;text-align:center;color:#73818b}.empty-state>i{font-size:32px;color:#9aabb6}.empty-state strong{color:#52616c}.empty-state span{font-size:12px;max-width:560px;line-height:1.8}
+    .load-more{display:flex;justify-content:center;margin-top:18px}.reject-panel{border-top:3px solid #d65a50}.close-btn{border:0;background:transparent;font-size:25px;cursor:pointer;color:#74818a}.note-field{display:grid;gap:8px;font-size:13px;font-weight:700}.note-field textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;font:inherit;resize:vertical}.reject-panel .row-actions{margin-top:14px}
+    @media(max-width:1000px){table,thead,tbody,tr,td{display:block}thead{display:none}tbody tr{border:1px solid #e8edf0;border-radius:9px;margin-bottom:12px;padding:8px}td{display:flex;justify-content:space-between;gap:10px;padding:8px 5px;white-space:normal;border-bottom:1px solid #f0f2f4}td:before{content:attr(data-label);font-weight:700;color:#77838c;min-width:115px}.row-actions{justify-content:flex-start}}
+    @media(max-width:650px){.page-heading{align-items:flex-start;flex-direction:column}.summary-grid{gap:9px}.summary-card{padding:14px}.summary-card>i{left:12px;top:16px}.workflow-card{padding:15px}.toolbar{align-items:flex-start;flex-direction:column}.refresh-btn{width:100%}}
   `]
 })
-export class ObservationWorkflowComponent {
-  filter = 'all';
-  selectedId = 1002;
-  feedback = '';
-  reports: ReportRow[] = [
-    { id: 1001, type: 'نشرة ساعية', station: 'محطة تجريبية - 01', observationDate: '2026-11-01 06:00', createdBy: 'راصد تجريبي', status: 'draft', note: '' },
-    { id: 1002, type: 'نشرة يومية', station: 'محطة تجريبية - 01', observationDate: '2026-10-31', createdBy: 'راصد تجريبي', status: 'submitted', note: 'بانتظار مراجعة مسؤول المحطة.' },
-    { id: 1003, type: 'نشرة ساعية', station: 'محطة تجريبية - 02', observationDate: '2026-10-31 12:00', createdBy: 'راصد تجريبي', status: 'returned', note: 'يرجى مراجعة قيمة الرؤية وإعادة إرسال النشرة.' },
-    { id: 1004, type: 'نشرة يومية', station: 'محطة تجريبية - 02', observationDate: '2026-10-30', createdBy: 'راصد تجريبي', status: 'approved', note: 'اعتماد تجريبي للعرض.' }
-  ];
+export class ObservationWorkflowComponent implements OnInit {
+  private readonly http = inject(HttpClient);
+  private readonly apiBaseUrl = inject(METRA_API_BASE_URL);
+  readonly pageSize = 50;
 
-  get visibleReports(): ReportRow[] {
-    return this.filter === 'all' ? this.reports : this.reports.filter(report => report.status === this.filter);
+  items: HourlyReviewQueueItem[] = [];
+  nextCursor: string | null = null;
+  hasMore = false;
+  isLoading = false;
+  workingId: string | null = null;
+  errorMessage = '';
+  message = '';
+  rejectTarget: HourlyReviewQueueItem | null = null;
+  rejectNote = '';
+
+  ngOnInit(): void {
+    void this.refreshQueue();
   }
 
-  get selectedReport(): ReportRow | undefined {
-    return this.reports.find(report => report.id === this.selectedId);
+  trackByObservationId(_index: number, item: HourlyReviewQueueItem): string {
+    return item.observationId;
   }
 
-  count(status: ReportStatus): number {
-    return this.reports.filter(report => report.status === status).length;
+  async refreshQueue(): Promise<void> {
+    this.items = [];
+    this.nextCursor = null;
+    this.hasMore = false;
+    await this.fetchPage(null, false);
   }
 
-  setFilter(value: string): void {
-    this.filter = value;
-    if (!this.visibleReports.some(report => report.id === this.selectedId)) {
-      this.selectedId = this.visibleReports[0]?.id ?? 0;
+  async loadMore(): Promise<void> {
+    if (!this.nextCursor || this.isLoading) return;
+    await this.fetchPage(this.nextCursor, true);
+  }
+
+  prepareReject(item: HourlyReviewQueueItem): void {
+    this.rejectTarget = item;
+    this.rejectNote = '';
+    this.message = '';
+  }
+
+  cancelReject(): void {
+    this.rejectTarget = null;
+    this.rejectNote = '';
+  }
+
+  async confirmReject(): Promise<void> {
+    const target = this.rejectTarget;
+    const note = this.rejectNote.trim();
+    if (!target || !note) return;
+    await this.decide(target, 2, note);
+    if (!this.errorMessage) this.cancelReject();
+  }
+
+  async decide(item: HourlyReviewQueueItem, decision: ReviewDecision, note: string | null = null): Promise<void> {
+    this.workingId = item.observationId;
+    this.errorMessage = '';
+    this.message = '';
+    try {
+      const base = this.normalizedBaseUrl();
+      await firstValueFrom(
+        this.http.post(
+          `${base}/observations/hourly/${encodeURIComponent(item.observationId)}/review`,
+          { decision, note },
+          { withCredentials: true }
+        ).pipe(timeout({ first: 15000 }))
+      );
+      this.items = this.items.filter(row => row.observationId !== item.observationId);
+      this.message = decision === 1 ? 'تم اعتماد النشرة وتسجيل قرار المراجعة.' : 'تم رفض النشرة وتسجيل سبب الرفض.';
+    } catch (error: unknown) {
+      this.errorMessage = this.describeError(error);
+    } finally {
+      this.workingId = null;
     }
-    this.feedback = '';
   }
 
-  select(id: number): void {
-    this.selectedId = id;
-    this.feedback = '';
-  }
-
-  statusLabel(status: ReportStatus): string {
-    return ({ draft: 'مسودة', submitted: 'بانتظار المراجعة', returned: 'معادة للتصحيح', approved: 'معتمدة' })[status];
-  }
-
-  apply(report: ReportRow, action: ReportAction): void {
-    const transitions: Record<ReportAction, Partial<Record<ReportStatus, ReportStatus>>> = {
-      submit: { draft: 'submitted' },
-      return: { submitted: 'returned' },
-      approve: { submitted: 'approved' },
-      resubmit: { returned: 'submitted' }
-    };
-    const next = transitions[action][report.status];
-    if (!next) {
-      this.feedback = 'العملية غير مسموحة في حالة النشرة الحالية.';
-      return;
+  private async fetchPage(cursor: string | null, append: boolean): Promise<void> {
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.message = '';
+    try {
+      let params = new HttpParams().set('pageSize', this.pageSize.toString());
+      if (cursor) params = params.set('cursor', cursor);
+      const page = await firstValueFrom(
+        this.http.get<HourlyReviewQueuePage>(
+          `${this.normalizedBaseUrl()}/observations/hourly/review-queue`,
+          { params, withCredentials: true }
+        ).pipe(timeout({ first: 15000 }))
+      );
+      if (!page || !Array.isArray(page.items) || typeof page.hasMore !== 'boolean' ||
+          (page.hasMore && (typeof page.nextCursor !== 'string' || !page.nextCursor))) {
+        throw new Error('invalid_queue_response');
+      }
+      const incoming = page.items.filter(item =>
+        !!item && typeof item.observationId === 'string' &&
+        typeof item.stationId === 'string' && typeof item.submittedBy === 'string' &&
+        Number.isInteger(item.utcHour) && item.utcHour >= 0 && item.utcHour <= 23);
+      this.items = append ? [...this.items, ...incoming] : incoming;
+      this.hasMore = page.hasMore;
+      this.nextCursor = page.nextCursor;
+    } catch (error: unknown) {
+      this.errorMessage = this.describeError(error);
+    } finally {
+      this.isLoading = false;
     }
-    report.status = next;
-    report.note = action === 'return' ? 'ملاحظة تجريبية: يرجى تصحيح البيانات ثم إعادة الإرسال.' : '';
-    this.feedback = 'تم تغيير الحالة في المعاينة فقط؛ لم يتم حفظ أي بيانات على الخادم.';
+  }
+
+  private normalizedBaseUrl(): string {
+    const base = this.apiBaseUrl.endsWith('/') ? this.apiBaseUrl.slice(0, -1) : this.apiBaseUrl;
+    return base.endsWith('/api/v1') ? base : `${base}/api/v1`;
+  }
+
+  private describeError(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      if (error.status === 401) return 'يلزم تسجيل الدخول قبل عرض قائمة المراجعة. إعداد المصادقة غير مفعّل في نسخة المعاينة الحالية.';
+      if (error.status === 403) return 'لا يملك الحساب الحالي صلاحية مراجعة النشرات أو لا توجد له محطة مسندة.';
+      if (error.status === 404 || error.status === 503) return 'خدمة حفظ ومراجعة النشرات غير مفعّلة على الخادم حالياً؛ لم يتم استخدام بيانات تجريبية بديلة.';
+      if (error.status === 0) return 'تعذر الاتصال بالخادم. تحقق من تشغيل API وإعداد عنوان الخدمة.';
+      return `تعذر تنفيذ الطلب (HTTP ${error.status}). حاول التحديث أو راجع سجل الخادم.`;
+    }
+    if (error instanceof Error && error.message === 'invalid_queue_response') {
+      return 'أعاد الخادم استجابة غير مطابقة لعقد قائمة المراجعة.';
+    }
+    return 'حدث خطأ غير متوقع أثناء الاتصال بخدمة المراجعة.';
   }
 }
