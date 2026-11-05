@@ -1,5 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Component, inject } from '@angular/core';
+import { firstValueFrom, timeout } from 'rxjs';
+import { METRA_API_BASE_URL } from '../../core/identity/current-user-context.service';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -113,7 +116,7 @@ interface HourlyPreview {
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
 
-        <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وحفظ المسودة محلياً</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
+        <div class="actions"><button class="primary" type="submit" [disabled]="isValidating"><i class="fa-solid" [ngClass]="isValidating ? 'fa-spinner fa-spin' : 'fa-clipboard-check'"></i> {{ isValidating ? 'جارٍ التحقق من الخادم...' : 'التحقق وحفظ المسودة محلياً' }}</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
       </form>
 
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> يرجى تصحيح الملاحظات التالية</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
@@ -148,7 +151,10 @@ export class HourlyReportsComponent {
   message = '';
   previews: HourlyPreview[] = [];
   private nextReference = 1;
+  isValidating = false;
   private readonly storageKey = 'metra.hourly-drafts.v1';
+  private readonly http = inject(HttpClient);
+  private readonly apiBaseUrl = inject(METRA_API_BASE_URL);
 
   constructor() {
     this.restoreDrafts();
@@ -246,7 +252,7 @@ export class HourlyReportsComponent {
     }
   }
 
-  submit(event: Event, form: HTMLFormElement): void {
+  async submit(event: Event, form: HTMLFormElement): Promise<void> {
     event.preventDefault();
     this.issues = [];
     this.message = '';
@@ -316,6 +322,36 @@ export class HourlyReportsComponent {
 
     if (this.issues.length) return;
 
+    this.isValidating = true;
+    try {
+      const base = this.apiBaseUrl.endsWith('/')
+        ? this.apiBaseUrl.slice(0, -1)
+        : this.apiBaseUrl;
+      const validation = await firstValueFrom(
+        this.http.post<{
+          isValid: boolean;
+          issues: Array<{ field: string; message: string }>;
+        }>(base + '/observations/hourly/validate', { values })
+          .pipe(timeout({ first: 15000 }))
+      );
+      if (!validation.isValid) {
+        this.issues = (validation.issues ?? []).map(issue =>
+          issue.message || ('قيمة الحقل ' + issue.field + ' غير صالحة.')
+        );
+        return;
+      }
+    } catch (error: unknown) {
+      const status = error instanceof HttpErrorResponse ? error.status : 0;
+      this.issues = [
+        status === 0
+          ? 'تعذر الوصول إلى خدمة التحقق في الخادم. لم تُحفظ النشرة؛ تحقق من عنوان API والاتصال.'
+          : 'رفض الخادم طلب التحقق (HTTP ' + status + '). لم تُحفظ النشرة.'
+      ];
+      return;
+    } finally {
+      this.isValidating = false;
+    }
+
     const reference = 'H-' + String(this.nextReference++).padStart(4, '0');
     this.previews.unshift({
       reference,
@@ -326,7 +362,7 @@ export class HourlyReportsComponent {
       values
     });
     this.persistDrafts();
-    this.message = 'اجتازت النشرة التحقق وحُفظت كمسودة محلية على هذا المتصفح.';
+    this.message = 'اجتازت النشرة تحقق الواجهة والخادم، وحُفظت كمسودة محلية على هذا المتصفح.';
     form.reset();
     this.selectedHour = '';
   }
