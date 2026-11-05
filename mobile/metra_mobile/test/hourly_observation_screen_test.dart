@@ -91,4 +91,46 @@ void main() {
     expect(find.textContaining('اجتازت التحقق'), findsNothing);
   });
 
+  testWidgets('keeps submission disabled when no secure token provider exists',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      home: HourlyObservationScreen(),
+    ));
+
+    final button = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('إرسال النشرة'),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    expect(button.onPressed, isNull);
+    expect(
+      find.text('الإرسال غير مفعّل: لم يتم ربط مزوّد جلسة دخول آمن بهذه الشاشة.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('enables submission only when a token provider is injected',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        accessTokenProvider: () async => 'short-lived-test-token',
+      ),
+    ));
+
+    final button = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('إرسال النشرة'),
+        matching: find.byType(OutlinedButton),
+      ),
+    );
+    expect(button.onPressed, isNotNull);
+    expect(
+      find.text(
+        'يتم التحقق أولاً ثم الإرسال إلى .NET. تعتمد صلاحية المحطة على هوية المستخدم في الخادم.',
+      ),
+      findsOneWidget,
+    );
+  });
+
 }
