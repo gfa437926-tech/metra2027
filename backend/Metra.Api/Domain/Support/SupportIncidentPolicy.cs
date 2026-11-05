@@ -77,8 +77,11 @@ public static class SupportIncidentPolicy
         ValidateText(report.Title, nameof(report.Title), 5, 160, "عنوان البلاغ", issues);
         ValidateText(report.Description, nameof(report.Description), 10, 5000, "وصف المشكلة", issues);
 
-        if (report.AffectedAsset?.Length > 160)
-            issues.Add(new(nameof(report.AffectedAsset), "اسم الجهاز أو الخدمة المتأثرة يجب ألا يتجاوز 160 محرفاً."));
+        if (report.AffectedAsset is { } asset &&
+            (string.IsNullOrWhiteSpace(asset) || asset.Trim().Length > 160))
+        {
+            issues.Add(new(nameof(report.AffectedAsset), "اسم الجهاز أو الخدمة المتأثرة يجب أن يكون غير فارغ وألا يتجاوز 160 محرفاً."));
+        }
 
         if (report.OccurredAt == default || report.OccurredAt > now.AddMinutes(5))
             issues.Add(new(nameof(report.OccurredAt), "وقت حدوث المشكلة غير صالح أو يقع في المستقبل."));
