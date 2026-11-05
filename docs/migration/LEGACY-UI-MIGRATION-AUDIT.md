@@ -205,3 +205,12 @@ A persistence-independent first implementation now exists on the work branch:
 - `docs/api/EQUIPMENT-FAULTS-CONTRACT.md` records the proposed station-scoped HTTP contract and security invariants.
 
 This is domain groundwork only. No HTTP endpoints, persistence adapter, Supabase tables/RPCs/storage buckets, attachment upload, Angular screens, or Flutter screens have been implemented for this feature. The database remains unchanged and explicit schema approval is still required before persistence work.
+
+
+## Follow-up implementation — IT and telecommunications incident domain (2026-11-05)
+
+- Added `backend/Metra.Api/Domain/Support/SupportIncidentPolicy.cs` for station-scoped IT and telecom incident validation, severity consistency, and lifecycle transitions including waiting-for-information and rework.
+- Added `backend/Metra.Api.Tests/Domain/SupportIncidentPolicyTests.cs` for both incident kinds, identity and text validation, future timestamps, operational impact severity, and lifecycle paths.
+- Added `docs/api/SUPPORT-INCIDENTS-CONTRACT.md` with proposed station-scoped API routes, permission boundaries, audit expectations, validation, and response semantics.
+
+These additions are domain and contract groundwork only. No support-incidents API endpoints, persistence adapters, Supabase schema, category catalogue, attachment storage, or client screens have been implemented. Explicit database approval remains a prerequisite for persistence.
