@@ -21,6 +21,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   String _severity = 'High';
   String _severityFilter = 'الكل';
   String _categoryFilter = 'الكل';
+  String _sortOrder = 'الأحدث';
   bool _blockingOnly = false;
   bool _blocking = false;
   bool _saving = false;
@@ -224,6 +225,41 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     super.dispose();
   }
 
+  String _severityArabic(dynamic severity) {
+    switch (severity) {
+      case 'Low': return 'منخفض';
+      case 'Medium': return 'متوسط';
+      case 'High': return 'عالٍ';
+      case 'Critical': return 'حرج';
+      default: return severity?.toString() ?? 'غير محدد';
+    }
+  }
+
+  List<Map<String, dynamic>> _filteredDrafts() {
+    final q = _search.text.trim().toLowerCase();
+    final result = _drafts.where((draft) {
+      final matchesSearch = q.isEmpty || ['equipment', 'category', 'severity', 'description']
+          .any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
+      final matchesSeverity = _severityFilter == 'الكل' || draft['severity'] == _severityFilter;
+      final matchesCategory = _categoryFilter == 'الكل' || draft['category'] == _categoryFilter;
+      final matchesBlocking = !_blockingOnly || draft['blocking'] == true;
+      return matchesSearch && matchesSeverity && matchesCategory && matchesBlocking;
+    }).toList();
+    int rank(dynamic severity) => const {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}[severity] ?? 0;
+    result.sort((a, b) {
+      switch (_sortOrder) {
+        case 'الأقدم':
+          return (a['createdAt'] ?? '').toString().compareTo((b['createdAt'] ?? '').toString());
+        case 'الأشد':
+          final bySeverity = rank(b['severity']).compareTo(rank(a['severity']));
+          return bySeverity != 0 ? bySeverity : (b['createdAt'] ?? '').toString().compareTo((a['createdAt'] ?? '').toString());
+        default:
+          return (b['createdAt'] ?? '').toString().compareTo((a['createdAt'] ?? '').toString());
+      }
+    });
+    return result;
+  }
+
   Widget _summaryTile(String label, int count, Color background, Color foreground) => Container(
     constraints: const BoxConstraints(minWidth: 105),
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -387,6 +423,17 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           value: _blockingOnly,
           onChanged: (value) => setState(() => _blockingOnly = value),
         ),
+        DropdownButtonFormField<String>(
+          value: _sortOrder,
+          decoration: const InputDecoration(labelText: 'ترتيب البلاغات'),
+          items: const [
+            DropdownMenuItem(value: 'الأحدث', child: Text('الأحدث أولاً')),
+            DropdownMenuItem(value: 'الأقدم', child: Text('الأقدم أولاً')),
+            DropdownMenuItem(value: 'الأشد', child: Text('الأعطال الأشد أولاً')),
+          ],
+          onChanged: (value) => setState(() => _sortOrder = value ?? 'الأحدث'),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _search,
           decoration: InputDecoration(
@@ -399,14 +446,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         const SizedBox(height: 8),
         if (_drafts.isEmpty)
           const Card(child: ListTile(leading: Icon(Icons.inbox_outlined), title: Text('لا توجد بلاغات محلية محفوظة'))),
-        ..._drafts.where((draft) {
-          final q = _search.text.trim().toLowerCase();
-          final matchesSearch = q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
-          final matchesSeverity = _severityFilter == 'الكل' || draft['severity'] == _severityFilter;
-          final matchesCategory = _categoryFilter == 'الكل' || draft['category'] == _categoryFilter;
-          final matchesBlocking = !_blockingOnly || draft['blocking'] == true;
-          return matchesSearch && matchesSeverity && matchesCategory && matchesBlocking;
-        }).map((draft) => Card(
+        ..._filteredDrafts().map((draft) => Card(
           elevation: 0,
           child: ListTile(
             onTap: () {
@@ -430,7 +470,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
               }),
             ),
             title: Text('${draft['equipment'] ?? 'جهاز غير محدد'}'),
-            subtitle: Text('${draft['category']} • ${draft['severity']}\\n${draft['description']}',
+            subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\n${draft['description']}',
               maxLines: 3, overflow: TextOverflow.ellipsis),
             isThreeLine: true,
             trailing: IconButton(
