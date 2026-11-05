@@ -98,7 +98,7 @@ public static class HourlyObservationContractValidator
             errors.Add($"ملاحظة المراجعة يجب ألا تتجاوز {MaximumReviewNoteLength} محرف.");
 
         if (request.Note is not null && request.Note.Any(char.IsControl) &&
-            request.Note.Any(character => character is not '\\r' and not '\\n' and not '\\t'))
+            request.Note.Any(character => character is not '\r' and not '\n' and not '\t'))
             errors.Add("ملاحظة المراجعة تحتوي محارف تحكم غير مسموحة.");
 
         if (request.Decision == HourlyObservationReviewDecision.Reject &&
