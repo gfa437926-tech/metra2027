@@ -200,7 +200,7 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
             if (await authorization.ExecuteScalarAsync(cancellationToken) is null)
             {
                 await transaction.RollbackAsync(cancellationToken);
-                return HourlyObservationStoreResult.Conflict;
+                return HourlyObservationStoreResult.Unauthorized;
             }
         }
 
