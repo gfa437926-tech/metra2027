@@ -193,6 +193,22 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     }
   }
 
+  Future<void> _duplicateDraft(Map<String, dynamic> source) async {
+    final copy = Map<String, dynamic>.from(source);
+    copy['id'] = DateTime.now().microsecondsSinceEpoch.toString();
+    copy['createdAt'] = DateTime.now().toIso8601String();
+    copy['status'] = 'local_draft';
+    final next = [copy, ..._drafts];
+    try {
+      await _storage.write(key: _draftKey, value: jsonEncode(next));
+      if (!mounted) return;
+      setState(() => _drafts = next);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إنشاء نسخة جديدة من البلاغ؛ عدّلها قبل الحفظ النهائي.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر إنشاء نسخة من البلاغ.')));
+    }
+  }
+
   Future<void> _deleteDraft(String id) async {
     final next = _drafts.where((draft) => draft['id'] != id).toList();
     try {
@@ -473,11 +489,18 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
             subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\n${draft['description']}',
               maxLines: 3, overflow: TextOverflow.ellipsis),
             isThreeLine: true,
-            trailing: IconButton(
-              tooltip: 'حذف المسودة',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => _deleteDraft(draft['id'].toString()),
-            ),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              IconButton(
+                tooltip: 'نسخ البلاغ',
+                icon: const Icon(Icons.copy_outlined),
+                onPressed: () => _duplicateDraft(draft),
+              ),
+              IconButton(
+                tooltip: 'حذف المسودة',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => _deleteDraft(draft['id'].toString()),
+              ),
+            ]),
           ),
         )),
         const Padding(
