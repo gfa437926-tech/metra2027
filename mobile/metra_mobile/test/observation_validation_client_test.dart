@@ -86,4 +86,76 @@ void main() {
     client.close();
   });
 
+
+  test('submits an hourly observation with bearer authorization and UTC metadata', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1/',
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        expect(request.url.path, '/api/v1/observations/hourly');
+        expect(request.headers['authorization'], 'Bearer test-access-token');
+        final payload = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(payload['observationDate'], '2026-11-06');
+        expect(payload['utcHour'], 6);
+        expect((payload['values'] as Map<String, dynamic>)['utcTime'], '06');
+        return http.Response(
+          jsonEncode({
+            'observationId': 'obs-123',
+            'stationId': 'station-7',
+            'status': 0,
+          }),
+          201,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+
+    final result = await client.submitHourly(
+      accessToken: 'test-access-token',
+      observationDate: DateTime(2026, 11, 6),
+      utcHour: 6,
+      values: {'utcTime': '06', 'dryTemp': '+21.0'},
+    );
+
+    expect(result['observationId'], 'obs-123');
+    expect(result['stationId'], 'station-7');
+    client.close();
+  });
+
+  test('rejects empty access tokens before making a request', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async => http.Response('{}', 201)),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: '  ',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 0,
+        values: {'utcTime': '00'},
+      ),
+      throwsArgumentError,
+    );
+    client.close();
+  });
+
+  test('rejects invalid UTC hours before making a request', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async => http.Response('{}', 201)),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: 'test-access-token',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 24,
+        values: {'utcTime': '24'},
+      ),
+      throwsArgumentError,
+    );
+    client.close();
+  });
+
 }
