@@ -147,6 +147,9 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       'createdAt': _drafts.where((d) => d['id'] == _editingId).map((d) => d['createdAt']).firstOrNull ?? DateTime.now().toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
       'resolvedAt': _workflowStatus == 'resolved' ? DateTime.now().toIso8601String() : null,
+      'statusHistory': _drafts.where((d) => d['id'] == _editingId).map((d) => List<Map<String, dynamic>>.from((d['statusHistory'] as List? ?? const []).whereType<Map>().map((entry) => Map<String, dynamic>.from(entry)))).firstOrNull ?? [
+        {'status': _workflowStatus, 'at': DateTime.now().toIso8601String(), 'note': 'إنشاء البلاغ'}
+      ],
       'status': 'local_draft',
       'workflowStatus': _workflowStatus,
     };
@@ -203,9 +206,22 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     final now = DateTime.now().toIso8601String();
     final next = _drafts.map((draft) {
       if (draft['id'].toString() != id) return draft;
+      final history = List<Map<String, dynamic>>.from(
+        (draft['statusHistory'] as List? ?? const [])
+            .whereType<Map>()
+            .map((entry) => Map<String, dynamic>.from(entry)),
+      );
+      if ((draft['workflowStatus'] ?? 'new') != status) {
+        history.add({
+          'status': status,
+          'at': now,
+          'note': status == 'resolved' ? 'تم إغلاق البلاغ بعد الإصلاح' : 'تحديث حالة المعالجة',
+        });
+      }
       return <String, dynamic>{
         ...draft,
         'workflowStatus': status,
+        'statusHistory': history,
         'updatedAt': now,
         if (status == 'resolved') 'resolvedAt': now,
         if (status != 'resolved') 'resolvedAt': null,
@@ -552,8 +568,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
               }),
             ),
             title: Text('${draft['equipment'] ?? 'جهاز غير محدد'}'),
-            subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${_workflowStatusArabic(draft['workflowStatus'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\n${draft['description']}',
-              maxLines: 3, overflow: TextOverflow.ellipsis),
+            subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${_workflowStatusArabic(draft['workflowStatus'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\nآخر تحديث: ${draft['updatedAt'] ?? draft['createdAt'] ?? 'غير محدد'} • سجل الحالات: ${(draft['statusHistory'] as List? ?? const []).length}\\n${draft['description']}',
+              maxLines: 4, overflow: TextOverflow.ellipsis),
             isThreeLine: true,
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
               IconButton(
