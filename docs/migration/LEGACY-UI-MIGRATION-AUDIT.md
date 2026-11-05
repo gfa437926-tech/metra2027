@@ -222,3 +222,8 @@ These additions are domain and contract groundwork only. No support-incidents AP
 - Added `backend/Metra.Api.Tests/Domain/MaintenanceAssignmentPolicyTests.cs` covering valid assignment, required identities, expected-resolution ordering, and note limits.
 
 This is validation groundwork only. It does not implement assignment authorization, persistence, notifications, API routes, or workshop UI. Authorization must verify that the assignee is an active support user with access to the same station before any assignment is accepted.
+
+
+## Authorization follow-up (2026-11-05)
+
+Added `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md` defining proposed server-side identity resolution, station isolation, support/maintenance permission names, mutation/audit requirements, attachment privacy, and readiness gates. This remains a design contract: no routes, database changes, or UI integrations were introduced by this document.
