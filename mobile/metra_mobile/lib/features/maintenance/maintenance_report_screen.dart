@@ -45,6 +45,51 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     );
   }
 
+  Future<void> _importDraftsFromClipboard() async {
+    try {
+      final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
+      final raw = clipboard?.text;
+      if (raw == null || raw.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الحافظة فارغة؛ انسخ ملف JSON أولاً.')));
+        return;
+      }
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic> || decoded['format'] != 'metra-maintenance-drafts-v1' || decoded['drafts'] is! List) {
+        throw const FormatException('Invalid METRA backup format');
+      }
+      final imported = <Map<String, dynamic>>[];
+      for (final item in decoded['drafts'] as List) {
+        if (item is! Map) continue;
+        final draft = Map<String, dynamic>.from(item);
+        final id = draft['id']?.toString();
+        final equipment = draft['equipment']?.toString().trim() ?? '';
+        final description = draft['description']?.toString().trim() ?? '';
+        if (id == null || id.isEmpty || equipment.length < 2 || description.length < 10) continue;
+        draft['id'] = id;
+        draft['status'] = 'local_draft';
+        imported.add(draft);
+      }
+      if (imported.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لم يتضمن ملف النسخة الاحتياطية بلاغات صالحة.')));
+        return;
+      }
+      final byId = <String, Map<String, dynamic>>{for (final draft in _drafts) draft['id'].toString(): draft};
+      for (final draft in imported) { byId[draft['id'].toString()] = draft; }
+      final merged = byId.values.toList()
+        ..sort((a, b) => (b['createdAt'] ?? '').toString().compareTo((a['createdAt'] ?? '').toString()));
+      await _storage.write(key: _draftKey, value: jsonEncode(merged));
+      if (!mounted) return;
+      setState(() => _drafts = merged);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم استيراد ' + imported.length.toString() + ' بلاغ ودمجها حسب المعرّف.')),
+      );
+    } on FormatException {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('صيغة النسخة الاحتياطية غير صحيحة أو غير متوافقة.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر استيراد البلاغات من الحافظة.')));
+    }
+  }
+
   Future<void> _loadDrafts() async {
     try {
       final raw = await _storage.read(key: _draftKey);
@@ -235,6 +280,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           icon: const Icon(Icons.content_copy_outlined),
           label: const Text('نسخ نسخة احتياطية JSON'),
         ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(onPressed: _importDraftsFromClipboard, icon: const Icon(Icons.file_download_outlined), label: const Text('استيراد نسخة JSON من الحافظة')),
         const SizedBox(height: 8),
         TextField(
           controller: _search,
