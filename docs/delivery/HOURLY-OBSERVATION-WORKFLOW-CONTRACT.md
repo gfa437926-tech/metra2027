@@ -54,11 +54,16 @@ enforce unique/idempotency behavior, and apply least-privilege database access.
   exactly one effective station assignment for submission, server-derived station
   identity, domain validation, pending-review state, station-scoped review, and
   submitter/reviewer separation.
-- `IHourlyObservationActorContextProvider` and `IHourlyObservationStore` are
-  persistence/identity boundaries only; production adapters and DI registrations
-  are not implemented. The new endpoint mapping extension is deliberately not
-  registered in `Program.cs` until those trusted dependencies exist, so no live
-  save or review endpoint is exposed yet.
+- `HttpHourlyObservationActorContextProvider` is implemented and registered when
+  the configured METRA database is available. It resolves issuer + subject from
+  the authenticated principal and reads account state, effective station grants,
+  and the two workflow permissions from the authoritative identity data source.
+  Focused unit tests cover authenticated resolution, expired grants, unknown
+  permissions, and inactive accounts.
+- `IHourlyObservationStore` still has no production adapter. The HTTP mapping
+  extension is intentionally not registered in `Program.cs` until a durable
+  store with transactional audit persistence is implemented; therefore save and
+  review are not yet live.
 - Flutter and Angular must display “validated” rather than “saved” until the
   authenticated persistence endpoint is implemented and returns a persisted ID.
 
