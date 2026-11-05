@@ -56,3 +56,29 @@ public sealed class MaintenanceAssignmentPolicyTests
         Assert.Empty(MaintenanceAssignmentPolicy.Validate(assignment, Now));
     }
 }
+
+    [Fact]
+    public void Accepts_assignment_at_five_minute_future_boundary() =>
+        Assert.Empty(MaintenanceAssignmentPolicy.Validate(
+            Valid() with { AssignedAt = Now.AddMinutes(5) }, Now));
+
+    [Fact]
+    public void Accepts_expected_resolution_at_one_year_boundary() =>
+        Assert.Empty(MaintenanceAssignmentPolicy.Validate(
+            Valid() with { ExpectedResolutionAt = Now.AddDays(365) }, Now));
+
+    [Fact]
+    public void Accepts_assignment_note_at_exact_limit() =>
+        Assert.Empty(MaintenanceAssignmentPolicy.Validate(
+            Valid() with { AssignmentNote = new string('x', 1000) }, Now));
+
+    [Fact]
+    public void Rejects_default_assignment_timestamp() =>
+        Assert.Contains(MaintenanceAssignmentPolicy.Validate(
+            Valid() with { AssignedAt = default }, Now),
+            x => x.Field == nameof(MaintenanceAssignment.AssignedAt));
+
+    [Fact]
+    public void Rejects_null_assignment() =>
+        Assert.Throws<ArgumentNullException>(() =>
+            MaintenanceAssignmentPolicy.Validate(null!, Now));
