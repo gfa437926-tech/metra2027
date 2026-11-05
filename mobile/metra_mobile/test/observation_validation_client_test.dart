@@ -72,4 +72,18 @@ void main() {
     );
     client.close();
   });
+
+  test('rejects malformed response payloads', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async => http.Response('[]', 200)),
+    );
+
+    expect(
+      () => client.validateHourly({'utcTime': '00'}),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
 }
