@@ -60,7 +60,7 @@ public sealed class HourlyObservationApplicationServiceTests
         var store = new FakeStore
         {
             ReviewTarget = new HourlyObservationReviewTarget(
-                "observation-1", "station-other", HourlyObservationStatus.PendingReview)
+                "observation-1", "station-other", "observer-2", HourlyObservationStatus.PendingReview)
         };
         var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
         var service = CreateService(actor, store);
@@ -75,12 +75,32 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Review_PreventsSubmitterFromReviewingOwnObservation()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "user-1", HourlyObservationStatus.PendingReview)
+        };
+        var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
+        var service = CreateService(actor, store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("self_review_forbidden", result.Code);
+        Assert.Null(store.ReviewCommand);
+    }
+
+    [Fact]
     public async Task Review_ReportsConcurrentDecisionConflict()
     {
         var store = new FakeStore
         {
             ReviewTarget = new HourlyObservationReviewTarget(
-                "observation-1", "station-owned", HourlyObservationStatus.PendingReview),
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview),
             ReviewResult = HourlyObservationStoreResult.Conflict
         };
         var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
