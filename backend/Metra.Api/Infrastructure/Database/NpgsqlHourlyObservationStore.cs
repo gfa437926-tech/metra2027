@@ -25,6 +25,35 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
+        const string authorizationSql = """
+            select exists (
+              select 1
+              from public.metra_account_states s
+              join public.permission_grants p on p.user_id=s.user_id
+              join public.station_assignments a on a.user_id=s.user_id
+              where s.user_id=@actor_id and s.account_state='active'
+                and p.permission_code=@permission and p.approval_status='approved'
+                and p.valid_from <= now() and (p.valid_to is null or p.valid_to > now())
+                and (p.revoked_at is null or p.revoked_at > now())
+                and a.station_id=@station_id and a.approval_status='approved'
+                and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
+                and (a.revoked_at is null or a.revoked_at > now())
+              for share of s, p, a
+            )
+            """;
+        await using (var authorization = new NpgsqlCommand(authorizationSql, connection, transaction))
+        {
+            authorization.Parameters.Add("actor_id", NpgsqlDbType.Uuid).Value = submittedBy;
+            authorization.Parameters.Add("permission", NpgsqlDbType.Text).Value =
+                HourlyObservationApplicationService.SubmitPermission;
+            authorization.Parameters.Add("station_id", NpgsqlDbType.Uuid).Value = stationId;
+            if (await authorization.ExecuteScalarAsync(cancellationToken) is not true)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw new UnauthorizedAccessException("Hourly observation submission authorization is no longer valid.");
+            }
+        }
+
         var observationId = Guid.NewGuid();
         const string insertSql = """
             insert into public.hourly_observations
