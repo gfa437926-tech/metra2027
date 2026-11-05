@@ -84,3 +84,14 @@ The support-incident policy is a separate domain boundary from equipment-fault r
 - Lifecycle transitions are constrained: Submitted → UnderReview/Rejected; UnderReview → Assigned/Rejected; Assigned → InProgress/UnderReview; InProgress → WaitingForInformation/Resolved/Assigned; WaitingForInformation → InProgress/Resolved; Resolved → Closed/InProgress. Closed and Rejected are terminal. Unknown lifecycle values and unsupported transitions must be rejected.
 
 These are domain-policy tests, not a deployed support API. The API must still enforce station ownership, role/permission checks, concurrency, audit logging, and server-derived actor identity. Do not infer authorization from a valid transition. Persistence and routes remain gated on the approved schema review.
+
+
+## Maintenance progress policy (domain groundwork)
+
+A persistence-independent policy now validates workshop progress updates:
+- Fault and station IDs are required; update timestamp is required and cannot be more than five minutes ahead of server time.
+- Progress percentage must be between 0 and 100; progress notes are optional and limited to 1,000 characters.
+- A report marked Resolved must have 100% progress.
+- Closed and Rejected reports do not accept progress updates.
+
+These rules do not authorize the actor or establish that the fault belongs to the route station. The eventual API must check station scope, assignee membership, lifecycle transition, and audit the update before persistence. This policy does not create routes or database objects.
