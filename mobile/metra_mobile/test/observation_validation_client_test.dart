@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -41,7 +39,7 @@ void main() {
   test('returns server validation issues to the mobile caller', () async {
     final client = ObservationValidationClient(
       baseUrl: 'https://api.example.test/api/v1',
-      client: MockClient((request) async => http.Response(
+      client: MockClient((request) async => http.Response.bytes(
         utf8.encode(jsonEncode({
           'isValid': false,
           'issues': [
@@ -69,7 +67,7 @@ void main() {
     );
 
     expect(
-      () => client.validateHourly({'utcTime': '00'}),
+      client.validateHourly({'utcTime': '00'}),
       throwsA(isA<http.ClientException>()),
     );
     client.close();
