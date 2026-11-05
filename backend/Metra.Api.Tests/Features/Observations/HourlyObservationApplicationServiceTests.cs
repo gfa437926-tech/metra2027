@@ -272,6 +272,27 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Review_MapsStoreAuthorizationRevocationToPermissionDenied()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview),
+            ReviewResult = HourlyObservationStoreResult.Unauthorized
+        };
+        var service = CreateService(
+            ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)),
+            store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("permission_denied", result.Code);
+    }
+
+    [Fact]
     public async Task Review_ReportsConcurrentDecisionConflict()
     {
         var store = new FakeStore
