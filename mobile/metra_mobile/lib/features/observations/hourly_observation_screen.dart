@@ -161,7 +161,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                     decoration: InputDecoration(
                       labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
                       errorText: _fieldError('utcTime'),
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                     ),
                     items: List.generate(24, (i) {
                       final h = i.toString().padLeft(2, '0');
