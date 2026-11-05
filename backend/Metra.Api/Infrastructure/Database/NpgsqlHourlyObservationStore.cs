@@ -28,7 +28,7 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
         var observationId = Guid.NewGuid();
         const string insertSql = """
             insert into public.hourly_observations
-              (id, station_id, submitted_by, observation_date, utc_hour, values, status, submitted_at)
+              (id, station_id, submitted_by, observation_date, utc_hour, observation_values, status, submitted_at)
             values
               (@id, @station_id, @submitted_by, @observation_date, @utc_hour,
                @values::jsonb, 'pending_review', now())
@@ -159,6 +159,7 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
                 and a.station_id=@station_id and a.approval_status='approved'
                 and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
                 and (a.revoked_at is null or a.revoked_at > now())
+              for share of s, p, a
             )
             """;
         await using (var authorization = new NpgsqlCommand(authorizationSql, connection, transaction))
