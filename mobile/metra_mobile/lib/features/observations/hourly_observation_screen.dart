@@ -158,7 +158,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
                     initialValue: _utcHour,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
                       errorText: _fieldError('utcTime'),
                       border: OutlineInputBorder(),
@@ -168,7 +168,12 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                       return DropdownMenuItem(value: h, child: Text('$h:00 UTC'));
                     }),
                     onChanged: _busy ? null : (v) {
-                      if (v != null) setState(() { _utcHour = v; _result = null; });
+                      if (v != null) {
+                        setState(() {
+                          _utcHour = v;
+                          _result = null;
+                        });
+                      }
                     },
                   ),
                 ]),
