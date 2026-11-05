@@ -43,6 +43,7 @@ public sealed record PersistedHourlyObservation(
 public sealed record HourlyObservationReviewTarget(
     string ObservationId,
     string StationId,
+    string SubmittedBy,
     HourlyObservationStatus Status);
 
 public sealed record CommitHourlyObservationReviewCommand(
@@ -180,6 +181,9 @@ public sealed class HourlyObservationApplicationService(
 
         if (target.Status != HourlyObservationStatus.PendingReview)
             return Failure<HourlyObservationReviewResponse>("invalid_state", "هذه النشرة ليست بانتظار المراجعة.");
+
+        if (string.Equals(actor.UserId, target.SubmittedBy, StringComparison.Ordinal))
+            return Failure<HourlyObservationReviewResponse>("self_review_forbidden", "لا يمكنك مراجعة نشرة قمت بإرسالها بنفسك.");
 
         var now = timeProvider.GetUtcNow();
         var canReviewStation = actor.StationGrants.Any(grant =>
