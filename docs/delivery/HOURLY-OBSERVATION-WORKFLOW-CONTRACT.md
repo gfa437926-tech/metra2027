@@ -49,14 +49,16 @@ enforce unique/idempotency behavior, and apply least-privilege database access.
 ## Current implementation boundary
 
 - Existing `/hourly/validate` remains anonymous and validation-only.
-- The new request/response contracts, metadata validators, and application service
-  are implemented. The service enforces active-account checks, permission checks,
+- The new request/response contracts, metadata validators, application service,
+  and authenticated HTTP endpoint adapter mappings (submit/review) are implemented. The service enforces active-account checks, permission checks,
   exactly one effective station assignment for submission, server-derived station
   identity, domain validation, pending-review state, station-scoped review, and
   submitter/reviewer separation.
 - `IHourlyObservationActorContextProvider` and `IHourlyObservationStore` are
   persistence/identity boundaries only; production adapters and DI registrations
-  are not implemented. No save or review endpoint is exposed yet.
+  are not implemented. The new endpoint mapping extension is deliberately not
+  registered in `Program.cs` until those trusted dependencies exist, so no live
+  save or review endpoint is exposed yet.
 - Flutter and Angular must display “validated” rather than “saved” until the
   authenticated persistence endpoint is implemented and returns a persisted ID.
 
