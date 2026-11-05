@@ -202,6 +202,42 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     }
   }
 
+  Future<void> _showStatusHistory(Map<String, dynamic> draft) async {
+    final history = (draft['statusHistory'] as List? ?? const [])
+        .whereType<Map>()
+        .map((entry) => Map<String, dynamic>.from(entry))
+        .toList()
+      ..sort((a, b) => (b['at'] ?? '').toString().compareTo((a['at'] ?? '').toString()));
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('سجل معالجة: ${draft['equipment'] ?? 'البلاغ'}'),
+        content: SizedBox(
+          width: 420,
+          child: history.isEmpty
+              ? const Text('لا توجد تغييرات مسجلة لهذا البلاغ بعد.')
+              : ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: history.length,
+                  separatorBuilder: (_, __) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final entry = history[index];
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.history),
+                      title: Text(_workflowStatusArabic(entry['status'])),
+                      subtitle: Text('${entry['note'] ?? 'تحديث الحالة'}\\n${entry['at'] ?? ''}'),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إغلاق')),
+        ],
+      ),
+    );
+  }
+
   Future<void> _setWorkflowStatus(String id, String status) async {
     final now = DateTime.now().toIso8601String();
     final next = _drafts.map((draft) {
@@ -580,8 +616,16 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
               PopupMenuButton<String>(
                 tooltip: 'تغيير حالة المعالجة',
                 icon: const Icon(Icons.more_vert),
-                onSelected: (status) => _setWorkflowStatus(draft['id'].toString(), status),
+                onSelected: (status) {
+                  if (status == 'history') {
+                    _showStatusHistory(draft);
+                  } else {
+                    _setWorkflowStatus(draft['id'].toString(), status);
+                  }
+                },
                 itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'history', child: Text('عرض سجل المعالجة')),
+                  PopupMenuDivider(),
                   PopupMenuItem(value: 'new', child: Text('إعادة إلى: جديد')),
                   PopupMenuItem(value: 'in_progress', child: Text('نقل إلى: قيد المعالجة')),
                   PopupMenuItem(value: 'resolved', child: Text('إغلاق: تم الإصلاح')),
