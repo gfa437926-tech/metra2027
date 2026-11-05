@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'models/current_user_context.dart';
 import 'services/current_user_context_client.dart';
 import 'features/stations/assigned_stations_screen.dart';
+import 'features/observations/hourly_observation_screen.dart';
 
 void main() {
   runApp(const MetraMobileApp());
@@ -107,7 +108,7 @@ class _MetraHomePageState extends State<MetraHomePage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
+        appBar: selectedIndex == 1 ? null : AppBar(
           title: const Text('نظام إدارة البيانات الجوية'),
           actions: [
             IconButton(
@@ -251,12 +252,7 @@ class _RecordsMobileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PlaceholderMobileView(
-      title: 'السجلات المناخية',
-      description:
-          'ستُضاف هنا قوائم الإدخال والبحث والمراجعة بعد اعتماد نماذج السجلات.',
-      icon: Icons.assignment_outlined,
-    );
+    return const HourlyObservationScreen();
   }
 }
 
