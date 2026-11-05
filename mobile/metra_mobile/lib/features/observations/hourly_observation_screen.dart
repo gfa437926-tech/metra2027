@@ -267,7 +267,14 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 errorText: _fieldError(f.$1),
                 border: const OutlineInputBorder(), isDense: true,
               ),
-              validator: (v) => required && (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
+              validator: (v) {
+                final value = v?.trim() ?? '';
+                if (required && value.isEmpty) return 'هذا الحقل مطلوب';
+                if (value.isNotEmpty && double.tryParse(value) == null) {
+                  return 'أدخل قيمة رقمية صحيحة';
+                }
+                return null;
+              },
               onChanged: (_) { if (_result != null) setState(() => _result = null); },
             ),
           )),
