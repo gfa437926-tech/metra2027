@@ -49,7 +49,22 @@ enforce unique/idempotency behavior, and apply least-privilege database access.
 ## Current implementation boundary
 
 - Existing `/hourly/validate` remains anonymous and validation-only.
-- The new request/response contracts and metadata validators are code-level
-  foundations only; no save or review endpoint is exposed yet.
+- The new request/response contracts, metadata validators, and application service
+  are implemented. The service enforces active-account checks, permission checks,
+  exactly one effective station assignment for submission, server-derived station
+  identity, domain validation, pending-review state, station-scoped review, and
+  submitter/reviewer separation.
+- `IHourlyObservationActorContextProvider` and `IHourlyObservationStore` are
+  persistence/identity boundaries only; production adapters and DI registrations
+  are not implemented. No save or review endpoint is exposed yet.
 - Flutter and Angular must display “validated” rather than “saved” until the
   authenticated persistence endpoint is implemented and returns a persisted ID.
+
+
+## Automated test coverage added (not yet executed)
+
+The application-service test suite covers inactive accounts, missing or multiple
+station assignments, expired assignments, missing submit permission, server-derived
+station identity, pending-review status, invalid review decisions, cross-station
+review denial, submitter self-review denial, and concurrent review conflicts.
+These tests are committed but must still be run in CI or a .NET 10 environment.
