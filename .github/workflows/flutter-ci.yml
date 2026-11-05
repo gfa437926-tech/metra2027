@@ -2,7 +2,7 @@ name: Flutter CI
 
 on:
   push:
-    branches: [main]
+    branches: ['**']
     paths:
       - "mobile/metra_mobile/**"
       - ".github/workflows/flutter-ci.yml"
