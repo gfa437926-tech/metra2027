@@ -51,13 +51,14 @@ void main() {
       ),
     ));
 
-    await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);
-    await tester.ensureVisible(find.text('التحقق من النشرة'));
-    await tester.tap(find.text('التحقق من النشرة'), warnIfMissed: false);
-    await tester.pump();
+    final submitButton = find.byType(FilledButton);
+    await tester.scrollUntilVisible(submitButton, 250, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
 
     expect(requests, 0);
-    expect(find.text('هذا الحقل مطلوب'), findsNothing);
+    expect(find.text('هذا الحقل مطلوب'), findsWidgets);
   });
   testWidgets('reset clears entered values and validation feedback',
       (tester) async {
