@@ -165,6 +165,20 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Submit_HandlesAuthorizationRevokedBetweenContextReadAndPersistence()
+    {
+        var store = new FakeStore { RejectCreateAuthorization = true };
+        var actor = ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null));
+        var service = CreateService(actor, store);
+
+        var result = await service.SubmitAsync(ValidRequest());
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("permission_denied", result.Code);
+        Assert.Null(store.Created);
+    }
+
+    [Fact]
     public async Task Submit_ReturnsFieldSpecificDomainValidationIssues()
     {
         var store = new FakeStore();
@@ -236,11 +250,14 @@ public sealed class HourlyObservationApplicationServiceTests
         public HourlyObservationReviewTarget? ReviewTarget { get; init; }
         public CommitHourlyObservationReviewCommand? ReviewCommand { get; private set; }
         public HourlyObservationStoreResult ReviewResult { get; init; } = HourlyObservationStoreResult.Committed;
+        public bool RejectCreateAuthorization { get; init; }
 
         public Task<PersistedHourlyObservation> CreateAsync(
             PersistHourlyObservationCommand command,
             CancellationToken cancellationToken)
         {
+            if (RejectCreateAuthorization)
+                throw new UnauthorizedAccessException();
             Created = command;
             return Task.FromResult(new PersistedHourlyObservation(
                 "observation-1",
