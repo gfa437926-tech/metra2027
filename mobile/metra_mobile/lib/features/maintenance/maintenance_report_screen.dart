@@ -26,6 +26,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   bool _saving = false;
   String? _editingId;
   List<Map<String, dynamic>> _drafts = [];
+  final Set<String> _selectedDraftIds = <String>{};
 
   @override
   void initState() {
@@ -161,11 +162,41 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     }
   }
 
+  Future<void> _deleteSelectedDrafts() async {
+    final ids = Set<String>.from(_selectedDraftIds);
+    if (ids.isEmpty) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف البلاغات المحددة'),
+        content: Text('سيتم حذف ${ids.length} مسودة محلية نهائياً. هل تريد المتابعة؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+          FilledButton.tonal(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('حذف المحدد')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final next = _drafts.where((draft) => !ids.contains(draft['id'].toString())).toList();
+    try {
+      await _storage.write(key: _draftKey, value: jsonEncode(next));
+      if (!mounted) return;
+      setState(() {
+        _drafts = next;
+        _selectedDraftIds.clear();
+        if (_editingId != null && ids.contains(_editingId)) _resetFields();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تم حذف ${ids.length} مسودة.')));
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر حذف البلاغات المحددة.')));
+    }
+  }
+
   Future<void> _deleteDraft(String id) async {
     final next = _drafts.where((draft) => draft['id'] != id).toList();
     try {
       await _storage.write(key: _draftKey, value: jsonEncode(next));
-      if (mounted) setState(() { _drafts = next; if (_editingId == id) _resetFields(); });
+      if (mounted) setState(() { _drafts = next; _selectedDraftIds.remove(id); if (_editingId == id) _resetFields(); });
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تعذر حذف المسودة المحلية.')),
@@ -391,7 +422,13 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                 const SnackBar(content: Text('تم تحميل المسودة للتعديل؛ اضغط تحديث المسودة.')),
               );
             },
-            leading: Icon(draft['blocking'] == true ? Icons.warning_amber_rounded : Icons.build_outlined),
+            leading: Checkbox(
+              value: _selectedDraftIds.contains(draft['id'].toString()),
+              onChanged: (checked) => setState(() {
+                final id = draft['id'].toString();
+                if (checked == true) { _selectedDraftIds.add(id); } else { _selectedDraftIds.remove(id); }
+              }),
+            ),
             title: Text('${draft['equipment'] ?? 'جهاز غير محدد'}'),
             subtitle: Text('${draft['category']} • ${draft['severity']}\\n${draft['description']}',
               maxLines: 3, overflow: TextOverflow.ellipsis),
