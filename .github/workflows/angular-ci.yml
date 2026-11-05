@@ -2,7 +2,6 @@ name: Angular build
 
 on:
   push:
-    branches: [main]
     paths:
       - "angular-app/**"
       - ".github/workflows/angular-ci.yml"
