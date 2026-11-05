@@ -1,3 +1,4 @@
+import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { HourlyReportsComponent } from './hourly-reports.component';
 
@@ -7,7 +8,8 @@ describe('HourlyReportsComponent local draft persistence', () => {
   beforeEach(() => {
     localStorage.removeItem(storageKey);
     TestBed.configureTestingModule({
-      imports: [HourlyReportsComponent]
+      imports: [HourlyReportsComponent],
+      providers: [provideHttpClient()]
     });
   });
 
