@@ -20,6 +20,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   String _category = 'أجهزة الرصد';
   String _severity = 'High';
   String _severityFilter = 'الكل';
+  String _categoryFilter = 'الكل';
+  bool _blockingOnly = false;
   bool _blocking = false;
   bool _saving = false;
   String? _editingId;
@@ -301,6 +303,20 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         OutlinedButton.icon(onPressed: _importDraftsFromClipboard, icon: const Icon(Icons.file_download_outlined), label: const Text('استيراد نسخة JSON من الحافظة')),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          value: _categoryFilter,
+          decoration: const InputDecoration(labelText: 'تصفية حسب التصنيف'),
+          items: const [
+            DropdownMenuItem(value: 'الكل', child: Text('كل التصنيفات')),
+            DropdownMenuItem(value: 'أجهزة الرصد', child: Text('أجهزة الرصد')),
+            DropdownMenuItem(value: 'الاتصالات', child: Text('الاتصالات')),
+            DropdownMenuItem(value: 'الحاسب والشبكة', child: Text('الحاسب والشبكة')),
+            DropdownMenuItem(value: 'الكهرباء والطاقة', child: Text('الكهرباء والطاقة')),
+            DropdownMenuItem(value: 'أخرى', child: Text('أخرى')),
+          ],
+          onChanged: (value) => setState(() => _categoryFilter = value ?? 'الكل'),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
           value: _severityFilter,
           decoration: const InputDecoration(labelText: 'تصفية حسب شدة العطل'),
           items: const [
@@ -312,7 +328,13 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           ],
           onChanged: (value) => setState(() => _severityFilter = value ?? 'الكل'),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('عرض الأعطال التي توقف العمل فقط'),
+          value: _blockingOnly,
+          onChanged: (value) => setState(() => _blockingOnly = value),
+        ),
         TextField(
           controller: _search,
           decoration: InputDecoration(
@@ -329,7 +351,9 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           final q = _search.text.trim().toLowerCase();
           final matchesSearch = q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
           final matchesSeverity = _severityFilter == 'الكل' || draft['severity'] == _severityFilter;
-          return matchesSearch && matchesSeverity;
+          final matchesCategory = _categoryFilter == 'الكل' || draft['category'] == _categoryFilter;
+          final matchesBlocking = !_blockingOnly || draft['blocking'] == true;
+          return matchesSearch && matchesSeverity && matchesCategory && matchesBlocking;
         }).map((draft) => Card(
           elevation: 0,
           child: ListTile(
