@@ -126,6 +126,7 @@ grant usage, select on sequence public.hourly_observation_audit_events_id_seq
 
 ## Current implementation boundary
 
-- The adapter is committed but intentionally not registered in dependency injection and the workflow HTTP routes remain unmapped.
+- The adapter is committed and is registered/mapped only when the explicit configuration flag `Features:HourlyObservationWorkflowEnabled=true` is enabled. The flag also requires `ConnectionStrings:MetraDatabase`.
+- Keep the flag disabled until this proposal is approved, the schema is applied, and the API runtime login has the exact table grants. The default is disabled.
 - No database schema, data, RLS policy, role, or permission was changed by this proposal.
 - Before enabling the endpoints, apply an approved migration, provision the least-privilege runtime login, and run database integration tests for atomic insert/audit, authorization revocation races, and concurrent review.
