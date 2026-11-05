@@ -73,6 +73,22 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لم يتضمن ملف النسخة الاحتياطية بلاغات صالحة.')));
         return;
       }
+      final existingIds = _drafts.map((draft) => draft['id'].toString()).toSet();
+      final updates = imported.where((draft) => existingIds.contains(draft['id'].toString())).length;
+      final additions = imported.length - updates;
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('تأكيد استيراد البلاغات'),
+          content: Text('سيتم إضافة $additions بلاغ جديد وتحديث $updates بلاغ موجود. هل تريد المتابعة؟'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('استيراد')),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
       final byId = <String, Map<String, dynamic>>{for (final draft in _drafts) draft['id'].toString(): draft};
       for (final draft in imported) { byId[draft['id'].toString()] = draft; }
       final merged = byId.values.toList()
@@ -81,7 +97,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       if (!mounted) return;
       setState(() => _drafts = merged);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تم استيراد ' + imported.length.toString() + ' بلاغ ودمجها حسب المعرّف.')),
+        SnackBar(content: Text('اكتمل الاستيراد: $additions جديد، $updates تحديث.')),
       );
     } on FormatException {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('صيغة النسخة الاحتياطية غير صحيحة أو غير متوافقة.')));
