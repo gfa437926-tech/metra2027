@@ -1,0 +1,14 @@
+﻿# .NET build outputs
+/backend/**/bin/
+/backend/**/obj/
+
+# Flutter generated outputs
+/mobile/metra_mobile/.dart_tool/
+/mobile/metra_mobile/build/
+
+# Local IDE files
+.vs/
+.idea/
+
+# Local deployment output
+/artifacts/
