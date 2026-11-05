@@ -139,7 +139,7 @@ class _MetraHomePageState extends State<MetraHomePage> {
                 child: IndexedStack(
                   index: selectedIndex,
                   children: [
-                    const _DashboardMobileView(),
+                    _DashboardMobileView(onHourlyTap: () => setState(() => selectedIndex = 1)),
                     const _RecordsMobileView(),
                     AssignedStationsScreen(
                       sessionState: _sessionState,
@@ -175,7 +175,8 @@ class _MetraHomePageState extends State<MetraHomePage> {
 }
 
 class _DashboardMobileView extends StatelessWidget {
-  const _DashboardMobileView();
+  const _DashboardMobileView({required this.onHourlyTap});
+  final VoidCallback onHourlyTap;
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +227,7 @@ class _DashboardMobileView extends StatelessWidget {
           title: 'السجلات الساعية',
           subtitle: 'قراءات الرصد كل ساعة',
           icon: Icons.schedule,
+          onTap: onHourlyTap,
         ),
         const _RecordTypeTile(
           title: 'السجلات الشهرية والسنوية',
@@ -292,11 +294,13 @@ class _RecordTypeTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.onTap,
   });
 
   final String title;
   final String subtitle;
   final IconData icon;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +314,7 @@ class _RecordTypeTile extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_left),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }
