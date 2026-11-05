@@ -19,6 +19,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   String _severity = 'High';
   bool _blocking = false;
   bool _saving = false;
+  String? _editingId;
   List<Map<String, dynamic>> _drafts = [];
 
   @override
@@ -51,17 +52,17 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     }
     setState(() => _saving = true);
     final draft = <String, dynamic>{
-      'id': DateTime.now().microsecondsSinceEpoch.toString(),
+      'id': _editingId ?? DateTime.now().microsecondsSinceEpoch.toString(),
       'category': _category,
       'equipment': _equipment.text.trim(),
       'severity': _severity,
       'blocking': _blocking,
       'description': _description.text.trim(),
-      'createdAt': DateTime.now().toIso8601String(),
+      'createdAt': _drafts.where((d) => d['id'] == _editingId).map((d) => d['createdAt']).firstOrNull ?? DateTime.now().toIso8601String(),
       'status': 'local_draft',
     };
     try {
-      final next = [draft, ..._drafts];
+      final next = _editingId == null ? [draft, ..._drafts] : _drafts.map((item) => item['id'] == _editingId ? draft : item).toList();
       await _storage.write(key: _draftKey, value: jsonEncode(next));
       if (!mounted) return;
       setState(() { _drafts = next; _saving = false; });
@@ -99,6 +100,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       _category = 'أجهزة الرصد';
       _severity = 'High';
       _blocking = false;
+      _editingId = null;
     });
   }
 
@@ -192,7 +194,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                 FilledButton.icon(
                   onPressed: _saving ? null : _saveDraft,
                   icon: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.save_outlined),
-                  label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ البلاغ محلياً'),
+                  label: Text(_saving ? 'جارٍ الحفظ...' : (_editingId == null ? 'حفظ البلاغ محلياً' : 'تحديث المسودة')),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
@@ -215,9 +217,22 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         ..._drafts.map((draft) => Card(
           elevation: 0,
           child: ListTile(
+            onTap: () {
+              setState(() {
+                _editingId = draft['id'].toString();
+                _category = draft['category'] as String? ?? 'أجهزة الرصد';
+                _severity = draft['severity'] as String? ?? 'High';
+                _blocking = draft['blocking'] == true;
+                _equipment.text = draft['equipment'] as String? ?? '';
+                _description.text = draft['description'] as String? ?? '';
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('تم تحميل المسودة للتعديل؛ اضغط تحديث المسودة.')),
+              );
+            },
             leading: Icon(draft['blocking'] == true ? Icons.warning_amber_rounded : Icons.build_outlined),
             title: Text('${draft['equipment'] ?? 'جهاز غير محدد'}'),
-            subtitle: Text('${draft['category']} • ${draft['severity']}\n${draft['description']}',
+            subtitle: Text('${draft['category']} • ${draft['severity']}\\n${draft['description']}',
               maxLines: 3, overflow: TextOverflow.ellipsis),
             isThreeLine: true,
             trailing: IconButton(
