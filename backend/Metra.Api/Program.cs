@@ -36,6 +36,7 @@ if (hasDatabase)
     builder.Services.AddScoped<RegistrationApprovalQueueQueryService>();
     builder.Services.AddScoped<ICurrentUserContextDataSource, NpgsqlCurrentUserContextDataSource>();
     builder.Services.AddScoped<CurrentUserContextApplicationService>();
+    builder.Services.AddScoped<IHourlyObservationActorContextProvider, HttpHourlyObservationActorContextProvider>();
     builder.Services.AddScoped<NpgsqlMetraAuthorizationDataSources>();
     builder.Services.AddScoped<IMetraPermissionAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
     builder.Services.AddScoped<IMetraResourceAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
