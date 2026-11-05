@@ -101,5 +101,29 @@ This is a substantial role-oriented management workspace, not merely a generic h
 ### Angular parity checkpoint
 The current Angular route table has routes for login, registration, dashboard, phenomena input/view, hourly, rainfall, daily, climate, agriculture, soil temperature, users, monthly, annual, and observation workflow. It does not yet declare dedicated routes for the three legacy fault pages, IT manager, network manager, telecom manager, workshop manager, or a clearly equivalent manager dashboard. A route alone is not acceptance: each screen still needs field/action/permission/API parity and visual review.
 
+
+### Fault, maintenance, analytics, and network screens — source inspection
+
+The following root-level sources were inspected beyond title-only inventory. Their controls establish concrete migration requirements:
+
+| Source | Verified workflow and UI elements | Migration implications |
+|---|---|---|
+| `fix.html` | New observation-equipment failure form; reporter/station identity; automatic/classic/special equipment sections; description/date/severity/image/urgent repair; status counters; manual measurement modal; share-report action | Requires a complete fault-intake workflow, equipment-specific fields, attachment handling, urgency, and status tracking |
+| `fix-tel.html` | Communications and IT equipment categories: phone, tower, satellite, fax, computer, laptop, printer, network, Wi-Fi; separate forms and details modal; pending/review/resolved/urgent counters | Model device category and category-specific details rather than a generic free-text fault form |
+| `it.html` | Technical-problem report with reporter identity/position/phone, bulletin type, affected field, problem type/details/description/urgency; previous reports, filters, quick stats, save/send actions | Needs structured issue classification, validation, report history, filters, and safe submission semantics |
+| `it-maneger.html` | IT report statistics: period selector, total reports, average resolution time, resolution rate, unique reporters; status/urgency/monthly/bulletin charts; station table and common problems | This is an analytics/manager screen, not the user-administration page |
+| `manag-net.html` | Integrated network/system dashboard with station/observer/report counts and tabs/tables for weather reports, equipment faults, telecom faults, IT problems, reminders, activity log, user messages, registration queue, system stats, backups, and SMS | Broad operations dashboard; separate read permissions and controlled actions per tab |
+| `telecom-manager.html` | Telecom fault management with search and filters by device/status/urgency/station; report details; status editing (pending/in progress/resolved/cancelled); device/urgent/description/reporter fields; charts; create-report modal; export/print/PDF/XLSX dependencies | Requires a full manager workflow with audit trail, filtering, status transitions, and export permissions |
+| `workshop-manager.html` | Observation-equipment maintenance dashboard; pending/in-progress/resolved/urgent/today/total metrics; resolution and urgency rates; status/severity charts; filters by status/severity/station/date; details and image modal; assignment, progress percentage, expected resolution date | Requires assignment and progress tracking, image access control, and maintenance lifecycle |
+| `weather_analytics.html` | Station/date-range selectors and charts for temperature/dew point/feels-like, humidity, wind, pressure, and solar brightness | Dedicated weather analytics feature is missing from the current Angular route table and Flutter feature set |
+
+### Security and parity implications from this inspection
+
+- The legacy screens rely on browser-side third-party libraries for charts, tables, PDF/XLSX export, QR generation, and direct data access. Treat these as UI references, not as an approved backend/security design.
+- Implement server-side authorization for every read, create, update, export, assignment, bulk action, and attachment download. Enforce station scope on the API; hiding a menu item is not authorization.
+- Preserve status vocabulary and operational distinctions where appropriate, but validate allowed transitions on the server and record who changed what and when.
+- Do not carry over legacy direct Supabase privileged access, credentials, or test-data shortcuts into the new app.
+- No source HTML, existing database, or Supabase schema was modified during this inspection.
+
 ### Archive recovery
 The repository contains the RAR archive, but GitHub's text-file retrieval cannot extract binary archive contents. Local extraction-tool availability has not yet been confirmed. The archive remains untouched.
