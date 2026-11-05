@@ -144,6 +144,73 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Review_RejectsActorWithoutReviewPermission()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview)
+        };
+        var actor = new HourlyObservationActorContext(
+            "user-1",
+            true,
+            [new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)],
+            new HashSet<string>(StringComparer.Ordinal));
+        var service = CreateService(actor, store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("permission_denied", result.Code);
+        Assert.Null(store.ReviewCommand);
+    }
+
+    [Fact]
+    public async Task Review_RejectsExpiredStationAssignment()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview)
+        };
+        var expiredGrant = new HourlyObservationStationGrant(
+            "station-owned", Now.AddDays(-2), Now.AddMinutes(-1), null);
+        var service = CreateService(ActiveActor(expiredGrant), store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("station_scope_violation", result.Code);
+        Assert.Null(store.ReviewCommand);
+    }
+
+    [Fact]
+    public async Task Review_RecordsApprovalAndTrimsReviewerNote()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview)
+        };
+        var service = CreateService(
+            ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)),
+            store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, "  تمت المطابقة  "));
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(HourlyObservationStatus.Approved, result.Value?.Status);
+        Assert.Equal("تمت المطابقة", store.ReviewCommand?.Note);
+        Assert.Equal(HourlyObservationStatus.PendingReview, store.ReviewCommand?.ExpectedStatus);
+    }
+
+    [Fact]
     public async Task Review_ReportsConcurrentDecisionConflict()
     {
         var store = new FakeStore
