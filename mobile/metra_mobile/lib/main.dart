@@ -257,7 +257,7 @@ class _DashboardMobileView extends StatelessWidget {
 class _RecordsMobileView extends StatelessWidget {
   const _RecordsMobileView({this.accessTokenProvider});
 
-  final Future<String?> Function()? accessTokenProvider;
+  final AccessTokenProvider? accessTokenProvider;
 
   @override
   Widget build(BuildContext context) {
