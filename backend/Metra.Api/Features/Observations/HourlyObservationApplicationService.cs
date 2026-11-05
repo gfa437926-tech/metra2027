@@ -212,16 +212,26 @@ public sealed class HourlyObservationApplicationService(
             : HourlyObservationStatus.Rejected;
 
         var note = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
-        var commit = await store.CommitReviewAsync(
-            new CommitHourlyObservationReviewCommand(
-                target.ObservationId,
-                HourlyObservationStatus.PendingReview,
-                nextStatus,
-                actor.UserId,
-                note,
-                now),
-            ReviewPermission,
-            cancellationToken);
+        HourlyObservationStoreResult commit;
+        try
+        {
+            commit = await store.CommitReviewAsync(
+                new CommitHourlyObservationReviewCommand(
+                    target.ObservationId,
+                    HourlyObservationStatus.PendingReview,
+                    nextStatus,
+                    actor.UserId,
+                    note,
+                    now),
+                ReviewPermission,
+                cancellationToken);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Failure<HourlyObservationReviewResponse>(
+                "permission_denied",
+                "انتهت صلاحية المراجعة أو تكليف المحطة؛ حدّث الجلسة وحاول مجدداً.");
+        }
 
         if (commit == HourlyObservationStoreResult.NotFound)
             return Failure<HourlyObservationReviewResponse>("not_found", "النشرة غير موجودة.");
