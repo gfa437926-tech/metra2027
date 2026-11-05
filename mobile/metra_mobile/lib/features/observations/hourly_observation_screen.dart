@@ -275,7 +275,11 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 }
                 return null;
               },
-              onChanged: (_) { if (_result != null) setState(() => _result = null); },
+              onChanged: (_) {
+                if (_result != null || _error != null) {
+                  setState(() { _result = null; _error = null; });
+                }
+              },
             ),
           )),
         ]),
