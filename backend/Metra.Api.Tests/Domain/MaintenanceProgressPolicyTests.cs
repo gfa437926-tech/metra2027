@@ -8,7 +8,7 @@ public sealed class MaintenanceProgressPolicyTests
     private static readonly DateTimeOffset Now = new(2026, 11, 5, 8, 0, 0, TimeSpan.Zero);
 
     private static MaintenanceProgressUpdate Valid() => new(
-        Guid.NewGuid(), Guid.NewGuid(), EquipmentFaultStatus.InProgress, 45,
+        Guid.NewGuid(), Guid.NewGuid(), EquipmentFaultStatus.Assigned, EquipmentFaultStatus.InProgress, 45,
         Now, "تم فحص الجهاز وبدء المعايرة");
 
     [Fact]
@@ -86,4 +86,37 @@ public sealed class MaintenanceProgressPolicyTests
     public void Rejects_null_update() =>
         Assert.Throws<ArgumentNullException>(() =>
             MaintenanceProgressPolicy.Validate(null!, Now));
+}
+
+    [Theory]
+    [InlineData(EquipmentFaultStatus.Submitted, EquipmentFaultStatus.InProgress)]
+    [InlineData(EquipmentFaultStatus.Assigned, EquipmentFaultStatus.Closed)]
+    [InlineData(EquipmentFaultStatus.Closed, EquipmentFaultStatus.InProgress)]
+    [InlineData(EquipmentFaultStatus.Rejected, EquipmentFaultStatus.Assigned)]
+    public void Rejects_invalid_lifecycle_transition(
+        EquipmentFaultStatus current,
+        EquipmentFaultStatus next)
+    {
+        var update = Valid() with { CurrentStatus = current, Status = next };
+        Assert.Contains(MaintenanceProgressPolicy.Validate(update, Now),
+            x => x.Field == nameof(update.Status));
+    }
+
+    [Fact]
+    public void Accepts_allowed_lifecycle_transition()
+    {
+        var update = Valid() with
+        {
+            CurrentStatus = EquipmentFaultStatus.Assigned,
+            Status = EquipmentFaultStatus.InProgress
+        };
+        Assert.Empty(MaintenanceProgressPolicy.Validate(update, Now));
+        [Fact]
+    public void Rejects_unknown_current_status()
+    {
+        var update = Valid() with { CurrentStatus = (EquipmentFaultStatus)999 };
+        Assert.Contains(MaintenanceProgressPolicy.Validate(update, Now),
+            x => x.Field == nameof(update.CurrentStatus));
+    }
+
 }
