@@ -37,7 +37,7 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
                 and (p.revoked_at is null or p.revoked_at > now())
                 and a.station_id=@station_id and a.approval_status='approved'
                 and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
-                and (a.revoked_at is null or a.revoked_at > now())
+                and a.approval_status = 'approved'
               for share of s, p, a
             )
             """;
