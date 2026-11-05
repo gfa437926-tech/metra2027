@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Maintenance intake is saved on-device until the approved server contract exists.
@@ -27,6 +28,21 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   void initState() {
     super.initState();
     _loadDrafts();
+  }
+
+  Future<void> _exportDrafts() async {
+    if (_drafts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا توجد بلاغات لتصديرها.')));
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert({
+      'format': 'metra-maintenance-drafts-v1',
+      'exportedAt': DateTime.now().toIso8601String(),
+      'drafts': _drafts,
+    })));
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تم نسخ نسخة JSON من البلاغات إلى الحافظة.')),
+    );
   }
 
   Future<void> _loadDrafts() async {
@@ -214,6 +230,12 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           Text('${_drafts.length}'),
         ]),
         const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _exportDrafts,
+          icon: const Icon(Icons.content_copy_outlined),
+          label: const Text('نسخ نسخة احتياطية JSON'),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: _search,
           decoration: InputDecoration(
@@ -226,7 +248,10 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         const SizedBox(height: 8),
         if (_drafts.isEmpty)
           const Card(child: ListTile(leading: Icon(Icons.inbox_outlined), title: Text('لا توجد بلاغات محلية محفوظة'))),
-        ..._drafts.where((draft) {\n          final q = _search.text.trim().toLowerCase();\n          return q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));\n        }).map((draft) => Card(
+        ..._drafts.where((draft) {
+          final q = _search.text.trim().toLowerCase();
+          return q.isEmpty || ['equipment', 'category', 'severity', 'description'].any((key) => (draft[key] ?? '').toString().toLowerCase().contains(q));
+        }).map((draft) => Card(
           elevation: 0,
           child: ListTile(
             onTap: () {
