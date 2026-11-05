@@ -214,3 +214,11 @@ This is domain groundwork only. No HTTP endpoints, persistence adapter, Supabase
 - Added `docs/api/SUPPORT-INCIDENTS-CONTRACT.md` with proposed station-scoped API routes, permission boundaries, audit expectations, validation, and response semantics.
 
 These additions are domain and contract groundwork only. No support-incidents API endpoints, persistence adapters, Supabase schema, category catalogue, attachment storage, or client screens have been implemented. Explicit database approval remains a prerequisite for persistence.
+
+
+## Follow-up implementation — workshop assignment policy (2026-11-05)
+
+- Added `backend/Metra.Api/Domain/Maintenance/MaintenanceAssignmentPolicy.cs` to validate fault/station/assignee identifiers, assignment timestamp, expected resolution window, and assignment-note length.
+- Added `backend/Metra.Api.Tests/Domain/MaintenanceAssignmentPolicyTests.cs` covering valid assignment, required identities, expected-resolution ordering, and note limits.
+
+This is validation groundwork only. It does not implement assignment authorization, persistence, notifications, API routes, or workshop UI. Authorization must verify that the assignee is an active support user with access to the same station before any assignment is accepted.
