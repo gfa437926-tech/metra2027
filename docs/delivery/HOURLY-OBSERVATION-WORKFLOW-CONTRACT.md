@@ -6,14 +6,14 @@ This document and the accompanying DTOs define the application boundary for
 central hourly-observation submission and station review. They do not claim
 that persistence or the endpoints are deployed.
 
-## Planned authenticated operations
+## Authenticated workflow operations
 
 | Operation | Purpose | Required authorization |
 |---|---|---|
 | `POST /api/v1/observations/hourly` | Submit a validated hourly report | Active account and an effective station assignment |
 | `GET /api/v1/observations/hourly/review-queue` | Read pending reports for station review | Active reviewer permission and effective station assignment, rechecked by PostgreSQL |
 | `GET /api/v1/observations/hourly/{id}` | Read one report | Resource-level station/role authorization |
-| `POST /api/v1/observations/hourly/{id}/review` | Approve or reject a pending report | Station reviewer for the report's station, or an explicitly authorized higher role |
+| `POST /api/v1/observations/hourly/{id}/review` | Approve or reject a pending report | Active station reviewer assigned to the report's station |
 
 ## Submission rules
 
