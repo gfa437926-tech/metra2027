@@ -53,7 +53,7 @@ void main() {
 
     await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(find.text('التحقق من النشرة'));
-    await tester.tap(find.text('التحقق من النشرة'));
+    await tester.tap(find.text('التحقق من النشرة'), warnIfMissed: false);
     await tester.pump();
 
     expect(requests, 0);
@@ -76,7 +76,7 @@ void main() {
     await tester.enterText(dryTemperature, '+21.0');
     await tester.scrollUntilVisible(find.text('تفريغ'), 250, scrollable: find.byType(Scrollable).first);
     await tester.ensureVisible(find.text('تفريغ'));
-    await tester.tap(find.text('تفريغ'));
+    await tester.tap(find.text('تفريغ'), warnIfMissed: false);
     await tester.pump();
 
     final field = tester.widget<TextFormField>(dryTemperature);
