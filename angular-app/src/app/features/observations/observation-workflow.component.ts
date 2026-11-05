@@ -123,7 +123,7 @@ type ReviewDecision = 1 | 2;
           <button class="close-btn" type="button" (click)="cancelReject()" aria-label="إلغاء">×</button>
         </div>
         <label class="note-field">سبب الرفض (إلزامي)
-          <textarea rows="3" maxlength="1000" [(ngModel)]="rejectNote" placeholder="اكتب سبب الرفض ليظهر ضمن سجل المراجعة..."></textarea>
+          <textarea rows="3" maxlength="1000" [value]="rejectNote" (input)="setRejectNote($any($event.target).value)" placeholder="اكتب سبب الرفض ليظهر ضمن سجل المراجعة..."></textarea>
         </label>
         <div class="row-actions">
           <button class="reject" type="button" (click)="confirmReject()" [disabled]="!rejectNote.trim() || workingId === target.observationId">تأكيد الرفض</button>
@@ -188,6 +188,10 @@ export class ObservationWorkflowComponent implements OnInit {
     this.rejectTarget = item;
     this.rejectNote = '';
     this.message = '';
+  }
+
+  setRejectNote(value: string): void {
+    this.rejectNote = value;
   }
 
   cancelReject(): void {
