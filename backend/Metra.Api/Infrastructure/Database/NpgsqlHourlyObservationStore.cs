@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using Metra.Api.Features.Observations;
+using Microsoft.AspNetCore.DataProtection;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -10,9 +13,127 @@ namespace Metra.Api.Infrastructure.Database;
 /// and must be approved/applied before this adapter is registered in production.
 /// Each report mutation and its audit event share one database transaction.
 /// </summary>
-public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
-    : IHourlyObservationStore
+public sealed class NpgsqlHourlyObservationStore(
+    NpgsqlDataSource dataSource,
+    IDataProtectionProvider protectionProvider,
+    TimeProvider timeProvider)
+    : IHourlyObservationStore, IHourlyObservationQueueReadStore
 {
+    private readonly IDataProtector _cursorProtector =
+        protectionProvider.CreateProtector("METRA.HourlyObservationReviewQueue.Cursor.v1");
+
+    public async Task<HourlyObservationQueueStorePage> ReadPageAsync(
+        HourlyObservationActorContext actor,
+        HourlyObservationQueueQuery query,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(actor);
+        ArgumentNullException.ThrowIfNull(query);
+
+        if (!Guid.TryParseExact(actor.UserId, "D", out var actorId))
+            throw new InvalidOperationException("Hourly observation queue actor ID is invalid.");
+
+        HourlyObservationQueueCursor? cursor = null;
+        if (query.Cursor is not null)
+        {
+            try
+            {
+                cursor = JsonSerializer.Deserialize<HourlyObservationQueueCursor>(
+                    _cursorProtector.Unprotect(query.Cursor));
+            }
+            catch (Exception exception) when (
+                exception is CryptographicException or JsonException or FormatException)
+            {
+                throw new HourlyObservationQueueInvalidCursorException();
+            }
+
+            if (cursor is null ||
+                cursor.ActorId != actorId ||
+                cursor.StationId != query.StationId ||
+                cursor.PageSize != query.PageSize ||
+                !Guid.TryParseExact(cursor.ObservationId, "D", out _) ||
+                cursor.SubmittedAtUtc.Offset != TimeSpan.Zero)
+                throw new HourlyObservationQueueInvalidCursorException();
+        }
+
+        Guid? requestedStation = null;
+        if (query.StationId is not null)
+        {
+            if (!Guid.TryParseExact(query.StationId, "D", out var parsedStation))
+                return new(Array.Empty<HourlyObservationQueueItem>(), false, null);
+            requestedStation = parsedStation;
+        }
+
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(
+            """
+            select o.id::text, o.station_id::text, o.observation_date, o.utc_hour,
+                   o.submitted_by::text, o.submitted_at
+            from public.hourly_observations o
+            where o.status='pending_review'
+              and (@requested_station is null or o.station_id=@requested_station)
+              and exists (
+                select 1
+                from public.metra_account_states s
+                join public.permission_grants p on p.user_id=s.user_id
+                where s.user_id=@actor_id and s.account_state='active'
+                  and p.permission_code=@permission and p.approval_status='approved'
+                  and p.valid_from <= now() and (p.valid_to is null or p.valid_to > now())
+                  and (p.revoked_at is null or p.revoked_at > now())
+              )
+              and exists (
+                select 1
+                from public.station_assignments a
+                where a.user_id=@actor_id and a.station_id=o.station_id
+                  and a.approval_status='approved'
+                  and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
+              )
+              and (@cursor_at is null or (o.submitted_at,o.id) < (@cursor_at,@cursor_id))
+            order by o.submitted_at desc,o.id desc
+            limit @limit
+            """, connection);
+        command.Parameters.Add("actor_id", NpgsqlDbType.Uuid).Value = actorId;
+        command.Parameters.Add("permission", NpgsqlDbType.Text).Value =
+            HourlyObservationApplicationService.ReviewPermission;
+        command.Parameters.Add("requested_station", NpgsqlDbType.Uuid).Value =
+            (object?)requestedStation ?? DBNull.Value;
+        command.Parameters.Add("cursor_at", NpgsqlDbType.TimestampTz).Value =
+            (object?)cursor?.SubmittedAtUtc ?? DBNull.Value;
+        command.Parameters.Add("cursor_id", NpgsqlDbType.Uuid).Value =
+            cursor is null ? DBNull.Value : Guid.Parse(cursor.ObservationId);
+        command.Parameters.Add("limit", NpgsqlDbType.Integer).Value = query.PageSize + 1;
+
+        var items = new List<HourlyObservationQueueItem>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                items.Add(new(
+                    reader.GetString(0),
+                    reader.GetString(1),
+                    reader.GetFieldValue<DateOnly>(2),
+                    reader.GetInt16(3),
+                    reader.GetString(4),
+                    reader.GetFieldValue<DateTimeOffset>(5).ToUniversalTime()));
+            }
+        }
+
+        var hasMore = items.Count > query.PageSize;
+        if (hasMore)
+            items.RemoveAt(items.Count - 1);
+
+        string? nextCursor = null;
+        if (hasMore && items.Count > 0)
+        {
+            var last = items[^1];
+            nextCursor = _cursorProtector.Protect(JsonSerializer.Serialize(
+                new HourlyObservationQueueCursor(
+                    actorId, query.StationId, query.PageSize,
+                    last.SubmittedAtUtc, last.ObservationId)));
+        }
+
+        return new(Array.AsReadOnly(items.ToArray()), hasMore, nextCursor);
+    }
     public async Task<PersistedHourlyObservation> CreateAsync(
         PersistHourlyObservationCommand command,
         CancellationToken cancellationToken)
@@ -245,6 +366,13 @@ public sealed class NpgsqlHourlyObservationStore(NpgsqlDataSource dataSource)
         await transaction.CommitAsync(cancellationToken);
         return HourlyObservationStoreResult.Committed;
     }
+
+    private sealed record HourlyObservationQueueCursor(
+        Guid ActorId,
+        string? StationId,
+        int PageSize,
+        DateTimeOffset SubmittedAtUtc,
+        string ObservationId);
 
     private static string ToDatabaseStatus(HourlyObservationStatus status) => status switch
     {
