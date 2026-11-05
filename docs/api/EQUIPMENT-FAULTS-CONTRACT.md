@@ -60,3 +60,13 @@ Allowed rework paths: Assigned -> UnderReview and Resolved -> InProgress. Closed
 ## Not implemented yet
 
 This contract and the domain policy do not create tables, RPCs, storage buckets, API routes, or client screens. Before persistence is implemented, review the contract and storage design against the approved station catalogue and explicitly approved database schema. No Supabase schema has been changed.
+
+## Workshop assignment rules (domain groundwork)
+
+The current domain policy additionally validates a maintenance assignment independently of persistence:
+- fault, station, and assignee identifiers must be non-empty;
+- assignment time must be present and no more than five minutes ahead of server time;
+- expected resolution must be after assignment and no more than one year ahead of server time;
+- optional assignment notes are limited to 1,000 characters.
+
+These checks are not authorization. Before assigning, the API must independently verify that the fault belongs to the route station and that the selected technician is active and authorized for that station/category. Use the authorization matrix in `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md`. Assignment and audit persistence remain unimplemented pending schema approval.
