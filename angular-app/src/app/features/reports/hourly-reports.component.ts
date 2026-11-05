@@ -23,7 +23,7 @@ interface HourlyPreview {
         <span class="preview-tag"><i class="fa-solid fa-flask"></i> وضع تجريبي</span>
       </header>
 
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>معاينة تجريبية وليست نظام حفظ فعلياً.</strong><span>تُفحص البيانات داخل الصفحة فقط. لا تُرسل إلى API ولا تُحفظ في قاعدة البيانات.</span></div></div>
+      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>الحفظ المحلي مفعل — الربط بالخادم لم يُفعّل بعد.</strong><span>تُحفظ المسودات وحالاتها في هذا المتصفح وتبقى بعد إعادة تحميل الصفحة. لا تُرسل إلى API ولا تُشارك بين الأجهزة حتى اكتمال خدمة الخادم.</span></div></div>
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
@@ -120,7 +120,10 @@ interface HourlyPreview {
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
       <section class="panel preview-panel" *ngIf="previews.length">
-        <h2><i class="fa-solid fa-inbox"></i> مسودات النشرات التجريبية</h2>
+        <div class="preview-heading">
+          <h2><i class="fa-solid fa-inbox"></i> مسودات النشرات المحفوظة محلياً</h2>
+          <button type="button" class="export-btn" (click)="exportDrafts()"><i class="fa-solid fa-download"></i> تصدير JSON</button>
+        </div>
         <article class="preview-row" *ngFor="let item of previews">
           <div><strong>{{ item.reference }}</strong><p>{{ item.station }} · {{ item.date }} · {{ item.hour }} UTC</p></div>
           <span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span>
@@ -131,7 +134,7 @@ interface HourlyPreview {
     </div>
   `,
   styles: [`
-    :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #667eea30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:20px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}.stats article{background:#fff;border:1px solid #e8edf1;border-radius:12px;padding:15px 18px;display:grid;grid-template-columns:32px 1fr;align-items:center;gap:3px 10px}.stats i{grid-row:span 2;color:#3498db;font-size:20px}.stats span{font-size:12px;color:#82909a}.stats strong{font-size:14px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.grid label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.grid select,.panel textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.grid select:focus,.panel textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.required-field:after{content:'مطلوب لهذه الساعة';font-size:10px;color:#b66a16}.conditional-note{font-size:12px;color:#805d19;background:#fff8e9;padding:9px 12px;border-radius:7px;margin-bottom:14px}.cloud-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}.cloud-layer{padding:14px;border:1px solid #e8edf1;border-radius:9px;background:#fafcfd}.cloud-layer>strong{display:block;margin-bottom:12px;color:#2980b9}.agreement{display:flex;align-items:center;gap:9px;margin-top:17px;padding:12px;background:#f4f8fb;border-radius:8px;font-size:13px}.actions{display:flex;gap:10px}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-panel{margin-top:20px}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row:last-child{border-bottom:0}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.stats{grid-template-columns:1fr}.grid,.cloud-grid{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.preview-tag{margin-right:0}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
+    :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #667eea30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:20px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}.stats article{background:#fff;border:1px solid #e8edf1;border-radius:12px;padding:15px 18px;display:grid;grid-template-columns:32px 1fr;align-items:center;gap:3px 10px}.stats i{grid-row:span 2;color:#3498db;font-size:20px}.stats span{font-size:12px;color:#82909a}.stats strong{font-size:14px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.grid label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.grid select,.panel textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.grid select:focus,.panel textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.required-field:after{content:'مطلوب لهذه الساعة';font-size:10px;color:#b66a16}.conditional-note{font-size:12px;color:#805d19;background:#fff8e9;padding:9px 12px;border-radius:7px;margin-bottom:14px}.cloud-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}.cloud-layer{padding:14px;border:1px solid #e8edf1;border-radius:9px;background:#fafcfd}.cloud-layer>strong{display:block;margin-bottom:12px;color:#2980b9}.agreement{display:flex;align-items:center;gap:9px;margin-top:17px;padding:12px;background:#f4f8fb;border-radius:8px;font-size:13px}.actions{display:flex;gap:10px}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-panel{margin-top:20px}.preview-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.preview-heading h2{margin:0}.export-btn{border:1px solid #cbd8e2;background:#f7fafc;color:#2876a8;padding:9px 13px;border-radius:8px;cursor:pointer;font:inherit;font-size:12px;font-weight:700}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row:last-child{border-bottom:0}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.stats{grid-template-columns:1fr}.grid,.cloud-grid{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.preview-tag{margin-right:0}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
   `]
 })
 export class HourlyReportsComponent {
@@ -145,6 +148,11 @@ export class HourlyReportsComponent {
   message = '';
   previews: HourlyPreview[] = [];
   private nextReference = 1;
+  private readonly storageKey = 'metra.hourly-drafts.v1';
+
+  constructor() {
+    this.restoreDrafts();
+  }
 
   get isSynoptic(): boolean {
     return ['00','03','06','09','12','15','18','21'].includes(this.selectedHour);
@@ -317,14 +325,83 @@ export class HourlyReportsComponent {
       status: 'draft',
       values
     });
-    this.message = 'اجتازت النشرة فحوص المعاينة وأنشئت كمسودة مؤقتة داخل هذه الصفحة فقط.';
+    this.persistDrafts();
+    this.message = 'اجتازت النشرة التحقق وحُفظت كمسودة محلية على هذا المتصفح.';
     form.reset();
     this.selectedHour = '';
   }
 
   sendForReview(item: HourlyPreview): void {
     item.status = 'submitted';
-    this.message = 'تم تغيير حالة ' + item.reference + ' إلى بانتظار المراجعة في المعاينة فقط.';
+    this.persistDrafts();
+    this.message = 'تم تحديث حالة ' + item.reference + ' محلياً إلى بانتظار المراجعة. لم تُرسل إلى الخادم.';
+  }
+
+  private restoreDrafts(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+      const payload = parsed as { format?: unknown; drafts?: unknown };
+      if (payload.format !== 'metra-hourly-drafts-v1' || !Array.isArray(payload.drafts)) return;
+
+      const restored = payload.drafts.filter((item): item is HourlyPreview => {
+        if (!item || typeof item !== 'object') return false;
+        const draft = item as Partial<HourlyPreview>;
+        return typeof draft.reference === 'string'
+          && typeof draft.date === 'string'
+          && typeof draft.hour === 'string'
+          && typeof draft.station === 'string'
+          && (draft.status === 'draft' || draft.status === 'submitted')
+          && !!draft.values
+          && typeof draft.values === 'object'
+          && !Array.isArray(draft.values);
+      });
+      this.previews = restored;
+      const largest = restored.reduce((max, item) => {
+        const match = /^H-(\\d+)$/.exec(item.reference);
+        return match ? Math.max(max, Number(match[1])) : max;
+      }, 0);
+      this.nextReference = largest + 1;
+    } catch {
+      this.message = 'تعذرت قراءة المسودات المحلية؛ بقيت البيانات الأصلية في التخزين دون تعديل.';
+    }
+  }
+
+  private persistDrafts(): void {
+    if (typeof localStorage === 'undefined') {
+      this.message = 'التخزين المحلي غير متاح في بيئة التشغيل الحالية.';
+      return;
+    }
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify({
+        format: 'metra-hourly-drafts-v1',
+        savedAt: new Date().toISOString(),
+        drafts: this.previews
+      }));
+    } catch {
+      this.message = 'تعذر حفظ المسودة محلياً؛ تحقق من مساحة التخزين وإعدادات المتصفح.';
+    }
+  }
+
+  exportDrafts(): void {
+    const payload = {
+      format: 'metra-hourly-drafts-v1',
+      exportedAt: new Date().toISOString(),
+      drafts: this.previews
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: 'application/json;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'metra-hourly-drafts-' + this.today + '.json';
+    anchor.click();
+    URL.revokeObjectURL(url);
+    this.message = 'تم تجهيز نسخة JSON احتياطية من ' + this.previews.length + ' مسودة.';
   }
 
   private label(key: string): string {
