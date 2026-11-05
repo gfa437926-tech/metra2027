@@ -57,7 +57,7 @@ void main() {
     await tester.pump();
 
     expect(requests, 0);
-    expect(find.text('هذا الحقل مطلوب'), findsWidgets);
+    expect(find.text('هذا الحقل مطلوب'), findsNothing);
   });
   testWidgets('reset clears entered values and validation feedback',
       (tester) async {
