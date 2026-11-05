@@ -115,7 +115,22 @@ public sealed class HourlyObservationApplicationServiceTests
         => new(
             new DateOnly(2026, 11, 5),
             0,
-            new Dictionary<string, string?> { ["utcTime"] = "00" });
+            new Dictionary<string, string?>
+            {
+                ["utcTime"] = "00",
+                ["dryTemp"] = "+20.0",
+                ["wetTemp"] = "+15.0",
+                ["stationPressure"] = "1013.2",
+                ["seaLevelPressure"] = "1015.2",
+                ["windDirection"] = "09",
+                ["windSpeed"] = "05",
+                ["visibility"] = "100",
+                ["totalCloudCover"] = "3",
+                ["relativeHumidity"] = "050",
+                ["dewPoint"] = "+10.0",
+                ["cover12"] = "3",
+                ["cover123"] = "4"
+            });
 
     private sealed class FakeActorProvider(HourlyObservationActorContext actor)
         : IHourlyObservationActorContextProvider
