@@ -131,7 +131,7 @@ public sealed class HourlyObservationApplicationService(
         if (validationIssues.Count > 0)
             return Failure<HourlyObservationSubmissionResponse>(
                 "observation_validation_failed",
-                string.Join(" ", validationIssues.Select(issue => issue.Message)));
+                "توجد أخطاء في قيم النشرة الساعية؛ راجع تفاصيل التحقق قبل الإرسال.");
 
         var saved = await store.CreateAsync(
             new PersistHourlyObservationCommand(
