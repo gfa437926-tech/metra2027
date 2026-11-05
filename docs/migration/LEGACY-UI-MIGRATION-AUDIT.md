@@ -194,3 +194,14 @@ No endpoint, database table, RPC, or migration was created by this cross-check. 
 
 ### Archive recovery
 The repository contains the RAR archive, but GitHub's text-file retrieval cannot extract binary archive contents. Local extraction-tool availability has not yet been confirmed. The archive remains untouched.
+
+
+## Follow-up implementation — equipment fault domain (2026-11-05)
+
+A persistence-independent first implementation now exists on the work branch:
+
+- `backend/Metra.Api/Domain/Maintenance/EquipmentFaultPolicy.cs` defines the equipment-fault report contract, severity/status enums, input validation, and permitted lifecycle transitions.
+- `backend/Metra.Api.Tests/Domain/EquipmentFaultPolicyTests.cs` covers valid reports, missing identities, short text, future timestamps, blocking-severity consistency, and allowed/forbidden transitions.
+- `docs/api/EQUIPMENT-FAULTS-CONTRACT.md` records the proposed station-scoped HTTP contract and security invariants.
+
+This is domain groundwork only. No HTTP endpoints, persistence adapter, Supabase tables/RPCs/storage buckets, attachment upload, Angular screens, or Flutter screens have been implemented for this feature. The database remains unchanged and explicit schema approval is still required before persistence work.
