@@ -28,7 +28,7 @@ interface HourlyPreview {
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
         <article><i class="fa-regular fa-clock"></i><span>التوقيت المحلي</span><strong>{{ now }}</strong></article>
-        <article><i class="fa-solid fa-list-check"></i><span>نشرات هذه المعاينة</span><strong>{{ previews.length }}</strong></article>
+        <article><i class="fa-solid fa-list-check"></i><span>مسودات محفوظة محلياً</span><strong>{{ previews.length }}</strong></article>
       </section>
 
       <form #hourlyForm (submit)="submit($event, hourlyForm)">
@@ -113,7 +113,7 @@ interface HourlyPreview {
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
 
-        <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وإنشاء مسودة تجريبية</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
+        <div class="actions"><button class="primary" type="submit"><i class="fa-solid fa-clipboard-check"></i> التحقق وحفظ المسودة محلياً</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
       </form>
 
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> يرجى تصحيح الملاحظات التالية</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
@@ -127,7 +127,7 @@ interface HourlyPreview {
         <article class="preview-row" *ngFor="let item of previews">
           <div><strong>{{ item.reference }}</strong><p>{{ item.station }} · {{ item.date }} · {{ item.hour }} UTC</p></div>
           <span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span>
-          <button *ngIf="item.status === 'draft'" type="button" class="send-btn" (click)="sendForReview(item)">إرسال للمراجعة</button>
+          <button *ngIf="item.status === 'draft'" type="button" class="send-btn" (click)="sendForReview(item)" >نقل إلى انتظار المراجعة (محلي)</button>
         </article>
       </section>
       <p class="footnote">قواعد الحقول المشروطة والتنسيقات هنا مبنية على نموذج الرصد الساعي الأصلي. يلزم إكمال المطابقة والاختبار مع واجهة API قبل استخدامها تشغيلياً.</p>
