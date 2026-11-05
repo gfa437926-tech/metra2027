@@ -261,7 +261,9 @@ class _RecordsMobileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HourlyObservationScreen(accessTokenProvider: accessTokenProvider);
+    return HourlyObservationScreen(
+      accessTokenProvider: accessTokenProvider?.getAccessToken,
+    );
   }
 }
 
