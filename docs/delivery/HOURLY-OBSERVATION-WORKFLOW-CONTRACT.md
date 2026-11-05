@@ -11,7 +11,7 @@ that persistence or the endpoints are deployed.
 | Operation | Purpose | Required authorization |
 |---|---|---|
 | `POST /api/v1/observations/hourly` | Submit a validated hourly report | Active account and an effective station assignment |
-| `GET /api/v1/observations/hourly` | List reports visible to the caller | Station scope derived from server-side assignments; privileged roles may have wider scope |
+| `GET /api/v1/observations/hourly/review-queue` | Read pending reports for station review | Active reviewer permission and effective station assignment, rechecked by PostgreSQL |
 | `GET /api/v1/observations/hourly/{id}` | Read one report | Resource-level station/role authorization |
 | `POST /api/v1/observations/hourly/{id}/review` | Approve or reject a pending report | Station reviewer for the report's station, or an explicitly authorized higher role |
 
@@ -48,25 +48,26 @@ enforce unique/idempotency behavior, and apply least-privilege database access.
 
 ## Current implementation boundary
 
-- Existing `/hourly/validate` remains anonymous and validation-only.
-- The new request/response contracts, metadata validators, application service,
-  and authenticated HTTP endpoint adapter mappings (submit/review) are implemented. The service enforces active-account checks, permission checks,
-  exactly one effective station assignment for submission, server-derived station
-  identity, domain validation, pending-review state, station-scoped review, and
-  submitter/reviewer separation.
-- `HttpHourlyObservationActorContextProvider` is implemented and registered when
-  the configured METRA database is available. It resolves issuer + subject from
-  the authenticated principal and reads account state, effective station grants,
-  and the two workflow permissions from the authoritative identity data source.
-  Focused unit tests cover authenticated resolution, expired grants, unknown
-  permissions, and inactive accounts.
-- `IHourlyObservationStore` still has no production adapter. The HTTP mapping
-  extension is intentionally not registered in `Program.cs` until a durable
-  store with transactional audit persistence is implemented; therefore save and
-  review are not yet live.
+- Existing `/api/v1/observations/hourly/validate` remains anonymous and validation-only.
+- Authenticated submit and review endpoint handlers, request contracts, validators,
+  actor resolution, application service, and PostgreSQL transactional store are
+  implemented in the backend.
+- The review queue is implemented at
+  `GET /api/v1/observations/hourly/review-queue`. It returns metadata only, checks
+  the actor's active account, review permission and station assignments in the
+  application layer and again in the database query, and uses protected keyset
+  continuation cursors. The default page size is 50 and the maximum is 100.
+- The feature is deliberately disabled by default through
+  `Features:HourlyObservationWorkflowEnabled=false`. Endpoint mapping and
+  persistence service registration occur only when the flag is enabled.
+- The target tables and least-privilege identity-table grants are still a
+  reviewed proposal, not an applied schema. Therefore submit, queue reads, and
+  review are not yet live against the METRA database. Do not enable the feature
+  until the schema, role grants, RLS behavior and durable Data Protection key
+  storage are approved and integration-tested.
 - Flutter and Angular must display “validated” rather than “saved” until the
-  authenticated persistence endpoint is implemented and returns a persisted ID.
-
+  authenticated persistence endpoint is enabled and returns a persisted ID.
+- No legacy station database or station data is part of this implementation.
 
 ## Automated test coverage added (not yet executed)
 
