@@ -39,12 +39,27 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     ('cover123', 'تغطية الطبقات الثلاث', '0'),
   ];
 
+  static const _optionalFields = <(String, String, String)>[
+    ('vaporPressure', 'ضغط البخار', '00.0'),
+    ('vaporPressureDiff', 'فرق ضغط البخار', '00.0'),
+    ('avgWindDirection', 'متوسط اتجاه الرياح', '00'),
+    ('avgWindSpeed', 'متوسط سرعة الرياح', '00'),
+    ('currentWeather', 'الطقس الحالي', '00'),
+    ('cloud1Amount', 'كمية السحب الأولى', '0'),
+    ('cloud2Amount', 'كمية السحب الثانية', '0'),
+    ('cloud3Amount', 'كمية السحب الثالثة', '0'),
+    ('cloud4Amount', 'كمية السحب الرابعة', '0'),
+    ('cloud1Height', 'ارتفاع قاعدة السحب الأولى', '000'),
+    ('cloud2Height', 'ارتفاع قاعدة السحب الثانية', '000'),
+    ('cloud3Height', 'ارتفاع قاعدة السحب الثالثة', '000'),
+  ];
+
   @override
   void initState() {
     super.initState();
     _client = widget._providedClient ?? ObservationValidationClient();
     _ownsClient = widget._providedClient == null;
-    for (final f in _baseFields) {
+    for (final f in [..._baseFields, ..._optionalFields]) {
       _controllers[f.$1] = TextEditingController();
     }
     for (final f in const [
@@ -68,7 +83,12 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   }
 
   Map<String, String?> _payload() {
-    final values = <String, String?>{'utcTime': _utcHour};
+    final values = <String, String?>{
+      'utcTime': _utcHour,
+      'observationDate': _date.year.toString().padLeft(4, '0') + '-' +
+          _date.month.toString().padLeft(2, '0') + '-' +
+          _date.day.toString().padLeft(2, '0'),
+    };
     for (final entry in _controllers.entries) {
       final value = entry.value.text.trim();
       if (value.isNotEmpty) values[entry.key] = value;
@@ -142,6 +162,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
               )),
               const SizedBox(height: 12),
               _section('العناصر الجوية الأساسية', _baseFields),
+              _section('العناصر الجوية الإضافية', _optionalFields, required: false),
               if (_synoptic) _section('عناصر الرصد السينوبتيكي — مطلوبة لهذه الساعة', const [
                 ('pressureSlope', 'ميل الضغط', '0.0'),
                 ('pressureShape', 'شكل تغير الضغط', '0'),
@@ -190,7 +211,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     );
   }
 
-  Widget _section(String title, List<(String, String, String)> fields) {
+  Widget _section(String title, List<(String, String, String)> fields, {bool required = true}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -208,7 +229,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 labelText: f.$2, hintText: f.$3,
                 border: const OutlineInputBorder(), isDense: true,
               ),
-              validator: (v) => v == null || v.trim().isEmpty ? 'هذا الحقل مطلوب' : null,
+              validator: (v) => required && (v == null || v.trim().isEmpty) ? 'هذا الحقل مطلوب' : null,
               onChanged: (_) { if (_result != null) setState(() => _result = null); },
             ),
           )),
