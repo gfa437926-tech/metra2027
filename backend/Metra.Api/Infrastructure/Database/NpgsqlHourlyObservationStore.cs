@@ -15,8 +15,7 @@ namespace Metra.Api.Infrastructure.Database;
 /// </summary>
 public sealed class NpgsqlHourlyObservationStore(
     NpgsqlDataSource dataSource,
-    IDataProtectionProvider protectionProvider,
-    TimeProvider timeProvider)
+    IDataProtectionProvider protectionProvider)
     : IHourlyObservationStore, IHourlyObservationQueueReadStore
 {
     private readonly IDataProtector _cursorProtector =
