@@ -77,7 +77,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers.values) { c.dispose(); }
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
     if (_ownsClient) _client.close();
     super.dispose();
   }
@@ -85,9 +87,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   Map<String, String?> _payload() {
     final values = <String, String?>{
       'utcTime': _utcHour,
-      'observationDate': _date.year.toString().padLeft(4, '0') + '-' +
-          _date.month.toString().padLeft(2, '0') + '-' +
-          _date.day.toString().padLeft(2, '0'),
+      'observationDate': '${_date.year.toString().padLeft(4, '0')}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
     };
     for (final entry in _controllers.entries) {
       final value = entry.value.text.trim();
@@ -135,9 +135,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel = _date.year.toString().padLeft(4, '0') + '-' +
-        _date.month.toString().padLeft(2, '0') + '-' +
-        _date.day.toString().padLeft(2, '0');
+    final dateLabel = '${_date.year.toString().padLeft(4, '0')}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}';
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -155,11 +153,11 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   OutlinedButton.icon(
                     onPressed: _pickDate,
                     icon: const Icon(Icons.calendar_month),
-                    label: Text('تاريخ الرصد: ' + dateLabel),
+                    label: Text('تاريخ الرصد: $dateLabel'),
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
-                    value: _utcHour,
+                    initialValue: _utcHour,
                     decoration: const InputDecoration(
                       labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
                       border: OutlineInputBorder(),
@@ -215,13 +213,13 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   _notice('النشرة اجتازت التحقق بنجاح. لم يتم حفظها أو إرسالها.',
                       const Color(0xFFEAF7EF), const Color(0xFF16703D))
                 else ...[
-                  _notice('توجد ' + _result!.issues.length.toString() + ' ملاحظة يجب تصحيحها.',
+                  _notice('توجد ${_result!.issues.length} ملاحظة يجب تصحيحها.',
                       const Color(0xFFFFF6E5), const Color(0xFF8A5A00)),
                   ..._result!.issues.map((issue) => ListTile(
                     dense: true,
                     leading: const Icon(Icons.error_outline, color: Color(0xFFB42318)),
                     title: Text(issue.message),
-                    subtitle: Text('الحقل: ' + issue.field),
+                    subtitle: Text('الحقل: ${issue.field}'),
                   )),
                 ],
               ],
