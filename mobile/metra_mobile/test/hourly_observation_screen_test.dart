@@ -23,11 +23,16 @@ void main() {
       ),
     ));
 
-    await tester.scrollUntilVisible(find.text('ميل الضغط'), 250, scrollable: find.byType(Scrollable).first);\n    expect(find.text('ميل الضغط'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('شكل تغير الضغط'), 250, scrollable: find.byType(Scrollable).first);\n    expect(find.text('شكل تغير الضغط'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('الطقس السابق'), 250, scrollable: find.byType(Scrollable).first);\n    expect(find.text('الطقس السابق'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('كمية الهطول'), 250, scrollable: find.byType(Scrollable).first);\n    expect(find.text('كمية الهطول'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);\n    expect(find.text('التحقق من النشرة'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('ميل الضغط'), 250, scrollable: find.byType(Scrollable).first);
+    expect(find.text('ميل الضغط'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('شكل تغير الضغط'), 250, scrollable: find.byType(Scrollable).first);
+    expect(find.text('شكل تغير الضغط'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('الطقس السابق'), 250, scrollable: find.byType(Scrollable).first);
+    expect(find.text('الطقس السابق'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('كمية الهطول'), 250, scrollable: find.byType(Scrollable).first);
+    expect(find.text('كمية الهطول'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);
+    expect(find.text('التحقق من النشرة'), findsOneWidget);
   });
 
   testWidgets('blocks an empty form before calling the validation API',
@@ -46,7 +51,8 @@ void main() {
       ),
     ));
 
-    await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);\n    await tester.tap(find.text('التحقق من النشرة'));
+    await tester.scrollUntilVisible(find.text('التحقق من النشرة'), 250, scrollable: find.byType(Scrollable).first);
+    await tester.tap(find.text('التحقق من النشرة'));
     await tester.pump();
 
     expect(requests, 0);
