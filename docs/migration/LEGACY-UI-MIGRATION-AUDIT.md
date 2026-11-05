@@ -66,3 +66,40 @@ The current app has a home overview, station directory, and observation review. 
 - Database: no schema changes made as part of this audit.
 
 **Important:** This is an inventory and migration plan, not a claim that the legacy UI migration is complete.
+
+## Verified source-page findings (2026-11-05)
+
+### Shared legacy sidebar: `sidebar.html`
+The original sidebar is a single RTL navigation shell with a dark blue gradient, logo/system identity, current-user and station card, live clock, section headings, icon-coded links, active/hover states, and a logout action. Its verified destinations and labels are:
+
+1. لوحة التحكم — `main.html`
+2. النشرات الساعية — `hourly_reports.html`
+3. المناخ الساعي — `h_climate_send.html`
+4. النشرات اليومية — `daily.html`
+5. حرارة التربة — `soil-send.html`
+6. النشرات الزراعية — `agricultural_reports.html`
+7. الظواهر الجوية — `weather_phenomena.html`
+8. النشرات المطرية — `rainfall_reports.html`
+9. أعطال الرصد — `fix.html`
+10. أعطال الاتصالات — `fix-tel.html`
+11. أعطال البرامج — `it.html`
+12. تسجيل الخروج
+
+The current Angular shell already has one shared sidebar, but its menu differs: it adds monthly/annual reports, phenomena input/view, observation review, and user administration while omitting the three legacy fault destinations. The migration must reconcile these deliberately; do not add another sidebar inside individual pages. Preserve the legacy Arabic names where they represent the same workflow, and retain newer routes only where they are approved product features.
+
+### Management dashboard: `manager-dashboard.html`
+This is a substantial role-oriented management workspace, not merely a generic home dashboard. Verified UI elements include:
+- Summary cards for total/active users, total/today reports, total/active stations, and pending registrations.
+- Charts for users by station, report activity/distribution, monthly activity, users by role, and registration status.
+- User table with search/pagination and actions for edit, delete, password reset, and WhatsApp reminder.
+- Registration queue with approve/reject/details actions.
+- Station/report detail tables and overall statistics export/print actions.
+- Reminder history, bulk and scheduled WhatsApp reminders, connection test, and logs.
+
+**Security/architecture migration note:** the legacy page loads the Supabase JavaScript client directly and has client-side management actions. Rebuild the capabilities through authenticated ASP.NET Core endpoints with server-side role authorization and audit logging. Never copy a Supabase service-role key or privileged WhatsApp credentials into Angular or Flutter. Deletion, password reset, bulk messaging, and scheduled reminders require explicit permission checks and safe server-side workflows.
+
+### Angular parity checkpoint
+The current Angular route table has routes for login, registration, dashboard, phenomena input/view, hourly, rainfall, daily, climate, agriculture, soil temperature, users, monthly, annual, and observation workflow. It does not yet declare dedicated routes for the three legacy fault pages, IT manager, network manager, telecom manager, workshop manager, or a clearly equivalent manager dashboard. A route alone is not acceptance: each screen still needs field/action/permission/API parity and visual review.
+
+### Archive recovery
+The repository contains the RAR archive, but GitHub's text-file retrieval cannot extract binary archive contents. Local extraction-tool availability has not yet been confirmed. The archive remains untouched.
