@@ -23,6 +23,13 @@ builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
 
 var hasDatabase = !string.IsNullOrWhiteSpace(
     builder.Configuration.GetConnectionString("MetraDatabase"));
+var hourlyObservationWorkflowEnabled =
+    builder.Configuration.GetValue<bool>("Features:HourlyObservationWorkflowEnabled");
+if (hourlyObservationWorkflowEnabled && !hasDatabase)
+{
+    throw new InvalidOperationException(
+        "Features:HourlyObservationWorkflowEnabled requires ConnectionStrings:MetraDatabase.");
+}
 if (hasDatabase)
 {
     builder.Services.AddScoped<IRegistrationSubmissionCatalogue, NpgsqlRegistrationSubmissionCatalogue>();
@@ -37,6 +44,11 @@ if (hasDatabase)
     builder.Services.AddScoped<ICurrentUserContextDataSource, NpgsqlCurrentUserContextDataSource>();
     builder.Services.AddScoped<CurrentUserContextApplicationService>();
     builder.Services.AddScoped<IHourlyObservationActorContextProvider, HttpHourlyObservationActorContextProvider>();
+    if (hourlyObservationWorkflowEnabled)
+    {
+        builder.Services.AddScoped<IHourlyObservationStore, NpgsqlHourlyObservationStore>();
+        builder.Services.AddScoped<HourlyObservationApplicationService>();
+    }
     builder.Services.AddScoped<NpgsqlMetraAuthorizationDataSources>();
     builder.Services.AddScoped<IMetraPermissionAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
     builder.Services.AddScoped<IMetraResourceAuthorizationDataSource>(sp => sp.GetRequiredService<NpgsqlMetraAuthorizationDataSources>());
@@ -137,6 +149,10 @@ if (hasDatabase)
     app.MapRegistrationSubmissionEndpoints();
     app.MapRegistrationApprovalEndpoints();
     app.MapCurrentUserContextEndpoints();
+    if (hourlyObservationWorkflowEnabled)
+    {
+        app.MapHourlyObservationWorkflowEndpoints();
+    }
 }
 
 api.MapGet("/ready", async (IServiceProvider services, CancellationToken cancellationToken) =>
