@@ -124,6 +124,21 @@ public sealed class SupportIncidentPolicyTests
         Assert.Empty(SupportIncidentPolicy.Validate(
             ValidReport() with { AffectedAsset = null }, Now));
 
+    [Theory]
+    [InlineData("   ")] 
+    [InlineData("\\t\\n")]
+    public void Rejects_blank_optional_affected_asset(string asset)
+    {
+        var report = ValidReport() with { AffectedAsset = asset };
+        Assert.Contains(SupportIncidentPolicy.Validate(report, Now),
+            issue => issue.Field == nameof(report.AffectedAsset));
+    }
+
+    [Fact]
+    public void Accepts_affected_asset_at_160_character_boundary() =>
+        Assert.Empty(SupportIncidentPolicy.Validate(
+            ValidReport() with { AffectedAsset = new string('a', 160) }, Now));
+
     [Fact]
     public void Rejects_null_report() =>
         Assert.Throws<ArgumentNullException>(() =>
