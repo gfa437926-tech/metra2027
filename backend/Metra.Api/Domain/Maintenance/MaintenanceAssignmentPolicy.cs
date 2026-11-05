@@ -1,3 +1,5 @@
+using Metra.Api.Domain.Observations;
+
 namespace Metra.Api.Domain.Maintenance;
 
 /// <summary>Rules for assigning and tracking workshop maintenance work without persistence assumptions.</summary>
@@ -11,12 +13,12 @@ public sealed record MaintenanceAssignment(
 
 public static class MaintenanceAssignmentPolicy
 {
-    public static IReadOnlyList<Observations.ValidationIssue> Validate(
+    public static IReadOnlyList<ValidationIssue> Validate(
         MaintenanceAssignment assignment,
         DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(assignment);
-        var issues = new List<Observations.ValidationIssue>();
+        var issues = new List<ValidationIssue>();
         if (assignment.FaultId == Guid.Empty)
             issues.Add(new(nameof(assignment.FaultId), "يجب تحديد بلاغ عطل صحيح."));
         if (assignment.StationId == Guid.Empty)
