@@ -117,6 +117,25 @@ grant usage, select on sequence public.hourly_observation_audit_events_id_seq
   to metra_api_runtime;
 ```
 
+## Station review queue API (implemented, feature-flagged)
+
+The API now includes an authenticated, read-only queue endpoint:
+
+- `GET /api/v1/observations/hourly/review-queue`
+- Optional query parameters: `stationId`, `pageSize` (default 50, maximum 100), and `cursor`.
+- The response contains only queue metadata: observation ID, station ID, observation date, UTC hour, submitter account ID, and submission time. It does not return the JSON observation values.
+- The application service requires an active actor, the `observations.hourly.review` permission, and at least one effective station assignment. A requested station must belong to that actor's effective assignments.
+- The PostgreSQL query independently rechecks the active account, approved/unexpired review permission, and approved/unexpired assignment against authoritative identity tables on every page.
+- Paging uses a stable descending `(submitted_at, id)` keyset. Continuation tokens are protected with ASP.NET Core Data Protection and bound to the actor, station filter, and page size.
+
+The API endpoint, query service, PostgreSQL adapter, and service-level tests are committed, but have not yet been built or executed against PostgreSQL. The workflow flag remains disabled by default.
+
+## Additional activation prerequisites
+
+The queue query reads `metra_account_states`, `permission_grants`, and `station_assignments`. Before activation, verify that the dedicated `metra_api_runtime` database principal has only the required read access to these identity tables and that applicable RLS policies permit the API query without granting access to client roles. The table grants in this proposal do not by themselves grant access to those identity tables.
+
+In multi-instance or redeployed production environments, configure a durable, shared ASP.NET Core Data Protection key ring. Otherwise, review-queue continuation cursors may become invalid after a process restart or on another API instance.
+
 ## Required review decisions
 
 1. Confirm that `station_catalogue.id`, `auth.users.id`, `metra_account_states`, `permission_grants`, and `station_assignments` are the authoritative new-project references.
