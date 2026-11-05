@@ -42,7 +42,7 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
           <a class="nav-link" routerLink="/soil-temperature" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-temperature-half soil"></i><span>حرارة التربة</span></a>
           <a class="nav-link" routerLink="/agriculture" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-seedling agriculture"></i><span>النشرات الزراعية</span></a>
         </nav>
-        <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>دورة النشرات (معاينة)</span></a>
+        <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات الساعية</span></a>
         <div class="section-title">إدارة النظام</div>
         <nav>
           <a class="nav-link" routerLink="/my-registration" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-clipboard-check users"></i><span>متابعة طلب التسجيل</span></a>
