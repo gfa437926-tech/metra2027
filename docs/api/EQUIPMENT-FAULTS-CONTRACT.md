@@ -70,3 +70,17 @@ The current domain policy additionally validates a maintenance assignment indepe
 - optional assignment notes are limited to 1,000 characters.
 
 These checks are not authorization. Before assigning, the API must independently verify that the fault belongs to the route station and that the selected technician is active and authorized for that station/category. Use the authorization matrix in `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md`. Assignment and audit persistence remain unimplemented pending schema approval.
+
+
+## Support incident validation (domain groundwork)
+
+The support-incident policy is a separate domain boundary from equipment-fault reporting. Its current validation rules are:
+
+- Station and reporter IDs are required; reporter identity must ultimately be derived from the validated server-side identity, not request input.
+- Category is limited to 2–80 characters, title to 5–160, description to 10–5,000, and the optional affected-asset label to 160.
+- Occurrence time is required and cannot exceed server time by more than five minutes.
+- An incident marked as operationally impacting must use High or Critical severity.
+- A null affected-asset label is valid; an absent/default occurrence timestamp and a null report are invalid.
+- Lifecycle transitions are constrained: Submitted → UnderReview/Rejected; UnderReview → Assigned/Rejected; Assigned → InProgress/UnderReview; InProgress → WaitingForInformation/Resolved/Assigned; WaitingForInformation → InProgress/Resolved; Resolved → Closed/InProgress. Closed and Rejected are terminal. Unknown lifecycle values and unsupported transitions must be rejected.
+
+These are domain-policy tests, not a deployed support API. The API must still enforce station ownership, role/permission checks, concurrency, audit logging, and server-derived actor identity. Do not infer authorization from a valid transition. Persistence and routes remain gated on the approved schema review.
