@@ -251,6 +251,27 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Review_HandlesAuthorizationRevokedBetweenTargetReadAndCommit()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview),
+            RejectReviewAuthorization = true
+        };
+        var service = CreateService(
+            ActiveActor(new HourlyObservationStationGrant("station-owned", Now.AddDays(-1), null, null)),
+            store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("permission_denied", result.Code);
+    }
+
+    [Fact]
     public async Task Review_ReportsConcurrentDecisionConflict()
     {
         var store = new FakeStore
@@ -362,6 +383,7 @@ public sealed class HourlyObservationApplicationServiceTests
         public CommitHourlyObservationReviewCommand? ReviewCommand { get; private set; }
         public HourlyObservationStoreResult ReviewResult { get; init; } = HourlyObservationStoreResult.Committed;
         public bool RejectCreateAuthorization { get; init; }
+        public bool RejectReviewAuthorization { get; init; }
 
         public Task<PersistedHourlyObservation> CreateAsync(
             PersistHourlyObservationCommand command,
@@ -390,6 +412,8 @@ public sealed class HourlyObservationApplicationServiceTests
             string requiredPermission,
             CancellationToken cancellationToken)
         {
+            if (RejectReviewAuthorization)
+                throw new UnauthorizedAccessException();
             ReviewCommand = command;
             return Task.FromResult(ReviewResult);
         }
