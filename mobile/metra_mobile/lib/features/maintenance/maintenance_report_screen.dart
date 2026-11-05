@@ -22,6 +22,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
   String _severityFilter = 'الكل';
   String _categoryFilter = 'الكل';
   String _sortOrder = 'الأحدث';
+  String _workflowStatus = 'new';
+  String _statusFilter = 'الكل';
   bool _blockingOnly = false;
   bool _blocking = false;
   bool _saving = false;
@@ -72,6 +74,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         if (id == null || id.isEmpty || equipment.length < 2 || description.length < 10) continue;
         draft['id'] = id;
         draft['status'] = 'local_draft';
+        draft['workflowStatus'] = draft['workflowStatus'] ?? 'new';
         imported.add(draft);
       }
       if (imported.isEmpty) {
@@ -143,6 +146,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       'description': _description.text.trim(),
       'createdAt': _drafts.where((d) => d['id'] == _editingId).map((d) => d['createdAt']).firstOrNull ?? DateTime.now().toIso8601String(),
       'status': 'local_draft',
+      'workflowStatus': _workflowStatus,
     };
     try {
       final next = _editingId == null ? [draft, ..._drafts] : _drafts.map((item) => item['id'] == _editingId ? draft : item).toList();
@@ -229,6 +233,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       _category = 'أجهزة الرصد';
       _severity = 'High';
       _blocking = false;
+      _workflowStatus = 'new';
       _editingId = null;
     });
   }
@@ -239,6 +244,14 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
     _description.dispose();
     _search.dispose();
     super.dispose();
+  }
+
+  String _workflowStatusArabic(dynamic status) {
+    switch (status) {
+      case 'in_progress': return 'قيد المعالجة';
+      case 'resolved': return 'تم الإصلاح';
+      default: return 'جديد';
+    }
   }
 
   String _severityArabic(dynamic severity) {
@@ -259,7 +272,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       final matchesSeverity = _severityFilter == 'الكل' || draft['severity'] == _severityFilter;
       final matchesCategory = _categoryFilter == 'الكل' || draft['category'] == _categoryFilter;
       final matchesBlocking = !_blockingOnly || draft['blocking'] == true;
-      return matchesSearch && matchesSeverity && matchesCategory && matchesBlocking;
+      final matchesStatus = _statusFilter == 'الكل' || (draft['workflowStatus'] ?? 'new') == _statusFilter;
+      return matchesSearch && matchesSeverity && matchesCategory && matchesBlocking && matchesStatus;
     }).toList();
     int rank(dynamic severity) => const {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}[severity] ?? 0;
     result.sort((a, b) {
@@ -351,6 +365,17 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                   ],
                   onChanged: (value) => setState(() => _severity = value ?? _severity),
                 ),
+                DropdownButtonFormField<String>(
+                  value: _workflowStatus,
+                  decoration: const InputDecoration(labelText: 'حالة معالجة البلاغ'),
+                  items: const [
+                    DropdownMenuItem(value: 'new', child: Text('جديد')),
+                    DropdownMenuItem(value: 'in_progress', child: Text('قيد المعالجة')),
+                    DropdownMenuItem(value: 'resolved', child: Text('تم الإصلاح')),
+                  ],
+                  onChanged: (value) => setState(() => _workflowStatus = value ?? _workflowStatus),
+                ),
+                const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: const Text('العطل يوقف العمل'),
@@ -432,6 +457,18 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           ],
           onChanged: (value) => setState(() => _severityFilter = value ?? 'الكل'),
         ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _statusFilter,
+          decoration: const InputDecoration(labelText: 'تصفية حسب حالة المعالجة'),
+          items: const [
+            DropdownMenuItem(value: 'الكل', child: Text('كل الحالات')),
+            DropdownMenuItem(value: 'new', child: Text('جديد')),
+            DropdownMenuItem(value: 'in_progress', child: Text('قيد المعالجة')),
+            DropdownMenuItem(value: 'resolved', child: Text('تم الإصلاح')),
+          ],
+          onChanged: (value) => setState(() => _statusFilter = value ?? 'الكل'),
+        ),
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -471,6 +508,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                 _category = draft['category'] as String? ?? 'أجهزة الرصد';
                 _severity = draft['severity'] as String? ?? 'High';
                 _blocking = draft['blocking'] == true;
+                _workflowStatus = draft['workflowStatus'] as String? ?? 'new';
                 _equipment.text = draft['equipment'] as String? ?? '';
                 _description.text = draft['description'] as String? ?? '';
               });
@@ -486,7 +524,7 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
               }),
             ),
             title: Text('${draft['equipment'] ?? 'جهاز غير محدد'}'),
-            subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\n${draft['description']}',
+            subtitle: Text('${draft['category']} • ${_severityArabic(draft['severity'])} • ${_workflowStatusArabic(draft['workflowStatus'])} • ${draft['blocking'] == true ? 'يوقف العمل' : 'لا يوقف العمل'}\\n${draft['description']}',
               maxLines: 3, overflow: TextOverflow.ellipsis),
             isThreeLine: true,
             trailing: Row(mainAxisSize: MainAxisSize.min, children: [
