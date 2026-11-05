@@ -6,6 +6,7 @@ namespace Metra.Api.Domain.Maintenance;
 public sealed record MaintenanceProgressUpdate(
     Guid FaultId,
     Guid StationId,
+    EquipmentFaultStatus CurrentStatus,
     EquipmentFaultStatus Status,
     int ProgressPercent,
     DateTimeOffset UpdatedAt,
@@ -24,8 +25,13 @@ public static class MaintenanceProgressPolicy
             issues.Add(new(nameof(update.FaultId), "يجب تحديد بلاغ العطل."));
         if (update.StationId == Guid.Empty)
             issues.Add(new(nameof(update.StationId), "يجب تحديد المحطة."));
+        if (!Enum.IsDefined(update.CurrentStatus))
+            issues.Add(new(nameof(update.CurrentStatus), "حالة العطل الحالية غير معروفة."));
         if (!Enum.IsDefined(update.Status))
-            issues.Add(new(nameof(update.Status), "حالة العطل غير معروفة."));
+            issues.Add(new(nameof(update.Status), "حالة العطل المطلوبة غير معروفة."));
+        if (Enum.IsDefined(update.CurrentStatus) && Enum.IsDefined(update.Status) &&
+            !EquipmentFaultPolicy.CanTransition(update.CurrentStatus, update.Status))
+            issues.Add(new(nameof(update.Status), "انتقال حالة العطل غير مسموح وفق دورة حياة البلاغ."));
         if (update.ProgressPercent is < 0 or > 100)
             issues.Add(new(nameof(update.ProgressPercent), "نسبة الإنجاز يجب أن تكون بين 0 و100."));
         if (update.UpdatedAt == default || update.UpdatedAt > now.AddMinutes(5))
