@@ -78,9 +78,7 @@ class ObservationValidationClient {
             'Authorization': 'Bearer $token',
           },
           body: jsonEncode({
-            'observationDate': observationDate.year.toString().padLeft(4, '0') +
-                '-' + observationDate.month.toString().padLeft(2, '0') +
-                '-' + observationDate.day.toString().padLeft(2, '0'),
+            'observationDate': '${observationDate.year.toString().padLeft(4, '0')}-${observationDate.month.toString().padLeft(2, '0')}-${observationDate.day.toString().padLeft(2, '0')}',
             'utcHour': utcHour,
             'values': values,
           }),
