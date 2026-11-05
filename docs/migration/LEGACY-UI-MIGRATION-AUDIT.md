@@ -166,5 +166,31 @@ The Angular shared navigation has one sidebar, which is the correct structural a
 
 This follow-up is a source/navigation audit only. It does not claim that any missing screen has been implemented or verified.
 
+
+### Backend capability cross-check
+
+The ASP.NET Core API source and backend README were checked against the missing legacy workflows.
+
+**Existing API feature families confirmed in source:** observation validation/submission/decision/review queue; station directory/catalogue review; registration submission/review; station user directory; station assignment management; station audit; authority access; health/readiness.
+
+**Not found in the current backend feature tree or endpoint registration:** equipment-fault intake and maintenance lifecycle, telecom fault management, IT problem reporting/statistics, integrated operations dashboard, weather analytics queries/aggregations, manager dashboard aggregates, and reminder scheduling/delivery. These must be designed as new server-side feature families before client screens can be fully functional.
+
+**Important architecture boundary:** the API applies a global authenticated-user fallback policy and has server-side station permission checks for operational routes. New management features must follow this pattern and must not query Supabase directly from Angular or Flutter with privileged credentials.
+
+**Readiness maintenance requirement:** when new backend feature services are introduced, update the readiness dependency check and tests so the API cannot be marked ready while a required configured feature is unavailable. Do not claim production readiness solely from the existing health endpoint.
+
+### Backend-first contract backlog
+
+| Proposed API area | Initial contract scope (design target; not implemented) |
+|---|---|
+| Observation equipment faults | Station-scoped create/list/detail; image metadata and secure upload/download; severity and urgency; status lifecycle |
+| Telecom/IT faults | Typed device/problem categories; create/list/detail; assignment; status transition; update notes; audit |
+| Workshop maintenance | Queue; assignment; progress; expected resolution date; resolution details; controlled attachment access |
+| Management dashboard | Permission-filtered summary counts and bounded aggregate datasets; no broad raw-table exposure |
+| Weather analytics | Station/date-range query with explicit approved-data filters and bounded aggregation; documented units and missing-data handling |
+| Reminders | Permission-checked preview, explicit confirmation, delivery status/history, rate limits, and provider credentials held only server-side |
+
+No endpoint, database table, RPC, or migration was created by this cross-check. All proposed contracts remain subject to schema review and approval.
+
 ### Archive recovery
 The repository contains the RAR archive, but GitHub's text-file retrieval cannot extract binary archive contents. Local extraction-tool availability has not yet been confirmed. The archive remains untouched.
