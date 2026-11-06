@@ -64,6 +64,22 @@ public sealed class SupportIncidentPolicyTests
     }
 
     [Fact]
+    public void Rejects_null_required_text_fields()
+    {
+        var report = ValidReport() with
+        {
+            Category = null!,
+            Title = null!,
+            Description = null!
+        };
+
+        var issues = SupportIncidentPolicy.Validate(report, Now);
+        Assert.Contains(issues, issue => issue.Field == nameof(report.Category));
+        Assert.Contains(issues, issue => issue.Field == nameof(report.Title));
+        Assert.Contains(issues, issue => issue.Field == nameof(report.Description));
+    }
+
+    [Fact]
     public void Rejects_blank_category_title_and_description()
     {
         var report = ValidReport() with { Category = "  ", Title = "     ", Description = "\t " };
@@ -125,7 +141,7 @@ public sealed class SupportIncidentPolicyTests
             ValidReport() with { AffectedAsset = null }, Now));
 
     [Theory]
-    [InlineData("   ")] 
+    [InlineData("   ")]
     [InlineData("\t\n")]
     public void Rejects_blank_optional_affected_asset(string asset)
     {
