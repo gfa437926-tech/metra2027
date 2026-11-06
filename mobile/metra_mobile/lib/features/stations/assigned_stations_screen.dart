@@ -179,7 +179,6 @@ class _AssignmentCard extends StatelessWidget {
       'weather_observer_role': 'راصد جوي',
       'observer': 'راصد جوي',
       'station_observer': 'راصد جوي',
-      'weather_observer_role': 'راصد جوي',
       'observer_role': 'راصد جوي',
       'station_manager': 'رئيس محطة',
       'station_head': 'رئيس محطة',
