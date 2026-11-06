@@ -78,7 +78,7 @@ void main() {
           requestCount++;
           return http.Response(_contextJson('Active'), 200);
         }),
-        tokenProvider: _TokenProvider('   \\t  '),
+        tokenProvider: _TokenProvider('   \t  '),
         endpointEnabled: true,
       );
 
