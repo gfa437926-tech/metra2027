@@ -44,6 +44,50 @@ void main() {
     expect(find.text('1'), findsWidgets);
   });
 
+  testWidgets('localizes supported station role codes and preserves unknown codes',
+      (tester) async {
+    CurrentUserStationAssignment assignment(String role) =>
+        CurrentUserStationAssignment(
+          stationId: 'station-$role',
+          stationName: 'محطة $role',
+          roleCode: role,
+          validFrom: DateTime(2026, 1, 1),
+          validTo: null,
+          isActive: true,
+        );
+
+    final context = CurrentUserContext(
+      userId: 'user-roles',
+      profile: const CurrentUserProfile(
+        firstName: 'اختبار',
+        fatherName: null,
+        lastName: 'الأدوار',
+        email: null,
+        phone: null,
+      ),
+      accountState: 'active',
+      assignments: [
+        assignment('weather_observer'),
+        assignment('station-manager'),
+        assignment('station_reviewer'),
+        assignment('unmapped_role'),
+      ],
+      permissions: const [],
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: AssignedStationsScreen(
+        sessionState: CurrentUserSessionState.active,
+        userContext: context,
+      ),
+    ));
+
+    expect(find.text('راصد جوي'), findsOneWidget);
+    expect(find.text('رئيس محطة'), findsOneWidget);
+    expect(find.text('مدقق محطة'), findsOneWidget);
+    expect(find.text('unmapped_role'), findsOneWidget);
+  });
+
   testWidgets('does not invent station data when identity is unconfigured',
       (tester) async {
     await tester.pumpWidget(const MaterialApp(
