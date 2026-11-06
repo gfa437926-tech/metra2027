@@ -230,6 +230,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                         setState(() {
                           _utcHour = v;
                           _result = null;
+                          _error = null;
                           _submissionMessage = null;
                         });
                       }
