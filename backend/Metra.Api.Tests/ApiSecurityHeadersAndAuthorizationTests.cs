@@ -46,6 +46,24 @@ public sealed class ApiSecurityHeadersAndAuthorizationTests
     }
 
     [Fact]
+    public async Task Observation_submission_endpoint_requires_authentication()
+    {
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder => builder.UseEnvironment("Development"));
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{Guid.NewGuid()}/observations",
+            new StringContent("{}"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        AssertHeader(response, "Cache-Control", "no-store");
+    }
+
+    [Fact]
     public async Task Hsts_is_added_to_production_https_responses()
     {
         await using var factory = new WebApplicationFactory<Program>()
