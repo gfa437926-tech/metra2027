@@ -253,4 +253,42 @@ void main() {
     );
     expect(find.textContaining('obs-123'), findsOneWidget);
   });
+  testWidgets('unlocks form and reports API failure after submit',
+      (tester) async {
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/validate')) {
+        return http.Response('{"isValid":true,"issues":[]}', 200);
+      }
+      return http.Response('{"message":"server unavailable"}', 503);
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+        accessTokenProvider: () async => 'test-token',
+      ),
+    ));
+
+    final fields = find.byType(TextFormField);
+    for (var i = 0; i < 12; i++) {
+      await tester.enterText(fields.at(i), '1');
+    }
+    final submitButton = find.byKey(
+      const ValueKey('submit-hourly-observation'),
+    );
+    await tester.scrollUntilVisible(
+      submitButton,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('تعذر إرسال النشرة'), findsOneWidget);
+    expect(tester.widget<TextFormField>(fields.first).enabled, isTrue);
+    expect(tester.widget<OutlinedButton>(submitButton).onPressed, isNotNull);
+  });
+
 }
