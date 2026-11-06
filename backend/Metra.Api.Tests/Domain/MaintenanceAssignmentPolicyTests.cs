@@ -79,6 +79,16 @@ public sealed class MaintenanceAssignmentPolicyTests
         Assert.Empty(MaintenanceAssignmentPolicy.Validate(
             Valid() with { ExpectedResolutionAt = Now.AddDays(365) }, Now));
 
+    [Theory]
+    [InlineData("   ")]
+    [InlineData("\\t\\n")]
+    public void Rejects_blank_assignment_note(string note)
+    {
+        var assignment = Valid() with { AssignmentNote = note };
+        Assert.Contains(MaintenanceAssignmentPolicy.Validate(assignment, Now),
+            x => x.Field == nameof(assignment.AssignmentNote));
+    }
+
     [Fact]
     public void Accepts_assignment_note_at_exact_limit() =>
         Assert.Empty(MaintenanceAssignmentPolicy.Validate(
