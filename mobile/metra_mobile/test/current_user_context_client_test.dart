@@ -97,7 +97,7 @@ void main() {
           captured = request;
           return http.Response(_contextJson('Active'), 200);
         }),
-        tokenProvider: _TokenProvider('  valid-token \\t'),
+        tokenProvider: _TokenProvider('  valid-token \t'),
         endpointEnabled: true,
       );
 
