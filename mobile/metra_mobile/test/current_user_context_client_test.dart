@@ -71,6 +71,25 @@ void main() {
       client.close();
     });
 
+    test('rejects a whitespace-only access token without calling the API', () async {
+      var requestCount = 0;
+      final client = CurrentUserContextClient(
+        client: MockClient((_) async {
+          requestCount++;
+          return http.Response(_contextJson('Active'), 200);
+        }),
+        tokenProvider: _TokenProvider('   \\t  '),
+        endpointEnabled: true,
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.unauthenticated);
+      expect(result.context, isNull);
+      expect(requestCount, 0);
+      client.close();
+    });
+
     test('maps an active server account context', () async {
       final client = CurrentUserContextClient(
         client: MockClient(
