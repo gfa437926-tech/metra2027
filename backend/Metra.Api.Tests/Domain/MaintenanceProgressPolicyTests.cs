@@ -77,7 +77,7 @@ public sealed class MaintenanceProgressPolicyTests
 
     [Theory]
     [InlineData("   ")]
-    [InlineData("\\t\\n")]
+    [InlineData("\t\n")]
     public void Rejects_blank_progress_note(string note)
     {
         var update = Valid() with { ProgressNote = note };
