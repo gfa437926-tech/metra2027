@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -289,6 +290,55 @@ void main() {
     expect(find.textContaining('تعذر إرسال النشرة'), findsOneWidget);
     expect(tester.widget<TextFormField>(fields.first).enabled, isTrue);
     expect(tester.widget<OutlinedButton>(submitButton).onPressed, isNotNull);
+  });
+
+  testWidgets('omits inactive conditional values after changing UTC hour',
+      (tester) async {
+    Map<String, dynamic>? sentValues;
+    final client = MockClient((request) async {
+      sentValues = (jsonDecode(request.body) as Map<String, dynamic>)['values']
+          as Map<String, dynamic>;
+      return http.Response('{"isValid":true,"issues":[]}', 200);
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+      ),
+    ));
+
+    // Fill required base fields and conditional fields at 00 UTC.
+    final fields = find.byType(TextFormField);
+    for (var i = 0; i < 12; i++) {
+      await tester.enterText(fields.at(i), '1');
+    }
+    await tester.scrollUntilVisible(find.text('ميل الضغط'),
+        250, scrollable: find.byType(Scrollable).first);
+    await tester.enterText(find.widgetWithText(TextFormField, 'ميل الضغط'), '2');
+    await tester.scrollUntilVisible(find.text('كمية الهطول'),
+        250, scrollable: find.byType(Scrollable).first);
+    await tester.enterText(find.widgetWithText(TextFormField, 'كمية الهطول'), '3');
+
+    final hour = find.byType(DropdownButtonFormField<String>);
+    await tester.ensureVisible(hour);
+    await tester.tap(hour);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('01:00 UTC').last);
+    await tester.pumpAndSettle();
+
+    final validate = find.widgetWithText(FilledButton, 'التحقق من النشرة');
+    await tester.scrollUntilVisible(validate, 250,
+        scrollable: find.byType(Scrollable).first);
+    await tester.tap(validate);
+    await tester.pumpAndSettle();
+
+    expect(sentValues, isNotNull);
+    expect(sentValues!.containsKey('pressureSlope'), isFalse);
+    expect(sentValues!.containsKey('pressureShape'), isFalse);
+    expect(sentValues!.containsKey('pastWeather'), isFalse);
+    expect(sentValues!.containsKey('precipitationAmount'), isFalse);
   });
 
 }
