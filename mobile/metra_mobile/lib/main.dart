@@ -54,6 +54,7 @@ class _MetraHomePageState extends State<MetraHomePage> {
   late final CurrentUserContextClient _identityClient;
   CurrentUserSessionState _sessionState = CurrentUserSessionState.unconfigured;
   CurrentUserContext? _currentUser;
+  int _identityRequestGeneration = 0;
 
   @override
   void initState() {
@@ -64,13 +65,16 @@ class _MetraHomePageState extends State<MetraHomePage> {
   }
 
   Future<void> _loadCurrentUser({bool refresh = false}) async {
-    if (refresh && mounted) {
+    final requestGeneration = ++_identityRequestGeneration;
+    if (mounted) {
       setState(() {
         _sessionState = CurrentUserSessionState.loading;
+        // Never keep showing a previously loaded identity while refreshing it.
+        _currentUser = null;
       });
     }
     final result = await _identityClient.load();
-    if (!mounted) return;
+    if (!mounted || requestGeneration != _identityRequestGeneration) return;
     setState(() {
       _sessionState = result.state;
       _currentUser = result.context;
