@@ -90,6 +90,24 @@ void main() {
       client.close();
     });
 
+    test('trims surrounding whitespace from a valid bearer token', () async {
+      http.Request? captured;
+      final client = CurrentUserContextClient(
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(_contextJson('Active'), 200);
+        }),
+        tokenProvider: _TokenProvider('  valid-token \\t'),
+        endpointEnabled: true,
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.active);
+      expect(captured?.headers['Authorization'], 'Bearer valid-token');
+      client.close();
+    });
+
     test('maps an active server account context', () async {
       final client = CurrentUserContextClient(
         client: MockClient(
