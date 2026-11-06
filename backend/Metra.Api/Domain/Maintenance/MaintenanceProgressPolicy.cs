@@ -36,8 +36,9 @@ public static class MaintenanceProgressPolicy
             issues.Add(new(nameof(update.ProgressPercent), "نسبة الإنجاز يجب أن تكون بين 0 و100."));
         if (update.UpdatedAt == default || update.UpdatedAt > now.AddMinutes(5))
             issues.Add(new(nameof(update.UpdatedAt), "وقت تحديث الإنجاز غير صالح."));
-        if (update.ProgressNote?.Length > 1000)
-            issues.Add(new(nameof(update.ProgressNote), "ملاحظة الإنجاز يجب ألا تتجاوز 1000 محرف."));
+        if (update.ProgressNote is not null &&
+            (string.IsNullOrWhiteSpace(update.ProgressNote) || update.ProgressNote.Trim().Length > 1000))
+            issues.Add(new(nameof(update.ProgressNote), "ملاحظة الإنجاز يجب ألا تكون فارغة وألا تتجاوز 1000 محرف."));
 
         if (update.Status == EquipmentFaultStatus.Resolved && update.ProgressPercent != 100)
             issues.Add(new(nameof(update.ProgressPercent), "لا يمكن تسجيل العطل محلولاً قبل اكتمال الإنجاز بنسبة 100."));
