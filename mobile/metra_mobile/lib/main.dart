@@ -342,15 +342,41 @@ class _AccountMobileView extends StatelessWidget {
                 ),
                 if (user != null) ...[
                   _AccountDetailRow(
-                    label: 'اسم المستخدم',
-                    value: user.profile.username,
+                    label: 'معرّف الحساب',
+                    value: user.userId,
                     icon: Icons.badge_outlined,
                   ),
                   _AccountDetailRow(
-                    label: 'الدور',
-                    value: user.role,
+                    label: 'حالة الحساب',
+                    value: user.accountState,
                     icon: Icons.admin_panel_settings_outlined,
                   ),
+                  _AccountDetailRow(
+                    label: 'المحطات المسندة',
+                    value: '${user.assignments.length}',
+                    icon: Icons.location_on_outlined,
+                  ),
+                  if (user.assignments.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('المحطات'),
+                          ...user.assignments.map((assignment) => ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  assignment.isActive
+                                      ? Icons.location_on
+                                      : Icons.location_off_outlined,
+                                ),
+                                title: Text(assignment.stationName),
+                                subtitle: Text(assignment.roleCode),
+                              )),
+                        ],
+                      ),
+                    ),
                 ],
                 if (sessionState == CurrentUserSessionState.unconfigured)
                   const Padding(
