@@ -185,3 +185,73 @@ void main() {
   });
 
 }
+
+  testWidgets('keeps form locked while token and submit requests are pending',
+      (tester) async {
+    final tokenResponse = Completer<String?>();
+    final submitResponse = Completer<http.Response>();
+    var requests = 0;
+    final client = MockClient((request) async {
+      requests++;
+      if (request.url.path.endsWith('/validate')) {
+        return http.Response('{"isValid":true,"issues":[]}', 200);
+      }
+      return submitResponse.future;
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+        accessTokenProvider: () => tokenResponse.future,
+      ),
+    ));
+
+    final fields = find.byType(TextFormField);
+    for (var i = 0; i < 12; i++) {
+      await tester.enterText(fields.at(i), '1');
+    }
+
+    final submitButton = find.byKey(
+      const ValueKey('submit-hourly-observation'),
+    );
+    await tester.scrollUntilVisible(
+      submitButton,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(submitButton);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(requests, 1);
+    expect(tester.widget<TextFormField>(fields.first).enabled, isFalse);
+
+    tokenResponse.complete('short-lived-test-token');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(requests, 2);
+    expect(tester.widget<TextFormField>(fields.first).enabled, isFalse);
+    expect(
+      tester.widget<OutlinedButton>(submitButton).onPressed,
+      isNull,
+    );
+
+    submitResponse.complete(http.Response(
+      '{"observationId":"obs-123","stationId":"station-456","status":"submitted"}',
+      201,
+      headers: {'content-type': 'application/json'},
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
+    expect(tester.widget<TextFormField>(fields.first).enabled, isTrue);
+    expect(
+      tester.widget<OutlinedButton>(submitButton).onPressed,
+      isNotNull,
+    );
+    expect(find.textContaining('obs-123'), findsOneWidget);
+  });
+
