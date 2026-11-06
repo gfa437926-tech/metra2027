@@ -91,7 +91,32 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
 app.UseHttpsRedirection();
+
+// Apply a consistent defensive header baseline to every API response.
+// API payloads may contain operational and personal data, so they must not
+// be cached by browsers or intermediary caches.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "no-referrer";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        headers["Cache-Control"] = "no-store";
+        headers["Pragma"] = "no-cache";
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
 app.UseCors("MetraClients");
 app.UseAuthentication();
 app.UseAuthorization();
