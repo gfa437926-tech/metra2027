@@ -176,6 +176,21 @@ void main() {
       client.close();
     });
 
+    test('maps server errors to unavailable without exposing response details', () async {
+      final client = CurrentUserContextClient(
+        client: MockClient((_) async =>
+            http.Response('internal database error', 500)),
+        tokenProvider: _TokenProvider('valid-token'),
+        endpointEnabled: true,
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.unavailable);
+      expect(result.context, isNull);
+      client.close();
+    });
+
     test('maps a forbidden identity context response to forbidden', () async {
       final client = CurrentUserContextClient(
         client: MockClient((_) async => http.Response('{}', 403)),
