@@ -98,10 +98,7 @@ void main() {
     ));
 
     final button = tester.widget<OutlinedButton>(
-      find.ancestor(
-        of: find.text('إرسال النشرة'),
-        matching: find.byType(OutlinedButton),
-      ),
+      find.byKey(const ValueKey('submit-hourly-observation')),
     );
     expect(button.onPressed, isNull);
     expect(
@@ -119,10 +116,7 @@ void main() {
     ));
 
     final button = tester.widget<OutlinedButton>(
-      find.ancestor(
-        of: find.text('إرسال النشرة'),
-        matching: find.byType(OutlinedButton),
-      ),
+      find.byKey(const ValueKey('submit-hourly-observation')),
     );
     expect(button.onPressed, isNotNull);
     expect(
