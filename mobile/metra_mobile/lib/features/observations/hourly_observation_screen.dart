@@ -217,7 +217,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   const Text('بيانات الرصد', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed: _pickDate,
+                    onPressed: _busy ? null : _pickDate,
                     icon: const Icon(Icons.calendar_month),
                     label: Text('تاريخ الرصد: $dateLabel'),
                   ),
@@ -344,6 +344,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: TextFormField(
               controller: _controllers[f.$1],
+              enabled: !_busy,
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               textDirection: TextDirection.ltr,
               decoration: InputDecoration(
