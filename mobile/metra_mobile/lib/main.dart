@@ -148,12 +148,26 @@ class _MetraHomePageState extends State<MetraHomePage> {
                         style: const TextStyle(color: Color(0xFF624512)),
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'تحديث حالة الجلسة',
-                      onPressed: _sessionState == CurrentUserSessionState.loading
-                          ? null
-                          : () => _loadCurrentUser(refresh: true),
-                      icon: const Icon(Icons.refresh, color: Color(0xFF624512)),
+                    Semantics(
+                      label: _sessionState == CurrentUserSessionState.loading
+                          ? 'جارٍ تحديث حالة الجلسة'
+                          : 'تحديث حالة الجلسة',
+                      child: IconButton(
+                        tooltip: 'تحديث حالة الجلسة',
+                        onPressed: _sessionState == CurrentUserSessionState.loading
+                            ? null
+                            : () => _loadCurrentUser(refresh: true),
+                        icon: _sessionState == CurrentUserSessionState.loading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF624512),
+                                ),
+                              )
+                            : const Icon(Icons.refresh, color: Color(0xFF624512)),
+                      ),
                     ),
                   ],
                 ),
