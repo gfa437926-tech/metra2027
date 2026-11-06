@@ -81,7 +81,7 @@ public sealed class MaintenanceAssignmentPolicyTests
 
     [Theory]
     [InlineData("   ")]
-    [InlineData("\\t\\n")]
+    [InlineData("\t\n")]
     public void Rejects_blank_assignment_note(string note)
     {
         var assignment = Valid() with { AssignmentNote = note };
