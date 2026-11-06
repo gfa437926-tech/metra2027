@@ -206,4 +206,55 @@ void main() {
   });
 
 
+
+  test('rejects empty identifiers in successful submission responses', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({
+          'observationId': '   ',
+          'stationId': 'station-7',
+          'status': 0,
+        }),
+        201,
+      )),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: 'test-access-token',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 6,
+        values: {'utcTime': '06'},
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
+  test('rejects structured status values in successful submission responses', () async {
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({
+          'observationId': 'obs-123',
+          'stationId': 'station-7',
+          'status': {'state': 'accepted'},
+        }),
+        201,
+      )),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: 'test-access-token',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 6,
+        values: {'utcTime': '06'},
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
 }
