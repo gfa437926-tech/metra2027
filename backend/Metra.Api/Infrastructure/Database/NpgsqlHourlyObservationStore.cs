@@ -86,6 +86,7 @@ public sealed class NpgsqlHourlyObservationStore(
                 where a.user_id=@actor_id and a.station_id=o.station_id
                   and a.approval_status='approved'
                   and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
+                  and (a.revoked_at is null or a.revoked_at > now())
               )
               and (@cursor_at is null or (o.submitted_at,o.id) < (@cursor_at,@cursor_id))
             order by o.submitted_at desc,o.id desc
@@ -156,6 +157,7 @@ public sealed class NpgsqlHourlyObservationStore(
               and (p.revoked_at is null or p.revoked_at > now())
               and a.station_id=@station_id and a.approval_status='approved'
               and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
+                  and (a.revoked_at is null or a.revoked_at > now())
             for share of s, p, a
             """;
         await using (var authorization = new NpgsqlCommand(authorizationSql, connection, transaction))
@@ -310,6 +312,7 @@ public sealed class NpgsqlHourlyObservationStore(
               and (p.revoked_at is null or p.revoked_at > now())
               and a.station_id=@station_id and a.approval_status='approved'
               and a.valid_from <= now() and (a.valid_to is null or a.valid_to > now())
+                  and (a.revoked_at is null or a.revoked_at > now())
             for share of s, p, a
             """;
         await using (var authorization = new NpgsqlCommand(authorizationSql, connection, transaction))
