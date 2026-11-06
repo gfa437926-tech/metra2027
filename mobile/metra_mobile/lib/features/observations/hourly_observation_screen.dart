@@ -95,7 +95,17 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       'utcTime': _utcHour,
       'observationDate': '${_date.year.toString().padLeft(4, '0')}-${_date.month.toString().padLeft(2, '0')}-${_date.day.toString().padLeft(2, '0')}',
     };
+    // Conditional observations are only applicable at their configured UTC
+    // synoptic/precipitation hours. Do not send stale values left in hidden
+    // fields after the operator changes the observation hour.
+    final inactiveFields = <String>{
+      if (!_synoptic) 'pressureSlope',
+      if (!_synoptic) 'pressureShape',
+      if (!_synoptic) 'pastWeather',
+      if (!_precipitation) 'precipitationAmount',
+    };
     for (final entry in _controllers.entries) {
+      if (inactiveFields.contains(entry.key)) continue;
       final value = entry.value.text.trim();
       if (value.isNotEmpty) values[entry.key] = value;
     }
