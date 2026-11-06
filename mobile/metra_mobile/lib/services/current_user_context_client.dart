@@ -62,7 +62,7 @@ class CurrentUserContextClient {
         CurrentUserSessionState.unavailable,
       );
     }
-    if (token == null || token.isEmpty) {
+    if (token == null || token.trim().isEmpty) {
       return const CurrentUserContextResult(
         CurrentUserSessionState.unauthenticated,
       );
