@@ -47,14 +47,17 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       'exportedAt': DateTime.now().toIso8601String(),
       'drafts': _drafts,
     })));
-    if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم نسخ نسخة JSON من البلاغات إلى الحافظة.')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم نسخ نسخة JSON من البلاغات إلى الحافظة.')),
+      );
+    }
   }
 
   Future<void> _importDraftsFromClipboard() async {
     try {
       final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
+      if (!mounted) return;
       final raw = clipboard?.text;
       if (raw == null || raw.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('الحافظة فارغة؛ انسخ ملف JSON أولاً.')));
@@ -209,9 +212,11 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         SnackBar(content: Text('تم تحديث حالة البلاغات المحددة إلى «${_workflowStatusArabic(status)}».')),
       );
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر تحديث حالات البلاغات المحددة.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تحديث حالات البلاغات المحددة.')),
+        );
+      }
     }
   }
 
@@ -325,9 +330,11 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         SnackBar(content: Text('تم تحديث حالة البلاغ إلى: ${_workflowStatusArabic(status)}')),
       );
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر تحديث حالة البلاغ.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تحديث حالة البلاغ.')),
+        );
+      }
     }
   }
 
@@ -353,9 +360,11 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
       await _storage.write(key: _draftKey, value: jsonEncode(next));
       if (mounted) setState(() { _drafts = next; _selectedDraftIds.remove(id); if (_editingId == id) _resetFields(); });
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر حذف المسودة المحلية.')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر حذف المسودة المحلية.')),
+        );
+      }
     }
   }
 
@@ -468,7 +477,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
               key: _formKey,
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 DropdownButtonFormField<String>(
-                  value: _category,
+                  key: ValueKey('category-$_category'),
+                  initialValue: _category,
                   decoration: const InputDecoration(labelText: 'تصنيف المعدة'),
                   items: const [
                     DropdownMenuItem(value: 'أجهزة الرصد', child: Text('أجهزة الرصد')),
@@ -489,7 +499,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _severity,
+                  key: ValueKey('severity-$_severity'),
+                  initialValue: _severity,
                   decoration: const InputDecoration(labelText: 'شدة العطل'),
                   items: const [
                     DropdownMenuItem(value: 'Low', child: Text('منخفض')),
@@ -500,7 +511,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
                   onChanged: (value) => setState(() => _severity = value ?? _severity),
                 ),
                 DropdownButtonFormField<String>(
-                  value: _workflowStatus,
+                  key: ValueKey('workflow-$_workflowStatus'),
+                  initialValue: _workflowStatus,
                   decoration: const InputDecoration(labelText: 'حالة معالجة البلاغ'),
                   items: const [
                     DropdownMenuItem(value: 'new', child: Text('جديد')),
@@ -569,7 +581,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         OutlinedButton.icon(onPressed: _importDraftsFromClipboard, icon: const Icon(Icons.file_download_outlined), label: const Text('استيراد نسخة JSON من الحافظة')),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _categoryFilter,
+          key: ValueKey('category-filter-$_categoryFilter'),
+          initialValue: _categoryFilter,
           decoration: const InputDecoration(labelText: 'تصفية حسب التصنيف'),
           items: const [
             DropdownMenuItem(value: 'الكل', child: Text('كل التصنيفات')),
@@ -583,7 +596,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _severityFilter,
+          key: ValueKey('severity-filter-$_severityFilter'),
+          initialValue: _severityFilter,
           decoration: const InputDecoration(labelText: 'تصفية حسب شدة العطل'),
           items: const [
             DropdownMenuItem(value: 'الكل', child: Text('كل الشدات')),
@@ -596,7 +610,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _statusFilter,
+          key: ValueKey('status-filter-$_statusFilter'),
+          initialValue: _statusFilter,
           decoration: const InputDecoration(labelText: 'تصفية حسب حالة المعالجة'),
           items: const [
             DropdownMenuItem(value: 'الكل', child: Text('كل الحالات')),
@@ -614,7 +629,8 @@ class _MaintenanceReportScreenState extends State<MaintenanceReportScreen> {
           onChanged: (value) => setState(() => _blockingOnly = value),
         ),
         DropdownButtonFormField<String>(
-          value: _sortOrder,
+          key: ValueKey('sort-$_sortOrder'),
+          initialValue: _sortOrder,
           decoration: const InputDecoration(labelText: 'ترتيب البلاغات'),
           items: const [
             DropdownMenuItem(value: 'الأحدث', child: Text('الأحدث أولاً')),
