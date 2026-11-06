@@ -24,3 +24,16 @@ void main() {
     expect(find.text('السجلات الساعية'), findsWidgets);
   });
 }
+
+  testWidgets('account tab shows session details instead of placeholder',
+      (tester) async {
+    await tester.pumpWidget(const MetraMobileApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('حسابي'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('حالة الجلسة'), findsOneWidget);
+    expect(find.text('نسخة معاينة — المصادقة غير مهيأة'), findsOneWidget);
+    expect(find.textContaining('المصادقة غير مهيأة'), findsOneWidget);
+  });
