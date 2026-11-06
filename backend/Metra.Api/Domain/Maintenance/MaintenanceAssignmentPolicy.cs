@@ -30,8 +30,9 @@ public static class MaintenanceAssignmentPolicy
         if (assignment.ExpectedResolutionAt is { } expected &&
             (expected <= assignment.AssignedAt || expected > now.AddDays(365)))
             issues.Add(new(nameof(assignment.ExpectedResolutionAt), "موعد الإنجاز المتوقع يجب أن يكون بعد الإسناد وخلال سنة."));
-        if (assignment.AssignmentNote?.Length > 1000)
-            issues.Add(new(nameof(assignment.AssignmentNote), "ملاحظات الإسناد يجب ألا تتجاوز 1000 محرف."));
+        if (assignment.AssignmentNote is not null &&
+            (string.IsNullOrWhiteSpace(assignment.AssignmentNote) || assignment.AssignmentNote.Trim().Length > 1000))
+            issues.Add(new(nameof(assignment.AssignmentNote), "ملاحظات الإسناد يجب ألا تكون فارغة وألا تتجاوز 1000 محرف."));
         return issues;
     }
 }
