@@ -5,7 +5,13 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:metra_mobile/services/current_user_context_client.dart';
 
-class _ThrowingTokenProvider implements AccessTokenProvider {\n  @override\n  Future<String?> getAccessToken() async => throw StateError('secure session unavailable');\n}\n\nclass _TokenProvider implements AccessTokenProvider {
+class _ThrowingTokenProvider implements AccessTokenProvider {
+  @override
+  Future<String?> getAccessToken() async =>
+      throw StateError('secure session unavailable');
+}
+
+class _TokenProvider implements AccessTokenProvider {
   _TokenProvider(this.token);
 
   final String? token;
