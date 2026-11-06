@@ -55,6 +55,21 @@ public sealed class HourlyObservationApplicationServiceTests
     }
 
     [Fact]
+    public async Task Submit_RejectsRevokedStationAssignment()
+    {
+        var store = new FakeStore();
+        var revoked = new HourlyObservationStationGrant(
+            "station-revoked", Now.AddDays(-2), null, Now.AddMinutes(-1));
+        var service = CreateService(ActiveActor(revoked), store);
+
+        var result = await service.SubmitAsync(ValidRequest());
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("station_context_required", result.Code);
+        Assert.Null(store.Created);
+    }
+
+    [Fact]
     public async Task Submit_RejectsActorWithoutSubmitPermission()
     {
         var store = new FakeStore();
@@ -178,6 +193,27 @@ public sealed class HourlyObservationApplicationServiceTests
         var expiredGrant = new HourlyObservationStationGrant(
             "station-owned", Now.AddDays(-2), Now.AddMinutes(-1), null);
         var service = CreateService(ActiveActor(expiredGrant), store);
+
+        var result = await service.ReviewAsync(
+            "observation-1",
+            new HourlyObservationReviewRequest(HourlyObservationReviewDecision.Approve, null));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal("station_scope_violation", result.Code);
+        Assert.Null(store.ReviewCommand);
+    }
+
+    [Fact]
+    public async Task Review_RejectsRevokedStationAssignment()
+    {
+        var store = new FakeStore
+        {
+            ReviewTarget = new HourlyObservationReviewTarget(
+                "observation-1", "station-owned", "observer-2", HourlyObservationStatus.PendingReview)
+        };
+        var revokedGrant = new HourlyObservationStationGrant(
+            "station-owned", Now.AddDays(-2), null, Now.AddMinutes(-1));
+        var service = CreateService(ActiveActor(revokedGrant), store);
 
         var result = await service.ReviewAsync(
             "observation-1",
