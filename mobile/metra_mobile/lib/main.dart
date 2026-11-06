@@ -182,12 +182,10 @@ class _MetraHomePageState extends State<MetraHomePage> {
                       sessionState: _sessionState,
                       userContext: _currentUser,
                     ),
-                    _PlaceholderMobileView(
-                      title: 'حسابي',
-                      description: _currentUser == null
-                          ? _sessionLabel
-                          : '${_currentUser!.profile.firstName} ${_currentUser!.profile.lastName}',
-                      icon: Icons.person_outline,
+                    _AccountMobileView(
+                      sessionLabel: _sessionLabel,
+                      sessionState: _sessionState,
+                      userContext: _currentUser,
                     ),
                   ],
                 ),
@@ -295,6 +293,108 @@ class _RecordsMobileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return HourlyObservationScreen(
       accessTokenProvider: accessTokenProvider?.getAccessToken,
+    );
+  }
+}
+
+class _AccountMobileView extends StatelessWidget {
+  const _AccountMobileView({
+    required this.sessionLabel,
+    required this.sessionState,
+    required this.userContext,
+  });
+
+  final String sessionLabel;
+  final CurrentUserSessionState sessionState;
+  final CurrentUserContext? userContext;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = userContext;
+    final displayName = user == null
+        ? 'لم يتم تحميل بيانات الحساب'
+        : '${user.profile.firstName} ${user.profile.lastName}'.trim();
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const CircleAvatar(
+                  radius: 28,
+                  child: Icon(Icons.person_outline, size: 30),
+                ),
+                const SizedBox(height: 14),
+                Text(displayName,
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
+                Text(sessionLabel),
+                const SizedBox(height: 16),
+                const Divider(),
+                _AccountDetailRow(
+                  label: 'حالة الجلسة',
+                  value: sessionLabel,
+                  icon: Icons.verified_user_outlined,
+                ),
+                if (user != null) ...[
+                  _AccountDetailRow(
+                    label: 'اسم المستخدم',
+                    value: user.profile.username,
+                    icon: Icons.badge_outlined,
+                  ),
+                  _AccountDetailRow(
+                    label: 'الدور',
+                    value: user.role,
+                    icon: Icons.admin_panel_settings_outlined,
+                  ),
+                ],
+                if (sessionState == CurrentUserSessionState.unconfigured)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Text(
+                      'المصادقة غير مهيأة في نسخة المعاينة. لا يمكن عرض بيانات حساب حقيقية.',
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AccountDetailRow extends StatelessWidget {
+  const _AccountDetailRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Text(value, textAlign: TextAlign.end,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
     );
   }
 }
