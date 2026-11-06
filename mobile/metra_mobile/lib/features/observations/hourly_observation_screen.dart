@@ -255,6 +255,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton.icon(
+                    key: const ValueKey('submit-hourly-observation'),
                     onPressed: _busy || widget.accessTokenProvider == null
                         ? null
                         : _submit,
