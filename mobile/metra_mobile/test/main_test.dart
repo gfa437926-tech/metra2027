@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter.dart';
 import 'package:metra_mobile/main.dart';
 
 void main() {
@@ -23,7 +23,6 @@ void main() {
 
     expect(find.text('السجلات الساعية'), findsWidgets);
   });
-}
 
   testWidgets('account tab shows session details instead of placeholder',
       (tester) async {
@@ -34,6 +33,12 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('حالة الجلسة'), findsOneWidget);
-    expect(find.text('نسخة معاينة — المصادقة غير مهيأة'), findsOneWidget);
-    expect(find.text('المصادقة غير مهيأة في نسخة المعاينة. لا يمكن عرض بيانات حساب حقيقية.'), findsOneWidget);
+    expect(find.text('نسخة معاينة — المصادقة غير مهيأة'), findsWidgets);
+    expect(
+      find.text(
+        'المصادقة غير مهيأة في نسخة المعاينة. لا يمكن عرض بيانات حساب حقيقية.',
+      ),
+      findsOneWidget,
+    );
   });
+}
