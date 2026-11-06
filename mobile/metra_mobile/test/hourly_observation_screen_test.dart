@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -137,6 +139,49 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+
+  testWidgets('locks observation inputs while validation is in flight',
+      (tester) async {
+    final response = Completer<http.Response>();
+    final client = MockClient((request) => response.future);
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(
+        validationClient: ObservationValidationClient(
+          client: client,
+          baseUrl: 'https://example.test/api/v1',
+        ),
+      ),
+    ));
+
+    final fields = find.byType(TextFormField);
+    for (var i = 0; i < 12; i++) {
+      await tester.enterText(fields.at(i), '1');
+    }
+
+    final validateButton = find.widgetWithText(FilledButton, 'التحقق من النشرة');
+    await tester.scrollUntilVisible(
+      validateButton,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(validateButton);
+    await tester.pump();
+
+    expect(tester.widget<TextFormField>(fields.first).enabled, isFalse);
+    final dateButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, RegExp('تاريخ الرصد:')),
+    );
+    expect(dateButton.onPressed, isNull);
+    final hourPicker = tester.widget<DropdownButtonFormField<String>>(
+      find.byType(DropdownButtonFormField<String>),
+    );
+    expect(hourPicker.onChanged, isNull);
+
+    response.complete(http.Response('{"isValid":true,"issues":[]}', 200));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(fields.first).enabled, isTrue);
   });
 
 }
