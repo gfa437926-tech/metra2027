@@ -65,6 +65,25 @@ class ObservationValidationClient {
     if (utcHour < 0 || utcHour > 23) {
       throw ArgumentError.value(utcHour, 'utcHour', 'UTC hour must be between 0 and 23.');
     }
+    final normalizedHour = utcHour.toString().padLeft(2, '0');
+    final normalizedDate =
+        '${observationDate.year.toString().padLeft(4, '0')}-${observationDate.month.toString().padLeft(2, '0')}-${observationDate.day.toString().padLeft(2, '0')}';
+    final payloadHour = values['utcTime'];
+    if (payloadHour != null && payloadHour != normalizedHour) {
+      throw ArgumentError.value(
+        payloadHour,
+        'values.utcTime',
+        'UTC hour metadata must match utcHour.',
+      );
+    }
+    final payloadDate = values['observationDate'];
+    if (payloadDate != null && payloadDate != normalizedDate) {
+      throw ArgumentError.value(
+        payloadDate,
+        'values.observationDate',
+        'Observation date metadata must match observationDate.',
+      );
+    }
 
     final base = _baseUrl.endsWith('/')
         ? _baseUrl.substring(0, _baseUrl.length - 1)
@@ -78,7 +97,7 @@ class ObservationValidationClient {
             'Authorization': 'Bearer $token',
           },
           body: jsonEncode({
-            'observationDate': '${observationDate.year.toString().padLeft(4, '0')}-${observationDate.month.toString().padLeft(2, '0')}-${observationDate.day.toString().padLeft(2, '0')}',
+            'observationDate': normalizedDate,
             'utcHour': utcHour,
             'values': values,
           }),
