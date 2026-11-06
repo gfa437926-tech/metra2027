@@ -102,7 +102,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     return values;
   }
 
-  Future<ObservationValidationResult?> _runValidation() async {
+  Future<ObservationValidationResult?> _runValidation({
+    bool releaseBusy = true,
+  }) async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return null;
     setState(() { _busy = true; _result = null; _error = null; });
@@ -114,7 +116,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة التحقق: $e');
       return null;
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (releaseBusy && mounted) setState(() => _busy = false);
     }
   }
 
@@ -124,13 +126,19 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
 
   Future<void> _submit() async {
     final tokenProvider = widget.accessTokenProvider;
-    if (tokenProvider == null) return;
+    if (tokenProvider == null || _busy) return;
 
-    final validation = await _runValidation();
-    if (!mounted || validation == null || !validation.isValid) return;
+    // Keep the form locked from validation through the final submit response.
+    // Releasing the busy flag between these requests allowed edits or a second
+    // submission while the first operation was still in progress.
+    final validation = await _runValidation(releaseBusy: false);
+    if (!mounted) return;
+    if (validation == null || !validation.isValid) {
+      setState(() => _busy = false);
+      return;
+    }
 
     setState(() {
-      _busy = true;
       _submissionMessage = null;
       _error = null;
     });
