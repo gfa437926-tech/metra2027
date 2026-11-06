@@ -97,6 +97,12 @@ void main() {
       home: HourlyObservationScreen(),
     ));
 
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('submit-hourly-observation')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     final button = tester.widget<OutlinedButton>(
       find.byKey(const ValueKey('submit-hourly-observation')),
     );
@@ -115,6 +121,12 @@ void main() {
       ),
     ));
 
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('submit-hourly-observation')),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     final button = tester.widget<OutlinedButton>(
       find.byKey(const ValueKey('submit-hourly-observation')),
     );
