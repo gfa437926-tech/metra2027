@@ -148,7 +148,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       if (mounted) {
         setState(() {
           _submissionMessage =
-              'تم إرسال النشرة بنجاح. رقم السجل: ' + response['observationId'].toString();
+              'تم إرسال النشرة بنجاح. رقم السجل: ${response['observationId']}';
         });
       }
     } catch (e) {
@@ -299,7 +299,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
                 widget.accessTokenProvider == null
                     ? 'الإرسال غير مفعّل: لم يتم ربط مزوّد جلسة دخول آمن بهذه الشاشة.'
                     : 'يتم التحقق أولاً ثم الإرسال إلى .NET. تعتمد صلاحية المحطة على هوية المستخدم في الخادم.',
-                style: TextStyle(color: Colors.black54, fontSize: 12),
+                style: const TextStyle(color: Colors.black54, fontSize: 12),
               ),
             ],
           ),
