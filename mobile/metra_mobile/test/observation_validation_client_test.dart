@@ -157,5 +157,53 @@ void main() {
     );
     client.close();
   });
+  test('rejects conflicting UTC hour metadata before making a request', () async {
+    var requests = 0;
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: 'test-access-token',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 6,
+        values: {'utcTime': '09'},
+      ),
+      throwsArgumentError,
+    );
+
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('rejects conflicting observation date metadata before making a request', () async {
+    var requests = 0;
+    final client = ObservationValidationClient(
+      baseUrl: 'https://api.example.test/api/v1',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await expectLater(
+      client.submitHourly(
+        accessToken: 'test-access-token',
+        observationDate: DateTime(2026, 11, 6),
+        utcHour: 6,
+        values: {'observationDate': '2026-11-07'},
+      ),
+      throwsArgumentError,
+    );
+
+    expect(requests, 0);
+    client.close();
+  });
+
 
 }
