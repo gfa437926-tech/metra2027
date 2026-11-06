@@ -63,7 +63,12 @@ class _MetraHomePageState extends State<MetraHomePage> {
     _loadCurrentUser();
   }
 
-  Future<void> _loadCurrentUser() async {
+  Future<void> _loadCurrentUser({bool refresh = false}) async {
+    if (refresh && mounted) {
+      setState(() {
+        _sessionState = CurrentUserSessionState.loading;
+      });
+    }
     final result = await _identityClient.load();
     if (!mounted) return;
     setState(() {
@@ -135,9 +140,22 @@ class _MetraHomePageState extends State<MetraHomePage> {
                   border: Border.all(color: const Color(0xFFD6A54B)),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Text(
-                  '$_sessionLabel. لا تُدخل بيانات تشغيلية أو شخصية حقيقية في نسخة المعاينة.',
-                  style: const TextStyle(color: Color(0xFF624512)),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '$_sessionLabel. لا تُدخل بيانات تشغيلية أو شخصية حقيقية في نسخة المعاينة.',
+                        style: const TextStyle(color: Color(0xFF624512)),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'تحديث حالة الجلسة',
+                      onPressed: _sessionState == CurrentUserSessionState.loading
+                          ? null
+                          : () => _loadCurrentUser(refresh: true),
+                      icon: const Icon(Icons.refresh, color: Color(0xFF624512)),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
