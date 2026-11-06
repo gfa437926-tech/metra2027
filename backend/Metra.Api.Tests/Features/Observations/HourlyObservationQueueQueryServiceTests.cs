@@ -122,6 +122,30 @@ public sealed class HourlyObservationQueueQueryServiceTests
     }
 
     [Fact]
+    public async Task Rejects_revoked_station_assignment_before_store_access()
+    {
+        var revoked = new HourlyObservationStationGrant(
+            StationA, Now.AddDays(-1), null, Now.AddMinutes(-1));
+        var store = new FakeStore(Page());
+        var result = await Create(Actor(revoked), store).ReadAsync(new(StationA));
+
+        Assert.Equal(HourlyObservationQueueReadStatus.Unauthorized, result.Status);
+        Assert.Equal(0, store.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_store_rows_from_a_revoked_station_assignment()
+    {
+        var revokedStation = new HourlyObservationStationGrant(
+            StationB, Now.AddDays(-1), null, Now.AddMinutes(-1));
+        var store = new FakeStore(Page(Item(ObservationA, StationB, Now)));
+        var result = await Create(Actor(Grant(StationA), revokedStation), store).ReadAsync(new());
+
+        Assert.Equal(HourlyObservationQueueReadStatus.InvalidStoreResponse, result.Status);
+        Assert.Equal(1, store.Calls);
+    }
+
+    [Fact]
     public async Task Rejects_store_rows_outside_actor_station_scope()
     {
         var store = new FakeStore(Page(Item(ObservationA, StationB, Now)));
