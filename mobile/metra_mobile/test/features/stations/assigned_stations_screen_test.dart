@@ -39,7 +39,7 @@ void main() {
 
     expect(find.text('محطة اختبار'), findsOneWidget);
     expect(find.text('station-01'), findsOneWidget);
-    expect(find.text('رئيس محطة'), findsOneWidget);
+    expect(find.text('رئيس محطة'), findsNWidgets(2));
     expect(find.text('2026-01-01'), findsOneWidget);
     expect(find.text('1'), findsWidgets);
   });
@@ -68,6 +68,9 @@ void main() {
       accountState: 'active',
       assignments: [
         assignment('weather_observer'),
+        assignment('weather-observer-role'),
+        assignment('station-chief'),
+        assignment('system-administrator'),
         assignment('station-manager'),
         assignment('station_reviewer'),
         assignment('unmapped_role'),
@@ -82,9 +85,10 @@ void main() {
       ),
     ));
 
-    expect(find.text('راصد جوي'), findsOneWidget);
+    expect(find.text('راصد جوي'), findsNWidgets(2));
     expect(find.text('رئيس محطة'), findsOneWidget);
     expect(find.text('مدقق محطة'), findsOneWidget);
+    expect(find.text('مدير النظام'), findsOneWidget);
     expect(find.text('unmapped_role'), findsOneWidget);
   });
 
