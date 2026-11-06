@@ -184,7 +184,6 @@ void main() {
     expect(tester.widget<TextFormField>(fields.first).enabled, isTrue);
   });
 
-}
 
   testWidgets('keeps form locked while token and submit requests are pending',
       (tester) async {
@@ -254,4 +253,4 @@ void main() {
     );
     expect(find.textContaining('obs-123'), findsOneWidget);
   });
-
+}
