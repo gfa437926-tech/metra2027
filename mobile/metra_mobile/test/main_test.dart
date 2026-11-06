@@ -35,5 +35,5 @@ void main() {
 
     expect(find.text('حالة الجلسة'), findsOneWidget);
     expect(find.text('نسخة معاينة — المصادقة غير مهيأة'), findsOneWidget);
-    expect(find.textContaining('المصادقة غير مهيأة'), findsOneWidget);
+    expect(find.text('المصادقة غير مهيأة في نسخة المعاينة. لا يمكن عرض بيانات حساب حقيقية.'), findsOneWidget);
   });
