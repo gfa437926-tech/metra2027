@@ -181,7 +181,14 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       firstDate: DateTime(2000), lastDate: DateTime(2100),
       helpText: 'تاريخ الرصد',
     );
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) {
+      setState(() {
+        _date = picked;
+        _result = null;
+        _error = null;
+        _submissionMessage = null;
+      });
+    }
   }
 
   @override
