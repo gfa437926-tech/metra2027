@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:metra_mobile/services/current_user_context_client.dart';
 
-class _TokenProvider implements AccessTokenProvider {
+class _ThrowingTokenProvider implements AccessTokenProvider {\n  @override\n  Future<String?> getAccessToken() async => throw StateError('secure session unavailable');\n}\n\nclass _TokenProvider implements AccessTokenProvider {
   _TokenProvider(this.token);
 
   final String? token;
@@ -107,6 +107,56 @@ void main() {
       final result = await client.load();
 
       expect(result.state, CurrentUserSessionState.unauthenticated);
+      expect(result.context, isNull);
+      client.close();
+    });
+
+    test('sends the short-lived token only as a bearer authorization header', () async {
+      http.Request? captured;
+      final client = CurrentUserContextClient(
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(_contextJson('Active'), 200);
+        }),
+        tokenProvider: _TokenProvider('short-lived-test-token'),
+        endpointEnabled: true,
+        baseUrl: 'https://api.example.test/api/v1/',
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.active);
+      expect(captured?.method, 'GET');
+      expect(captured?.url.toString(), 'https://api.example.test/api/v1/identity/me');
+      expect(captured?.headers['Authorization'], 'Bearer short-lived-test-token');
+      expect(captured?.headers['Accept'], 'application/json');
+      client.close();
+    });
+
+    test('maps a forbidden identity context response to forbidden', () async {
+      final client = CurrentUserContextClient(
+        client: MockClient((_) async => http.Response('{}', 403)),
+        tokenProvider: _TokenProvider('valid-token'),
+        endpointEnabled: true,
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.forbidden);
+      expect(result.context, isNull);
+      client.close();
+    });
+
+    test('fails closed when the token provider throws', () async {
+      final client = CurrentUserContextClient(
+        client: MockClient((_) async => http.Response('{}', 200)),
+        tokenProvider: _ThrowingTokenProvider(),
+        endpointEnabled: true,
+      );
+
+      final result = await client.load();
+
+      expect(result.state, CurrentUserSessionState.unavailable);
       expect(result.context, isNull);
       client.close();
     });
