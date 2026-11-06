@@ -12,6 +12,7 @@ The current ASP.NET Core startup code confirms:
 - Issuer, audience, token lifetime, and signing key are validated; HTTPS metadata is required.
 - The authorization fallback policy requires an authenticated user unless an endpoint explicitly opts out.
 - Supabase HTTP clients have an eight-second timeout.
+- Production responses receive HSTS; all environments receive defensive response headers: MIME sniffing and framing are disabled, referrers are suppressed, camera/microphone/geolocation permissions are denied, and API responses are marked non-cacheable.
 - CORS origins are read from `Cors:AllowedOrigins`; no wildcard origin is configured.
 - Exception handling, HTTPS redirection, authentication, and authorization middleware are registered.
 - Health and readiness endpoints are explicitly anonymous. Health returns only a basic liveness payload. Readiness returns a generic ready/unavailable result and probes the station directory; it does not return database rows or credentials.
@@ -28,7 +29,7 @@ These controls are useful foundations, but do not by themselves establish produc
 | Authorization | Every operational endpoint has a server-side permission and station-scope test; client-side route/menu guards are treated only as UX |
 | Readiness | All required feature dependencies are included in readiness as features are added; readiness must fail closed when a required dependency is missing or unavailable |
 | Observability | Structured logs redact bearer tokens, passwords, connection strings, personal data, and provider credentials; privileged actions emit audit events |
-| Transport | Production HTTPS, trusted proxy/forwarded-header behavior, HSTS policy, and exact CORS origins are verified in the real hosting environment |
+| Transport | Production HTTPS, trusted proxy/forwarded-header behavior, HSTS policy, defensive response headers, and exact CORS origins are verified in the real hosting environment |
 | Resilience | Bounded timeouts, cancellation propagation, safe retry policy, and concurrency behavior are tested against disposable integration dependencies |
 | Supply chain | Locked dependencies, CI tests, dependency/security review, SBOM and provenance artifacts are retained for each release |
 
