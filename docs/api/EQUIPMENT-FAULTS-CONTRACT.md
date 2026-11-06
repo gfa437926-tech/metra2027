@@ -90,7 +90,7 @@ These are domain-policy tests, not a deployed support API. The API must still en
 
 A persistence-independent policy now validates workshop progress updates:
 - Fault and station IDs are required; update timestamp is required and cannot be more than five minutes ahead of server time.
-- Progress percentage must be between 0 and 100; progress notes are optional and limited to 1,000 characters.
+- Progress percentage must be between 0 and 100; progress notes may be omitted, but a supplied note cannot be blank or whitespace-only and its trimmed length is limited to 1,000 characters.
 - A report marked Resolved must have 100% progress.
 - Closed and Rejected reports do not accept progress updates.
 
