@@ -67,6 +67,7 @@ class CurrentUserContextClient {
         CurrentUserSessionState.unauthenticated,
       );
     }
+    token = token.trim();
 
     try {
       final base = _baseUrl.endsWith('/')
