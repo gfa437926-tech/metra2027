@@ -75,6 +75,16 @@ public sealed class MaintenanceProgressPolicyTests
             x => x.Field == nameof(update.UpdatedAt));
     }
 
+    [Theory]
+    [InlineData("   ")]
+    [InlineData("\\t\\n")]
+    public void Rejects_blank_progress_note(string note)
+    {
+        var update = Valid() with { ProgressNote = note };
+        Assert.Contains(MaintenanceProgressPolicy.Validate(update, Now),
+            x => x.Field == nameof(update.ProgressNote));
+    }
+
     [Fact]
     public void Accepts_progress_note_at_exact_limit()
     {
