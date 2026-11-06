@@ -111,10 +111,19 @@ class ObservationValidationClient {
       );
     }
     final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic> ||
-        decoded['observationId'] is! String ||
-        decoded['stationId'] is! String ||
-        decoded['status'] == null) {
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Invalid hourly submission response.');
+    }
+    final observationId = decoded['observationId'];
+    final stationId = decoded['stationId'];
+    final status = decoded['status'];
+    final hasValidStatus = status is int ||
+        (status is String && status.trim().isNotEmpty);
+    if (observationId is! String ||
+        observationId.trim().isEmpty ||
+        stationId is! String ||
+        stationId.trim().isEmpty ||
+        !hasValidStatus) {
       throw const FormatException('Invalid hourly submission response.');
     }
     return Map.unmodifiable(decoded);
