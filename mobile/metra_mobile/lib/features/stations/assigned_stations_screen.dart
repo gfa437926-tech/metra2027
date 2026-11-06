@@ -175,18 +175,22 @@ class _AssignmentCard extends StatelessWidget {
   String _roleLabel(String code) {
     final normalized = code.trim().toLowerCase().replaceAll('-', '_');
     const labels = <String, String>{
-      'observer': 'راصد جوي',
       'weather_observer': 'راصد جوي',
       'weather_observer_role': 'راصد جوي',
       'observer': 'راصد جوي',
       'station_observer': 'راصد جوي',
+      'weather_observer_role': 'راصد جوي',
+      'observer_role': 'راصد جوي',
       'station_manager': 'رئيس محطة',
+      'station_head': 'رئيس محطة',
+      'head_of_station': 'رئيس محطة',
       'stationmanager': 'رئيس محطة',
       'chief_station': 'رئيس محطة',
       'station_chief': 'رئيس محطة',
       'supervisor': 'مشرف',
       'reviewer': 'مدقق',
       'station_reviewer': 'مدقق محطة',
+      'station_auditor': 'مدقق محطة',
       'review_station': 'مدقق محطة',
       'climate_manager': 'مدير المناخ',
       'climate_director': 'مدير المناخ',
@@ -200,6 +204,7 @@ class _AssignmentCard extends StatelessWidget {
       'admin': 'مدير النظام',
       'system_admin': 'مدير النظام',
       'system_administrator': 'مدير النظام',
+      'systemadministrator': 'مدير النظام',
     };
     return labels[normalized] ?? code;
   }
