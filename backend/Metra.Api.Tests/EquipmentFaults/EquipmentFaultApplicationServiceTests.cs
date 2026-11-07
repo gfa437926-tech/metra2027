@@ -204,6 +204,20 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
+    public async Task Unexpected_repository_failure_fails_closed_without_authorization()
+    {
+        var reader = new FakeStationReader { ThrowUnexpectedFailure = true };
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, reader);
+
+        var result = await service.AuthorizeRecordAsync(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
+
+        Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
     public async Task Caller_cancellation_is_not_converted_to_access_denial()
     {
         using var cancellation = new CancellationTokenSource();
@@ -252,6 +266,7 @@ public sealed class EquipmentFaultApplicationServiceTests
         public bool ThrowTimeout { get; init; }
         public bool ThrowHttpFailure { get; init; }
         public bool ThrowCallerCancellation { get; init; }
+        public bool ThrowUnexpectedFailure { get; init; }
         public int CallCount { get; private set; }
 
         public Task<Guid?> GetOwningStationIdAsync(Guid faultId, CancellationToken cancellationToken)
@@ -259,6 +274,8 @@ public sealed class EquipmentFaultApplicationServiceTests
             CallCount++;
             if (ThrowCallerCancellation)
                 throw new OperationCanceledException(cancellationToken);
+            if (ThrowUnexpectedFailure)
+                throw new InvalidOperationException("simulated unexpected repository failure");
             if (ThrowHttpFailure)
                 throw new HttpRequestException("simulated repository failure");
             if (ThrowTimeout)
