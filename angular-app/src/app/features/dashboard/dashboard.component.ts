@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
 
 interface DashboardCard {
   title: string;
@@ -208,7 +209,10 @@ export class DashboardComponent implements OnInit {
 
   managementCards: DashboardCard[] = [];
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly auth: SupabaseAuthService
+  ) {}
 
   ngOnInit(): void {
     if (typeof localStorage === 'undefined') return;
@@ -230,14 +234,21 @@ export class DashboardComponent implements OnInit {
     this.showPending('تم تحديث لوحة التحكم');
   }
 
-  logout(): void {
-    if (typeof localStorage !== 'undefined' && window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+  async logout(): Promise<void> {
+    if (typeof localStorage === 'undefined' || !window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+      return;
+    }
+
+    try {
+      await this.auth.signOut();
       localStorage.removeItem('currentUser');
       this.userName = 'مستخدم النظام';
       this.userRole = '';
       this.stationName = '';
       this.managementCards = [];
-      this.showPending('تم تسجيل الخروج من هذه الجلسة المحلية');
+      await this.router.navigate(['/login']);
+    } catch {
+      this.toastMessage = 'تعذر إنهاء جلسة الدخول. حاول مرة أخرى.';
     }
   }
 
