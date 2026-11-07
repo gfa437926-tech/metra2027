@@ -37,6 +37,71 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
+    public async Task Transition_derives_review_permission_from_domain_policy()
+    {
+        var stationId = Guid.NewGuid();
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(
+            auth, new FakeStationReader { OwnerStationId = stationId });
+
+        var result = await service.AuthorizeTransitionAsync(
+            Guid.NewGuid(), stationId, Guid.NewGuid(),
+            EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview);
+
+        Assert.Equal(EquipmentFaultAccessResult.Allowed, result);
+        Assert.Equal("equipment_fault.review", auth.LastPermission);
+        Assert.Equal(1, auth.CallCount);
+    }
+
+    [Fact]
+    public async Task Invalid_transition_is_rejected_before_repository_or_authorization()
+    {
+        var reader = new FakeStationReader { OwnerStationId = Guid.NewGuid() };
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, reader);
+
+        var result = await service.AuthorizeTransitionAsync(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            EquipmentFaultStatus.Closed, EquipmentFaultStatus.InProgress);
+
+        Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
+        Assert.Equal(0, reader.CallCount);
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
+    public async Task Transition_checks_persisted_station_before_permission()
+    {
+        var routeStation = Guid.NewGuid();
+        var reader = new FakeStationReader { OwnerStationId = Guid.NewGuid() };
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, reader);
+
+        var result = await service.AuthorizeTransitionAsync(
+            Guid.NewGuid(), routeStation, Guid.NewGuid(),
+            EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview);
+
+        Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
+    public async Task Transition_denies_when_required_permission_is_missing()
+    {
+        var stationId = Guid.NewGuid();
+        var auth = new FakeAuthorization { Allowed = false };
+        var service = new EquipmentFaultApplicationService(
+            auth, new FakeStationReader { OwnerStationId = stationId });
+
+        var result = await service.AuthorizeTransitionAsync(
+            Guid.NewGuid(), stationId, Guid.NewGuid(),
+            EquipmentFaultStatus.UnderReview, EquipmentFaultStatus.Assigned);
+
+        Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
+        Assert.Equal("equipment_fault.assign", auth.LastPermission);
+    }
+
+    [Fact]
     public async Task Record_access_checks_persisted_station_before_permission()
     {
         var routeStation = Guid.NewGuid();
