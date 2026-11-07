@@ -9,7 +9,9 @@
 - Derive the reporter identity only from the validated JWT `sub` claim.
 - Never accept a reporter/user identity from a client payload.
 - Resolve station access on the server for every read and mutation. A route station ID is a resource selector, not proof of authorization.
-- Require the action-specific permission and a matching station scope.
+- For every operation addressed by `faultId`, load the record using both `faultId` and `stationId` (or verify its persisted `station_id` equals the route value) before applying any mutation. Never authorize against a caller-supplied station ID alone.
+- Require the action-specific permission and a matching station scope. Fail closed if authorization is unconfigured, times out, returns malformed data, or denies access.
+- For create operations, derive the user from JWT `sub` and authorize `equipment_fault.create` against the route station before accepting the submission.
 - Keep service-role credentials server-side.
 - Record every decision and transition in an append-only audit record containing actor, timestamp, previous state, next state, and reason.
 - Bound request sizes, pagination, text lengths, upload types, upload sizes, and request rates.
