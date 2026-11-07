@@ -137,6 +137,10 @@ The isolated backend now defines `IEquipmentFaultReadStore` and
 - List queries are validated and bounded before authorization or persistence.
   The store receives the station ID separately from filter input and must apply
   that predicate before computing totals, ordering, offset, or page size.
+- List ordering is an explicit allow-listed option: occurrence time descending
+  (default) or ascending. The store must add a unique immutable tie-breaker
+  (fault ID) so pagination remains deterministic when timestamps are equal.
+  Undefined sort values are rejected before authorization or persistence.
 - Detail reads pass both `faultId` and `stationId` to the store. The service
   also verifies the returned projection contains those exact identifiers and
   normalizes a missing or mismatched record to `NotFoundOrWrongStation`.
