@@ -139,6 +139,23 @@ public sealed class EquipmentFaultPolicyTests
         }));
     }
 
+    [Theory]
+    [InlineData((EquipmentFaultStatus)999, EquipmentFaultStatus.UnderReview)]
+    [InlineData(EquipmentFaultStatus.Submitted, (EquipmentFaultStatus)999)]
+    public void Undefined_status_values_never_produce_a_transition_permission(
+        EquipmentFaultStatus from, EquipmentFaultStatus to)
+    {
+        Assert.False(EquipmentFaultPolicy.TryGetRequiredPermission(from, to, out _));
+        Assert.False(EquipmentFaultPolicy.CanTransition(
+            from, to, new HashSet<string>
+            {
+                "equipment_fault.review",
+                "equipment_fault.assign",
+                "equipment_fault.resolve",
+                "equipment_fault.close"
+            }));
+    }
+
     [Fact]
     public void Transition_requires_its_specific_permission()
     {
