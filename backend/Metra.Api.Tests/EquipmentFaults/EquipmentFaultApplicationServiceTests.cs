@@ -405,7 +405,7 @@ public sealed class EquipmentFaultReadServiceTests
 
     [Theory]
     [InlineData(-1, 1, 25, 0)]
-    [InlineData(0, 1, 25, 0)]
+    [InlineData(0, 1, 25, 1)]
     [InlineData(1, 2, 25, 0)]
     [InlineData(1, 1, 24, 0)]
     public async Task Invalid_store_page_metadata_fails_closed(
