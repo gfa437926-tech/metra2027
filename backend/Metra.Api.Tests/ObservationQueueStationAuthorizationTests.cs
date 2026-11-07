@@ -34,7 +34,8 @@ public sealed class ObservationQueueStationAuthorizationTests
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal(0, queue.CallCount);
-        Assert.Equal(stationId, Assert.Single(authorization.CheckedStationIds));
+        Assert.Equal(3, authorization.CheckedStationIds.Count);
+        Assert.All(authorization.CheckedStationIds, checkedStationId => Assert.Equal(stationId, checkedStationId));
     }
 
     [Fact]
@@ -55,6 +56,26 @@ public sealed class ObservationQueueStationAuthorizationTests
         Assert.Equal(1, queue.CallCount);
         Assert.Equal(stationId, queue.RequestedStationId);
         Assert.Equal(25, queue.RequestedLimit);
+    }
+
+    [Fact]
+    public async Task Reviewer_with_decision_specific_permission_can_read_station_queue()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new QueueAuthorizationFake(userId, stationId, "observation.approve");
+        var queue = new ObservationQueueFake();
+
+        await using var factory = CreateFactory(authorization, queue);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationId}/observations");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(2, authorization.CheckedStationIds.Count);
+        Assert.Equal(1, queue.CallCount);
+        Assert.Equal(stationId, queue.RequestedStationId);
     }
 
     [Fact]
@@ -137,7 +158,10 @@ public sealed class ObservationQueueStationAuthorizationTests
             });
         });
 
-    private sealed class QueueAuthorizationFake(Guid userId, Guid allowedStationId)
+    private sealed class QueueAuthorizationFake(
+        Guid userId,
+        Guid allowedStationId,
+        string allowedPermission = "observation.review")
         : IStationAuthorizationService
     {
         public bool IsConfigured { get; set; } = true;
@@ -151,7 +175,7 @@ public sealed class ObservationQueueStationAuthorizationTests
             return Task.FromResult(
                 requestedUserId == userId &&
                 stationId == allowedStationId &&
-                permissionCode == "observation.review");
+                permissionCode == allowedPermission);
         }
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
