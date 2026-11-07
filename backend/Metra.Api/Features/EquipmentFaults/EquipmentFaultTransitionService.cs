@@ -35,7 +35,7 @@ public sealed class EquipmentFaultTransitionService(
                 expectedCurrentStatus, nextStatus, out _) ||
             reason is null ||
             reason != reason.Trim() ||
-            reason.Length is < 3 or > 1000)
+            reason.Length is < 5 or > 1000)
         {
             return EquipmentFaultTransitionExecutionResult.InvalidRequest;
         }
