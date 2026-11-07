@@ -36,7 +36,7 @@ public sealed record EquipmentFaultAuditEntry(
     Guid FaultId,
     Guid ActorId,
     DateTimeOffset OccurredAt,
-    EquipmentFaultStatus PreviousStatus,
+    EquipmentFaultStatus? PreviousStatus,
     EquipmentFaultStatus NewStatus,
     string Reason);
 
