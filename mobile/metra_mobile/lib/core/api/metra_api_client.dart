@@ -261,6 +261,25 @@ class MetraApiClient {
     return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList(growable: false);
   }
 
+
+  Future<void> transitionSupportIncident({
+    required String stationId,
+    required String incidentId,
+    required String toStatus,
+    String? note,
+    String? assignedTo,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/support-incidents/${Uri.encodeComponent(incidentId)}/transitions',
+      body: {
+        'toStatus': toStatus,
+        'note': note,
+        'assignedTo': assignedTo,
+      },
+    );
+  }
+
   Future<void> submitSupportIncident({
     required String stationId,
     required String kind,

@@ -147,6 +147,110 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
     );
   }
 
+
+  List<Map<String, String>> _nextActions(String status) {
+    switch (status) {
+      case 'Submitted':
+        return [
+          {'status': 'UnderReview', 'label': 'بدء المراجعة'},
+          {'status': 'Rejected', 'label': 'رفض'},
+        ];
+      case 'UnderReview':
+        return [
+          {'status': 'Assigned', 'label': 'إسناد'},
+          {'status': 'Rejected', 'label': 'رفض'},
+        ];
+      case 'Assigned':
+        return [
+          {'status': 'InProgress', 'label': 'بدء المعالجة'},
+        ];
+      case 'InProgress':
+        return [
+          {'status': 'WaitingForInformation', 'label': 'بانتظار معلومات'},
+          {'status': 'Resolved', 'label': 'حل'},
+        ];
+      case 'WaitingForInformation':
+        return [
+          {'status': 'InProgress', 'label': 'استئناف'},
+          {'status': 'Resolved', 'label': 'حل'},
+        ];
+      case 'Resolved':
+        return [
+          {'status': 'Closed', 'label': 'إغلاق'},
+        ];
+      default:
+        return const <Map<String, String>>[];
+    }
+  }
+
+  Future<void> _transition(Map<String, dynamic> row, String toStatus) async {
+    String? note;
+    if (toStatus == 'Rejected' || toStatus == 'Closed') {
+      final TextEditingController controller = TextEditingController();
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) => AlertDialog(
+          title: Text(toStatus),
+          content: TextField(
+            controller: controller,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'ملاحظة',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('تأكيد'),
+            ),
+          ],
+        ),
+      );
+      final String entered = controller.text.trim();
+      controller.dispose();
+      if (!mounted) {
+        return;
+      }
+      if (confirmed != true) {
+        return;
+      }
+      if (entered.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('الملاحظة مطلوبة')),
+        );
+        return;
+      }
+      note = entered;
+    }
+    try {
+      await widget.api.transitionSupportIncident(
+        stationId: widget.stationId,
+        incidentId: row['id'].toString(),
+        toStatus: toStatus,
+        note: note,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم تحديث حالة البلاغ')),
+      );
+      await _refresh();
+    } on MetraApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر التحديث (${error.statusCode})')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -300,16 +404,39 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                 children: <Widget>[
                   for (final Map<String, dynamic> row in rows)
                     Card(
-                      child: ListTile(
-                        title: Text(
-                          '${row['title'] ?? '—'} • ${row['status'] ?? ''}',
-                        ),
-                        subtitle: Text(
-                          '${row['kind'] ?? ''} • ${row['severity'] ?? ''}\n${row['description'] ?? ''}',
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        isThreeLine: true,
+                      child: Column(
+                        children: <Widget>[
+                          ListTile(
+                            title: Text(
+                              '${row['title'] ?? '—'} • ${row['status'] ?? ''}',
+                            ),
+                            subtitle: Text(
+                              '${row['kind'] ?? ''} • ${row['severity'] ?? ''}\n${row['description'] ?? ''}',
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            isThreeLine: true,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            child: Wrap(
+                              spacing: 8,
+                              children: <Widget>[
+                                for (final Map<String, String> action
+                                    in _nextActions(
+                                  row['status']?.toString() ?? '',
+                                ))
+                                  OutlinedButton(
+                                    onPressed: () => _transition(
+                                      row,
+                                      action['status']!,
+                                    ),
+                                    child: Text(action['label']!),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                 ],
