@@ -327,6 +327,7 @@ public sealed class EquipmentFaultReadServiceTests
         Assert.Equal(3, store.Window?.Page);
         Assert.Equal(20, store.Window?.PageSize);
         Assert.Equal(40, store.Window?.Offset);
+        Assert.Equal(EquipmentFaultListSort.OccurredAtDescending, store.Sort);
         Assert.Equal("equipment_fault.read", auth.Permission);
     }
 
@@ -355,6 +356,23 @@ public sealed class EquipmentFaultReadServiceTests
         var result = await service.GetPageAsync(
             Guid.NewGuid(), Guid.NewGuid(),
             new EquipmentFaultListQuery(0, 25, null, null, null, null));
+
+        Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
+        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(0, store.ListCalls);
+    }
+
+    [Fact]
+    public async Task Undefined_sort_is_rejected_before_authorization_or_store()
+    {
+        var auth = new ReadFakeAuthorization { Allowed = true };
+        var store = new ReadFakeStore();
+        var service = new EquipmentFaultReadService(auth, store);
+        var query = new EquipmentFaultListQuery(
+            1, 25, null, null, null, null, (EquipmentFaultListSort)999);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), Guid.NewGuid(), query);
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
         Assert.Equal(0, auth.CallCount);
@@ -431,6 +449,7 @@ public sealed class EquipmentFaultReadServiceTests
         public int ListCalls { get; private set; }
         public Guid? ListStationId { get; private set; }
         public EquipmentFaultListWindow? Window { get; private set; }
+        public EquipmentFaultListSort? Sort { get; private set; }
         public EquipmentFaultDetail? Detail { get; init; }
         public Guid? DetailFaultId { get; private set; }
         public Guid? DetailStationId { get; private set; }
@@ -444,6 +463,7 @@ public sealed class EquipmentFaultReadServiceTests
             ListCalls++;
             ListStationId = stationId;
             Window = window;
+            Sort = query.Sort;
             if (ThrowCancellation)
                 throw new OperationCanceledException(cancellationToken);
             if (ThrowFailure)
