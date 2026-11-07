@@ -41,6 +41,16 @@ public static class EquipmentFaultAuthorization
             // Treat an upstream timeout as denial, but preserve caller cancellation.
             return false;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Preserve cancellation initiated by the caller.
+            throw;
+        }
+        catch (Exception)
+        {
+            // Unexpected authorization-provider failures must fail closed.
+            return false;
+        }
     }
 
     public static async Task<bool> CanTransitionAsync(
