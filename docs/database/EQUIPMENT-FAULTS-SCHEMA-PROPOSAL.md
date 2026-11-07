@@ -11,10 +11,11 @@ This document is a design proposal, not a migration. It contains no executable D
 
 The current application contracts support a two-table minimum model: the current fault record and an append-only audit history. The read-store contract is station-scoped, and list projections now carry `StationId` so the application boundary can reject a foreign-station row even if a future adapter accidentally returns one.
 
-Two decisions must be resolved before a migration can be generated:
+The creation-audit contract blocker has been addressed in the domain model: `EquipmentFaultAuditEntry.PreviousStatus` is nullable, and `EquipmentFaultAuditPolicy` accepts a null previous state only when the new state is `Submitted`. This models the initial Created event without inventing a Submitted-to-Submitted transition.
+
+One schema-mapping decision remains before a migration can be generated:
 
 1. **Station foreign key:** the exact table and primary-key column in the approved new station catalogue must be confirmed from its authoritative schema. This proposal deliberately does not guess a table name or reuse the legacy station catalogue.
-2. **Creation audit event:** `EquipmentFaultAuditEntry` currently requires a non-null previous status and validates only status-to-status transitions. A creation event has no previous status. Before persistence, amend the audit contract to represent `Created` with `previous_status = NULL`, or introduce a separate immutable creation event type. Do not fabricate a Submitted-to-Submitted transition.
 
 The user identity reference assumes Supabase Auth user UUIDs. Confirm that the JWT `sub` used by the API maps directly to `auth.users.id` in the target project.
 
@@ -124,6 +125,6 @@ After schema approval and migration in an isolated test project:
 
 ## 7. Review decision
 
-**Conditionally accepted as the proposed logical design**, subject to the two blockers in section 1 and confirmation of the target catalogue's exact key. The table shapes, constraints, indexes, server-only access model, and atomicity requirements are internally consistent with the current fault lifecycle and read contracts.
+**Conditionally accepted as the proposed logical design**, subject to confirmation of the target catalogue's exact key and identity mapping in section 1. The table shapes, constraints, indexes, server-only access model, and atomicity requirements are internally consistent with the current fault lifecycle and read contracts.
 
 **Not approved for execution.** No SQL, migration, RPC, grants, RLS policy, or database object has been created. A separate explicit deployment approval is required after the station foreign-key mapping and creation-audit contract are resolved.
