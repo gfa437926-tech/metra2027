@@ -14,7 +14,7 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
         <div>
           <span class="eyebrow">الصيانة والدعم</span>
           <h1>بلاغات الدعم</h1>
-          <p>بلاغات تقنية المعلومات والاتصالات ضمن نطاق المحطة.</p>
+          <p>دورة الحادث: تقديم → مراجعة → إسناد → معالجة → إغلاق، مع عزل المحطة.</p>
         </div>
         <button type="button" (click)="load()" [disabled]="loading || !stationId">تحديث</button>
       </header>
@@ -47,20 +47,35 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
       </section>
 
       <section class="card">
-        <h2>بلاغات المحطة</h2>
+        <h2>متابعة الحوادث</h2>
         <div *ngIf="loading">جارٍ التحميل...</div>
-        <table *ngIf="!loading">
-          <thead><tr><th>العنوان</th><th>النوع</th><th>الحالة</th><th>الأولوية</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let row of rows">
-              <td>{{ row['title'] }}</td>
-              <td>{{ row['kind'] }}</td>
-              <td>{{ row['status'] }}</td>
-              <td>{{ row['severity'] }}</td>
-            </tr>
-            <tr *ngIf="rows.length === 0"><td colspan="4">لا توجد بلاغات.</td></tr>
-          </tbody>
-        </table>
+        <div class="item" *ngFor="let row of rows">
+          <div class="head">
+            <strong>{{ row['title'] }}</strong>
+            <span class="badge">{{ row['status'] }}</span>
+            <span class="badge muted">{{ row['severity'] }}</span>
+          </div>
+          <p>{{ row['description'] }}</p>
+          <div class="actions">
+            <button type="button" *ngFor="let action of nextActions(String(row['status'] || ''))"
+              [disabled]="busyId === row['id']"
+              (click)="transition(row, action.status)">{{ action.label }}</button>
+          </div>
+        </div>
+        <p *ngIf="!loading && rows.length === 0">لا توجد بلاغات.</p>
+      </section>
+
+      <section class="return-dialog" *ngIf="pending" role="dialog">
+        <div class="return-panel">
+          <h2>{{ pending.label }}</h2>
+          <label>ملاحظة
+            <textarea [(ngModel)]="note" rows="3" maxlength="1000"></textarea>
+          </label>
+          <div class="return-actions">
+            <button type="button" (click)="pending=null; note=''" [disabled]="!!busyId">إلغاء</button>
+            <button type="button" (click)="confirm()" [disabled]="!!busyId">تأكيد</button>
+          </div>
+        </div>
       </section>
     </div>
   `,
@@ -77,8 +92,15 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
     .notice{padding:.75rem 1rem;border-radius:8px;background:#f8fafc;margin-bottom:.75rem}
     .notice.error{background:#fef2f2;color:#991b1b}
     .notice.success{background:#ecfdf5;color:#065f46}
-    table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid #e2e8f0;padding:.5rem;text-align:right}
+    .item{border:1px solid #e2e8f0;border-radius:10px;padding:.85rem;margin-bottom:.75rem}
+    .head{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+    .badge{background:#ecfeff;color:#155e75;border-radius:999px;padding:.15rem .55rem;font-size:.85rem}
+    .badge.muted{background:#f1f5f9;color:#475569}
+    .actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+    .actions button{background:#334155}
+    .return-dialog{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center}
+    .return-panel{background:#fff;border-radius:12px;padding:1rem;width:min(92vw,420px);display:grid;gap:.75rem}
+    .return-actions{display:flex;gap:.5rem;justify-content:flex-end}
   `]
 })
 export class SupportIncidentWorkflowComponent implements OnInit {
@@ -88,8 +110,11 @@ export class SupportIncidentWorkflowComponent implements OnInit {
   rows: Record<string, unknown>[] = [];
   loading = false;
   saving = false;
+  busyId: string | null = null;
   error = '';
   feedback = '';
+  note = '';
+  pending: { row: Record<string, unknown>; status: string; label: string } | null = null;
   form = {
     kind: 'InformationTechnology',
     category: '',
@@ -105,6 +130,31 @@ export class SupportIncidentWorkflowComponent implements OnInit {
       this.stationId = params.get('stationId')?.trim() ?? '';
       if (this.stationId && this.api.isConfigured) void this.load();
     });
+  }
+
+  String = String;
+
+  nextActions(status: string): Array<{ status: string; label: string }> {
+    switch (status) {
+      case 'Submitted':
+        return [{ status: 'UnderReview', label: 'بدء المراجعة' }, { status: 'Rejected', label: 'رفض' }];
+      case 'UnderReview':
+        return [{ status: 'Assigned', label: 'إسناد' }, { status: 'Rejected', label: 'رفض' }];
+      case 'Assigned':
+        return [{ status: 'InProgress', label: 'بدء المعالجة' }, { status: 'UnderReview', label: 'إعادة للمراجعة' }];
+      case 'InProgress':
+        return [
+          { status: 'WaitingForInformation', label: 'بانتظار معلومات' },
+          { status: 'Resolved', label: 'حل' },
+          { status: 'Assigned', label: 'إعادة إسناد' },
+        ];
+      case 'WaitingForInformation':
+        return [{ status: 'InProgress', label: 'استئناف' }, { status: 'Resolved', label: 'حل' }];
+      case 'Resolved':
+        return [{ status: 'Closed', label: 'إغلاق' }, { status: 'InProgress', label: 'إعادة فتح' }];
+      default:
+        return [];
+    }
   }
 
   async load(): Promise<void> {
@@ -150,11 +200,40 @@ export class SupportIncidentWorkflowComponent implements OnInit {
     }
   }
 
+  transition(row: Record<string, unknown>, status: string): void {
+    const label = this.nextActions(String(row['status'] || '')).find((a) => a.status === status)?.label ?? status;
+    this.pending = { row, status, label };
+    this.note = '';
+  }
+
+  async confirm(): Promise<void> {
+    if (!this.stationId || !this.pending || this.busyId) return;
+    if ((this.pending.status === 'Rejected' || this.pending.status === 'Closed') && !this.note.trim()) {
+      this.error = 'الملاحظة مطلوبة للإغلاق أو الرفض.';
+      return;
+    }
+    const id = String(this.pending.row['id'] || '');
+    this.busyId = id;
+    this.error = '';
+    try {
+      await this.api.transition(this.stationId, id, this.pending.status, this.note.trim() || undefined);
+      this.feedback = `تم تنفيذ الانتقال: ${this.pending.label}`;
+      this.pending = null;
+      this.note = '';
+      await this.load();
+    } catch (error: unknown) {
+      this.error = this.errorMessage(error);
+    } finally {
+      this.busyId = null;
+    }
+  }
+
   private errorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401) return 'يلزم تسجيل الدخول.';
-      if (error.status === 403) return 'ليست لديك صلاحية بلاغات هذه المحطة.';
-      if (error.status === 400) return 'بيانات البلاغ غير صالحة.';
+      if (error.status === 403) return 'ليست لديك صلاحية هذا الإجراء.';
+      if (error.status === 400) return 'بيانات الطلب غير صالحة.';
+      if (error.status === 409) return 'انتقال الحالة غير مسموح.';
       if (error.status === 503) return 'خدمة الدعم غير متاحة (جداول القاعدة قد تكون غير مفعّلة).';
       return `رفض الخادم الطلب (HTTP ${error.status}).`;
     }
