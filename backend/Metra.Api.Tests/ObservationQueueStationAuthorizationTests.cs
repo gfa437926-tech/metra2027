@@ -57,6 +57,63 @@ public sealed class ObservationQueueStationAuthorizationTests
         Assert.Equal(25, queue.RequestedLimit);
     }
 
+    [Fact]
+    public async Task Unconfigured_authorization_fails_closed_without_reading_queue()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new QueueAuthorizationFake(userId, stationId) { IsConfigured = false };
+        var queue = new ObservationQueueFake();
+
+        await using var factory = CreateFactory(authorization, queue);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationId}/observations");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Empty(authorization.CheckedStationIds);
+        Assert.Equal(0, queue.CallCount);
+    }
+
+    [Fact]
+    public async Task Unconfigured_queue_fails_closed_without_authorization_or_queue_read()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new QueueAuthorizationFake(userId, stationId);
+        var queue = new ObservationQueueFake { IsConfigured = false };
+
+        await using var factory = CreateFactory(authorization, queue);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationId}/observations");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Empty(authorization.CheckedStationIds);
+        Assert.Equal(0, queue.CallCount);
+    }
+
+    [Fact]
+    public async Task Invalid_queue_limit_is_rejected_before_authorization_or_read()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new QueueAuthorizationFake(userId, stationId);
+        var queue = new ObservationQueueFake();
+
+        await using var factory = CreateFactory(authorization, queue);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationId}/observations?limit=101");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Empty(authorization.CheckedStationIds);
+        Assert.Equal(0, queue.CallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(
         QueueAuthorizationFake authorization,
         ObservationQueueFake queue) =>
@@ -83,7 +140,7 @@ public sealed class ObservationQueueStationAuthorizationTests
     private sealed class QueueAuthorizationFake(Guid userId, Guid allowedStationId)
         : IStationAuthorizationService
     {
-        public bool IsConfigured => true;
+        public bool IsConfigured { get; set; } = true;
         public List<Guid> CheckedStationIds { get; } = [];
 
         public Task<bool> HasStationPermissionAsync(
@@ -105,7 +162,7 @@ public sealed class ObservationQueueStationAuthorizationTests
 
     private sealed class ObservationQueueFake : IObservationQueueService
     {
-        public bool IsConfigured => true;
+        public bool IsConfigured { get; set; } = true;
         public int CallCount { get; private set; }
         public Guid RequestedStationId { get; private set; }
         public int RequestedLimit { get; private set; }
