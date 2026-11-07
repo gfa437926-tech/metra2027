@@ -117,6 +117,25 @@ public sealed class ObservationQueueStationAuthorizationTests
     }
 
     [Fact]
+    public async Task Failed_queue_read_returns_unavailable_instead_of_an_empty_success()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new QueueAuthorizationFake(userId, stationId);
+        var queue = new ObservationQueueFake { ReturnNull = true };
+
+        await using var factory = CreateFactory(authorization, queue);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationId}/observations");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(1, queue.CallCount);
+        Assert.Equal(stationId, queue.RequestedStationId);
+    }
+
+    [Fact]
     public async Task Invalid_queue_limit_is_rejected_before_authorization_or_read()
     {
         var userId = Guid.NewGuid();
@@ -190,6 +209,7 @@ public sealed class ObservationQueueStationAuthorizationTests
         public int CallCount { get; private set; }
         public Guid RequestedStationId { get; private set; }
         public int RequestedLimit { get; private set; }
+        public bool ReturnNull { get; set; }
 
         public Task<JsonElement?> GetSubmittedAsync(
             Guid stationId, int limit, CancellationToken cancellationToken)
@@ -197,6 +217,9 @@ public sealed class ObservationQueueStationAuthorizationTests
             CallCount++;
             RequestedStationId = stationId;
             RequestedLimit = limit;
+            if (ReturnNull)
+                return Task.FromResult<JsonElement?>(null);
+
             using var document = JsonDocument.Parse("[]");
             return Task.FromResult<JsonElement?>(document.RootElement.Clone());
         }
