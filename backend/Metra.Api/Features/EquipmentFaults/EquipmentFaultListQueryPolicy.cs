@@ -5,13 +5,20 @@ namespace Metra.Api.Features.EquipmentFaults;
 /// Station scope must still be derived from the authenticated principal and
 /// enforced by the adapter; this policy does not authorize or filter records.
 /// </summary>
+public enum EquipmentFaultListSort
+{
+    OccurredAtDescending,
+    OccurredAtAscending
+}
+
 public sealed record EquipmentFaultListQuery(
     int Page,
     int PageSize,
     EquipmentFaultStatus? Status,
     EquipmentFaultSeverity? Severity,
     DateTimeOffset? OccurredFrom,
-    DateTimeOffset? OccurredTo);
+    DateTimeOffset? OccurredTo,
+    EquipmentFaultListSort Sort = EquipmentFaultListSort.OccurredAtDescending);
 
 public sealed record EquipmentFaultListWindow(int Page, int PageSize, int Offset);
 
@@ -36,6 +43,9 @@ public static class EquipmentFaultListQueryPolicy
             return false;
 
         if (query.Severity is { } severity && !Enum.IsDefined(severity))
+            return false;
+
+        if (!Enum.IsDefined(query.Sort))
             return false;
 
         if (query.OccurredFrom is { } from &&
