@@ -80,6 +80,15 @@ public sealed class EquipmentFaultListQueryPolicyTests
     }
 
     [Fact]
+    public void Undefined_sort_value_is_rejected()
+    {
+        Assert.False(EquipmentFaultListQueryPolicy.TryNormalize(
+            new EquipmentFaultListQuery(
+                1, 25, null, null, null, null, (EquipmentFaultListSort)999),
+            out _));
+    }
+
+    [Fact]
     public void Reversed_occurrence_range_is_rejected()
     {
         var now = DateTimeOffset.UtcNow;
