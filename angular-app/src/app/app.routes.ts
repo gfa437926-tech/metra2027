@@ -3,6 +3,7 @@ import { requireAuthenticatedUser } from './core/supabase/auth.guard';
 
 export const routes: Routes = [
   { path: 'equipment-faults', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/maintenance/equipment-fault-workflow.component').then(m => m.EquipmentFaultWorkflowComponent) },
+  { path: 'support-incidents', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/support/support-incident-workflow.component').then(m => m.SupportIncidentWorkflowComponent) },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent)
