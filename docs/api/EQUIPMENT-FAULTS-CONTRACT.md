@@ -35,6 +35,13 @@ and record-level access:
 - Record operations obtain the owner station from
   `IEquipmentFaultStationReader`, compare it with the route station, and only then
   check the action permission.
+- Lifecycle authorization uses `AuthorizeTransitionAsync`: the required permission
+  is derived internally from `EquipmentFaultPolicy.TryGetRequiredPermission`, so
+  clients cannot choose or weaken the permission associated with a transition.
+- Invalid transitions are rejected before repository or authorization calls. Valid
+  transitions still require a matching persisted station and the exact derived
+  permission (for example, Submitted -> UnderReview requires
+  `equipment_fault.review`).
 - A missing record or station mismatch is normalized to
   `NotFoundOrWrongStation`; denied permission and dependency timeout fail closed.
 - The station reader is an interface only. No concrete persistence adapter, database
