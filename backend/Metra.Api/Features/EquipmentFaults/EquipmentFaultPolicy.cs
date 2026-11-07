@@ -74,6 +74,9 @@ public static class EquipmentFaultPolicy
         if (!HasLength(submission.Description, 10, 4000))
             return "invalid_description";
 
+        if (!Enum.IsDefined(submission.Severity))
+            return "invalid_severity";
+
         if (submission.OccurredAt is null || submission.OccurredAt > now.AddMinutes(5))
             return "invalid_occurred_at";
 
@@ -94,6 +97,7 @@ public static class EquipmentFaultPolicy
         EquipmentFaultStatus from,
         EquipmentFaultStatus to,
         IReadOnlySet<string> permissions) =>
+        permissions is not null &&
         AllowedTransitions.TryGetValue((from, to), out var required) &&
         permissions.Contains(required);
 
