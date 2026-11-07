@@ -53,6 +53,7 @@ public sealed class StationScopedAuthorizationIntegrationTests
         {
             AllowAutoRedirect = false
         });
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
 
         using var allowedResponse = await client.PostAsync(
             $"/api/v1/stations/{allowedStationId}/observations/{Guid.NewGuid()}/decision",
@@ -99,6 +100,7 @@ public sealed class StationScopedAuthorizationIntegrationTests
             });
 
         using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
         using var response = await client.PostAsync(
             $"/api/v1/stations/{stationId}/observations/{Guid.NewGuid()}/decision",
             new StringContent("{\"decision\":\"approve\",\"note\":null}", Encoding.UTF8, "application/json"));
@@ -157,13 +159,15 @@ public sealed class StationScopedAuthorizationIntegrationTests
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
+            if (!Guid.TryParse(Request.Headers["X-Test-User"], out var userId))
+                return Task.FromResult(AuthenticateResult.Fail("Missing test user identifier."));
+
             var identity = new ClaimsIdentity(
-                [new Claim("sub", TestUserId.Value.ToString())], Scheme);
+                [new Claim("sub", userId.ToString())], Scheme);
             var principal = new ClaimsPrincipal(identity);
             var ticket = new AuthenticationTicket(principal, Scheme);
             return Task.FromResult(AuthenticateResult.Success(ticket));
         }
 
-        private static readonly Lazy<Guid> TestUserId = new(Guid.NewGuid());
     }
 }
