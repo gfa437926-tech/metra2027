@@ -73,6 +73,36 @@ public sealed class StationAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task Unexpected_transport_exception_fails_closed()
+    {
+        var handler = new StubHandler(_ =>
+            throw new InvalidOperationException("simulated unexpected transport failure"));
+        var service = CreateService(handler);
+
+        var allowed = await service.HasStationPermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.create");
+
+        Assert.False(allowed);
+    }
+
+    [Fact]
+    public async Task Caller_cancellation_is_propagated()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var handler = new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("true", Encoding.UTF8, "application/json")
+        });
+        var service = CreateService(handler);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.HasStationPermissionAsync(
+                Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.create",
+                cancellation.Token));
+    }
+
+    [Fact]
     public async Task Missing_credentials_fail_closed_without_sending_request()
     {
         var handler = new StubHandler(_ => throw new InvalidOperationException("Request must not be sent."));
