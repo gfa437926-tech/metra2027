@@ -96,7 +96,7 @@ public static class EquipmentFaultPolicy
     public static bool CanTransition(
         EquipmentFaultStatus from,
         EquipmentFaultStatus to,
-        IReadOnlySet<string> permissions) =>
+        IReadOnlySet<string>? permissions) =>
         permissions is not null &&
         AllowedTransitions.TryGetValue((from, to), out var required) &&
         permissions.Contains(required);
