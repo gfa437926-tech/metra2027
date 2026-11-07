@@ -24,6 +24,10 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   final TextEditingController _windSpeed = TextEditingController();
   final TextEditingController _windDirection = TextEditingController();
   final TextEditingController _relativeHumidity = TextEditingController();
+  final TextEditingController _stationPressure = TextEditingController();
+  final TextEditingController _visibility = TextEditingController();
+  final TextEditingController _cloudCover = TextEditingController();
+  final TextEditingController _remarks = TextEditingController();
   bool _submitImmediately = true;
   bool _saving = false;
 
@@ -34,9 +38,12 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     _windSpeed.dispose();
     _windDirection.dispose();
     _relativeHumidity.dispose();
+    _stationPressure.dispose();
+    _visibility.dispose();
+    _cloudCover.dispose();
+    _remarks.dispose();
     super.dispose();
   }
-
 
   String? _validateTemp(String? value, String label) {
     final String text = value?.trim() ?? '';
@@ -73,8 +80,22 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     return null;
   }
 
+  String? _validateCrossField() {
+    final double? dry = double.tryParse(_dryTemp.text.trim().replaceAll('+', ''));
+    final double? wet = double.tryParse(_wetTemp.text.trim().replaceAll('+', ''));
+    if (dry != null && wet != null && wet > dry) {
+      return 'الحرارة الرطبة لا يجوز أن تتجاوز الجافة';
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _saving) {
+      return;
+    }
+    final String? cross = _validateCrossField();
+    if (cross != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cross)));
       return;
     }
     setState(() => _saving = true);
@@ -92,6 +113,10 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
           'windSpeed': _windSpeed.text.trim(),
           'windDirection': _windDirection.text.trim(),
           'relativeHumidity': _relativeHumidity.text.trim(),
+          'stationPressure': _stationPressure.text.trim(),
+          'visibility': _visibility.text.trim(),
+          'cloudCover': _cloudCover.text.trim(),
+          'remarks': _remarks.text.trim(),
         },
         submit: _submitImmediately,
       );
@@ -103,6 +128,10 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       _windSpeed.clear();
       _windDirection.clear();
       _relativeHumidity.clear();
+      _stationPressure.clear();
+      _visibility.clear();
+      _cloudCover.clear();
+      _remarks.clear();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -134,6 +163,27 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     }
   }
 
+  Widget _field(
+    TextEditingController controller,
+    String label, {
+    String? Function(String?)? validator,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        enabled: !_saving,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,30 +198,19 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
               style: const TextStyle(color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _dryTemp,
-              decoration: const InputDecoration(
-                labelText: 'الحرارة الجافة',
-                border: OutlineInputBorder(),
-              ),
+            _field(
+              _dryTemp,
+              'الحرارة الجافة (°م) *',
               validator: (String? value) => _validateTemp(value, 'الحرارة الجافة'),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _wetTemp,
-              decoration: const InputDecoration(
-                labelText: 'الحرارة الرطبة',
-                border: OutlineInputBorder(),
-              ),
+            _field(
+              _wetTemp,
+              'الحرارة الرطبة (°م) *',
               validator: (String? value) => _validateTemp(value, 'الحرارة الرطبة'),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _relativeHumidity,
-              decoration: const InputDecoration(
-                labelText: 'الرطوبة النسبية %',
-                border: OutlineInputBorder(),
-              ),
+            _field(
+              _relativeHumidity,
+              'الرطوبة النسبية %',
               validator: (String? value) => _validateOptionalNumber(
                 value,
                 label: 'الرطوبة',
@@ -179,13 +218,9 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 max: 100,
               ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _windDirection,
-              decoration: const InputDecoration(
-                labelText: 'اتجاه الرياح (درجة)',
-                border: OutlineInputBorder(),
-              ),
+            _field(
+              _windDirection,
+              'اتجاه الرياح (درجة)',
               validator: (String? value) => _validateOptionalNumber(
                 value,
                 label: 'اتجاه الرياح',
@@ -193,13 +228,9 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 max: 360,
               ),
             ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _windSpeed,
-              decoration: const InputDecoration(
-                labelText: 'سرعة الرياح',
-                border: OutlineInputBorder(),
-              ),
+            _field(
+              _windSpeed,
+              'سرعة الرياح',
               validator: (String? value) => _validateOptionalNumber(
                 value,
                 label: 'سرعة الرياح',
@@ -207,6 +238,37 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 max: 150,
               ),
             ),
+            _field(
+              _stationPressure,
+              'ضغط المحطة (هكتوباسكال)',
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'ضغط المحطة',
+                min: 800,
+                max: 1100,
+              ),
+            ),
+            _field(
+              _visibility,
+              'الرؤية الأفقية (كم)',
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'الرؤية',
+                min: 0,
+                max: 70,
+              ),
+            ),
+            _field(
+              _cloudCover,
+              'الغطاء السحابي (أوكتا 0-8)',
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'الغطاء السحابي',
+                min: 0,
+                max: 8,
+              ),
+            ),
+            _field(_remarks, 'ملاحظات الراصد', maxLines: 3),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('إرسال للمراجعة فوراً'),

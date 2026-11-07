@@ -181,6 +181,7 @@ export class DashboardComponent implements OnInit {
   toastMessage = '';
 
   readonly basicReports: DashboardCard[] = [
+    { title: 'حالة نشرات المحطة', icon: 'fa-solid fa-chart-column', description: 'ملخص النشرات المرسلة والمُرجَعة ضمن صلاحية المحطة', path: '/reports/observation-status', colorClass: 'card-report', iconColor: '#0369a1', buttonClass: 'btn-primary', actionLabel: 'عرض الملخص' },
     { title: 'مراجعة النشرات', icon: 'fa-solid fa-list-check', description: 'مراجعة واعتماد أو إرجاع النشرات المرسلة وإعادة تقديم المُرجَعة', path: '/observations/workflow', colorClass: 'card-report', iconColor: '#0f766e', buttonClass: 'btn-primary', actionLabel: 'فتح المراجعة' },
     { title: 'النشرات الساعية', icon: 'fa-regular fa-clock', description: 'إرسال وعرض التقارير الساعية لبيانات الطقس مثل الحرارة والرطوبة والرياح', path: '/reports/hourly', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
     { title: 'النشرات اليومية', icon: 'fa-regular fa-calendar-days', description: 'التقارير اليومية الشاملة لبيانات الطقس والإحصائيات اليومية', path: '/reports/daily', colorClass: 'card-report', iconColor: '#2980b9', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
