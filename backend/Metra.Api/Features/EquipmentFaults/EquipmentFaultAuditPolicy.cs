@@ -14,13 +14,24 @@ public static class EquipmentFaultAuditPolicy
         if (entry.FaultId == Guid.Empty || entry.ActorId == Guid.Empty)
             return "invalid_audit_identity";
 
-        if (!Enum.IsDefined(entry.PreviousStatus) ||
-            !Enum.IsDefined(entry.NewStatus))
+        if (!Enum.IsDefined(entry.NewStatus))
             return "invalid_audit_status";
 
-        if (!EquipmentFaultPolicy.TryGetRequiredPermission(
-                entry.PreviousStatus, entry.NewStatus, out _))
-            return "invalid_audit_transition";
+        if (entry.PreviousStatus is null)
+        {
+            // A creation event has no prior state; it must establish Submitted.
+            if (entry.NewStatus != EquipmentFaultStatus.Submitted)
+                return "invalid_audit_transition";
+        }
+        else
+        {
+            if (!Enum.IsDefined(entry.PreviousStatus.Value))
+                return "invalid_audit_status";
+
+            if (!EquipmentFaultPolicy.TryGetRequiredPermission(
+                    entry.PreviousStatus.Value, entry.NewStatus, out _))
+                return "invalid_audit_transition";
+        }
 
         if (entry.OccurredAt == default)
             return "invalid_audit_timestamp";
@@ -37,7 +48,7 @@ public static class EquipmentFaultAuditPolicy
         Guid faultId,
         Guid actorId,
         DateTimeOffset occurredAt,
-        EquipmentFaultStatus previousStatus,
+        EquipmentFaultStatus? previousStatus,
         EquipmentFaultStatus newStatus,
         string reason) =>
         new(faultId, actorId, occurredAt, previousStatus, newStatus, reason);
