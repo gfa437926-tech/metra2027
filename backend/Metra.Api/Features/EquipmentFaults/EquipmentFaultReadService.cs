@@ -97,11 +97,7 @@ public sealed class EquipmentFaultReadService(
             var page = await store.GetPageAsync(
                 stationId, query!, window, cancellationToken);
 
-            if (page is null || page.Items is null ||
-                page.TotalCount < 0 ||
-                page.Page != window.Page ||
-                page.PageSize != window.PageSize ||
-                page.Items.Count > window.PageSize)
+            if (!IsValidPage(page, window))
                 return new(EquipmentFaultReadResultCode.DependencyFailure);
 
             return new(EquipmentFaultReadResultCode.Success, page);
@@ -138,6 +134,9 @@ public sealed class EquipmentFaultReadService(
                 detail.StationId != stationId)
                 return new(EquipmentFaultReadResultCode.NotFoundOrWrongStation);
 
+            if (!IsValidDetail(detail))
+                return new(EquipmentFaultReadResultCode.DependencyFailure);
+
             return new(EquipmentFaultReadResultCode.Success, detail);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -149,4 +148,47 @@ public sealed class EquipmentFaultReadService(
             return new(EquipmentFaultReadResultCode.DependencyFailure);
         }
     }
+
+    private static bool IsValidPage(
+        EquipmentFaultListPage? page,
+        EquipmentFaultListWindow window)
+    {
+        if (page is null || page.Items is null ||
+            page.TotalCount < page.Items.Count ||
+            page.Page != window.Page ||
+            page.PageSize != window.PageSize ||
+            page.Items.Count > window.PageSize)
+            return false;
+
+        var seen = new HashSet<Guid>();
+        foreach (var item in page.Items)
+        {
+            if (item is null ||
+                item.FaultId == Guid.Empty ||
+                !HasLength(item.Category, 2, 80) ||
+                !HasLength(item.EquipmentName, 2, 120) ||
+                !Enum.IsDefined(item.Severity) ||
+                !Enum.IsDefined(item.Status) ||
+                item.OccurredAt == default ||
+                !seen.Add(item.FaultId))
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsValidDetail(EquipmentFaultDetail detail) =>
+        detail.ReporterId != Guid.Empty &&
+        HasLength(detail.Category, 2, 80) &&
+        HasLength(detail.EquipmentName, 2, 120) &&
+        HasLength(detail.Description, 10, 4000) &&
+        Enum.IsDefined(detail.Severity) &&
+        Enum.IsDefined(detail.Status) &&
+        detail.OccurredAt != default;
+
+    private static bool HasLength(string? value, int min, int max) =>
+        value is not null &&
+        value == value.Trim() &&
+        value.Length >= min &&
+        value.Length <= max;
 }
