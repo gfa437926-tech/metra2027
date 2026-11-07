@@ -199,6 +199,42 @@ public sealed class EquipmentFaultPolicyTests
     }
 
     [Theory]
+    [InlineData(EquipmentFaultStatus.Submitted)]
+    [InlineData(EquipmentFaultStatus.UnderReview)]
+    [InlineData(EquipmentFaultStatus.Assigned)]
+    [InlineData(EquipmentFaultStatus.InProgress)]
+    [InlineData(EquipmentFaultStatus.Resolved)]
+    [InlineData(EquipmentFaultStatus.Closed)]
+    [InlineData(EquipmentFaultStatus.Rejected)]
+    public void Same_status_transition_is_never_allowed(EquipmentFaultStatus status)
+    {
+        Assert.False(EquipmentFaultPolicy.TryGetRequiredPermission(status, status, out _));
+        Assert.False(EquipmentFaultPolicy.CanTransition(
+            status, status, new HashSet<string>
+            {
+                "equipment_fault.review",
+                "equipment_fault.assign",
+                "equipment_fault.resolve",
+                "equipment_fault.close"
+            }));
+    }
+
+    [Theory]
+    [InlineData(EquipmentFaultStatus.Closed)]
+    [InlineData(EquipmentFaultStatus.Rejected)]
+    public void Terminal_statuses_have_no_outgoing_transitions(EquipmentFaultStatus terminal)
+    {
+        foreach (var next in Enum.GetValues<EquipmentFaultStatus>())
+            Assert.False(EquipmentFaultPolicy.TryGetRequiredPermission(terminal, next, out _));
+    }
+
+    [Fact]
+    public void Undefined_status_is_not_terminal()
+    {
+        Assert.False(EquipmentFaultPolicy.IsTerminal((EquipmentFaultStatus)999));
+    }
+
+    [Theory]
     [InlineData(EquipmentFaultStatus.Closed)]
     [InlineData(EquipmentFaultStatus.Rejected)]
     public void Closed_and_rejected_are_terminal(EquipmentFaultStatus status)
