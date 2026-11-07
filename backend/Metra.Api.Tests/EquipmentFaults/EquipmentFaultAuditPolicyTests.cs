@@ -61,7 +61,7 @@ public sealed class EquipmentFaultAuditPolicyTests
     [Fact]
     public void Default_timestamp_is_rejected()
     {
-        var entry = Create(occurredAt: default);
+        var entry = Create(occurredAt: DateTimeOffset.MinValue);
 
         Assert.Equal("invalid_audit_timestamp", EquipmentFaultAuditPolicy.Validate(entry));
     }
