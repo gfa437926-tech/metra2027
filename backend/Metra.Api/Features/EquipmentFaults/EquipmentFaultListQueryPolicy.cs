@@ -12,12 +12,12 @@ public enum EquipmentFaultListSort
 }
 
 public sealed record EquipmentFaultListQuery(
-    int Page,
-    int PageSize,
-    EquipmentFaultStatus? Status,
-    EquipmentFaultSeverity? Severity,
-    DateTimeOffset? OccurredFrom,
-    DateTimeOffset? OccurredTo,
+    int Page = 1,
+    int PageSize = EquipmentFaultListQueryPolicy.DefaultPageSize,
+    EquipmentFaultStatus? Status = null,
+    EquipmentFaultSeverity? Severity = null,
+    DateTimeOffset? OccurredFrom = null,
+    DateTimeOffset? OccurredTo = null,
     EquipmentFaultListSort Sort = EquipmentFaultListSort.OccurredAtDescending);
 
 public sealed record EquipmentFaultListWindow(int Page, int PageSize, int Offset);
