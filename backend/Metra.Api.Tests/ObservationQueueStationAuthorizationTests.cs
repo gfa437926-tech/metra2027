@@ -231,7 +231,7 @@ public sealed class ObservationQueueStationAuthorizationTests
         UrlEncoder encoder)
         : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
-        public const string Scheme = "MetraQueueTest";
+        public new const string Scheme = "MetraQueueTest";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
