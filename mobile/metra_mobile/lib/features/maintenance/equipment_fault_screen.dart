@@ -122,7 +122,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _category,
+                      key: ValueKey(_category),
+                      initialValue: _category,
                       decoration: const InputDecoration(
                         labelText: 'تصنيف المعدة',
                         border: OutlineInputBorder(),
@@ -173,7 +174,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _severity,
+                      key: ValueKey(_severity),
+                      initialValue: _severity,
                       decoration: const InputDecoration(
                         labelText: 'درجة الشدة',
                         border: OutlineInputBorder(),

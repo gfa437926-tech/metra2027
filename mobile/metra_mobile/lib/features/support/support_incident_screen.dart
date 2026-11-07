@@ -110,7 +110,8 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     DropdownButtonFormField<String>(
-                      value: _kind,
+                      key: ValueKey(_kind),
+                      initialValue: _kind,
                       decoration: const InputDecoration(
                         labelText: 'نوع البلاغ',
                         border: OutlineInputBorder(),
@@ -186,7 +187,8 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _severity,
+                      key: ValueKey(_severity),
+                      initialValue: _severity,
                       decoration: const InputDecoration(
                         labelText: 'الأولوية',
                         border: OutlineInputBorder(),
