@@ -152,6 +152,53 @@ public sealed class StationScopedAuthorizationIntegrationTests
         Assert.Equal(0, decisions.CallCount);
     }
 
+    [Fact]
+    public async Task User_cannot_approve_their_own_observation()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var observationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, stationId);
+        var decisions = new ObservationDecisionFake
+        {
+            OwnershipCreatedBy = userId
+        };
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IObservationDecisionService>();
+                    services.AddSingleton<IObservationDecisionService>(decisions);
+                });
+            });
+
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{stationId}/observations/{observationId}/decision",
+            new StringContent(
+                "{\"decision\":\"approve\",\"note\":null}",
+                Encoding.UTF8,
+                "application/json"));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(0, decisions.CallCount);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("self_review_forbidden", body);
+    }
+
     private sealed class StationScopedAuthorizationFake(Guid userId, Guid allowedStationId)
         : IStationAuthorizationService
     {
@@ -204,6 +251,15 @@ public sealed class StationScopedAuthorizationIntegrationTests
     {
         public bool IsConfigured => true;
         public int CallCount { get; private set; }
+        public Guid? OwnershipCreatedBy { get; set; }
+
+        public Task<ObservationOwnership?> GetOwnershipAsync(
+            Guid stationId, Guid observationId, CancellationToken cancellationToken)
+        {
+            var owner = OwnershipCreatedBy ?? Guid.Parse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+            return Task.FromResult<ObservationOwnership?>(
+                new ObservationOwnership(observationId, stationId, owner, "submitted"));
+        }
 
         public Task<ObservationDecisionOutcome> DecideAsync(
             Guid userId, Guid stationId, Guid observationId,
@@ -215,6 +271,7 @@ public sealed class StationScopedAuthorizationIntegrationTests
                 true, true, HttpStatusCode.OK, document.RootElement.Clone()));
         }
     }
+
 
     private sealed class TestAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,

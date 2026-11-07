@@ -57,6 +57,13 @@ public static class ObservationAuthorizationPolicy
             !string.Equals(actor.UserId, observation.CreatedByUserId, StringComparison.Ordinal))
             return Deny("not_observation_owner", "يمكن تنفيذ هذه العملية على النشرة التي أنشأها المستخدم فقط.");
 
+        // Separation of duties: the creator cannot review, return, or approve their own observation.
+        if ((permission is ObservationPermission.Review
+                or ObservationPermission.ReturnForCorrection
+                or ObservationPermission.Approve) &&
+            string.Equals(actor.UserId, observation.CreatedByUserId, StringComparison.Ordinal))
+            return Deny("self_review_forbidden", "لا يجوز للمستخدم اعتماد أو مراجعة أو إرجاع النشرة التي أنشأها بنفسه.");
+
         return new(true, null, null);
     }
 
