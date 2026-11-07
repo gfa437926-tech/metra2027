@@ -152,6 +152,73 @@ public sealed class EquipmentFaultTransitionServiceTests
         Assert.Equal(EquipmentFaultTransitionExecutionResult.Forbidden, result);
     }
 
+    [Theory]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(false, false, true)]
+    public async Task Empty_actor_station_or_fault_is_rejected_before_access(
+        bool emptyActor, bool emptyStation, bool emptyFault)
+    {
+        var stationId = Guid.NewGuid();
+        var auth = new FakeAuthorization { Allowed = true };
+        var writer = new FakeWriter();
+        var access = new EquipmentFaultApplicationService(
+            auth, new FakeStationReader(stationId));
+        var service = new EquipmentFaultTransitionService(access, writer);
+
+        var result = await service.ExecuteAsync(
+            emptyActor ? Guid.Empty : Guid.NewGuid(),
+            emptyStation ? Guid.Empty : stationId,
+            emptyFault ? Guid.Empty : Guid.NewGuid(),
+            EquipmentFaultStatus.Submitted,
+            EquipmentFaultStatus.UnderReview,
+            "مراجعة البلاغ");
+
+        Assert.Equal(EquipmentFaultTransitionExecutionResult.InvalidRequest, result);
+        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(0, writer.CallCount);
+    }
+
+    [Fact]
+    public async Task Wrong_station_owner_prevents_atomic_write()
+    {
+        var routeStationId = Guid.NewGuid();
+        var auth = new FakeAuthorization { Allowed = true };
+        var writer = new FakeWriter();
+        var access = new EquipmentFaultApplicationService(
+            auth, new FakeStationReader(Guid.NewGuid()));
+        var service = new EquipmentFaultTransitionService(access, writer);
+
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(), routeStationId, Guid.NewGuid(),
+            EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview,
+            "مراجعة البلاغ");
+
+        Assert.Equal(EquipmentFaultTransitionExecutionResult.NotFoundOrWrongStation, result);
+        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(0, writer.CallCount);
+    }
+
+    [Fact]
+    public async Task Undefined_status_is_rejected_before_access_or_write()
+    {
+        var stationId = Guid.NewGuid();
+        var auth = new FakeAuthorization { Allowed = true };
+        var writer = new FakeWriter();
+        var access = new EquipmentFaultApplicationService(
+            auth, new FakeStationReader(stationId));
+        var service = new EquipmentFaultTransitionService(access, writer);
+
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(), stationId, Guid.NewGuid(),
+            (EquipmentFaultStatus)999, EquipmentFaultStatus.UnderReview,
+            "مراجعة البلاغ");
+
+        Assert.Equal(EquipmentFaultTransitionExecutionResult.InvalidRequest, result);
+        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(0, writer.CallCount);
+    }
+
     private static EquipmentFaultTransitionService CreateService(
         Guid stationId, bool allowed, FakeWriter writer)
     {
