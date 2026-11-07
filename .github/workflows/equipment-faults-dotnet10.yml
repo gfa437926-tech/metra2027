@@ -1,0 +1,63 @@
+name: Equipment Faults - .NET 10 validation
+
+on:
+  push:
+    branches:
+      - work/equipment-fault-domain
+    paths:
+      - "backend/**"
+      - ".github/workflows/equipment-faults-dotnet10.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - ".github/workflows/equipment-faults-dotnet10.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: equipment-faults-dotnet10-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Restore, build and test (.NET 10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Show SDK
+        run: dotnet --info
+
+      - name: Restore API
+        run: dotnet restore backend/Metra.Api/Metra.Api.csproj
+
+      - name: Build API
+        run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
+
+      - name: Restore tests
+        run: dotnet restore backend/Metra.Api.Tests/Metra.Api.Tests.csproj
+
+      - name: Build tests
+        run: dotnet build backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=equipment-faults.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: equipment-faults-dotnet10-test-results
+          path: "**/TestResults/*.trx"
+          if-no-files-found: ignore
