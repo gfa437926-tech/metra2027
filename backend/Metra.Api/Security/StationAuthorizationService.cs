@@ -81,5 +81,15 @@ public sealed class SupabaseStationAuthorizationService(
         {
             return false;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Preserve cancellation initiated by the caller.
+            throw;
+        }
+        catch (Exception)
+        {
+            // Unexpected transport/provider failures must never grant permission.
+            return false;
+        }
     }
 }
