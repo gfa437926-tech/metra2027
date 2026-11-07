@@ -137,6 +137,8 @@ The isolated backend now defines `IEquipmentFaultReadStore` and
 - List queries are validated and bounded before authorization or persistence.
   The store receives the station ID separately from filter input and must apply
   that predicate before computing totals, ordering, offset, or page size.
+  Each list projection also carries its persisted `StationId`; the service
+  rejects any returned row whose station differs from the requested scope.
 - List ordering is an explicit allow-listed option: occurrence time descending
   (default) or ascending. The store must add a unique immutable tie-breaker
   (fault ID) so pagination remains deterministic when timestamps are equal.
@@ -160,6 +162,7 @@ review and explicit approval.
 The application read boundary validates returned data before reporting success:
 
 - A list page must echo the requested page and page size, contain no more than the requested page size, and have a non-negative total count that is not smaller than the returned item count.
+- Each list item must echo the exact requested station ID; any cross-station projection fails closed.
 - Every list item must have a non-empty fault ID and must echo the exact requested station ID; it must also contain valid status and severity enum values, a non-default occurrence timestamp, and category/equipment-name lengths within the domain limits.
 - Duplicate fault IDs within one page are rejected.
 - A detail projection must have non-empty reporter identity, valid status/severity values, a non-default occurrence timestamp, and category, equipment name, and description lengths within the domain limits.
