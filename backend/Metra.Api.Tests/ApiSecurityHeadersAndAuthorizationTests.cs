@@ -70,7 +70,7 @@ public sealed class ApiSecurityHeadersAndAuthorizationTests
             .WithWebHostBuilder(builder => builder.UseEnvironment("Production"));
         using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
-            BaseAddress = new Uri("https://localhost"),
+            BaseAddress = new Uri("https://metra.test"),
             AllowAutoRedirect = false
         });
 
