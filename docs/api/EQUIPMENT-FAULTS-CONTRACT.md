@@ -97,3 +97,12 @@ List endpoints must use bounded pagination and stable ordering. Cross-station un
 ## Explicitly out of scope pending approval
 
 This contract does not create or alter database tables, migrations, RPCs, storage buckets, deployed API routes, or client screens. Persistence must wait for review of the approved station catalogue and explicit approval of the database schema.
+
+
+### Additional lifecycle invariants
+
+- A transition from a status to itself is always invalid, even when the actor holds every equipment-fault permission.
+- `Closed` and `Rejected` are terminal: neither status may have any outgoing transition.
+- Undefined status enum values are invalid and must not be treated as terminal or transitionable.
+- Reopening is explicitly limited to `Resolved -> InProgress`; rejected and closed records cannot be reopened.
+- These rules are domain invariants and must be revalidated against the persisted current status when a write adapter is introduced. A client-supplied status is never authoritative.
