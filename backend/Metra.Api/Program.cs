@@ -23,6 +23,7 @@ static void AddBoundedSupabaseClient(IServiceCollection services, string name) =
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationResubmitService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
@@ -36,6 +37,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAuthorityAccessService
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
+builder.Services.AddScoped<IObservationResubmitService, SupabaseObservationResubmitService>();
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
@@ -129,6 +131,7 @@ if (app.Environment.IsDevelopment())
 app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
+app.MapObservationResubmitEndpoints();
 app.MapObservationQueueEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
@@ -154,6 +157,7 @@ app.MapGet("/api/v1/ready", async (
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,
     IObservationDecisionService decision,
+    IObservationResubmitService resubmit,
     IObservationQueueService queue,
     IStationDirectoryService directory,
     IStationCatalogueReviewService stationReview,
@@ -168,6 +172,7 @@ app.MapGet("/api/v1/ready", async (
     var configured = authorization.IsConfigured &&
         submission.IsConfigured &&
         decision.IsConfigured &&
+        resubmit.IsConfigured &&
         queue.IsConfigured &&
         directory.IsConfigured &&
         stationReview.IsConfigured &&

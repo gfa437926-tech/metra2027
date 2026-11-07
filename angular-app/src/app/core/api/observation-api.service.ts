@@ -134,6 +134,24 @@ export class ObservationApiService {
     ));
   }
 
+
+  async resubmitObservation(
+    stationId: string,
+    observationId: string,
+    payload?: Record<string, unknown>
+  ): Promise<unknown> {
+    if (!this.isConfigured) throw new Error('يلزم ضبط عنوان API وإعدادات Supabase العامة أولاً.');
+    if (!this.isUuid(stationId) || !this.isUuid(observationId)) {
+      throw new Error('معرّف المحطة أو النشرة غير صالح.');
+    }
+    const headers = await this.authHeaders();
+    return firstValueFrom(this.http.post(
+      `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/observations/${encodeURIComponent(observationId)}/resubmit`,
+      { payload: payload ?? null },
+      { headers }
+    ));
+  }
+
   private isUuid(value: string): boolean {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
   }

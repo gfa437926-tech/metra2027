@@ -154,6 +154,19 @@ class MetraApiClient {
     );
   }
 
+
+  Future<void> resubmitObservation({
+    required String stationId,
+    required String observationId,
+    Map<String, dynamic>? payload,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}/resubmit',
+      body: {'payload': payload},
+    );
+  }
+
   Future<void> submitObservation({required String stationId,
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
