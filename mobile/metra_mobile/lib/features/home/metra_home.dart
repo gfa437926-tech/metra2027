@@ -3,7 +3,6 @@ import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../maintenance/equipment_fault_screen.dart';
-import '../support/support_incident_screen.dart';
 import '../observations/observation_submit_screen.dart';
 
 const _navy = Color(0xFF061B4A);
