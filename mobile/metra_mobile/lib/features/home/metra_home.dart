@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
-import '../maintenance/maintenance_report_screen.dart';
+import '../maintenance/equipment_fault_screen.dart';
+import '../support/support_incident_screen.dart';
+import '../observations/observation_submit_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -28,9 +30,14 @@ class _MetraHomeState extends State<MetraHome> {
         ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
             message: 'اختر محطة أولاً من دليل المحطات. سيطبّق الخادم صلاحيات حسابك على المحطة والعمليات المتاحة.')
         : ObservationReviewScreen(api: widget.api, stationId: _selectedStationId!),
-      const _InformationPage(icon: Icons.analytics_outlined, title: 'التقارير والتحليلات',
-        message: 'التقارير التشغيلية غير مفعلة حتى ربط مصدر موثق للرصدات المعتمدة.'),
-      const MaintenanceReportScreen(),
+      _selectedStationId == null
+        ? const _InformationPage(icon: Icons.edit_note_outlined, title: 'إدخال نشرة',
+            message: 'اختر محطة أولاً لإدخال نشرة ساعية عبر واجهة الخادم.')
+        : ObservationSubmitScreen(api: widget.api, stationId: _selectedStationId!),
+      _selectedStationId == null
+        ? const _InformationPage(icon: Icons.build_outlined, title: 'أعطال المعدات',
+            message: 'اختر محطة أولاً لتسجيل أعطال المعدات على الخادم.')
+        : EquipmentFaultScreen(api: widget.api, stationId: _selectedStationId!),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
@@ -47,8 +54,8 @@ class _MetraHomeState extends State<MetraHome> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
-          NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'الرصد'),
-          NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'التقارير'),
+          NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'مراجعة'),
+          NavigationDestination(icon: Icon(Icons.edit_note_outlined), selectedIcon: Icon(Icons.edit_note), label: 'إدخال'),
           NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'الصيانة'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
         ]),

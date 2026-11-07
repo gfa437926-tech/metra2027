@@ -181,9 +181,10 @@ export class DashboardComponent implements OnInit {
   toastMessage = '';
 
   readonly basicReports: DashboardCard[] = [
+    { title: 'مراجعة النشرات', icon: 'fa-solid fa-list-check', description: 'مراجعة واعتماد أو إرجاع النشرات المرسلة وإعادة تقديم المُرجَعة', path: '/observations/workflow', colorClass: 'card-report', iconColor: '#0f766e', buttonClass: 'btn-primary', actionLabel: 'فتح المراجعة' },
     { title: 'النشرات الساعية', icon: 'fa-regular fa-clock', description: 'إرسال وعرض التقارير الساعية لبيانات الطقس مثل الحرارة والرطوبة والرياح', path: '/reports/hourly', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
     { title: 'النشرات اليومية', icon: 'fa-regular fa-calendar-days', description: 'التقارير اليومية الشاملة لبيانات الطقس والإحصائيات اليومية', path: '/reports/daily', colorClass: 'card-report', iconColor: '#2980b9', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
-    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
+    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', path: '/reports/rainfall', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
   ];
 
   readonly climateCards: DashboardCard[] = [
