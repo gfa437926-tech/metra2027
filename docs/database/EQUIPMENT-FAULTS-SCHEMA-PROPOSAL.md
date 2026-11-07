@@ -2,7 +2,7 @@
 
 **Review status:** Approved logical model after read-only verification of the target station catalogue and identity references.
 **Execution status:** Migration/application remains gated; no database change has been made.
-**Target:** the new METRA Supabase project only, after the station-catalogue key is verified.
+**Target:** the new METRA Supabase project only (`tbdnklyxjvbrilvnwgmq`).
 **Legacy database:** explicitly excluded.
 
 This document is a design proposal, not a migration. It contains no executable DDL and must not be applied as SQL.
@@ -28,7 +28,7 @@ One row represents the current state of one reported equipment fault.
 | Column | Proposed type | Nullability | Purpose |
 |---|---|---|---|
 | `id` | uuid | NOT NULL, generated | Stable fault identifier / primary key |
-| `station_id` | uuid | NOT NULL | FK to the approved new station catalogue |
+| `station_id` | uuid | NOT NULL | FK to `public.station_catalogue(id)` |
 | `reporter_id` | uuid | NOT NULL | Auth user who submitted the fault |
 | `category` | varchar(80) | NOT NULL | Equipment category |
 | `equipment_name` | varchar(120) | NOT NULL | Equipment name |
