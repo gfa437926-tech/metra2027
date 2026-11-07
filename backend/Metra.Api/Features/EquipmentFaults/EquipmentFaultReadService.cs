@@ -6,6 +6,7 @@ namespace Metra.Api.Features.EquipmentFaults;
 /// </summary>
 public sealed record EquipmentFaultListItem(
     Guid FaultId,
+    Guid StationId,
     string Category,
     string EquipmentName,
     EquipmentFaultSeverity Severity,
@@ -97,7 +98,7 @@ public sealed class EquipmentFaultReadService(
             var page = await store.GetPageAsync(
                 stationId, query!, window, cancellationToken);
 
-            if (!IsValidPage(page, window))
+            if (!IsValidPage(page, window, stationId))
                 return new(EquipmentFaultReadResultCode.DependencyFailure);
 
             return new(EquipmentFaultReadResultCode.Success, page);
@@ -151,7 +152,8 @@ public sealed class EquipmentFaultReadService(
 
     private static bool IsValidPage(
         EquipmentFaultListPage? page,
-        EquipmentFaultListWindow window)
+        EquipmentFaultListWindow window,
+        Guid expectedStationId)
     {
         if (page is null || page.Items is null ||
             page.TotalCount < page.Items.Count ||
@@ -165,6 +167,7 @@ public sealed class EquipmentFaultReadService(
         {
             if (item is null ||
                 item.FaultId == Guid.Empty ||
+                item.StationId != expectedStationId ||
                 !HasLength(item.Category, 2, 80) ||
                 !HasLength(item.EquipmentName, 2, 120) ||
                 !Enum.IsDefined(item.Severity) ||
