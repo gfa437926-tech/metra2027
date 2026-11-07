@@ -17,16 +17,27 @@ class SupportIncidentScreen extends StatefulWidget {
 }
 
 class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _category = TextEditingController();
-  final _title = TextEditingController();
-  final _description = TextEditingController();
-  final _affectedAsset = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _category = TextEditingController();
+  final TextEditingController _title = TextEditingController();
+  final TextEditingController _description = TextEditingController();
+  final TextEditingController _affectedAsset = TextEditingController();
   String _kind = 'InformationTechnology';
   String _severity = 'High';
   bool _impactsOperations = false;
   bool _submitting = false;
   late Future<List<Map<String, dynamic>>> _queue;
+
+  static const List<String> _kinds = <String>[
+    'InformationTechnology',
+    'Telecommunications',
+  ];
+  static const List<String> _severities = <String>[
+    'Low',
+    'Normal',
+    'High',
+    'Critical',
+  ];
 
   @override
   void initState() {
@@ -44,12 +55,16 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _queue = widget.api.listSupportIncidents(widget.stationId));
+    setState(() {
+      _queue = widget.api.listSupportIncidents(widget.stationId);
+    });
     await _queue;
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _submitting) return;
+    if (!_formKey.currentState!.validate() || _submitting) {
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await widget.api.submitSupportIncident(
@@ -65,7 +80,9 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
             : _affectedAsset.text.trim(),
         impactsOperations: _impactsOperations,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       _category.clear();
       _title.clear();
       _description.clear();
@@ -75,18 +92,59 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
       );
       await _refresh();
     } on MetraApiException catch (error) {
-      if (!mounted) return;
-      final message = switch (error.statusCode) {
+      if (!mounted) {
+        return;
+      }
+      final String message = switch (error.statusCode) {
         400 => 'بيانات البلاغ غير صالحة.',
         401 => 'يلزم تسجيل الدخول أولاً.',
         403 => 'ليست لديك صلاحية تسجيل بلاغات الدعم لهذه المحطة.',
-        503 => 'خدمة الدعم غير متاحة حالياً (جداول القاعدة قد تكون غير مفعّلة).',
+        503 =>
+          'خدمة الدعم غير متاحة حالياً (جداول القاعدة قد تكون غير مفعّلة).',
         _ => 'تعذر إرسال البلاغ.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
+  }
+
+  Widget _choiceRow({
+    required String label,
+    required List<String> options,
+    required String selected,
+    required ValueChanged<String> onSelected,
+    String Function(String value)? labelFor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final String option in options)
+              ChoiceChip(
+                label: Text(labelFor == null ? option : labelFor(option)),
+                selected: selected == option,
+                onSelected: _submitting
+                    ? null
+                    : (bool isSelected) {
+                        if (isSelected) {
+                          onSelected(option);
+                        }
+                      },
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   @override
@@ -94,13 +152,16 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('بلاغات الدعم'),
-        actions: [
-          IconButton(onPressed: _refresh, icon: const Icon(Icons.refresh)),
+        actions: <Widget>[
+          IconButton(
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
+        children: <Widget>[
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -108,33 +169,18 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'نوع البلاغ',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _kind,
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'InformationTechnology',
-                              child: Text('تقنية معلومات'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Telecommunications',
-                              child: Text('اتصالات'),
-                            ),
-                          ],
-                          onChanged: _submitting
-                              ? null
-                              : (v) {
-                                  if (v != null) setState(() => _kind = v);
-                                },
-                        ),
-                      ),
+                  children: <Widget>[
+                    _choiceRow(
+                      label: 'نوع البلاغ',
+                      options: _kinds,
+                      selected: _kind,
+                      onSelected: (String value) {
+                        setState(() => _kind = value);
+                      },
+                      labelFor: (String value) =>
+                          value == 'InformationTechnology'
+                              ? 'تقنية معلومات'
+                              : 'اتصالات',
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -143,9 +189,9 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                         labelText: 'التصنيف',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) {
-                        final t = v?.trim() ?? '';
-                        if (t.length < 2 || t.length > 80) {
+                      validator: (String? value) {
+                        final String text = value?.trim() ?? '';
+                        if (text.length < 2 || text.length > 80) {
                           return 'التصنيف من 2 إلى 80 محرفاً';
                         }
                         return null;
@@ -158,9 +204,9 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                         labelText: 'العنوان',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) {
-                        final t = v?.trim() ?? '';
-                        if (t.length < 5 || t.length > 160) {
+                      validator: (String? value) {
+                        final String text = value?.trim() ?? '';
+                        if (text.length < 5 || text.length > 160) {
                           return 'العنوان من 5 إلى 160 محرفاً';
                         }
                         return null;
@@ -175,9 +221,11 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                         labelText: 'الوصف',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (v) {
-                        final t = v?.trim() ?? '';
-                        if (t.length < 10) return 'الوصف 10 محارف على الأقل';
+                      validator: (String? value) {
+                        final String text = value?.trim() ?? '';
+                        if (text.length < 10) {
+                          return 'الوصف 10 محارف على الأقل';
+                        }
                         return null;
                       },
                     ),
@@ -190,31 +238,13 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'الأولوية',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _severity,
-                          items: const [
-                            DropdownMenuItem(value: 'Low', child: Text('Low')),
-                            DropdownMenuItem(value: 'Normal', child: Text('Normal')),
-                            DropdownMenuItem(value: 'High', child: Text('High')),
-                            DropdownMenuItem(
-                              value: 'Critical',
-                              child: Text('Critical'),
-                            ),
-                          ],
-                          onChanged: _submitting
-                              ? null
-                              : (v) {
-                                  if (v != null) setState(() => _severity = v);
-                                },
-                        ),
-                      ),
+                    _choiceRow(
+                      label: 'الأولوية',
+                      options: _severities,
+                      selected: _severity,
+                      onSelected: (String value) {
+                        setState(() => _severity = value);
+                      },
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -222,7 +252,9 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                       value: _impactsOperations,
                       onChanged: _submitting
                           ? null
-                          : (v) => setState(() => _impactsOperations = v),
+                          : (bool value) {
+                              setState(() => _impactsOperations = value);
+                            },
                     ),
                     FilledButton.icon(
                       onPressed: _submitting ? null : _submit,
@@ -239,7 +271,10 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
           const SizedBox(height: 16),
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _queue,
-            builder: (context, snapshot) {
+            builder: (
+              BuildContext context,
+              AsyncSnapshot<List<Map<String, dynamic>>> snapshot,
+            ) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
@@ -254,15 +289,16 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                   ),
                 );
               }
-              final rows = snapshot.data ?? const <Map<String, dynamic>>[];
+              final List<Map<String, dynamic>> rows =
+                  snapshot.data ?? const <Map<String, dynamic>>[];
               if (rows.isEmpty) {
                 return const Card(
                   child: ListTile(title: Text('لا توجد بلاغات دعم مسجّلة')),
                 );
               }
               return Column(
-                children: [
-                  for (final row in rows)
+                children: <Widget>[
+                  for (final Map<String, dynamic> row in rows)
                     Card(
                       child: ListTile(
                         title: Text(

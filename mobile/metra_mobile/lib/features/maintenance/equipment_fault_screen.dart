@@ -17,22 +17,27 @@ class EquipmentFaultScreen extends StatefulWidget {
 }
 
 class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _equipmentName = TextEditingController();
-  final _description = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _equipmentName = TextEditingController();
+  final TextEditingController _description = TextEditingController();
   String _category = 'أجهزة الرصد';
   String _severity = 'High';
   bool _blocking = false;
   bool _submitting = false;
   late Future<List<Map<String, dynamic>>> _queue;
 
-  static const _categories = <String>[
+  static const List<String> _categories = <String>[
     'أجهزة الرصد',
     'أجهزة الاتصالات',
     'أجهزة القياس',
     'أخرى',
   ];
-  static const _severities = <String>['Low', 'Medium', 'High', 'Critical'];
+  static const List<String> _severities = <String>[
+    'Low',
+    'Medium',
+    'High',
+    'Critical',
+  ];
 
   @override
   void initState() {
@@ -48,12 +53,16 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _queue = widget.api.listEquipmentFaults(widget.stationId));
+    setState(() {
+      _queue = widget.api.listEquipmentFaults(widget.stationId);
+    });
     await _queue;
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _submitting) return;
+    if (!_formKey.currentState!.validate() || _submitting) {
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await widget.api.submitEquipmentFault(
@@ -65,7 +74,9 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
         occurredAt: DateTime.now().toUtc(),
         isOperationallyBlocking: _blocking,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       _equipmentName.clear();
       _description.clear();
       setState(() {
@@ -77,8 +88,10 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
       );
       await _refresh();
     } on MetraApiException catch (error) {
-      if (!mounted) return;
-      final message = switch (error.statusCode) {
+      if (!mounted) {
+        return;
+      }
+      final String message = switch (error.statusCode) {
         400 => 'بيانات البلاغ غير صالحة. راجع الحقول وأعد المحاولة.',
         401 => 'يلزم تسجيل الدخول أولاً.',
         403 => 'ليست لديك صلاحية تسجيل أعطال هذه المحطة.',
@@ -86,10 +99,47 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
           'خدمة الأعطال غير متاحة حالياً (قد تكون جداول القاعدة غير مفعّلة بعد).',
         _ => 'تعذر إرسال البلاغ. حاول مجدداً.',
       };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted) {
+        setState(() => _submitting = false);
+      }
     }
+  }
+
+  Widget _choiceRow({
+    required String label,
+    required List<String> options,
+    required String selected,
+    required ValueChanged<String> onSelected,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            for (final String option in options)
+              ChoiceChip(
+                label: Text(option),
+                selected: selected == option,
+                onSelected: _submitting
+                    ? null
+                    : (bool isSelected) {
+                        if (isSelected) {
+                          onSelected(option);
+                        }
+                      },
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   @override
@@ -97,7 +147,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('أعطال المعدات'),
-        actions: [
+        actions: <Widget>[
           IconButton(
             tooltip: 'تحديث القائمة',
             onPressed: _refresh,
@@ -107,7 +157,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: [
+        children: <Widget>[
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -115,32 +165,22 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+                  children: <Widget>[
                     const Text(
                       'بلاغ عطل جديد',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'تصنيف المعدة',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _category,
-                          items: [
-                            for (final c in _categories)
-                              DropdownMenuItem(value: c, child: Text(c)),
-                          ],
-                          onChanged: _submitting
-                              ? null
-                              : (value) {
-                                  if (value != null) setState(() => _category = value);
-                                },
-                        ),
-                      ),
+                    _choiceRow(
+                      label: 'تصنيف المعدة',
+                      options: _categories,
+                      selected: _category,
+                      onSelected: (String value) {
+                        setState(() => _category = value);
+                      },
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -150,8 +190,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                         labelText: 'اسم المعدة',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) {
-                        final text = value?.trim() ?? '';
+                      validator: (String? value) {
+                        final String text = value?.trim() ?? '';
                         if (text.length < 2 || text.length > 120) {
                           return 'اسم المعدة من 2 إلى 120 محرفاً';
                         }
@@ -168,8 +208,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                         labelText: 'وصف العطل',
                         border: OutlineInputBorder(),
                       ),
-                      validator: (value) {
-                        final text = value?.trim() ?? '';
+                      validator: (String? value) {
+                        final String text = value?.trim() ?? '';
                         if (text.length < 10 || text.length > 5000) {
                           return 'الوصف من 10 إلى 5000 محرف';
                         }
@@ -177,26 +217,13 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                       },
                     ),
                     const SizedBox(height: 8),
-                    InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'درجة الشدة',
-                        border: OutlineInputBorder(),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          value: _severity,
-                          items: [
-                            for (final s in _severities)
-                              DropdownMenuItem(value: s, child: Text(s)),
-                          ],
-                          onChanged: _submitting
-                              ? null
-                              : (value) {
-                                  if (value != null) setState(() => _severity = value);
-                                },
-                        ),
-                      ),
+                    _choiceRow(
+                      label: 'درجة الشدة',
+                      options: _severities,
+                      selected: _severity,
+                      onSelected: (String value) {
+                        setState(() => _severity = value);
+                      },
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
@@ -204,7 +231,9 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                       value: _blocking,
                       onChanged: _submitting
                           ? null
-                          : (value) => setState(() => _blocking = value),
+                          : (bool value) {
+                              setState(() => _blocking = value);
+                            },
                     ),
                     const SizedBox(height: 8),
                     FilledButton.icon(
@@ -216,7 +245,9 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.send),
-                      label: Text(_submitting ? 'جارٍ الإرسال...' : 'إرسال إلى الخادم'),
+                      label: Text(
+                        _submitting ? 'جارٍ الإرسال...' : 'إرسال إلى الخادم',
+                      ),
                     ),
                   ],
                 ),
@@ -231,7 +262,10 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
           const SizedBox(height: 8),
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _queue,
-            builder: (context, snapshot) {
+            builder: (
+              BuildContext context,
+              AsyncSnapshot<List<Map<String, dynamic>>> snapshot,
+            ) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.all(24),
@@ -239,8 +273,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                 );
               }
               if (snapshot.hasError) {
-                final error = snapshot.error;
-                final message = error is MetraApiException
+                final Object? error = snapshot.error;
+                final String message = error is MetraApiException
                     ? switch (error.statusCode) {
                         401 => 'يلزم تسجيل الدخول أولاً',
                         403 => 'ليست لديك صلاحية قراءة أعطال هذه المحطة',
@@ -260,7 +294,8 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                   ),
                 );
               }
-              final rows = snapshot.data ?? const <Map<String, dynamic>>[];
+              final List<Map<String, dynamic>> rows =
+                  snapshot.data ?? const <Map<String, dynamic>>[];
               if (rows.isEmpty) {
                 return const Card(
                   child: ListTile(
@@ -269,19 +304,19 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                 );
               }
               return Column(
-                children: [
-                  for (final row in rows)
+                children: <Widget>[
+                  for (final Map<String, dynamic> row in rows)
                     Card(
                       child: ListTile(
                         title: Text(
                           '${row['equipment_name'] ?? '—'} • ${row['severity'] ?? ''}',
                         ),
                         subtitle: Text(
-                          [
+                          <String>[
                             row['equipment_category']?.toString() ?? '',
                             row['status']?.toString() ?? '',
                             row['description']?.toString() ?? '',
-                          ].where((x) => x.isNotEmpty).join('\n'),
+                          ].where((String x) => x.isNotEmpty).join('\n'),
                           maxLines: 4,
                           overflow: TextOverflow.ellipsis,
                         ),
