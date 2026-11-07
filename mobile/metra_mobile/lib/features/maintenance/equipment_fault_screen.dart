@@ -121,22 +121,26 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_category),
-                      initialValue: _category,
+                    InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'تصنيف المعدة',
                         border: OutlineInputBorder(),
                       ),
-                      items: [
-                        for (final c in _categories)
-                          DropdownMenuItem(value: c, child: Text(c)),
-                      ],
-                      onChanged: _submitting
-                          ? null
-                          : (value) {
-                              if (value != null) setState(() => _category = value);
-                            },
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _category,
+                          items: [
+                            for (final c in _categories)
+                              DropdownMenuItem(value: c, child: Text(c)),
+                          ],
+                          onChanged: _submitting
+                              ? null
+                              : (value) {
+                                  if (value != null) setState(() => _category = value);
+                                },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -173,22 +177,26 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                       },
                     ),
                     const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_severity),
-                      initialValue: _severity,
+                    InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'درجة الشدة',
                         border: OutlineInputBorder(),
                       ),
-                      items: [
-                        for (final s in _severities)
-                          DropdownMenuItem(value: s, child: Text(s)),
-                      ],
-                      onChanged: _submitting
-                          ? null
-                          : (value) {
-                              if (value != null) setState(() => _severity = value);
-                            },
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _severity,
+                          items: [
+                            for (final s in _severities)
+                              DropdownMenuItem(value: s, child: Text(s)),
+                          ],
+                          onChanged: _submitting
+                              ? null
+                              : (value) {
+                                  if (value != null) setState(() => _severity = value);
+                                },
+                        ),
+                      ),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,

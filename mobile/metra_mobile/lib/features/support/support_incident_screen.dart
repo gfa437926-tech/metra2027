@@ -109,28 +109,32 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_kind),
-                      initialValue: _kind,
+                    InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'نوع البلاغ',
                         border: OutlineInputBorder(),
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'InformationTechnology',
-                          child: Text('تقنية معلومات'),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _kind,
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'InformationTechnology',
+                              child: Text('تقنية معلومات'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Telecommunications',
+                              child: Text('اتصالات'),
+                            ),
+                          ],
+                          onChanged: _submitting
+                              ? null
+                              : (v) {
+                                  if (v != null) setState(() => _kind = v);
+                                },
                         ),
-                        DropdownMenuItem(
-                          value: 'Telecommunications',
-                          child: Text('اتصالات'),
-                        ),
-                      ],
-                      onChanged: _submitting
-                          ? null
-                          : (v) {
-                              if (v != null) setState(() => _kind = v);
-                            },
+                      ),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -186,27 +190,31 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey(_severity),
-                      initialValue: _severity,
+                    InputDecorator(
                       decoration: const InputDecoration(
                         labelText: 'الأولوية',
                         border: OutlineInputBorder(),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'Low', child: Text('Low')),
-                        DropdownMenuItem(value: 'Normal', child: Text('Normal')),
-                        DropdownMenuItem(value: 'High', child: Text('High')),
-                        DropdownMenuItem(
-                          value: 'Critical',
-                          child: Text('Critical'),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          value: _severity,
+                          items: const [
+                            DropdownMenuItem(value: 'Low', child: Text('Low')),
+                            DropdownMenuItem(value: 'Normal', child: Text('Normal')),
+                            DropdownMenuItem(value: 'High', child: Text('High')),
+                            DropdownMenuItem(
+                              value: 'Critical',
+                              child: Text('Critical'),
+                            ),
+                          ],
+                          onChanged: _submitting
+                              ? null
+                              : (v) {
+                                  if (v != null) setState(() => _severity = v);
+                                },
                         ),
-                      ],
-                      onChanged: _submitting
-                          ? null
-                          : (v) {
-                              if (v != null) setState(() => _severity = v);
-                            },
+                      ),
                     ),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
