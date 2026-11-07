@@ -37,6 +37,42 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     super.dispose();
   }
 
+
+  String? _validateTemp(String? value, String label) {
+    final String text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return '$label مطلوب';
+    }
+    final double? number = double.tryParse(text.replaceAll('+', ''));
+    if (number == null) {
+      return '$label يجب أن يكون رقماً';
+    }
+    if (number < -90 || number > 60) {
+      return '$label خارج المدى المسموح (-90..60)';
+    }
+    return null;
+  }
+
+  String? _validateOptionalNumber(
+    String? value, {
+    required String label,
+    required double min,
+    required double max,
+  }) {
+    final String text = value?.trim() ?? '';
+    if (text.isEmpty) {
+      return null;
+    }
+    final double? number = double.tryParse(text);
+    if (number == null) {
+      return '$label يجب أن يكون رقماً';
+    }
+    if (number < min || number > max) {
+      return '$label خارج المدى ($min..$max)';
+    }
+    return null;
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate() || _saving) {
       return;
@@ -118,13 +154,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 labelText: 'الحرارة الجافة',
                 border: OutlineInputBorder(),
               ),
-              validator: (String? value) {
-                final String text = value?.trim() ?? '';
-                if (text.isEmpty) {
-                  return 'مطلوب';
-                }
-                return null;
-              },
+              validator: (String? value) => _validateTemp(value, 'الحرارة الجافة'),
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -133,28 +163,34 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 labelText: 'الحرارة الرطبة',
                 border: OutlineInputBorder(),
               ),
-              validator: (String? value) {
-                final String text = value?.trim() ?? '';
-                if (text.isEmpty) {
-                  return 'مطلوب';
-                }
-                return null;
-              },
+              validator: (String? value) => _validateTemp(value, 'الحرارة الرطبة'),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _relativeHumidity,
               decoration: const InputDecoration(
-                labelText: 'الرطوبة النسبية',
+                labelText: 'الرطوبة النسبية %',
                 border: OutlineInputBorder(),
+              ),
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'الرطوبة',
+                min: 0,
+                max: 100,
               ),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _windDirection,
               decoration: const InputDecoration(
-                labelText: 'اتجاه الرياح',
+                labelText: 'اتجاه الرياح (درجة)',
                 border: OutlineInputBorder(),
+              ),
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'اتجاه الرياح',
+                min: 0,
+                max: 360,
               ),
             ),
             const SizedBox(height: 12),
@@ -163,6 +199,12 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
               decoration: const InputDecoration(
                 labelText: 'سرعة الرياح',
                 border: OutlineInputBorder(),
+              ),
+              validator: (String? value) => _validateOptionalNumber(
+                value,
+                label: 'سرعة الرياح',
+                min: 0,
+                max: 150,
               ),
             ),
             SwitchListTile(
