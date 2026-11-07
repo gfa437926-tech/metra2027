@@ -249,6 +249,45 @@ class MetraApiClient {
     );
   }
 
+
+  Future<List<Map<String, dynamic>>> listSupportIncidents(String stationId, {int limit = 50}) async {
+    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/support-incidents?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_support_incident_list');
+    return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList(growable: false);
+  }
+
+  Future<void> submitSupportIncident({
+    required String stationId,
+    required String kind,
+    required String category,
+    required String title,
+    required String description,
+    required String severity,
+    required DateTime occurredAt,
+    String? affectedAsset,
+    bool impactsOperations = false,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/support-incidents',
+      body: {
+        'kind': kind,
+        'category': category,
+        'title': title,
+        'description': description,
+        'affectedAsset': affectedAsset,
+        'severity': severity,
+        'occurredAt': occurredAt.toUtc().toIso8601String(),
+        'impactsOperations': impactsOperations,
+      },
+    );
+  }
+
   Future<http.Response> _send(String method, String path,
       {Map<String, dynamic>? body}) async {
     if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');
