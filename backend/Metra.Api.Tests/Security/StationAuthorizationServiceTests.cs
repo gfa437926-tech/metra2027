@@ -23,6 +23,34 @@ public sealed class StationAuthorizationServiceTests
         Assert.True(allowed);
     }
 
+    [Fact]
+    public async Task Permission_check_sends_the_exact_user_station_and_permission_to_server_rpc()
+    {
+        var userId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var stationId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var handler = new StubHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal(
+                "https://example.supabase.co/rest/v1/rpc/metra_user_has_station_permission",
+                request.RequestUri?.ToString());
+            Assert.Equal("Bearer", request.Headers.Authorization?.Scheme);
+            Assert.Equal("unit-test-secret", request.Headers.Authorization?.Parameter);
+            var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            Assert.Contains(userId.ToString(), body, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains(stationId.ToString(), body, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("equipment_fault.create", body, StringComparison.Ordinal);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("true", Encoding.UTF8, "application/json")
+            };
+        });
+        var service = CreateService(handler);
+
+        Assert.True(await service.HasStationPermissionAsync(
+            userId, stationId, "equipment_fault.create"));
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.Forbidden, "true")]
     [InlineData(HttpStatusCode.InternalServerError, "true")]
