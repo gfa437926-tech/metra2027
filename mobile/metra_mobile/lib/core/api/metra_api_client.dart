@@ -194,6 +194,61 @@ class MetraApiClient {
         'payload': payload, 'submit': submit});
   }
 
+
+  Future<List<Map<String, dynamic>>> listEquipmentFaults(String stationId, {int limit = 50}) async {
+    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/equipment-faults?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_equipment_fault_list');
+    return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList(growable: false);
+  }
+
+  Future<void> submitEquipmentFault({
+    required String stationId,
+    required String equipmentCategory,
+    required String equipmentName,
+    required String description,
+    required String severity,
+    required DateTime occurredAt,
+    bool isOperationallyBlocking = false,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/equipment-faults',
+      body: {
+        'equipmentCategory': equipmentCategory,
+        'equipmentName': equipmentName,
+        'description': description,
+        'severity': severity,
+        'occurredAt': occurredAt.toUtc().toIso8601String(),
+        'isOperationallyBlocking': isOperationallyBlocking,
+      },
+    );
+  }
+
+  Future<void> transitionEquipmentFault({
+    required String stationId,
+    required String faultId,
+    required String toStatus,
+    String? note,
+    int? progressPercent,
+    String? assignedTo,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/equipment-faults/${Uri.encodeComponent(faultId)}/transitions',
+      body: {
+        'toStatus': toStatus,
+        'note': note,
+        'progressPercent': progressPercent,
+        'assignedTo': assignedTo,
+      },
+    );
+  }
+
   Future<http.Response> _send(String method, String path,
       {Map<String, dynamic>? body}) async {
     if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');

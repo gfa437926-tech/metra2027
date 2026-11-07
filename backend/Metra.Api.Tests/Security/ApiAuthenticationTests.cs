@@ -148,8 +148,10 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/returned")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/equipment-faults")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/resubmit")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/equipment-faults/22222222-2222-2222-2222-222222222222/transitions")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
     public async Task Every_protected_station_endpoint_requires_authentication(string path)
     {
@@ -173,6 +175,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             path.Contains("/decision", StringComparison.Ordinal)
             || path.Contains("/resubmit", StringComparison.Ordinal)
             || path.Contains("/validate", StringComparison.Ordinal)
+            || path.Contains("/equipment-faults", StringComparison.Ordinal)
                 ? HttpMethod.Post
                 : path.StartsWith("/api/v1/stations", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post,
             path);
@@ -247,7 +250,9 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         var isStationWrite = path.Contains("/decision", StringComparison.Ordinal)
             || path.Contains("/resubmit", StringComparison.Ordinal)
             || path.Contains("/review", StringComparison.Ordinal)
-            || path.Contains("/assignments", StringComparison.Ordinal);
+            || path.Contains("/assignments", StringComparison.Ordinal)
+            || path.Contains("/equipment-faults", StringComparison.Ordinal) && path.Contains("/transitions", StringComparison.Ordinal)
+            || path.EndsWith("/equipment-faults", StringComparison.Ordinal);
         if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !isStationWrite)
             return _client.GetAsync(path);
         return _client.PostAsync(path, new StringContent("{}", Encoding.UTF8, "application/json"));

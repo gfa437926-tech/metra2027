@@ -1,4 +1,5 @@
 using Metra.Api.Features.Observations;
+using Metra.Api.Features.Maintenance;
 using Metra.Api.Security;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
@@ -34,6 +35,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationUserDirectorySe
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuditService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAssignmentService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAuthorityAccessService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseEquipmentFaultService));
 
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
@@ -44,6 +46,7 @@ builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueSer
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
+builder.Services.AddScoped<IEquipmentFaultService, SupabaseEquipmentFaultService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
@@ -135,6 +138,7 @@ app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
 app.MapObservationResubmitEndpoints();
 app.MapObservationReturnedQueueEndpoints();
+app.MapEquipmentFaultEndpoints();
 app.MapObservationQueueEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
