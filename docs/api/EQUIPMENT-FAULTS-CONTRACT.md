@@ -126,3 +126,27 @@ The domain exposes `EquipmentFaultAuditPolicy.Validate` for audit entries. It re
 ### List query bounds and station isolation
 
 List-query validation is limited to page numbers 1–100,000 and page sizes 1–100 (default 25). Undefined status/severity filters and reversed occurrence-time ranges are rejected. The resulting offset is bounded before persistence access. These checks do not establish station authorization: the future query adapter must derive the permitted station scope from the authenticated server-side context, apply it in the database predicate before pagination/counting, and never trust a caller-supplied station identifier as authority. Counts and page metadata must be scoped to that same station to avoid cross-station disclosure.
+
+### Station-scoped read service boundary
+
+The isolated backend now defines `IEquipmentFaultReadStore` and
+`EquipmentFaultReadService` for list and detail reads:
+
+- Both operations require a trusted station context and the
+  `equipment_fault.read` permission before calling the read store.
+- List queries are validated and bounded before authorization or persistence.
+  The store receives the station ID separately from filter input and must apply
+  that predicate before computing totals, ordering, offset, or page size.
+- Detail reads pass both `faultId` and `stationId` to the store. The service
+  also verifies the returned projection contains those exact identifiers and
+  normalizes a missing or mismatched record to `NotFoundOrWrongStation`.
+- Invalid projections, unexpected store failures, and authorization failures
+  never produce a successful read. Caller cancellation is propagated.
+- The list query has no station-ID field: callers cannot widen its station scope
+  by adding a filter. The future HTTP handler must resolve station context from
+  the authenticated server-side principal/resource authorization, not trust a
+  caller-supplied query value.
+
+This is a contract and orchestration layer only. There is no concrete store,
+DI registration, endpoint, SQL, migration, or database change pending schema
+review and explicit approval.
