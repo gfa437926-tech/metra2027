@@ -213,7 +213,7 @@ public sealed class StationScopedAuthorizationIntegrationTests
         UrlEncoder encoder)
         : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
-        public const string Scheme = "MetraTest";
+        public new const string Scheme = "MetraTest";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
