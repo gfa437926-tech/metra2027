@@ -125,7 +125,7 @@ The domain exposes `EquipmentFaultAuditPolicy.Validate` for audit entries. It re
 
 ### List query bounds and station isolation
 
-List-query validation is limited to page numbers 1–100,000 and page sizes 1–100 (default 25). Undefined status/severity filters and reversed occurrence-time ranges are rejected. The resulting offset is bounded before persistence access. These checks do not establish station authorization: the future query adapter must derive the permitted station scope from the authenticated server-side context, apply it in the database predicate before pagination/counting, and never trust a caller-supplied station identifier as authority. Counts and page metadata must be scoped to that same station to avoid cross-station disclosure.
+List-query validation is limited to page numbers 1–100,000 (default 1) and page sizes 1–100 (default 25). Undefined status/severity filters and reversed occurrence-time ranges are rejected. The resulting offset is bounded before persistence access. These checks do not establish station authorization: the future query adapter must derive the permitted station scope from the authenticated server-side context, apply it in the database predicate before pagination/counting, and never trust a caller-supplied station identifier as authority. Counts and page metadata must be scoped to that same station to avoid cross-station disclosure.
 
 ### Station-scoped read service boundary
 
@@ -154,6 +154,7 @@ The isolated backend now defines `IEquipmentFaultReadStore` and
 This is a contract and orchestration layer only. There is no concrete store,
 DI registration, endpoint, SQL, migration, or database change pending schema
 review and explicit approval.
+
 ### Read projection validation and consistency
 
 The application read boundary validates returned data before reporting success:
