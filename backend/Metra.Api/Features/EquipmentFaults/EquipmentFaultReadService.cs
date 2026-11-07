@@ -36,7 +36,12 @@ public sealed record EquipmentFaultDetail(
 
 /// <summary>
 /// Read ports are intentionally station-scoped. Implementations must apply the
-/// station predicate before count, ordering, offset, or limit.
+/// station predicate and every supplied filter identically to both the page query
+/// and its total count before ordering, offset, or limit. Ordering must be stable:
+/// append FaultId as a unique tie-breaker for equal OccurredAt values. A page's
+/// metadata must describe the exact requested window, and each row must echo the
+/// persisted station identifier so the application boundary can verify scope.
+/// Detail reads must use one predicate containing both FaultId and StationId.
 /// </summary>
 public interface IEquipmentFaultReadStore
 {
@@ -46,7 +51,10 @@ public interface IEquipmentFaultReadStore
         EquipmentFaultListWindow window,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Must query by faultId AND stationId, returning null for either miss.</summary>
+    /// <summary>
+    /// Must query by faultId AND stationId in the same predicate, returning null
+    /// for either miss without revealing whether a cross-station record exists.
+    /// </summary>
     Task<EquipmentFaultDetail?> GetDetailAsync(
         Guid faultId,
         Guid stationId,
