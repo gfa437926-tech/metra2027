@@ -86,6 +86,16 @@ public sealed class EquipmentFaultApplicationService(
         {
             return EquipmentFaultAccessResult.Forbidden;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Caller cancellation is control flow, not an authorization denial.
+            throw;
+        }
+        catch (Exception)
+        {
+            // Unexpected repository failures must fail closed before permission checks.
+            return EquipmentFaultAccessResult.Forbidden;
+        }
 
         if (persistedStationId is null ||
             !EquipmentFaultStationScope.MatchesPersistedOwner(routeStationId, persistedStationId.Value))
