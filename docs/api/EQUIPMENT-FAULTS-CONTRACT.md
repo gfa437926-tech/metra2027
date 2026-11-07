@@ -160,7 +160,7 @@ review and explicit approval.
 The application read boundary validates returned data before reporting success:
 
 - A list page must echo the requested page and page size, contain no more than the requested page size, and have a non-negative total count that is not smaller than the returned item count.
-- Every list item must have a non-empty fault ID, valid status and severity enum values, a non-default occurrence timestamp, and category/equipment-name lengths within the domain limits.
+- Every list item must have a non-empty fault ID and must echo the exact requested station ID; it must also contain valid status and severity enum values, a non-default occurrence timestamp, and category/equipment-name lengths within the domain limits.
 - Duplicate fault IDs within one page are rejected.
 - A detail projection must have non-empty reporter identity, valid status/severity values, a non-default occurrence timestamp, and category, equipment name, and description lengths within the domain limits.
 - A detail projection whose fault or station identifiers differ from the requested identifiers is normalized to `NotFoundOrWrongStation`; malformed fields or inconsistent page metadata are treated as dependency failures. No malformed projection is returned as a successful result.
