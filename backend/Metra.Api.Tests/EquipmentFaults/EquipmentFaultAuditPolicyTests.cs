@@ -20,6 +20,16 @@ public sealed class EquipmentFaultAuditPolicyTests
     }
 
     [Fact]
+    public void Creation_audit_without_previous_status_is_accepted_only_for_submitted()
+    {
+        var valid = Create(previous: null, next: EquipmentFaultStatus.Submitted);
+        var invalid = Create(previous: null, next: EquipmentFaultStatus.UnderReview);
+
+        Assert.Null(EquipmentFaultAuditPolicy.Validate(valid));
+        Assert.Equal("invalid_audit_transition", EquipmentFaultAuditPolicy.Validate(invalid));
+    }
+
+    [Fact]
     public void Null_entry_is_rejected()
     {
         Assert.Equal("invalid_audit_entry", EquipmentFaultAuditPolicy.Validate(null));
@@ -92,7 +102,7 @@ public sealed class EquipmentFaultAuditPolicyTests
         Guid? faultId = null,
         Guid? actorId = null,
         DateTimeOffset? occurredAt = null,
-        EquipmentFaultStatus previous = EquipmentFaultStatus.Submitted,
+        EquipmentFaultStatus? previous = EquipmentFaultStatus.Submitted,
         EquipmentFaultStatus next = EquipmentFaultStatus.UnderReview,
         string reason = "تمت مراجعة البلاغ.") =>
         new(
