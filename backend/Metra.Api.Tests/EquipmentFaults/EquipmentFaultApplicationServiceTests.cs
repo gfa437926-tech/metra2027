@@ -23,6 +23,36 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
+    public async Task Create_rejects_empty_user_or_station_before_authorization()
+    {
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, new FakeStationReader());
+        var valid = new EquipmentFaultSubmission(
+            "أجهزة الرصد", "مقياس الحرارة", "توقف الجهاز عن إرسال القراءات.",
+            EquipmentFaultSeverity.High, Now, false);
+
+        Assert.False(await service.CanCreateAsync(
+            Guid.Empty, Guid.NewGuid(), valid, Now));
+        Assert.False(await service.CanCreateAsync(
+            Guid.NewGuid(), Guid.Empty, valid, Now));
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
+    public async Task Create_denies_when_authorization_is_not_configured()
+    {
+        var auth = new FakeAuthorization { IsConfigured = false, Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, new FakeStationReader());
+        var valid = new EquipmentFaultSubmission(
+            "أجهزة الرصد", "مقياس الحرارة", "توقف الجهاز عن إرسال القراءات.",
+            EquipmentFaultSeverity.High, Now, false);
+
+        Assert.False(await service.CanCreateAsync(
+            Guid.NewGuid(), Guid.NewGuid(), valid, Now));
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
     public async Task Invalid_submission_is_rejected_before_authorization()
     {
         var auth = new FakeAuthorization { Allowed = true };
