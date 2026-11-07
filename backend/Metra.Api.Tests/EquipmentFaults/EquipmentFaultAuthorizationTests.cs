@@ -34,6 +34,52 @@ public sealed class EquipmentFaultAuthorizationTests
         Assert.Equal(0, authorization.CallCount);
     }
 
+    [Fact]
+    public async Task Authorization_fails_closed_when_dependency_throws_http_error()
+    {
+        var authorization = new AuthorizationStub
+        {
+            Exception = new HttpRequestException("authorization dependency unavailable")
+        };
+
+        var allowed = await EquipmentFaultAuthorization.HasStationPermissionAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.create");
+
+        Assert.False(allowed);
+        Assert.Equal(1, authorization.CallCount);
+    }
+
+    [Fact]
+    public async Task Authorization_fails_closed_on_upstream_timeout()
+    {
+        var authorization = new AuthorizationStub
+        {
+            Exception = new TaskCanceledException("upstream timed out")
+        };
+
+        var allowed = await EquipmentFaultAuthorization.HasStationPermissionAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.create");
+
+        Assert.False(allowed);
+        Assert.Equal(1, authorization.CallCount);
+    }
+
+    [Fact]
+    public async Task Authorization_preserves_explicit_caller_cancellation()
+    {
+        using var source = new CancellationTokenSource();
+        source.Cancel();
+        var authorization = new AuthorizationStub
+        {
+            Exception = new TaskCanceledException("caller cancelled")
+        };
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() =>
+            EquipmentFaultAuthorization.HasStationPermissionAsync(
+                authorization, Guid.NewGuid(), Guid.NewGuid(),
+                "equipment_fault.create", source.Token));
+    }
+
     [Theory]
     [InlineData(true, false, "equipment_fault.create")]
     [InlineData(false, true, "equipment_fault.create")]
@@ -86,6 +132,7 @@ public sealed class EquipmentFaultAuthorizationTests
     {
         public bool IsConfigured { get; init; } = true;
         public bool Result { get; init; }
+        public Exception? Exception { get; init; }
         public int CallCount { get; private set; }
         public Guid LastUserId { get; private set; }
         public Guid LastStationId { get; private set; }
@@ -99,7 +146,10 @@ public sealed class EquipmentFaultAuthorizationTests
             LastUserId = userId;
             LastStationId = stationId;
             LastPermission = permissionCode;
-            return Task.FromResult(Result);
+
+            return Exception is not null
+                ? Task.FromException<bool>(Exception)
+                : Task.FromResult(Result);
         }
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
