@@ -448,6 +448,50 @@ public sealed class EquipmentFaultReadServiceTests
     }
 
     [Fact]
+    public async Task List_rejects_more_items_than_the_requested_page_size()
+    {
+        var items = Enumerable.Range(0, 26).Select(_ => ValidListItem()).ToArray();
+        var store = new ReadFakeStore
+        {
+            Page = new EquipmentFaultListPage(items, 26, 1, 25)
+        };
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = true }, store);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), Guid.NewGuid(),
+            new EquipmentFaultListQuery(1, 25));
+
+        Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
+    }
+
+    [Fact]
+    public async Task List_rejects_empty_id_and_undefined_item_enums()
+    {
+        var invalidItems = new[]
+        {
+            new EquipmentFaultListItem(
+                Guid.Empty, "أجهزة", "مقياس", EquipmentFaultSeverity.High,
+                EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow),
+            new EquipmentFaultListItem(
+                Guid.NewGuid(), "أجهزة", "مقياس", (EquipmentFaultSeverity)999,
+                EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow)
+        };
+        var store = new ReadFakeStore
+        {
+            Page = new EquipmentFaultListPage(invalidItems, 2, 1, 25)
+        };
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = true }, store);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), Guid.NewGuid(),
+            new EquipmentFaultListQuery(1, 25));
+
+        Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
+    }
+
+    [Fact]
     public async Task Detail_with_matching_ids_but_invalid_projection_fails_closed()
     {
         var faultId = Guid.NewGuid();
