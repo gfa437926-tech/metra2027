@@ -1,7 +1,7 @@
 # Equipment Faults — Database Schema Proposal
 
-**Review status:** Conditional technical approval of the logical model only.
-**Execution status:** NOT APPROVED FOR DATABASE DEPLOYMENT.
+**Review status:** Approved logical model after read-only verification of the target station catalogue and identity references.
+**Execution status:** Migration/application remains gated; no database change has been made.
 **Target:** the new METRA Supabase project only, after the station-catalogue key is verified.
 **Legacy database:** explicitly excluded.
 
@@ -13,11 +13,11 @@ The current application contracts support a two-table minimum model: the current
 
 The creation-audit contract blocker has been addressed in the domain model: `EquipmentFaultAuditEntry.PreviousStatus` is nullable, and `EquipmentFaultAuditPolicy` accepts a null previous state only when the new state is `Submitted`. This models the initial Created event without inventing a Submitted-to-Submitted transition.
 
-One schema-mapping decision remains before a migration can be generated:
+Read-only inspection of the target project confirmed:
+- `public.station_catalogue.id` is a UUID primary key; this is the only approved operational station catalogue and is already referenced by current METRA tables.
+- Existing METRA identity tables reference `auth.users(id)`; the backend's validated JWT `sub` is the user UUID used by its authorization services.
 
-1. **Station foreign key:** the exact table and primary-key column in the approved new station catalogue must be confirmed from its authoritative schema. This proposal deliberately does not guess a table name or reuse the legacy station catalogue.
-
-The user identity reference assumes Supabase Auth user UUIDs. Confirm that the JWT `sub` used by the API maps directly to `auth.users.id` in the target project.
+No station-table or identity mapping blocker remains for the logical model. These checks were read-only; no schema or data was changed.
 
 ## 2. Proposed entities
 
@@ -43,7 +43,7 @@ One row represents the current state of one reported equipment fault.
 Constraints:
 - Primary key on `id`.
 - Unique composite key on `(id, station_id)`, required by the audit table's composite foreign key.
-- Foreign key `station_id` to the verified new station-catalogue key, with deletion restricted.
+- Foreign key `station_id` to `public.station_catalogue(id)`, with deletion restricted. The target table and UUID key were confirmed by read-only schema inspection.
 - Foreign key `reporter_id` to `auth.users(id)`, with deletion restricted or handled by an approved anonymisation policy.
 - CHECK constraints for the exact status and severity strings used by the .NET domain.
 - CHECK constraints for trimmed text and the same length limits as domain validation.
@@ -125,6 +125,6 @@ After schema approval and migration in an isolated test project:
 
 ## 7. Review decision
 
-**Conditionally accepted as the proposed logical design**, subject to confirmation of the target catalogue's exact key and identity mapping in section 1. The table shapes, constraints, indexes, server-only access model, and atomicity requirements are internally consistent with the current fault lifecycle and read contracts.
+**Approved as the logical design for implementation.** The target station key and Auth identity mapping have been verified read-only. The table shapes, constraints, indexes, server-only access model, and atomicity requirements are internally consistent with the current fault lifecycle and read contracts.
 
-**Not approved for execution.** No SQL, migration, RPC, grants, RLS policy, or database object has been created. A separate explicit deployment approval is required after the station foreign-key mapping and creation-audit contract are resolved.
+**Database execution is still gated.** This is technical approval of the model, not permission to apply it to the live project. No SQL, migration, RPC, grants, RLS policy, or database object has been created. Before applying a migration, present its exact SQL and request your explicit deployment approval.
