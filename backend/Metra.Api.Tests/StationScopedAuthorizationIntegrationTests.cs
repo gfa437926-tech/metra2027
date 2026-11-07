@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Metra.Api.Features.Observations;
+using Metra.Api.Features.Users;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
@@ -162,11 +163,19 @@ public sealed class StationScopedAuthorizationIntegrationTests
             CancellationToken cancellationToken = default)
         {
             CheckedStationIds.Add(stationId);
+            var allowedPermissions = new HashSet<string>(StringComparer.Ordinal)
+            {
+                "observation.approve",
+                "observation.create",
+                "observation.review",
+                "observation.return_for_correction",
+                "users.station.view"
+            };
             return Task.FromResult(
                 IsConfigured &&
                 requestedUserId == userId &&
                 stationId == allowedStationId &&
-                permissionCode == "observation.approve");
+                allowedPermissions.Contains(permissionCode));
         }
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
@@ -228,4 +237,64 @@ public sealed class StationScopedAuthorizationIntegrationTests
         }
 
     }
+    [Fact]
+    public async Task User_can_read_audit_log_only_for_the_authorized_station()
+    {
+        var userId = Guid.NewGuid();
+        var allowedStationId = Guid.NewGuid();
+        var deniedStationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, allowedStationId);
+        var audit = new StationAuditFake();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IStationAuditService>();
+                    services.AddSingleton<IStationAuditService>(audit);
+                });
+            });
+
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var allowedResponse = await client.GetAsync(
+            $"/api/v1/stations/{allowedStationId}/audit-log");
+        using var deniedResponse = await client.GetAsync(
+            $"/api/v1/stations/{deniedStationId}/audit-log");
+
+        Assert.Equal(HttpStatusCode.OK, allowedResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
+        Assert.Equal(1, audit.CallCount);
+        Assert.Equal(new[] { allowedStationId, deniedStationId }, authorization.CheckedStationIds);
+    }
+
+    private sealed class StationAuditFake : IStationAuditService
+    {
+        public bool IsConfigured => true;
+        public int CallCount { get; private set; }
+
+        public Task<JsonElement?> GetAuditAsync(Guid stationId, int limit, CancellationToken cancellationToken)
+        {
+            CallCount++;
+            using var document = JsonDocument.Parse("[]");
+            return Task.FromResult<JsonElement?>(document.RootElement.Clone());
+        }
+    }
+
 }
