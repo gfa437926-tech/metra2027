@@ -170,6 +170,34 @@ public sealed class EquipmentFaultPolicyTests
             new HashSet<string> { "equipment_fault.assign" }));
     }
 
+    [Fact]
+    public void Transition_matrix_allows_only_explicitly_declared_edges()
+    {
+        var expected = new Dictionary<(EquipmentFaultStatus From, EquipmentFaultStatus To), string>
+        {
+            [(EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview)] = "equipment_fault.review",
+            [(EquipmentFaultStatus.Submitted, EquipmentFaultStatus.Rejected)] = "equipment_fault.review",
+            [(EquipmentFaultStatus.UnderReview, EquipmentFaultStatus.Assigned)] = "equipment_fault.assign",
+            [(EquipmentFaultStatus.UnderReview, EquipmentFaultStatus.Rejected)] = "equipment_fault.review",
+            [(EquipmentFaultStatus.Assigned, EquipmentFaultStatus.UnderReview)] = "equipment_fault.review",
+            [(EquipmentFaultStatus.Assigned, EquipmentFaultStatus.InProgress)] = "equipment_fault.resolve",
+            [(EquipmentFaultStatus.InProgress, EquipmentFaultStatus.Resolved)] = "equipment_fault.resolve",
+            [(EquipmentFaultStatus.Resolved, EquipmentFaultStatus.InProgress)] = "equipment_fault.resolve",
+            [(EquipmentFaultStatus.Resolved, EquipmentFaultStatus.Closed)] = "equipment_fault.close"
+        };
+
+        var statuses = Enum.GetValues<EquipmentFaultStatus>();
+        foreach (var from in statuses)
+        foreach (var to in statuses)
+        {
+            var allowed = EquipmentFaultPolicy.TryGetRequiredPermission(from, to, out var actual);
+            var expectedAllowed = expected.TryGetValue((from, to), out var permission);
+            Assert.Equal(expectedAllowed, allowed);
+            if (expectedAllowed)
+                Assert.Equal(permission, actual);
+        }
+    }
+
     [Theory]
     [InlineData(EquipmentFaultStatus.Closed)]
     [InlineData(EquipmentFaultStatus.Rejected)]
