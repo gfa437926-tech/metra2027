@@ -65,7 +65,7 @@ public sealed class StationScopedAuthorizationIntegrationTests
         Assert.Equal(HttpStatusCode.OK, allowedResponse.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
         Assert.Equal(1, decisions.CallCount);
-        Assert.Equal(new[] { allowedStationId }, authorization.CheckedStationIds);
+        Assert.Equal(new[] { allowedStationId, deniedStationId }, authorization.CheckedStationIds);
     }
 
     [Fact]
