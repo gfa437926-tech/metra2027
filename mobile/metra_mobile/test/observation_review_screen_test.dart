@@ -100,7 +100,8 @@ void main() {
     await tester.tap(find.text('مُرجَعة لإعادة التقديم'));
     await tester.pumpAndSettle();
     expect(find.text('نشرة ساعية'), findsOneWidget);
-    expect(find.text('إعادة التقديم'), findsOneWidget);
+    expect(find.text('تصحيح وإعادة التقديم'), findsOneWidget);
     api.close();
   });
 }
+

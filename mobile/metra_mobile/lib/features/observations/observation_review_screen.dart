@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import 'returned_observation_editor.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 class ObservationReviewScreen extends StatefulWidget {
@@ -177,34 +178,17 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen>
   }
 
   Future<void> _resubmit(ObservationQueueItem item) async {
-    final confirmed = await showDialog<bool>(
+    final edited = await showReturnedObservationEditor(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('إعادة تقديم النشرة'),
-        content: Text(
-          item.reviewNote == null || item.reviewNote!.isEmpty
-              ? 'هل تريد إعادة تقديم هذه النشرة للمراجعة؟'
-              : 'ملاحظة المراجع: ${item.reviewNote}\n\nهل تريد إعادة التقديم؟',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('إعادة التقديم'),
-          ),
-        ],
-      ),
+      item: item,
     );
-    if (confirmed != true) return;
+    if (edited == null) return;
 
     try {
       await widget.api.resubmitObservation(
         stationId: widget.stationId,
         observationId: item.id,
-        payload: item.payload,
+        payload: edited,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -369,7 +353,7 @@ class _ReturnedActions extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: () => onResubmit(item),
             icon: const Icon(Icons.upload),
-            label: const Text('إعادة التقديم'),
+            label: const Text('تصحيح وإعادة التقديم'),
           ),
         ),
       );
