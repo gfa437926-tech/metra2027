@@ -47,6 +47,38 @@ public sealed class EquipmentFaultPolicyTests
     }
 
     [Theory]
+    [InlineData(" ", "invalid_equipment_name")]
+    [InlineData("A", "invalid_equipment_name")]
+    [InlineData("  مقياس الحرارة", "invalid_equipment_name")]
+    public void Invalid_equipment_name_is_rejected(string name, string expected)
+    {
+        var request = ValidSubmission() with { EquipmentName = name };
+        Assert.Equal(expected, EquipmentFaultPolicy.ValidateSubmission(request, Now));
+    }
+
+    [Theory]
+    [InlineData("قصير", "invalid_description")]
+    [InlineData("", "invalid_description")]
+    [InlineData("توقف الجهاز عن إرسال القراءات. ", "invalid_description")]
+    public void Invalid_description_is_rejected(string description, string expected)
+    {
+        var request = ValidSubmission() with { Description = description };
+        Assert.Equal(expected, EquipmentFaultPolicy.ValidateSubmission(request, Now));
+    }
+
+    [Fact]
+    public void Maximum_allowed_field_lengths_are_accepted()
+    {
+        var request = ValidSubmission() with
+        {
+            EquipmentCategory = new string('ج', 80),
+            EquipmentName = new string('م', 120),
+            Description = new string('و', 4000)
+        };
+        Assert.Null(EquipmentFaultPolicy.ValidateSubmission(request, Now));
+    }
+
+    [Theory]
     [InlineData(EquipmentFaultSeverity.Low)]
     [InlineData(EquipmentFaultSeverity.Medium)]
     public void Operationally_blocking_fault_requires_high_or_critical_severity(
