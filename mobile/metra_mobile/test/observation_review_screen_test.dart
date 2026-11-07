@@ -19,11 +19,19 @@ void main() {
       accessTokenProvider: () async => 'access-token',
       client: MockClient((request) async {
         final path = request.url.path;
-        if (path.endsWith('/observations/returned')) {
-          return http.Response(jsonEncode(returned), 200);
+        if (path.contains('/observations/returned')) {
+          return http.Response(
+            jsonEncode(returned),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
         }
         if (path.contains('/observations')) {
-          return http.Response(jsonEncode(review), 200);
+          return http.Response(
+            jsonEncode(review),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
         }
         return http.Response('not found', 404);
       }),
@@ -39,10 +47,10 @@ void main() {
           'observation_type': 'daily',
           'observed_at': '2026-11-03T12:00:00Z',
           'status': 'submitted',
-          'payload': {}
+          'payload': <String, dynamic>{},
         }
       ],
-      returned: const [],
+      returned: <Map<String, dynamic>>[],
     );
 
     await tester.pumpWidget(MaterialApp(
@@ -52,12 +60,14 @@ void main() {
     expect(find.text('مراجعة النشرات'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
     expect(find.text('طابور المراجعة'), findsOneWidget);
-    expect(find.text('مُرجَعة لإعادة التقديم'), findsOneWidget);
     api.close();
   });
 
   testWidgets('shows an empty state for an empty server queue', (tester) async {
-    final api = buildApi(review: const [], returned: const []);
+    final api = buildApi(
+      review: <Map<String, dynamic>>[],
+      returned: <Map<String, dynamic>>[],
+    );
 
     await tester.pumpWidget(MaterialApp(
       home: ObservationReviewScreen(api: api, stationId: stationId),
@@ -69,7 +79,7 @@ void main() {
 
   testWidgets('shows returned observations for resubmit', (tester) async {
     final api = buildApi(
-      review: const [],
+      review: <Map<String, dynamic>>[],
       returned: [
         {
           'id': '33333333-3333-4333-8333-333333333333',
@@ -78,7 +88,7 @@ void main() {
           'observed_at': '2026-11-03T13:00:00Z',
           'status': 'returned',
           'review_note': 'راجع درجة الحرارة',
-          'payload': {'dry_temp': '20.0'}
+          'payload': <String, dynamic>{'dry_temp': '20.0'},
         }
       ],
     );

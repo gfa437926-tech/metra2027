@@ -126,11 +126,12 @@ class MetraApiClient {
 
 
   Future<List<ObservationQueueItem>> getReturnedObservations(String stationId, {int limit = 50}) async {
+    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send(
       'GET',
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/returned?limit=$limit',
     );
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw const FormatException('invalid_returned_queue');
     return decoded
         .map((item) => ObservationQueueItem.fromJson(Map<String, dynamic>.from(item as Map)))
