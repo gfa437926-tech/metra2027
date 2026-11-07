@@ -57,7 +57,7 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
           </div>
           <p>{{ row['description'] }}</p>
           <div class="actions">
-            <button type="button" *ngFor="let action of nextActions(String(row['status'] || ''))"
+            <button type="button" *ngFor="let action of nextActions(statusOf(row))"
               [disabled]="busyId === row['id']"
               (click)="transition(row, action.status)">{{ action.label }}</button>
           </div>
@@ -72,7 +72,7 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
             <textarea [(ngModel)]="note" rows="3" maxlength="1000"></textarea>
           </label>
           <div class="return-actions">
-            <button type="button" (click)="pending=null; note=''" [disabled]="!!busyId">إلغاء</button>
+            <button type="button" (click)="cancel()" [disabled]="!!busyId">إلغاء</button>
             <button type="button" (click)="confirm()" [disabled]="!!busyId">تأكيد</button>
           </div>
         </div>
@@ -132,7 +132,15 @@ export class SupportIncidentWorkflowComponent implements OnInit {
     });
   }
 
-  String = String;
+  statusOf(row: Record<string, unknown>): string {
+    return String(row['status'] || '');
+  }
+
+  cancel(): void {
+    if (this.busyId) return;
+    this.pending = null;
+    this.note = '';
+  }
 
   nextActions(status: string): Array<{ status: string; label: string }> {
     switch (status) {
