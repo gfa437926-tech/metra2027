@@ -160,6 +160,35 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
+    public async Task Repository_http_failure_fails_closed_without_authorization()
+    {
+        var reader = new FakeStationReader { ThrowHttpFailure = true };
+        var auth = new FakeAuthorization { Allowed = true };
+        var service = new EquipmentFaultApplicationService(auth, reader);
+
+        var result = await service.AuthorizeRecordAsync(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
+
+        Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
+        Assert.Equal(0, auth.CallCount);
+    }
+
+    [Fact]
+    public async Task Caller_cancellation_is_not_converted_to_access_denial()
+    {
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var reader = new FakeStationReader { ThrowCallerCancellation = true };
+        var service = new EquipmentFaultApplicationService(
+            new FakeAuthorization { Allowed = true }, reader);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.AuthorizeRecordAsync(
+                Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+                "equipment_fault.read", cancellation.Token));
+    }
+
+    [Fact]
     public async Task Empty_identity_or_fault_id_is_rejected_before_repository_access()
     {
         var reader = new FakeStationReader { OwnerStationId = Guid.NewGuid() };
@@ -191,11 +220,17 @@ public sealed class EquipmentFaultApplicationServiceTests
     {
         public Guid? OwnerStationId { get; init; }
         public bool ThrowTimeout { get; init; }
+        public bool ThrowHttpFailure { get; init; }
+        public bool ThrowCallerCancellation { get; init; }
         public int CallCount { get; private set; }
 
         public Task<Guid?> GetOwningStationIdAsync(Guid faultId, CancellationToken cancellationToken)
         {
             CallCount++;
+            if (ThrowCallerCancellation)
+                throw new OperationCanceledException(cancellationToken);
+            if (ThrowHttpFailure)
+                throw new HttpRequestException("simulated repository failure");
             if (ThrowTimeout)
                 throw new TaskCanceledException("simulated repository timeout");
             return Task.FromResult(OwnerStationId);
