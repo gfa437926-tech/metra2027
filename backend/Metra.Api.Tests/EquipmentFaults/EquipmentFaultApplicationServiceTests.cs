@@ -411,17 +411,18 @@ public sealed class EquipmentFaultReadServiceTests
     public async Task Invalid_store_page_metadata_fails_closed(
         long totalCount, int returnedPage, int returnedPageSize, int itemCount)
     {
+        var stationId = Guid.NewGuid();
         var store = new ReadFakeStore
         {
             Page = new EquipmentFaultListPage(
-                Enumerable.Range(0, itemCount).Select(_ => ValidListItem()).ToArray(),
+                Enumerable.Range(0, itemCount).Select(_ => ValidListItem(stationId)).ToArray(),
                 totalCount, returnedPage, returnedPageSize)
         };
         var service = new EquipmentFaultReadService(
             new ReadFakeAuthorization { Allowed = true }, store);
 
         var result = await service.GetPageAsync(
-            Guid.NewGuid(), Guid.NewGuid(),
+            Guid.NewGuid(), stationId,
             new EquipmentFaultListQuery(1, 25, null, null, null, null));
 
         Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
@@ -431,7 +432,8 @@ public sealed class EquipmentFaultReadServiceTests
     [Fact]
     public async Task Duplicate_or_invalid_list_projection_is_rejected()
     {
-        var duplicate = ValidListItem();
+        var stationId = Guid.NewGuid();
+        var duplicate = ValidListItem(stationId);
         var store = new ReadFakeStore
         {
             Page = new EquipmentFaultListPage(
@@ -441,7 +443,7 @@ public sealed class EquipmentFaultReadServiceTests
             new ReadFakeAuthorization { Allowed = true }, store);
 
         var result = await service.GetPageAsync(
-            Guid.NewGuid(), Guid.NewGuid(),
+            Guid.NewGuid(), stationId,
             new EquipmentFaultListQuery(1, 25, null, null, null, null));
 
         Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
@@ -450,7 +452,8 @@ public sealed class EquipmentFaultReadServiceTests
     [Fact]
     public async Task List_rejects_more_items_than_the_requested_page_size()
     {
-        var items = Enumerable.Range(0, 26).Select(_ => ValidListItem()).ToArray();
+        var stationId = Guid.NewGuid();
+        var items = Enumerable.Range(0, 26).Select(_ => ValidListItem(stationId)).ToArray();
         var store = new ReadFakeStore
         {
             Page = new EquipmentFaultListPage(items, 26, 1, 25)
@@ -459,7 +462,7 @@ public sealed class EquipmentFaultReadServiceTests
             new ReadFakeAuthorization { Allowed = true }, store);
 
         var result = await service.GetPageAsync(
-            Guid.NewGuid(), Guid.NewGuid(),
+            Guid.NewGuid(), stationId,
             new EquipmentFaultListQuery(1, 25));
 
         Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
@@ -468,13 +471,14 @@ public sealed class EquipmentFaultReadServiceTests
     [Fact]
     public async Task List_rejects_empty_id_and_undefined_item_enums()
     {
+        var stationId = Guid.NewGuid();
         var invalidItems = new[]
         {
             new EquipmentFaultListItem(
-                Guid.Empty, "أجهزة", "مقياس", EquipmentFaultSeverity.High,
+                Guid.Empty, stationId, "أجهزة", "مقياس", EquipmentFaultSeverity.High,
                 EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow),
             new EquipmentFaultListItem(
-                Guid.NewGuid(), "أجهزة", "مقياس", (EquipmentFaultSeverity)999,
+                Guid.NewGuid(), stationId, "أجهزة", "مقياس", (EquipmentFaultSeverity)999,
                 EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow)
         };
         var store = new ReadFakeStore
@@ -485,7 +489,7 @@ public sealed class EquipmentFaultReadServiceTests
             new ReadFakeAuthorization { Allowed = true }, store);
 
         var result = await service.GetPageAsync(
-            Guid.NewGuid(), Guid.NewGuid(),
+            Guid.NewGuid(), stationId,
             new EquipmentFaultListQuery(1, 25));
 
         Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
@@ -550,8 +554,27 @@ public sealed class EquipmentFaultReadServiceTests
                 Guid.NewGuid(), Guid.NewGuid(), query, cancellation.Token));
     }
 
-    private static EquipmentFaultListItem ValidListItem() =>
-        new(Guid.NewGuid(), Guid.NewGuid(), "أجهزة", "مقياس", EquipmentFaultSeverity.High,
+    [Fact]
+    public async Task List_rejects_item_from_another_station_even_if_other_fields_are_valid()
+    {
+        var stationId = Guid.NewGuid();
+        var foreignItem = ValidListItem(Guid.NewGuid());
+        var store = new ReadFakeStore
+        {
+            Page = new EquipmentFaultListPage(new[] { foreignItem }, 1, 1, 25)
+        };
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = true }, store);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), stationId, new EquipmentFaultListQuery(1, 25));
+
+        Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, result.Code);
+        Assert.Null(result.Page);
+    }
+
+    private static EquipmentFaultListItem ValidListItem(Guid stationId) =>
+        new(Guid.NewGuid(), stationId, "أجهزة", "مقياس", EquipmentFaultSeverity.High,
             EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow);
 
     private sealed class ReadFakeAuthorization : IStationAuthorizationService
