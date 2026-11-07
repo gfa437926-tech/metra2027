@@ -41,6 +41,26 @@ public sealed class EquipmentFaultApplicationService(
             authorization, userId, stationId, "equipment_fault.create", cancellationToken);
     }
 
+    /// <summary>
+    /// Authorizes a lifecycle transition only after verifying the persisted owner.
+    /// The required permission is derived from domain policy, never accepted from the caller.
+    /// </summary>
+    public async Task<EquipmentFaultAccessResult> AuthorizeTransitionAsync(
+        Guid userId,
+        Guid routeStationId,
+        Guid faultId,
+        EquipmentFaultStatus currentStatus,
+        EquipmentFaultStatus nextStatus,
+        CancellationToken cancellationToken = default)
+    {
+        if (!EquipmentFaultPolicy.TryGetRequiredPermission(
+                currentStatus, nextStatus, out var requiredPermission))
+            return EquipmentFaultAccessResult.Forbidden;
+
+        return await AuthorizeRecordAsync(
+            userId, routeStationId, faultId, requiredPermission, cancellationToken);
+    }
+
     public async Task<EquipmentFaultAccessResult> AuthorizeRecordAsync(
         Guid userId,
         Guid routeStationId,
