@@ -19,6 +19,15 @@ public sealed class EquipmentFaultListQueryPolicyTests
     }
 
     [Fact]
+    public void Default_query_uses_documented_first_page_and_page_size()
+    {
+        var query = new EquipmentFaultListQuery();
+
+        Assert.True(EquipmentFaultListQueryPolicy.TryNormalize(query, out var window));
+        Assert.Equal(new EquipmentFaultListWindow(1, 25, 0), window);
+    }
+
+    [Fact]
     public void Null_query_is_rejected_with_safe_default_window()
     {
         Assert.False(EquipmentFaultListQueryPolicy.TryNormalize(null, out var window));
