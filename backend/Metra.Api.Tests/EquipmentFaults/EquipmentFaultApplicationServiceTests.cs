@@ -306,3 +306,158 @@ public sealed class EquipmentFaultApplicationServiceTests
             Task.FromResult(false);
     }
 }
+
+public sealed class EquipmentFaultReadServiceTests
+{
+    [Fact]
+    public async Task List_authorizes_then_passes_station_and_bounded_window_to_store()
+    {
+        var stationId = Guid.NewGuid();
+        var auth = new ReadFakeAuthorization { Allowed = true };
+        var store = new ReadFakeStore();
+        var service = new EquipmentFaultReadService(auth, store);
+        var query = new EquipmentFaultListQuery(
+            3, 20, EquipmentFaultStatus.Submitted, null, null, null);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), stationId, query);
+
+        Assert.Equal(EquipmentFaultReadResultCode.Success, result.Code);
+        Assert.Equal(stationId, store.ListStationId);
+        Assert.Equal(3, store.Window?.Page);
+        Assert.Equal(20, store.Window?.PageSize);
+        Assert.Equal(40, store.Window?.Offset);
+        Assert.Equal("equipment_fault.read", auth.Permission);
+    }
+
+    [Fact]
+    public async Task List_denial_never_calls_store()
+    {
+        var store = new ReadFakeStore();
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = false }, store);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), Guid.NewGuid(),
+            new EquipmentFaultListQuery(1, 25, null, null, null, null));
+
+        Assert.Equal(EquipmentFaultReadResultCode.Forbidden, result.Code);
+        Assert.Equal(0, store.ListCalls);
+    }
+
+    [Fact]
+    public async Task Invalid_list_query_is_rejected_before_authorization_or_store()
+    {
+        var auth = new ReadFakeAuthorization { Allowed = true };
+        var store = new ReadFakeStore();
+        var service = new EquipmentFaultReadService(auth, store);
+
+        var result = await service.GetPageAsync(
+            Guid.NewGuid(), Guid.NewGuid(),
+            new EquipmentFaultListQuery(0, 25, null, null, null, null));
+
+        Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
+        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(0, store.ListCalls);
+    }
+
+    [Fact]
+    public async Task Detail_is_scoped_by_both_ids_and_mismatch_is_not_disclosed()
+    {
+        var stationId = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var store = new ReadFakeStore
+        {
+            Detail = new EquipmentFaultDetail(
+                faultId, Guid.NewGuid(), Guid.NewGuid(),
+                "أجهزة", "مقياس", "وصف العطل التفصيلي",
+                EquipmentFaultSeverity.High, EquipmentFaultStatus.Submitted,
+                DateTimeOffset.UtcNow)
+        };
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = true }, store);
+
+        var result = await service.GetDetailAsync(
+            Guid.NewGuid(), stationId, faultId);
+
+        Assert.Equal(EquipmentFaultReadResultCode.NotFoundOrWrongStation, result.Code);
+        Assert.Equal(faultId, store.DetailFaultId);
+        Assert.Equal(stationId, store.DetailStationId);
+    }
+
+    [Fact]
+    public async Task Store_failure_fails_closed_and_caller_cancellation_propagates()
+    {
+        var store = new ReadFakeStore { ThrowFailure = true };
+        var service = new EquipmentFaultReadService(
+            new ReadFakeAuthorization { Allowed = true }, store);
+        var query = new EquipmentFaultListQuery(1, 25, null, null, null, null);
+
+        var failed = await service.GetPageAsync(Guid.NewGuid(), Guid.NewGuid(), query);
+        Assert.Equal(EquipmentFaultReadResultCode.DependencyFailure, failed.Code);
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        store.ThrowCancellation = true;
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.GetPageAsync(
+                Guid.NewGuid(), Guid.NewGuid(), query, cancellation.Token));
+    }
+
+    private sealed class ReadFakeAuthorization : IStationAuthorizationService
+    {
+        public bool Allowed { get; init; }
+        public int CallCount { get; private set; }
+        public string? Permission { get; private set; }
+        public bool IsConfigured => true;
+
+        public Task<bool> HasStationPermissionAsync(
+            Guid userId, Guid stationId, string permissionCode,
+            CancellationToken cancellationToken = default)
+        {
+            CallCount++;
+            Permission = permissionCode;
+            return Task.FromResult(Allowed);
+        }
+
+        public Task<bool> HasStationOwnerAuthorityPermissionAsync(
+            Guid userId, Guid stationId, string permissionCode,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
+    }
+
+    private sealed class ReadFakeStore : IEquipmentFaultReadStore
+    {
+        public int ListCalls { get; private set; }
+        public Guid? ListStationId { get; private set; }
+        public EquipmentFaultListWindow? Window { get; private set; }
+        public EquipmentFaultDetail? Detail { get; init; }
+        public Guid? DetailFaultId { get; private set; }
+        public Guid? DetailStationId { get; private set; }
+        public bool ThrowFailure { get; set; }
+        public bool ThrowCancellation { get; set; }
+
+        public Task<EquipmentFaultListPage> GetPageAsync(
+            Guid stationId, EquipmentFaultListQuery query,
+            EquipmentFaultListWindow window, CancellationToken cancellationToken = default)
+        {
+            ListCalls++;
+            ListStationId = stationId;
+            Window = window;
+            if (ThrowCancellation)
+                throw new OperationCanceledException(cancellationToken);
+            if (ThrowFailure)
+                throw new InvalidOperationException("simulated read failure");
+            return Task.FromResult(new EquipmentFaultListPage(
+                Array.Empty<EquipmentFaultListItem>(), 0, window.Page, window.PageSize));
+        }
+
+        public Task<EquipmentFaultDetail?> GetDetailAsync(
+            Guid faultId, Guid stationId, CancellationToken cancellationToken = default)
+        {
+            DetailFaultId = faultId;
+            DetailStationId = stationId;
+            return Task.FromResult(Detail);
+        }
+    }
+}
