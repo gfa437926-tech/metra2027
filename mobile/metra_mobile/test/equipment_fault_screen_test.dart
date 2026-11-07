@@ -32,14 +32,16 @@ void main() {
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }
-        return http.Response('not found', 404);
+        return http.Response('[]', 200,
+            headers: {'content-type': 'application/json; charset=utf-8'});
       }),
     );
 
     await tester.pumpWidget(MaterialApp(
       home: EquipmentFaultScreen(api: api, stationId: stationId),
     ));
-    await tester.pumpAndSettle();
+    await tester.pump(); // start future
+    await tester.pump(const Duration(milliseconds: 50));
     expect(find.text('أعطال المعدات'), findsOneWidget);
     expect(find.textContaining('مقياس الحرارة'), findsOneWidget);
     api.close();
