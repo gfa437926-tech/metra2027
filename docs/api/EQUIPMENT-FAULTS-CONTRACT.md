@@ -16,6 +16,15 @@
 - Record every decision and transition in an append-only audit record containing actor, timestamp, previous state, next state, and reason.
 - Bound request sizes, pagination, text lengths, upload types, upload sizes, and request rates.
 
+## Implemented station-scope guard
+
+The isolated backend now includes `EquipmentFaultStationScope.MatchesPersistedOwner`.
+Record handlers must call this guard only after loading the persisted fault and must
+deny the request when either station identifier is empty or the route station does
+not equal the persisted owner. Unit tests cover matching, cross-station mismatch,
+and empty identifiers. This helper is defense-in-depth; it does not replace the
+database query constraint or the authorization service.
+
 ## Proposed API surface
 
 | Method | Route | Permission |
