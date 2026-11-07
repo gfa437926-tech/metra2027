@@ -30,6 +30,22 @@ public sealed class EquipmentFaultPolicyTests
         Assert.Equal(expected, EquipmentFaultPolicy.ValidateSubmission(request, Now));
     }
 
+    [Fact]
+    public void Undefined_severity_value_is_rejected()
+    {
+        var request = ValidSubmission() with { Severity = (EquipmentFaultSeverity)999 };
+        Assert.Equal("invalid_severity", EquipmentFaultPolicy.ValidateSubmission(request, Now));
+    }
+
+    [Fact]
+    public void Missing_permission_set_never_authorizes_a_transition()
+    {
+        Assert.False(EquipmentFaultPolicy.CanTransition(
+            EquipmentFaultStatus.UnderReview,
+            EquipmentFaultStatus.Assigned,
+            null!));
+    }
+
     [Theory]
     [InlineData(EquipmentFaultSeverity.Low)]
     [InlineData(EquipmentFaultSeverity.Medium)]
