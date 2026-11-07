@@ -116,3 +116,8 @@ A future persistence adapter must implement `IEquipmentFaultTransitionWriter.Try
 ### Transition command validation
 
 The application transition coordinator rejects empty actor, station, or fault identifiers; undefined statuses; transitions absent from the domain matrix; and audit reasons outside 5–1000 characters or containing leading/trailing whitespace. It checks station ownership and action permission before invoking the atomic writer. The writer must still enforce station ownership and expected status in its own atomic persistence predicate. Writer failures never return an applied result; caller-requested cancellation is propagated.
+
+
+### Audit entry validation
+
+The domain exposes `EquipmentFaultAuditPolicy.Validate` for audit entries. It rejects missing fault/actor identifiers, undefined statuses, transitions not present in the lifecycle matrix, default timestamps, and reasons outside 5–1000 characters or with surrounding whitespace. This is input validation only: immutability, append-only enforcement, trusted server timestamps, and atomic coupling to the status update remain mandatory responsibilities of the approved persistence layer.
