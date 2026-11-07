@@ -25,6 +25,24 @@ not equal the persisted owner. Unit tests cover matching, cross-station mismatch
 and empty identifiers. This helper is defense-in-depth; it does not replace the
 database query constraint or the authorization service.
 
+## Application authorization orchestration
+
+`EquipmentFaultApplicationService` now centralizes the preconditions for creation
+and record-level access:
+
+- Creation validates the domain submission before checking
+  `equipment_fault.create` for the requested station.
+- Record operations obtain the owner station from
+  `IEquipmentFaultStationReader`, compare it with the route station, and only then
+  check the action permission.
+- A missing record or station mismatch is normalized to
+  `NotFoundOrWrongStation`; denied permission and dependency timeout fail closed.
+- The station reader is an interface only. No concrete persistence adapter, database
+  object, migration, or RPC is introduced by this change.
+
+The service is not registered as an API dependency and no HTTP endpoint is exposed
+until the approved persistence contract is available.
+
 ## Proposed API surface
 
 | Method | Route | Permission |
