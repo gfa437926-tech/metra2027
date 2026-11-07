@@ -110,17 +110,26 @@ public sealed class EquipmentFaultStationAuthorizationTests
 
     private sealed class FaultAuthorizationFake(Guid userId, Guid allowedStationId) : IStationAuthorizationService
     {
+        public bool IsConfigured => true;
+
         public Task<bool> HasStationPermissionAsync(
             Guid authenticatedUserId,
             Guid stationId,
             string permissionCode,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken = default)
         {
             return Task.FromResult(
                 authenticatedUserId == userId
                 && stationId == allowedStationId
                 && permissionCode.StartsWith("equipment_fault.", StringComparison.Ordinal));
         }
+
+        public Task<bool> HasStationOwnerAuthorityPermissionAsync(
+            Guid authenticatedUserId,
+            Guid stationId,
+            string permissionCode,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class EquipmentFaultServiceFake : IEquipmentFaultService
@@ -171,7 +180,7 @@ public sealed class EquipmentFaultStationAuthorizationTests
         ILoggerFactory logger,
         UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
-        public const string Scheme = "Test";
+        public new const string Scheme = "MetraEquipmentFaultTest";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {

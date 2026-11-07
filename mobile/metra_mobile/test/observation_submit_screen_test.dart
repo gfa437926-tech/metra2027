@@ -17,8 +17,11 @@ void main() {
       accessTokenProvider: () async => 'token',
       client: MockClient((request) async {
         called = true;
-        return http.Response(jsonEncode({'id': stationId}), 201,
-            headers: {'content-type': 'application/json; charset=utf-8'});
+        return http.Response(
+          jsonEncode({'id': stationId}),
+          201,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }),
     );
 
@@ -26,9 +29,10 @@ void main() {
       home: ObservationSubmitScreen(api: api, stationId: stationId),
     ));
 
-    await tester.enterText(find.byType(TextFormField).at(0), '999');
-    await tester.enterText(find.byType(TextFormField).at(1), '20');
-    await tester.tap(find.text('حفظ النشرة'));
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), '999');
+    await tester.enterText(fields.at(1), '20');
+    await tester.tap(find.widgetWithText(FilledButton, 'حفظ النشرة'));
     await tester.pump();
 
     expect(find.textContaining('خارج المدى'), findsWidgets);
