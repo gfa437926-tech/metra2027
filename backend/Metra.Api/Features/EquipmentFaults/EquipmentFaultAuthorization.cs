@@ -26,8 +26,21 @@ public static class EquipmentFaultAuthorization
             return false;
         }
 
-        return await authorization.HasStationPermissionAsync(
-            userId, stationId, permissionCode, cancellationToken);
+        try
+        {
+            return await authorization.HasStationPermissionAsync(
+                userId, stationId, permissionCode, cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            // A failed authorization dependency must never grant access.
+            return false;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Treat an upstream timeout as denial, but preserve caller cancellation.
+            return false;
+        }
     }
 
     public static async Task<bool> CanTransitionAsync(
