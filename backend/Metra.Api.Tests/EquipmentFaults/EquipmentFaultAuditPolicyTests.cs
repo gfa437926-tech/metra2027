@@ -78,6 +78,16 @@ public sealed class EquipmentFaultAuditPolicyTests
         Assert.Equal("invalid_audit_reason", EquipmentFaultAuditPolicy.Validate(entry));
     }
 
+    [Fact]
+    public void Reason_length_boundaries_are_accepted()
+    {
+        var minimum = Create(reason: "12345");
+        var maximum = Create(reason: new string('x', 1000));
+
+        Assert.Null(EquipmentFaultAuditPolicy.Validate(minimum));
+        Assert.Null(EquipmentFaultAuditPolicy.Validate(maximum));
+    }
+
     private static EquipmentFaultAuditEntry Create(
         Guid? faultId = null,
         Guid? actorId = null,
