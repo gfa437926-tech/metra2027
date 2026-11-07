@@ -43,7 +43,10 @@ and record-level access:
   permission (for example, Submitted -> UnderReview requires
   `equipment_fault.review`).
 - A missing record or station mismatch is normalized to
-  `NotFoundOrWrongStation`; denied permission and dependency timeout fail closed.
+  `NotFoundOrWrongStation`; denied permission, dependency timeout, HTTP failure,
+  malformed authorization response, and unexpected repository/authorization-provider
+  exceptions fail closed. Explicit caller cancellation is propagated rather than
+  converted into an authorization denial.
 - The station reader is an interface only. No concrete persistence adapter, database
   object, migration, or RPC is introduced by this change.
 
