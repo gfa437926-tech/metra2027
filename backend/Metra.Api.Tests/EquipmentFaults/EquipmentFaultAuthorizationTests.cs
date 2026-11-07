@@ -50,6 +50,21 @@ public sealed class EquipmentFaultAuthorizationTests
     }
 
     [Fact]
+    public async Task Authorization_fails_closed_on_unexpected_dependency_error()
+    {
+        var authorization = new AuthorizationStub
+        {
+            Exception = new InvalidOperationException("unexpected provider failure")
+        };
+
+        var allowed = await EquipmentFaultAuthorization.HasStationPermissionAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.create");
+
+        Assert.False(allowed);
+        Assert.Equal(1, authorization.CallCount);
+    }
+
+    [Fact]
     public async Task Authorization_fails_closed_on_upstream_timeout()
     {
         var authorization = new AuthorizationStub
