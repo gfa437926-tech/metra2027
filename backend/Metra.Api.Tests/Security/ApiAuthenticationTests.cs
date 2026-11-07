@@ -147,6 +147,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/returned")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/resubmit")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]

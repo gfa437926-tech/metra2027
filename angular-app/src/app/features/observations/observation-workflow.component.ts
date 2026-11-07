@@ -42,7 +42,12 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
         <article><span>مصدر البيانات</span><strong class="source">الخادم</strong></article>
       </section>
 
-      <section class="card">
+      <div class="tabs">
+        <button type="button" [class.active]="activeTab==='review'" (click)="activeTab='review'; load()">طابور المراجعة</button>
+        <button type="button" [class.active]="activeTab==='returned'" (click)="activeTab='returned'; loadReturned()">مُرجَعة لإعادة التقديم</button>
+      </div>
+
+      <section class="card" *ngIf="activeTab==='review'">
         <div class="card-heading"><div><h2>قائمة النشرات المرسلة</h2><p>تظهر هنا السجلات ذات الحالة submitted فقط وفق صلاحيات المحطة.</p></div>
           <span class="count">{{ rows.length }} سجل</span>
         </div>
@@ -68,6 +73,30 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
           </table>
         </div>
       </section>
+      
+      <section class="panel" *ngIf="activeTab==='returned'">
+        <div class="heading"><div><h2>نشراتك المُرجَعة للتصحيح</h2>
+          <p>تظهر هنا نشراتك ذات الحالة returned فقط. يمكنك إعادة تقديمها بعد التصحيح.</p></div>
+          <span class="count">{{ returnedRows.length }} سجل</span>
+        </div>
+        <div class="loading" *ngIf="loading"><i class="fa-solid fa-spinner spin"></i> جارٍ التحميل...</div>
+        <div class="table-wrap" *ngIf="!loading">
+          <table>
+            <thead><tr><th>المعرّف</th><th>النوع</th><th>وقت الرصد</th><th>ملاحظة المراجع</th><th>إجراء</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of returnedRows">
+                <td><code>{{ row.id }}</code></td>
+                <td>{{ typeLabel(row.observation_type) }}</td>
+                <td>{{ dateLabel(row.observed_at) }}</td>
+                <td>{{ row['review_note'] || '—' }}</td>
+                <td><button type="button" class="approve" (click)="resubmitReturned(row)" [disabled]="busyId !== null">إعادة التقديم</button></td>
+              </tr>
+              <tr *ngIf="returnedRows.length === 0"><td colspan="5" class="empty">لا توجد نشرات مُرجَعة لك في هذه المحطة.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="return-dialog" *ngIf="returnTarget" role="dialog" aria-modal="true" aria-labelledby="returnTitle">
         <div class="return-panel">
           <h2 id="returnTitle">إرجاع النشرة للتصحيح</h2>
@@ -86,6 +115,10 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
     </div>
   `,
   styles: [`
+    .tabs{display:flex;gap:.5rem;margin-bottom:1rem}
+    .tabs button{padding:.4rem .8rem;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;cursor:pointer}
+    .tabs button.active{background:#0f766e;color:#fff;border-color:#0f766e}
+
     :host{display:block;color:#2c3e50;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif}
     .page{max-width:1500px;margin:auto}header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.eyebrow{color:#287caf;font-size:13px;font-weight:800}.eyebrow i{margin-left:7px}h1{font-size:clamp(24px,3vw,32px);margin:8px 0;font-weight:800}h2{font-size:19px;margin:0 0 5px}p{margin:0;color:#7b8790;font-size:13px;line-height:1.8}
     button{font:inherit;cursor:pointer}.refresh{border:1px solid #cbd8e2;background:white;color:#2876a8;padding:10px 15px;border-radius:8px}.refresh:disabled,button:disabled{opacity:.5;cursor:not-allowed}
@@ -100,6 +133,8 @@ export class ObservationWorkflowComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   stationId = '';
   rows: ObservationQueueItem[] = [];
+  returnedRows: ObservationQueueItem[] = [];
+  activeTab: 'review' | 'returned' = 'review';
   loading = false;
   busyId: string | null = null;
   error = '';
@@ -127,6 +162,37 @@ export class ObservationWorkflowComponent implements OnInit {
       this.rows = [];
     } finally {
       this.loading = false;
+    }
+  }
+
+  async loadReturned(): Promise<void> {
+    if (!this.stationId) return;
+    this.loading = true;
+    this.error = '';
+    try {
+      this.returnedRows = await this.api.getReturnedObservations(this.stationId, 100);
+    } catch (e: unknown) {
+      this.error = this.errorMessage(e);
+      this.returnedRows = [];
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async resubmitReturned(row: ObservationQueueItem): Promise<void> {
+    if (!this.stationId || this.busyId) return;
+    this.busyId = row.id;
+    this.error = '';
+    this.feedback = '';
+    try {
+      await this.api.resubmitObservation(this.stationId, row.id, row.payload as Record<string, unknown>);
+      this.feedback = 'أُعيد تقديم النشرة للمراجعة.';
+      this.returnedRows = this.returnedRows.filter(r => r.id !== row.id);
+      await this.load();
+    } catch (e: unknown) {
+      this.error = this.errorMessage(e);
+    } finally {
+      this.busyId = null;
     }
   }
 

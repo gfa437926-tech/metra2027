@@ -11,8 +11,10 @@ export interface ObservationQueueItem {
   observation_type: 'daily' | 'hourly' | 'phenomenon' | string;
   observed_at: string;
   payload: Record<string, unknown>;
-  status: 'submitted';
+  status: 'submitted' | 'returned' | string;
   submitted_at: string | null;
+  reviewed_at?: string | null;
+  review_note?: string | null;
   created_at: string;
 }
 
@@ -105,6 +107,18 @@ export class ObservationApiService {
         submit: submission.submit
       },
       { headers }
+    ));
+  }
+
+
+  async getReturnedObservations(stationId: string, limit = 50): Promise<ObservationQueueItem[]> {
+    if (!this.isConfigured) throw new Error('يلزم ضبط عنوان API وإعدادات Supabase العامة أولاً.');
+    if (!this.isUuid(stationId) || limit < 1 || limit > 100) throw new Error('معرّف المحطة أو حد النتائج غير صالح.');
+    const headers = await this.authHeaders();
+    const params = new HttpParams().set('limit', String(limit));
+    return firstValueFrom(this.http.get<ObservationQueueItem[]>(
+      `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/observations/returned`,
+      { headers, params }
     ));
   }
 

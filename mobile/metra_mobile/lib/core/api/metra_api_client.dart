@@ -15,12 +15,14 @@ class MetraApiException implements Exception {
 class ObservationQueueItem {
   const ObservationQueueItem({required this.id, required this.stationId,
     required this.observationType, required this.observedAt,
-    required this.status, this.payload = const {}});
+    required this.status,
+    this.reviewNote, this.payload = const {}});
   final String id;
   final String stationId;
   final String observationType;
   final DateTime observedAt;
   final String status;
+  final String? reviewNote;
   final Map<String, dynamic> payload;
 
   factory ObservationQueueItem.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class ObservationQueueItem {
     return ObservationQueueItem(id: id, stationId: stationId,
       observationType: type, observedAt: observedAt,
       status: json['status'] is String ? json['status'] as String : 'submitted',
+      reviewNote: json['review_note'] is String ? json['review_note'] as String : null,
       payload: rawPayload is Map<String, dynamic> ? rawPayload : const {});
   }
 }
@@ -119,6 +122,19 @@ class MetraApiClient {
       if (page.length < pageSize) return stations;
     }
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
+  }
+
+
+  Future<List<ObservationQueueItem>> getReturnedObservations(String stationId, {int limit = 50}) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/returned?limit=$limit',
+    );
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) throw const FormatException('invalid_returned_queue');
+    return decoded
+        .map((item) => ObservationQueueItem.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
   }
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
