@@ -100,6 +100,43 @@ public sealed class EquipmentFaultTransitionServiceTests
         Assert.Equal(0, writer.CallCount);
     }
 
+    [Theory]
+    [InlineData(EquipmentFaultTransitionWriteResult.NotFoundOrWrongStation,
+        EquipmentFaultTransitionExecutionResult.NotFoundOrWrongStation)]
+    [InlineData(EquipmentFaultTransitionWriteResult.Forbidden,
+        EquipmentFaultTransitionExecutionResult.Forbidden)]
+    public async Task Writer_access_results_are_preserved(
+        EquipmentFaultTransitionWriteResult writeResult,
+        EquipmentFaultTransitionExecutionResult expected)
+    {
+        var stationId = Guid.NewGuid();
+        var writer = new FakeWriter { Result = writeResult };
+        var service = CreateService(stationId, allowed: true, writer);
+
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(), stationId, Guid.NewGuid(),
+            EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview,
+            "مراجعة البلاغ");
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task Caller_cancellation_from_atomic_writer_is_propagated()
+    {
+        var stationId = Guid.NewGuid();
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        var writer = new FakeWriter { ThrowCancellation = true };
+        var service = CreateService(stationId, allowed: true, writer);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.ExecuteAsync(
+                Guid.NewGuid(), stationId, Guid.NewGuid(),
+                EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview,
+                "مراجعة البلاغ", cancellation.Token));
+    }
+
     [Fact]
     public async Task Unexpected_writer_failure_fails_closed()
     {
@@ -153,6 +190,7 @@ public sealed class EquipmentFaultTransitionServiceTests
     {
         public EquipmentFaultTransitionWriteResult Result { get; init; }
         public bool ThrowUnexpected { get; init; }
+        public bool ThrowCancellation { get; init; }
         public int CallCount { get; private set; }
         public Guid FaultId { get; private set; }
         public Guid StationId { get; private set; }
@@ -173,6 +211,8 @@ public sealed class EquipmentFaultTransitionServiceTests
             NextStatus = nextStatus;
             ActorId = actorId;
             Reason = reason;
+            if (ThrowCancellation)
+                throw new OperationCanceledException(cancellationToken);
             if (ThrowUnexpected)
                 throw new InvalidOperationException("simulated writer failure");
             return Task.FromResult(Result);
