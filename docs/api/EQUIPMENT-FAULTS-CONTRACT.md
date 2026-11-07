@@ -111,3 +111,8 @@ This contract does not create or alter database tables, migrations, RPCs, storag
 ## Concurrent transition and audit write boundary
 
 A future persistence adapter must implement `IEquipmentFaultTransitionWriter.TryTransitionAsync` as one atomic operation. It must compare the persisted owner station and current status with the caller's expected values, update the status only when both still match, and append the immutable audit event in the same transaction. A stale expected status returns a conflict; a missing record or station mismatch must not disclose another station's record. The in-memory `EquipmentFaultTransitionConcurrency` guard is an early validation aid only and is not a substitute for the atomic database predicate. No writer implementation or database object is created before schema approval.
+
+
+### Transition command validation
+
+The application transition coordinator rejects empty actor, station, or fault identifiers; undefined statuses; transitions absent from the domain matrix; and audit reasons outside 5–1000 characters or containing leading/trailing whitespace. It checks station ownership and action permission before invoking the atomic writer. The writer must still enforce station ownership and expected status in its own atomic persistence predicate. Writer failures never return an applied result; caller-requested cancellation is propagated.
