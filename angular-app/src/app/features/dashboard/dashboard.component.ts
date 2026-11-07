@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
 
 interface DashboardCard {
   title: string;
@@ -181,9 +182,11 @@ export class DashboardComponent implements OnInit {
   toastMessage = '';
 
   readonly basicReports: DashboardCard[] = [
+    { title: 'حالة نشرات المحطة', icon: 'fa-solid fa-chart-column', description: 'ملخص النشرات المرسلة والمُرجَعة ضمن صلاحية المحطة', path: '/reports/observation-status', colorClass: 'card-report', iconColor: '#0369a1', buttonClass: 'btn-primary', actionLabel: 'عرض الملخص' },
+    { title: 'مراجعة النشرات', icon: 'fa-solid fa-list-check', description: 'مراجعة واعتماد أو إرجاع النشرات المرسلة وإعادة تقديم المُرجَعة', path: '/observations/workflow', colorClass: 'card-report', iconColor: '#0f766e', buttonClass: 'btn-primary', actionLabel: 'فتح المراجعة' },
     { title: 'النشرات الساعية', icon: 'fa-regular fa-clock', description: 'إرسال وعرض التقارير الساعية لبيانات الطقس مثل الحرارة والرطوبة والرياح', path: '/reports/hourly', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
     { title: 'النشرات اليومية', icon: 'fa-regular fa-calendar-days', description: 'التقارير اليومية الشاملة لبيانات الطقس والإحصائيات اليومية', path: '/reports/daily', colorClass: 'card-report', iconColor: '#2980b9', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
-    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
+    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', path: '/reports/rainfall', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
   ];
 
   readonly climateCards: DashboardCard[] = [
@@ -193,9 +196,9 @@ export class DashboardComponent implements OnInit {
   ];
 
   readonly maintenanceCards: DashboardCard[] = [
-    { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
-    { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
-    { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
+    { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', path: '/equipment-faults', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
+    { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
+    { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
   ];
 
   readonly aboutCards: DashboardCard[] = [
@@ -206,7 +209,10 @@ export class DashboardComponent implements OnInit {
 
   managementCards: DashboardCard[] = [];
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly auth: SupabaseAuthService
+  ) {}
 
   ngOnInit(): void {
     if (typeof localStorage === 'undefined') return;
@@ -228,14 +234,21 @@ export class DashboardComponent implements OnInit {
     this.showPending('تم تحديث لوحة التحكم');
   }
 
-  logout(): void {
-    if (typeof localStorage !== 'undefined' && window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+  async logout(): Promise<void> {
+    if (typeof localStorage === 'undefined' || !window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+      return;
+    }
+
+    try {
+      await this.auth.signOut();
       localStorage.removeItem('currentUser');
       this.userName = 'مستخدم النظام';
       this.userRole = '';
       this.stationName = '';
       this.managementCards = [];
-      this.showPending('تم تسجيل الخروج من هذه الجلسة المحلية');
+      await this.router.navigate(['/login']);
+    } catch {
+      this.toastMessage = 'تعذر إنهاء جلسة الدخول. حاول مرة أخرى.';
     }
   }
 

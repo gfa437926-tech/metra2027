@@ -2,6 +2,9 @@ import { Routes } from '@angular/router';
 import { requireAuthenticatedUser } from './core/supabase/auth.guard';
 
 export const routes: Routes = [
+  { path: 'reports/observation-status', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/reports/station-observation-status.component').then(m => m.StationObservationStatusComponent) },
+  { path: 'equipment-faults', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/maintenance/equipment-fault-workflow.component').then(m => m.EquipmentFaultWorkflowComponent) },
+  { path: 'support-incidents', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/support/support-incident-workflow.component').then(m => m.SupportIncidentWorkflowComponent) },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent)
@@ -12,6 +15,7 @@ export const routes: Routes = [
   },
   {
     path: '',
+    canActivate: [requireAuthenticatedUser],
     loadComponent: () => import('./features/dashboard/dashboard.component')
       .then((m) => m.DashboardComponent)
   },

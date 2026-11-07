@@ -1,0 +1,50 @@
+using Metra.Api.Domain.Observations;
+
+namespace Metra.Api.Domain.Maintenance;
+
+/// <summary>Validates workshop progress updates independently of persistence and authorization.</summary>
+public sealed record MaintenanceProgressUpdate(
+    Guid FaultId,
+    Guid StationId,
+    EquipmentFaultStatus CurrentStatus,
+    EquipmentFaultStatus Status,
+    int ProgressPercent,
+    DateTimeOffset UpdatedAt,
+    string? ProgressNote);
+
+public static class MaintenanceProgressPolicy
+{
+    public static IReadOnlyList<ValidationIssue> Validate(
+        MaintenanceProgressUpdate update,
+        DateTimeOffset now)
+    {
+        ArgumentNullException.ThrowIfNull(update);
+        var issues = new List<ValidationIssue>();
+
+        if (update.FaultId == Guid.Empty)
+            issues.Add(new(nameof(update.FaultId), "يجب تحديد بلاغ العطل."));
+        if (update.StationId == Guid.Empty)
+            issues.Add(new(nameof(update.StationId), "يجب تحديد المحطة."));
+        if (!Enum.IsDefined(update.CurrentStatus))
+            issues.Add(new(nameof(update.CurrentStatus), "حالة العطل الحالية غير معروفة."));
+        if (!Enum.IsDefined(update.Status))
+            issues.Add(new(nameof(update.Status), "حالة العطل المطلوبة غير معروفة."));
+        if (Enum.IsDefined(update.CurrentStatus) && Enum.IsDefined(update.Status) &&
+            !EquipmentFaultPolicy.CanTransition(update.CurrentStatus, update.Status))
+            issues.Add(new(nameof(update.Status), "انتقال حالة العطل غير مسموح وفق دورة حياة البلاغ."));
+        if (update.ProgressPercent is < 0 or > 100)
+            issues.Add(new(nameof(update.ProgressPercent), "نسبة الإنجاز يجب أن تكون بين 0 و100."));
+        if (update.UpdatedAt == default || update.UpdatedAt > now.AddMinutes(5))
+            issues.Add(new(nameof(update.UpdatedAt), "وقت تحديث الإنجاز غير صالح."));
+        if (update.ProgressNote is not null &&
+            (string.IsNullOrWhiteSpace(update.ProgressNote) || update.ProgressNote.Trim().Length > 1000))
+            issues.Add(new(nameof(update.ProgressNote), "ملاحظة الإنجاز يجب ألا تكون فارغة وألا تتجاوز 1000 محرف."));
+
+        if (update.Status == EquipmentFaultStatus.Resolved && update.ProgressPercent != 100)
+            issues.Add(new(nameof(update.ProgressPercent), "لا يمكن تسجيل العطل محلولاً قبل اكتمال الإنجاز بنسبة 100."));
+        if (update.Status is EquipmentFaultStatus.Closed or EquipmentFaultStatus.Rejected)
+            issues.Add(new(nameof(update.Status), "لا يمكن تحديث تقدم عطل مغلق أو مرفوض."));
+
+        return issues;
+    }
+}

@@ -31,31 +31,18 @@ For GitHub Pages, the browser origin is `https://gfa437926-tech.github.io`. Add 
 
 ## Host requirements
 
-1. Run the published container image on a supported container host.
-2. Expose HTTPS publicly and forward traffic to container port `8080`.
+1. Run the published container image on a supported container host, or use a separately verified ASP.NET Core/IIS publishing procedure when the selected host requires it.
+2. Expose HTTPS publicly and forward traffic to the API process/container using the port and hosting model required by that host.
 3. Configure all required variables above using the provider's secret/configuration interface.
 4. Configure a persistent, stable API base URL ending in `/api/v1`.
 5. Configure the Angular Pages workflow secrets `METRA_API_BASE_URL`, `METRA_SUPABASE_URL`, and `METRA_SUPABASE_ANON_KEY`. The anon/publishable key is client-visible by design and must be protected by correct Supabase RLS; it is not a service-role key.
 6. Configure Flutter with the same HTTPS API base URL and the appropriate Supabase publishable/anon client key through the mobile build configuration.
 
-No production host is currently specified in this repository. Do not infer one or report deployment as complete until a real host URL is supplied and verified.
+## Hosting selection status
 
-## Render Blueprint setup
+No production host or deployment target has been approved in this repository. Do not create a hosting service, assume a provider, infer a hostname, or report deployment as complete until the target and its supported ASP.NET Core hosting model have been confirmed. Review any trial period, renewal cost, resource limits, persistent storage, secret management, HTTPS support, and deployment restrictions before committing to a provider.
 
-A repository-root `render.yaml` is provided for the API service. It uses the existing Dockerfile and build context, selects the Frankfurt region, binds the container to Render's public HTTP port, configures the exact GitHub Pages CORS origin, and uses the anonymous readiness endpoint for platform health checks, so an instance is not marked healthy until its server-side Supabase catalogue probe succeeds.
-
-To create the host:
-
-1. Sign in to Render and choose **New → Blueprint**.
-2. Connect `gfa437926-tech/metra2027` on branch `main` and select the repository-root `render.yaml`.
-3. Review the service and pricing/plan shown by Render before creating it.
-4. When prompted, provide the value for `Supabase__ServiceRoleKey` directly in Render's secret field. Never commit this value or paste it into chat.
-5. Create the Blueprint and wait for the first deployment to finish.
-6. Copy the actual `https://...` service URL assigned by Render. Do not assume a hostname from the service name.
-7. Verify `/api/v1/health` and then `/api/v1/ready`. The liveness endpoint proves the process is responding; the Render platform health check uses readiness and therefore also requires a successful server-side Supabase catalogue probe.
-8. Add the real API base URL (ending in `/api/v1`) to the GitHub Pages repository secret `METRA_API_BASE_URL`, and configure the matching mobile build setting. Keep the Supabase publishable key separate from the server-only service-role key.
-
-The Blueprint deliberately does not contain a service-role key. Render's `sync: false` prompts for it during initial Blueprint creation; if the Blueprint already exists, add or update the secret in the Render service's Environment settings. Creating this file in GitHub does not create a Render account, service, hostname, or deployment.
+The repository's previous Render-specific walkthrough has intentionally been removed from this guide. The presence of a container image or deployment workflow does not require using Render and does not mean a service has been created.
 
 ## Post-deployment verification
 

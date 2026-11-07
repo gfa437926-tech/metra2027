@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
+import { EditableObservationField, buildEditableFields, fieldsToPayload } from './observation-field-labels';
 
 @Component({
   standalone: true,
@@ -42,7 +43,12 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
         <article><span>مصدر البيانات</span><strong class="source">الخادم</strong></article>
       </section>
 
-      <section class="card">
+      <div class="tabs">
+        <button type="button" [class.active]="activeTab==='review'" (click)="activeTab='review'; load()">طابور المراجعة</button>
+        <button type="button" [class.active]="activeTab==='returned'" (click)="activeTab='returned'; loadReturned()">مُرجَعة لإعادة التقديم</button>
+      </div>
+
+      <section class="card" *ngIf="activeTab==='review'">
         <div class="card-heading"><div><h2>قائمة النشرات المرسلة</h2><p>تظهر هنا السجلات ذات الحالة submitted فقط وفق صلاحيات المحطة.</p></div>
           <span class="count">{{ rows.length }} سجل</span>
         </div>
@@ -68,6 +74,55 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
           </table>
         </div>
       </section>
+      
+      <section class="panel" *ngIf="activeTab==='returned'">
+        <div class="heading"><div><h2>نشراتك المُرجَعة للتصحيح</h2>
+          <p>تظهر هنا نشراتك ذات الحالة returned فقط. يمكنك إعادة تقديمها بعد التصحيح.</p></div>
+          <span class="count">{{ returnedRows.length }} سجل</span>
+        </div>
+        <div class="loading" *ngIf="loading"><i class="fa-solid fa-spinner spin"></i> جارٍ التحميل...</div>
+        <div class="table-wrap" *ngIf="!loading">
+          <table>
+            <thead><tr><th>المعرّف</th><th>النوع</th><th>وقت الرصد</th><th>ملاحظة المراجع</th><th>إجراء</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let row of returnedRows">
+                <td><code>{{ row.id }}</code></td>
+                <td>{{ typeLabel(row.observation_type) }}</td>
+                <td>{{ dateLabel(row.observed_at) }}</td>
+                <td>{{ row['review_note'] || '—' }}</td>
+                <td><button type="button" class="approve" (click)="openEditor(row)" [disabled]="busyId !== null || editSaving">تصحيح وإعادة التقديم</button></td>
+              </tr>
+              <tr *ngIf="returnedRows.length === 0"><td colspan="5" class="empty">لا توجد نشرات مُرجَعة لك في هذه المحطة.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      
+      <section class="return-dialog" *ngIf="editTarget" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+        <div class="return-panel edit-panel">
+          <h2 id="editTitle">تصحيح النشرة المُرجَعة</h2>
+          <p class="review-note" *ngIf="editTarget.review_note">
+            <strong>ملاحظة المراجع:</strong> {{ editTarget.review_note }}
+          </p>
+          <p class="review-note muted" *ngIf="!editTarget.review_note">لا توجد ملاحظة مكتوبة من المراجع.</p>
+          <p class="meta">{{ typeLabel(editTarget.observation_type) }} — {{ dateLabel(editTarget.observed_at) }}</p>
+          <div class="fields" *ngIf="editFields.length > 0">
+            <div class="field" *ngFor="let field of editFields">
+              <label [attr.for]="'f-' + field.key">{{ field.label }} <code *ngIf="field.label !== field.key">({{ field.key }})</code></label>
+              <input [id]="'f-' + field.key" type="text" [(ngModel)]="field.value" maxlength="200" [disabled]="editSaving" />
+            </div>
+          </div>
+          <p class="empty" *ngIf="editFields.length === 0">لا توجد حقول قابلة للتحرير في حمولة هذه النشرة.</p>
+          <div class="return-actions">
+            <button type="button" class="cancel" (click)="closeEditor()" [disabled]="editSaving">إلغاء</button>
+            <button type="button" class="confirm-return" (click)="submitEditedResubmit()" [disabled]="editSaving || editFields.length === 0">
+              {{ editSaving ? 'جارٍ الإرسال...' : 'حفظ وإعادة التقديم' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section class="return-dialog" *ngIf="returnTarget" role="dialog" aria-modal="true" aria-labelledby="returnTitle">
         <div class="return-panel">
           <h2 id="returnTitle">إرجاع النشرة للتصحيح</h2>
@@ -86,6 +141,19 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
     </div>
   `,
   styles: [`
+    .edit-panel{max-width:560px;width:min(96vw,560px);max-height:90vh;overflow:auto}
+    .review-note{background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:.75rem 1rem;margin:.5rem 0 1rem;color:#9a3412}
+    .review-note.muted{background:#f8fafc;border-color:#e2e8f0;color:#64748b}
+    .meta{color:#64748b;font-size:.9rem;margin-bottom:.75rem}
+    .fields{display:grid;gap:.75rem;margin-bottom:1rem}
+    .field label{display:block;font-weight:600;margin-bottom:.25rem}
+    .field code{font-weight:400;color:#64748b;font-size:.85em}
+    .field input{width:100%;padding:.5rem .65rem;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+
+    .tabs{display:flex;gap:.5rem;margin-bottom:1rem}
+    .tabs button{padding:.4rem .8rem;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;cursor:pointer}
+    .tabs button.active{background:#0f766e;color:#fff;border-color:#0f766e}
+
     :host{display:block;color:#2c3e50;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif}
     .page{max-width:1500px;margin:auto}header{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:22px}.eyebrow{color:#287caf;font-size:13px;font-weight:800}.eyebrow i{margin-left:7px}h1{font-size:clamp(24px,3vw,32px);margin:8px 0;font-weight:800}h2{font-size:19px;margin:0 0 5px}p{margin:0;color:#7b8790;font-size:13px;line-height:1.8}
     button{font:inherit;cursor:pointer}.refresh{border:1px solid #cbd8e2;background:white;color:#2876a8;padding:10px 15px;border-radius:8px}.refresh:disabled,button:disabled{opacity:.5;cursor:not-allowed}
@@ -100,6 +168,11 @@ export class ObservationWorkflowComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   stationId = '';
   rows: ObservationQueueItem[] = [];
+  returnedRows: ObservationQueueItem[] = [];
+  activeTab: 'review' | 'returned' = 'review';
+  editTarget: ObservationQueueItem | null = null;
+  editFields: EditableObservationField[] = [];
+  editSaving = false;
   loading = false;
   busyId: string | null = null;
   error = '';
@@ -127,6 +200,63 @@ export class ObservationWorkflowComponent implements OnInit {
       this.rows = [];
     } finally {
       this.loading = false;
+    }
+  }
+
+  async loadReturned(): Promise<void> {
+    if (!this.stationId) return;
+    this.loading = true;
+    this.error = '';
+    try {
+      this.returnedRows = await this.api.getReturnedObservations(this.stationId, 100);
+    } catch (e: unknown) {
+      this.error = this.errorMessage(e);
+      this.returnedRows = [];
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  openEditor(row: ObservationQueueItem): void {
+    if (this.busyId || this.editSaving) return;
+    this.editTarget = row;
+    this.editFields = buildEditableFields(
+      (row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload))
+        ? row.payload as Record<string, unknown>
+        : {}
+    );
+    this.error = '';
+    this.feedback = '';
+  }
+
+  closeEditor(): void {
+    if (this.editSaving) return;
+    this.editTarget = null;
+    this.editFields = [];
+  }
+
+  async submitEditedResubmit(): Promise<void> {
+    if (!this.stationId || !this.editTarget || this.editSaving) return;
+    if (this.editFields.length === 0) {
+      this.error = 'لا توجد حقول لإعادة إرسالها.';
+      return;
+    }
+    this.editSaving = true;
+    this.error = '';
+    this.feedback = '';
+    const observationId = this.editTarget.id;
+    const payload = fieldsToPayload(this.editFields);
+    try {
+      await this.api.resubmitObservation(this.stationId, observationId, payload);
+      this.feedback = 'تم حفظ التصحيح وإعادة تقديم النشرة للمراجعة.';
+      this.returnedRows = this.returnedRows.filter(r => r.id !== observationId);
+      this.editTarget = null;
+      this.editFields = [];
+      await this.load();
+    } catch (e: unknown) {
+      this.error = this.errorMessage(e);
+    } finally {
+      this.editSaving = false;
     }
   }
 
@@ -178,7 +308,7 @@ export class ObservationWorkflowComponent implements OnInit {
       if (error.status === 401) return 'انتهت جلسة الدخول أو لم يتم تسجيل الدخول. أعد تسجيل الدخول.';
       if (error.status === 403) return 'ليس لديك صلاحية الوصول إلى مراجعة هذه المحطة أو اتخاذ هذا القرار.';
       if (error.status === 404) return 'النشرة أو المحطة غير موجودة.';
-      if (error.status === 409) return 'تعذر تنفيذ القرار بسبب تعارض في حالة النشرة. حدّث القائمة.';
+      if (error.status === 409) return 'تعذر التنفيذ بسبب تعارض في حالة النشرة (قد تكون أُعيد تقديمها أو اعتُمدت). حدّث القائمة.';
       if (error.status === 0) return 'تعذر الاتصال بالخادم. تحقق من عنوان API وإعدادات CORS.';
       if (error.status >= 500) return 'الخدمة غير متاحة حالياً. تحقق من إعدادات الخادم وقاعدة البيانات.';
       return `رفض الخادم الطلب (HTTP ${error.status}).`;

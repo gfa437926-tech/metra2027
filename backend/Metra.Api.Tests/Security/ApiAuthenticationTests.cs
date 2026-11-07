@@ -147,7 +147,11 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/returned")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/equipment-faults")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/resubmit")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/equipment-faults/22222222-2222-2222-2222-222222222222/transitions")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
     public async Task Every_protected_station_endpoint_requires_authentication(string path)
     {
@@ -163,10 +167,18 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/stations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
+    [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/resubmit")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
     public async Task Malformed_bearer_token_is_rejected_for_observation_and_station_endpoints(string path)
     {
-        using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
+        using var request = new HttpRequestMessage(
+            path.Contains("/decision", StringComparison.Ordinal)
+            || path.Contains("/resubmit", StringComparison.Ordinal)
+            || path.Contains("/validate", StringComparison.Ordinal)
+            || path.Contains("/equipment-faults", StringComparison.Ordinal)
+                ? HttpMethod.Post
+                : path.StartsWith("/api/v1/stations", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post,
+            path);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
         if (request.Method == HttpMethod.Post) request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
@@ -235,7 +247,13 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
     private Task<HttpResponseMessage> SendUnauthenticated(string path)
     {
-        if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal))
+        var isStationWrite = path.Contains("/decision", StringComparison.Ordinal)
+            || path.Contains("/resubmit", StringComparison.Ordinal)
+            || path.Contains("/review", StringComparison.Ordinal)
+            || path.Contains("/assignments", StringComparison.Ordinal)
+            || path.Contains("/equipment-faults", StringComparison.Ordinal) && path.Contains("/transitions", StringComparison.Ordinal)
+            || path.EndsWith("/equipment-faults", StringComparison.Ordinal);
+        if (path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !isStationWrite)
             return _client.GetAsync(path);
         return _client.PostAsync(path, new StringContent("{}", Encoding.UTF8, "application/json"));
     }

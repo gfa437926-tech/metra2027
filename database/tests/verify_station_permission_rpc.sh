@@ -27,3 +27,24 @@ if grep -Eiq "GRANT EXECUTE ON FUNCTION public\\.metra_user_has_station_permissi
 fi
 
 echo "Station authorization SQL contract verified."
+
+# Observation decision contracts (always) and isolated PostgreSQL tests when a server is reachable.
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+bash "$ROOT/database/tests/verify_observation_decision_contract.sh"
+run_pg_tests() {
+  bash "$ROOT/database/tests/run_observation_decision_isolated_pg_tests.sh"
+}
+if command -v psql >/dev/null 2>&1; then
+  if psql -d postgres -c "select 1" >/dev/null 2>&1; then
+    run_pg_tests
+  elif [[ -n "${PGPASSWORD:-}" ]] && PGPASSWORD="$PGPASSWORD" psql -h "${PGHOST:-localhost}" -U "${PGUSER:-postgres}" -d postgres -c "select 1" >/dev/null 2>&1; then
+    run_pg_tests
+  elif command -v su >/dev/null 2>&1 && su - postgres -c "psql -d postgres -c 'select 1'" >/dev/null 2>&1; then
+    su - postgres -c "cd '$ROOT' && bash database/tests/run_observation_decision_isolated_pg_tests.sh"
+  else
+    echo "Observation decision SQL contract verified; isolated PG tests not executed (no reachable PostgreSQL in this job)."
+  fi
+else
+  echo "Observation decision SQL contract verified; isolated PG tests not executed (psql not installed in this job)."
+fi
+
