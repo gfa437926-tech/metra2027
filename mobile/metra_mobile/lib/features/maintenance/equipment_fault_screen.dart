@@ -176,10 +176,10 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
     String? note;
     int? progress;
     if (toStatus == 'Rejected' || toStatus == 'Closed' || toStatus == 'Resolved') {
-      final controller = TextEditingController();
-      final confirmed = await showDialog<bool>(
+      final TextEditingController controller = TextEditingController();
+      final bool? confirmed = await showDialog<bool>(
         context: context,
-        builder: (dialogContext) => AlertDialog(
+        builder: (BuildContext dialogContext) => AlertDialog(
           title: Text(toStatus),
           content: TextField(
             controller: controller,
@@ -189,7 +189,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
               border: OutlineInputBorder(),
             ),
           ),
-          actions: [
+          actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
               child: const Text('إلغاء'),
@@ -201,17 +201,24 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
           ],
         ),
       );
-      note = controller.text.trim();
+      final String entered = controller.text.trim();
       controller.dispose();
-      if (confirmed != true) return;
-      if ((toStatus == 'Rejected' || toStatus == 'Closed') &&
-          (note == null || note.isEmpty)) {
+      if (!mounted) {
+        return;
+      }
+      if (confirmed != true) {
+        return;
+      }
+      if ((toStatus == 'Rejected' || toStatus == 'Closed') && entered.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('الملاحظة مطلوبة')),
         );
         return;
       }
-      if (toStatus == 'Resolved') progress = 100;
+      note = entered.isEmpty ? null : entered;
+      if (toStatus == 'Resolved') {
+        progress = 100;
+      }
     }
     try {
       await widget.api.transitionEquipmentFault(
@@ -221,13 +228,17 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
         note: note,
         progressPercent: progress,
       );
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم تحديث حالة البلاغ')),
       );
       await _refresh();
     } on MetraApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('تعذر التحديث (${error.statusCode})')),
       );
@@ -420,8 +431,9 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                             child: Wrap(
                               spacing: 8,
-                              children: [
-                                for (final action in _nextActions(
+                              children: <Widget>[
+                                for (final Map<String, String> action
+                                    in _nextActions(
                                   row['status']?.toString() ?? '',
                                 ))
                                   OutlinedButton(
