@@ -106,3 +106,8 @@ This contract does not create or alter database tables, migrations, RPCs, storag
 - Undefined status enum values are invalid and must not be treated as terminal or transitionable.
 - Reopening is explicitly limited to `Resolved -> InProgress`; rejected and closed records cannot be reopened.
 - These rules are domain invariants and must be revalidated against the persisted current status when a write adapter is introduced. A client-supplied status is never authoritative.
+
+
+## Concurrent transition and audit write boundary
+
+A future persistence adapter must implement `IEquipmentFaultTransitionWriter.TryTransitionAsync` as one atomic operation. It must compare the persisted owner station and current status with the caller's expected values, update the status only when both still match, and append the immutable audit event in the same transaction. A stale expected status returns a conflict; a missing record or station mismatch must not disclose another station's record. The in-memory `EquipmentFaultTransitionConcurrency` guard is an early validation aid only and is not a substitute for the atomic database predicate. No writer implementation or database object is created before schema approval.
