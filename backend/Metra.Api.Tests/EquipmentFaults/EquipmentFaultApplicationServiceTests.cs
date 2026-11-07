@@ -551,7 +551,7 @@ public sealed class EquipmentFaultReadServiceTests
     }
 
     private static EquipmentFaultListItem ValidListItem() =>
-        new(Guid.NewGuid(), "أجهزة", "مقياس", EquipmentFaultSeverity.High,
+        new(Guid.NewGuid(), Guid.NewGuid(), "أجهزة", "مقياس", EquipmentFaultSeverity.High,
             EquipmentFaultStatus.Submitted, DateTimeOffset.UtcNow);
 
     private sealed class ReadFakeAuthorization : IStationAuthorizationService
