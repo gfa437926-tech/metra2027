@@ -26,7 +26,7 @@ interface HourlyPreview {
         <span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span>
       </header>
 
-      <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="blockedOfflineCount">{{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
@@ -149,6 +149,7 @@ export class HourlyReportsComponent {
   private readonly syncOwner = 'hourly-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   pendingOfflineCount = 0;
+  blockedOfflineCount = 0;
   syncing = false;
 
   constructor() {
@@ -162,7 +163,16 @@ export class HourlyReportsComponent {
   }
 
   private async refreshOfflineCount(): Promise<void> {
-    try { this.pendingOfflineCount = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly').length; } catch { /* local storage unavailable */ }
+    try { const items = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineCount = items.filter(x => x.state === 'blocked').length; } catch { /* local storage unavailable */ }
+  }
+
+  async retryBlockedOffline(): Promise<void> {
+    const items = await this.offlineQueue.list();
+    for (const item of items) if (item.observationType === 'hourly' && item.state === 'blocked') {
+      await this.offlineQueue.update({ ...item, state: 'pending', lastError: undefined });
+    }
+    await this.refreshOfflineCount();
+    if (this.isOnline && this.apiReady) await this.flushHourlyQueue();
   }
 
   private async flushHourlyQueue(): Promise<void> {
