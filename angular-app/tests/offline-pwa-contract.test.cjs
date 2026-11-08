@@ -46,3 +46,19 @@ test('web manifest declares an Arabic standalone application', () => {
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.start_url, '/');
 });
+
+
+test('hourly report permits local queueing without API configuration and uses secure UUID helper', () => {
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  assert.match(hourly, /createIdempotencyKey\(\)/);
+  assert.match(hourly, /!this\.isOnline \|\| !this\.apiReady/);
+  assert.match(hourly, /getConfirmedDailySubmission\(result\)/);
+  assert.doesNotMatch(hourly, /crypto\.randomUUID\(\)/);
+  assert.doesNotMatch(hourly, /disabled]="saving \|\| !apiReady \|\| !selectedStationId"/);
+});
+
+test('daily report keeps local queue available when API configuration is absent', () => {
+  const daily = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/daily-reports.component.ts'), 'utf8');
+  assert.match(daily, /!this\.isOnline \|\| !this\.apiReady/);
+  assert.doesNotMatch(daily, /disabled]="saving \|\| !apiReady \|\| !selectedStationId"/);
+});
