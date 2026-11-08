@@ -91,7 +91,7 @@ async function main() {
     // No real Supabase project, credentials, or database are contacted by this test.
     // Replace the bundled runtime config before the application reads it.
     // This prevents the smoke test from contacting the configured production project.
-    await page.addInitScript(() => {
+    await context.addInitScript(() => {
       localStorage.setItem('sb-metra-e2e-auth-token', JSON.stringify({
         access_token: 'metra-e2e-access-token',
         token_type: 'bearer',
@@ -109,7 +109,7 @@ async function main() {
         }
       }));
     });
-    await page.route('**/auth/v1/user**', route => route.fulfill({
+    await context.route('**/auth/v1/user**', route => route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
