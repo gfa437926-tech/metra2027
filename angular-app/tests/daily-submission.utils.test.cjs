@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  createIdempotencyKey,
+  createIdempotencyKey,\n  getOrCreateDailySubmissionKey,
   getConfirmedDailySubmission,
   dailyObservedAtForReport
 } = require('../.test-dist/daily-submission.utils.js');
@@ -49,4 +49,35 @@ test('maps daily report types to their current UTC timestamps', () => {
   assert.equal(dailyObservedAtForReport('2026-11-08', '06utc'), '2026-11-08T06:00:00.000Z');
   assert.equal(dailyObservedAtForReport('2026-11-08', '18utc'), '2026-11-08T18:00:00.000Z');
   assert.throws(() => dailyObservedAtForReport('not-a-date', '24h'), RangeError);
+});
+
+test('persists only a hashed fingerprint and reuses the key after reload', async () => {
+  const { webcrypto } = require('node:crypto');
+  const values = new Map();
+  const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const fingerprint = JSON.stringify({ stationId: 'station-1', report: { minTemp: '-05.3' } });
+  const first = await getOrCreateDailySubmissionKey(fingerprint, null, storage, webcrypto);
+  const serialized = values.get('metra.daily.pending-submission.v1');
+  assert.ok(serialized);
+  assert.equal(serialized.includes(fingerprint), false);
+  const afterReload = await getOrCreateDailySubmissionKey(fingerprint, null, storage, webcrypto);
+  assert.equal(afterReload.idempotencyKey, first.idempotencyKey);
+  assert.equal(afterReload.fingerprint, first.fingerprint);
+});
+
+test('creates a new key when the logical report changes', async () => {
+  const { webcrypto } = require('node:crypto');
+  const values = new Map();
+  const storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) };
+  const first = await getOrCreateDailySubmissionKey('report-A', null, storage, webcrypto);
+  const changed = await getOrCreateDailySubmissionKey('report-B', null, storage, webcrypto);
+  assert.notEqual(changed.idempotencyKey, first.idempotencyKey);
+  assert.notEqual(changed.fingerprint, first.fingerprint);
+});
+
+test('retains same-page retry protection when session storage is unavailable', async () => {
+  const { webcrypto } = require('node:crypto');
+  const first = await getOrCreateDailySubmissionKey('report-A', null, undefined, webcrypto);
+  const retry = await getOrCreateDailySubmissionKey('report-A', first, undefined, webcrypto);
+  assert.equal(retry.idempotencyKey, first.idempotencyKey);
 });
