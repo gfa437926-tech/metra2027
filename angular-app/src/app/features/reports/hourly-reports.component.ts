@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { DailyOfflineQueue } from '../../core/offline/daily-offline-queue';
+import { createIdempotencyKey, getConfirmedDailySubmission } from './daily-submission.utils';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -116,7 +117,7 @@ interface HourlyPreview {
           <label class="agreement"><input type="checkbox" name="responsibilityAgreement" required> أقر بأنني قمت بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.</label>
         </section>
 
-        <div class="actions"><button class="primary" type="submit" [disabled]="saving || !apiReady || !selectedStationId"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
+        <div class="actions"><button class="primary" type="submit" [disabled]="saving || !selectedStationId"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button><button class="secondary" type="reset" (click)="resetMessage()">مسح الحقول</button></div>
       </form>
 
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> يرجى تصحيح الملاحظات التالية</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
@@ -171,8 +172,9 @@ export class HourlyReportsComponent {
         if (item.observationType !== 'hourly' || item.state === 'blocked' || !this.isOnline) continue;
         try {
           const result = await this.api.submitObservation(item.stationId, { idempotencyKey: item.idempotencyKey, observationType: 'hourly', observedAt: item.observedAt, payload: item.payload, submit: true });
-          const id = result && typeof result === 'object' && 'id' in result ? String((result as {id: unknown}).id) : '';
-          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new Error('لم يصل إيصال حفظ مؤكد.');
+          const receipt = getConfirmedDailySubmission(result);
+          if (!receipt) throw new Error('لم يصل إيصال حفظ مؤكد.');
+          const id = receipt.id;
           await this.offlineQueue.remove(item.idempotencyKey);
           this.previews.unshift({reference:id,date:item.reportDate,hour:item.reportType,station:item.stationName,status:'submitted',values:{}});
         } catch (error) {
@@ -398,13 +400,17 @@ export class HourlyReportsComponent {
     const payload = { stationName: station.name_ar, utcHour: hour, values: payloadValues };
     const reportDate = values['observationDate'] ?? this.today;
     const observedAt = new Date(reportDate + 'T' + hour + ':00:00.000Z').toISOString();
-    const idempotencyKey = crypto.randomUUID();
+    let idempotencyKey: string;
+    try { idempotencyKey = createIdempotencyKey(); }
+    catch (error) { this.message = error instanceof Error ? error.message : 'تعذر إنشاء مفتاح إرسال آمن.'; return; }
     this.saving = true;
     try {
-      if (!this.isOnline) {
+      if (!this.isOnline || !this.apiReady) {
         await this.offlineQueue.enqueue({idempotencyKey,observationType:'hourly',stationId:this.selectedStationId,stationName:station.name_ar,reportDate,reportType:hour,observedAt,payload,createdAt:new Date().toISOString(),attempts:0,state:'pending'});
         await this.refreshOfflineCount();
-        this.message = 'حُفظت النشرة الساعية محلياً وستُرسل تلقائياً عند عودة الشبكة؛ لم تُعتمد بعد.';
+        this.message = this.isOnline
+          ? 'حُفظت النشرة الساعية محلياً؛ ستُرسل بعد تهيئة API وتوفر الاتصال، ولم تُعتمد بعد.'
+          : 'حُفظت النشرة الساعية محلياً وستُرسل تلقائياً عند عودة الشبكة؛ لم تُعتمد بعد.';
         return;
       }
       const result = await this.api.submitObservation(this.selectedStationId, {
@@ -414,9 +420,9 @@ export class HourlyReportsComponent {
         payload,
         submit: true
       });
-      const id = result && typeof result === 'object' && 'id' in result
-        ? String((result as { id: unknown }).id) : '';
-      if (!id) throw new Error('استجابة الخادم لا تحتوي معرّف النشرة المحفوظة.');
+      const receipt = getConfirmedDailySubmission(result);
+      if (!receipt) throw new Error('لم يصل إيصال حفظ مؤكد من الخادم؛ لم يتم اعتماد النشرة.');
+      const id = receipt.id;
       this.previews.unshift({
         reference: id,
         date: values['observationDate'] ?? this.today,
