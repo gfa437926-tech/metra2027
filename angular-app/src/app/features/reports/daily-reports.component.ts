@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
-import { createIdempotencyKey, dailyObservedAtForReport, getConfirmedDailySubmission } from './daily-submission.utils';
+import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey } from './daily-submission.utils';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -214,54 +214,9 @@ export class DailyReportsComponent {
   }
 
   private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
-    let fingerprintHash = '';
-    let canPersistFingerprint = false;
-    try {
-      if (globalThis.crypto?.subtle && typeof TextEncoder !== 'undefined') {
-        const digest = await globalThis.crypto.subtle.digest(
-          'SHA-256', new TextEncoder().encode(fingerprint)
-        );
-        fingerprintHash = Array.from(new Uint8Array(digest))
-          .map(byte => byte.toString(16).padStart(2, '0')).join('');
-        canPersistFingerprint = true;
-      }
-    } catch {
-      // Fall back to the in-memory fingerprint when Web Crypto is unavailable.
-    }
-    if (!canPersistFingerprint) fingerprintHash = fingerprint;
-
-    if (this.pendingSubmission?.fingerprint === fingerprintHash) {
-      return this.pendingSubmission.idempotencyKey;
-    }
-
-    try {
-      const stored = canPersistFingerprint
-        ? sessionStorage.getItem(this.pendingSubmissionStorageKey) : null;
-      if (stored) {
-        const parsed = JSON.parse(stored) as { fingerprintHash?: unknown; idempotencyKey?: unknown };
-        if (parsed.fingerprintHash === fingerprintHash &&
-            typeof parsed.idempotencyKey === 'string' &&
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.idempotencyKey)) {
-          this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey: parsed.idempotencyKey };
-          return parsed.idempotencyKey;
-        }
-      }
-    } catch {
-      // Storage may be disabled; in-memory idempotency still protects retries in this page.
-    }
-
-    const idempotencyKey = createIdempotencyKey();
-    this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey };
-    try {
-      if (canPersistFingerprint) {
-        sessionStorage.setItem(this.pendingSubmissionStorageKey, JSON.stringify({
-          fingerprintHash, idempotencyKey
-        }));
-      }
-    } catch {
-      // Do not block a valid submission if session storage is unavailable.
-    }
-    return idempotencyKey;
+    const pending = await getOrCreateDailySubmissionKey(fingerprint, this.pendingSubmission);
+    this.pendingSubmission = pending;
+    return pending.idempotencyKey;
   }
 
   private clearPendingSubmission(): void {
