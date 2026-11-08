@@ -39,3 +39,62 @@ export function dailyObservedAtForReport(reportDate: string, reportType: string)
     : reportType === '18utc' ? '18' : '00';
   return new Date(`${reportDate}T${utcHour}:00:00.000Z`).toISOString();
 }
+
+export interface PendingDailySubmissionKey {
+  fingerprint: string;
+  idempotencyKey: string;
+}
+
+/** Reuse a pending key for the same report; persist only its SHA-256 hash and UUID. */
+export async function getOrCreateDailySubmissionKey(
+  fingerprint: string,
+  pending: PendingDailySubmissionKey | null,
+  storage?: Pick<Storage, 'getItem' | 'setItem'>,
+  cryptoApi: Crypto | undefined = globalThis.crypto
+): Promise<PendingDailySubmissionKey> {
+  let fingerprintHash = '';
+  let canPersistFingerprint = false;
+  try {
+    if (cryptoApi?.subtle && typeof TextEncoder !== 'undefined') {
+      const digest = await cryptoApi.subtle.digest('SHA-256', new TextEncoder().encode(fingerprint));
+      fingerprintHash = Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, '0')).join('');
+      canPersistFingerprint = true;
+    }
+  } catch {
+    // Without Web Crypto, retain the raw fingerprint only in page memory.
+  }
+  if (!canPersistFingerprint) fingerprintHash = fingerprint;
+  if (pending?.fingerprint === fingerprintHash) return pending;
+
+  let activeStorage = storage;
+  if (!activeStorage && canPersistFingerprint) {
+    try { activeStorage = globalThis.sessionStorage; } catch { /* storage unavailable */ }
+  }
+  try {
+    const stored = canPersistFingerprint ? activeStorage?.getItem('metra.daily.pending-submission.v1') : null;
+    if (stored) {
+      const parsed = JSON.parse(stored) as { fingerprintHash?: unknown; idempotencyKey?: unknown };
+      if (parsed.fingerprintHash === fingerprintHash &&
+          typeof parsed.idempotencyKey === 'string' &&
+          UUID_V4_PATTERN.test(parsed.idempotencyKey)) {
+        return { fingerprint: fingerprintHash, idempotencyKey: parsed.idempotencyKey };
+      }
+    }
+  } catch {
+    // Disabled or malformed storage must not prevent a valid submission.
+  }
+
+  const idempotencyKey = createIdempotencyKey(cryptoApi);
+  const next = { fingerprint: fingerprintHash, idempotencyKey };
+  try {
+    if (canPersistFingerprint) {
+      activeStorage?.setItem('metra.daily.pending-submission.v1', JSON.stringify({
+        fingerprintHash, idempotencyKey
+      }));
+    }
+  } catch {
+    // In-memory retry protection remains available.
+  }
+  return next;
+}
