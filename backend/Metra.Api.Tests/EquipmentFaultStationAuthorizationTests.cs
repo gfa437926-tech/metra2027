@@ -166,9 +166,12 @@ public sealed class EquipmentFaultStationAuthorizationTests
         public Task<EquipmentFaultServiceOutcome> GetByIdAsync(
             Guid stationId,
             Guid faultId,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(new EquipmentFaultServiceOutcome(
-                true, true, HttpStatusCode.OK, JsonDocument.Parse("{"station_id":"" + stationId + ""}").RootElement));
+            CancellationToken cancellationToken)
+        {
+            var payload = $"{{"station_id":"{stationId}"}}";
+            return Task.FromResult(new EquipmentFaultServiceOutcome(
+                true, true, HttpStatusCode.OK, JsonDocument.Parse(payload).RootElement));
+        }
 
         public Task<EquipmentFaultServiceOutcome> TransitionAsync(
             Guid userId,
