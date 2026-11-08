@@ -87,7 +87,17 @@ async function main() {
     // The offline queue is initialized by the daily reports feature, not by the app shell.
     // Visit that route before asserting the production-created IndexedDB schema.
     await page.goto(`http://127.0.0.1:${port}/reports/daily`, { waitUntil: 'domcontentloaded' });
-    await page.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+    try {
+      await page.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        href: location.href,
+        config: window.__METRA_CONFIG__,
+        authStorage: Object.keys(localStorage).filter(key => key.startsWith('sb-')),
+        body: document.body.innerText.slice(0, 1200)
+      }));
+      throw new Error('Daily route did not mount. Diagnostics=' + JSON.stringify({ diagnostics }) + '; cause=' + error.message);
+    }
 
     const pwa = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return { supported: false };
