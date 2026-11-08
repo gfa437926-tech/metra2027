@@ -57,7 +57,6 @@ if (!string.IsNullOrWhiteSpace(equipmentFaultConnectionString))
     var connectionBuilder = new NpgsqlConnectionStringBuilder(equipmentFaultConnectionString)
     {
         SslMode = SslMode.VerifyFull,
-        TrustServerCertificate = false,
         Timeout = 8,
         CommandTimeout = 8,
         Pooling = true
