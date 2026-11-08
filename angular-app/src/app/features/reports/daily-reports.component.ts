@@ -109,7 +109,7 @@ export class DailyReportsComponent implements OnDestroy {
   private readonly offlineQueue = new DailyOfflineQueue();
   private readonly syncOwner = 'daily-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   private syncChannel?: BroadcastChannel;
-  private readonly handleSyncAvailable = (): void => { if (this.isOnline) void this.flushOfflineQueue(); };
+  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string }>): void => { if (event.data?.owner !== this.syncOwner && this.isOnline) void this.flushOfflineQueue(); };
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   pendingOfflineCount = 0;
