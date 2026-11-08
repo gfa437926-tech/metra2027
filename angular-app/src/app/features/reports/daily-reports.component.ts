@@ -94,6 +94,7 @@ export class DailyReportsComponent {
   selectedStationId = '';
   saving = false;
   private pendingSubmission: { fingerprint: string; idempotencyKey: string } | null = null;
+  private readonly pendingSubmissionStorageKey = 'metra.daily.pending-submission.v1';
 
   constructor() { void this.loadStations(); }
 
@@ -168,16 +169,11 @@ export class DailyReportsComponent {
       payload,
       submit: true
     });
-    if (this.pendingSubmission?.fingerprint !== submissionFingerprint) {
-      this.pendingSubmission = {
-        fingerprint: submissionFingerprint,
-        idempotencyKey: crypto.randomUUID()
-      };
-    }
+    const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
     this.saving = true;
     try {
       const result = await this.api.submitObservation(this.selectedStationId, {
-        idempotencyKey: this.pendingSubmission.idempotencyKey,
+        idempotencyKey,
         observationType: 'daily',
         observedAt,
         payload,
@@ -197,7 +193,7 @@ export class DailyReportsComponent {
       this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
         reportType: this.reportType, station: stationName, status: 'submitted', values });
       this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
-      this.pendingSubmission = null;
+      this.clearPendingSubmission();
       this.resetState(form);
       form.reset();
       this.selectedStationId = '';
@@ -219,6 +215,60 @@ export class DailyReportsComponent {
       }
     } finally {
       this.saving = false;
+    }
+  }
+
+  private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
+    let fingerprintHash = fingerprint;
+    try {
+      if (globalThis.crypto?.subtle && typeof TextEncoder !== 'undefined') {
+        const digest = await globalThis.crypto.subtle.digest(
+          'SHA-256', new TextEncoder().encode(fingerprint)
+        );
+        fingerprintHash = Array.from(new Uint8Array(digest))
+          .map(byte => byte.toString(16).padStart(2, '0')).join('');
+      }
+    } catch {
+      // Fall back to the in-memory fingerprint when Web Crypto is unavailable.
+    }
+
+    if (this.pendingSubmission?.fingerprint === fingerprintHash) {
+      return this.pendingSubmission.idempotencyKey;
+    }
+
+    try {
+      const stored = sessionStorage.getItem(this.pendingSubmissionStorageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored) as { fingerprintHash?: unknown; idempotencyKey?: unknown };
+        if (parsed.fingerprintHash === fingerprintHash &&
+            typeof parsed.idempotencyKey === 'string' &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parsed.idempotencyKey)) {
+          this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey: parsed.idempotencyKey };
+          return parsed.idempotencyKey;
+        }
+      }
+    } catch {
+      // Storage may be disabled; in-memory idempotency still protects retries in this page.
+    }
+
+    const idempotencyKey = crypto.randomUUID();
+    this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey };
+    try {
+      sessionStorage.setItem(this.pendingSubmissionStorageKey, JSON.stringify({
+        fingerprintHash, idempotencyKey
+      }));
+    } catch {
+      // Do not block a valid submission if session storage is unavailable.
+    }
+    return idempotencyKey;
+  }
+
+  private clearPendingSubmission(): void {
+    this.pendingSubmission = null;
+    try {
+      sessionStorage.removeItem(this.pendingSubmissionStorageKey);
+    } catch {
+      // Storage cleanup is best-effort; a later fingerprint mismatch rotates the key.
     }
   }
 
