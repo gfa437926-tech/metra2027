@@ -526,7 +526,7 @@ async function main() {
         request.onerror = () => reject(request.error);
       });
       db.close();
-      return rows.length === 1 && rows[0].state === 'blocked' && rows[0].observationType === 'daily';
+      return rows.length === 2 && rows.every(item => item.state === 'blocked') && rows.some(item => item.observationType === 'daily') && rows.some(item => item.observationType === 'hourly');
     }, { timeout: 15000 });
     assert.deepEqual(errors, [], 'Angular pages should not throw uncaught runtime errors');
     console.log(JSON.stringify({
@@ -534,7 +534,7 @@ async function main() {
       reopenedAfterReload: true, autoSyncConfirmed: true, serverRejectionBlocked: true,
       transientFailureRetainedAndRetried: true, hourlySavedAndReopened: true, hourlyRejectionBlocked: true,
       hourlyTransientFailureRetried: true, concurrentDailyHourlySync: true, maxConcurrentPosts, apiAttempts: acceptedPosts.length,
-      remainingBlocked: 1, runtimeErrors: errors.length
+      remainingBlocked: 2, runtimeErrors: errors.length
     }));
   } finally {
     if (browser) await browser.close();
