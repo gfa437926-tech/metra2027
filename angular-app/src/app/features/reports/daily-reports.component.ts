@@ -99,6 +99,7 @@ export class DailyReportsComponent {
   private pendingSubmission: { fingerprint: string; idempotencyKey: string } | null = null;
   private readonly pendingSubmissionStorageKey = 'metra.daily.pending-submission.v1';
   private readonly offlineQueue = new DailyOfflineQueue();
+  private readonly syncOwner = 'daily-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   pendingOfflineCount = 0;
@@ -129,7 +130,10 @@ export class DailyReportsComponent {
     if (this.syncing || !this.isOnline || !this.apiReady) return;
     this.syncing = true;
     this.syncMessage = '';
+    let leaseAcquired = false;
     try {
+      leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
+      if (!leaseAcquired) return;
       const items = await this.offlineQueue.list();
       for (const item of items) {
         if (!this.isOnline) break;
@@ -163,6 +167,7 @@ export class DailyReportsComponent {
     } catch (error) {
       this.syncMessage = error instanceof Error ? error.message : 'تعذرت المزامنة.';
     } finally {
+      if (leaseAcquired) { try { await this.offlineQueue.releaseSyncLease(this.syncOwner); } catch { /* lease expires automatically */ } }
       this.syncing = false;
       await this.refreshOfflineCount();
     }
