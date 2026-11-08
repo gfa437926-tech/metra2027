@@ -98,3 +98,29 @@ export async function getOrCreateDailySubmissionKey(
   }
   return next;
 }
+
+/** Extract a concise, user-safe validation message from Angular HTTP errors. */
+export function getSubmissionErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object') {
+    const candidate = error as { error?: unknown; message?: unknown; status?: unknown };
+    const body = candidate.error;
+    if (typeof body === 'string' && body.trim()) return body.trim().slice(0, 500);
+    if (body && typeof body === 'object') {
+      const details = body as { detail?: unknown; message?: unknown; title?: unknown; errors?: unknown };
+      for (const value of [details.detail, details.message, details.title]) {
+        if (typeof value === 'string' && value.trim()) return value.trim().slice(0, 500);
+      }
+      if (details.errors && typeof details.errors === 'object') {
+        const messages = Object.values(details.errors as Record<string, unknown>)
+          .flatMap(value => Array.isArray(value) ? value : [value])
+          .filter((value): value is string => typeof value === 'string' && Boolean(value.trim()));
+        if (messages.length) return messages.slice(0, 5).join(' · ').slice(0, 500);
+      }
+    }
+    if (typeof candidate.message === 'string' && candidate.message.trim()) {
+      const status = Number(candidate.status);
+      return (Number.isFinite(status) && status > 0 ? `HTTP ${status}: ` : '') + candidate.message.trim().slice(0, 470);
+    }
+  }
+  return fallback;
+}
