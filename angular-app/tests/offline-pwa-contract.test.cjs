@@ -12,6 +12,7 @@ test('PWA worker installs an application shell and activates immediately', () =>
   assert.match(worker, /self\.skipWaiting\(\)/);
   assert.match(worker, /self\.clients\.claim\(\)/);
   assert.match(worker, /APP_SHELL/);
+  assert.match(worker, /'metra-icon\\.svg'/);
 });
 
 test('PWA worker never intercepts or caches API/authenticated traffic', () => {
@@ -47,6 +48,8 @@ test('web manifest declares an Arabic standalone application', () => {
   assert.equal(manifest.display, 'standalone');
   assert.equal(manifest.start_url, './');
   assert.equal(manifest.scope, './');
+  assert.ok(manifest.icons.some(icon => icon.src === './metra-icon.svg' && icon.type === 'image/svg+xml'));
+  assert.ok(fs.existsSync(path.join(__dirname, '../src/metra-icon.svg')));
 });
 
 
