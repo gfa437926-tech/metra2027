@@ -19,7 +19,7 @@ async function main() {
     if (req.method === 'GET' && pathname === '/metra-config.js') {
       res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
       res.end(`window.__METRA_CONFIG__ = Object.freeze({
-        apiBaseUrl: '',
+        apiBaseUrl: 'https://metra-api-e2e.local',
         supabaseUrl: 'https://metra-e2e.supabase.co',
         supabaseAnonKey: 'metra-browser-e2e-anon-key'
       });`);
@@ -47,7 +47,37 @@ async function main() {
     const context = await browser.newContext();
     const page = await context.newPage();
     const errors = [];
+    let mockStatus = 200;
+    const acceptedPosts = [];
+    const station = {
+      id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
+      name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
+      operational_status: 'operational', approval_status: 'approved', is_demo: true,
+      elevation_m: 10, station_coordinates: []
+    };
     page.on('pageerror', error => errors.push(error.message));
+    await page.route('https://metra-api-e2e.local/api/v1/stations**', async route => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([station]) });
+        return;
+      }
+      const request = route.request();
+      acceptedPosts.push(request.postDataJSON());
+      if (mockStatus === 422) {
+        await route.fulfill({ status: 422, contentType: 'application/problem+json', body: JSON.stringify({
+          title: 'بيانات النشرة مرفوضة في اختبار المتصفح',
+          errors: { maxTemp: ['قيمة تجريبية غير مقبولة'] }
+        }) });
+        return;
+      }
+      if (mockStatus >= 500) {
+        await route.fulfill({ status: mockStatus, contentType: 'application/json', body: JSON.stringify({ message: 'تعطل مؤقت في خادم الاختبار' }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+        id: '00000000-0000-4000-8000-000000000099', status: 'submitted'
+      }) });
+    });
 
     // Supply a disposable test identity and intercept only the auth user lookup.
     // No real Supabase project, credentials, or database are contacted by this test.
@@ -103,7 +133,7 @@ async function main() {
       });
       await new Promise((resolve, reject) => {
         const tx = db.transaction('station-catalogue', 'readwrite');
-        tx.objectStore('station-catalogue').put({ id: '00000000-0000-4000-8000-000000000002', stations: [{
+        tx.objectStore('station-catalogue').put({ id: 'latest', stations: [{
           id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
           name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
           operational_status: 'operational', approval_status: 'approved', is_demo: true,
@@ -192,9 +222,120 @@ async function main() {
     assert.equal(restored.maxTemp, '25.7');
     assert.equal(restored.precipitation, '012.5');
     assert.equal(restored.agreement, true, 'Reopened report should restore its acknowledgement state');
-    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, submittedThroughFormOffline: true, persistedInIndexedDB: true, reopenedAfterOfflineReload: true, restoredFields: Object.keys(restored).length - 1, runtimeErrors: errors.length }));
     assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
-    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, runtimeErrors: errors.length }));
+
+    // Restoring connectivity must automatically submit the queued item and only
+    // remove it after the API returns a valid submitted receipt.
+    mockStatus = 200;
+    await context.setOffline(false);
+    await page.getByText('0 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    assert.equal(acceptedPosts.length, 1, 'The online event should automatically submit the queued report once');
+    assert.equal(acceptedPosts[0].observationType, 'daily');
+    assert.equal(acceptedPosts[0].submit, true);
+    const afterSuccess = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows;
+    });
+    assert.equal(afterSuccess.length, 0, 'A confirmed receipt should remove the queued item');
+
+    // A permanent validation/authorization rejection must move the item to
+    // blocked, retain its payload, and surface the server's reason to the user.
+    await context.setOffline(true);
+    await page.locator('input[name="observer"]').fill('راصد الرفض');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
+    mockStatus = 422;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة متوقفة بسبب رفض الخادم').waitFor({ timeout: 10000 });
+    await page.getByText('بيانات النشرة مرفوضة في اختبار المتصفح').waitFor({ timeout: 10000 });
+    const rejected = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows;
+    });
+    assert.equal(rejected.length, 1);
+    assert.equal(rejected[0].state, 'blocked');
+    assert.match(rejected[0].lastError, /بيانات النشرة مرفوضة/);
+
+    // A transient server failure must remain pending with an incremented attempt
+    // count; a later online event retries it without losing the local payload.
+    await context.setOffline(true);
+    await page.locator('input[name="observer"]').fill('راصد الانقطاع');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
+    mockStatus = 503;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    const transient = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.payload.observerName === 'راصد الانقطاع');
+    });
+    assert.ok(transient);
+    assert.equal(transient.state, 'pending');
+    assert.equal(transient.attempts, 1);
+    assert.match(transient.lastError, /HTTP 503/);
+
+    mockStatus = 200;
+    await context.setOffline(true);
+    await context.setOffline(false);
+    await page.getByText('0 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    const finalQueue = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows;
+    });
+    assert.equal(finalQueue.length, 1, 'Only the explicitly rejected item should remain blocked');
+    assert.equal(finalQueue[0].state, 'blocked');
+    assert.equal(acceptedPosts.length, 4, 'Success, rejection, transient failure, and retry should all reach the mocked API');
+    assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
+    console.log(JSON.stringify({
+      browser: 'Chromium', serviceWorker: pwa.active, savedOffline: true,
+      reopenedAfterReload: true, autoSyncConfirmed: true, serverRejectionBlocked: true,
+      transientFailureRetainedAndRetried: true, apiAttempts: acceptedPosts.length,
+      remainingBlocked: finalQueue.length, runtimeErrors: errors.length
+    }));
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
