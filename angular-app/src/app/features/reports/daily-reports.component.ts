@@ -179,7 +179,21 @@ export class DailyReportsComponent {
       form.reset();
       this.selectedStationId = '';
     } catch (error) {
-      this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+      const body = error && typeof error === 'object' && 'error' in error
+        ? (error as { error?: unknown }).error : null;
+      if (body && typeof body === 'object' && 'issues' in body &&
+          Array.isArray((body as { issues: unknown }).issues)) {
+        this.issues = (body as { issues: Array<{ field?: unknown; message?: unknown }> }).issues
+          .map(issue => `${typeof issue.field === 'string' ? issue.field : 'حقل'}: ${typeof issue.message === 'string' ? issue.message : 'قيمة غير صالحة'}`);
+        this.message = 'رفض الخادم النشرة؛ لم يتم تأكيد حفظها. صحح الحقول الموضحة ثم أعد الإرسال.';
+      } else if (body && typeof body === 'object' && 'error' in body &&
+          typeof (body as { error: unknown }).error === 'string') {
+        this.message = 'رفض الخادم الإرسال: ' + (body as { error: string }).error;
+      } else {
+        this.message = error instanceof Error
+          ? 'لم يتم تأكيد الحفظ: ' + error.message
+          : 'تعذر إرسال النشرة إلى الخادم؛ لم يتم تأكيد الحفظ.';
+      }
     } finally {
       this.saving = false;
     }
