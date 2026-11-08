@@ -4,12 +4,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StationContextService } from '../../core/station/station-context.service';
+import { StationPickerComponent } from '../../core/station/station-picker.component';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
 import { EditableObservationField, buildEditableFields, fieldsToPayload, validateEditableFields } from './observation-field-labels';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StationPickerComponent],
   template: `
     <div class="page" dir="rtl">
       <header>
@@ -22,6 +23,8 @@ import { EditableObservationField, buildEditableFields, fieldsToPayload, validat
           <i class="fa-solid fa-rotate" [class.spin]="loading"></i> تحديث القائمة
         </button>
       </header>
+
+      <metra-station-picker [stationId]="stationId" (stationIdChange)="onStationPicked($event)"></metra-station-picker>
 
       <section class="notice" *ngIf="!api.isConfigured">
         <i class="fa-solid fa-triangle-exclamation"></i>
@@ -202,6 +205,19 @@ export class ObservationWorkflowComponent implements OnInit {
       this.error = '';
       if (this.stationId && this.api.isConfigured) void this.load();
     });
+  }
+
+
+  onStationPicked(stationId: string): void {
+    this.stationId = stationId;
+    this.error = '';
+    if (this.stationId && this.api.isConfigured) {
+      if (this.activeTab === 'returned') {
+        void this.loadReturned();
+      } else {
+        void this.load();
+      }
+    }
   }
 
   async load(): Promise<void> {

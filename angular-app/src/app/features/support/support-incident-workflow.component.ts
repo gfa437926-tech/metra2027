@@ -4,11 +4,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StationContextService } from '../../core/station/station-context.service';
+import { StationPickerComponent } from '../../core/station/station-picker.component';
 import { SupportIncidentApiService } from '../../core/api/support-incident-api.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StationPickerComponent],
   template: `
     <div class="page" dir="rtl">
       <header>
@@ -19,6 +20,8 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
         </div>
         <button type="button" (click)="load()" [disabled]="loading || !stationId">تحديث</button>
       </header>
+      <metra-station-picker [stationId]="stationId" (stationIdChange)="onStationPicked($event)"></metra-station-picker>
+
       <section class="notice" *ngIf="!api.isConfigured">يلزم ضبط عنوان API وتسجيل الدخول.</section>
       <section class="notice" *ngIf="api.isConfigured && !stationId">افتح الشاشة مع <code>?stationId=UUID</code>.</section>
       <section class="notice error" *ngIf="error">{{ error }}</section>
@@ -197,6 +200,15 @@ export class SupportIncidentWorkflowComponent implements OnInit {
         return [{ status: 'Closed', label: 'إغلاق' }, { status: 'InProgress', label: 'إعادة فتح' }];
       default:
         return [];
+    }
+  }
+
+
+  onStationPicked(stationId: string): void {
+    this.stationId = stationId;
+    this.error = '';
+    if (this.stationId && this.api.isConfigured) {
+      void this.load();
     }
   }
 

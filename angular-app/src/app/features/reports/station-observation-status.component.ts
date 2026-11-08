@@ -3,11 +3,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StationContextService } from '../../core/station/station-context.service';
+import { StationPickerComponent } from '../../core/station/station-picker.component';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StationPickerComponent],
   template: `
     <div class="page" dir="rtl">
       <header>
@@ -18,6 +19,8 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
         </div>
         <button type="button" (click)="load()" [disabled]="loading || !stationId">تحديث</button>
       </header>
+      <metra-station-picker [stationId]="stationId" (stationIdChange)="onStationPicked($event)"></metra-station-picker>
+
       <section class="notice" *ngIf="!api.isConfigured">يلزم ضبط عنوان API وتسجيل الدخول.</section>
       <section class="notice" *ngIf="api.isConfigured && !stationId">افتح مع <code>?stationId=UUID</code>.</section>
       <section class="notice error" *ngIf="error">{{ error }}</section>
@@ -77,6 +80,15 @@ export class StationObservationStatusComponent implements OnInit {
       }
       if (this.stationId && this.api.isConfigured) void this.load();
     });
+  }
+
+
+  onStationPicked(stationId: string): void {
+    this.stationId = stationId;
+    this.error = '';
+    if (this.stationId && this.api.isConfigured) {
+      void this.load();
+    }
   }
 
   async load(): Promise<void> {

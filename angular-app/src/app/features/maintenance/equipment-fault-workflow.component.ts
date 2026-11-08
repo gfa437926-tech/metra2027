@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StationContextService } from '../../core/station/station-context.service';
+import { StationPickerComponent } from '../../core/station/station-picker.component';
 import {
   EquipmentFaultApiService,
   EquipmentFaultItem,
@@ -11,7 +12,7 @@ import {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StationPickerComponent],
   template: `
     <div class="page" dir="rtl">
       <header>
@@ -22,6 +23,8 @@ import {
         </div>
         <button type="button" (click)="load()" [disabled]="loading || !stationId">تحديث</button>
       </header>
+
+      <metra-station-picker [stationId]="stationId" (stationIdChange)="onStationPicked($event)"></metra-station-picker>
 
       <section class="notice" *ngIf="!api.isConfigured">يلزم ضبط عنوان API وتسجيل الدخول.</section>
       <section class="notice" *ngIf="api.isConfigured && !stationId">افتح الشاشة مع <code>?stationId=UUID</code>.</section>
@@ -215,6 +218,15 @@ export class EquipmentFaultWorkflowComponent implements OnInit {
         ];
       default:
         return [];
+    }
+  }
+
+
+  onStationPicked(stationId: string): void {
+    this.stationId = stationId;
+    this.error = '';
+    if (this.stationId && this.api.isConfigured) {
+      void this.load();
     }
   }
 
