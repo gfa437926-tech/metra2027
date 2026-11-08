@@ -70,7 +70,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
           <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
           <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
-          <button class="primary" type="button" [disabled]="saving || !apiReady || !selectedStationId" (click)="submitToServer($event, dailyForm)"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button>
+          <button class="primary" type="button" [disabled]="saving || !selectedStationId" (click)="submitToServer($event, dailyForm)"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button>
           <button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button>
         </div>
       </form>
@@ -206,7 +206,9 @@ export class DailyReportsComponent {
     this.issues = [];
     this.message = '';
     if (this.saving) return;
-    if (!this.apiReady) { this.message = 'لم يتم الإرسال: إعدادات API أو Supabase غير مكتملة.'; return; }
+    if (!this.apiReady && this.isOnline) {
+      // Allow durable local queuing when the API is not configured; no server success is implied.
+    }
     if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
     if (!form.reportValidity()) return;
     const values = this.readForm(form);
@@ -253,14 +255,16 @@ export class DailyReportsComponent {
     this.saving = true;
     try {
       const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
-      if (!this.isOnline) {
+      if (!this.isOnline || !this.apiReady) {
         await this.offlineQueue.enqueue({
           idempotencyKey, observationType: 'daily', stationId: this.selectedStationId, stationName,
           reportDate: values['currentDate'] ?? this.today, reportType: this.reportType,
           observedAt, payload, createdAt: new Date().toISOString(), attempts: 0, state: 'pending'
         });
         await this.refreshOfflineCount();
-        this.message = 'تم حفظ النشرة محلياً بأمان داخل صندوق الإرسال؛ ستُرسل تلقائياً عند عودة الشبكة. لا تعتبر مرسلة بعد.';
+        this.message = this.isOnline
+          ? 'حُفظت النشرة محلياً؛ ستُرسل بعد تهيئة API وتوفر الاتصال. لم تُعتمد بعد.'
+          : 'تم حفظ النشرة محلياً داخل صندوق الإرسال؛ ستُرسل تلقائياً عند عودة الشبكة. لا تعتبر مرسلة بعد.';
         return;
       }
       const result = await this.api.submitObservation(this.selectedStationId, {
