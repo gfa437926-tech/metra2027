@@ -230,7 +230,7 @@ public sealed class EquipmentFaultTransitionServiceTests
 
     private sealed class FakeStationReader(Guid stationId) : IEquipmentFaultStationReader
     {
-        public Task<Guid?> GetOwningStationIdAsync(Guid faultId, CancellationToken cancellationToken) =>
+        public Task<Guid?> GetOwningStationIdAsync(Guid actorId, Guid stationId, Guid faultId, CancellationToken cancellationToken) =>
             Task.FromResult<Guid?>(stationId);
     }
 
