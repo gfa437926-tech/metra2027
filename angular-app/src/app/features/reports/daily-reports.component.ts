@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey, getSubmissionErrorMessage } from './daily-submission.utils';
 import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
@@ -97,7 +97,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
     :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#3498db,#2471a3);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #3498db30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:18px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.type-panel{background:#fff;border:1px solid #e5eaee;border-radius:12px;padding:17px 20px;margin-bottom:18px}.type-options{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0}.type-options label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.type-panel p{color:#2980b9;font-size:12px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.daily-field{display:flex;flex-direction:column;gap:7px;min-width:0}.daily-field>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.field-actions{display:flex;gap:7px;flex-wrap:wrap}.no-data-btn,.sign-toggle{border:1px solid #c8dce8;border-radius:7px;background:#f3f8fb;color:#28658a;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}.no-data-btn.active{background:#e8f5ec;border-color:#8ac79d;color:#267443}.sign-toggle{min-width:42px;font-weight:800}.grid label,.notes-label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.notes-label textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.notes-label textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.phenomena{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}.phenomena label{display:flex;align-items:center;gap:8px;background:#f7f9fb;padding:11px;border-radius:8px;font-size:13px}.agreement{display:flex;align-items:center;gap:9px;background:#f4f8fb;padding:14px 16px;border-radius:9px;margin:15px 0;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions .test,.actions .info,.actions .whatsapp{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px}.actions .test{background:#fff3cd;color:#856404}.actions .info{background:#d9edf7;color:#245575}.actions .whatsapp{background:#25d366;color:#fff}.report-preview{white-space:pre-wrap;direction:rtl;text-align:right;background:#f7f9fb;border:1px solid #e5eaee;border-radius:8px;padding:14px;font:13px/1.8 inherit;max-height:420px;overflow:auto}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phenomena{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid,.phenomena{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
   `]
 })
-export class DailyReportsComponent {
+export class DailyReportsComponent implements OnDestroy {
   readonly api = inject(ObservationApiService);
   stations: StationDirectoryItem[] = [];
   stationsLoading = false;
@@ -108,6 +108,8 @@ export class DailyReportsComponent {
   private readonly pendingSubmissionStorageKey = 'metra.daily.pending-submission.v1';
   private readonly offlineQueue = new DailyOfflineQueue();
   private readonly syncOwner = 'daily-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  private syncChannel?: BroadcastChannel;
+  private readonly handleSyncAvailable = (): void => { if (this.isOnline) void this.flushOfflineQueue(); };
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   pendingOfflineCount = 0;
@@ -120,6 +122,10 @@ export class DailyReportsComponent {
     void this.loadStations();
     void this.refreshOfflineCount();
     if (typeof window !== 'undefined') {
+      if (typeof BroadcastChannel !== 'undefined') {
+        this.syncChannel = new BroadcastChannel('metra-offline-outbox-sync');
+        this.syncChannel.addEventListener('message', this.handleSyncAvailable);
+      }
       window.addEventListener('online', this.handleOnline);
       window.addEventListener('offline', this.handleOffline);
       if (navigator.onLine) void this.flushOfflineQueue();
@@ -131,6 +137,15 @@ export class DailyReportsComponent {
     void this.flushOfflineQueue();
   };
   private readonly handleOffline = (): void => { this.isOnline = false; };
+
+  ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.handleOnline);
+      window.removeEventListener('offline', this.handleOffline);
+    }
+    this.syncChannel?.removeEventListener('message', this.handleSyncAvailable);
+    this.syncChannel?.close();
+  }
 
   private async refreshOfflineCount(): Promise<void> {
     try { const items = (await this.offlineQueue.list()).filter(x => (x.observationType ?? 'daily') === 'daily'); this.pendingOfflineItems = items.filter(x => x.state === 'pending' || x.state === 'blocked'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; }
