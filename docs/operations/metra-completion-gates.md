@@ -52,3 +52,14 @@
 - Added `npm test` and made Angular CI run it before the production build.
 - These are focused helper/contract tests, not full Angular component integration tests. The form-to-API workflow still requires component-level tests for validation, in-flight duplicate prevention, retry-key persistence across reload, and error rendering.
 - The `24h` `observedAt` boundary remains provisional pending confirmation by the meteorological business owner. No database schema or migrations were changed.
+
+## Daily offline outbox — first implementation slice
+
+- Added an IndexedDB outbox for daily observation submissions. The browser transaction is considered complete only after the IndexedDB transaction commits.
+- The daily form now places a validated submission in the local outbox when the browser reports no network connection. It retains the same idempotency key and does not show a server-save success message.
+- The daily page displays online/offline state and the local outbox count. On the browser `online` event and page startup, it attempts to submit queued records through the authenticated station-scoped API.
+- A queued item is removed only after the API returns a valid `submitted` receipt containing the observation UUID. Network/ambiguous failures remain queued with the same idempotency key. Validation/authorization failures are marked blocked instead of being retried indefinitely.
+- This is the first offline workflow slice for the Angular daily report form. It does not yet make the entire application shell available on a cold offline launch; Angular service-worker/PWA caching, offline station-catalogue provisioning, and equivalent outboxes for hourly and other forms remain required.
+- IndexedDB contents are stored by the browser's origin storage and are not application-level encrypted in this implementation. Do not use shared/public devices for offline entry until device-level protection and a documented local-data retention/clearance policy are in place. No access tokens or service-role secrets are stored in the outbox.
+- No background-sync API is assumed: retries occur when the page is open and connectivity returns, or when the page is reopened online. A browser/OS may suspend a closed tab.
+- Browser integration tests with simulated offline/online transitions, IndexedDB failure, reload recovery, auth expiry, and duplicate delivery are still required. No live Supabase write or migration was performed.
