@@ -64,3 +64,16 @@
 - IndexedDB contents are stored by the browser's origin storage and are not application-level encrypted in this implementation. Do not use shared/public devices for offline entry until device-level protection and a documented local-data retention/clearance policy are in place. No access tokens or service-role secrets are stored in the outbox.
 - No background-sync API is assumed: retries occur when the page is open and connectivity returns, or when the page is reopened online. A browser/OS may suspend a closed tab.
 - Browser integration tests with simulated offline/online transitions, IndexedDB failure, reload recovery, auth expiry, and duplicate delivery are still required. No live Supabase write or migration was performed.
+
+## Application-wide offline shell and hourly outbox — implementation slice
+
+- Added a same-origin service worker at `angular-app/src/metra-sw.js`; it caches the app shell, same-origin static resources as they are first requested, and provides a cached root navigation fallback when offline.
+- The service worker deliberately bypasses non-GET requests, cross-origin requests, and every `/api/` request. Authenticated API responses and tokens are not placed in Cache Storage.
+- Added a web app manifest, metadata, production asset inclusion, and HTTPS-only service-worker registration.
+- Extended the IndexedDB outbox to distinguish daily/hourly observation types. Hourly form submissions can now be queued offline and retried on the `online` event or when the hourly page is reopened online; station catalogue caching is shared with daily entry.
+- Ambiguous hourly network failures are queued with the same idempotency key. The queue item is removed only after a UUID receipt is returned. Validation/authorization failures are marked blocked.
+- Added Node built-in contract tests for service-worker shell installation/activation, API bypass, offline navigation fallback, IndexedDB transaction completion, and secure-context registration.
+- Limitations still open: service-worker cache is a runtime cache rather than a generated full precache of every lazy route/chunk; the first visit must be online. Offline auth/session behavior must be tested with the actual identity provider. Third-party fonts/icons are not guaranteed offline. PWA icons and platform installability checks remain outstanding.
+- Browser-level tests using a real IndexedDB implementation and simulated network transitions are still required. CI must pass on the final commit before this slice is accepted.
+- IndexedDB data remains browser-origin storage without app-level encryption. Shared-device protection, retention/clearance controls, and device policy remain release gates.
+- No Supabase schema changes, migrations, or live database writes were made.
