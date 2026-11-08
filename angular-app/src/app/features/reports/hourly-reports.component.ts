@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
+import { DailyOfflineQueue } from '../../core/offline/daily-offline-queue';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -143,20 +144,59 @@ export class HourlyReportsComponent {
   stationsError = '';
   selectedStationId = '';
   saving = false;
+  private readonly offlineQueue = new DailyOfflineQueue();
+  isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+  pendingOfflineCount = 0;
+  syncing = false;
 
-  constructor() { void this.loadStations(); }
+  constructor() {
+    void this.loadStations();
+    void this.refreshOfflineCount();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => { this.isOnline = true; void this.flushHourlyQueue(); });
+      window.addEventListener('offline', () => { this.isOnline = false; });
+      if (navigator.onLine) void this.flushHourlyQueue();
+    }
+  }
+
+  private async refreshOfflineCount(): Promise<void> {
+    try { this.pendingOfflineCount = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly').length; } catch { /* local storage unavailable */ }
+  }
+
+  private async flushHourlyQueue(): Promise<void> {
+    if (this.syncing || !this.isOnline || !this.apiReady) return;
+    this.syncing = true;
+    try {
+      for (const item of await this.offlineQueue.list()) {
+        if (item.observationType !== 'hourly' || item.state === 'blocked' || !this.isOnline) continue;
+        try {
+          const result = await this.api.submitObservation(item.stationId, { idempotencyKey: item.idempotencyKey, observationType: 'hourly', observedAt: item.observedAt, payload: item.payload, submit: true });
+          const id = result && typeof result === 'object' && 'id' in result ? String((result as {id: unknown}).id) : '';
+          if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new Error('لم يصل إيصال حفظ مؤكد.');
+          await this.offlineQueue.remove(item.idempotencyKey);
+          this.previews.unshift({reference:id,date:item.reportDate,hour:item.reportType,station:item.stationName,status:'submitted',values:{}});
+        } catch (error) {
+          const status = error && typeof error === 'object' && 'status' in error ? Number((error as {status:unknown}).status) : 0;
+          if ([400,403,422].includes(status)) await this.offlineQueue.update({...item,state:'blocked',lastError:'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.'});
+          else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:error instanceof Error?error.message:'تعذر الاتصال.'}); break; }
+        }
+      }
+    } finally { this.syncing = false; await this.refreshOfflineCount(); }
+  }
 
   get apiReady(): boolean { return this.api.isConfigured; }
   setStation(value: string): void { this.selectedStationId = value; }
 
   private async loadStations(): Promise<void> {
-    if (!this.apiReady) {
+    try { const cached = await this.offlineQueue.getCachedStations<StationDirectoryItem>(); if (cached.length) this.stations = cached; } catch { /* cache unavailable */ }
+    if (!this.apiReady || !this.isOnline) {
       this.stationsError = 'الاتصال الفعلي غير مهيأ: يلزم ضبط API وSupabase.';
       return;
     }
     this.stationsLoading = true;
     try {
       this.stations = await this.api.getAllStations();
+      await this.offlineQueue.cacheStations(this.stations);
       if (!this.stations.length) this.stationsError = 'لا توجد محطات تشغيلية متاحة في الدليل.';
     } catch {
       this.stationsError = 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
@@ -356,12 +396,21 @@ export class HourlyReportsComponent {
     delete payloadValues['stationId'];
     const hour = values['utcTime'] ?? this.selectedHour;
     const payload = { stationName: station.name_ar, utcHour: hour, values: payloadValues };
+    const reportDate = values['observationDate'] ?? this.today;
+    const observedAt = new Date(reportDate + 'T' + hour + ':00:00.000Z').toISOString();
+    const idempotencyKey = crypto.randomUUID();
     this.saving = true;
     try {
+      if (!this.isOnline) {
+        await this.offlineQueue.enqueue({idempotencyKey,observationType:'hourly',stationId:this.selectedStationId,stationName:station.name_ar,reportDate,reportType:hour,observedAt,payload,createdAt:new Date().toISOString(),attempts:0,state:'pending'});
+        await this.refreshOfflineCount();
+        this.message = 'حُفظت النشرة الساعية محلياً وستُرسل تلقائياً عند عودة الشبكة؛ لم تُعتمد بعد.';
+        return;
+      }
       const result = await this.api.submitObservation(this.selectedStationId, {
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey,
         observationType: 'hourly',
-        observedAt: new Date((values['observationDate'] ?? this.today) + 'T' + hour + ':00:00.000Z').toISOString(),
+        observedAt,
         payload,
         submit: true
       });
