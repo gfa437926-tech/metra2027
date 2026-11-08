@@ -4,7 +4,8 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-const root = path.resolve(__dirname, '../dist/metra2027/browser');
+// Angular's application builder writes browser assets directly to dist/<project>.
+const root = path.resolve(__dirname, '../dist/metra2027');
 const port = Number(process.env.PORT || 4173);
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
 
@@ -14,7 +15,15 @@ async function main() {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     const candidate = path.resolve(root, '.' + pathname);
     const safe = candidate.startsWith(root + path.sep) || candidate === path.join(root, 'index.html');
-    const file = safe && fs.existsSync(candidate) && fs.statSync(candidate).isFile() ? candidate : path.join(root, 'index.html');
+    const exists = safe && fs.existsSync(candidate) && fs.statSync(candidate).isFile();
+    // Only application navigations receive the SPA shell; missing assets must remain 404s.
+    const isNavigation = req.method === 'GET' && (req.headers.accept || '').includes('text/html');
+    if (!exists && !isNavigation) {
+      res.statusCode = 404;
+      res.end('Not found');
+      return;
+    }
+    const file = exists ? candidate : path.join(root, 'index.html');
     res.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream');
     fs.createReadStream(file).pipe(res);
   });
