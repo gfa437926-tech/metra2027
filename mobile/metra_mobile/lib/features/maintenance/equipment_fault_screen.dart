@@ -172,6 +172,66 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
     }
   }
 
+
+  Future<void> _openDetail(Map<String, dynamic> row) async {
+    final String id = row['id']?.toString() ?? '';
+    if (id.isEmpty) {
+      return;
+    }
+    try {
+      final Map<String, dynamic> detail = await widget.api.getEquipmentFaultById(
+        stationId: widget.stationId,
+        faultId: id,
+      );
+      if (!mounted) {
+        return;
+      }
+      final String stationId = detail['station_id']?.toString() ?? '';
+      if (stationId.isNotEmpty && stationId != widget.stationId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('رُفض عرض عطل لا ينتمي إلى محطتك')),
+        );
+        return;
+      }
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext sheetContext) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    '${detail['equipment_category'] ?? ''} / ${detail['equipment_name'] ?? ''}',
+                    style: Theme.of(sheetContext).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('الحالة: ${detail['status'] ?? '—'}'),
+                  Text('الشدة: ${detail['severity'] ?? '—'}'),
+                  Text('التقدم: ${detail['progress_percent'] ?? 0}%'),
+                  const SizedBox(height: 8),
+                  Text(detail['description']?.toString() ?? ''),
+                  const SizedBox(height: 8),
+                  Text('المحطة: ${detail['station_id'] ?? '—'}'),
+                  Text('المعرّف: ${detail['id'] ?? '—'}'),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } on MetraApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر جلب التفاصيل (${error.statusCode})')),
+      );
+    }
+  }
+
   Future<void> _transition(Map<String, dynamic> row, String toStatus) async {
     String? note;
     int? progress;
@@ -432,6 +492,10 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
                             child: Wrap(
                               spacing: 8,
                               children: <Widget>[
+                                OutlinedButton(
+                                  onPressed: () => _openDetail(row),
+                                  child: const Text('تفاصيل من الخادم'),
+                                ),
                                 for (final Map<String, String> action
                                     in _nextActions(
                                   row['status']?.toString() ?? '',

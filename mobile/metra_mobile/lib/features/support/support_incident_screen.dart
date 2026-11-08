@@ -183,6 +183,67 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
     }
   }
 
+
+  Future<void> _openDetail(Map<String, dynamic> row) async {
+    final String id = row['id']?.toString() ?? '';
+    if (id.isEmpty) {
+      return;
+    }
+    try {
+      final Map<String, dynamic> detail = await widget.api.getSupportIncidentById(
+        stationId: widget.stationId,
+        incidentId: id,
+      );
+      if (!mounted) {
+        return;
+      }
+      final String stationId = detail['station_id']?.toString() ?? '';
+      if (stationId.isNotEmpty && stationId != widget.stationId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('رُفض عرض بلاغ لا ينتمي إلى محطتك')),
+        );
+        return;
+      }
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext sheetContext) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    detail['title']?.toString() ?? 'تفاصيل البلاغ',
+                    style: Theme.of(sheetContext).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('الحالة: ${detail['status'] ?? '—'}'),
+                  Text('الأولوية: ${detail['severity'] ?? '—'}'),
+                  Text('النوع: ${detail['kind'] ?? '—'}'),
+                  Text('التصنيف: ${detail['category'] ?? '—'}'),
+                  const SizedBox(height: 8),
+                  Text(detail['description']?.toString() ?? ''),
+                  const SizedBox(height: 8),
+                  Text('المحطة: ${detail['station_id'] ?? '—'}'),
+                  Text('المعرّف: ${detail['id'] ?? '—'}'),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } on MetraApiException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر جلب التفاصيل (${error.statusCode})')),
+      );
+    }
+  }
+
   Future<void> _transition(Map<String, dynamic> row, String toStatus) async {
     String? note;
     if (toStatus == 'Rejected' || toStatus == 'Closed') {
@@ -422,6 +483,10 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
                             child: Wrap(
                               spacing: 8,
                               children: <Widget>[
+                                OutlinedButton(
+                                  onPressed: () => _openDetail(row),
+                                  child: const Text('تفاصيل من الخادم'),
+                                ),
                                 for (final Map<String, String> action
                                     in _nextActions(
                                   row['status']?.toString() ?? '',
