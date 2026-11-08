@@ -87,3 +87,16 @@ test('hourly submit does not block offline enqueue when API is unconfigured', ()
   assert.doesNotMatch(hourly, /if \(!this\.apiReady\) \{ this\.message = 'لم يتم الإرسال/);
   assert.match(hourly, /if \(!this\.isOnline \|\| !this\.apiReady\)\s*\{/);
 });
+
+
+test('daily and hourly screens distinguish blocked records and expose explicit retry', () => {
+  const daily = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/daily-reports.component.ts'), 'utf8');
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  for (const source of [daily, hourly]) {
+    assert.match(source, /blockedOfflineCount/);
+    assert.match(source, /state === 'blocked'/);
+    assert.match(source, /retryBlockedOffline\(\)/);
+    assert.match(source, /إعادة محاولة النشرات المتوقفة/);
+  }
+  assert.match(hourly, /observationType === 'hourly' && item\.state === 'blocked'/);
+});
