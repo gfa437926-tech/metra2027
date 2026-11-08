@@ -25,7 +25,7 @@ interface HourlyPreview {
         <span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span>
       </header>
 
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>إرسال النشرة يتم عبر API عند تهيئة الاتصال.</strong><span>لن تُعرض النشرة كمرسلة إلا بعد تأكيد الحفظ من الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
@@ -430,7 +430,14 @@ export class HourlyReportsComponent {
       this.selectedHour = '';
       this.selectedStationId = '';
     } catch (error) {
-      this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+      const status = error && typeof error === 'object' && 'status' in error ? Number((error as {status:unknown}).status) : 0;
+      if (!this.isOnline || status === 0) {
+        await this.offlineQueue.enqueue({idempotencyKey,observationType:'hourly',stationId:this.selectedStationId,stationName:station.name_ar,reportDate,reportType:hour,observedAt,payload,createdAt:new Date().toISOString(),attempts:1,state:'pending',lastError:'انقطع الاتصال أو لم يصل تأكيد الخادم.'});
+        await this.refreshOfflineCount();
+        this.message = 'لم يصل تأكيد الخادم؛ حُفظت النشرة في قائمة الانتظار وستعاد المحاولة تلقائياً.';
+      } else {
+        this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+      }
     } finally {
       this.saving = false;
     }
