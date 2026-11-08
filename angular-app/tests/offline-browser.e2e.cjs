@@ -183,6 +183,7 @@ async function main() {
     // Submit through the real Angular form while offline, not by writing a fake
     // outbox record directly. The app must persist the submitted payload locally.
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
     await page.getByText('نشرات محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
@@ -333,6 +334,7 @@ async function main() {
 
     mockStatus = 200;
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await context.setOffline(false);
     await page.getByText('0 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
     const finalQueue = await page.evaluate(async () => {
