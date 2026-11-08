@@ -93,6 +93,7 @@ export class DailyReportsComponent {
   stationsError = '';
   selectedStationId = '';
   saving = false;
+  private pendingSubmission: { fingerprint: string; idempotencyKey: string } | null = null;
 
   constructor() { void this.loadStations(); }
 
@@ -158,10 +159,25 @@ export class DailyReportsComponent {
     };
     const reportDate = values['currentDate'] ?? this.today;
     const observedAt = this.observedAtForReport(reportDate, this.reportType);
+    // Reuse the same idempotency key after an ambiguous network failure.
+    // If any submitted value changes, start a distinct logical submission.
+    const submissionFingerprint = JSON.stringify({
+      stationId: this.selectedStationId,
+      observationType: 'daily',
+      observedAt,
+      payload,
+      submit: true
+    });
+    if (this.pendingSubmission?.fingerprint !== submissionFingerprint) {
+      this.pendingSubmission = {
+        fingerprint: submissionFingerprint,
+        idempotencyKey: crypto.randomUUID()
+      };
+    }
     this.saving = true;
     try {
       const result = await this.api.submitObservation(this.selectedStationId, {
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: this.pendingSubmission.idempotencyKey,
         observationType: 'daily',
         observedAt,
         payload,
@@ -181,6 +197,7 @@ export class DailyReportsComponent {
       this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
         reportType: this.reportType, station: stationName, status: 'submitted', values });
       this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
+      this.pendingSubmission = null;
       this.resetState(form);
       form.reset();
       this.selectedStationId = '';
