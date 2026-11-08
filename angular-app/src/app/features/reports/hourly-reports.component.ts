@@ -166,6 +166,7 @@ export class HourlyReportsComponent implements OnDestroy {
   blockedOfflineCount = 0;
   blockedOfflineItems: DailyOfflineSubmission[] = [];
   syncing = false;
+  private syncRequested = false;
 
   constructor() {
     void this.loadStations();
@@ -224,7 +225,8 @@ export class HourlyReportsComponent implements OnDestroy {
   }
 
   private async flushHourlyQueue(): Promise<void> {
-    if (this.syncing || !this.isOnline || !this.apiReady) return;
+    if (this.syncing) { this.syncRequested = true; return; }
+    if (!this.isOnline || !this.apiReady) return;
     this.syncing = true;
     let leaseAcquired = false;
     try {
@@ -255,6 +257,10 @@ export class HourlyReportsComponent implements OnDestroy {
       }
       this.syncing = false;
       await this.refreshOfflineCount();
+      if (this.syncRequested && this.isOnline && this.apiReady) {
+        this.syncRequested = false;
+        void this.flushHourlyQueue();
+      }
     }
   }
 
