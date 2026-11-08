@@ -26,7 +26,7 @@ test('creates an RFC 4122 UUID v4 using secure random bytes as fallback', () => 
 });
 
 test('fails closed when no cryptographically secure random source exists', () => {
-  assert.throws(() => createIdempotencyKey(undefined), /مولّداً عشوائياً آمناً/);
+  assert.throws(() => createIdempotencyKey({}), /مولّداً عشوائياً آمناً/);
 });
 
 test('accepts only a submitted receipt containing a UUID v4', () => {
