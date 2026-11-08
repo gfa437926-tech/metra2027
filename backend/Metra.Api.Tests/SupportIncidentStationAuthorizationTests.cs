@@ -162,6 +162,14 @@ public sealed class SupportIncidentStationAuthorizationTests
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("[]").RootElement));
         }
 
+        public Task<SupportIncidentServiceOutcome> GetByIdAsync(
+            Guid stationId,
+            Guid incidentId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new SupportIncidentServiceOutcome(
+                true, true, HttpStatusCode.OK,
+                JsonDocument.Parse("{\"station_id\":\"" + stationId.ToString() + "\"}").RootElement));
+
         public Task<SupportIncidentServiceOutcome> TransitionAsync(
             Guid userId,
             Guid stationId,

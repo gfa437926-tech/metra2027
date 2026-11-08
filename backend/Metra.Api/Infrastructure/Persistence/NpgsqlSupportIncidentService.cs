@@ -138,6 +138,42 @@ public sealed class NpgsqlSupportIncidentService(
         }
     }
 
+    public async Task<SupportIncidentServiceOutcome> GetByIdAsync(
+        Guid stationId,
+        Guid incidentId,
+        CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || stationId == Guid.Empty || incidentId == Guid.Empty)
+            return new(IsConfigured, false, null, null);
+
+        var (conn, tx) = await NpgsqlOpsSession.BeginScopedAsync(
+            _connectionString!, Guid.Empty, stationId, cancellationToken);
+        await using (conn)
+        await using (tx)
+        {
+            await using var cmd = new NpgsqlCommand(
+                """
+                select id, station_id, reporter_user_id, kind, category, title, description,
+                       affected_asset, severity, status, impacts_operations, occurred_at,
+                       assigned_to, created_at, updated_at
+                from public.metra_support_incidents
+                where id = @id and station_id = @station_id
+                limit 1;
+                """, conn, tx);
+            cmd.Parameters.AddWithValue("id", incidentId);
+            cmd.Parameters.AddWithValue("station_id", stationId);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                await tx.CommitAsync(cancellationToken);
+                return new(true, false, HttpStatusCode.NotFound, null);
+            }
+            var row = ReadIncident(reader);
+            await tx.CommitAsync(cancellationToken);
+            return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(row));
+        }
+    }
+
     public async Task<SupportIncidentServiceOutcome> TransitionAsync(
         Guid userId,
         Guid stationId,

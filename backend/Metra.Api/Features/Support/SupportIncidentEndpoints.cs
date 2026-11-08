@@ -36,6 +36,8 @@ public interface ISupportIncidentService
         Guid userId, Guid stationId, SupportIncidentSubmitRequest request, CancellationToken cancellationToken);
     Task<SupportIncidentServiceOutcome> ListAsync(
         Guid stationId, int limit, CancellationToken cancellationToken);
+    Task<SupportIncidentServiceOutcome> GetByIdAsync(
+        Guid stationId, Guid incidentId, CancellationToken cancellationToken);
     Task<SupportIncidentServiceOutcome> TransitionAsync(
         Guid userId, Guid stationId, Guid incidentId, SupportIncidentTransitionRequest request, CancellationToken cancellationToken);
 }
@@ -121,6 +123,33 @@ public sealed class SupabaseSupportIncidentService(
             HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/metra_support_incidents?{query}");
         ApplyAuth(message);
         return await SendAsync(message, cancellationToken);
+    }
+
+    
+    public async Task<SupportIncidentServiceOutcome> GetByIdAsync(
+        Guid stationId, Guid incidentId, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || stationId == Guid.Empty || incidentId == Guid.Empty)
+            return new(IsConfigured, false, null, null);
+
+        var query =
+            $"id=eq.{incidentId:D}&station_id=eq.{stationId:D}" +
+            "&select=id,station_id,reporter_user_id,kind,category,title,description,affected_asset,severity,status,impacts_operations,occurred_at,assigned_to,created_at,updated_at" +
+            "&limit=1";
+        using var message = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{_url!.TrimEnd('/')}/rest/v1/metra_support_incidents?{query}");
+        ApplyAuth(message);
+        var outcome = await SendAsync(message, cancellationToken);
+        if (!outcome.Succeeded || outcome.Data is null)
+            return outcome;
+        if (outcome.Data.Value.ValueKind == JsonValueKind.Array)
+        {
+            if (outcome.Data.Value.GetArrayLength() == 0)
+                return new(true, false, HttpStatusCode.NotFound, null);
+            return new(true, true, HttpStatusCode.OK, outcome.Data.Value[0].Clone());
+        }
+        return outcome;
     }
 
     public Task<SupportIncidentServiceOutcome> TransitionAsync(
@@ -248,7 +277,31 @@ public static class SupportIncidentEndpoints
             .RequireStationPermission("support_incident.read")
             .WithTags("Support").WithName("ListSupportIncidents");
 
-        endpoints.MapPost("/api/v1/stations/{stationId:guid}/support-incidents/{incidentId:guid}/transitions",
+        
+        endpoints.MapGet("/api/v1/stations/{stationId:guid}/support-incidents/{incidentId:guid}",
+            async (Guid stationId, Guid incidentId, ISupportIncidentService service, CancellationToken cancellationToken) =>
+            {
+                if (!service.IsConfigured)
+                    return Results.Problem(title: "Support incident service unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);
+                var result = await service.GetByIdAsync(stationId, incidentId, cancellationToken);
+                if (!result.Succeeded || result.Data is null)
+                {
+                    if (result.StatusCode == HttpStatusCode.NotFound)
+                        return Results.NotFound(new { error = "support_incident_not_found" });
+                    return Results.Problem(title: "Support incident detail unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+                if (result.Data.Value.TryGetProperty("station_id", out var stationProp))
+                {
+                    if (!Guid.TryParse(stationProp.GetString(), out var rowStation) || rowStation != stationId)
+                        return Results.NotFound(new { error = "support_incident_not_found" });
+                }
+                return Results.Ok(result.Data);
+            })
+            .RequireStationPermission("support_incident.read")
+            .WithTags("Support")
+            .WithName("GetSupportIncidentById");
+
+endpoints.MapPost("/api/v1/stations/{stationId:guid}/support-incidents/{incidentId:guid}/transitions",
             async (Guid stationId, Guid incidentId, SupportIncidentTransitionRequest? request, HttpContext http,
                 ISupportIncidentService service, IStationAuthorizationService authorization, CancellationToken ct) =>
             {
