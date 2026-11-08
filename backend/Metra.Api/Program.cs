@@ -2,9 +2,11 @@ using Metra.Api.Features.Observations;
 using Metra.Api.Security;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Metra.Api.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,7 @@ static void AddBoundedSupabaseClient(IServiceCollection services, string name) =
     services.AddHttpClient(name, client => client.Timeout = TimeSpan.FromSeconds(8));
 
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationService));
+AddBoundedSupabaseClient(builder.Services, SupabaseLegacyHs256AuthenticationHandler.HttpClientName);
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
@@ -48,8 +51,26 @@ builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalo
 builder.Services.AddOpenApi();
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    .AddAuthentication("Supabase")
+    .AddPolicyScheme("Supabase", "Supabase ES256 / legacy HS256", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var authorization = context.Request.Headers.Authorization.ToString();
+            if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) &&
+                SupabaseLegacyHs256AuthenticationHandler.TryReadAlgorithm(
+                    authorization["Bearer ".Length..].Trim(), out var algorithm) &&
+                string.Equals(algorithm, "HS256", StringComparison.Ordinal))
+            {
+                return SupabaseLegacyHs256AuthenticationHandler.SchemeName;
+            }
+
+            // All non-HS256 algorithms go through the normal signature verifier.
+            // JwtBearer will reject unsupported algorithms; the header is never trusted.
+            return JwtBearerDefaults.AuthenticationScheme;
+        };
+    })
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.Authority = authority;
         options.Audience = audience;
@@ -66,7 +87,9 @@ builder.Services
             NameClaimType = "sub",
             ClockSkew = TimeSpan.FromSeconds(60)
         };
-    });
+    })
+    .AddScheme<AuthenticationSchemeOptions, SupabaseLegacyHs256AuthenticationHandler>(
+        SupabaseLegacyHs256AuthenticationHandler.SchemeName, _ => { });
 
 builder.Services.AddAuthorization(options =>
 {
