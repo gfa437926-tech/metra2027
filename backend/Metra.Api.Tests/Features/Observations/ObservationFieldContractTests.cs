@@ -75,6 +75,29 @@ public sealed class ObservationFieldContractTests
     }
 
     [Fact]
+    public void Daily_submission_contract_rejects_minimum_humidity_above_maximum()
+    {
+        using var document = JsonDocument.Parse("""
+        {
+          "reportType": "06utc",
+          "responsibilityAgreement": true,
+          "values": {
+            "minTemp": "-05.3",
+            "maxTemp": "25.7",
+            "precipitation": "012.5",
+            "snowThickness": "015",
+            "maxHumidity": "060",
+            "minHumidity": "75"
+          }
+        }
+        """);
+
+        var issues = ObservationFieldContract.ValidateSubmission("daily", document.RootElement);
+
+        Assert.Contains(issues, issue => issue.Field == "minHumidity");
+    }
+
+    [Fact]
     public void Daily_24_hour_contract_requires_full_phenomena_and_sunshine_fields()
     {
         using var document = JsonDocument.Parse("""
