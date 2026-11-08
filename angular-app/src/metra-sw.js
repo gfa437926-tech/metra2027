@@ -1,7 +1,9 @@
 /* METRA offline application shell. API/auth traffic is deliberately never cached. */
 const CACHE_PREFIX = 'metra-app-shell-';
 const CACHE_NAME = CACHE_PREFIX + 'v1';
-const APP_SHELL = ['/', '/index.html', '/metra-config.js', '/manifest.webmanifest'];
+const APP_ROOT = new URL('./', self.registration.scope).toString();
+const APP_SHELL = [APP_ROOT, 'index.html', 'metra-config.js', 'manifest.webmanifest']
+  .map(path => new URL(path, APP_ROOT).toString());
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
@@ -31,10 +33,10 @@ self.addEventListener('fetch', event => {
       const cache = await caches.open(CACHE_NAME);
       try {
         const response = await fetch(request);
-        if (response.ok) await cache.put('/', response.clone());
+        if (response.ok) await cache.put(APP_ROOT, response.clone());
         return response;
       } catch {
-        return (await cache.match(request)) || (await cache.match('/')) || Response.error();
+        return (await cache.match(request)) || (await cache.match(APP_ROOT)) || Response.error();
       }
     })());
     return;
