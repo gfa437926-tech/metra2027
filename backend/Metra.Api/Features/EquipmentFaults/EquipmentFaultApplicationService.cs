@@ -9,7 +9,7 @@ namespace Metra.Api.Features.EquipmentFaults;
 /// </summary>
 public interface IEquipmentFaultStationReader
 {
-    Task<Guid?> GetOwningStationIdAsync(Guid faultId, CancellationToken cancellationToken);
+    Task<Guid?> GetOwningStationIdAsync(Guid actorId, Guid stationId, Guid faultId, CancellationToken cancellationToken);
 }
 
 public enum EquipmentFaultAccessResult
@@ -76,7 +76,7 @@ public sealed class EquipmentFaultApplicationService(
         try
         {
             persistedStationId = await stationReader.GetOwningStationIdAsync(
-                faultId, cancellationToken);
+                userId, routeStationId, faultId, cancellationToken);
         }
         catch (HttpRequestException)
         {
