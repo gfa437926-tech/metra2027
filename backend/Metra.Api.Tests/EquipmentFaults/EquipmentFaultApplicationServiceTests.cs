@@ -35,7 +35,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.Empty, Guid.NewGuid(), valid, Now));
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.Empty, valid, Now));
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.NewGuid(), valid, Now));
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.NewGuid(), invalid, Now));
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -96,11 +96,11 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
         Assert.Equal(0, reader.CallCount);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
-    public async Task Transition_checks_persisted_station_before_permission()
+    public async Task Transition_authorizes_station_before_scoped_record_lookup()
     {
         var routeStation = Guid.NewGuid();
         var reader = new FakeStationReader { OwnerStationId = Guid.NewGuid() };
@@ -112,7 +112,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             EquipmentFaultStatus.Submitted, EquipmentFaultStatus.UnderReview);
 
         Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
-    public async Task Record_access_checks_persisted_station_before_permission()
+    public async Task Record_access_authorizes_station_before_scoped_record_lookup()
     {
         var routeStation = Guid.NewGuid();
         var reader = new FakeStationReader { OwnerStationId = Guid.NewGuid() };
@@ -143,7 +143,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.NewGuid(), routeStation, Guid.NewGuid(), "equipment_fault.read");
 
         Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public sealed class EquipmentFaultApplicationServiceTests
     }
 
     [Fact]
-    public async Task Repository_timeout_fails_closed_without_authorization()
+    public async Task Repository_timeout_fails_closed_after_station_authorization()
     {
         var reader = new FakeStationReader { ThrowTimeout = true };
         var auth = new FakeAuthorization { Allowed = true };
@@ -186,11 +186,11 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
 
         Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
-    public async Task Repository_http_failure_fails_closed_without_authorization()
+    public async Task Repository_http_failure_fails_closed_after_station_authorization()
     {
         var reader = new FakeStationReader { ThrowHttpFailure = true };
         var auth = new FakeAuthorization { Allowed = true };
@@ -200,11 +200,11 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
 
         Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
-    public async Task Unexpected_repository_failure_fails_closed_without_authorization()
+    public async Task Unexpected_repository_failure_fails_closed_after_station_authorization()
     {
         var reader = new FakeStationReader { ThrowUnexpectedFailure = true };
         var auth = new FakeAuthorization { Allowed = true };
@@ -214,7 +214,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
 
         Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
         Assert.Equal(0, reader.CallCount);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     [Fact]
@@ -257,7 +257,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "equipment_fault.read");
 
         Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
     }
 
     private sealed class FakeStationReader : IEquipmentFaultStationReader
@@ -358,7 +358,7 @@ public sealed class EquipmentFaultReadServiceTests
             new EquipmentFaultListQuery(0, 25, null, null, null, null));
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
@@ -375,7 +375,7 @@ public sealed class EquipmentFaultReadServiceTests
             Guid.NewGuid(), Guid.NewGuid(), query);
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
@@ -531,7 +531,7 @@ public sealed class EquipmentFaultReadServiceTests
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, emptyStation.Code);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
