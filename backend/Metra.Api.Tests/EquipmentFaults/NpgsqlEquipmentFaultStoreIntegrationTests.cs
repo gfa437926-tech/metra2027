@@ -91,10 +91,13 @@ public sealed class NpgsqlEquipmentFaultStoreIntegrationTests : IAsyncLifetime
             _actorId, _otherStationId, new EquipmentFaultListQuery(), new EquipmentFaultListWindow(1, 25, 0));
         var wrongStationOwner = await _store.GetOwningStationIdAsync(
             _actorId, _otherStationId, faultId, CancellationToken.None);
+        var wrongStationDetail = await _store.GetDetailAsync(
+            _actorId, faultId, _otherStationId);
 
         Assert.Single(ownPage.Items);
         Assert.Empty(otherPage.Items);
         Assert.Null(wrongStationOwner);
+        Assert.Null(wrongStationDetail);
 
         var transition = await _store.TryTransitionAsync(
             faultId, _stationId, EquipmentFaultStatus.Submitted,
