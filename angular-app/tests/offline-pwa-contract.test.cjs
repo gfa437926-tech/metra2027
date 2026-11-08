@@ -114,3 +114,18 @@ test('shared sync lease is renewed before each queued submission', () => {
   assert.match(daily, /renewSyncLease\(this\.syncOwner\)/);
   assert.match(hourly, /renewSyncLease\(this\.syncOwner\)/);
 });
+
+
+test('hourly queue exposes durable pending items and restores them after reload', () => {
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  assert.match(hourly, /pendingOfflineItems/);
+  assert.match(hourly, /restoreOfflineSubmission\(item, hourlyForm\)/);
+  assert.match(hourly, /observationType === 'hourly'/);
+  assert.match(hourly, /observationType: 'hourly'/);
+});
+
+test('shared observation lease waits for the competing queue instead of abandoning it', () => {
+  assert.match(queue, /waitMs = 300_000/);
+  assert.match(queue, /tryAcquireSyncLease\(owner, leaseMs\)/);
+  assert.match(queue, /setTimeout\(resolve, 100\)/);
+});
