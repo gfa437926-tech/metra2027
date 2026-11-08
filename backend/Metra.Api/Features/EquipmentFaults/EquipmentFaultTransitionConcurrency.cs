@@ -16,8 +16,8 @@ public enum EquipmentFaultTransitionWriteResult
 /// <summary>
 /// Contract for an atomic compare-and-transition operation. Implementations must
 /// update only when the persisted station and status still match the supplied
-/// expectations, and must append the immutable audit event atomically.
-/// No database implementation is provided until schema approval.
+/// expectations, and must append the immutable audit event atomically. The Npgsql
+/// adapter implements this contract; production use remains gated on migration approval.
 /// </summary>
 public interface IEquipmentFaultTransitionWriter
 {
