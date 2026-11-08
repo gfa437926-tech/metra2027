@@ -115,7 +115,18 @@ export class DailyOfflineQueue {
         if (current?.owner === owner) store.delete('observations');
       };
       request.onerror = () => reject(request.error ?? new Error('تعذر قراءة قفل المزامنة.'));
-      tx.oncomplete = () => resolve();
+      tx.oncomplete = () => {
+        // Wake other tabs after releasing the shared lease. A tab may have
+        // missed the original online event while another tab owned the lock.
+        try {
+          if (typeof BroadcastChannel !== 'undefined') {
+            const channel = new BroadcastChannel('metra-offline-outbox-sync');
+            channel.postMessage({ type: 'lease-released', at: Date.now() });
+            channel.close();
+          }
+        } catch { /* polling remains the fallback when BroadcastChannel is unavailable */ }
+        resolve();
+      };
       tx.onerror = () => reject(tx.error ?? new Error('فشلت معاملة تحرير قفل المزامنة.'));
       tx.onabort = () => reject(tx.error ?? new Error('أُلغيت معاملة تحرير قفل المزامنة.'));
     });
