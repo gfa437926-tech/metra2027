@@ -81,7 +81,7 @@ Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It 
 - The migration is additive and does not update existing METRA tables or rows.
 - The SQL has not been applied. A final review and PostgreSQL integration run are required before production execution.
 - The current RLS policy uses transaction-local station/actor context; the adapter must set both on every transaction and must never accept actor identity from a request body.
-- The adapter is implemented in `backend/Metra.Api/Features/EquipmentFaults/NpgsqlEquipmentFaultStore.cs`; the Testcontainers suite is in `backend/Metra.Api.Tests/EquipmentFaults/NpgsqlEquipmentFaultStoreIntegrationTests.cs`. GitHub Actions run #40 passed on commit `0cd2517fd2375be5186380b804819b0206cd5f97`: API build 0 warnings/0 errors, test build 0 warnings/0 errors, and 407/407 tests passed including the PostgreSQL 17 integration tests. The run is available at https://github.com/gfa437926-tech/metra2027/actions/runs/42439733655.
+- The adapter is implemented in `backend/Metra.Api/Features/EquipmentFaults/NpgsqlEquipmentFaultStore.cs`; the Testcontainers suite is in `backend/Metra.Api.Tests/EquipmentFaults/NpgsqlEquipmentFaultStoreIntegrationTests.cs`. GitHub Actions run #42 passed on commit `80c8b3da209509edd00f9a07d91d848b0a2b654f`: API build 0 warnings/0 errors, test build 0 warnings/0 errors, and 409/409 tests passed including PostgreSQL 17 integration coverage for station scoping, audit atomicity/immutability, and concurrent transitions. The run is available at https://github.com/gfa437926-tech/metra2027/actions/runs/42439824493.
 
 ## Application configuration added
 
@@ -92,4 +92,4 @@ Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It 
 
 ## CI security dependency result
 
-The test dependency graph previously resolved vulnerable `SSH.NET 2024.2.0` (GHSA-mggc-4xg6-vcxf and GHSA-q939-rpr3-3284). The test project now pins `SSH.NET 2026.0.0`, the patched release. Latest run #40 restored and built both projects with zero warnings, and passed all 407 tests.
+The test dependency graph previously resolved vulnerable `SSH.NET 2024.2.0` (GHSA-mggc-4xg6-vcxf and GHSA-q939-rpr3-3284). The test project now pins `SSH.NET 2026.0.0`, the patched release. Latest run #42 restored and built both projects with zero warnings, and passed all 409 tests.
