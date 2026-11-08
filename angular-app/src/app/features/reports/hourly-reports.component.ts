@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
-import { createIdempotencyKey, getConfirmedDailySubmission } from './daily-submission.utils';
+import { createIdempotencyKey, getConfirmedDailySubmission, getSubmissionErrorMessage } from './daily-submission.utils';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -195,7 +195,7 @@ export class HourlyReportsComponent {
           this.previews.unshift({reference:id,date:item.reportDate,hour:item.reportType,station:item.stationName,status:'submitted',values:{}});
         } catch (error) {
           const status = error && typeof error === 'object' && 'status' in error ? Number((error as {status:unknown}).status) : 0;
-          if ([400,403,422].includes(status)) await this.offlineQueue.update({...item,state:'blocked',lastError:'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.'});
+          if ([400,403,422].includes(status)) await this.offlineQueue.update({...item,state:'blocked',lastError:getSubmissionErrorMessage(error,'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.')});
           else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:error instanceof Error?error.message:'تعذر الاتصال.'}); break; }
         }
       }
