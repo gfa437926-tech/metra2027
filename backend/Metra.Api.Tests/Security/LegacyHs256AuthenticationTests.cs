@@ -141,6 +141,59 @@ public sealed class LegacyHs256AuthenticationTests
         Assert.NotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Unsupported_HS512_algorithm_is_not_sent_to_the_legacy_HS256_verifier()
+    {
+        var handler = new StubHandler(HttpStatusCode.OK, $"""{"id":"{{UserId}}"}""");
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signingKey = new ECDsaSecurityKey(ecdsa);
+        var issuer = SupabaseUrl + "/auth/v1";
+
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Supabase:Url"] = SupabaseUrl,
+                    ["Supabase:PublishableKey"] = PublishableKey,
+                    ["Authentication:Authority"] = issuer,
+                    ["Authentication:Audience"] = "authenticated"
+                }));
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddHttpClient(SupabaseLegacyHs256AuthenticationHandler.HttpClientName)
+                    .ConfigurePrimaryHttpMessageHandler(() => handler);
+                services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    options.Authority = null;
+                    options.Audience = null;
+                    options.ConfigurationManager = null;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
+                        ValidateAudience = true,
+                        ValidAudience = "authenticated",
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 },
+                        IssuerSigningKey = signingKey,
+                        ClockSkew = TimeSpan.FromSeconds(60)
+                    };
+                });
+            });
+        });
+        using var client = factory.CreateClient();
+        var token = CreateToken("HS512", UserId, issuer, "authenticated");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/stations");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(0, handler.CallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(StubHandler handler) =>
         new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
