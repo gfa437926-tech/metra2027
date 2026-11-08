@@ -110,7 +110,8 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["Supabase:Url"] = "https://tbdnklyxjvbrilvnwgmq.supabase.co",
-                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder"
+                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder",
+                    ["ConnectionStrings:MetraOps"] = ""
                 }));
             builder.ConfigureTestServices(services =>
             {
