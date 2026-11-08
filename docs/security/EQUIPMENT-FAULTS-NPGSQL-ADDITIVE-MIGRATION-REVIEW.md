@@ -1,6 +1,6 @@
 # Equipment Faults — Additive Npgsql Schema and Runtime Role Review
 
-**Status:** draft for operator review; not applied to Supabase.  
+**Status:** implementation committed for review; migration remains unapplied to Supabase; PostgreSQL CI validation pending.  
 **Target:** `tbdnklyxjvbrilvnwgmq` only.  
 **Branch:** `work/equipment-fault-domain`.
 
@@ -33,7 +33,7 @@
 
 The role login must be provisioned with a managed secret after migration; no password, JWT signing secret, or service-role key is embedded in SQL or repository files.
 
-## Transaction contract for Npgsql adapter
+## Implemented transaction contract for Npgsql adapter
 
 For each call:
 1. Open a connection using the dedicated feature login and verified TLS.
@@ -58,4 +58,11 @@ Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It 
 - The migration is additive and does not update existing METRA tables or rows.
 - The SQL has not been applied. A final review and PostgreSQL integration run are required before production execution.
 - The current RLS policy uses transaction-local station/actor context; the adapter must set both on every transaction and must never accept actor identity from a request body.
-- The Npgsql adapter and real PostgreSQL Testcontainers suite remain implementation work; this review artifact does not claim they are complete.
+- The adapter is implemented in `backend/Metra.Api/Features/EquipmentFaults/NpgsqlEquipmentFaultStore.cs`; the Testcontainers suite is in `backend/Metra.Api.Tests/EquipmentFaults/NpgsqlEquipmentFaultStoreIntegrationTests.cs`. CI has been triggered for the latest branch head; test results are pending and no successful run is claimed yet.
+
+## Application configuration added
+
+- `EquipmentFaults:ConnectionString`: dedicated PostgreSQL login connection string. Program enforces `SslMode=VerifyFull`, certificate validation, bounded connection/command timeouts, and pooling.
+- `Supabase:PublishableKey` (preferred) or `Supabase:AnonKey`: public API key sent only server-to-server to the fixed Auth `/auth/v1/user` verifier for legacy HS256 access tokens.
+- ES256 remains on the existing JwtBearer/JWKS validation path. The legacy handler forwards only tokens whose parsed header declares HS256, then independently checks the verified Auth user ID, subject, issuer, audience, and lifetime. Unsupported algorithms are not routed to the legacy verifier.
+- No JWT signing secret, private key, service-role key, or database password is stored in source control.
