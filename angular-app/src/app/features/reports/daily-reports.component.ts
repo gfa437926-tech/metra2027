@@ -219,7 +219,8 @@ export class DailyReportsComponent {
   }
 
   private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
-    let fingerprintHash = fingerprint;
+    let fingerprintHash = '';
+    let canPersistFingerprint = false;
     try {
       if (globalThis.crypto?.subtle && typeof TextEncoder !== 'undefined') {
         const digest = await globalThis.crypto.subtle.digest(
@@ -227,17 +228,20 @@ export class DailyReportsComponent {
         );
         fingerprintHash = Array.from(new Uint8Array(digest))
           .map(byte => byte.toString(16).padStart(2, '0')).join('');
+        canPersistFingerprint = true;
       }
     } catch {
       // Fall back to the in-memory fingerprint when Web Crypto is unavailable.
     }
+    if (!canPersistFingerprint) fingerprintHash = fingerprint;
 
     if (this.pendingSubmission?.fingerprint === fingerprintHash) {
       return this.pendingSubmission.idempotencyKey;
     }
 
     try {
-      const stored = sessionStorage.getItem(this.pendingSubmissionStorageKey);
+      const stored = canPersistFingerprint
+        ? sessionStorage.getItem(this.pendingSubmissionStorageKey) : null;
       if (stored) {
         const parsed = JSON.parse(stored) as { fingerprintHash?: unknown; idempotencyKey?: unknown };
         if (parsed.fingerprintHash === fingerprintHash &&
@@ -254,9 +258,11 @@ export class DailyReportsComponent {
     const idempotencyKey = crypto.randomUUID();
     this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey };
     try {
-      sessionStorage.setItem(this.pendingSubmissionStorageKey, JSON.stringify({
-        fingerprintHash, idempotencyKey
-      }));
+      if (canPersistFingerprint) {
+        sessionStorage.setItem(this.pendingSubmissionStorageKey, JSON.stringify({
+          fingerprintHash, idempotencyKey
+        }));
+      }
     } catch {
       // Do not block a valid submission if session storage is unavailable.
     }
