@@ -37,7 +37,7 @@ test('outbox confirms writes only after IndexedDB transaction completion', () =>
 
 test('application registers service worker only in secure context', () => {
   assert.match(main, /'serviceWorker' in navigator/);
-  assert.match(main, /location\.protocol === 'https:'/);
+  assert.match(main, /window\.isSecureContext/);
   assert.match(main, /register\('\.\/metra-sw\.js'\)/);
 });
 
