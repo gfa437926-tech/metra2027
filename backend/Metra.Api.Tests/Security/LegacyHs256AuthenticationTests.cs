@@ -144,7 +144,7 @@ public sealed class LegacyHs256AuthenticationTests
     [Fact]
     public async Task Unsupported_HS512_algorithm_is_not_sent_to_the_legacy_HS256_verifier()
     {
-        var handler = new StubHandler(HttpStatusCode.OK, $"""{"id":"{{UserId}}"}""");
+        var handler = new StubHandler(HttpStatusCode.OK, "{\"id\":\"" + UserId + "\"}");
         using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
         var signingKey = new ECDsaSecurityKey(ecdsa);
         var issuer = SupabaseUrl + "/auth/v1";
