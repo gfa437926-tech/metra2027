@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
+import { createIdempotencyKey, dailyObservedAtForReport, getConfirmedDailySubmission } from './daily-submission.utils';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -159,7 +160,7 @@ export class DailyReportsComponent {
       values: canonicalValues
     };
     const reportDate = values['currentDate'] ?? this.today;
-    const observedAt = this.observedAtForReport(reportDate, this.reportType);
+    const observedAt = dailyObservedAtForReport(reportDate, this.reportType);
     // Reuse the same idempotency key after an ambiguous network failure.
     // If any submitted value changes, start a distinct logical submission.
     const submissionFingerprint = JSON.stringify({
@@ -179,17 +180,11 @@ export class DailyReportsComponent {
         payload,
         submit: true
       });
-      const response = result && typeof result === 'object'
-        ? result as { id?: unknown; status?: unknown; replayed?: unknown }
-        : null;
-      const id = typeof response?.id === 'string' &&
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(response.id) &&
-        response.status === 'submitted'
-          ? response.id
-          : '';
-      if (!id) {
-        throw new Error('لم يؤكد الخادم حالة submitted ومعرّف UUID للنشرة؛ لم يتم إعلان نجاح الحفظ.');
+      const confirmed = getConfirmedDailySubmission(result);
+      if (!confirmed) {
+        throw new Error('لم يؤكد الخادم حالة submitted ومعرّف UUID v4 للنشرة؛ لم يتم إعلان نجاح الحفظ.');
       }
+      const id = confirmed.id;
       this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
         reportType: this.reportType, station: stationName, status: 'submitted', values });
       this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
@@ -216,20 +211,6 @@ export class DailyReportsComponent {
     } finally {
       this.saving = false;
     }
-  }
-
-  private createIdempotencyKey(): string {
-    const cryptoApi = globalThis.crypto;
-    if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID();
-    if (typeof cryptoApi?.getRandomValues !== 'function') {
-      throw new Error('هذا المتصفح لا يوفر مولّداً عشوائياً آمناً؛ حدّث المتصفح أو استخدم اتصالاً آمناً قبل إرسال النشرة.');
-    }
-
-    const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
   }
 
   private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
@@ -269,7 +250,7 @@ export class DailyReportsComponent {
       // Storage may be disabled; in-memory idempotency still protects retries in this page.
     }
 
-    const idempotencyKey = this.createIdempotencyKey();
+    const idempotencyKey = createIdempotencyKey();
     this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey };
     try {
       if (canPersistFingerprint) {
@@ -299,15 +280,6 @@ export class DailyReportsComponent {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-
-  private observedAtForReport(reportDate: string, reportType: string): string {
-    // 24h currently uses the report date at 00:00Z; confirm the operational
-    // reporting-day boundary with the meteorological business rules before release.
-    const utcHour = reportType === '06utc' ? '06'
-      : reportType === '18utc' ? '18' : '00';
-    return new Date(`${reportDate}T${utcHour}:00:00.000Z`).toISOString();
-  }
-
 
   readonly phenomena = [
     {id:'thunderstorm',label:'عواصف رعدية'},{id:'hail',label:'برد'},{id:'snow',label:'ثلوج'},
