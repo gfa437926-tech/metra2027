@@ -203,3 +203,10 @@ and all report-specific visibility/required behavior.
 - Review whether the existing persistence RPC accepts and stores the canonical `reportType` and nested `values` shape without transformation; this must be confirmed from its current implementation before any database contract migration is proposed.
 - Add endpoint-level integration tests proving invalid direct submission returns HTTP 400 and does not call the persistence service.
 - Add explicit UTC date-rollover tests for local-hour-to-UTC conversion, then wire the same conversion into both clients.
+
+
+### CI evidence update
+
+- On code commit `c4abebd9ad10425e684636ffc48346a1a681a2a6`, GitHub Actions completed the `.NET API build` step successfully and the `Run domain and API tests` step successfully, including the new observation contract tests.
+- The same Backend build workflow was still running its production container image step at the time of this update; therefore the full workflow is not yet marked successful.
+- The Client CI run for the earlier code commit was cancelled when newer branch commits superseded it. The latest branch-head Client CI run is queued/pending and must be checked separately.
