@@ -36,3 +36,12 @@
 - Read-only inspection of the legacy `daily_db.js` confirms the period labels: `24h` = 00:00–24:00; `06utc` = a 24-hour period ending at 06:00 UTC; `18utc` = a 24-hour period ending at 18:00 UTC. The legacy form stores the selected date as `report_date` and `collection_date`, while the UI describes the 24-hour summary as the previous day.
 - Therefore, the current API `observedAt` mapping is still provisional: the repository establishes period labels and selected-date storage, but does not conclusively define whether `observedAt` should denote period start, period end, or the operational reporting date. Do not change the mapping or release this workflow until the meteorological owner confirms that convention.
 - The latest change is code-only; CI must pass on its exact head SHA. No database migration was applied and no live submission was performed.
+
+## Angular daily submission unit-test harness
+
+- Extracted the daily submission security/contract helpers into `angular-app/src/app/features/reports/daily-submission.utils.ts` so the safety-critical decisions can be tested independently of browser UI state.
+- Added dependency-free Node.js test coverage using the Node 22 built-in test runner; TypeScript compilation is performed by the existing Angular TypeScript compiler. No new npm dependency is required.
+- Covered native secure UUID generation, secure-random fallback UUID v4 generation, fail-closed behavior when secure randomness is unavailable, acceptance/rejection of persisted submission receipts, and the current `24h` / `06utc` / `18utc` timestamp mapping.
+- Added `npm test` and made Angular CI run it before the production build.
+- These are focused helper/contract tests, not full Angular component integration tests. The form-to-API workflow still requires component-level tests for validation, in-flight duplicate prevention, retry-key persistence across reload, and error rendering.
+- The `24h` `observedAt` boundary remains provisional pending confirmation by the meteorological business owner. No database schema or migrations were changed.
