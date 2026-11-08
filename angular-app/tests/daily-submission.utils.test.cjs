@@ -37,7 +37,7 @@ test('accepts only a submitted receipt containing a UUID v4', () => {
   assert.equal(getConfirmedDailySubmission({ id, status: 'draft' }), null);
   assert.equal(getConfirmedDailySubmission({ id: 'not-a-uuid', status: 'submitted' }), null);
   assert.equal(getConfirmedDailySubmission({ status: 'submitted' }), null);
-  assert.equal(getConfirmedDailySubmission({ id, status: 'submitted', replayed: 'yes' }), {
+  assert.deepEqual(getConfirmedDailySubmission({ id, status: 'submitted', replayed: 'yes' }), {
     id, status: 'submitted'
   });
   assert.equal(getConfirmedDailySubmission({ id, status: 'submitted' }).replayed, undefined);
