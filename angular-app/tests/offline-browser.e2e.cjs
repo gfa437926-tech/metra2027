@@ -422,10 +422,40 @@ async function main() {
     await dailyPage.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await dailyPage.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
 
-    // Both tabs receive the same online event and contend for one shared lease.
+    // Verify both record types are durably queued before restoring connectivity.
+    const concurrentBefore = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.map(item => ({ observationType: item.observationType ?? 'daily', state: item.state }));
+    });
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'daily' && item.state === 'pending').length, 1);
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'hourly' && item.state === 'pending').length, 1);
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'daily' && item.state === 'blocked').length, 1);
+
+    // Restore the network in the browser context, then notify both live tabs.
+    // The persistent BroadcastChannel relays connectivity and lease handoff
+    // when a background tab does not receive the browser's online event.
     holdConcurrentResponses = true;
     mockStatus = 200;
     await context.setOffline(false);
+    await Promise.all([
+      page.waitForFunction(() => navigator.onLine === true),
+      dailyPage.waitForFunction(() => navigator.onLine === true)
+    ]);
+    await Promise.all([
+      page.evaluate(() => window.dispatchEvent(new Event('online'))),
+      dailyPage.evaluate(() => window.dispatchEvent(new Event('online')))
+    ]);
     await page.waitForFunction(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
@@ -442,7 +472,7 @@ async function main() {
       return rows.length === 1 && rows[0].state === 'blocked';
     }, { timeout: 20000 });
     const concurrentPosts = acceptedPosts.slice(4);
-    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after one online event');
+    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after connectivity is restored');
     assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
     assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
 
