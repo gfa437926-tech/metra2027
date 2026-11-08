@@ -213,7 +213,7 @@ export class DailyReportsComponent {
             await this.offlineQueue.update({ ...item, state: 'blocked', lastError: getSubmissionErrorMessage(error, 'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.') });
           } else {
             await this.offlineQueue.update({ ...item, state: 'pending', attempts: item.attempts + 1,
-              lastError: error instanceof Error ? error.message : 'تعذر الاتصال بالخادم.' });
+              lastError: getSubmissionErrorMessage(error, 'تعذر الاتصال بالخادم.') });
             break;
           }
         }
