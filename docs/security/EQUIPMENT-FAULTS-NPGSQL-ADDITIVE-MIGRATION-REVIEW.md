@@ -65,6 +65,13 @@ Custom GUC values are API-to-database trust assertions, not cryptographic identi
 
 The SQL creates a LOGIN role without a password. Before Npgsql can connect, an administrator must provision its password out-of-band (never in Git, chat, migration SQL, logs, or client configuration), store it in the server secret manager, and configure the dedicated connection string. The application must fail readiness if the secret/connection is absent.
 
+
+## Latest advisor observations (read-only)
+
+- Security Advisor returned one informational `rls_enabled_no_policy` notice for `metra_migration.legacy_users_staging`. Follow-up ACL inspection showed the table is owned by `postgres`, has no table grants beyond the owner ACL, and RLS is enabled with no policies. This is a deny-by-default private staging table; no policy or grant change is proposed.
+- Performance Advisor returned 46 informational unused-index notices. These are not grounds for removing indexes from a newly established/low-traffic system; no existing index will be dropped as part of this feature.
+- No advisor action has been applied to the database.
+
 ## Rollback
 
 Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It revokes runtime membership and grants but deliberately preserves all feature data and schema. Full object removal is a separate destructive operation and requires a verified export and explicit approval.
