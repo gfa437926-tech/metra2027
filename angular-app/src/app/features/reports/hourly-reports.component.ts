@@ -184,6 +184,7 @@ export class HourlyReportsComponent {
       if (!leaseAcquired) return;
       for (const item of await this.offlineQueue.list()) {
         if (item.observationType !== 'hourly' || item.state === 'blocked' || !this.isOnline) continue;
+        if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
         try {
           const result = await this.api.submitObservation(item.stationId, { idempotencyKey: item.idempotencyKey, observationType: 'hourly', observedAt: item.observedAt, payload: item.payload, submit: true });
           const receipt = getConfirmedDailySubmission(result);
