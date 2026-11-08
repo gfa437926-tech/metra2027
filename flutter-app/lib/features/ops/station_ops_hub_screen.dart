@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import '../maintenance/equipment_fault_screen.dart';
 import '../support/support_incident_screen.dart';
+import 'station_ops_summary_screen.dart';
 
 /// Hub that opens station-scoped equipment faults and support incidents.
 class StationOpsHubScreen extends StatelessWidget {
@@ -19,6 +20,25 @@ class StationOpsHubScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.analytics_outlined),
+            title: const Text('ملخص التشغيل'),
+            subtitle: const Text('أعداد النشرات والأعطال والدعم من الخادم فقط'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => StationOpsSummaryScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
         Card(
           child: ListTile(
             leading: const Icon(Icons.build_circle_outlined),
