@@ -15,7 +15,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
     <div class="page" dir="rtl">
       <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
-      <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
+      <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="blockedOfflineCount"> · {{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
@@ -103,6 +103,7 @@ export class DailyReportsComponent {
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   pendingOfflineCount = 0;
+  blockedOfflineCount = 0;
   syncMessage = '';
 
   constructor() {
@@ -122,8 +123,17 @@ export class DailyReportsComponent {
   private readonly handleOffline = (): void => { this.isOnline = false; };
 
   private async refreshOfflineCount(): Promise<void> {
-    try { this.pendingOfflineCount = (await this.offlineQueue.list()).length; }
+    try { const items = await this.offlineQueue.list(); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineCount = items.filter(x => x.state === 'blocked').length; }
     catch (error) { this.syncMessage = error instanceof Error ? error.message : 'تعذر قراءة صندوق الإرسال المحلي.'; }
+  }
+
+  async retryBlockedOffline(): Promise<void> {
+    const items = await this.offlineQueue.list();
+    for (const item of items) if (item.state === 'blocked') {
+      await this.offlineQueue.update({ ...item, state: 'pending', lastError: undefined });
+    }
+    await this.refreshOfflineCount();
+    if (this.isOnline && this.apiReady) await this.flushOfflineQueue();
   }
 
   private async flushOfflineQueue(): Promise<void> {
