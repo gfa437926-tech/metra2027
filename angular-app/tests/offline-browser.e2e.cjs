@@ -39,13 +39,18 @@ async function main() {
 
     // Supply a disposable test identity and intercept only the auth user lookup.
     // No real Supabase project, credentials, or database are contacted by this test.
-    await page.addInitScript(() => {
-      const projectUrl = 'https://metra-e2e.supabase.co';
-      window.__METRA_CONFIG__ = {
+    // Replace the bundled runtime config before the application reads it.
+    // This prevents the smoke test from contacting the configured production project.
+    await page.route('**/metra-config.js', route => route.fulfill({
+      status: 200,
+      contentType: 'application/javascript',
+      body: `window.__METRA_CONFIG__ = Object.freeze({
         apiBaseUrl: '',
-        supabaseUrl: projectUrl,
+        supabaseUrl: 'https://metra-e2e.supabase.co',
         supabaseAnonKey: 'metra-browser-e2e-anon-key'
-      };
+      });`
+    }));
+    await page.addInitScript(() => {
       localStorage.setItem('sb-metra-e2e-auth-token', JSON.stringify({
         access_token: 'metra-e2e-access-token',
         token_type: 'bearer',
