@@ -2,7 +2,7 @@
 const CACHE_PREFIX = 'metra-app-shell-';
 const CACHE_NAME = CACHE_PREFIX + 'v1';
 const APP_ROOT = new URL('./', self.registration.scope).toString();
-const APP_SHELL = [APP_ROOT, 'index.html', 'metra-config.js', 'manifest.webmanifest']
+const APP_SHELL = [APP_ROOT, 'index.html', 'metra-config.js', 'manifest.webmanifest', 'metra-icon.svg']
   .map(path => new URL(path, APP_ROOT).toString());
 
 self.addEventListener('install', event => {
