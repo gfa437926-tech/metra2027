@@ -160,6 +160,7 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
 // Readiness is separate from liveness: it verifies server configuration and a
 // bounded, server-authenticated Supabase catalogue request without exposing secrets.
 app.MapGet("/api/v1/ready", async (
+    IConfiguration configuration,
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,
     IObservationDecisionService decision,
@@ -174,6 +175,7 @@ app.MapGet("/api/v1/ready", async (
     IStationAssignmentService stationAssignments,
     IStationAuditService stationAudit,
     IAuthorityAccessService authorityAccess,
+    IEquipmentFaultService equipmentFaults,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -196,12 +198,34 @@ app.MapGet("/api/v1/ready", async (
             title: "API dependencies are not configured",
             statusCode: StatusCodes.Status503ServiceUnavailable);
 
+    // When MetraOps is configured, readiness must prove the Npgsql path is live.
+    // An empty connection string means ops still rely on Supabase-only adapters.
+    var metraOps = configuration.GetConnectionString("MetraOps");
+    if (!string.IsNullOrWhiteSpace(metraOps))
+    {
+        if (!equipmentFaults.IsConfigured)
+            return Results.Problem(
+                title: "MetraOps equipment fault adapter is not configured",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+
+        var opsOk = await NpgsqlOpsSession.CanConnectAsync(metraOps, cancellationToken);
+        if (!opsOk)
+            return Results.Problem(
+                title: "MetraOps database readiness probe failed",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
     // Verify an authenticated server-side PostgREST round trip, not merely
     // non-empty environment variables. A schema, credential, or network
     // failure must keep the instance out of service.
     var probe = await directory.GetStationsAsync(1, 0, null, cancellationToken);
     return probe is not null
-        ? Results.Ok(new { status = "ready", service = "metra-api" })
+        ? Results.Ok(new
+        {
+            status = "ready",
+            service = "metra-api",
+            metraOps = string.IsNullOrWhiteSpace(metraOps) ? "not_configured" : "reachable"
+        })
         : Results.Problem(
             title: "Supabase readiness probe failed",
             statusCode: StatusCodes.Status503ServiceUnavailable);

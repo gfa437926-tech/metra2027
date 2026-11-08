@@ -12,8 +12,8 @@ namespace Metra.Api.Infrastructure.Persistence;
 /// <summary>
 /// Station-scoped equipment fault persistence over Npgsql.
 /// Activated only when ConnectionStrings:MetraOps is configured.
-/// Every query includes station_id; transitions use FOR UPDATE in a transaction
-/// and write an immutable audit row in the same transaction.
+/// Every transaction sets role metra_ops_faults and LOCAL app.station_id / app.user_id
+/// so RLS + least privilege apply; pooled connections cannot leak prior request context.
 /// </summary>
 public sealed class NpgsqlEquipmentFaultService(
     IConfiguration configuration,
@@ -37,28 +37,28 @@ public sealed class NpgsqlEquipmentFaultService(
         if (!allowed)
             return new(true, false, HttpStatusCode.Forbidden, null);
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
-
-        try
+        var (conn, tx) = await NpgsqlOpsSession.BeginScopedAsync(
+            _connectionString!, userId, stationId, cancellationToken);
+        await using (conn)
+        await using (tx)
         {
-            var id = Guid.NewGuid();
-            await using (var cmd = new NpgsqlCommand(
-                """
-                insert into public.metra_equipment_faults (
-                  id, station_id, reporter_user_id, equipment_category, equipment_name,
-                  description, severity, status, is_operationally_blocking, occurred_at,
-                  progress_percent, created_at, updated_at)
-                values (
-                  @id, @station_id, @reporter, @category, @name,
-                  @description, @severity, 'Submitted', @blocking, @occurred_at,
-                  0, now(), now())
-                returning id, station_id, reporter_user_id, equipment_category, equipment_name,
-                          description, severity, status, is_operationally_blocking, occurred_at,
-                          assigned_to, progress_percent, progress_note, created_at, updated_at;
-                """, conn, tx))
+            try
             {
+                var id = Guid.NewGuid();
+                await using var cmd = new NpgsqlCommand(
+                    """
+                    insert into public.metra_equipment_faults (
+                      id, station_id, reporter_user_id, equipment_category, equipment_name,
+                      description, severity, status, is_operationally_blocking, occurred_at,
+                      progress_percent, created_at, updated_at)
+                    values (
+                      @id, @station_id, @reporter, @category, @name,
+                      @description, @severity, 'Submitted', @blocking, @occurred_at,
+                      0, now(), now())
+                    returning id, station_id, reporter_user_id, equipment_category, equipment_name,
+                              description, severity, status, is_operationally_blocking, occurred_at,
+                              assigned_to, progress_percent, progress_note, created_at, updated_at;
+                    """, conn, tx);
                 cmd.Parameters.AddWithValue("id", id);
                 cmd.Parameters.AddWithValue("station_id", stationId);
                 cmd.Parameters.AddWithValue("reporter", userId);
@@ -93,11 +93,11 @@ public sealed class NpgsqlEquipmentFaultService(
                 await tx.CommitAsync(cancellationToken);
                 return new(true, true, HttpStatusCode.Created, JsonSerializer.SerializeToElement(row));
             }
-        }
-        catch (PostgresException)
-        {
-            await tx.RollbackAsync(cancellationToken);
-            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+            catch (PostgresException)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+            }
         }
     }
 
@@ -109,27 +109,33 @@ public sealed class NpgsqlEquipmentFaultService(
         if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 100)
             return new(IsConfigured, false, null, null);
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var cmd = new NpgsqlCommand(
-            """
-            select id, station_id, reporter_user_id, equipment_category, equipment_name,
-                   description, severity, status, is_operationally_blocking, occurred_at,
-                   assigned_to, progress_percent, progress_note, created_at, updated_at
-            from public.metra_equipment_faults
-            where station_id = @station_id
-            order by occurred_at desc
-            limit @limit;
-            """, conn);
-        cmd.Parameters.AddWithValue("station_id", stationId);
-        cmd.Parameters.AddWithValue("limit", limit);
+        // Read path still binds station context so RLS cannot return other stations.
+        var (conn, tx) = await NpgsqlOpsSession.BeginScopedAsync(
+            _connectionString!, Guid.Empty, stationId, cancellationToken);
+        await using (conn)
+        await using (tx)
+        {
+            await using var cmd = new NpgsqlCommand(
+                """
+                select id, station_id, reporter_user_id, equipment_category, equipment_name,
+                       description, severity, status, is_operationally_blocking, occurred_at,
+                       assigned_to, progress_percent, progress_note, created_at, updated_at
+                from public.metra_equipment_faults
+                where station_id = @station_id
+                order by occurred_at desc
+                limit @limit;
+                """, conn, tx);
+            cmd.Parameters.AddWithValue("station_id", stationId);
+            cmd.Parameters.AddWithValue("limit", limit);
 
-        var rows = new List<Dictionary<string, object?>>();
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-            rows.Add(ReadFault(reader));
+            var rows = new List<Dictionary<string, object?>>();
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+                rows.Add(ReadFault(reader));
 
-        return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(rows));
+            await tx.CommitAsync(cancellationToken);
+            return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(rows));
+        }
     }
 
     public async Task<EquipmentFaultServiceOutcome> GetByIdAsync(
@@ -140,25 +146,34 @@ public sealed class NpgsqlEquipmentFaultService(
         if (!IsConfigured || stationId == Guid.Empty || faultId == Guid.Empty)
             return new(IsConfigured, false, null, null);
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var cmd = new NpgsqlCommand(
-            """
-            select id, station_id, reporter_user_id, equipment_category, equipment_name,
-                   description, severity, status, is_operationally_blocking, occurred_at,
-                   assigned_to, progress_percent, progress_note, created_at, updated_at
-            from public.metra_equipment_faults
-            where id = @id and station_id = @station_id
-            limit 1;
-            """, conn);
-        cmd.Parameters.AddWithValue("id", faultId);
-        cmd.Parameters.AddWithValue("station_id", stationId);
+        var (conn, tx) = await NpgsqlOpsSession.BeginScopedAsync(
+            _connectionString!, Guid.Empty, stationId, cancellationToken);
+        await using (conn)
+        await using (tx)
+        {
+            await using var cmd = new NpgsqlCommand(
+                """
+                select id, station_id, reporter_user_id, equipment_category, equipment_name,
+                       description, severity, status, is_operationally_blocking, occurred_at,
+                       assigned_to, progress_percent, progress_note, created_at, updated_at
+                from public.metra_equipment_faults
+                where id = @id and station_id = @station_id
+                limit 1;
+                """, conn, tx);
+            cmd.Parameters.AddWithValue("id", faultId);
+            cmd.Parameters.AddWithValue("station_id", stationId);
 
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-            return new(true, false, HttpStatusCode.NotFound, null);
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                await tx.CommitAsync(cancellationToken);
+                return new(true, false, HttpStatusCode.NotFound, null);
+            }
 
-        return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(ReadFault(reader)));
+            var row = ReadFault(reader);
+            await tx.CommitAsync(cancellationToken);
+            return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(row));
+        }
     }
 
     public async Task<EquipmentFaultServiceOutcome> TransitionAsync(
@@ -181,114 +196,110 @@ public sealed class NpgsqlEquipmentFaultService(
         if (!allowed)
             return new(true, false, HttpStatusCode.Forbidden, null);
 
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var tx = await conn.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-
-        try
+        var (conn, tx) = await NpgsqlOpsSession.BeginScopedAsync(
+            _connectionString!, userId, stationId, cancellationToken);
+        await using (conn)
+        await using (tx)
         {
-            await using var select = new NpgsqlCommand(
-                """
-                select id, station_id, status, assigned_to, progress_percent
-                from public.metra_equipment_faults
-                where id = @id and station_id = @station_id
-                for update;
-                """, conn, tx);
-            select.Parameters.AddWithValue("id", faultId);
-            select.Parameters.AddWithValue("station_id", stationId);
-
-            await using var reader = await select.ExecuteReaderAsync(cancellationToken);
-            if (!await reader.ReadAsync(cancellationToken))
+            try
             {
+                await using var select = new NpgsqlCommand(
+                    """
+                    select id, station_id, status, assigned_to, progress_percent
+                    from public.metra_equipment_faults
+                    where id = @id and station_id = @station_id
+                    for update;
+                    """, conn, tx);
+                select.Parameters.AddWithValue("id", faultId);
+                select.Parameters.AddWithValue("station_id", stationId);
+
+                await using var reader = await select.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    await reader.CloseAsync();
+                    await tx.RollbackAsync(cancellationToken);
+                    return new(true, false, HttpStatusCode.NotFound, null);
+                }
+
+                var fromStatusText = reader.GetString(reader.GetOrdinal("status"));
+                var progress = reader.GetInt32(reader.GetOrdinal("progress_percent"));
                 await reader.CloseAsync();
-                await tx.RollbackAsync(cancellationToken);
-                return new(true, false, HttpStatusCode.NotFound, null);
-            }
 
-            var fromStatusText = reader.GetString(reader.GetOrdinal("status"));
-            var progress = reader.GetInt32(reader.GetOrdinal("progress_percent"));
-            await reader.CloseAsync();
+                if (!Enum.TryParse<EquipmentFaultStatus>(fromStatusText, true, out var fromStatus) ||
+                    !EquipmentFaultPolicy.CanTransition(fromStatus, toStatus))
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    return new(true, false, HttpStatusCode.Conflict, null);
+                }
 
-            if (!Enum.TryParse<EquipmentFaultStatus>(fromStatusText, true, out var fromStatus) ||
-                !EquipmentFaultPolicy.CanTransition(fromStatus, toStatus))
-            {
-                await tx.RollbackAsync(cancellationToken);
-                return new(true, false, HttpStatusCode.Conflict, null);
-            }
+                if (toStatus is EquipmentFaultStatus.Rejected or EquipmentFaultStatus.Closed &&
+                    string.IsNullOrWhiteSpace(request.Note))
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    return new(true, false, HttpStatusCode.BadRequest, null);
+                }
 
-            if (toStatus is EquipmentFaultStatus.Rejected or EquipmentFaultStatus.Closed &&
-                string.IsNullOrWhiteSpace(request.Note))
-            {
-                await tx.RollbackAsync(cancellationToken);
-                return new(true, false, HttpStatusCode.BadRequest, null);
-            }
+                if (toStatus == EquipmentFaultStatus.Resolved && (request.ProgressPercent ?? progress) != 100)
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    return new(true, false, HttpStatusCode.BadRequest, null);
+                }
 
-            if (toStatus == EquipmentFaultStatus.Resolved && (request.ProgressPercent ?? progress) != 100)
-            {
-                await tx.RollbackAsync(cancellationToken);
-                return new(true, false, HttpStatusCode.BadRequest, null);
-            }
+                await using var update = new NpgsqlCommand(
+                    """
+                    update public.metra_equipment_faults
+                    set status = @to_status,
+                        assigned_to = case
+                          when @to_status = 'Assigned' then coalesce(@assigned_to, assigned_to)
+                          else assigned_to end,
+                        progress_percent = coalesce(@progress, progress_percent),
+                        progress_note = coalesce(@note, progress_note),
+                        updated_at = now()
+                    where id = @id and station_id = @station_id
+                    returning id, station_id, reporter_user_id, equipment_category, equipment_name,
+                              description, severity, status, is_operationally_blocking, occurred_at,
+                              assigned_to, progress_percent, progress_note, created_at, updated_at;
+                    """, conn, tx);
+                update.Parameters.AddWithValue("to_status", toStatus.ToString());
+                update.Parameters.AddWithValue("id", faultId);
+                update.Parameters.AddWithValue("station_id", stationId);
+                update.Parameters.AddWithValue("progress", (object?)request.ProgressPercent ?? DBNull.Value);
+                update.Parameters.AddWithValue("note", (object?)request.Note ?? DBNull.Value);
+                var assignedParam = update.Parameters.Add("assigned_to", NpgsqlDbType.Uuid);
+                assignedParam.Value = request.AssignedTo is Guid g ? g : DBNull.Value;
 
-            if (toStatus == EquipmentFaultStatus.Assigned &&
-                request.AssignedTo is null)
-            {
-                // Allow keeping existing assignee; enforce presence only when both empty in SQL path.
-            }
-
-            await using var update = new NpgsqlCommand(
-                """
-                update public.metra_equipment_faults
-                set status = @to_status,
-                    assigned_to = case
-                      when @to_status = 'Assigned' then coalesce(@assigned_to, assigned_to)
-                      else assigned_to end,
-                    progress_percent = coalesce(@progress, progress_percent),
-                    progress_note = coalesce(@note, progress_note),
-                    updated_at = now()
-                where id = @id and station_id = @station_id
-                returning id, station_id, reporter_user_id, equipment_category, equipment_name,
-                          description, severity, status, is_operationally_blocking, occurred_at,
-                          assigned_to, progress_percent, progress_note, created_at, updated_at;
-                """, conn, tx);
-            update.Parameters.AddWithValue("to_status", toStatus.ToString());
-            update.Parameters.AddWithValue("id", faultId);
-            update.Parameters.AddWithValue("station_id", stationId);
-            update.Parameters.AddWithValue("progress", (object?)request.ProgressPercent ?? DBNull.Value);
-            update.Parameters.AddWithValue("note", (object?)request.Note ?? DBNull.Value);
-            var assignedParam = update.Parameters.Add("assigned_to", NpgsqlDbType.Uuid);
-            assignedParam.Value = request.AssignedTo is Guid g ? g : DBNull.Value;
-
-            await using var updatedReader = await update.ExecuteReaderAsync(cancellationToken);
-            if (!await updatedReader.ReadAsync(cancellationToken))
-            {
+                await using var updatedReader = await update.ExecuteReaderAsync(cancellationToken);
+                if (!await updatedReader.ReadAsync(cancellationToken))
+                {
+                    await updatedReader.CloseAsync();
+                    await tx.RollbackAsync(cancellationToken);
+                    return new(true, false, HttpStatusCode.Conflict, null);
+                }
+                var row = ReadFault(updatedReader);
                 await updatedReader.CloseAsync();
-                await tx.RollbackAsync(cancellationToken);
-                return new(true, false, HttpStatusCode.Conflict, null);
+
+                await using var audit = new NpgsqlCommand(
+                    """
+                    insert into public.metra_equipment_fault_audit_events (
+                      fault_id, station_id, actor_user_id, event_type, from_status, to_status, note)
+                    values (@fault_id, @station_id, @actor, 'status_transition', @from_status, @to_status, @note);
+                    """, conn, tx);
+                audit.Parameters.AddWithValue("fault_id", faultId);
+                audit.Parameters.AddWithValue("station_id", stationId);
+                audit.Parameters.AddWithValue("actor", userId);
+                audit.Parameters.AddWithValue("from_status", fromStatusText);
+                audit.Parameters.AddWithValue("to_status", toStatus.ToString());
+                audit.Parameters.AddWithValue("note", (object?)request.Note ?? DBNull.Value);
+                await audit.ExecuteNonQueryAsync(cancellationToken);
+
+                await tx.CommitAsync(cancellationToken);
+                return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(row));
             }
-            var row = ReadFault(updatedReader);
-            await updatedReader.CloseAsync();
-
-            await using var audit = new NpgsqlCommand(
-                """
-                insert into public.metra_equipment_fault_audit_events (
-                  fault_id, station_id, actor_user_id, event_type, from_status, to_status, note)
-                values (@fault_id, @station_id, @actor, 'status_transition', @from_status, @to_status, @note);
-                """, conn, tx);
-            audit.Parameters.AddWithValue("fault_id", faultId);
-            audit.Parameters.AddWithValue("station_id", stationId);
-            audit.Parameters.AddWithValue("actor", userId);
-            audit.Parameters.AddWithValue("from_status", fromStatusText);
-            audit.Parameters.AddWithValue("to_status", toStatus.ToString());
-            audit.Parameters.AddWithValue("note", (object?)request.Note ?? DBNull.Value);
-            await audit.ExecuteNonQueryAsync(cancellationToken);
-
-            await tx.CommitAsync(cancellationToken);
-            return new(true, true, HttpStatusCode.OK, JsonSerializer.SerializeToElement(row));
-        }
-        catch (PostgresException)
-        {
-            await tx.RollbackAsync(cancellationToken);
-            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+            catch (PostgresException)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+            }
         }
     }
 
