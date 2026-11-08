@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
-import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey } from './daily-submission.utils';
+import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey, getSubmissionErrorMessage } from './daily-submission.utils';
 import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
 
 type DailyStatus = 'draft' | 'submitted';
@@ -169,7 +169,7 @@ export class DailyReportsComponent {
           const response = error && typeof error === 'object' && 'status' in error
             ? Number((error as { status: unknown }).status) : 0;
           if (response === 400 || response === 403 || response === 422) {
-            await this.offlineQueue.update({ ...item, state: 'blocked', lastError: 'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.' });
+            await this.offlineQueue.update({ ...item, state: 'blocked', lastError: getSubmissionErrorMessage(error, 'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.') });
           } else {
             await this.offlineQueue.update({ ...item, state: 'pending', attempts: item.attempts + 1,
               lastError: error instanceof Error ? error.message : 'تعذر الاتصال بالخادم.' });
