@@ -124,3 +124,34 @@ The Flutter README says Android/iOS runners are not currently included and must
 be generated. Passing Dart analyze/tests does not create installable APK/AAB/IPA
 artifacts. Android/iOS runner generation, signing, release builds, and real-device
 installation tests remain open.
+
+
+### Validation API wiring gap
+
+The backend exposes separate `POST /api/v1/observations/hourly/validate` and
+`POST /api/v1/observations/daily/validate` endpoints. The current Flutter
+`MetraApiClient` exposes submission but no methods for either validation route;
+the Flutter hourly screen therefore performs its own smaller client-side checks
+and submits directly. The Angular hourly/daily components also need a call-site
+audit to prove they invoke the authoritative validators before submission.
+The submission endpoint validates request shape/type/size and delegates to the
+database RPC; it does not itself call `HourlyObservationValidator` or
+`DailyObservationValidator`.
+
+Additionally, the daily validation endpoint currently calls
+`DailyObservationValidator.Validate(request.Values)` without a
+`requiredFields` set. The validator supports report-type-specific required
+fields, but this endpoint invocation does not supply them. This leaves the
+required-field policy incomplete at that API boundary. Define and validate
+approved daily report-type required-field sets before treating daily validation
+as production-ready.
+
+Required remediation:
+1. Define one authoritative field schema and required-field policy per report type.
+2. Make submission enforce that policy server-side (not merely expose a separate
+   optional validation route).
+3. Ensure daily report type is explicit and selects its required-field set.
+4. Add Flutter and Angular API client methods for server validation where
+   pre-submit feedback is required.
+5. Add negative integration tests proving malformed/missing/conditional fields
+   cannot be persisted by direct API submission.
