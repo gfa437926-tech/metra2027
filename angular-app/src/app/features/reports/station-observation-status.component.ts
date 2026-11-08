@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StationContextService } from '../../core/station/station-context.service';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
 
 @Component({
@@ -54,6 +55,7 @@ import { ObservationApiService, ObservationQueueItem } from '../../core/api/obse
 export class StationObservationStatusComponent implements OnInit {
   readonly api = inject(ObservationApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly stationContext = inject(StationContextService);
   stationId = '';
   loading = false;
   error = '';
@@ -64,8 +66,15 @@ export class StationObservationStatusComponent implements OnInit {
   get returnedCount(): number { return this.returned.length; }
 
   ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId(this.route);
     this.route.queryParamMap.subscribe((params) => {
-      this.stationId = params.get('stationId')?.trim() ?? '';
+      const fromQuery = params.get('stationId')?.trim() ?? '';
+      if (this.stationContext.isUuid(fromQuery)) {
+        this.stationContext.remember(fromQuery);
+        this.stationId = fromQuery;
+      } else {
+        this.stationId = this.stationContext.resolveStationId(this.route);
+      }
       if (this.stationId && this.api.isConfigured) void this.load();
     });
   }

@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StationContextService } from '../../core/station/station-context.service';
 import {
   EquipmentFaultApiService,
   EquipmentFaultItem,
@@ -140,6 +141,7 @@ import {
 export class EquipmentFaultWorkflowComponent implements OnInit {
   readonly api = inject(EquipmentFaultApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly stationContext = inject(StationContextService);
 
   stationId = '';
   rows: EquipmentFaultItem[] = [];
@@ -170,8 +172,15 @@ export class EquipmentFaultWorkflowComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId(this.route);
     this.route.queryParamMap.subscribe((params) => {
-      this.stationId = params.get('stationId')?.trim() ?? '';
+      const fromQuery = params.get('stationId')?.trim() ?? '';
+      if (this.stationContext.isUuid(fromQuery)) {
+        this.stationContext.remember(fromQuery);
+        this.stationId = fromQuery;
+      } else {
+        this.stationId = this.stationContext.resolveStationId(this.route);
+      }
       this.error = '';
       if (this.stationId && this.api.isConfigured) void this.load();
     });

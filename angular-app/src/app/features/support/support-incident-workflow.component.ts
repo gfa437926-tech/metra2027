@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { StationContextService } from '../../core/station/station-context.service';
 import { SupportIncidentApiService } from '../../core/api/support-incident-api.service';
 
 @Component({
@@ -130,6 +131,7 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
 export class SupportIncidentWorkflowComponent implements OnInit {
   readonly api = inject(SupportIncidentApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly stationContext = inject(StationContextService);
   stationId = '';
   rows: Record<string, unknown>[] = [];
   detail: Record<string, unknown> | null = null;
@@ -152,8 +154,15 @@ export class SupportIncidentWorkflowComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId(this.route);
     this.route.queryParamMap.subscribe((params) => {
-      this.stationId = params.get('stationId')?.trim() ?? '';
+      const fromQuery = params.get('stationId')?.trim() ?? '';
+      if (this.stationContext.isUuid(fromQuery)) {
+        this.stationContext.remember(fromQuery);
+        this.stationId = fromQuery;
+      } else {
+        this.stationId = this.stationContext.resolveStationId(this.route);
+      }
       if (this.stationId && this.api.isConfigured) void this.load();
     });
   }

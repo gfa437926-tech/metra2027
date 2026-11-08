@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
+import { StationContextService } from '../../core/station/station-context.service';
 
 interface DashboardCard {
   title: string;
@@ -54,7 +55,7 @@ interface DashboardCard {
           <h3>نشرة الظواهر الجوية الخطرة</h3>
           <p>قم بإرسال تقارير الظواهر الجوية الخطرة والاستثنائية مثل العواصف الرعدية، الأمطار الغزيرة، العواصف الترابية، والصقيع. هذه النشرة مهمة للتحذير المبكر وإدارة الطوارئ لحماية الأرواح والممتلكات.</p>
         </div>
-        <a class="btn phenomena-button" routerLink="/phenomena/input">
+        <a class="btn phenomena-button" routerLink="/phenomena/input" [queryParams]="stationQueryParams">
           <i class="fa-solid fa-paper-plane"></i> إرسال النشرة
         </a>
       </section>
@@ -122,7 +123,7 @@ interface DashboardCard {
         <h4 class="card-title">{{ card.title }}</h4>
         <p class="card-description">{{ card.description }}</p>
         @if (card.path) {
-          <a class="card-btn" [class]="card.buttonClass" [routerLink]="card.path">
+          <a class="card-btn" [class]="card.buttonClass" [routerLink]="card.path" [queryParams]="stationQueryParams">
             <i class="fa-solid fa-chart-line"></i> {{ card.actionLabel }}
           </a>
         } @else {
@@ -178,6 +179,8 @@ export class DashboardComponent implements OnInit {
   userName = 'مستخدم النظام';
   userRole = '';
   stationName = '';
+  stationId = '';
+  stationQueryParams: Record<string, string> = {};
   greetingTime = this.getGreetingTime();
   toastMessage = '';
 
@@ -211,10 +214,13 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private readonly router: Router,
-    private readonly auth: SupabaseAuthService
+    private readonly auth: SupabaseAuthService,
+    private readonly stationContext: StationContextService
   ) {}
 
   ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId();
+    this.stationQueryParams = this.stationId ? { stationId: this.stationId } : {};
     if (typeof localStorage === 'undefined') return;
     try {
       const raw = localStorage.getItem('currentUser');
@@ -245,6 +251,8 @@ export class DashboardComponent implements OnInit {
       this.userName = 'مستخدم النظام';
       this.userRole = '';
       this.stationName = '';
+  stationId = '';
+  stationQueryParams: Record<string, string> = {};
       this.managementCards = [];
       await this.router.navigate(['/login']);
     } catch {
