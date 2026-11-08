@@ -1,7 +1,7 @@
 # Equipment Faults — Domain Contract (Draft)
 
-**Status:** isolated implementation specification; not yet exposed by the API.
-**Persistence:** intentionally excluded until the station catalogue and database schema are reviewed and explicitly approved.
+**Status:** domain services and Npgsql adapter implemented; HTTP routes are not yet mapped.
+**Persistence:** additive SQL and rollback are prepared for review; the METRA Supabase migration remains unapplied pending schema approval.
 
 ## Trust boundaries
 
@@ -47,11 +47,15 @@ and record-level access:
   malformed authorization response, and unexpected repository/authorization-provider
   exceptions fail closed. Explicit caller cancellation is propagated rather than
   converted into an authorization denial.
-- The station reader is an interface only. No concrete persistence adapter, database
-  object, migration, or RPC is introduced by this change.
+- `NpgsqlEquipmentFaultStore` implements the station reader, paged/detail read store,
+  atomic transition writer, and submission writer. It uses a dedicated PostgreSQL login,
+  transaction-local `SET ROLE` and actor/station/reason context, parameterized SQL,
+  row locking, and the database audit trigger. The migration and roles are still only
+  drafted; production use remains gated on approval and external credential provisioning.
 
-The service is not registered as an API dependency and no HTTP endpoint is exposed
-until the approved persistence contract is available.
+The services are conditionally registered when `EquipmentFaults:ConnectionString` is
+configured. The feature's HTTP endpoints remain unmapped until the API surface and
+production migration are separately approved.
 
 ## Proposed API surface
 
@@ -96,7 +100,7 @@ List endpoints must use bounded pagination and stable ordering. Cross-station un
 
 ## Explicitly out of scope pending approval
 
-This contract does not create or alter database tables, migrations, RPCs, storage buckets, deployed API routes, or client screens. Persistence must wait for review of the approved station catalogue and explicit approval of the database schema.
+This contract does not deploy database tables, roles, RPCs, storage buckets, API routes, or client screens. The additive migration is in `supabase/migrations/20261108060000_equipment_faults_npgsql.sql`; it must pass the review checkpoint before application.
 
 
 ### Additional lifecycle invariants
@@ -110,7 +114,7 @@ This contract does not create or alter database tables, migrations, RPCs, storag
 
 ## Concurrent transition and audit write boundary
 
-A future persistence adapter must implement `IEquipmentFaultTransitionWriter.TryTransitionAsync` as one atomic operation. It must compare the persisted owner station and current status with the caller's expected values, update the status only when both still match, and append the immutable audit event in the same transaction. A stale expected status returns a conflict; a missing record or station mismatch must not disclose another station's record. The in-memory `EquipmentFaultTransitionConcurrency` guard is an early validation aid only and is not a substitute for the atomic database predicate. No writer implementation or database object is created before schema approval.
+A future persistence adapter must implement `IEquipmentFaultTransitionWriter.TryTransitionAsync` as one atomic operation. It must compare the persisted owner station and current status with the caller's expected values, update the status only when both still match, and append the immutable audit event in the same transaction. A stale expected status returns a conflict; a missing record or station mismatch must not disclose another station's record. The in-memory `EquipmentFaultTransitionConcurrency` guard is an early validation aid only and is not a substitute for the atomic database predicate. The Npgsql writer is implemented; the migration remains unapplied until schema approval. PostgreSQL 17 Testcontainers coverage verifies atomic rollback when audit insertion fails.
 
 
 ### Transition command validation
