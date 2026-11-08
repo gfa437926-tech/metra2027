@@ -29,7 +29,7 @@ concurrency:
 jobs:
   angular:
     name: Angular build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: angular-app
@@ -52,7 +52,7 @@ jobs:
 
   flutter:
     name: Flutter analyze and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: flutter-app
