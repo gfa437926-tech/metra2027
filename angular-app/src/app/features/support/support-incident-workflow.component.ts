@@ -234,6 +234,31 @@ export class SupportIncidentWorkflowComponent implements OnInit {
     }
   }
 
+
+  closeDetail(): void {
+    this.detail = null;
+  }
+
+  async openDetail(row: Record<string, unknown>): Promise<void> {
+    if (!this.stationId || this.detailLoading) return;
+    const id = String(row['id'] || '');
+    if (!id) return;
+    this.detailLoading = true;
+    this.error = '';
+    try {
+      this.detail = (await this.api.getById(this.stationId, id)) as Record<string, unknown>;
+      if (this.detail['station_id'] && String(this.detail['station_id']) !== this.stationId) {
+        this.detail = null;
+        this.error = 'رُفض عرض تفاصيل بلاغ لا ينتمي إلى محطتك.';
+      }
+    } catch (error: unknown) {
+      this.detail = null;
+      this.error = this.errorMessage(error);
+    } finally {
+      this.detailLoading = false;
+    }
+  }
+
   transition(row: Record<string, unknown>, status: string): void {
     const label = this.nextActions(String(row['status'] || '')).find((a) => a.status === status)?.label ?? status;
     this.pending = { row, status, label };

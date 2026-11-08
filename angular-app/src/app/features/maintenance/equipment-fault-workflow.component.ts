@@ -249,6 +249,10 @@ export class EquipmentFaultWorkflowComponent implements OnInit {
     }
   }
 
+  closeDetail(): void {
+    this.detail = null;
+  }
+
   async openDetail(row: EquipmentFaultItem): Promise<void> {
     if (!this.stationId || this.detailLoading) return;
     this.detailLoading = true;
