@@ -13,6 +13,22 @@
 - The feature therefore uses separate roles: `metra_equipment_faults_runtime` (NOLOGIN, NOBYPASSRLS) and `metra_equipment_faults_login` (LOGIN, NOINHERIT, NOBYPASSRLS) with SET ROLE membership. The login receives no password in SQL; its credential must be set out-of-band and stored in the API secret manager. It is never a member of `service_role`.
 - This role split avoids broadening `metra_api_runtime` and avoids giving the fault feature access to unrelated METRA tables.
 
+
+## Existing `metra_api_runtime` and RLS review
+
+The read-only catalogue of policies and grants showed:
+
+- Role attributes: `NOLOGIN`, `INHERIT`, `NOSUPERUSER`, `NOBYPASSRLS`; no role-membership grants were returned for this role.
+- Explicit table privilege: `SELECT` only on:
+  `meteorological_authorities`, `metra_account_states`, `metra_role_catalogue`,
+  `metra_user_profiles`, `permission_grants`, `registration_audit_events`,
+  `registration_requests`, `station_assignments`, `station_catalogue`,
+  and `station_coordinates`.
+- Runtime SELECT policies on those tables use `USING (true)`; this role is therefore a trusted server-side read boundary, not a row-by-row user authorization boundary. API services must still scope requests and authorize actors/stations before returning data.
+- The reviewed client policies deny `anon` and `authenticated` access on the sensitive public tables. All 19 public tables returned by the schema scan had RLS enabled.
+- The separate Supabase `service_role` is `BYPASSRLS`; it is not used by the new Npgsql fault adapter.
+- Neither `metra_equipment_faults_runtime` nor `metra_equipment_faults_login` existed at the time of the read-only role probe. The draft migration creates them separately and does not change the existing `metra_api_runtime` role or its grants.
+
 ## Proposed objects
 
 1. `equipment_faults`: current state, reporter, severity, station FK, occurrence time, and optimistic version.
