@@ -231,7 +231,7 @@ public sealed class EquipmentFaultTransitionServiceTests
     private sealed class FakeStationReader(Guid stationId) : IEquipmentFaultStationReader
     {
         public Task<Guid?> GetOwningStationIdAsync(Guid actorId, Guid stationId, Guid faultId, CancellationToken cancellationToken) =>
-            Task.FromResult<Guid?>(stationId);
+            Task.FromResult<Guid?>(this.stationId);
     }
 
     private sealed class FakeAuthorization : IStationAuthorizationService
