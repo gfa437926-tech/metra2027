@@ -54,9 +54,9 @@ interface DashboardCard {
           <h3>نشرة الظواهر الجوية الخطرة</h3>
           <p>قم بإرسال تقارير الظواهر الجوية الخطرة والاستثنائية مثل العواصف الرعدية، الأمطار الغزيرة، العواصف الترابية، والصقيع. هذه النشرة مهمة للتحذير المبكر وإدارة الطوارئ لحماية الأرواح والممتلكات.</p>
         </div>
-        <button class="btn phenomena-button" type="button" (click)="showPending('نشرة الظواهر الجوية')">
+        <a class="btn phenomena-button" routerLink="/phenomena/input">
           <i class="fa-solid fa-paper-plane"></i> إرسال النشرة
-        </button>
+        </a>
       </section>
 
       <section class="card-section">
@@ -258,12 +258,35 @@ export class DashboardComponent implements OnInit {
   }
 
   private setManagementCards(): void {
+    // Always expose the modern identity/permissions hub when the session is known.
+    // Role-specific titles remain informational; navigation targets real /users APIs.
+    const usersCard: DashboardCard = {
+      title: 'المستخدمون والصلاحيات',
+      icon: 'fa-solid fa-users-gear',
+      description: 'مراجعة طلبات التسجيل، مستخدمي المحطة، التعيينات، ومنح صلاحيات الجهات عبر API',
+      path: '/users',
+      colorClass: 'card-management',
+      iconColor: '#9b59b6',
+      buttonClass: 'btn-purple',
+      actionLabel: 'فتح الإدارة'
+    };
     if (this.userRole === 'رئيس محطة') {
-      this.managementCards = [{ title: 'إدارة المحطة', icon: 'fa-solid fa-user-tie', description: 'لوحة تحكم رئيس المحطة لإدارة المستخدمين والتقارير والعمليات', colorClass: 'card-management', iconColor: '#9b59b6', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'إدارة المحطة', icon: 'fa-solid fa-user-tie', description: 'مراجعة الحسابات والتعيينات وسجلات المحطة', path: '/users', colorClass: 'card-management', iconColor: '#9b59b6', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
     } else if (this.userRole === 'مدير مركز') {
-      this.managementCards = [{ title: 'إدارة المركز', icon: 'fa-solid fa-user-gear', description: 'لوحة تحكم مدير المركز للمتابعة والإشراف والتقارير الشاملة', colorClass: 'card-management', iconColor: '#8e44ad', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'إدارة المركز', icon: 'fa-solid fa-user-gear', description: 'متابعة الاعتماد والصلاحيات عبر المسارات الحديثة', path: '/users', colorClass: 'card-management', iconColor: '#8e44ad', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
     } else if (this.userRole === 'مدير النظام') {
-      this.managementCards = [{ title: 'لوحة المدير العام', icon: 'fa-solid fa-crown', description: 'لوحة التحكم الشاملة لمدير النظام والإحصائيات والتقارير الإدارية', colorClass: 'card-management', iconColor: '#f1c40f', buttonClass: 'btn-warning', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'لوحة المدير العام', icon: 'fa-solid fa-crown', description: 'إدارة الهوية والصلاحيات والاعتماد النظامي', path: '/users', colorClass: 'card-management', iconColor: '#f1c40f', buttonClass: 'btn-warning', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
+    } else {
+      this.managementCards = [usersCard];
     }
   }
 
