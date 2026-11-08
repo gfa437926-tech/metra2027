@@ -437,13 +437,102 @@ async function main() {
     assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after one online event');
     assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
     assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
+
     assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+
+    // Hourly permanent rejection must retain the record as blocked with the
+    // server's reason; transient failure must stay pending and retry later.
+    await context.setOffline(true);
+    await page.locator('input[name="dryTemp"]').fill('+26.0');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    mockStatus = 422;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة متوقفة بسبب رفض الخادم').waitFor({ timeout: 10000 });
+    await page.getByText('بيانات النشرة مرفوضة في اختبار المتصفح').waitFor({ timeout: 10000 });
+    const hourlyRejected = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.observationType === 'hourly');
+    });
+    assert.ok(hourlyRejected);
+    assert.equal(hourlyRejected.state, 'blocked');
+    assert.match(hourlyRejected.lastError, /بيانات النشرة مرفوضة/);
+
+    await context.setOffline(true);
+    await page.locator('input[name="dryTemp"]').fill('+27.0');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    mockStatus = 503;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    await page.waitForFunction(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.some(item => item.observationType === 'hourly' && item.payload.values.dryTemp === '+27.0' && item.attempts === 1 && Boolean(item.lastError));
+    }, { timeout: 10000 });
+    const hourlyTransient = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.observationType === 'hourly' && item.payload.values.dryTemp === '+27.0');
+    });
+    assert.equal(hourlyTransient.state, 'pending');
+    assert.equal(hourlyTransient.attempts, 1);
+    assert.match(hourlyTransient.lastError, /تعطل مؤقت في خادم الاختبار/);
+    mockStatus = 200;
+    await context.setOffline(true);
+    await context.setOffline(false);
+    await page.waitForFunction(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.length === 1 && rows[0].state === 'blocked' && rows[0].observationType === 'daily';
+    }, { timeout: 15000 });
     assert.deepEqual(errors, [], 'Angular pages should not throw uncaught runtime errors');
     console.log(JSON.stringify({
       browser: 'Chromium', serviceWorker: pwa.active, savedOffline: true,
       reopenedAfterReload: true, autoSyncConfirmed: true, serverRejectionBlocked: true,
-      transientFailureRetainedAndRetried: true, hourlySavedAndReopened: true,
-      concurrentDailyHourlySync: true, maxConcurrentPosts, apiAttempts: acceptedPosts.length,
+      transientFailureRetainedAndRetried: true, hourlySavedAndReopened: true, hourlyRejectionBlocked: true,
+      hourlyTransientFailureRetried: true, concurrentDailyHourlySync: true, maxConcurrentPosts, apiAttempts: acceptedPosts.length,
       remainingBlocked: 1, runtimeErrors: errors.length
     }));
   } finally {
