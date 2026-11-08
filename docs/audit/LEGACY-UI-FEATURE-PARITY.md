@@ -210,3 +210,21 @@ and all report-specific visibility/required behavior.
 - On code commit `c4abebd9ad10425e684636ffc48346a1a681a2a6`, GitHub Actions completed the `.NET API build` step successfully and the `Run domain and API tests` step successfully, including the new observation contract tests.
 - The same Backend build workflow was still running its production container image step at the time of this update; therefore the full workflow is not yet marked successful.
 - The Client CI run for the earlier code commit was cancelled when newer branch commits superseded it. The latest branch-head Client CI run is queued/pending and must be checked separately.
+
+
+## Angular daily report API integration — implementation record (2026-11-08)
+
+- Updated `angular-app/src/app/features/reports/daily-reports.component.ts` to submit the form through `ObservationApiService.submitObservation()` on both the explicit send action and normal form submission (Enter key). The previous local-only submission handler is now used only by the explicitly labelled local-draft action.
+- The request uses the existing authenticated station-scoped endpoint `POST /api/v1/stations/{stationId}/observations`, with a fresh idempotency key, `observationType: daily`, report-type-specific UTC timestamp, and `submit: true`.
+- The request payload now follows the v1 contract exactly: `reportType`, boolean `responsibilityAgreement`, and `values` containing only canonical meteorological field keys. Observer/station labels, notes and selected phenomena remain metadata outside `values`; form-only controls are no longer passed to the meteorological validator.
+- `06utc` and `18utc` observations are timestamped at 06:00Z and 18:00Z respectively; `24h` retains the existing date-at-00:00Z convention pending confirmation of the meteorological reporting-day boundary.
+- A success message is displayed only when the server returns a persisted observation `id`. If the server returns no identifier, the UI reports that persistence was not confirmed. HTTP 400 field issues are mapped to the visible validation list.
+- The session list is explicitly labelled as a local display cache. It is not represented as a persistent history. The local-draft action remains separate and explicitly warns that it does not write to the server.
+- No SQL migrations, database schema, database records, or Supabase project configuration were changed.
+
+### Remaining verification
+
+- Client CI for branch head `81d2281a0b526c1bd957b6efa79e1602cadc722e` has been queued/pending; the Angular build result is not yet available.
+- A live authenticated end-to-end submission has not been performed; actual persistence must be confirmed in the configured environment by checking the returned observation ID and the station review queue.
+- Confirm the correct reporting-day timestamp convention for `24h` before treating the timestamp semantics as final.
+- Add automated Angular component/API tests once a test runner is configured for `angular-app`.
