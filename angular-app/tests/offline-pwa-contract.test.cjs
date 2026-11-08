@@ -23,7 +23,8 @@ test('PWA worker never intercepts or caches API/authenticated traffic', () => {
 
 test('offline navigation falls back to cached application shell', () => {
   assert.match(worker, /request\.mode === 'navigate'/);
-  assert.match(worker, /cache\.match\('\/'\)/);
+  assert.match(worker, /new URL\('\.\/', self\.registration\.scope\)/);
+  assert.match(worker, /cache\.match\(APP_ROOT\)/);
   assert.match(worker, /catch\s*\{/);
 });
 
@@ -44,7 +45,8 @@ test('web manifest declares an Arabic standalone application', () => {
   assert.equal(manifest.lang, 'ar');
   assert.equal(manifest.dir, 'rtl');
   assert.equal(manifest.display, 'standalone');
-  assert.equal(manifest.start_url, '/');
+  assert.equal(manifest.start_url, './');
+  assert.equal(manifest.scope, './');
 });
 
 
