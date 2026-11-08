@@ -313,6 +313,7 @@ async function main() {
       db.close();
       return rows.some(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts === 1 && Boolean(item.lastError));
     }, { timeout: 10000 });
+    await page.getByText(/جارٍ الإرسال تلقائياً/).waitFor({ state: 'hidden', timeout: 10000 });
     const transient = await page.evaluate(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
