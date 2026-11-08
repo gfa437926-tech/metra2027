@@ -259,6 +259,7 @@ async function main() {
     // A permanent validation/authorization rejection must move the item to
     // blocked, retain its payload, and surface the server's reason to the user.
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.locator('input[name="observer"]').fill('راصد الرفض');
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
@@ -288,6 +289,7 @@ async function main() {
     // A transient server failure must remain pending with an incremented attempt
     // count; a later online event retries it without losing the local payload.
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.locator('input[name="observer"]').fill('راصد الانقطاع');
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
@@ -355,6 +357,7 @@ async function main() {
 
     // Real hourly form: offline persistence, reload and reopening.
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.goto('http://127.0.0.1:' + port + '/reports/hourly', { waitUntil: 'domcontentloaded' });
     await page.locator('metra-hourly-reports').waitFor({ state: 'attached', timeout: 20000 });
     await page.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
@@ -443,6 +446,7 @@ async function main() {
     // Hourly permanent rejection must retain the record as blocked with the
     // server's reason; transient failure must stay pending and retry later.
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.locator('input[name="dryTemp"]').fill('+26.0');
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
@@ -470,6 +474,7 @@ async function main() {
     assert.match(hourlyRejected.lastError, /بيانات النشرة مرفوضة/);
 
     await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
     await page.locator('input[name="dryTemp"]').fill('+27.0');
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
