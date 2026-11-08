@@ -133,6 +133,7 @@ export class DailyReportsComponent {
       const items = await this.offlineQueue.list();
       for (const item of items) {
         if (!this.isOnline) break;
+        if (item.state === 'blocked') continue;
         try {
           const result = await this.api.submitObservation(item.stationId, {
             idempotencyKey: item.idempotencyKey,
@@ -144,6 +145,7 @@ export class DailyReportsComponent {
           const receipt = getConfirmedDailySubmission(result);
           if (!receipt) throw new Error('لم يصل إيصال حفظ مؤكد؛ ستبقى النشرة في قائمة الانتظار.');
           await this.offlineQueue.remove(item.idempotencyKey);
+          if (this.pendingSubmission?.idempotencyKey === item.idempotencyKey) this.clearPendingSubmission();
           this.previews.unshift({ reference: receipt.id, date: item.reportDate,
             reportType: item.reportType, station: item.stationName, status: 'submitted', values: {} });
         } catch (error) {
