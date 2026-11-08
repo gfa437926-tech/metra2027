@@ -36,6 +36,7 @@ public sealed class NpgsqlEquipmentFaultStoreIntegrationTests : IAsyncLifetime
             create table public.station_catalogue (id uuid primary key);
             create role anon nologin;
             create role authenticated nologin;
+            create role metra_api_runtime nologin inherit;
             create role service_role nologin bypassrls;
             """);
 
