@@ -28,6 +28,15 @@ interface HourlyPreview {
 
       <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="blockedOfflineCount">{{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><ul *ngIf="blockedOfflineItems.length" class="offline-blocked-list"><li *ngFor="let item of blockedOfflineItems"><strong>{{ item.stationName }} — {{ item.reportDate }} ({{ item.reportType }} UTC)</strong><span>{{ item.lastError || 'رفض الخادم النشرة دون تفاصيل إضافية.' }}</span></li></ul><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
 
+      <section class="panel preview-panel" *ngIf="pendingOfflineItems.length">
+        <h2><i class="fa-solid fa-cloud-arrow-down"></i> نشرات ساعية محفوظة على هذا الجهاز</h2>
+        <p>يمكن إعادة فتح النشرة ومراجعة قيمها دون إرسالها أو حذفها من قائمة الانتظار.</p>
+        <article class="preview-row" *ngFor="let item of pendingOfflineItems">
+          <div><strong>{{ item.stationName }} — {{ item.reportDate }} · {{ item.reportType }} UTC</strong><p>{{ item.state === 'blocked' ? 'تحتاج إلى مراجعة' : 'بانتظار المزامنة' }}</p></div>
+          <button type="button" class="secondary" (click)="restoreOfflineSubmission(item, hourlyForm)">إعادة فتح النشرة</button>
+        </article>
+      </section>
+
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
         <article><i class="fa-regular fa-clock"></i><span>التوقيت المحلي</span><strong>{{ now }}</strong></article>
@@ -149,6 +158,7 @@ export class HourlyReportsComponent {
   private readonly syncOwner = 'hourly-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   pendingOfflineCount = 0;
+  pendingOfflineItems: DailyOfflineSubmission[] = [];
   blockedOfflineCount = 0;
   blockedOfflineItems: DailyOfflineSubmission[] = [];
   syncing = false;
@@ -164,7 +174,27 @@ export class HourlyReportsComponent {
   }
 
   private async refreshOfflineCount(): Promise<void> {
-    try { const items = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; } catch { /* local storage unavailable */ }
+    try { const items = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly'); this.pendingOfflineItems = items.filter(x => x.state === 'pending' || x.state === 'blocked'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; } catch { /* local storage unavailable */ }
+  }
+
+  restoreOfflineSubmission(item: DailyOfflineSubmission, form: HTMLFormElement): void {
+    const payload = item.payload ?? {};
+    const values = payload['values'] && typeof payload['values'] === 'object'
+      ? payload['values'] as Record<string, unknown> : {};
+    this.selectedStationId = item.stationId;
+    this.selectedHour = item.reportType;
+    const setValue = (name: string, value: unknown): void => {
+      const field = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+      if (field && typeof value === 'string') field.value = value;
+    };
+    setValue('stationId', item.stationId);
+    setValue('observationDate', item.reportDate);
+    setValue('utcTime', item.reportType);
+    for (const [name, value] of Object.entries(values)) setValue(name, value);
+    const agreement = form.elements.namedItem('responsibilityAgreement') as HTMLInputElement | null;
+    if (agreement) agreement.checked = values['responsibilityAgreement'] === 'on' || values['responsibilityAgreement'] === true;
+    this.issues = [];
+    this.message = 'أُعيد فتح النشرة الساعية المحفوظة محلياً؛ ما زالت في قائمة الانتظار ولم تُرسل بعد.';
   }
 
   async retryBlockedOffline(): Promise<void> {
@@ -196,7 +226,7 @@ export class HourlyReportsComponent {
         } catch (error) {
           const status = error && typeof error === 'object' && 'status' in error ? Number((error as {status:unknown}).status) : 0;
           if ([400,403,422].includes(status)) await this.offlineQueue.update({...item,state:'blocked',lastError:getSubmissionErrorMessage(error,'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.')});
-          else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:error instanceof Error?error.message:'تعذر الاتصال.'}); break; }
+          else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:getSubmissionErrorMessage(error,'تعذر الاتصال بالخادم.')}); break; }
         }
       }
     } finally {
