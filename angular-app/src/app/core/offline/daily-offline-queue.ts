@@ -87,7 +87,7 @@ export class DailyOfflineQueue {
   ): Promise<T> {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, mode);
-      const request = operation(transaction.objectStore(this.storeName));
+      const request = operation(transaction.objectStore(storeName));
       let result!: T;
       request.onsuccess = () => { result = request.result as T; };
       request.onerror = () => reject(request.error ?? new Error('فشلت عملية صندوق الإرسال المحلي.'));
