@@ -9,7 +9,7 @@ not the website URL and not a Supabase URL. The Flutter API client appends
 ## Run against a deployed API
 
 ```powershell
-cd mobile/metra_mobile
+cd flutter-app
 flutter pub get
 flutter run --dart-define=METRA_API_BASE_URL=https://api.example.gov.sy
 ```
