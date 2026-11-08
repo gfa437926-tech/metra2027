@@ -72,6 +72,14 @@ public sealed class EquipmentFaultApplicationService(
             faultId == Guid.Empty || string.IsNullOrWhiteSpace(permissionCode))
             return EquipmentFaultAccessResult.NotFoundOrWrongStation;
 
+        // Authorize the requested station before probing a record identifier.
+        // This prevents an unprivileged caller from using the station reader as an
+        // existence oracle for fault IDs belonging to another station.
+        var allowed = await EquipmentFaultAuthorization.HasStationPermissionAsync(
+            authorization, userId, routeStationId, permissionCode, cancellationToken);
+        if (!allowed)
+            return EquipmentFaultAccessResult.Forbidden;
+
         Guid? persistedStationId;
         try
         {
@@ -93,7 +101,6 @@ public sealed class EquipmentFaultApplicationService(
         }
         catch (Exception)
         {
-            // Unexpected repository failures must fail closed before permission checks.
             return EquipmentFaultAccessResult.Forbidden;
         }
 
@@ -101,11 +108,6 @@ public sealed class EquipmentFaultApplicationService(
             !EquipmentFaultStationScope.MatchesPersistedOwner(routeStationId, persistedStationId.Value))
             return EquipmentFaultAccessResult.NotFoundOrWrongStation;
 
-        var allowed = await EquipmentFaultAuthorization.HasStationPermissionAsync(
-            authorization, userId, routeStationId, permissionCode, cancellationToken);
-
-        return allowed
-            ? EquipmentFaultAccessResult.Allowed
-            : EquipmentFaultAccessResult.Forbidden;
+        return EquipmentFaultAccessResult.Allowed;
     }
 }
