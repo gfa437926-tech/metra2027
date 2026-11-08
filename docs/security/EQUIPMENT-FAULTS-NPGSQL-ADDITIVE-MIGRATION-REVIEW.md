@@ -74,7 +74,7 @@ The SQL creates a LOGIN role without a password. Before Npgsql can connect, an a
 
 ## Rollback
 
-Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It revokes runtime membership and grants but deliberately preserves all feature data and schema. Full object removal is a separate destructive operation and requires a verified export and explicit approval.
+Use `supabase/rollback/20261108060000_disable_equipment_faults_runtime.sql`. It revokes runtime membership, sets the feature login to NOLOGIN, and revokes grants while deliberately preserving all feature data and schema. Full object removal is a separate destructive operation and requires a verified export and explicit approval.
 
 ## Review notes / unresolved before applying
 
