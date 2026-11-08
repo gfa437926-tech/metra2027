@@ -12,7 +12,7 @@ test('PWA worker installs an application shell and activates immediately', () =>
   assert.match(worker, /self\.skipWaiting\(\)/);
   assert.match(worker, /self\.clients\.claim\(\)/);
   assert.match(worker, /APP_SHELL/);
-  assert.match(worker, /'metra-icon\\.svg'/);
+  assert.match(worker, /'metra-icon\.svg'/);
 });
 
 test('PWA worker never intercepts or caches API/authenticated traffic', () => {
