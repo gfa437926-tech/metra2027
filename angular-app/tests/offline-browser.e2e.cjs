@@ -322,10 +322,10 @@ async function main() {
         request.onerror = () => reject(request.error);
       });
       db.close();
-      return rows.find(item => item.payload.observerName === 'راصد الانقطاع' && item.state === 'pending' && item.attempts >= 1 && Boolean(item.lastError));
+      return rows.find(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts >= 1 && Boolean(item.lastError));
     });
     assert.ok(transient);
-    assert.equal(transient.state, 'pending');
+    assert.equal(transient.state, 'pending', JSON.stringify(transient));
     assert.equal(transient.attempts, 1);
     assert.match(transient.lastError, /تعطل مؤقت في خادم الاختبار/);
 
