@@ -54,3 +54,19 @@ review.
 ## Follow-up
 
 - Removed root `.rar` archive from the cleanup branch (not required by Angular/Flutter/.NET).
+
+
+## Residual legacy root cleanup
+
+After exact blob removal, remaining root legacy assets were removed by operator
+request to clear residual copies associated with the old UI package (even when
+blob SHA differed from current `metra-old` HEAD):
+
+- `soil-send.js`
+- `soil-validation.js`
+- `supabase-config.js`
+- `user-data.js`
+- `weather_phenomena.html`
+
+Modern trees (`angular-app`, `backend`, `mobile`, `database`, `supabase`) were
+not modified. `metra-old` was not modified.
