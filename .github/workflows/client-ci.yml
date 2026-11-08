@@ -41,6 +41,7 @@ jobs:
           cache: npm
           cache-dependency-path: angular-app/package.json
       - run: npm install --no-audit --no-fund
+      - run: npm test
       - run: npm run build
 
   flutter:
