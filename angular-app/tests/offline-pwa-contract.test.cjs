@@ -99,7 +99,11 @@ test('daily and hourly screens distinguish blocked records and expose explicit r
     assert.match(source, /إعادة محاولة النشرات المتوقفة/);
   }
   assert.match(hourly, /observationType === 'hourly' && item\.state === 'blocked'/);
-  assert.match(daily, /\(item\.observationType \?\? 'daily'\) !== 'daily'/);
+  // Retry controls stay scoped to each screen, while the shared lease owner drains both types.
+  assert.match(daily, /\(item\.observationType \?\? 'daily'\) === 'daily' && item\.state === 'blocked'/);
+  assert.match(daily, /The shared lease owner drains both daily and hourly records/);
+  assert.match(daily, /observationType: item\.observationType \?\? 'daily'/);
+  assert.match(hourly, /observationType: item\.observationType \?\? 'daily'/);
   assert.match(daily, /blockedOfflineItems/);
   assert.match(hourly, /blockedOfflineItems/);
   assert.match(daily, /item\.lastError/);
