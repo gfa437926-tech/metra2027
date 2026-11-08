@@ -137,7 +137,7 @@ export class DailyReportsComponent {
         try {
           const result = await this.api.submitObservation(item.stationId, {
             idempotencyKey: item.idempotencyKey,
-            observationType: 'daily',
+            observationType: item.observationType ?? 'daily',
             observedAt: item.observedAt,
             payload: item.payload,
             submit: true
@@ -255,7 +255,7 @@ export class DailyReportsComponent {
       const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
       if (!this.isOnline) {
         await this.offlineQueue.enqueue({
-          idempotencyKey, stationId: this.selectedStationId, stationName,
+          idempotencyKey, observationType: 'daily', stationId: this.selectedStationId, stationName,
           reportDate: values['currentDate'] ?? this.today, reportType: this.reportType,
           observedAt, payload, createdAt: new Date().toISOString(), attempts: 0, state: 'pending'
         });
