@@ -16,6 +16,14 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
       <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="blockedOfflineCount"> · {{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><ul *ngIf="blockedOfflineItems.length" class="offline-blocked-list"><li *ngFor="let item of blockedOfflineItems"><strong>{{ item.stationName }} — {{ item.reportDate }} ({{ item.reportType }})</strong><span>{{ item.lastError || 'رفض الخادم النشرة دون تفاصيل إضافية.' }}</span></li></ul><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
+      <section class="panel preview-panel" *ngIf="pendingOfflineItems.length">
+        <h2><i class="fa-solid fa-cloud-arrow-down"></i> نشرات محفوظة على هذا الجهاز</h2>
+        <p>يمكنك إعادة فتح أي نشرة معلّقة ومراجعة حقولها قبل المزامنة. إعادة الفتح لا ترسل النشرة ولا تحذفها من قائمة الانتظار.</p>
+        <article class="preview-row" *ngFor="let item of pendingOfflineItems">
+          <div><strong>{{ item.stationName }} — {{ item.reportDate }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.state === 'blocked' ? 'تحتاج إلى مراجعة' : 'بانتظار المزامنة' }}</p></div>
+          <button type="button" class="secondary" (click)="restoreOfflineSubmission(item, dailyForm)">إعادة فتح النشرة</button>
+        </article>
+      </section>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
@@ -103,6 +111,7 @@ export class DailyReportsComponent {
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   pendingOfflineCount = 0;
+  pendingOfflineItems: DailyOfflineSubmission[] = [];
   blockedOfflineCount = 0;
   blockedOfflineItems: DailyOfflineSubmission[] = [];
   syncMessage = '';
@@ -124,8 +133,36 @@ export class DailyReportsComponent {
   private readonly handleOffline = (): void => { this.isOnline = false; };
 
   private async refreshOfflineCount(): Promise<void> {
-    try { const items = (await this.offlineQueue.list()).filter(x => (x.observationType ?? 'daily') === 'daily'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; }
+    try { const items = (await this.offlineQueue.list()).filter(x => (x.observationType ?? 'daily') === 'daily'); this.pendingOfflineItems = items.filter(x => x.state === 'pending' || x.state === 'blocked'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; }
     catch (error) { this.syncMessage = error instanceof Error ? error.message : 'تعذر قراءة صندوق الإرسال المحلي.'; }
+  }
+
+  restoreOfflineSubmission(item: DailyOfflineSubmission, form: HTMLFormElement): void {
+    const payload = item.payload ?? {};
+    const values = payload['values'] && typeof payload['values'] === 'object'
+      ? payload['values'] as Record<string, unknown> : {};
+    this.reportType = item.reportType as typeof this.reportType;
+    this.selectedStationId = item.stationId;
+    const setValue = (name: string, value: unknown): void => {
+      const field = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+      if (field && typeof value === 'string') field.value = value;
+    };
+    setValue('currentDate', item.reportDate);
+    setValue('stationId', item.stationId);
+    setValue('observer', typeof payload['observerName'] === 'string' ? payload['observerName'] : '');
+    setValue('observerNotes', typeof payload['observerNotes'] === 'string' ? payload['observerNotes'] : '');
+    for (const [name, value] of Object.entries(values)) setValue(name, value);
+    const agreement = form.elements.namedItem('responsibilityAgreement') as HTMLInputElement | null;
+    if (agreement) agreement.checked = payload['responsibilityAgreement'] === true;
+    const selectedPhenomena = Array.isArray(payload['phenomena']) ? payload['phenomena'] : [];
+    for (const phenomenon of this.phenomena) {
+      const field = form.elements.namedItem(phenomenon.id) as HTMLInputElement | null;
+      if (field) field.checked = selectedPhenomena.includes(phenomenon.id);
+    }
+    this.noDataFields.clear();
+    this.issues = [];
+    this.clearPreview();
+    this.message = 'أُعيد فتح النشرة المحفوظة محلياً. عدّلها عند الحاجة ثم أرسلها عند توفر الاتصال؛ ما زالت محفوظة في قائمة الانتظار.';
   }
 
   async retryBlockedOffline(): Promise<void> {
