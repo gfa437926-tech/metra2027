@@ -20,8 +20,8 @@ public enum EquipmentFaultAccessResult
 }
 
 /// <summary>
-/// Application-layer authorization orchestration. Persistence writes and database
-/// schema are deliberately kept outside this service until the schema is approved.
+/// Application-layer authorization orchestration. Persistence remains behind narrow
+/// ports; the additive database migration is reviewed and deployed separately.
 /// </summary>
 public sealed class EquipmentFaultApplicationService(
     IStationAuthorizationService authorization,
