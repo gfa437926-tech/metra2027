@@ -155,3 +155,30 @@ Required remediation:
    pre-submit feedback is required.
 5. Add negative integration tests proving malformed/missing/conditional fields
    cannot be persisted by direct API submission.
+
+
+### Daily report-type behavior and persistence gap
+
+The legacy daily form has three report types: `24h`, `06utc`, and `18utc`.
+For `24h`, the original client requires the minimum/maximum temperatures,
+precipitation, snow thickness, evaporation, sunshine duration/percentage,
+maximum gust speed/direction/time, and maximum/minimum humidity with their
+occurrence times. For `06utc` and `18utc`, only minimum/maximum temperatures,
+precipitation, and snow thickness are required; the 24-hour-only phenomena,
+evaporation/sunshine, wind, and humidity sections are disabled/hidden.
+The legacy form also requires the responsibility agreement before submission.
+
+The current Angular daily component reproduces report-type controls and much of
+the field validation, but its `submit()` handler creates a draft in the
+component's in-memory `previews` array and explicitly reports that the draft is
+temporary to the current page. Its `saveDraft()` also does not persist outside
+the page. The displayed "API" label therefore must not be interpreted as proof
+of API-backed daily persistence. Flutter has no daily form yet.
+
+The current backend daily validator supports a set of field rules, but the
+validation endpoint does not pass a report-type-specific required-field set.
+Implement explicit `24h` / `06utc` / `18utc` policy in the backend and enforce
+it in the submission path, then connect Angular and Flutter to the authenticated
+station-scoped submission API. Preserve the responsibility acknowledgement,
+phenomena selection, local/UTC date semantics, missing-value `#` handling,
+and all report-specific visibility/required behavior.
