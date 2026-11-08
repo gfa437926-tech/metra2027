@@ -59,7 +59,14 @@ builder.Services.AddScoped<IEquipmentFaultService>(sp =>
         return new NpgsqlEquipmentFaultService(configuration, auth);
     return ActivatorUtilities.CreateInstance<SupabaseEquipmentFaultService>(sp);
 });
-builder.Services.AddScoped<ISupportIncidentService, SupabaseSupportIncidentService>();
+builder.Services.AddScoped<ISupportIncidentService>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var auth = sp.GetRequiredService<IStationAuthorizationService>();
+    if (!string.IsNullOrWhiteSpace(configuration.GetConnectionString("MetraOps")))
+        return new NpgsqlSupportIncidentService(configuration, auth);
+    return ActivatorUtilities.CreateInstance<SupabaseSupportIncidentService>(sp);
+});
 builder.Services.AddSingleton<ISupabaseAccessTokenValidator, SupabaseAccessTokenValidator>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
