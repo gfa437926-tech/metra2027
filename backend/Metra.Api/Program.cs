@@ -38,6 +38,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAssignmentServi
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAuthorityAccessService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseEquipmentFaultService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseSupportIncidentService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAccessTokenValidator));
 
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
@@ -50,6 +51,7 @@ builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentS
 builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
 builder.Services.AddScoped<IEquipmentFaultService, SupabaseEquipmentFaultService>();
 builder.Services.AddScoped<ISupportIncidentService, SupabaseSupportIncidentService>();
+builder.Services.AddSingleton<ISupabaseAccessTokenValidator, SupabaseAccessTokenValidator>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
@@ -60,23 +62,7 @@ builder.Services.AddOpenApi();
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
-    {
-        options.Authority = authority;
-        options.Audience = audience;
-        options.RequireHttpsMetadata = true;
-        options.MapInboundClaims = false;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = authority,
-            ValidateAudience = true,
-            ValidAudience = audience,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            NameClaimType = "sub",
-            ClockSkew = TimeSpan.FromSeconds(60)
-        };
-    });
+        MetraJwtBearerConfiguration.Configure(options, builder.Configuration, authority, audience));
 
 builder.Services.AddAuthorization(options =>
 {

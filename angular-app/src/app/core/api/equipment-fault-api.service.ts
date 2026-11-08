@@ -80,6 +80,16 @@ export class EquipmentFaultApiService {
     ));
   }
 
+
+  async getById(stationId: string, faultId: string): Promise<EquipmentFaultItem> {
+    if (!this.isConfigured) throw new Error('يلزم ضبط عنوان API وإعدادات Supabase العامة أولاً.');
+    const headers = await this.authHeaders();
+    return firstValueFrom(this.http.get<EquipmentFaultItem>(
+      `${metraConfig.apiBaseUrl}/api/v1/stations/${encodeURIComponent(stationId)}/equipment-faults/${encodeURIComponent(faultId)}`,
+      { headers }
+    ));
+  }
+
   private async authHeaders(): Promise<HttpHeaders> {
     const token = await this.auth.getAccessToken();
     if (!token) throw new Error('يلزم تسجيل الدخول أولاً.');

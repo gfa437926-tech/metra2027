@@ -45,6 +45,11 @@ public interface IEquipmentFaultService
         int limit,
         CancellationToken cancellationToken);
 
+    Task<EquipmentFaultServiceOutcome> GetByIdAsync(
+        Guid stationId,
+        Guid faultId,
+        CancellationToken cancellationToken);
+
     Task<EquipmentFaultServiceOutcome> TransitionAsync(
         Guid userId,
         Guid stationId,
@@ -201,7 +206,40 @@ public sealed class SupabaseEquipmentFaultService(
         return await SendAsync(message, cancellationToken);
     }
 
-    public async Task<EquipmentFaultServiceOutcome> TransitionAsync(
+    
+    public async Task<EquipmentFaultServiceOutcome> GetByIdAsync(
+        Guid stationId,
+        Guid faultId,
+        CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || stationId == Guid.Empty || faultId == Guid.Empty)
+            return new(IsConfigured, false, null, null);
+
+        // Station scope is enforced in the query filter and again by the endpoint permission gate.
+        var query =
+            $"id=eq.{faultId:D}&station_id=eq.{stationId:D}" +
+            "&select=id,station_id,reporter_user_id,equipment_category,equipment_name,description,severity,status,is_operationally_blocking,occurred_at,assigned_to,progress_percent,progress_note,created_at,updated_at" +
+            "&limit=1";
+        using var message = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{_url!.TrimEnd('/')}/rest/v1/metra_equipment_faults?{query}");
+        ApplyServiceAuth(message);
+
+        var outcome = await SendAsync(message, cancellationToken);
+        if (!outcome.Succeeded || outcome.Data is null)
+            return outcome;
+
+        if (outcome.Data.Value.ValueKind == JsonValueKind.Array)
+        {
+            if (outcome.Data.Value.GetArrayLength() == 0)
+                return new(true, false, HttpStatusCode.NotFound, null);
+            return new(true, true, HttpStatusCode.OK, outcome.Data.Value[0].Clone());
+        }
+
+        return outcome;
+    }
+
+public async Task<EquipmentFaultServiceOutcome> TransitionAsync(
         Guid userId,
         Guid stationId,
         Guid faultId,
@@ -365,7 +403,44 @@ public static class EquipmentFaultEndpoints
             .WithTags("Maintenance")
             .WithName("ListEquipmentFaults");
 
-        endpoints.MapPost(
+        
+        endpoints.MapGet(
+            "/api/v1/stations/{stationId:guid}/equipment-faults/{faultId:guid}",
+            async (
+                Guid stationId,
+                Guid faultId,
+                IEquipmentFaultService faults,
+                CancellationToken cancellationToken) =>
+            {
+                if (!faults.IsConfigured)
+                    return Results.Problem(
+                        title: "Equipment fault service unavailable",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                var result = await faults.GetByIdAsync(stationId, faultId, cancellationToken);
+                if (!result.Succeeded || result.Data is null)
+                {
+                    if (result.StatusCode == HttpStatusCode.NotFound)
+                        return Results.NotFound(new { error = "equipment_fault_not_found" });
+                    return Results.Problem(
+                        title: "Equipment fault detail unavailable",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+
+                // Defense in depth: reject cross-station leakage if storage ever returns a mismatched row.
+                if (result.Data.Value.TryGetProperty("station_id", out var stationProp))
+                {
+                    if (!Guid.TryParse(stationProp.GetString(), out var rowStation) || rowStation != stationId)
+                        return Results.NotFound(new { error = "equipment_fault_not_found" });
+                }
+
+                return Results.Ok(result.Data);
+            })
+            .RequireStationPermission("equipment_fault.read")
+            .WithTags("Maintenance")
+            .WithName("GetEquipmentFaultById");
+
+endpoints.MapPost(
             "/api/v1/stations/{stationId:guid}/equipment-faults/{faultId:guid}/transitions",
             async (
                 Guid stationId,

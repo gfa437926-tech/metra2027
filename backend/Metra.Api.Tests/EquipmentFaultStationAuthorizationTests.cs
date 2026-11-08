@@ -163,6 +163,13 @@ public sealed class EquipmentFaultStationAuthorizationTests
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("[]").RootElement));
         }
 
+        public Task<EquipmentFaultServiceOutcome> GetByIdAsync(
+            Guid stationId,
+            Guid faultId,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new EquipmentFaultServiceOutcome(
+                true, true, HttpStatusCode.OK, JsonDocument.Parse("{"station_id":"" + stationId + ""}").RootElement));
+
         public Task<EquipmentFaultServiceOutcome> TransitionAsync(
             Guid userId,
             Guid stationId,

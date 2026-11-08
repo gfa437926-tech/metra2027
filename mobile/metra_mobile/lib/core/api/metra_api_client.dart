@@ -229,6 +229,20 @@ class MetraApiClient {
     );
   }
 
+
+  Future<Map<String, dynamic>> getEquipmentFaultById({
+    required String stationId,
+    required String faultId,
+  }) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/equipment-faults/${Uri.encodeComponent(faultId)}',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_equipment_fault');
+    return Map<String, dynamic>.from(decoded);
+  }
+
   Future<void> transitionEquipmentFault({
     required String stationId,
     required String faultId,
