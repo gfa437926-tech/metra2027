@@ -313,8 +313,6 @@ async function main() {
       db.close();
       return rows.some(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts === 1 && Boolean(item.lastError));
     }, { timeout: 10000 });
-    const transientDebug = await page.evaluate(async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('metra-offline-outbox', 3); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const rows = await new Promise((resolve, reject) => { const tx = db.transaction('daily-submissions', 'readonly'); const request = tx.objectStore('daily-submissions').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return rows; });
-    console.log('DAILY_TRANSIENT_QUEUE_DEBUG', JSON.stringify(transientDebug));
     const transient = await page.evaluate(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
@@ -369,7 +367,7 @@ async function main() {
     await page.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
     await page.locator('select[name="utcTime"]').selectOption('01');
     const hourlyValues = { dryTemp: '+25.5', wetTemp: '+20.0', stationPressure: '1013.2', seaLevelPressure: '1013.2', relativeHumidity: '065', dewPoint: '+18.5', windDirection: '18', windSpeed: '12', visibility: '050', totalCloudCover: '2', cover12: '2', cover123: '2' };
-    for (const [name, value] of Object.entries(hourlyValues)) await page.locator('[name="' + name + '"]').fill(value);
+    for (const [name, value] of Object.entries(hourlyValues)) { if (name === 'totalCloudCover') await page.locator('[name="' + name + '"]').selectOption(value); else await page.locator('[name="' + name + '"]').fill(value); }
     await page.locator('input[name="responsibilityAgreement"]').check();
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
