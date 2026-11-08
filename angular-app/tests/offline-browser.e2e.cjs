@@ -305,7 +305,7 @@ async function main() {
     assert.ok(transient);
     assert.equal(transient.state, 'pending');
     assert.equal(transient.attempts, 1);
-    assert.match(transient.lastError, /HTTP 503/);
+    assert.match(transient.lastError, /503 Service Unavailable/);
 
     mockStatus = 200;
     await context.setOffline(true);
