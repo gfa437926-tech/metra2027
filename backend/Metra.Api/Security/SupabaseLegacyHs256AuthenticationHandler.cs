@@ -78,7 +78,7 @@ public sealed class SupabaseLegacyHs256AuthenticationHandler(
             // Auth /user has already verified the signature and token activity.
             // Only after that succeeds do we inspect signed claims for issuer/audience
             // parity with the ES256 JwtBearer configuration.
-            if (!TryValidateVerifiedClaims(token, userId, out var payload))
+            if (!TryValidateVerifiedClaims(token, userId))
                 return AuthenticateResult.Fail("Legacy token claims are invalid.");
 
             var claims = new List<Claim> { new("sub", userId.ToString()) };
@@ -142,9 +142,8 @@ public sealed class SupabaseLegacyHs256AuthenticationHandler(
         }
     }
 
-    private bool TryValidateVerifiedClaims(string token, Guid authUserId, out JwtPayload payload)
+    private bool TryValidateVerifiedClaims(string token, Guid authUserId)
     {
-        payload = new JwtPayload();
         try
         {
             var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
@@ -156,13 +155,12 @@ public sealed class SupabaseLegacyHs256AuthenticationHandler(
 
             var now = DateTimeOffset.UtcNow;
             var skew = TimeSpan.FromSeconds(60);
-            if (jwt.ValidTo == DateTime.MinValue || now - skew >= jwt.ValidTo)
+            if (jwt.ValidTo == DateTime.MinValue || now - skew >= new DateTimeOffset(jwt.ValidTo))
                 return false;
-            if (jwt.Payload.Nbf is long notBefore &&
-                now + skew < DateTimeOffset.FromUnixTimeSeconds(notBefore))
+            if (jwt.ValidFrom != DateTime.MinValue &&
+                now + skew < new DateTimeOffset(jwt.ValidFrom))
                 return false;
 
-            payload = jwt.Payload;
             return true;
         }
         catch (Exception)
