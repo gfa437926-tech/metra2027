@@ -121,7 +121,7 @@ export class DailyOfflineQueue {
         try {
           if (typeof BroadcastChannel !== 'undefined') {
             const channel = new BroadcastChannel('metra-offline-outbox-sync');
-            channel.postMessage({ type: 'lease-released', at: Date.now() });
+            channel.postMessage({ type: 'lease-released', owner, at: Date.now() });
             channel.close();
           }
         } catch { /* polling remains the fallback when BroadcastChannel is unavailable */ }
