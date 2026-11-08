@@ -35,7 +35,7 @@ public sealed class EquipmentFaultApplicationServiceTests
             Guid.Empty, Guid.NewGuid(), valid, Now));
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.Empty, valid, Now));
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.NewGuid(), valid, Now));
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.False(await service.CanCreateAsync(
             Guid.NewGuid(), Guid.NewGuid(), invalid, Now));
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.Equal(EquipmentFaultAccessResult.Forbidden, result);
         Assert.Equal(0, reader.CallCount);
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
     }
 
     [Fact]
@@ -244,7 +244,7 @@ public sealed class EquipmentFaultApplicationServiceTests
 
         Assert.Equal(EquipmentFaultAccessResult.NotFoundOrWrongStation, result);
         Assert.Equal(0, reader.CallCount);
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
     }
 
     [Fact]
@@ -358,7 +358,7 @@ public sealed class EquipmentFaultReadServiceTests
             new EquipmentFaultListQuery(0, 25, null, null, null, null));
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
@@ -375,7 +375,7 @@ public sealed class EquipmentFaultReadServiceTests
             Guid.NewGuid(), Guid.NewGuid(), query);
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
@@ -531,7 +531,7 @@ public sealed class EquipmentFaultReadServiceTests
 
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, result.Code);
         Assert.Equal(EquipmentFaultReadResultCode.InvalidRequest, emptyStation.Code);
-        Assert.Equal(1, auth.CallCount);
+        Assert.Equal(0, auth.CallCount);
         Assert.Equal(0, store.ListCalls);
     }
 
