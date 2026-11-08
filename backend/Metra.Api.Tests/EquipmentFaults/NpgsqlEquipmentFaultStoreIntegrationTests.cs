@@ -47,16 +47,18 @@ public sealed class NpgsqlEquipmentFaultStoreIntegrationTests : IAsyncLifetime
         await ExecuteAsync(admin, """
             alter role metra_equipment_faults_login password 'integration-only-password';
             """);
-        await using (var seed = new NpgsqlCommand(
-            """
-            insert into auth.users(id) values (@actor);
-            insert into public.station_catalogue(id) values (@station), (@other_station);
-            """, admin))
+        await using (var seedUser = new NpgsqlCommand(
+            "insert into auth.users(id) values (@actor)", admin))
         {
-            seed.Parameters.AddWithValue("actor", _actorId);
-            seed.Parameters.AddWithValue("station", _stationId);
-            seed.Parameters.AddWithValue("other_station", _otherStationId);
-            await seed.ExecuteNonQueryAsync();
+            seedUser.Parameters.AddWithValue("actor", _actorId);
+            await seedUser.ExecuteNonQueryAsync();
+        }
+        await using (var seedStations = new NpgsqlCommand(
+            "insert into public.station_catalogue(id) values (@station), (@other_station)", admin))
+        {
+            seedStations.Parameters.AddWithValue("station", _stationId);
+            seedStations.Parameters.AddWithValue("other_station", _otherStationId);
+            await seedStations.ExecuteNonQueryAsync();
         }
 
         var loginConnection = new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString())
