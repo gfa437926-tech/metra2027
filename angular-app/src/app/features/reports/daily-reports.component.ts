@@ -169,9 +169,9 @@ export class DailyReportsComponent {
       payload,
       submit: true
     });
-    const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
     this.saving = true;
     try {
+      const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
       const result = await this.api.submitObservation(this.selectedStationId, {
         idempotencyKey,
         observationType: 'daily',
@@ -218,6 +218,20 @@ export class DailyReportsComponent {
     }
   }
 
+  private createIdempotencyKey(): string {
+    const cryptoApi = globalThis.crypto;
+    if (typeof cryptoApi?.randomUUID === 'function') return cryptoApi.randomUUID();
+    if (typeof cryptoApi?.getRandomValues !== 'function') {
+      throw new Error('هذا المتصفح لا يوفر مولّداً عشوائياً آمناً؛ حدّث المتصفح أو استخدم اتصالاً آمناً قبل إرسال النشرة.');
+    }
+
+    const bytes = cryptoApi.getRandomValues(new Uint8Array(16));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+
   private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
     let fingerprintHash = '';
     let canPersistFingerprint = false;
@@ -255,7 +269,7 @@ export class DailyReportsComponent {
       // Storage may be disabled; in-memory idempotency still protects retries in this page.
     }
 
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = this.createIdempotencyKey();
     this.pendingSubmission = { fingerprint: fingerprintHash, idempotencyKey };
     try {
       if (canPersistFingerprint) {
