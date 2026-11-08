@@ -157,9 +157,7 @@ export class DailyReportsComponent {
       values: canonicalValues
     };
     const reportDate = values['currentDate'] ?? this.today;
-    const utcHour = this.reportType === '06utc' ? '06'
-      : this.reportType === '18utc' ? '18' : '00';
-    const observedAt = new Date(`${reportDate}T${utcHour}:00:00.000Z`).toISOString();
+    const observedAt = this.observedAtForReport(reportDate, this.reportType);
     this.saving = true;
     try {
       const result = await this.api.submitObservation(this.selectedStationId, {
@@ -205,6 +203,14 @@ export class DailyReportsComponent {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private observedAtForReport(reportDate: string, reportType: string): string {
+    // 24h currently uses the report date at 00:00Z; confirm the operational
+    // reporting-day boundary with the meteorological business rules before release.
+    const utcHour = reportType === '06utc' ? '06'
+      : reportType === '18utc' ? '18' : '00';
+    return new Date(`${reportDate}T${utcHour}:00:00.000Z`).toISOString();
   }
 
 
