@@ -108,6 +108,7 @@ builder.Services
             ValidAudience = audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+            ValidAlgorithms = new[] { SecurityAlgorithms.EcdsaSha256 },
             NameClaimType = "sub",
             ClockSkew = TimeSpan.FromSeconds(60)
         };
