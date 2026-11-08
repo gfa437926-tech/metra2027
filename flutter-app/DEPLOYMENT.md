@@ -40,3 +40,6 @@ does not replace API authentication.
 
 The app's API configuration is intentionally empty by default. A successful
 Flutter build does not mean the API is configured or deployed.
+
+
+See BUILD_PILOT.md for Android/iOS installable pilot steps.
