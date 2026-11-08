@@ -320,7 +320,7 @@ async function main() {
     assert.ok(transient);
     assert.equal(transient.state, 'pending');
     assert.equal(transient.attempts, 1);
-    assert.match(transient.lastError, /503 Service Unavailable/);
+    assert.match(transient.lastError, /تعطل مؤقت في خادم الاختبار/);
 
     mockStatus = 200;
     await context.setOffline(true);
