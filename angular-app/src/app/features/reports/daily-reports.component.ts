@@ -147,6 +147,7 @@ export class DailyReportsComponent {
       const items = await this.offlineQueue.list();
       for (const item of items) {
         if (!this.isOnline) break;
+        if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
         if (item.state === 'blocked') continue;
         try {
           const result = await this.api.submitObservation(item.stationId, {
