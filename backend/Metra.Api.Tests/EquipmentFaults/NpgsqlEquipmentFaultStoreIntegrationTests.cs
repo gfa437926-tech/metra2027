@@ -110,6 +110,11 @@ public sealed class NpgsqlEquipmentFaultStoreIntegrationTests : IAsyncLifetime
             "select count(*) from public.equipment_fault_audit where fault_id = @id", admin);
         auditCount.Parameters.AddWithValue("id", faultId);
         Assert.Equal(2L, (long)(await auditCount.ExecuteScalarAsync())!);
+
+        await using var auditMutation = new NpgsqlCommand(
+            "update public.equipment_fault_audit set reason = 'tampered audit' where fault_id = @id", admin);
+        auditMutation.Parameters.AddWithValue("id", faultId);
+        await Assert.ThrowsAsync<PostgresException>(() => auditMutation.ExecuteNonQueryAsync());
     }
 
     [Fact]
