@@ -2,15 +2,15 @@
 
 ## Status and scope
 
-This document defines the integration-test contract for the future equipment-fault persistence adapter. It does not implement a database adapter, create or alter a schema, run migrations, or connect to the production Supabase project.
+This plan is now implemented as `NpgsqlEquipmentFaultStoreIntegrationTests` against disposable PostgreSQL 17 Testcontainers. It applies the reviewed additive migration only inside ephemeral containers; it does not connect to or alter the production Supabase project.
 
-The existing unit tests validate application policies and service orchestration. They are not evidence that PostgreSQL queries enforce station isolation, that audit writes are transactional, or that concurrent transitions are serialized.
+Unit tests continue to validate domain policies and orchestration. The PostgreSQL integration suite additionally verifies station-scoped list/detail reads, transaction-local role/context, atomic audit writes and rollback, concurrent transition serialization, and runtime audit-table denial.
 
 ## Test environment
 
-- Run against a disposable PostgreSQL database using the same major version and relevant extensions as the approved target schema.
+- Run against disposable PostgreSQL 17 containers using the same major version as the METRA target.
 - Prefer an ephemeral database/container per test run or test collection. Never point destructive integration tests at production or the existing legacy database.
-- Apply only the reviewed and explicitly approved schema to the disposable database.
+- Apply the exact additive SQL migration from `supabase/migrations/20261108060000_equipment_faults_npgsql.sql` to the disposable database only.
 - Use the same SQL statements, constraints, indexes, triggers, and transaction boundaries as the production adapter.
 - Use a least-privilege application database role for application-path tests. Keep schema-owner/admin credentials restricted to fixture setup and teardown.
 - Seed deterministic fixtures with at least two distinct stations (Station A and Station B), multiple faults per station, equal OccurredAt timestamps, and audit entries.
@@ -114,7 +114,7 @@ The database write must compare the persisted station and expected status as par
 
 ## Test organization
 
-Suggested test suite names (final names may follow the chosen persistence technology):
+Implemented test suite: `backend/Metra.Api.Tests/EquipmentFaults/NpgsqlEquipmentFaultStoreIntegrationTests.cs`. Current scenarios:
 
 - EquipmentFaultStoreStationIsolationTests
 - EquipmentFaultStoreDetailScopeTests
@@ -122,26 +122,23 @@ Suggested test suite names (final names may follow the chosen persistence techno
 - EquipmentFaultTransitionConcurrencyIntegrationTests
 - EquipmentFaultAuditImmutabilityIntegrationTests
 
-These belong in a distinct integration-test project or clearly isolated test collection. They must not silently run against a developer's configured production connection string.
+The suite is isolated in a dedicated test class in the existing .NET test project and provisions its own PostgreSQL container. It does not read the application's production connection string.
 
 ## CI requirements
 
-- Add a dedicated PostgreSQL service/container for integration tests, pinned to the approved major version.
+- GitHub Actions workflow `.github/workflows/equipment-faults-dotnet10.yml` runs the .NET 10 test project; Testcontainers starts PostgreSQL 17 for the integration suite.
 - Fail fast if the integration connection string is missing or points to a non-disposable environment.
 - Run schema setup only against the ephemeral test database.
 - Publish test results separately from unit-test results so a green unit-test job cannot be mistaken for a green storage-integration job.
 - Preserve logs for failed assertions and database exceptions, while redacting connection strings, credentials, and sensitive row data.
 - Keep the existing .NET 10 unit-test workflow intact; add integration coverage as a separate job or explicit test stage.
 
-## Exit criteria before storage implementation is considered verified
+## Exit criteria and current validation
 
-1. All five scenario groups above pass against the real PostgreSQL adapter.
-2. Station isolation is enforced in SQL, not only by post-query validation.
-3. Transition and audit insert share one database transaction.
-4. The concurrent transition test consistently produces one winner and one conflict.
-5. The application database role cannot update or delete audit rows.
-6. CI reports the integration suite independently and successfully.
+1. The current integration suite covers station-scoped list and detail lookup, audit failure rollback, concurrent transitions (one Applied + one Conflict), and runtime-role denial of audit UPDATE/DELETE.
+2. The migration and adapter passed the previous PostgreSQL 17 run; the expanded concurrency/ACL test run is currently pending.
+3. Production application remains blocked on explicit schema approval, out-of-band login password provisioning, and the production connection string.
 
 ## Approval boundary
 
-This plan is documentation only. No database schema, migration, SQL function/RPC, grants, RLS policy, trigger, or production data has been changed. Implementing these tests against a concrete schema requires review and explicit approval of the proposed SQL and disposable test-database setup.
+The integration tests apply the migration only to disposable PostgreSQL containers. No production database schema, migration, role, grant, RLS policy, trigger, or production data has been changed. Production application still requires review and explicit approval of the exact SQL and rollback plan.
