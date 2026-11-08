@@ -39,6 +39,11 @@ async function main() {
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' });
     await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
 
+    // The offline queue is initialized by the daily reports feature, not by the app shell.
+    // Visit that route before asserting the production-created IndexedDB schema.
+    await page.goto(`http://127.0.0.1:${port}/reports/daily`, { waitUntil: 'domcontentloaded' });
+    await page.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+
     const pwa = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return { supported: false };
       const registration = await navigator.serviceWorker.ready;
