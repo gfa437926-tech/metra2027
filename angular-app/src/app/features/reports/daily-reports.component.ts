@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey } from './daily-submission.utils';
+import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -14,6 +15,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
     <div class="page" dir="rtl">
       <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
@@ -96,8 +98,73 @@ export class DailyReportsComponent {
   saving = false;
   private pendingSubmission: { fingerprint: string; idempotencyKey: string } | null = null;
   private readonly pendingSubmissionStorageKey = 'metra.daily.pending-submission.v1';
+  private readonly offlineQueue = new DailyOfflineQueue();
+  isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+  syncing = false;
+  pendingOfflineCount = 0;
+  syncMessage = '';
 
-  constructor() { void this.loadStations(); }
+  constructor() {
+    void this.loadStations();
+    void this.refreshOfflineCount();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.handleOnline);
+      window.addEventListener('offline', this.handleOffline);
+      if (navigator.onLine) void this.flushOfflineQueue();
+    }
+  }
+
+  private readonly handleOnline = (): void => {
+    this.isOnline = true;
+    void this.flushOfflineQueue();
+  };
+  private readonly handleOffline = (): void => { this.isOnline = false; };
+
+  private async refreshOfflineCount(): Promise<void> {
+    try { this.pendingOfflineCount = (await this.offlineQueue.list()).length; }
+    catch (error) { this.syncMessage = error instanceof Error ? error.message : 'تعذر قراءة صندوق الإرسال المحلي.'; }
+  }
+
+  private async flushOfflineQueue(): Promise<void> {
+    if (this.syncing || !this.isOnline || !this.apiReady) return;
+    this.syncing = true;
+    this.syncMessage = '';
+    try {
+      const items = await this.offlineQueue.list();
+      for (const item of items) {
+        if (!this.isOnline) break;
+        try {
+          const result = await this.api.submitObservation(item.stationId, {
+            idempotencyKey: item.idempotencyKey,
+            observationType: 'daily',
+            observedAt: item.observedAt,
+            payload: item.payload,
+            submit: true
+          });
+          const receipt = getConfirmedDailySubmission(result);
+          if (!receipt) throw new Error('لم يصل إيصال حفظ مؤكد؛ ستبقى النشرة في قائمة الانتظار.');
+          await this.offlineQueue.remove(item.idempotencyKey);
+          this.previews.unshift({ reference: receipt.id, date: item.reportDate,
+            reportType: item.reportType, station: item.stationName, status: 'submitted', values: {} });
+        } catch (error) {
+          const response = error && typeof error === 'object' && 'status' in error
+            ? Number((error as { status: unknown }).status) : 0;
+          if (response === 400 || response === 403 || response === 422) {
+            await this.offlineQueue.update({ ...item, state: 'blocked', lastError: 'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.' });
+          } else {
+            await this.offlineQueue.update({ ...item, state: 'pending', attempts: item.attempts + 1,
+              lastError: error instanceof Error ? error.message : 'تعذر الاتصال بالخادم.' });
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      this.syncMessage = error instanceof Error ? error.message : 'تعذرت المزامنة.';
+    } finally {
+      this.syncing = false;
+      await this.refreshOfflineCount();
+    }
+  }
 
   get apiReady(): boolean { return this.api.isConfigured; }
   get selectedStationName(): string {
@@ -173,6 +240,16 @@ export class DailyReportsComponent {
     this.saving = true;
     try {
       const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
+      if (!this.isOnline) {
+        await this.offlineQueue.enqueue({
+          idempotencyKey, stationId: this.selectedStationId, stationName,
+          reportDate: values['currentDate'] ?? this.today, reportType: this.reportType,
+          observedAt, payload, createdAt: new Date().toISOString(), attempts: 0, state: 'pending'
+        });
+        await this.refreshOfflineCount();
+        this.message = 'تم حفظ النشرة محلياً بأمان داخل صندوق الإرسال؛ ستُرسل تلقائياً عند عودة الشبكة. لا تعتبر مرسلة بعد.';
+        return;
+      }
       const result = await this.api.submitObservation(this.selectedStationId, {
         idempotencyKey,
         observationType: 'daily',
