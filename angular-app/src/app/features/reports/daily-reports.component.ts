@@ -12,7 +12,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
   template: `
     <div class="page" dir="rtl">
       <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>الإرسال الفعلي متاح عند اكتمال إعداد API وSupabase واختيار محطة مخوّلة؛ لا تُعرض رسالة نجاح قبل تأكيد الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
@@ -23,7 +23,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
         <p>{{ typeDescription }}</p>
       </section>
 
-      <form #dailyForm (submit)="submit($event, dailyForm)">
+      <form #dailyForm (submit)="submitToServer($event, dailyForm)">
         <section class="panel"><h2><i class="fa-solid fa-calendar-check"></i> معلومات النشرة</h2><div class="grid">
           <label>التاريخ<input type="date" name="currentDate" [value]="today" required></label>
           <label>المحطة<select name="stationId" required [value]="selectedStationId" (change)="setStation($any($event.target).value)"><option value="">اختر المحطة</option><option *ngFor="let station of stations" [value]="station.id">{{ station.name_ar }} — {{ station.local_station_code || station.wmo_station_id || station.station_type }}</option></select><input type="hidden" name="station" [value]="selectedStationName"><small *ngIf="stationsLoading">جارٍ تحميل المحطات...</small></label>
@@ -76,7 +76,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات التحقق</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
-      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> مسودات المعاينة المحلية</h2>
+      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> سجل هذه الجلسة</h2><p class="footnote">هذه القائمة للعرض داخل الصفحة فقط؛ النشرات المرسلة تحمل معرّفاً أعاده الخادم، أما المسودات المحلية فلا تُحفظ في قاعدة البيانات.</p>
         <article class="preview-row" *ngFor="let item of previews"><div><strong>{{ item.reference }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.station }} · {{ item.date }}</p></div><span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span></article>
       </section>
       <p class="footnote">تمت مواءمة الحقول المطلوبة وأنماط الترميز مع نموذج daily.html وملف daily_validation.js الأصلي. لا تزال هذه المعاينة بحاجة إلى اختبار ميداني ومطابقة قاعدة البيانات قبل التشغيل الفعلي.</p>
@@ -130,13 +130,42 @@ export class DailyReportsComponent {
     this.issues = this.validateValues(values);
     if (this.issues.length) return;
     const stationName = this.selectedStationName;
-    const payload = { reportType: this.reportType, stationName, observerName: values['observer'] ?? '', values };
+    // Only canonical meteorological fields belong in payload.values.
+    // Form controls such as date, station, observer, agreement and phenomena
+    // are envelope metadata and must never leak into the validator's field map.
+    const fieldNames = [
+      'minTemp', 'maxTemp', 'precipitation', 'snowThickness', 'precipitationTrace',
+      'evaporation', 'sunshineDuration', 'sunshinePercentage',
+      'maxGustSpeed', 'maxGustDirection', 'maxGustTime',
+      'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime'
+    ] as const;
+    const canonicalValues: Record<string, string> = {};
+    for (const name of fieldNames) {
+      const value = values[name]?.trim();
+      if (value) canonicalValues[name] = value;
+    }
+    const phenomena = this.phenomena
+      .filter(item => values[item.id] === '1')
+      .map(item => item.id);
+    const payload = {
+      reportType: this.reportType,
+      responsibilityAgreement: values['responsibilityAgreement'] === 'on',
+      stationName,
+      observerName: values['observer'] ?? '',
+      observerNotes: values['observerNotes'] ?? '',
+      phenomena,
+      values: canonicalValues
+    };
+    const reportDate = values['currentDate'] ?? this.today;
+    const utcHour = this.reportType === '06utc' ? '06'
+      : this.reportType === '18utc' ? '18' : '00';
+    const observedAt = new Date(`${reportDate}T${utcHour}:00:00.000Z`).toISOString();
     this.saving = true;
     try {
       const result = await this.api.submitObservation(this.selectedStationId, {
         idempotencyKey: crypto.randomUUID(),
         observationType: 'daily',
-        observedAt: new Date((values['currentDate'] ?? this.today) + 'T00:00:00.000Z').toISOString(),
+        observedAt,
         payload,
         submit: true
       });
