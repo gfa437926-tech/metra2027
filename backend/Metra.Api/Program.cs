@@ -1,4 +1,5 @@
 using Metra.Api.Features.Observations;
+using Metra.Api.Features.EquipmentFaults;
 using Metra.Api.Security;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
