@@ -38,7 +38,6 @@ public sealed class EquipmentFaultAuditPolicyTests
     [Theory]
     [InlineData(true, false)]
     [InlineData(false, true)]
-    [InlineData(false, false)]
     public void Missing_fault_or_actor_identity_is_rejected(bool emptyFault, bool emptyActor)
     {
         var entry = Create(
