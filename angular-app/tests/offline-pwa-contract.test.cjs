@@ -99,6 +99,11 @@ test('daily and hourly screens distinguish blocked records and expose explicit r
     assert.match(source, /إعادة محاولة النشرات المتوقفة/);
   }
   assert.match(hourly, /observationType === 'hourly' && item\.state === 'blocked'/);
+  assert.match(daily, /\(item\.observationType \?\? 'daily'\) !== 'daily'/);
+  assert.match(daily, /blockedOfflineItems/);
+  assert.match(hourly, /blockedOfflineItems/);
+  assert.match(daily, /item\.lastError/);
+  assert.match(hourly, /item\.lastError/);
 });
 
 
