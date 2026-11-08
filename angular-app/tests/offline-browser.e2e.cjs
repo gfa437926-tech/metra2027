@@ -509,6 +509,7 @@ async function main() {
     assert.equal(hourlyTransient.state, 'pending');
     assert.equal(hourlyTransient.attempts, 1);
     assert.match(hourlyTransient.lastError, /تعطل مؤقت في خادم الاختبار/);
+    await page.getByText('جارٍ الإرسال تلقائياً...').waitFor({ state: 'hidden', timeout: 10000 });
     mockStatus = 200;
     await context.setOffline(true);
     await context.setOffline(false);
