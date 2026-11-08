@@ -135,8 +135,8 @@ The suite is isolated in a dedicated test class in the existing .NET test projec
 
 ## Exit criteria and current validation
 
-1. The current integration suite covers station-scoped list and detail lookup, audit failure rollback, concurrent transitions (one Applied + one Conflict), and runtime-role denial of audit UPDATE/DELETE.
-2. The migration and adapter passed the previous PostgreSQL 17 run; the expanded concurrency/ACL test run is currently pending.
+1. The integration suite covers station-scoped list/detail/owner lookup, audit failure rollback, concurrent transitions (one Applied + one Conflict), runtime-role denial of audit UPDATE/DELETE, and immutable audit trigger behavior.
+2. GitHub Actions run #42 passed: 409 tests, 0 failed, 0 skipped; both API and test builds had 0 warnings and 0 errors. PostgreSQL 17 Testcontainers tests are included.
 3. Production application remains blocked on explicit schema approval, out-of-band login password provisioning, and the production connection string.
 
 ## Approval boundary
