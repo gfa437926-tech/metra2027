@@ -146,6 +146,7 @@ export class HourlyReportsComponent {
   selectedStationId = '';
   saving = false;
   private readonly offlineQueue = new DailyOfflineQueue();
+  private readonly syncOwner = 'hourly-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   pendingOfflineCount = 0;
   syncing = false;
@@ -167,7 +168,10 @@ export class HourlyReportsComponent {
   private async flushHourlyQueue(): Promise<void> {
     if (this.syncing || !this.isOnline || !this.apiReady) return;
     this.syncing = true;
+    let leaseAcquired = false;
     try {
+      leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
+      if (!leaseAcquired) return;
       for (const item of await this.offlineQueue.list()) {
         if (item.observationType !== 'hourly' || item.state === 'blocked' || !this.isOnline) continue;
         try {
@@ -183,7 +187,11 @@ export class HourlyReportsComponent {
           else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:error instanceof Error?error.message:'تعذر الاتصال.'}); break; }
         }
       }
-    } finally { this.syncing = false; await this.refreshOfflineCount(); }
+    } finally {
+      if (leaseAcquired) { try { await this.offlineQueue.releaseSyncLease(this.syncOwner); } catch { /* lease expires automatically */ } }
+      this.syncing = false;
+      await this.refreshOfflineCount();
+    }
   }
 
   get apiReady(): boolean { return this.api.isConfigured; }
@@ -324,7 +332,6 @@ export class HourlyReportsComponent {
     this.issues = [];
     this.message = '';
     if (this.saving) return;
-    if (!this.apiReady) { this.message = 'لم يتم الإرسال: إعدادات API أو Supabase غير مكتملة.'; return; }
     if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
     if (!form.reportValidity()) return;
 
