@@ -206,9 +206,6 @@ export class DailyReportsComponent {
     this.issues = [];
     this.message = '';
     if (this.saving) return;
-    if (!this.apiReady && this.isOnline) {
-      // Allow durable local queuing when the API is not configured; no server success is implied.
-    }
     if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
     if (!form.reportValidity()) return;
     const values = this.readForm(form);
