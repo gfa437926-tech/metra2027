@@ -100,3 +100,12 @@ test('daily and hourly screens distinguish blocked records and expose explicit r
   }
   assert.match(hourly, /observationType === 'hourly' && item\.state === 'blocked'/);
 });
+
+
+test('shared sync lease is renewed before each queued submission', () => {
+  const daily = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/daily-reports.component.ts'), 'utf8');
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  assert.match(queue, /renewSyncLease\(owner: string/);
+  assert.match(daily, /renewSyncLease\(this\.syncOwner\)/);
+  assert.match(hourly, /renewSyncLease\(this\.syncOwner\)/);
+});
