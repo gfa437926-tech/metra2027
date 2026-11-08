@@ -182,3 +182,24 @@ it in the submission path, then connect Angular and Flutter to the authenticated
 station-scoped submission API. Preserve the responsibility acknowledgement,
 phenomena selection, local/UTC date semantics, missing-value `#` handling,
 and all report-specific visibility/required behavior.
+
+
+## Unified hourly/daily field contract — implementation record (2026-11-08)
+
+- Added `backend/Metra.Api/Features/Observations/ObservationFieldContract.cs` as the shared API contract authority (version 1.0).
+- The contract standardizes the nested `payload.values` object and requires meteorological values to be strings, preserving fixed-width codes, decimal precision, `#`, and `T/t`.
+- Hourly submission now invokes `HourlyObservationValidator` at the write boundary, so callers cannot bypass required and UTC-hour-conditional field checks by skipping the separate validation endpoint.
+- Daily validation now requires one of `24h`, `06utc`, or `18utc`, requires responsibility acknowledgement, and selects the correct report-type required-field set.
+- Daily submission enforces the same report type, acknowledgement, and field rules before calling the existing persistence service.
+- Added `backend/Metra.Api.Tests/Features/Observations/ObservationFieldContractTests.cs` for report-type field counts, daily acknowledgement, daily required fields, hourly conditional requirements, and rejection of non-string values.
+- Added `docs/contracts/OBSERVATION-FIELD-CONTRACT-V1.md` with canonical request examples, field names, conditional requirements, and UTC conversion semantics.
+- No database schema, database records, legacy repository, or Supabase project was changed.
+
+### Remaining integration and verification work
+
+- CI for the current branch HEAD `c4abebd9ad10425e684636ffc48346a1a681a2a6` has started; results must be inspected before this contract implementation is considered build/test verified.
+- Angular daily still creates page-local previews and must be connected to the station-scoped submission API using `reportType`, `responsibilityAgreement`, and `values`.
+- Angular and Flutter clients must use the exact same field names and string serialization. Flutter daily UI is not yet implemented.
+- Review whether the existing persistence RPC accepts and stores the canonical `reportType` and nested `values` shape without transformation; this must be confirmed from its current implementation before any database contract migration is proposed.
+- Add endpoint-level integration tests proving invalid direct submission returns HTTP 400 and does not call the persistence service.
+- Add explicit UTC date-rollover tests for local-hour-to-UTC conversion, then wire the same conversion into both clients.
