@@ -40,7 +40,6 @@ Findings:
 | `user-data.js` | Blob differs |
 | `weather_phenomena.html` | Blob differs |
 | `supabase-config.js` | Blob differs from all metra-old copies |
-| `*.rar` archive | Binary payload; not part of modern app tree |
 
 These must **not** be deleted under the exact-match policy without a separate
 review.
@@ -51,3 +50,7 @@ review.
 - No Supabase schema changes
 - No merge to `main`
 - Modern app entrypoints remain Angular / Flutter / .NET
+
+## Follow-up
+
+- Removed root `.rar` archive from the cleanup branch (not required by Angular/Flutter/.NET).
