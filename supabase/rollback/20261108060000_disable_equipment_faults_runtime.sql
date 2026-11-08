@@ -5,6 +5,7 @@
 
 begin;
 revoke metra_equipment_faults_runtime from metra_equipment_faults_login;
+alter role metra_equipment_faults_login nologin;
 revoke all on public.equipment_faults, public.equipment_fault_audit
   from metra_equipment_faults_runtime, metra_equipment_faults_login;
 revoke all on sequence public.equipment_fault_audit_id_seq
@@ -13,7 +14,7 @@ commit;
 
 -- Re-enable procedure:
 -- 1) restore the exact grants from the reviewed migration;
--- 2) restore role membership with INHERIT FALSE, SET TRUE;
+-- 2) restore role membership with INHERIT FALSE, SET TRUE, then ALTER ROLE metra_equipment_faults_login LOGIN;
 -- 3) verify the externally managed login password and secret reference;
 -- 4) run RLS/permission smoke tests before routing traffic.
 --
