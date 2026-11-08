@@ -112,6 +112,7 @@ export class DailyReportsComponent implements OnDestroy {
   private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string; type?: string }>): void => { if (event.data?.owner === this.syncOwner) return; if (event.data?.type === 'network-online') this.isOnline = true; if (this.isOnline) void this.flushOfflineQueue(); };
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
+  private syncRequested = false;
   pendingOfflineCount = 0;
   pendingOfflineItems: DailyOfflineSubmission[] = [];
   blockedOfflineCount = 0;
@@ -195,7 +196,8 @@ export class DailyReportsComponent implements OnDestroy {
   }
 
   private async flushOfflineQueue(): Promise<void> {
-    if (this.syncing || !this.isOnline || !this.apiReady) return;
+    if (this.syncing) { this.syncRequested = true; return; }
+    if (!this.isOnline || !this.apiReady) return;
     this.syncing = true;
     this.syncMessage = '';
     let leaseAcquired = false;
@@ -245,6 +247,10 @@ export class DailyReportsComponent implements OnDestroy {
       }
       this.syncing = false;
       await this.refreshOfflineCount();
+      if (this.syncRequested && this.isOnline && this.apiReady) {
+        this.syncRequested = false;
+        void this.flushOfflineQueue();
+      }
     }
   }
 
