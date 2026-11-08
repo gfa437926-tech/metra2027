@@ -8,10 +8,8 @@ bootstrapApplication(AppComponent, {
   providers: [provideRouter(routes), provideHttpClient()]
 }).then(() => {
   if ('serviceWorker' in navigator && window.isSecureContext) {
-    window.addEventListener('load', () => {
-      void navigator.serviceWorker.register('./metra-sw.js').catch(error => {
-        console.error('METRA offline shell registration failed', error);
-      });
-    }, { once: true });
+    void navigator.serviceWorker.register('./metra-sw.js').catch(error => {
+      console.error('METRA offline shell registration failed', error);
+    });
   }
 }).catch((error: unknown) => console.error(error));
