@@ -26,7 +26,8 @@
             "assets": [
               "src/metra-config.js",
               "src/metra-sw.js",
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              "src/metra-icon.svg"
             ]
           },
           "configurations": {
