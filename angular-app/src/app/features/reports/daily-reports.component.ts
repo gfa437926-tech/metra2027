@@ -151,7 +151,11 @@ export class DailyReportsComponent {
     setValue('stationId', item.stationId);
     setValue('observer', typeof payload['observerName'] === 'string' ? payload['observerName'] : '');
     setValue('observerNotes', typeof payload['observerNotes'] === 'string' ? payload['observerNotes'] : '');
-    for (const [name, value] of Object.entries(values)) setValue(name, value);
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(name) as HTMLInputElement | null;
+      if (field && value === '#') this.toggleNoData(field, name);
+      else setValue(name, value);
+    }
     const agreement = form.elements.namedItem('responsibilityAgreement') as HTMLInputElement | null;
     if (agreement) agreement.checked = payload['responsibilityAgreement'] === true;
     const selectedPhenomena = Array.isArray(payload['phenomena']) ? payload['phenomena'] : [];
