@@ -173,16 +173,27 @@ export class DailyReportsComponent {
   setStation(value: string): void { this.selectedStationId = value; }
 
   private async loadStations(): Promise<void> {
-    if (!this.apiReady) {
-      this.stationsError = 'الاتصال الفعلي غير مهيأ: يلزم ضبط API وSupabase.';
+    try {
+      const cached = await this.offlineQueue.getCachedStations<StationDirectoryItem>();
+      if (cached.length) this.stations = cached;
+    } catch {
+      // IndexedDB may be disabled; online station loading can still work.
+    }
+    if (!this.apiReady || !this.isOnline) {
+      this.stationsError = this.stations.length
+        ? 'يتم استخدام دليل المحطات المحفوظ محلياً؛ ستتم مزامنته عند عودة الاتصال.'
+        : 'لا يوجد اتصال أو إعداد API؛ اتصل بالشبكة مرة واحدة على الأقل لتحميل دليل المحطات.';
       return;
     }
     this.stationsLoading = true;
     try {
       this.stations = await this.api.getAllStations();
-      if (!this.stations.length) this.stationsError = 'لا توجد محطات تشغيلية متاحة في الدليل.';
+      await this.offlineQueue.cacheStations(this.stations);
+      this.stationsError = this.stations.length ? '' : 'لا توجد محطات تشغيلية متاحة في الدليل.';
     } catch {
-      this.stationsError = 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
+      this.stationsError = this.stations.length
+        ? 'تعذر تحديث الدليل؛ نستخدم آخر نسخة محلية محفوظة.'
+        : 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
     } finally {
       this.stationsLoading = false;
     }
