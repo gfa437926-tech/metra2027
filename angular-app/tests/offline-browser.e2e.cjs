@@ -87,6 +87,33 @@ async function main() {
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' });
     await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
 
+    // Seed one disposable station in the same IndexedDB cache used by the app.
+    // This keeps the test fully isolated from the configured Supabase project.
+    await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onupgradeneeded = () => {
+          const value = request.result;
+          if (!value.objectStoreNames.contains('daily-submissions')) value.createObjectStore('daily-submissions', { keyPath: 'idempotencyKey' });
+          if (!value.objectStoreNames.contains('station-catalogue')) value.createObjectStore('station-catalogue', { keyPath: 'id' });
+          if (!value.objectStoreNames.contains('sync-locks')) value.createObjectStore('sync-locks', { keyPath: 'id' });
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('station-catalogue', 'readwrite');
+        tx.objectStore('station-catalogue').put({ id: '00000000-0000-4000-8000-000000000002', stations: [{
+          id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
+          name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
+          operational_status: 'operational', approval_status: 'approved', is_demo: true,
+          elevation_m: 10, station_coordinates: []
+        }], cachedAt: new Date().toISOString() });
+        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    });
+
     // The offline queue is initialized by the daily reports feature, not by the app shell.
     // Visit that route before asserting the production-created IndexedDB schema.
     await page.goto(`http://127.0.0.1:${port}/reports/daily`, { waitUntil: 'domcontentloaded' });
@@ -110,61 +137,64 @@ async function main() {
     assert.equal(pwa.supported, true, 'Service Worker API should be available on localhost');
     assert.equal(pwa.active, true, 'PWA service worker should become active');
 
-    const dbResult = await page.evaluate(async () => {
-      const db = await new Promise((resolve, reject) => {
-        const request = indexedDB.open('metra-offline-outbox', 3);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      const required = ['daily-submissions', 'station-catalogue', 'sync-locks'];
-      const missing = required.filter(name => !db.objectStoreNames.contains(name));
-      if (missing.length) throw new Error('Missing IndexedDB stores: ' + missing.join(', '));
-      const key = 'browser-e2e-' + crypto.randomUUID();
-      const record = { idempotencyKey: key, observationType: 'daily', stationId: 'browser-test', stationName: 'اختبار المتصفح', reportDate: '2099-01-01', reportType: '24h', observedAt: new Date().toISOString(), payload: {}, createdAt: new Date().toISOString(), attempts: 0, state: 'pending' };
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction('daily-submissions', 'readwrite');
-        tx.objectStore('daily-submissions').put(record);
-        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
-      });
-      const found = await new Promise((resolve, reject) => {
-        const tx = db.transaction('daily-submissions', 'readonly');
-        const request = tx.objectStore('daily-submissions').get(key);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      db.close();
-      return { stores: required, key, persisted: found?.idempotencyKey === key };
-    });
-    assert.equal(dbResult.persisted, true, 'IndexedDB should persist and retrieve an outbox record');
+    await page.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
+    await page.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
+    await page.locator('input[name="currentDate"]').fill('2099-01-01');
+    await page.locator('input[name="observer"]').fill('راصد الاختبار');
+    await page.getByRole('button', { name: /إدخال بيانات تجريبية/ }).click();
 
+    // Submit through the real Angular form while offline, not by writing a fake
+    // outbox record directly. The app must persist the submitted payload locally.
     await context.setOffline(true);
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
-    const offline = await page.evaluate(async key => {
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
+    await page.getByText('نشرات محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    const saved = await page.evaluate(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-      const record = await new Promise((resolve, reject) => {
+      const records = await new Promise((resolve, reject) => {
         const tx = db.transaction('daily-submissions', 'readonly');
-        const request = tx.objectStore('daily-submissions').get(key);
+        const request = tx.objectStore('daily-submissions').getAll();
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction('daily-submissions', 'readwrite');
-        tx.objectStore('daily-submissions').delete(key);
-        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
-      });
       db.close();
-      return { online: navigator.onLine, title: document.title, queuedRecordSurvivedReload: record?.idempotencyKey === key };
-    }, dbResult.key);
-    assert.equal(offline.online, false, 'Browser should be offline during offline reload');
-    assert.equal(offline.queuedRecordSurvivedReload, true, 'Queued submission must survive an offline page reload');
+      return records.find(item => item.stationId === '00000000-0000-4000-8000-000000000002');
+    });
+    assert.ok(saved, 'Submitting the daily form offline must persist a queue record');
+    assert.equal(saved.state, 'pending');
+    assert.equal(saved.payload.observerName, 'راصد الاختبار');
+    assert.equal(saved.payload.values.maxTemp, '25.7');
+
+    // Reload the app with the network still unavailable, then reopen the queued
+    // report through the UI and verify the original values are restored to fields.
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await page.getByText('نشرات محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    await page.getByRole('button', { name: 'إعادة فتح النشرة' }).click();
+    await page.locator('input[name="observer"]').waitFor({ state: 'visible' });
+    const restored = await page.evaluate(() => ({
+      online: navigator.onLine,
+      date: document.querySelector('input[name="currentDate"]')?.value,
+      station: document.querySelector('select[name="stationId"]')?.value,
+      observer: document.querySelector('input[name="observer"]')?.value,
+      maxTemp: document.querySelector('input[name="maxTemp"]')?.value,
+      precipitation: document.querySelector('input[name="precipitation"]')?.value,
+      agreement: document.querySelector('input[name="responsibilityAgreement"]')?.checked
+    }));
+    assert.equal(restored.online, false, 'Browser should remain offline after reload');
+    assert.equal(restored.date, '2099-01-01');
+    assert.equal(restored.station, '00000000-0000-4000-8000-000000000002');
+    assert.equal(restored.observer, 'راصد الاختبار');
+    assert.equal(restored.maxTemp, '25.7');
+    assert.equal(restored.precipitation, '012.5');
+    assert.equal(restored.agreement, true, 'Reopened report should restore its acknowledgement state');
+    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, submittedThroughFormOffline: true, persistedInIndexedDB: true, reopenedAfterOfflineReload: true, restoredFields: Object.keys(restored).length - 1, runtimeErrors: errors.length }));
     assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
-    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, indexedDbPersisted: dbResult.persisted, queuedRecordSurvivedReload: offline.queuedRecordSurvivedReload, offlineReload: true, runtimeErrors: errors.length }));
+    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, runtimeErrors: errors.length }));
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
