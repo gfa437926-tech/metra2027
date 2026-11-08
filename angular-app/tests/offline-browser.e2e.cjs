@@ -41,7 +41,7 @@ async function main() {
     // No real Supabase project, credentials, or database are contacted by this test.
     await page.addInitScript(() => {
       const projectUrl = 'https://metra-e2e.supabase.co';
-      (window as any).__METRA_CONFIG__ = {
+      window.__METRA_CONFIG__ = {
         apiBaseUrl: '',
         supabaseUrl: projectUrl,
         supabaseAnonKey: 'metra-browser-e2e-anon-key'
