@@ -236,7 +236,12 @@ export class DailyReportsComponent implements OnDestroy {
     } catch (error) {
       this.syncMessage = error instanceof Error ? error.message : 'تعذرت المزامنة.';
     } finally {
-      if (leaseAcquired) { try { await this.offlineQueue.releaseSyncLease(this.syncOwner); } catch { /* lease expires automatically */ } }
+      if (leaseAcquired) {
+        try {
+          await this.offlineQueue.releaseSyncLease(this.syncOwner);
+          this.syncChannel?.postMessage({ type: 'lease-released', owner: this.syncOwner, at: Date.now() });
+        } catch { /* lease expires automatically */ }
+      }
       this.syncing = false;
       await this.refreshOfflineCount();
     }
