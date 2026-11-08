@@ -36,6 +36,46 @@ async function main() {
     const page = await context.newPage();
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
+
+    // Supply a disposable test identity and intercept only the auth user lookup.
+    // No real Supabase project, credentials, or database are contacted by this test.
+    await page.addInitScript(() => {
+      const projectUrl = 'https://metra-e2e.supabase.co';
+      (window as any).__METRA_CONFIG__ = {
+        apiBaseUrl: '',
+        supabaseUrl: projectUrl,
+        supabaseAnonKey: 'metra-browser-e2e-anon-key'
+      };
+      localStorage.setItem('sb-metra-e2e-auth-token', JSON.stringify({
+        access_token: 'metra-e2e-access-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        refresh_token: 'metra-e2e-refresh-token',
+        user: {
+          id: '00000000-0000-4000-8000-000000000001',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'browser-e2e@example.test',
+          app_metadata: { provider: 'email', providers: ['email'] },
+          user_metadata: {},
+          created_at: '2026-01-01T00:00:00.000Z'
+        }
+      }));
+    });
+    await page.route('https://metra-e2e.supabase.co/auth/v1/user**', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: '00000000-0000-4000-8000-000000000001',
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: 'browser-e2e@example.test',
+        app_metadata: { provider: 'email', providers: ['email'] },
+        user_metadata: {},
+        created_at: '2026-01-01T00:00:00.000Z'
+      })
+    }));
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' });
     await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
 
