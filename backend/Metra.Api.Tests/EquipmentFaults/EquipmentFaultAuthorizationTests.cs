@@ -98,7 +98,6 @@ public sealed class EquipmentFaultAuthorizationTests
     [Theory]
     [InlineData(true, false, "equipment_fault.create")]
     [InlineData(false, true, "equipment_fault.create")]
-    [InlineData(false, false, "equipment_fault.create")]
     [InlineData(false, false, " ")]
     public async Task Empty_identifiers_or_permission_never_call_authorization(
         bool emptyUser, bool emptyStation, string permission)
