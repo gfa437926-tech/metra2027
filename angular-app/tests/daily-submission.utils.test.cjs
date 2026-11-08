@@ -37,6 +37,10 @@ test('accepts only a submitted receipt containing a UUID v4', () => {
   assert.equal(getConfirmedDailySubmission({ id, status: 'draft' }), null);
   assert.equal(getConfirmedDailySubmission({ id: 'not-a-uuid', status: 'submitted' }), null);
   assert.equal(getConfirmedDailySubmission({ status: 'submitted' }), null);
+  assert.equal(getConfirmedDailySubmission({ id, status: 'submitted', replayed: 'yes' }), {
+    id, status: 'submitted'
+  });
+  assert.equal(getConfirmedDailySubmission({ id, status: 'submitted' }).replayed, undefined);
   assert.equal(getConfirmedDailySubmission(null), null);
 });
 
@@ -44,4 +48,5 @@ test('maps daily report types to their current UTC timestamps', () => {
   assert.equal(dailyObservedAtForReport('2026-11-08', '24h'), '2026-11-08T00:00:00.000Z');
   assert.equal(dailyObservedAtForReport('2026-11-08', '06utc'), '2026-11-08T06:00:00.000Z');
   assert.equal(dailyObservedAtForReport('2026-11-08', '18utc'), '2026-11-08T18:00:00.000Z');
+  assert.throws(() => dailyObservedAtForReport('not-a-date', '24h'), RangeError);
 });
