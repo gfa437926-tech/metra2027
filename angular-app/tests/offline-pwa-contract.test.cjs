@@ -129,3 +129,16 @@ test('shared observation lease waits for the competing queue instead of abandoni
   assert.match(queue, /tryAcquireSyncLease\(owner, leaseMs\)/);
   assert.match(queue, /setTimeout\(resolve, 100\)/);
 });
+
+
+test('lease release broadcasts a cross-tab handoff so the other observation queue retries', () => {
+  assert.match(queue, /new BroadcastChannel\\('metra-offline-outbox-sync'\\)/);
+  assert.match(queue, /type: 'lease-released'/);
+  const daily = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/daily-reports.component.ts'), 'utf8');
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  for (const source of [daily, hourly]) {
+    assert.match(source, /new BroadcastChannel\\('metra-offline-outbox-sync'\\)/);
+    assert.match(source, /addEventListener\\('message', this\\.handleSyncAvailable\\)/);
+    assert.match(source, /ngOnDestroy\\(\\)/);
+  }
+});
