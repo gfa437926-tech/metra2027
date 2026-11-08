@@ -49,6 +49,8 @@ async function main() {
     const errors = [];
     let mockStatus = 200;
     const acceptedPosts = [];
+    let inFlightPosts = 0;
+    let maxConcurrentPosts = 0;
     const station = {
       id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
       name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
@@ -56,27 +58,32 @@ async function main() {
       elevation_m: 10, station_coordinates: []
     };
     page.on('pageerror', error => errors.push(error.message));
-    await page.route('https://metra-api-e2e.local/api/v1/stations**', async route => {
+    await context.route('https://metra-api-e2e.local/api/v1/stations**', async route => {
       if (route.request().method() === 'GET') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([station]) });
         return;
       }
       const request = route.request();
       acceptedPosts.push(request.postDataJSON());
-      if (mockStatus === 422) {
-        await route.fulfill({ status: 422, contentType: 'application/problem+json', body: JSON.stringify({
-          title: 'بيانات النشرة مرفوضة في اختبار المتصفح',
-          errors: { maxTemp: ['قيمة تجريبية غير مقبولة'] }
+      inFlightPosts++;
+      maxConcurrentPosts = Math.max(maxConcurrentPosts, inFlightPosts);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 180));
+        if (mockStatus === 422) {
+          await route.fulfill({ status: 422, contentType: 'application/problem+json', body: JSON.stringify({
+            title: 'بيانات النشرة مرفوضة في اختبار المتصفح',
+            errors: { maxTemp: ['قيمة تجريبية غير مقبولة'] }
+          }) });
+          return;
+        }
+        if (mockStatus >= 500) {
+          await route.fulfill({ status: mockStatus, contentType: 'application/json', body: JSON.stringify({ message: 'تعطل مؤقت في خادم الاختبار' }) });
+          return;
+        }
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          id: '00000000-0000-4000-8000-000000000099', status: 'submitted'
         }) });
-        return;
-      }
-      if (mockStatus >= 500) {
-        await route.fulfill({ status: mockStatus, contentType: 'application/json', body: JSON.stringify({ message: 'تعطل مؤقت في خادم الاختبار' }) });
-        return;
-      }
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
-        id: '00000000-0000-4000-8000-000000000099', status: 'submitted'
-      }) });
+      } finally { inFlightPosts--; }
     });
 
     // Supply a disposable test identity and intercept only the auth user lookup.
@@ -343,13 +350,101 @@ async function main() {
     });
     assert.equal(finalQueue.length, 1, 'Only the explicitly rejected item should remain blocked');
     assert.equal(finalQueue[0].state, 'blocked');
+
     assert.equal(acceptedPosts.length, 4, 'Success, rejection, transient failure, and retry should all reach the mocked API');
-    assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
+
+    // Real hourly form: offline persistence, reload and reopening.
+    await context.setOffline(true);
+    await page.goto('http://127.0.0.1:' + port + '/reports/hourly', { waitUntil: 'domcontentloaded' });
+    await page.locator('metra-hourly-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await page.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
+    await page.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
+    await page.locator('select[name="utcTime"]').selectOption('01');
+    const hourlyValues = { dryTemp: '+25.5', wetTemp: '+20.0', stationPressure: '1013.2', seaLevelPressure: '1013.2', relativeHumidity: '065', dewPoint: '+18.5', windDirection: '18', windSpeed: '12', visibility: '050', totalCloudCover: '2', cover12: '2', cover123: '2' };
+    for (const [name, value] of Object.entries(hourlyValues)) await page.locator('[name="' + name + '"]').fill(value);
+    await page.locator('input[name="responsibilityAgreement"]').check();
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    await page.getByText('نشرات ساعية محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    const hourlySaved = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.observationType === 'hourly');
+    });
+    assert.ok(hourlySaved);
+    assert.equal(hourlySaved.state, 'pending');
+    assert.equal(hourlySaved.reportType, '01');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('metra-hourly-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await page.getByText('نشرات ساعية محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    await page.getByRole('button', { name: 'إعادة فتح النشرة' }).click();
+    const hourlyRestored = await page.evaluate(() => ({
+      online: navigator.onLine,
+      station: document.querySelector('select[name="stationId"]')?.value,
+      hour: document.querySelector('select[name="utcTime"]')?.value,
+      dryTemp: document.querySelector('input[name="dryTemp"]')?.value,
+      dewPoint: document.querySelector('input[name="dewPoint"]')?.value,
+      agreement: document.querySelector('input[name="responsibilityAgreement"]')?.checked
+    }));
+    assert.equal(hourlyRestored.online, false);
+    assert.equal(hourlyRestored.station, '00000000-0000-4000-8000-000000000002');
+    assert.equal(hourlyRestored.hour, '01');
+    assert.equal(hourlyRestored.dryTemp, '+25.5');
+    assert.equal(hourlyRestored.dewPoint, '+18.5');
+    assert.equal(hourlyRestored.agreement, true);
+
+    // Queue a daily report in a second tab while the hourly tab remains active.
+    const dailyPage = await context.newPage();
+    await dailyPage.goto('http://127.0.0.1:' + port + '/reports/daily', { waitUntil: 'domcontentloaded' });
+    await dailyPage.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await dailyPage.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
+    await dailyPage.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
+    await dailyPage.locator('input[name="currentDate"]').fill('2099-01-02');
+    await dailyPage.locator('input[name="observer"]').fill('راصد التزامن');
+    await dailyPage.getByRole('button', { name: /إدخال بيانات تجريبية/ }).click();
+    await dailyPage.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await dailyPage.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
+
+    // Both tabs receive the same online event and contend for one shared lease.
+    mockStatus = 200;
+    await context.setOffline(false);
+    await page.waitForFunction(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.length === 1 && rows[0].state === 'blocked';
+    }, { timeout: 20000 });
+    const concurrentPosts = acceptedPosts.slice(4);
+    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after one online event');
+    assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
+    assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
+    assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+    assert.deepEqual(errors, [], 'Angular pages should not throw uncaught runtime errors');
     console.log(JSON.stringify({
       browser: 'Chromium', serviceWorker: pwa.active, savedOffline: true,
       reopenedAfterReload: true, autoSyncConfirmed: true, serverRejectionBlocked: true,
-      transientFailureRetainedAndRetried: true, apiAttempts: acceptedPosts.length,
-      remainingBlocked: finalQueue.length, runtimeErrors: errors.length
+      transientFailureRetainedAndRetried: true, hourlySavedAndReopened: true,
+      concurrentDailyHourlySync: true, maxConcurrentPosts, apiAttempts: acceptedPosts.length,
+      remainingBlocked: 1, runtimeErrors: errors.length
     }));
   } finally {
     if (browser) await browser.close();
