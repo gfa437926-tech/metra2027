@@ -69,7 +69,7 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
       <section class="card detail" *ngIf="detail">
         <div class="head">
           <h2>تفاصيل البلاغ</h2>
-          <button type="button" class="secondary" (click)="detail=null">إغلاق</button>
+          <button type="button" class="secondary" (click)="closeDetail()">إغلاق</button>
         </div>
         <dl>
           <dt>المعرّف</dt><dd><code>{{ detail['id'] }}</code></dd>

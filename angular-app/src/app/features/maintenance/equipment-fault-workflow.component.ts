@@ -85,7 +85,7 @@ import {
       <section class="card" *ngIf="detail">
         <div class="fault-head">
           <strong>تفاصيل العطل من الخادم</strong>
-          <button type="button" (click)="detail=null">إغلاق</button>
+          <button type="button" (click)="closeDetail()">إغلاق</button>
         </div>
         <p>{{ detail.equipment_category }} / {{ detail.equipment_name }} — {{ detail.status }}</p>
         <p>{{ detail.description }}</p>
