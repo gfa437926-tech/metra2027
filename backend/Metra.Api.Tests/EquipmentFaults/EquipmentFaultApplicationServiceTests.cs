@@ -269,7 +269,7 @@ public sealed class EquipmentFaultApplicationServiceTests
         public bool ThrowUnexpectedFailure { get; init; }
         public int CallCount { get; private set; }
 
-        public Task<Guid?> GetOwningStationIdAsync(Guid faultId, CancellationToken cancellationToken)
+        public Task<Guid?> GetOwningStationIdAsync(Guid actorId, Guid stationId, Guid faultId, CancellationToken cancellationToken)
         {
             CallCount++;
             if (ThrowCallerCancellation)
@@ -613,7 +613,7 @@ public sealed class EquipmentFaultReadServiceTests
         public bool ThrowCancellation { get; set; }
 
         public Task<EquipmentFaultListPage> GetPageAsync(
-            Guid stationId, EquipmentFaultListQuery query,
+            Guid actorId, Guid stationId, EquipmentFaultListQuery query,
             EquipmentFaultListWindow window, CancellationToken cancellationToken = default)
         {
             ListCalls++;
@@ -629,7 +629,7 @@ public sealed class EquipmentFaultReadServiceTests
         }
 
         public Task<EquipmentFaultDetail?> GetDetailAsync(
-            Guid faultId, Guid stationId, CancellationToken cancellationToken = default)
+            Guid actorId, Guid faultId, Guid stationId, CancellationToken cancellationToken = default)
         {
             DetailFaultId = faultId;
             DetailStationId = stationId;
