@@ -158,6 +158,86 @@ public sealed class NpgsqlEquipmentFaultStoreIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Concurrent_transitions_produce_one_winner_and_one_conflict()
+    {
+        var faultId = await CreateFaultAsync();
+        var start = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var review = Task.Run(async () =>
+        {
+            await start.Task;
+            return await _store.TryTransitionAsync(
+                faultId, _stationId, EquipmentFaultStatus.Submitted,
+                EquipmentFaultStatus.UnderReview, _actorId, "مراجعة البلاغ");
+        });
+        var reject = Task.Run(async () =>
+        {
+            await start.Task;
+            return await _store.TryTransitionAsync(
+                faultId, _stationId, EquipmentFaultStatus.Submitted,
+                EquipmentFaultStatus.Rejected, _actorId, "رفض البلاغ");
+        });
+
+        start.SetResult(true);
+        var results = await Task.WhenAll(review, reject);
+
+        Assert.Single(results, result => result == EquipmentFaultTransitionWriteResult.Applied);
+        Assert.Single(results, result => result == EquipmentFaultTransitionWriteResult.Conflict);
+
+        var detail = await _store.GetDetailAsync(_actorId, faultId, _stationId);
+        Assert.NotNull(detail);
+        Assert.Contains(detail.Status, new[] { EquipmentFaultStatus.UnderReview, EquipmentFaultStatus.Rejected });
+
+        await using var admin = new NpgsqlConnection(_postgres.GetConnectionString());
+        await admin.OpenAsync();
+        await using var auditCount = new NpgsqlCommand(
+            "select count(*) from public.equipment_fault_audit where fault_id = @id", admin);
+        auditCount.Parameters.AddWithValue("id", faultId);
+        Assert.Equal(2L, (long)(await auditCount.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Runtime_login_cannot_update_or_delete_audit_rows()
+    {
+        var faultId = await CreateFaultAsync();
+        var loginConnection = new NpgsqlConnectionStringBuilder(_postgres.GetConnectionString())
+        {
+            Username = "metra_equipment_faults_login",
+            Password = "integration-only-password",
+            SslMode = SslMode.Disable,
+            Pooling = false
+        };
+
+        await using (var connection = new NpgsqlConnection(loginConnection.ConnectionString))
+        {
+            await connection.OpenAsync();
+            await using var transaction = await connection.BeginTransactionAsync();
+            await using (var role = new NpgsqlCommand(
+                "set local role metra_equipment_faults_runtime", connection, transaction))
+                await role.ExecuteNonQueryAsync();
+            await using var update = new NpgsqlCommand(
+                "update public.equipment_fault_audit set reason = 'تعديل غير مصرح' where fault_id = @id",
+                connection, transaction);
+            update.Parameters.AddWithValue("id", faultId);
+            await Assert.ThrowsAsync<PostgresException>(() => update.ExecuteNonQueryAsync());
+        }
+
+        await using (var connection = new NpgsqlConnection(loginConnection.ConnectionString))
+        {
+            await connection.OpenAsync();
+            await using var transaction = await connection.BeginTransactionAsync();
+            await using (var role = new NpgsqlCommand(
+                "set local role metra_equipment_faults_runtime", connection, transaction))
+                await role.ExecuteNonQueryAsync();
+            await using var delete = new NpgsqlCommand(
+                "delete from public.equipment_fault_audit where fault_id = @id",
+                connection, transaction);
+            delete.Parameters.AddWithValue("id", faultId);
+            await Assert.ThrowsAsync<PostgresException>(() => delete.ExecuteNonQueryAsync());
+        }
+    }
+
+    [Fact]
     public async Task Undefined_or_forbidden_transition_is_denied_before_database_write()
     {
         var faultId = await CreateFaultAsync();
