@@ -73,6 +73,28 @@ export class DailyOfflineQueue {
     });
   }
 
+
+  async renewSyncLease(owner: string, leaseMs = 300_000): Promise<boolean> {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(this.syncLockStoreName, 'readwrite');
+      const store = tx.objectStore(this.syncLockStoreName);
+      const request = store.get('observations');
+      let renewed = false;
+      request.onsuccess = () => {
+        const current = request.result as { owner?: string } | undefined;
+        if (current?.owner === owner) {
+          store.put({ id: 'observations', owner, expiresAt: Date.now() + leaseMs });
+          renewed = true;
+        }
+      };
+      request.onerror = () => reject(request.error ?? new Error('تعذر قراءة قفل المزامنة.'));
+      tx.oncomplete = () => resolve(renewed);
+      tx.onerror = () => reject(tx.error ?? new Error('فشلت معاملة تجديد قفل المزامنة.'));
+      tx.onabort = () => reject(tx.error ?? new Error('أُلغيت معاملة تجديد قفل المزامنة.'));
+    });
+  }
+
   async releaseSyncLease(owner: string): Promise<void> {
     const db = await this.open();
     await new Promise<void>((resolve, reject) => {
