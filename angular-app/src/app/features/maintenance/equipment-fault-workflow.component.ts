@@ -82,6 +82,16 @@ import {
         <p *ngIf="!loading && rows.length === 0">لا توجد بلاغات.</p>
       </section>
 
+      <section class="card" *ngIf="detail">
+        <div class="fault-head">
+          <strong>تفاصيل العطل من الخادم</strong>
+          <button type="button" (click)="detail=null">إغلاق</button>
+        </div>
+        <p>{{ detail.equipment_category }} / {{ detail.equipment_name }} — {{ detail.status }}</p>
+        <p>{{ detail.description }}</p>
+        <p>المحطة: <code>{{ detail.station_id }}</code> — التقدم: {{ detail.progress_percent }}%</p>
+      </section>
+
       <section class="return-dialog" *ngIf="pendingTransition" role="dialog">
         <div class="return-panel">
           <h2>{{ pendingTransition.label }}</h2>
@@ -133,6 +143,8 @@ export class EquipmentFaultWorkflowComponent implements OnInit {
 
   stationId = '';
   rows: EquipmentFaultItem[] = [];
+  detail: EquipmentFaultItem | null = null;
+  detailLoading = false;
   loading = false;
   saving = false;
   busyId: string | null = null;
@@ -234,6 +246,24 @@ export class EquipmentFaultWorkflowComponent implements OnInit {
       this.error = this.errorMessage(error);
     } finally {
       this.saving = false;
+    }
+  }
+
+  async openDetail(row: EquipmentFaultItem): Promise<void> {
+    if (!this.stationId || this.detailLoading) return;
+    this.detailLoading = true;
+    this.error = '';
+    try {
+      this.detail = await this.api.getById(this.stationId, row.id);
+      if (this.detail.station_id && this.detail.station_id !== this.stationId) {
+        this.detail = null;
+        this.error = 'رُفض عرض عطل لا ينتمي إلى محطتك.';
+      }
+    } catch (error: unknown) {
+      this.detail = null;
+      this.error = this.errorMessage(error);
+    } finally {
+      this.detailLoading = false;
     }
   }
 

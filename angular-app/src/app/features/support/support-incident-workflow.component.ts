@@ -57,12 +57,32 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
           </div>
           <p>{{ row['description'] }}</p>
           <div class="actions">
+            <button type="button" class="secondary" (click)="openDetail(row)" [disabled]="detailLoading">تفاصيل من الخادم</button>
             <button type="button" *ngFor="let action of nextActions(statusOf(row))"
               [disabled]="busyId === row['id']"
               (click)="transition(row, action.status)">{{ action.label }}</button>
           </div>
         </div>
         <p *ngIf="!loading && rows.length === 0">لا توجد بلاغات.</p>
+      </section>
+
+      <section class="card detail" *ngIf="detail">
+        <div class="head">
+          <h2>تفاصيل البلاغ</h2>
+          <button type="button" class="secondary" (click)="detail=null">إغلاق</button>
+        </div>
+        <dl>
+          <dt>المعرّف</dt><dd><code>{{ detail['id'] }}</code></dd>
+          <dt>المحطة</dt><dd><code>{{ detail['station_id'] }}</code></dd>
+          <dt>الحالة</dt><dd>{{ detail['status'] }}</dd>
+          <dt>الأولوية</dt><dd>{{ detail['severity'] }}</dd>
+          <dt>النوع</dt><dd>{{ detail['kind'] }}</dd>
+          <dt>التصنيف</dt><dd>{{ detail['category'] }}</dd>
+          <dt>العنوان</dt><dd>{{ detail['title'] }}</dd>
+          <dt>الوصف</dt><dd>{{ detail['description'] }}</dd>
+          <dt>الجهاز/الخدمة</dt><dd>{{ detail['affected_asset'] || '—' }}</dd>
+          <dt>وقت الحدوث</dt><dd>{{ detail['occurred_at'] }}</dd>
+        </dl>
       </section>
 
       <section class="return-dialog" *ngIf="pending" role="dialog">
@@ -98,6 +118,10 @@ import { SupportIncidentApiService } from '../../core/api/support-incident-api.s
     .badge.muted{background:#f1f5f9;color:#475569}
     .actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
     .actions button{background:#334155}
+    button.secondary{background:#475569}
+    .detail dl{display:grid;grid-template-columns:140px 1fr;gap:.35rem .75rem}
+    .detail dt{color:#64748b}
+    .detail dd{margin:0}
     .return-dialog{position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center}
     .return-panel{background:#fff;border-radius:12px;padding:1rem;width:min(92vw,420px);display:grid;gap:.75rem}
     .return-actions{display:flex;gap:.5rem;justify-content:flex-end}
@@ -108,6 +132,8 @@ export class SupportIncidentWorkflowComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   stationId = '';
   rows: Record<string, unknown>[] = [];
+  detail: Record<string, unknown> | null = null;
+  detailLoading = false;
   loading = false;
   saving = false;
   busyId: string | null = null;
