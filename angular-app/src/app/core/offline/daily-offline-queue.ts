@@ -51,7 +51,17 @@ export class DailyOfflineQueue {
 
   // A short IndexedDB lease prevents daily and hourly pages from draining the
   // shared outbox concurrently. Server idempotency remains the final safeguard.
-  async acquireSyncLease(owner: string, leaseMs = 120_000): Promise<boolean> {
+  async acquireSyncLease(owner: string, leaseMs = 120_000, waitMs = 300_000): Promise<boolean> {
+    const startedAt = Date.now();
+    do {
+      const acquired = await this.tryAcquireSyncLease(owner, leaseMs);
+      if (acquired) return true;
+      if (Date.now() - startedAt >= waitMs) return false;
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } while (true);
+  }
+
+  private async tryAcquireSyncLease(owner: string, leaseMs: number): Promise<boolean> {
     const db = await this.open();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(this.syncLockStoreName, 'readwrite');
@@ -72,7 +82,6 @@ export class DailyOfflineQueue {
       tx.onabort = () => reject(tx.error ?? new Error('أُلغيت معاملة قفل المزامنة.'));
     });
   }
-
 
   async renewSyncLease(owner: string, leaseMs = 300_000): Promise<boolean> {
     const db = await this.open();
