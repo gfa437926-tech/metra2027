@@ -37,7 +37,7 @@ async function main() {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'domcontentloaded' });
-    await page.locator('app-root').waitFor({ state: 'attached', timeout: 20000 });
+    await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
 
     const pwa = await page.evaluate(async () => {
       if (!('serviceWorker' in navigator)) return { supported: false };
@@ -81,7 +81,7 @@ async function main() {
 
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.locator('app-root').waitFor({ state: 'attached', timeout: 20000 });
+    await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
     const offline = await page.evaluate(() => ({ online: navigator.onLine, title: document.title }));
     assert.equal(offline.online, false, 'Browser should be offline during offline reload');
     assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
