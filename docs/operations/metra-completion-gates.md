@@ -28,3 +28,11 @@
 - Do not modify the legacy INSERT database
 - Do not import legacy stations without approval
 - Do not place service-role or JWT secrets in clients
+
+## Daily submission retry hardening and legacy period semantics
+- The Angular daily form now keeps a pending idempotency key in the current page and, where Web Crypto and session storage are available, across a same-tab reload.
+- Session storage contains only the SHA-256 fingerprint of the exact submission plus its UUID idempotency key; the meteorological payload and observer metadata are not stored there. If hashing or session storage is unavailable, retries are protected only while the current page remains open.
+- A changed station, report date/type, agreement, or submitted value changes the fingerprint and causes a new idempotency key. A confirmed submitted response clears the pending key.
+- Read-only inspection of the legacy `daily_db.js` confirms the period labels: `24h` = 00:00–24:00; `06utc` = a 24-hour period ending at 06:00 UTC; `18utc` = a 24-hour period ending at 18:00 UTC. The legacy form stores the selected date as `report_date` and `collection_date`, while the UI describes the 24-hour summary as the previous day.
+- Therefore, the current API `observedAt` mapping is still provisional: the repository establishes period labels and selected-date storage, but does not conclusively define whether `observedAt` should denote period start, period end, or the operational reporting date. Do not change the mapping or release this workflow until the meteorological owner confirms that convention.
+- The latest change is code-only; CI must pass on its exact head SHA. No database migration was applied and no live submission was performed.
