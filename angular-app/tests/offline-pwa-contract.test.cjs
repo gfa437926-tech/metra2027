@@ -64,3 +64,23 @@ test('daily report keeps local queue available when API configuration is absent'
   assert.match(daily, /!this\.isOnline \|\| !this\.apiReady/);
   assert.doesNotMatch(daily, /disabled]="saving \|\| !apiReady \|\| !selectedStationId"/);
 });
+
+
+test('daily and hourly sync use one shared IndexedDB lease', () => {
+  const daily = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/daily-reports.component.ts'), 'utf8');
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  assert.match(queue, /sync-locks/);
+  assert.match(queue, /acquireSyncLease\(owner: string/);
+  assert.match(queue, /releaseSyncLease\(owner: string/);
+  assert.match(queue, /indexedDB\.open\(this\.databaseName, 3\)/);
+  assert.match(daily, /acquireSyncLease\(this\.syncOwner\)/);
+  assert.match(daily, /releaseSyncLease\(this\.syncOwner\)/);
+  assert.match(hourly, /acquireSyncLease\(this\.syncOwner\)/);
+  assert.match(hourly, /releaseSyncLease\(this\.syncOwner\)/);
+});
+
+test('hourly submit does not block offline enqueue when API is unconfigured', () => {
+  const hourly = fs.readFileSync(path.join(__dirname, '../src/app/features/reports/hourly-reports.component.ts'), 'utf8');
+  assert.doesNotMatch(hourly, /if \(!this\.apiReady\) \{ this\.message = 'لم يتم الإرسال/);
+  assert.match(hourly, /if \(!this\.isOnline \|\| !this\.apiReady\)\s*\{/);
+});
