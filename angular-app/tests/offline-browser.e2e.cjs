@@ -13,6 +13,18 @@ async function main() {
   assert.ok(fs.existsSync(path.join(root, 'index.html')), 'Angular production index must exist');
   const server = http.createServer((req, res) => {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    // The Service Worker pre-caches metra-config.js during installation. Serve an
+    // isolated test configuration at the origin so both page requests and SW cache
+    // population receive the same disposable values (never the real project config).
+    if (req.method === 'GET' && pathname === '/metra-config.js') {
+      res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
+      res.end(`window.__METRA_CONFIG__ = Object.freeze({
+        apiBaseUrl: '',
+        supabaseUrl: 'https://metra-e2e.supabase.co',
+        supabaseAnonKey: 'metra-browser-e2e-anon-key'
+      });`);
+      return;
+    }
     const candidate = path.resolve(root, '.' + pathname);
     const safe = candidate.startsWith(root + path.sep) || candidate === path.join(root, 'index.html');
     const exists = safe && fs.existsSync(candidate) && fs.statSync(candidate).isFile();
@@ -41,15 +53,6 @@ async function main() {
     // No real Supabase project, credentials, or database are contacted by this test.
     // Replace the bundled runtime config before the application reads it.
     // This prevents the smoke test from contacting the configured production project.
-    await page.route('**/metra-config.js', route => route.fulfill({
-      status: 200,
-      contentType: 'application/javascript',
-      body: `window.__METRA_CONFIG__ = Object.freeze({
-        apiBaseUrl: '',
-        supabaseUrl: 'https://metra-e2e.supabase.co',
-        supabaseAnonKey: 'metra-browser-e2e-anon-key'
-      });`
-    }));
     await page.addInitScript(() => {
       localStorage.setItem('sb-metra-e2e-auth-token', JSON.stringify({
         access_token: 'metra-e2e-access-token',
@@ -68,7 +71,7 @@ async function main() {
         }
       }));
     });
-    await page.route('https://metra-e2e.supabase.co/auth/v1/user**', route => route.fulfill({
+    await page.route('**/auth/v1/user**', route => route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
