@@ -132,23 +132,39 @@ async function main() {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
       });
-      await new Promise((resolve, reject) => {
-        const tx = db.transaction('daily-submissions', 'readwrite');
-        tx.objectStore('daily-submissions').delete(key);
-        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
-      });
       db.close();
-      return { stores: required, persisted: found?.idempotencyKey === key };
+      return { stores: required, key, persisted: found?.idempotencyKey === key };
     });
     assert.equal(dbResult.persisted, true, 'IndexedDB should persist and retrieve an outbox record');
 
     await context.setOffline(true);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.locator('metra-root').waitFor({ state: 'attached', timeout: 20000 });
-    const offline = await page.evaluate(() => ({ online: navigator.onLine, title: document.title }));
+    const offline = await page.evaluate(async key => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const record = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readwrite');
+        tx.objectStore('daily-submissions').delete(key);
+        tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+      return { online: navigator.onLine, title: document.title, queuedRecordSurvivedReload: record?.idempotencyKey === key };
+    }, dbResult.key);
     assert.equal(offline.online, false, 'Browser should be offline during offline reload');
+    assert.equal(offline.queuedRecordSurvivedReload, true, 'Queued submission must survive an offline page reload');
+    await page.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
     assert.deepEqual(errors, [], 'Angular page should not throw uncaught runtime errors');
-    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, indexedDbPersisted: dbResult.persisted, offlineReload: true, runtimeErrors: errors.length }));
+    console.log(JSON.stringify({ browser: 'Chromium', serviceWorker: pwa.active, indexedDbPersisted: dbResult.persisted, queuedRecordSurvivedReload: offline.queuedRecordSurvivedReload, offlineReload: true, runtimeErrors: errors.length }));
   } finally {
     if (browser) await browser.close();
     await new Promise(resolve => server.close(resolve));
