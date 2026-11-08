@@ -1,6 +1,11 @@
 using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,6 +86,59 @@ public sealed class LegacyHs256AuthenticationTests
         using var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ES256_token_remains_on_the_local_JWKS_validation_path()
+    {
+        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
+        var signingKey = new ECDsaSecurityKey(ecdsa);
+        var issuer = SupabaseUrl + "/auth/v1";
+        var now = DateTime.UtcNow;
+        var jwt = new JwtSecurityToken(
+            issuer,
+            "authenticated",
+            new[] { new Claim("sub", UserId.ToString()) },
+            now.AddMinutes(-1),
+            now.AddMinutes(5),
+            new SigningCredentials(signingKey, SecurityAlgorithms.EcdsaSha256));
+        var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Supabase:Url"] = SupabaseUrl,
+                    ["Authentication:Authority"] = issuer,
+                    ["Authentication:Audience"] = "authenticated"
+                }));
+            builder.ConfigureTestServices(services =>
+                services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+                {
+                    options.Authority = null;
+                    options.Audience = null;
+                    options.ConfigurationManager = null;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = issuer,
+                        ValidateAudience = true,
+                        ValidAudience = "authenticated",
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = signingKey,
+                        ClockSkew = TimeSpan.FromSeconds(60)
+                    };
+                }));
+        });
+        using var client = factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/stations");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        using var response = await client.SendAsync(request);
+
+        Assert.NotEqual(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     private static WebApplicationFactory<Program> CreateFactory(StubHandler handler) =>
