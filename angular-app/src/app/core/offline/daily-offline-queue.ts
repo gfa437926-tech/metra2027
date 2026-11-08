@@ -37,12 +37,12 @@ export class DailyOfflineQueue {
 
   async cacheStations(stations: unknown[]): Promise<void> {
     const db = await this.open();
-    await this.request<void>(db, 'readwrite', store => store.put({ id: 'latest', stations, cachedAt: new Date().toISOString() }));
+    await this.request<void>(db, 'readwrite', store => store.put({ id: 'latest', stations, cachedAt: new Date().toISOString() }), this.stationStoreName);
   }
 
   async getCachedStations<T>(): Promise<T[]> {
     const db = await this.open();
-    const cached = await this.request<{ stations?: T[] } | undefined>(db, 'readonly', store => store.get('latest'));
+    const cached = await this.request<{ stations?: T[] } | undefined>(db, 'readonly', store => store.get('latest'), this.stationStoreName);
     return Array.isArray(cached?.stations) ? cached.stations : [];
   }
 
@@ -82,10 +82,10 @@ export class DailyOfflineQueue {
   private request<T>(
     db: IDBDatabase,
     mode: IDBTransactionMode,
-    operation: (store: IDBObjectStore) => IDBRequest
+    operation: (store: IDBObjectStore) => IDBRequest,
+    storeName = this.storeName
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      const storeName = mode === 'readonly' && this.storeName !== this.stationStoreName ? this.storeName : this.storeName;
       const transaction = db.transaction(storeName, mode);
       const request = operation(transaction.objectStore(this.storeName));
       let result: T;
