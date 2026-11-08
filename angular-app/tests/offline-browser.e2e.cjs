@@ -452,10 +452,9 @@ async function main() {
       page.waitForFunction(() => navigator.onLine === true),
       dailyPage.waitForFunction(() => navigator.onLine === true)
     ]);
-    await Promise.all([
-      page.evaluate(() => window.dispatchEvent(new Event('online'))),
-      dailyPage.evaluate(() => window.dispatchEvent(new Event('online')))
-    ]);
+    // Dispatch one online event in the initiating tab; the other tab must
+    // learn about reconnection through the shared BroadcastChannel.
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
     await page.waitForFunction(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
