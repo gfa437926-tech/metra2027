@@ -73,3 +73,54 @@ Legacy HEAD: `12a96f301102fb75bd053dd7be188a04ed38b408`
 - All apps use the approved new station catalogue and backend authorization.
 - No preview-only form is considered production-ready.
 - No release is declared complete until the field-level migration matrix and end-to-end tests are signed off.
+
+
+## High-priority field-contract findings (2026-11-08)
+
+### Hourly observation form mismatch: Flutter vs authoritative API validator
+
+The current Flutter `ObservationSubmitScreen` exposes and submits only:
+`dryTemp`, `wetTemp`, `windSpeed`, `windDirection`, `relativeHumidity`,
+`stationPressure`, `visibility`, `cloudCover`, and `remarks`.
+
+The backend `HourlyObservationValidator` requires `utcTime` and, at minimum,
+`dryTemp`, `wetTemp`, `stationPressure`, `seaLevelPressure`,
+`windDirection`, `windSpeed`, `visibility`, `totalCloudCover`,
+`relativeHumidity`, `dewPoint`, `cover12`, and `cover123`.
+It conditionally requires `precipitationAmount` at UTC hours 00, 06, 12, 18,
+and `pressureSlope`, `pressureShape`, and `pastWeather` at synoptic hours
+00, 03, 06, 09, 12, 15, 18, 21.
+
+Therefore the current Flutter hourly form is a partial prototype, not a complete
+legacy hourly-entry replacement. It also sends `cloudCover`, while the validator
+expects `totalCloudCover`. Before release, align field identifiers and formats
+across legacy source, Angular, Flutter, API request guard, and backend validator;
+add tests for every required and conditional field and the local-to-UTC hour mapping.
+
+### Daily observation
+
+The backend daily validator currently recognizes field codes including
+`minTemp`, `maxTemp`, `precipitation`, `snowThickness`, `evaporation`,
+`sunshineDuration`, `sunshinePercentage`, `maxGustSpeed`,
+`maxGustDirection`, `maxGustTime`, `maxHumidityTime`, `minHumidityTime`,
+`maxHumidity`, and `minHumidity`, with `#` as a missing-value marker and
+`T/t` for precipitation trace. Required fields are supplied separately by
+report type. Flutter currently has no daily entry screen. The Angular daily
+component must be checked against every original daily field and the report-type
+required-field sets before it is treated as complete.
+
+### Preview-only Angular features
+
+The Angular agriculture component explicitly says it has no API/database
+connection and disables submission and WhatsApp sharing. The soil-temperature
+component also explicitly states that it is preview-only and disables database
+submission and sharing. These are UI prototypes, not production workflows.
+Backend contracts, persistence, role authorization, list/detail/report queries,
+and export behavior remain to be implemented and tested for these modules.
+
+### Flutter platform release readiness
+
+The Flutter README says Android/iOS runners are not currently included and must
+be generated. Passing Dart analyze/tests does not create installable APK/AAB/IPA
+artifacts. Android/iOS runner generation, signing, release builds, and real-device
+installation tests remain open.
