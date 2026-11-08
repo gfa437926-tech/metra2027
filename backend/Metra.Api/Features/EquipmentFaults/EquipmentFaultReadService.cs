@@ -46,6 +46,7 @@ public sealed record EquipmentFaultDetail(
 public interface IEquipmentFaultReadStore
 {
     Task<EquipmentFaultListPage> GetPageAsync(
+        Guid actorId,
         Guid stationId,
         EquipmentFaultListQuery query,
         EquipmentFaultListWindow window,
@@ -56,6 +57,7 @@ public interface IEquipmentFaultReadStore
     /// for either miss without revealing whether a cross-station record exists.
     /// </summary>
     Task<EquipmentFaultDetail?> GetDetailAsync(
+        Guid actorId,
         Guid faultId,
         Guid stationId,
         CancellationToken cancellationToken = default);
@@ -104,7 +106,7 @@ public sealed class EquipmentFaultReadService(
         try
         {
             var page = await store.GetPageAsync(
-                stationId, query!, window, cancellationToken);
+                userId, stationId, query!, window, cancellationToken);
 
             if (!IsValidPage(page, window, stationId))
                 return new(EquipmentFaultReadResultCode.DependencyFailure);
@@ -137,7 +139,7 @@ public sealed class EquipmentFaultReadService(
 
         try
         {
-            var detail = await store.GetDetailAsync(faultId, stationId, cancellationToken);
+            var detail = await store.GetDetailAsync(userId, faultId, stationId, cancellationToken);
             if (detail is null ||
                 detail.FaultId != faultId ||
                 detail.StationId != stationId)
