@@ -124,7 +124,7 @@ Neither option is safe merely because the role is named `metra_api_runtime` or `
 
 ## 6. Provisional recommendation
 
-**Do not approve either option yet. Keep B1 as the preferred candidate only if the following conditions can be demonstrated:**
+**Current direction: proceed with Option A as the design baseline, but do not implement or approve its database changes yet.** B1 remains a possible alternative only if the following conditions can first be demonstrated:
 
 - The project has asymmetric JWT signing enabled, or a separately generated asymmetric key can be imported without exposing any existing Supabase private key.
 - A short-lived backend-issued token can be verified by PostgREST with `role: metra_api_runtime`.
@@ -132,7 +132,7 @@ Neither option is safe merely because the role is named `metra_api_runtime` or `
 - `metra_api_runtime` remains `NOBYPASSRLS` and receives only the minimal Equipment Faults object privileges.
 - Integration tests prove user/station scoping, audit atomicity, concurrency, and audit immutability using that exact runtime role.
 
-If any of these cannot be met without broad grants or bypassing RLS, choose A and implement a dedicated restricted login plus Npgsql with transaction-local identity context and pool-isolation tests.
+If all of these can be demonstrated with narrowly scoped grants and no RLS bypass, B1 may be reconsidered against the Option A baseline. Until then, continue the Option A design: dedicated restricted login, Npgsql adapter, transaction-local identity context, and pool-isolation tests. Do not create the login role or alter grants until the complete SQL and privilege matrix have been reviewed and explicitly approved.
 
 This is a conditional engineering recommendation, not authorization to change Supabase.
 
