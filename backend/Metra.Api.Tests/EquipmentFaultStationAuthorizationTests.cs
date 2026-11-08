@@ -168,7 +168,7 @@ public sealed class EquipmentFaultStationAuthorizationTests
             Guid faultId,
             CancellationToken cancellationToken)
         {
-            var payload = $"{{"station_id":"{stationId}"}}";
+            var payload = "{\"station_id\":\"" + stationId.ToString() + "\"}";
             return Task.FromResult(new EquipmentFaultServiceOutcome(
                 true, true, HttpStatusCode.OK, JsonDocument.Parse(payload).RootElement));
         }
