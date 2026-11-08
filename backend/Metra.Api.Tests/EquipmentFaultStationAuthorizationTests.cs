@@ -65,6 +65,49 @@ public sealed class EquipmentFaultStationAuthorizationTests
         Assert.Equal(0, faults.SubmitCallCount);
     }
 
+
+    [Fact]
+    public async Task Unauthorized_user_cannot_get_equipment_fault_detail_and_service_is_not_called()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, allowedStationId: Guid.NewGuid());
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{faultId}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, faults.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task Authorized_user_gets_fault_only_for_requested_station()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, stationId);
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{faultId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, faults.GetByIdCallCount);
+        Assert.Equal(stationId, faults.LastGetStationId);
+        Assert.Equal(faultId, faults.LastGetFaultId);
+    }
+
     [Fact]
     public async Task Authorized_user_lists_only_requested_station_faults()
     {
@@ -137,6 +180,9 @@ public sealed class EquipmentFaultStationAuthorizationTests
         public bool IsConfigured => true;
         public int ListCallCount { get; private set; }
         public int SubmitCallCount { get; private set; }
+        public int GetByIdCallCount { get; private set; }
+        public Guid? LastGetStationId { get; private set; }
+        public Guid? LastGetFaultId { get; private set; }
         public Guid? LastListStationId { get; private set; }
         public int? LastListLimit { get; private set; }
 
@@ -168,6 +214,9 @@ public sealed class EquipmentFaultStationAuthorizationTests
             Guid faultId,
             CancellationToken cancellationToken)
         {
+            GetByIdCallCount++;
+            LastGetStationId = stationId;
+            LastGetFaultId = faultId;
             var payload = "{\"station_id\":\"" + stationId.ToString() + "\"}";
             return Task.FromResult(new EquipmentFaultServiceOutcome(
                 true, true, HttpStatusCode.OK, JsonDocument.Parse(payload).RootElement));

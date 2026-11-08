@@ -2,6 +2,7 @@ using Metra.Api.Features.Observations;
 using Metra.Api.Features.Maintenance;
 using Metra.Api.Features.Support;
 using Metra.Api.Security;
+using Metra.Api.Infrastructure.Persistence;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,7 +50,15 @@ builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueSer
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
-builder.Services.AddScoped<IEquipmentFaultService, SupabaseEquipmentFaultService>();
+// Prefer direct Npgsql ops connection when configured; otherwise Supabase RPC/REST path.
+builder.Services.AddScoped<IEquipmentFaultService>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var auth = sp.GetRequiredService<IStationAuthorizationService>();
+    if (!string.IsNullOrWhiteSpace(configuration.GetConnectionString("MetraOps")))
+        return new NpgsqlEquipmentFaultService(configuration, auth);
+    return ActivatorUtilities.CreateInstance<SupabaseEquipmentFaultService>(sp);
+});
 builder.Services.AddScoped<ISupportIncidentService, SupabaseSupportIncidentService>();
 builder.Services.AddSingleton<ISupabaseAccessTokenValidator, SupabaseAccessTokenValidator>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
