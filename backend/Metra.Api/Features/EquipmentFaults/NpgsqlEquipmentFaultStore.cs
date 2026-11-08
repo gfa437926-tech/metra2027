@@ -63,7 +63,7 @@ public sealed class NpgsqlEquipmentFaultStore(NpgsqlDataSource dataSource) :
 
         await using var pageCommand = new NpgsqlCommand { Connection = connection, Transaction = transaction };
         foreach (NpgsqlParameter parameter in countCommand.Parameters)
-            pageCommand.Parameters.AddWithValue(parameter.ParameterName, parameter.Value);
+            pageCommand.Parameters.AddWithValue(parameter.ParameterName, parameter.Value!);
 
         var order = query.Sort == EquipmentFaultListSort.OccurredAtAscending
             ? "occurred_at asc, id asc"
