@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
-import { DailyOfflineQueue } from '../../core/offline/daily-offline-queue';
+import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
 import { createIdempotencyKey, getConfirmedDailySubmission } from './daily-submission.utils';
 
 type HourlyStatus = 'draft' | 'submitted';
@@ -26,7 +26,7 @@ interface HourlyPreview {
         <span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span>
       </header>
 
-      <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="blockedOfflineCount">{{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="demo-warning" role="status" aria-live="polite"><i class="fa-solid fa-circle-info"></i><div><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span>{{ pendingOfflineCount }} نشرة ساعية بانتظار المزامنة</span><span *ngIf="blockedOfflineCount">{{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><ul *ngIf="blockedOfflineItems.length" class="offline-blocked-list"><li *ngFor="let item of blockedOfflineItems"><strong>{{ item.stationName }} — {{ item.reportDate }} ({{ item.reportType }} UTC)</strong><span>{{ item.lastError || 'رفض الخادم النشرة دون تفاصيل إضافية.' }}</span></li></ul><span *ngIf="syncing">جارٍ الإرسال تلقائياً...</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
@@ -150,6 +150,7 @@ export class HourlyReportsComponent {
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   pendingOfflineCount = 0;
   blockedOfflineCount = 0;
+  blockedOfflineItems: DailyOfflineSubmission[] = [];
   syncing = false;
 
   constructor() {
@@ -163,7 +164,7 @@ export class HourlyReportsComponent {
   }
 
   private async refreshOfflineCount(): Promise<void> {
-    try { const items = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineCount = items.filter(x => x.state === 'blocked').length; } catch { /* local storage unavailable */ }
+    try { const items = (await this.offlineQueue.list()).filter(x => x.observationType === 'hourly'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; } catch { /* local storage unavailable */ }
   }
 
   async retryBlockedOffline(): Promise<void> {
