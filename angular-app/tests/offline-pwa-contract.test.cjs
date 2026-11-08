@@ -38,3 +38,11 @@ test('application registers service worker only in secure context', () => {
   assert.match(main, /location\.protocol === 'https:'/);
   assert.match(main, /register\('\.\/metra-sw\.js'\)/);
 });
+
+test('web manifest declares an Arabic standalone application', () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/manifest.webmanifest'), 'utf8'));
+  assert.equal(manifest.lang, 'ar');
+  assert.equal(manifest.dir, 'rtl');
+  assert.equal(manifest.display, 'standalone');
+  assert.equal(manifest.start_url, '/');
+});
