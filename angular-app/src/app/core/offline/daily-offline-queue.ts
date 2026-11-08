@@ -21,6 +21,7 @@ export interface DailyOfflineSubmission {
 export class DailyOfflineQueue {
   private readonly databaseName = 'metra-offline-outbox';
   private readonly storeName = 'daily-submissions';
+  private readonly stationStoreName = 'station-catalogue';
   private database?: Promise<IDBDatabase>;
 
   async enqueue(item: DailyOfflineSubmission): Promise<void> {
@@ -32,6 +33,17 @@ export class DailyOfflineQueue {
     const db = await this.open();
     const items = await this.request<DailyOfflineSubmission[]>(db, 'readonly', store => store.getAll());
     return items.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async cacheStations(stations: unknown[]): Promise<void> {
+    const db = await this.open();
+    await this.request<void>(db, 'readwrite', store => store.put({ id: 'latest', stations, cachedAt: new Date().toISOString() }));
+  }
+
+  async getCachedStations<T>(): Promise<T[]> {
+    const db = await this.open();
+    const cached = await this.request<{ stations?: T[] } | undefined>(db, 'readonly', store => store.get('latest'));
+    return Array.isArray(cached?.stations) ? cached.stations : [];
   }
 
   async update(item: DailyOfflineSubmission): Promise<void> {
@@ -55,6 +67,9 @@ export class DailyOfflineQueue {
           if (!db.objectStoreNames.contains(this.storeName)) {
             db.createObjectStore(this.storeName, { keyPath: 'idempotencyKey' });
           }
+          if (!db.objectStoreNames.contains(this.stationStoreName)) {
+            db.createObjectStore(this.stationStoreName, { keyPath: 'id' });
+          }
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error ?? new Error('تعذر فتح صندوق الإرسال المحلي.'));
@@ -70,7 +85,8 @@ export class DailyOfflineQueue {
     operation: (store: IDBObjectStore) => IDBRequest
   ): Promise<T> {
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, mode);
+      const storeName = mode === 'readonly' && this.storeName !== this.stationStoreName ? this.storeName : this.storeName;
+      const transaction = db.transaction(storeName, mode);
       const request = operation(transaction.objectStore(this.storeName));
       let result: T;
       request.onsuccess = () => { result = request.result as T; };
