@@ -276,6 +276,19 @@ class MetraApiClient {
   }
 
 
+  Future<Map<String, dynamic>> getSupportIncidentById({
+    required String stationId,
+    required String incidentId,
+  }) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/support-incidents/${Uri.encodeComponent(incidentId)}',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_support_incident');
+    return Map<String, dynamic>.from(decoded);
+  }
+
   Future<void> transitionSupportIncident({
     required String stationId,
     required String incidentId,

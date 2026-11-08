@@ -66,6 +66,49 @@ public sealed class SupportIncidentStationAuthorizationTests
         Assert.Equal(0, incidents.SubmitCallCount);
     }
 
+
+    [Fact]
+    public async Task Unauthorized_user_cannot_get_support_incident_detail_and_service_is_not_called()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var incidentId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, allowedStationId: Guid.NewGuid());
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/support-incidents/{incidentId}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, incidents.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task Authorized_user_gets_support_incident_only_for_requested_station()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var incidentId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, stationId);
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/support-incidents/{incidentId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, incidents.GetByIdCallCount);
+        Assert.Equal(stationId, incidents.LastGetStationId);
+        Assert.Equal(incidentId, incidents.LastGetIncidentId);
+    }
+
     [Fact]
     public async Task Authorized_user_lists_only_requested_station_incidents()
     {
@@ -136,6 +179,9 @@ public sealed class SupportIncidentStationAuthorizationTests
         public bool IsConfigured => true;
         public int ListCallCount { get; private set; }
         public int SubmitCallCount { get; private set; }
+        public int GetByIdCallCount { get; private set; }
+        public Guid? LastGetStationId { get; private set; }
+        public Guid? LastGetIncidentId { get; private set; }
         public Guid? LastListStationId { get; private set; }
         public int? LastListLimit { get; private set; }
 
@@ -165,10 +211,15 @@ public sealed class SupportIncidentStationAuthorizationTests
         public Task<SupportIncidentServiceOutcome> GetByIdAsync(
             Guid stationId,
             Guid incidentId,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(new SupportIncidentServiceOutcome(
+            CancellationToken cancellationToken)
+        {
+            GetByIdCallCount++;
+            LastGetStationId = stationId;
+            LastGetIncidentId = incidentId;
+            return Task.FromResult(new SupportIncidentServiceOutcome(
                 true, true, HttpStatusCode.OK,
                 JsonDocument.Parse("{\"station_id\":\"" + stationId.ToString() + "\"}").RootElement));
+        }
 
         public Task<SupportIncidentServiceOutcome> TransitionAsync(
             Guid userId,
