@@ -251,8 +251,9 @@ export class DashboardComponent implements OnInit {
       this.userName = 'مستخدم النظام';
       this.userRole = '';
       this.stationName = '';
-  stationId = '';
-  stationQueryParams: Record<string, string> = {};
+      this.stationId = '';
+      this.stationQueryParams = {};
+      this.stationContext.clear();
       this.managementCards = [];
       await this.router.navigate(['/login']);
     } catch {
