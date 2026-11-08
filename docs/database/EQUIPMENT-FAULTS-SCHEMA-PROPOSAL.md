@@ -128,3 +128,45 @@ After schema approval and migration in an isolated test project:
 **Approved as the logical design for implementation.** The target station key and Auth identity mapping have been verified read-only. The table shapes, constraints, indexes, server-only access model, and atomicity requirements are internally consistent with the current fault lifecycle and read contracts.
 
 **Database execution is still gated.** This is technical approval of the model, not permission to apply it to the live project. No SQL, migration, RPC, grants, RLS policy, or database object has been created. Before applying a migration, present its exact SQL and request your explicit deployment approval.
+
+
+## 8. Atomic writer acceptance criteria (implementation gate)
+
+The following criteria are mandatory for the future implementation of
+`IEquipmentFaultTransitionWriter.TryTransitionAsync`; they clarify the
+transaction boundary without prescribing executable SQL:
+
+1. The routine receives the fault ID, expected station ID, expected current
+   status, requested next status, authenticated actor ID, and validated reason.
+   It must not accept a client-supplied audit timestamp or station owner.
+2. It must validate that both statuses are defined and that the exact
+   (previous, next) pair exists in the domain transition matrix. Terminal
+   states, self-transitions, and all unlisted pairs are rejected.
+3. The write predicate must match the fault ID, persisted station ID, and
+   expected current status together. The current status used for the audit
+   event must be the value matched by this same atomic operation, not a
+   separately pre-read value.
+4. A successful operation changes exactly one current fault row and appends
+   exactly one corresponding immutable audit row in the same transaction.
+   The audit row must carry the same fault and station IDs, actor, previous
+   and next statuses, validated reason, and a database-generated timestamp.
+5. If the current-row update affects no row, no audit row may be inserted.
+   If audit insertion, a constraint, or any later transactional step fails,
+   the current-row update must roll back. A partial success is never valid.
+6. The operation returns Applied only after the transaction commits. A stale
+   status returns Conflict; a missing fault or station mismatch returns the
+   same non-disclosing NotFoundOrWrongStation result. Infrastructure and
+   transaction failures must not be mapped to Applied.
+7. Concurrent requests using the same expected status must yield at most one
+   Applied result and exactly one audit event for that successful transition.
+   The losing request must return Conflict (or the non-disclosing missing /
+   wrong-station result if ownership no longer matches).
+8. The application service's preliminary ownership and permission checks are
+   not substitutes for these database predicates. The routine repeats the
+   authoritative station and status checks at write time.
+
+Required integration tests must assert the transaction effects, not merely
+the returned enum: after a rejected or failed transition, both current status
+and audit count remain unchanged; after one successful transition, exactly
+one matching audit row exists; and after a concurrent race, exactly one
+request succeeds and exactly one audit event is persisted.
