@@ -195,7 +195,7 @@ public sealed class EquipmentFaultTransitionServiceTests
             "مراجعة البلاغ");
 
         Assert.Equal(EquipmentFaultTransitionExecutionResult.NotFoundOrWrongStation, result);
-        Assert.Equal(0, auth.CallCount);
+        Assert.Equal(1, auth.CallCount);
         Assert.Equal(0, writer.CallCount);
     }
 
