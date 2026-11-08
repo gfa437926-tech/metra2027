@@ -167,9 +167,17 @@ export class DailyReportsComponent {
         payload,
         submit: true
       });
-      const id = result && typeof result === 'object' && 'id' in result
-        ? String((result as { id: unknown }).id) : '';
-      if (!id) throw new Error('استجابة الخادم لا تحتوي معرّف النشرة المحفوظة.');
+      const response = result && typeof result === 'object'
+        ? result as { id?: unknown; status?: unknown; replayed?: unknown }
+        : null;
+      const id = typeof response?.id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(response.id) &&
+        response.status === 'submitted'
+          ? response.id
+          : '';
+      if (!id) {
+        throw new Error('لم يؤكد الخادم حالة submitted ومعرّف UUID للنشرة؛ لم يتم إعلان نجاح الحفظ.');
+      }
       this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
         reportType: this.reportType, station: stationName, status: 'submitted', values });
       this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
