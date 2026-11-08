@@ -322,7 +322,7 @@ async function main() {
         request.onerror = () => reject(request.error);
       });
       db.close();
-      return rows.find(item => item.payload.observerName === 'راصد الانقطاع');
+      return rows.find(item => item.payload.observerName === 'راصد الانقطاع' && item.state === 'pending' && item.attempts >= 1 && Boolean(item.lastError));
     });
     assert.ok(transient);
     assert.equal(transient.state, 'pending');
