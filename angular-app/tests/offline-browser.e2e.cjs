@@ -51,6 +51,7 @@ async function main() {
     const acceptedPosts = [];
     let inFlightPosts = 0;
     let maxConcurrentPosts = 0;
+    let holdConcurrentResponses = false;
     const station = {
       id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
       name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
@@ -68,7 +69,7 @@ async function main() {
       inFlightPosts++;
       maxConcurrentPosts = Math.max(maxConcurrentPosts, inFlightPosts);
       try {
-        await new Promise(resolve => setTimeout(resolve, 180));
+        if (holdConcurrentResponses) await new Promise(resolve => setTimeout(resolve, 350));
         if (mockStatus === 422) {
           await route.fulfill({ status: 422, contentType: 'application/problem+json', body: JSON.stringify({
             title: 'بيانات النشرة مرفوضة في اختبار المتصفح',
@@ -312,6 +313,8 @@ async function main() {
       db.close();
       return rows.some(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts === 1 && Boolean(item.lastError));
     }, { timeout: 10000 });
+    const transientDebug = await page.evaluate(async () => { const db = await new Promise((resolve, reject) => { const request = indexedDB.open('metra-offline-outbox', 3); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); const rows = await new Promise((resolve, reject) => { const tx = db.transaction('daily-submissions', 'readonly'); const request = tx.objectStore('daily-submissions').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); }); db.close(); return rows; });
+    console.log('DAILY_TRANSIENT_QUEUE_DEBUG', JSON.stringify(transientDebug));
     const transient = await page.evaluate(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
@@ -421,6 +424,7 @@ async function main() {
     await dailyPage.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
 
     // Both tabs receive the same online event and contend for one shared lease.
+    holdConcurrentResponses = true;
     mockStatus = 200;
     await context.setOffline(false);
     await page.waitForFunction(async () => {
@@ -444,6 +448,7 @@ async function main() {
     assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
 
     assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+    holdConcurrentResponses = false;
 
     // Hourly permanent rejection must retain the record as blocked with the
     // server's reason; transient failure must stay pending and retry later.
