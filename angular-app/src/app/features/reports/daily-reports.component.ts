@@ -206,7 +206,7 @@ export class DailyReportsComponent implements OnDestroy {
       if (!leaseAcquired) return;
       const items = await this.offlineQueue.list();
       for (const item of items) {
-        if ((item.observationType ?? 'daily') !== 'daily') continue;
+        // The shared lease owner drains both daily and hourly records.
         if (!this.isOnline) break;
         if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
         if (item.state === 'blocked') continue;
