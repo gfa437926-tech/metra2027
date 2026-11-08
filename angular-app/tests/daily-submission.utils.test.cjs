@@ -88,6 +88,6 @@ test('extracts server validation detail and bounds the displayed message', () =>
   assert.equal(getSubmissionErrorMessage({ status: 422, error: { detail: 'قيمة درجة الحرارة خارج المجال المسموح.' } }, 'رفض عام'), 'قيمة درجة الحرارة خارج المجال المسموح.');
   assert.equal(getSubmissionErrorMessage({ status: 400, error: { errors: { temperature: ['درجة الحرارة مطلوبة.'] } } }, 'رفض عام'), 'درجة الحرارة مطلوبة.');
   assert.equal(getSubmissionErrorMessage({ status: 403, error: 'لا تملك صلاحية الإرسال.' }, 'رفض عام'), 'لا تملك صلاحية الإرسال.');
-  assert.equal(getSubmissionErrorMessage({ status: 422 }, 'رفض عام'), 'HTTP 422: ');
+  assert.equal(getSubmissionErrorMessage({ status: 422 }, 'رفض عام'), 'رفض عام');
   assert.equal(getSubmissionErrorMessage(null, 'رفض عام'), 'رفض عام');
 });
