@@ -4,6 +4,7 @@ const {
   createIdempotencyKey,
   getOrCreateDailySubmissionKey,
   getConfirmedDailySubmission,
+  getSubmissionErrorMessage,
   dailyObservedAtForReport
 } = require('../.test-dist/daily-submission.utils.js');
 
@@ -81,4 +82,12 @@ test('retains same-page retry protection when session storage is unavailable', a
   const first = await getOrCreateDailySubmissionKey('report-A', null, undefined, webcrypto);
   const retry = await getOrCreateDailySubmissionKey('report-A', first, undefined, webcrypto);
   assert.equal(retry.idempotencyKey, first.idempotencyKey);
+});
+
+test('extracts server validation detail and bounds the displayed message', () => {
+  assert.equal(getSubmissionErrorMessage({ status: 422, error: { detail: 'قيمة درجة الحرارة خارج المجال المسموح.' } }, 'رفض عام'), 'قيمة درجة الحرارة خارج المجال المسموح.');
+  assert.equal(getSubmissionErrorMessage({ status: 400, error: { errors: { temperature: ['درجة الحرارة مطلوبة.'] } } }, 'رفض عام'), 'درجة الحرارة مطلوبة.');
+  assert.equal(getSubmissionErrorMessage({ status: 403, error: 'لا تملك صلاحية الإرسال.' }, 'رفض عام'), 'لا تملك صلاحية الإرسال.');
+  assert.equal(getSubmissionErrorMessage({ status: 422 }, 'رفض عام'), 'HTTP 422: ');
+  assert.equal(getSubmissionErrorMessage(null, 'رفض عام'), 'رفض عام');
 });
