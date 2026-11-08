@@ -1,7 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  createIdempotencyKey,\n  getOrCreateDailySubmissionKey,
+  createIdempotencyKey,
+  getOrCreateDailySubmissionKey,
   getConfirmedDailySubmission,
   dailyObservedAtForReport
 } = require('../.test-dist/daily-submission.utils.js');
