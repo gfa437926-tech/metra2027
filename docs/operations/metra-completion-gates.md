@@ -37,6 +37,13 @@
 - Therefore, the current API `observedAt` mapping is still provisional: the repository establishes period labels and selected-date storage, but does not conclusively define whether `observedAt` should denote period start, period end, or the operational reporting date. Do not change the mapping or release this workflow until the meteorological owner confirms that convention.
 - The latest change is code-only; CI must pass on its exact head SHA. No database migration was applied and no live submission was performed.
 
+## Daily cross-field validation hardening
+
+- The daily domain validator now rejects a minimum humidity value greater than the maximum humidity value, in addition to the existing maximum/minimum temperature ordering rule.
+- The rule is enforced server-side, so direct API callers cannot bypass the cross-field constraint by skipping browser validation.
+- Unit tests cover inverted humidity values and the explicit `#` missing-data marker; the API field-contract test also exercises the rule through the submission contract.
+- This remains code-level validation only; no live Supabase write or migration was performed.
+
 ## Angular daily submission unit-test harness
 
 - Extracted the daily submission security/contract helpers into `angular-app/src/app/features/reports/daily-submission.utils.ts` so the safety-critical decisions can be tested independently of browser UI state.
