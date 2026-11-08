@@ -157,8 +157,8 @@ export class HourlyReportsComponent implements OnDestroy {
   private readonly offlineQueue = new DailyOfflineQueue();
   private readonly syncOwner = 'hourly-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   private syncChannel?: BroadcastChannel;
-  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string }>): void => { if (event.data?.owner !== this.syncOwner && this.isOnline) void this.flushHourlyQueue(); };
-  private readonly handleOnline = (): void => { this.isOnline = true; void this.flushHourlyQueue(); };
+  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string; type?: string }>): void => { if (event.data?.owner === this.syncOwner) return; if (event.data?.type === 'network-online') this.isOnline = true; if (this.isOnline) void this.flushHourlyQueue(); };
+  private readonly handleOnline = (): void => { this.isOnline = true; this.syncChannel?.postMessage({ type: 'network-online', owner: this.syncOwner, at: Date.now() }); void this.flushHourlyQueue(); };
   private readonly handleOffline = (): void => { this.isOnline = false; };
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   pendingOfflineCount = 0;
