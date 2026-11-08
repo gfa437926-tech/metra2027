@@ -4,8 +4,8 @@ const http = require('node:http');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
-// Angular's application builder writes browser assets directly to dist/<project>.
-const root = path.resolve(__dirname, '../dist/metra2027');
+// Angular application builder places browser-served files in the browser subdirectory.
+const root = path.resolve(__dirname, '../dist/metra2027/browser');
 const port = Number(process.env.PORT || 4173);
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
 
