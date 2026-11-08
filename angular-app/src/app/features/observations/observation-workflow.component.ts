@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
-import { EditableObservationField, buildEditableFields, fieldsToPayload } from './observation-field-labels';
+import { EditableObservationField, buildEditableFields, fieldsToPayload, validateEditableFields } from './observation-field-labels';
 
 @Component({
   standalone: true,
@@ -108,9 +108,15 @@ import { EditableObservationField, buildEditableFields, fieldsToPayload } from '
           <p class="review-note muted" *ngIf="!editTarget.review_note">لا توجد ملاحظة مكتوبة من المراجع.</p>
           <p class="meta">{{ typeLabel(editTarget.observation_type) }} — {{ dateLabel(editTarget.observed_at) }}</p>
           <div class="fields" *ngIf="editFields.length > 0">
-            <div class="field" *ngFor="let field of editFields">
-              <label [attr.for]="'f-' + field.key">{{ field.label }} <code *ngIf="field.label !== field.key">({{ field.key }})</code></label>
-              <input [id]="'f-' + field.key" type="text" [(ngModel)]="field.value" maxlength="200" [disabled]="editSaving" />
+            <div class="field" *ngFor="let field of editFields" [class.needs-attention]="field.highlighted" [class.has-error]="!!field.error">
+              <label [attr.for]="'f-' + field.key">
+                {{ field.label }}
+                <code *ngIf="field.label !== field.key">({{ field.key }})</code>
+                <span class="badge" *ngIf="field.highlighted">مطلوب التصحيح</span>
+              </label>
+              <input [id]="'f-' + field.key" type="text" [(ngModel)]="field.value" maxlength="200" [disabled]="editSaving" (ngModelChange)="field.error=''" />
+              <small class="hint" *ngIf="field.hint && !field.error">{{ field.hint }}</small>
+              <small class="field-error" *ngIf="field.error">{{ field.error }}</small>
             </div>
           </div>
           <p class="empty" *ngIf="editFields.length === 0">لا توجد حقول قابلة للتحرير في حمولة هذه النشرة.</p>
@@ -220,11 +226,16 @@ export class ObservationWorkflowComponent implements OnInit {
   openEditor(row: ObservationQueueItem): void {
     if (this.busyId || this.editSaving) return;
     this.editTarget = row;
-    this.editFields = buildEditableFields(
+    const payload =
       (row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload))
         ? row.payload as Record<string, unknown>
-        : {}
-    );
+        : {};
+    this.editFields = buildEditableFields(payload, row.review_note ?? row['review_note']);
+    // Surface highlighted fields first so the observer sees reviewer cues immediately.
+    this.editFields = [
+      ...this.editFields.filter((f) => f.highlighted),
+      ...this.editFields.filter((f) => !f.highlighted),
+    ];
     this.error = '';
     this.feedback = '';
   }
@@ -239,6 +250,14 @@ export class ObservationWorkflowComponent implements OnInit {
     if (!this.stationId || !this.editTarget || this.editSaving) return;
     if (this.editFields.length === 0) {
       this.error = 'لا توجد حقول لإعادة إرسالها.';
+      return;
+    }
+    const validation = validateEditableFields(this.editFields);
+    for (const field of this.editFields) {
+      field.error = validation[field.key] ?? '';
+    }
+    if (Object.keys(validation).length > 0) {
+      this.error = 'صحّح الحقول المعلّمة قبل إعادة التقديم.';
       return;
     }
     this.editSaving = true;
