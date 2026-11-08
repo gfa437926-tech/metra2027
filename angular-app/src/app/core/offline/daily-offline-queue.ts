@@ -2,6 +2,7 @@ export type DailyOfflineState = 'pending' | 'sending' | 'blocked';
 
 export interface DailyOfflineSubmission {
   idempotencyKey: string;
+  observationType?: 'daily' | 'hourly';
   stationId: string;
   stationName: string;
   reportDate: string;
