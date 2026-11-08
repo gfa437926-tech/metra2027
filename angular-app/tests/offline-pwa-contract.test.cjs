@@ -140,7 +140,7 @@ test('lease release broadcasts a cross-tab handoff so the other observation queu
     assert.ok(source.includes("postMessage({ type: 'lease-released', owner: this.syncOwner"));
     assert.ok(source.includes("type: 'network-online', owner: this.syncOwner"));
     assert.ok(source.includes("event.data?.type === 'network-online'"));
-    assert.ok(source.includes("event.data?.owner !== this.syncOwner"));
+    assert.ok(source.includes("event.data?.owner === this.syncOwner"));
     assert.ok(source.includes("ngOnDestroy(): void"));
   }
 });
