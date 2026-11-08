@@ -114,6 +114,13 @@ public static class ObservationSubmissionEndpoints
                 if (validationError is not null)
                     return Results.BadRequest(new { error = validationError });
 
+                // Enforce the same authoritative field contract on the write path;
+                // clients cannot bypass validation by skipping the separate validate endpoint.
+                var fieldIssues = ObservationFieldContract.ValidateSubmission(
+                    request!.ObservationType!, request.Payload!.Value);
+                if (fieldIssues.Count > 0)
+                    return Results.BadRequest(new { error = "invalid_observation_fields", issues = fieldIssues });
+
                 if (!submission.IsConfigured)
                     return Results.Problem(
                         title: "Observation service unavailable",
