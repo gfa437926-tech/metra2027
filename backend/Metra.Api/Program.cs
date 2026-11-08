@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,6 +48,29 @@ builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
+// Equipment Faults use a dedicated PostgreSQL login. Enforce TLS certificate
+// validation even if the supplied connection string is weaker.
+var equipmentFaultConnectionString = builder.Configuration["EquipmentFaults:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(equipmentFaultConnectionString))
+{
+    var connectionBuilder = new NpgsqlConnectionStringBuilder(equipmentFaultConnectionString)
+    {
+        SslMode = SslMode.VerifyFull,
+        TrustServerCertificate = false,
+        Timeout = 8,
+        CommandTimeout = 8,
+        Pooling = true
+    };
+    builder.Services.AddSingleton(NpgsqlDataSource.Create(connectionBuilder.ConnectionString));
+    builder.Services.AddScoped<NpgsqlEquipmentFaultStore>();
+    builder.Services.AddScoped<IEquipmentFaultStationReader>(sp => sp.GetRequiredService<NpgsqlEquipmentFaultStore>());
+    builder.Services.AddScoped<IEquipmentFaultReadStore>(sp => sp.GetRequiredService<NpgsqlEquipmentFaultStore>());
+    builder.Services.AddScoped<IEquipmentFaultTransitionWriter>(sp => sp.GetRequiredService<NpgsqlEquipmentFaultStore>());
+    builder.Services.AddScoped<IEquipmentFaultSubmissionWriter>(sp => sp.GetRequiredService<NpgsqlEquipmentFaultStore>());
+    builder.Services.AddScoped<EquipmentFaultApplicationService>();
+    builder.Services.AddScoped<EquipmentFaultReadService>();
+    builder.Services.AddScoped<EquipmentFaultTransitionService>();
+}
 builder.Services.AddOpenApi();
 
 builder.Services
