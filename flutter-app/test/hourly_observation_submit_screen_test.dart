@@ -62,9 +62,9 @@ void main() {
     }
 
     final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.scrollUntilVisible(submit, 300, scrollable: find.byType(Scrollable).first);
-    await tester.ensureVisible(submit);
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
     await tester.pumpAndSettle();
+    expect(submit, findsOneWidget);
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
