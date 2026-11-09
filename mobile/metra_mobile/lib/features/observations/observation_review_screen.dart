@@ -78,9 +78,25 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.assignment_outlined)),
                     title: Text(_typeLabel(item.observationType)),
-                    subtitle: Text('${item.observedAt.toLocal()} • ${item.status}',
+                    subtitle: Text('${item.observedAt.toLocal()} • ${_statusLabel(item.status)}',
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
+                  if (item.payload.isNotEmpty)
+                    ExpansionTile(
+                      title: const Text('تفاصيل بيانات الرصد'),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: item.payload.entries.map((entry) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 3),
+                              child: Text('${_fieldLabel(entry.key)}: ${entry.value}'),
+                            )).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: Row(children: [
@@ -184,6 +200,27 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       );
     }
   }
+
+  String _statusLabel(String status) => switch (status.toLowerCase()) {
+    'draft' => 'مسودة',
+    'submitted' => 'مرسلة للمراجعة',
+    'pending' || 'pending_review' => 'بانتظار المراجعة',
+    'approved' => 'معتمدة',
+    'returned' || 'returned_for_correction' => 'معادة للتصحيح',
+    'rejected' => 'مرفوضة',
+    _ => 'حالة غير معروفة',
+  };
+
+  String _fieldLabel(String code) => switch (code) {
+    'utcTime' => 'ساعة UTC', 'dryTemp' => 'الحرارة الجافة',
+    'wetTemp' => 'الحرارة الرطبة', 'stationPressure' => 'ضغط المحطة',
+    'seaLevelPressure' => 'ضغط سطح البحر', 'relativeHumidity' => 'الرطوبة النسبية',
+    'dewPoint' => 'درجة الندى', 'windDirection' => 'اتجاه الرياح',
+    'windSpeed' => 'سرعة الرياح', 'visibility' => 'الرؤية',
+    'precipitation' => 'الهطول', 'minTemp' => 'الحرارة الصغرى',
+    'maxTemp' => 'الحرارة العظمى', 'reportType' => 'نوع التقرير',
+    _ => code,
+  };
 
   String _typeLabel(String type) => switch (type) {
     'daily' => 'نشرة يومية',
