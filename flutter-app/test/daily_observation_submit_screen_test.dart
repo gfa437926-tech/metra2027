@@ -66,13 +66,13 @@ void main() {
     }
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
     await tester.scrollUntilVisible(
-      agreement, 300, scrollable: find.byType(Scrollable).first,
+      agreement, 300, scrollable: find.byType(Scrollable).first, alignment: 0.5,
     );
     await tester.tap(agreement);
     await tester.pumpAndSettle();
     final submit = find.byKey(const ValueKey('daily-submit'));
     await tester.scrollUntilVisible(
-      submit, 300, scrollable: find.byType(Scrollable).first,
+      submit, 300, scrollable: find.byType(Scrollable).first, alignment: 0.5,
     );
     await tester.tap(submit);
     await tester.pumpAndSettle();
