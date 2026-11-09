@@ -232,8 +232,11 @@ export class HourlyReportsComponent implements OnDestroy {
     try {
       leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
       if (!leaseAcquired) return;
-      for (const item of await this.offlineQueue.list()) {
-        if (item.state === 'blocked' || !this.isOnline) continue;
+      // Re-read the shared outbox after each item so both report types
+      // are drained even when another tab enqueues during synchronization.
+      while (this.isOnline) {
+        const item = (await this.offlineQueue.list()).find(candidate => candidate.state === 'pending');
+        if (!item) break;
         if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
         try {
           const result = await this.api.submitObservation(item.stationId, { idempotencyKey: item.idempotencyKey, observationType: item.observationType ?? 'daily', observedAt: item.observedAt, payload: item.payload, submit: true });
