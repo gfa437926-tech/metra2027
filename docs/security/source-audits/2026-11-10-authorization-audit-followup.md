@@ -93,3 +93,34 @@ Before staging approval, the safe preparation tasks are:
 ## Safety record
 
 No legacy repository or database was accessed. No database was connected to, queried, or modified. No SQL or migration was applied or replayed. No credentials were read. No deployment was performed. No staging tests were run.
+
+
+## Target-repository follow-up — 2026-11-10
+
+This note distinguishes the source-repository findings above from the independently inspected target repository `gfa437926-tech/metra2027`:
+
+- The source-repository statement that no permission-grant create/approve/revoke transaction was located applies to that source repository's own `main` tree. It must not be generalized to the target repository.
+- The target repository contains authority access lifecycle migrations `020`–`029` and `AuthorityAccessEndpoints.cs`. Target SQL migrations `020` and `021` define authority membership and permission-grant request/decision workflows. Further target migrations constrain route scope, revoke direct audit writes, require active subjects, and add read models. The API derives actor IDs from the verified JWT `sub` claim on the reviewed routes.
+- The target authority permission-grant decision transaction locks the pending grant, rejects self-review/requester approval, requires active authority membership and `authority.access.review`, binds the decision to the target grant's authority, and checks the requested permission against the target role's allow-list. This is stronger evidence than the source repository alone provides.
+- **The target's complete delegation ceiling remains unproven from tracked source**, because no tracked target SQL file defines `public.metra_role_permissions` or provides the complete authoritative role-permission seed/allow-list. The RPCs reference this table, so the exact contents of the ceiling cannot be verified from Git. Do not infer its values from the source repository's historic audit statement that rows were once observed in a database; no live target database inspection was performed in this follow-up.
+
+### Six unresolved migration-source candidates
+
+The following six exact source candidates remain absent from the source repository's current `main` tree and are not approved for copying into the target without object/dependency mapping:
+
+1. `20261102172226_create_provenance_preserving_observation_store.sql`
+2. `20261103122944_grant_runtime_station_coordinate_read.sql`
+3. `20261103123005_link_membership_and_assignment_roles.sql`
+4. `20261103123127_index_role_catalogue_foreign_keys.sql`
+5. `20261103162707_enforce_explicit_role_permission_allowlist.sql`
+6. `20261103162738_seed_conservative_observation_role_permissions.sql`
+
+The last two are release-critical source gaps for establishing the exact role-permission allow-list. Their absence from the Git tree is not proof that the live target schema lacks the table or rows. The earlier 2026-11-04 hosted-ledger inventory is historical and has not been rechecked in this repository-only pass. Recovery must use exact trusted artifacts or an explicitly approved read-only export of the NEW target schema. No legacy database may be accessed.
+
+### UI/API integration follow-up
+
+The target API registration contract was verified directly in `RegistrationSubmissionEndpoints.cs`: `GET /api/v1/registration-roles`, `GET /api/v1/account/registration-status`, and `POST /api/v1/registration-requests`. The POST DTO carries profile, role, station, terms version and idempotency key; the server derives `p_auth_user_id` from the validated JWT `sub` claim. The Flutter client now has a registration/account-status screen and a station observation-entry screen calling the target .NET routes. The observation submission contract is `POST /api/v1/stations/{stationId}/observations`, with `idempotencyKey`, `observationType`, `observedAt`, `payload`, and `submit`; it requires `observation.create` at the API boundary.
+
+The registration endpoint requires an authenticated Supabase identity. The screen is therefore an authenticated registration/profile-completion flow, not anonymous account creation. This matches the current server contract; do not expose a public registration route or send an actor UUID from the client.
+
+No SQL was executed, no database was connected to, no migration was replayed, and no staging test was run.
