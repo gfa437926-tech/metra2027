@@ -548,11 +548,12 @@ async function main() {
           request.onerror = () => reject(request.error);
         });
         db.close();
+        // First observe the durable submission by its test payload.
+        // Retry metadata is asserted separately so the failure identifies whether
+        // the row, the attempt counter, or the server error was actually missing.
         const item = rows.find(row =>
           row.observationType === 'hourly' &&
-          row.payload.values.dryTemp === '+27.0' &&
-          row.attempts >= 1 &&
-          Boolean(row.lastError)
+          row.payload?.values?.dryTemp === '+27.0'
         );
         return item ? {
           stationId: item.stationId,
