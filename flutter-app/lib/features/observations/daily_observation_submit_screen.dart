@@ -194,8 +194,10 @@ class _DailyObservationSubmitScreenState
       appBar: AppBar(title: const Text('إدخال نشرة يومية')),
       body: Form(
         key: _formKey,
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('المحطة: ${widget.stationId}',
                 style: const TextStyle(color: Color(0xFF64748B))),
@@ -280,6 +282,7 @@ class _DailyObservationSubmitScreenState
               label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة اليومية'),
             ),
           ],
+          ),
         ),
       ),
     );

@@ -16,7 +16,7 @@ void main() {
     WidgetTester tester,
     String reportType,
   ) async {
-    late http.Request captured;
+    http.Request? captured;
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'daily-test-token',
@@ -58,22 +58,25 @@ void main() {
           };
     for (final entry in values.entries) {
       final field = find.byKey(ValueKey('daily-field-${entry.key}'));
-      await tester.scrollUntilVisible(
-        field, 300, scrollable: find.byType(Scrollable).first,
-      );
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
       await tester.enterText(field, entry.value);
+      await tester.pump();
     }
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
-    await tester.drag(find.byType(ListView), const Offset(0, -220));
+    await tester.ensureVisible(agreement);
     await tester.pumpAndSettle();
-    await tester.tap(agreement);
+    final checkbox = find.descendant(of: agreement, matching: find.byType(Checkbox));
+    expect(checkbox, findsOneWidget);
+    await tester.tap(checkbox);
     await tester.pumpAndSettle();
     final submit = find.byKey(const ValueKey('daily-submit'));
-    await tester.drag(find.byType(ListView), const Offset(0, -220));
+    await tester.ensureVisible(submit);
     await tester.pumpAndSettle();
     await tester.tap(submit);
     await tester.pumpAndSettle();
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured, isNotNull, reason: 'daily submit did not reach API');
+    final body = jsonDecode(captured!.body) as Map<String, dynamic>;
     api.close();
     return body;
   }
@@ -118,7 +121,7 @@ void main() {
   });
 
   testWidgets('06 UTC daily report submits the exact canonical envelope', (tester) async {
-    late http.Request captured;
+    http.Request? captured;
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'daily-test-token',
@@ -156,7 +159,8 @@ void main() {
 
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
     await tester.scrollUntilVisible(agreement, 300, scrollable: find.byType(Scrollable).first);
-    await tester.tap(agreement);
+    final checkbox = find.descendant(of: agreement, matching: find.byType(Checkbox));
+    await tester.tap(checkbox);
     await tester.pumpAndSettle();
 
     final submit = find.byKey(const ValueKey('daily-submit'));
@@ -164,10 +168,10 @@ void main() {
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(captured.method, 'POST');
-    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
-    expect(captured.headers['authorization'], 'Bearer daily-test-token');
+    final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+    expect(captured!.method, 'POST');
+    expect(captured!.url.path, '/api/v1/stations/$stationId/observations');
+    expect(captured!.headers['authorization'], 'Bearer daily-test-token');
     expect(body['observationType'], 'daily');
     expect(body['submit'], isTrue);
     expect(body['payload']['reportType'], '06utc');
@@ -199,7 +203,6 @@ void main() {
       expect(body['payload']['values']['sunshinePercentage'], '075');
       expect(body['observedAt'], endsWith('T00:00:00.000Z'));
     },
-    skip: 'Temporarily isolating remaining single CI failure; re-enable after green unit suite.',
   );
 
   testWidgets('18 UTC daily report submits only its canonical required fields',

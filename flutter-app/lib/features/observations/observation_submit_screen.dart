@@ -304,8 +304,10 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       appBar: AppBar(title: const Text('إدخال نشرة ساعية')),
       body: Form(
         key: _formKey,
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
+          child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Text('المحطة: ${widget.stationId}',
                 style: const TextStyle(color: Color(0xFF64748B))),
@@ -451,6 +453,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
               label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
             ),
           ],
+          ),
         ),
       ),
     );
