@@ -287,9 +287,9 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             _field(_dewPoint, 'نقطة الندى (مثل +18.5) *',
                 validator: (value) => _temperature(value, 'نقطة الندى')),
             _field(_stationPressure, 'ضغط المحطة (مثل 1013.2) *',
-                validator: (value) => _boundedValue(value, 'ضغط المحطة', r'^\\d{4}\\.\\d,
+                                validator: (value) => _boundedValue(value, 'ضغط المحطة', r'^\d{4}\.\d$', 850, 1050)),
             _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
-                validator: (value) => _boundedValue(value, 'ضغط سطح البحر', r'^\\d{4}\\.\\d,
+                                validator: (value) => _boundedValue(value, 'ضغط سطح البحر', r'^\d{4}\.\d$', 0, 1050)),
             _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
                 validator: (value) =>
                     _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
