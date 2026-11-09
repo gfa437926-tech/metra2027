@@ -11,8 +11,12 @@ alter table if exists public.metra_equipment_fault_audit_events enable row level
 
 revoke all on table public.metra_equipment_faults from anon, authenticated;
 revoke all on table public.metra_equipment_fault_audit_events from anon, authenticated;
-grant select, insert, update, delete on table public.metra_equipment_faults to service_role;
-grant select, insert on table public.metra_equipment_fault_audit_events to service_role;
+-- The REST adapter needs direct SELECT only. All writes go through the
+-- permission-checking SECURITY DEFINER RPCs below; do not let service_role
+-- bypass those workflow checks with direct table mutations.
+revoke all on table public.metra_equipment_faults from service_role;
+revoke all on table public.metra_equipment_fault_audit_events from service_role;
+grant select on table public.metra_equipment_faults to service_role;
 
 -- Explicitly drop any accidental client policies if present.
 do $$
@@ -42,8 +46,11 @@ alter table if exists public.metra_support_incident_audit_events enable row leve
 
 revoke all on table public.metra_support_incidents from anon, authenticated;
 revoke all on table public.metra_support_incident_audit_events from anon, authenticated;
-grant select, insert, update, delete on table public.metra_support_incidents to service_role;
-grant select, insert on table public.metra_support_incident_audit_events to service_role;
+-- The REST adapter needs direct SELECT only. All writes go through the
+-- permission-checking SECURITY DEFINER RPCs below.
+revoke all on table public.metra_support_incidents from service_role;
+revoke all on table public.metra_support_incident_audit_events from service_role;
+grant select on table public.metra_support_incidents to service_role;
 
 -- ---------- Assignee authorization for equipment faults ----------
 create or replace function public.metra_transition_equipment_fault(
