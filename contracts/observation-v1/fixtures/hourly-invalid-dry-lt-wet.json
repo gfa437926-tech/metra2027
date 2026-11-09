@@ -1,0 +1,26 @@
+{
+  "id": "hourly-invalid-dry-lt-wet",
+  "observationType": "hourly",
+  "reportType": null,
+  "responsibilityAgreement": true,
+  "values": {
+    "utcTime": "03",
+    "dryTemp": "+10.0",
+    "wetTemp": "+15.0",
+    "dewPoint": "+08.0",
+    "stationPressure": "1013.2",
+    "seaLevelPressure": "1015.0",
+    "relativeHumidity": "070",
+    "windDirection": "09",
+    "windSpeed": "03",
+    "visibility": "020",
+    "totalCloudCover": "2",
+    "cover12": "1",
+    "cover123": "2",
+    "pressureSlope": "0.5",
+    "pressureShape": "2",
+    "pastWeather": "0"
+  },
+  "expectValid": false,
+  "expectErrorFields": ["dryTemp"]
+}

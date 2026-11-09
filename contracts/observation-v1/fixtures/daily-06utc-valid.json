@@ -1,0 +1,14 @@
+{
+  "id": "daily-06utc-valid",
+  "observationType": "daily",
+  "reportType": "06utc",
+  "responsibilityAgreement": true,
+  "values": {
+    "minTemp": "08.0",
+    "maxTemp": "19.5",
+    "precipitation": "000.0",
+    "snowThickness": "000"
+  },
+  "expectValid": true,
+  "expectErrorFields": []
+}
