@@ -86,7 +86,8 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
       await _loadData();
       if (mounted) setState(() => _load = Future<void>.value());
     } on MetraApiException catch (error) {
-      if (mounted) setState(() => _error = switch (error.statusCode) {
+      if (mounted) {
+        setState(() => _error = switch (error.statusCode) {
         400 => 'البيانات أو المحطة أو الدور غير مقبول. راجع الاختيارات.',
         401 => 'انتهت جلسة الدخول. سجّل الدخول مجدداً.',
         409 => 'يوجد طلب تسجيل قائم أو تعارض في حالة الحساب.',
@@ -175,7 +176,7 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
           decoration: const InputDecoration(labelText: 'رقم الهاتف (اختياري)', border: OutlineInputBorder())),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _roleCode,
+          initialValue: _roleCode,
           decoration: const InputDecoration(labelText: 'الدور المطلوب', border: OutlineInputBorder()),
           items: _roles.map((role) => DropdownMenuItem(value: role.code,
             child: Text(role.nameArabic))).toList(),
@@ -183,7 +184,7 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _stationId,
+          initialValue: _stationId,
           decoration: const InputDecoration(labelText: 'المحطة', border: OutlineInputBorder()),
           items: _stations.map((station) => DropdownMenuItem(value: station.id,
             child: Text('${station.nameArabic} — ${station.localCode}',
