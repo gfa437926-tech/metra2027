@@ -458,7 +458,9 @@ async function main() {
     // The shared lease intentionally serializes requests. Keep the first
     // response held to prove the second tab cannot start a parallel POST,
     // then release it so the lease owner can drain the other observation type.
-    await page.waitForFunction(() => acceptedPosts.length >= 5, { timeout: 20000 });
+    const firstPostDeadline = Date.now() + 20000;
+    while (acceptedPosts.length < 5 && Date.now() < firstPostDeadline) await page.waitForTimeout(50);
+    assert.ok(acceptedPosts.length >= 5, 'The lease owner should start the first queued request after reconnection');
     const firstConcurrentPosts = acceptedPosts.slice(4);
     assert.equal(firstConcurrentPosts.length, 1, 'Only one POST may be in flight while its response is held');
     assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
