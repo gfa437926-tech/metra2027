@@ -9,13 +9,11 @@
 alter table if exists public.metra_equipment_faults enable row level security;
 alter table if exists public.metra_equipment_fault_audit_events enable row level security;
 
-revoke all on table public.metra_equipment_faults from anon, authenticated;
-revoke all on table public.metra_equipment_fault_audit_events from anon, authenticated;
+revoke all on table public.metra_equipment_faults from public, anon, authenticated, service_role;
+revoke all on table public.metra_equipment_fault_audit_events from public, anon, authenticated, service_role;
 -- The REST adapter needs direct SELECT only. All writes go through the
 -- permission-checking SECURITY DEFINER RPCs below; do not let service_role
 -- bypass those workflow checks with direct table mutations.
-revoke all on table public.metra_equipment_faults from service_role;
-revoke all on table public.metra_equipment_fault_audit_events from service_role;
 grant select on table public.metra_equipment_faults to service_role;
 
 -- Explicitly drop any accidental client policies if present.
@@ -44,12 +42,10 @@ end $$;
 alter table if exists public.metra_support_incidents enable row level security;
 alter table if exists public.metra_support_incident_audit_events enable row level security;
 
-revoke all on table public.metra_support_incidents from anon, authenticated;
-revoke all on table public.metra_support_incident_audit_events from anon, authenticated;
+revoke all on table public.metra_support_incidents from public, anon, authenticated, service_role;
+revoke all on table public.metra_support_incident_audit_events from public, anon, authenticated, service_role;
 -- The REST adapter needs direct SELECT only. All writes go through the
 -- permission-checking SECURITY DEFINER RPCs below.
-revoke all on table public.metra_support_incidents from service_role;
-revoke all on table public.metra_support_incident_audit_events from service_role;
 grant select on table public.metra_support_incidents to service_role;
 
 -- ---------- Assignee authorization for equipment faults ----------
