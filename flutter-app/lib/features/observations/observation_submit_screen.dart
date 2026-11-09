@@ -112,7 +112,6 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     if (!_formKey.currentState!.validate() || _saving) return;
 
     setState(() => _saving = true);
-    final now = DateTime.now().toUtc();
     final observedAt = DateTime.utc(
       _observationDate.year, _observationDate.month, _observationDate.day,
     ).add(Duration(hours: _localHour - 3));
