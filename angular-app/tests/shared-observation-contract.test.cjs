@@ -69,8 +69,11 @@ test('invalid shared fixtures declare the fields expected to fail', () => {
 test('hourly optional field fixture names stay aligned with the documented contract', () => {
   const contract = fs.readFileSync(path.resolve(__dirname, '../../docs/contracts/OBSERVATION-FIELD-CONTRACT-V1.md'), 'utf8');
   for (const field of ['vaporPressure', 'vaporPressureDiff', 'avgWindDirection', 'avgWindSpeed',
-    'currentWeather', 'cloud1Amount', 'cloud2Amount', 'cloud3Amount', 'cloud4Amount',
-    'cloud1Type', 'cloud2Type', 'cloud3Type', 'cloud1Height', 'cloud2Height', 'cloud3Height']) {
-    assert.ok(contract.includes(field), 'contract missing optional field ' + field);
+    'currentWeather', 'cloud1Amount', 'cloud4Amount', 'cloud1Type', 'cloud3Type',
+    'cloud1Height', 'cloud3Height']) {
+    assert.ok(contract.includes(field), 'contract missing optional field/range endpoint ' + field);
   }
+  assert.match(contract, /cloud1Amount.{0,20}cloud4Amount/);
+  assert.match(contract, /cloud1Type.{0,20}cloud3Type/);
+  assert.match(contract, /cloud1Height.{0,20}cloud3Height/);
 });
