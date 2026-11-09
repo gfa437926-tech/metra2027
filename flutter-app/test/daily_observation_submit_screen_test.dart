@@ -12,6 +12,75 @@ import 'package:metra_mobile/features/observations/observation_submit_screen.dar
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
 
+  Future<Map<String, dynamic>> submitDailyType(
+    WidgetTester tester,
+    String reportType,
+  ) async {
+    late http.Request captured;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'daily-test-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode({
+            'id': '22222222-2222-4222-8222-222222222222',
+            'status': 'submitted',
+            'replayed': false,
+          }),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }),
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: DailyObservationSubmitScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    if (reportType != '24h') {
+      await tester.tap(find.byKey(const ValueKey('daily-report-type')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(DailyObservationContract.reportTypes[reportType]!).last);
+      await tester.pumpAndSettle();
+    }
+    final values = reportType == '24h'
+        ? <String, String>{
+            'minTemp': '-05.3', 'maxTemp': '25.7',
+            'precipitation': '012.5', 'snowThickness': '015',
+            'evaporation': '12.5', 'sunshineDuration': '08.5',
+            'sunshinePercentage': '075', 'maxGustSpeed': '15',
+            'maxGustDirection': '25', 'maxGustTime': '14.5',
+            'maxHumidity': '085', 'maxHumidityTime': '06.0',
+            'minHumidity': '35', 'minHumidityTime': '14.0',
+          }
+        : <String, String>{
+            'minTemp': '-05.3', 'maxTemp': '25.7',
+            'precipitation': '012.5', 'snowThickness': '015',
+          };
+    for (final entry in values.entries) {
+      final field = find.byKey(ValueKey('daily-field-${entry.key}'));
+      await tester.scrollUntilVisible(
+        field, 300, scrollable: find.byType(Scrollable).first,
+      );
+      await tester.enterText(field, entry.value);
+    }
+    final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
+    await tester.scrollUntilVisible(
+      agreement, 300, scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(agreement);
+    await tester.pumpAndSettle();
+    final submit = find.byKey(const ValueKey('daily-submit'));
+    await tester.scrollUntilVisible(
+      submit, 300, scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    api.close();
+    return body;
+  }
+
   test('daily contract selects report-specific required fields', () {
     expect(DailyObservationContract.requiredFields('06utc'), {
       'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
@@ -115,6 +184,37 @@ void main() {
     expect(body['observedAt'], endsWith('T06:00:00.000Z'));
     expect(find.textContaining('تم حفظ النشرة اليومية وإرسالها للمراجعة'), findsOneWidget);
     api.close();
+  });
+
+  testWidgets('24-hour daily report submits all canonical required fields',
+      (tester) async {
+    final body = await submitDailyType(tester, '24h');
+    expect(body['observationType'], 'daily');
+    expect(body['payload']['reportType'], '24h');
+    expect(body['payload']['responsibilityAgreement'], isTrue);
+    expect((body['payload']['values'] as Map).keys, containsAll([
+      'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+      'evaporation', 'sunshineDuration', 'sunshinePercentage',
+      'maxGustSpeed', 'maxGustDirection', 'maxGustTime',
+      'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime',
+    ]));
+    expect(body['payload']['values']['sunshinePercentage'], '075');
+    expect(body['observedAt'], endsWith('T00:00:00.000Z'));
+  });
+
+  testWidgets('18 UTC daily report submits only its canonical required fields',
+      (tester) async {
+    final body = await submitDailyType(tester, '18utc');
+    expect(body['observationType'], 'daily');
+    expect(body['payload']['reportType'], '18utc');
+    expect(body['payload']['responsibilityAgreement'], isTrue);
+    expect(body['payload']['values'], {
+      'minTemp': '-05.3',
+      'maxTemp': '25.7',
+      'precipitation': '012.5',
+      'snowThickness': '015',
+    });
+    expect(body['observedAt'], endsWith('T18:00:00.000Z'));
   });
 
   testWidgets('hourly entry exposes navigation to the daily form', (tester) async {
