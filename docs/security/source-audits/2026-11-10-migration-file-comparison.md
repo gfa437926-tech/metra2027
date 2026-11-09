@@ -69,3 +69,62 @@ Therefore none of the remaining source-only SQL files is approved for copying or
 ## Safety
 
 No SQL was executed, no migration was replayed, no database was connected to, no staging state was inspected, and no files or repositories were deleted.
+
+
+## Detailed source-only reconciliation — 2026-11-10
+
+A second inventory compared the 52 source migration filenames/blob SHAs with the target's 29 numbered `database/migrations` files and 5 `supabase/migrations` files. In addition to the 11 exact numbered workflow equivalents and 5 observation equivalents described above, the source file `20261104030506_004_station_catalogue_review_permission.sql` has a target counterpart with the same INSERT/ON CONFLICT statement but different comments; retain the target file and do not replace it.
+
+The following 35 source migrations have no byte-identical same-effect counterpart identified by the tracked-file comparison. This is a **source-only inventory**, not a finding that all their effects are absent from the target database. Each remains unapproved for copying until object/dependency/chronology mapping is complete:
+
+### Station catalogue and identity foundation
+
+- `20261102154652_create_independent_station_catalogue.sql`
+- `20261102155101_index_station_catalogue_foreign_keys.sql`
+- `20261102155110_add_catalogue_integrity_triggers.sql`
+- `20261102155119_lock_station_catalogue_client_access.sql`
+- `20261102163034_enforce_station_temporal_integrity.sql`
+- `20261102165436_add_identity_membership_and_station_assignment.sql`
+- `20261102165505_lock_identity_tables_and_index_foreign_keys.sql`
+- `20261102165724_add_user_profile_and_align_account_lifecycle.sql`
+- `20261102165758_index_account_state_requester.sql`
+- `20261102171030_add_station_source_provenance_and_demo_flags.sql`
+- `20261102171037_support_unverified_station_operational_status.sql`
+
+### Registration lifecycle and runtime grants
+
+- `20261102235913_create_registration_workflow_persistence.sql`
+- `20261102235937_add_atomic_registration_submission_rpc.sql`
+- `20261103000038_harden_registration_idempotency_checks.sql`
+- `20261103000332_provision_least_privilege_api_runtime_role.sql`
+- `20261103000835_add_atomic_two_stage_registration_approval.sql`
+- `20261103000914_grant_runtime_registration_queue_read.sql`
+- `20261103001045_harden_registration_approval_expected_state.sql`
+- `20261103001209_grant_runtime_registration_audit_read.sql`
+- `20261103001354_use_database_clock_for_registration_approval.sql`
+- `20261103001407_move_registration_submission_rpc_to_private_schema.sql`
+- `20261103001654_revoke_public_execute_from_approval_rpc.sql`
+- `20261103001743_drop_obsolete_registration_approval_rpc.sql`
+- `20261103001942_classify_existing_pending_registration_before_linked_account.sql`
+- `20261103002006_fix_pending_registration_replay_classification.sql`
+- `20261103010120_respect_scheduled_permission_revocation.sql`
+- `20261103010435_add_registration_foreign_key_indexes.sql`
+
+### Authenticated registration and catalogue review hardening
+
+- `20261104014631_registration_authenticated_entrypoint.sql`
+- `20261104014827_registration_server_timestamp_and_terms_guard.sql`
+- `20261104015029_authenticated_registration_decision_entrypoint.sql`
+- `20261104015823_restrict_registration_rpc_to_server_runtime.sql`
+- `20261104021613_20261104110000_secure_station_catalogue_review.sql`
+- `20261104024652_harden_station_catalogue_review_null_validation.sql`
+- `20261104042128_require_approved_active_station_for_registration.sql`
+- `20261110120000_honor_scheduled_permission_revocation.sql`
+
+### Separate six historical recovery candidates
+
+The six filenames listed in `2026-11-10-authorization-audit-followup.md` are not present in the 52-file source inventory at all. They are therefore a distinct recovery problem, not six more files to copy from the source tree. In particular, `20261103162707_enforce_explicit_role_permission_allowlist.sql` and `20261103162738_seed_conservative_observation_role_permissions.sql` are the missing authoritative allow-list sources required to prove the exact permission ceiling. Do not recreate them as purported originals.
+
+### Next reconciliation gate
+
+For each of the 35 source-only files, record: schema objects created/altered, function signatures and bodies, grants/revokes, RLS/policies, triggers/indexes, dependency order, whether a later target migration supersedes it, and whether the effect is part of an externally provisioned baseline. Compare only against an approved read-only schema export of the NEW target or trusted deployment artifacts. The current tracked-source scan alone cannot establish live state. The six historical files require exact-source recovery or a separately labelled reconstructed baseline after explicit approval; no SQL is to be executed as part of this audit.
