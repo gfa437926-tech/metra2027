@@ -56,7 +56,7 @@ void main() {
       'تغطية الطبقات الثلاث (0-8) *': '5',
     };
     for (final entry in entries.entries) {
-      final field = find.byKey(ValueKey('hourly-field-' + entry.key));
+      final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
       await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
       await tester.enterText(field, entry.value);
     }
