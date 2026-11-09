@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { validateHourlyObservation } = require('../src/app/features/observations/hourly-observation-contract.cjs');
+const { validateDailyObservation } = require('../src/app/features/observations/daily-observation-contract.cjs');
 
 const fixturesDir = path.resolve(__dirname, '../../contracts/observation-v1/fixtures');
 const manifest = JSON.parse(fs.readFileSync(path.join(fixturesDir, 'manifest.json'), 'utf8'));
@@ -76,4 +78,59 @@ test('hourly optional field fixture names stay aligned with the documented contr
   assert.match(contract, /cloud1Amount.{0,20}cloud4Amount/);
   assert.match(contract, /cloud1Type.{0,20}cloud3Type/);
   assert.match(contract, /cloud1Height.{0,20}cloud3Height/);
+});
+
+test('shared daily fixtures execute against Angular daily validation rules', () => {
+  const daily = manifest.fixtures
+    .map(name => JSON.parse(fs.readFileSync(path.join(fixturesDir, name), 'utf8')))
+    .filter(fixture => fixture.observationType === 'daily');
+  assert.equal(daily.length, 6);
+  for (const fixture of daily) {
+    const errors = validateDailyObservation(
+      fixture.reportType,
+      fixture.values,
+      fixture.responsibilityAgreement === true
+    );
+    if (fixture.expectValid) {
+      assert.deepEqual(errors, {}, fixture.id + ': ' + JSON.stringify(errors));
+    } else {
+      assert.ok(Object.keys(errors).length > 0, fixture.id + ' should be rejected');
+      for (const field of fixture.expectErrorFields) {
+        assert.ok(Object.hasOwn(errors, field), fixture.id + ' should report ' + field);
+      }
+    }
+  }
+});
+
+test('shared hourly fixtures execute against Angular hourly validation rules', () => {
+  const hourly = manifest.fixtures
+    .map(name => JSON.parse(fs.readFileSync(path.join(fixturesDir, name), 'utf8')))
+    .filter(fixture => fixture.observationType === 'hourly');
+  assert.equal(hourly.length, 2);
+  for (const fixture of hourly) {
+    const errors = validateHourlyObservation(fixture.values);
+    if (fixture.expectValid) {
+      assert.deepEqual(errors, {}, fixture.id + ': ' + JSON.stringify(errors));
+    } else {
+      assert.ok(Object.keys(errors).length > 0, fixture.id + ' should be rejected');
+      for (const field of fixture.expectErrorFields) {
+        assert.ok(Object.hasOwn(errors, field), fixture.id + ' should report ' + field);
+      }
+    }
+  }
+});
+
+test('hourly conditional requirements and cross-field checks execute', () => {
+  const valid = JSON.parse(fs.readFileSync(path.join(fixturesDir, 'hourly-valid-synoptic.json'), 'utf8')).values;
+  const missing = { ...valid, utcTime: '01' };
+  delete missing.precipitationAmount;
+  delete missing.pressureSlope;
+  delete missing.pressureShape;
+  delete missing.pastWeather;
+  assert.deepEqual(validateHourlyObservation(missing), {});
+  const synoptic = { ...valid, utcTime: '00' };
+  delete synoptic.precipitationAmount;
+  assert.ok(Object.hasOwn(validateHourlyObservation(synoptic), 'precipitationAmount'));
+  const badTemperature = { ...valid, dryTemp: '+10.0', wetTemp: '+15.0' };
+  assert.ok(Object.hasOwn(validateHourlyObservation(badTemperature), 'dryTemp'));
 });
