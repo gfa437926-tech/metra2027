@@ -80,6 +80,18 @@ No application or migration file is approved for deletion by this audit. The tar
 5. The 43 negative authorization scenarios and staging acceptance matrix are plans, not executed staging tests.
 6. No production hosting/deployment or live staging acceptance is claimed by this consolidation.
 
+## Implemented in the current draft PR
+
+The following first integration slice has now been added to this branch:
+
+- Added immutable coordinate clustering for the existing `StationDirectoryItem` model.
+- Updated the existing station directory map to display a count marker for co-located stations and let the user choose a station from that cluster. Stations without valid coordinates remain in the list and are excluded only from map markers.
+- Added Flutter tests for coordinate grouping, invalid/missing coordinates, record preservation, and immutability.
+- Ported selected API hardening patterns from the source ASP.NET foundation: a global fixed-window rate limit of 120 requests per minute per authenticated subject (or client IP before authentication), HSTS outside Development, and defensive response headers.
+- Added an API integration test asserting the defensive response headers.
+
+These are adaptations to the existing target architecture, not wholesale copies of the source Flutter app or minimal API.
+
 ## Next controlled phases
 
 1. Inspect Flutter source files individually and map dependencies/API contracts.
