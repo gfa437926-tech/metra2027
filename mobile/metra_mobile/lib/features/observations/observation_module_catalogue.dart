@@ -90,7 +90,7 @@ const _rainAck = ObservationFieldSpec(
   kind: ObservationFieldKind.boolean,
 );
 
-const observationModuleCatalogue = <ObservationModuleSpec>[
+final observationModuleCatalogue = <ObservationModuleSpec>[
   ObservationModuleSpec(
     module: ObservationModule.hourly,
     title: 'النشرة الساعية',
