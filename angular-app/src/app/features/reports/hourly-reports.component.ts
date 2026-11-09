@@ -267,11 +267,12 @@ export class HourlyReportsComponent implements OnDestroy {
       await this.refreshOfflineCount();
       const pendingRemain = (await this.offlineQueue.list()).some(item => item.state === 'pending');
       if (this.isOnline && this.apiReady && !stoppedForTransientFailure &&
-          (this.syncRequested || (leaseAcquired && pendingRemain))) {
+          (this.syncRequested || pendingRemain)) {
         this.syncRequested = false;
-        // Retry after releasing the lease so a missed cross-tab wake-up
-        // cannot leave the other report type pending indefinitely.
-        window.setTimeout(() => void this.flushHourlyQueue(), 150);
+        // If another tab held the lease when this attempt began, retry with a
+        // longer backoff. This closes the missed-notification race without
+        // polling continuously or retrying a transient API failure.
+        window.setTimeout(() => void this.flushHourlyQueue(), leaseAcquired ? 150 : 500);
       }
     }
   }
