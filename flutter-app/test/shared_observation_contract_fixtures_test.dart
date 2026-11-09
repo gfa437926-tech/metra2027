@@ -1,9 +1,53 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/features/observations/daily_observation_contract.dart';
 
-/// Mirrors contracts/observation-v1 daily fixtures without filesystem lookup in CI.
+/// Executes the canonical repository JSON fixtures against the Flutter validator.
 void main() {
-  test('daily 24h valid fixture matches DailyObservationContract', () {
+  test('all shared daily fixtures match DailyObservationContract expectations', () {
+    final manifestFile = _locateSharedManifest();
+    final fixturesDirectory = manifestFile.parent;
+    final manifest = jsonDecode(manifestFile.readAsStringSync()) as Map<String, dynamic>;
+    expect(manifest['contractVersion'], '1.0');
+
+    final fixtureNames = (manifest['fixtures'] as List<dynamic>).cast<String>();
+    final dailyFixtures = fixtureNames
+        .map((name) => jsonDecode(File('${fixturesDirectory.path}/$name').readAsStringSync())
+            as Map<String, dynamic>)
+        .where((fixture) => fixture['observationType'] == 'daily')
+        .toList();
+
+    expect(dailyFixtures, hasLength(6));
+    for (final fixture in dailyFixtures) {
+      final id = fixture['id'] as String;
+      final valuesJson = fixture['values'] as Map<String, dynamic>;
+      final values = valuesJson.map(
+        (key, value) => MapEntry(key, value?.toString() ?? ''),
+      );
+      final errors = DailyObservationContract.validate(
+        fixture['reportType'] as String,
+        values,
+        responsibilityAgreement: fixture['responsibilityAgreement'] == true,
+      );
+      final expectedValid = fixture['expectValid'] as bool;
+      final expectedErrorFields = (fixture['expectErrorFields'] as List<dynamic>)
+          .cast<String>();
+
+      if (expectedValid) {
+        expect(errors, isEmpty, reason: '$id: $errors');
+      } else {
+        expect(errors, isNotEmpty, reason: '$id should be rejected');
+        for (final field in expectedErrorFields) {
+          expect(errors.containsKey(field), isTrue,
+              reason: '$id should report $field; actual: $errors');
+        }
+      }
+    }
+  });
+
+  test('daily 24h valid values pass the client contract', () {
     final errors = DailyObservationContract.validate(
       '24h',
       {
@@ -27,7 +71,7 @@ void main() {
     expect(errors, isEmpty, reason: '$errors');
   });
 
-  test('daily 06utc valid fixture matches DailyObservationContract', () {
+  test('daily 06utc valid values pass the client contract', () {
     final errors = DailyObservationContract.validate(
       '06utc',
       {
@@ -41,7 +85,7 @@ void main() {
     expect(errors, isEmpty, reason: '$errors');
   });
 
-  test('daily max < min is rejected on maxTemp', () {
+  test('daily max below min is rejected on maxTemp', () {
     final errors = DailyObservationContract.validate(
       '06utc',
       {
@@ -82,4 +126,18 @@ void main() {
     );
     expect(errors, isEmpty, reason: '$errors');
   });
+}
+
+File _locateSharedManifest() {
+  final candidates = <File>[
+    File('../contracts/observation-v1/fixtures/manifest.json'),
+    File('contracts/observation-v1/fixtures/manifest.json'),
+    File('../../contracts/observation-v1/fixtures/manifest.json'),
+  ];
+  for (final candidate in candidates) {
+    if (candidate.existsSync()) return candidate;
+  }
+  throw FileSystemException(
+    'Could not locate contracts/observation-v1/fixtures/manifest.json',
+  );
 }
