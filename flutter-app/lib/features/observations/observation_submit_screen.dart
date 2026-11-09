@@ -19,10 +19,15 @@ class ObservationSubmitScreen extends StatefulWidget {
     super.key,
     required this.api,
     required this.stationId,
+    this.initialLocalHour,
+    this.initialLocalDate,
   });
 
   final MetraApiClient api;
   final String stationId;
+  /// When set (0-23), skips wall-clock hour for deterministic widget tests.
+  final int? initialLocalHour;
+  final DateTime? initialLocalDate;
 
   @override
   State<ObservationSubmitScreen> createState() =>
@@ -67,9 +72,19 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   void initState() {
     super.initState();
     final stationLocalNow = DateTime.now().toUtc().add(const Duration(hours: 3));
-    _observationDate = DateTime(
-      stationLocalNow.year, stationLocalNow.month, stationLocalNow.day);
-    _localHour = stationLocalNow.hour;
+    final seededDate = widget.initialLocalDate;
+    _observationDate = seededDate != null
+        ? DateTime(seededDate.year, seededDate.month, seededDate.day)
+        : DateTime(stationLocalNow.year, stationLocalNow.month, stationLocalNow.day);
+    final seededHour = widget.initialLocalHour;
+    if (seededHour != null) {
+      if (seededHour < 0 || seededHour > 23) {
+        throw ArgumentError.value(seededHour, 'initialLocalHour');
+      }
+      _localHour = seededHour;
+    } else {
+      _localHour = stationLocalNow.hour;
+    }
   }
 
   @override

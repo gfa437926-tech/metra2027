@@ -39,20 +39,22 @@ void main() {
             'replayed': false,
           }),
           200,
+          headers: {'content-type': 'application/json'},
         );
       }),
     );
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationSubmitScreen(api: api, stationId: stationId),
+      home: ObservationSubmitScreen(
+        api: api,
+        stationId: stationId,
+        // Local 04 => UTC 01 (non-synoptic, no precipitation required)
+        initialLocalHour: 4,
+        initialLocalDate: DateTime(2026, 11, 9),
+      ),
     ));
     await tester.pumpAndSettle();
 
-    final hour = find.byKey(const ValueKey('hourly-local-hour'));
-    await tester.tap(hour);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('04').last);
-    await tester.pumpAndSettle();
     expect(find.text('سيُرسل التوقيت العالمي UTC: 01:00'), findsOneWidget);
 
     const entries = <String, String>{
@@ -84,16 +86,18 @@ void main() {
       'ارتفاع السحب الثانية (0-999)': '250',
       'ارتفاع السحب الثالثة (0-999)': '900',
     };
+
     for (final entry in entries.entries) {
       final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
-      await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(field);
+      await tester.pump();
       await tester.enterText(field, entry.value);
+      await tester.pump();
     }
 
     final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
-    await tester.pumpAndSettle();
-    expect(submit, findsOneWidget);
+    await tester.ensureVisible(submit);
+    await tester.pump();
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
@@ -133,7 +137,12 @@ void main() {
       }),
     );
     await tester.pumpWidget(MaterialApp(
-      home: ObservationSubmitScreen(api: api, stationId: stationId),
+      home: ObservationSubmitScreen(
+        api: api,
+        stationId: stationId,
+        initialLocalHour: 4,
+        initialLocalDate: DateTime(2026, 11, 9),
+      ),
     ));
     await tester.pumpAndSettle();
 
@@ -143,11 +152,11 @@ void main() {
     };
     for (final entry in values.entries) {
       final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
-      await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
+      await tester.ensureVisible(field);
       await tester.enterText(field, entry.value);
     }
     final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.scrollUntilVisible(submit, 300, scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(submit);
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
