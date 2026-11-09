@@ -1,38 +1,42 @@
 # Support and maintenance authorization matrix
 
-Status: proposed server-side contract; not yet wired to routes or persistence.
+**Status:** aligned with API code on `work/legacy-ui-migration-audit` (service-role + station permission gates).  
+**Not a grant of database apply.** Persistence still uses server-side `service_role` or Npgsql ops role after API authorization.
 
 ## Principal identity
-- Resolve the actor from the validated JWT subject. Never accept actor ID, station scope, role, or permissions from the request body as authoritative.
-- Resolve active account, station memberships, and permissions on the server for each operation. Reject disabled, unapproved, or stale principals.
-- Keep service-role credentials server-side. Do not expose them in Angular, Flutter, logs, exceptions, or API responses.
+- Actor identity comes only from validated JWT `sub`. Request body cannot supply actor/station authority.
+- `IStationAuthorizationService` must be configured; missing configuration fails closed (503 / forbid paths).
+- `Supabase:ServiceRoleKey` is server configuration only — never in Angular/Flutter.
 
 ## Station boundary
-- A station observer may create and read records only for stations explicitly assigned to that actor.
-- A station manager may review records only for their authorized station scope.
-- Workshop/support staff may be assigned only when their active support membership permits the target station and incident category.
-- Central support roles may access multiple stations only through explicit permission scope; do not infer global access from a role label alone.
-- Every list, detail, update, attachment, export, and aggregate query must apply the same station boundary. A UUID supplied by a client is not proof of access.
+- Every list, detail, create, and transition is under `/api/v1/stations/{stationId}/...`.
+- Supabase REST filters include `station_id=eq.{stationId}` on reads; RPCs pass `p_station_id`.
+- Detail responses must include `station_id` matching the route or return 404 (defense in depth).
+- Npgsql path sets `SET LOCAL app.station_id` / `app.user_id` and filters `where station_id = @station_id`.
 
-## Suggested permissions
-| Action | Permission |
-|---|---|
-| Submit equipment fault | `equipment_fault.create` |
-| Read station fault queue/details | `equipment_fault.read` |
-| Review / reject equipment fault | `equipment_fault.review` |
-| Assign or reassign workshop technician | `equipment_fault.assign` |
-| Start or update maintenance work (`InProgress`) | `equipment_fault.update` |
-| Resolve or close maintenance | `equipment_fault.resolve` |
-| Submit IT/telecom incident | `support_incident.create` |
-| Read support incident | `support_incident.read` |
-| Review / reject support incident | `support_incident.review` |
-| Assign support incident | `support_incident.assign` |
-| Start work or wait for information (`InProgress`, `WaitingForInformation`) | `support_incident.update` |
-| Resolve or close support incident | `support_incident.resolve` |
-| View station-scoped analytics | `operations.analytics.read` |
+## Permission codes (API contract)
 
-### Transition → permission mapping (API contract)
-| Domain | Target status | Required permission |
+| Action | Permission | Wired in API | Covered by automated tests |
+|---|---|---|---|
+| Submit equipment fault | `equipment_fault.create` | Yes (`RequireStationPermission`) | Yes (unauthorized submit) |
+| List / detail faults | `equipment_fault.read` | Yes | Yes (list/detail/cross-station/mismatch payload) |
+| Review / reject | `equipment_fault.review` | Yes (`PermissionForTransition`) | Yes (theory map) |
+| Assign technician | `equipment_fault.assign` | Yes | Yes (theory map) |
+| Start / update work (`InProgress`) | `equipment_fault.update` | Yes | Yes (theory + integration update≠resolve) |
+| Resolve / close | `equipment_fault.resolve` | Yes | Yes (theory + integration) |
+| Submit support incident | `support_incident.create` | Yes | Yes |
+| List / detail support | `support_incident.read` | Yes | Yes (cross-station + mismatch) |
+| Review / reject support | `support_incident.review` | Yes | Yes (theory) |
+| Assign support | `support_incident.assign` | Yes | Yes (theory) |
+| Work / wait info (`InProgress`, `WaitingForInformation`) | `support_incident.update` | Yes | Yes (theory + integration) |
+| Resolve / close support | `support_incident.resolve` | Yes | Yes (theory + integration) |
+| Attachments | — | **No API routes** | N/A |
+| Export | — | **No API routes** | N/A |
+| `operations.analytics.read` | documented only | **Not wired** to maintenance/support endpoints | **Not tested** |
+
+### Transition → permission
+
+| Domain | Target status | Permission |
 |---|---|---|
 | Equipment | UnderReview, Rejected | `equipment_fault.review` |
 | Equipment | Assigned | `equipment_fault.assign` |
@@ -43,21 +47,10 @@ Status: proposed server-side contract; not yet wired to routes or persistence.
 | Support | InProgress, WaitingForInformation | `support_incident.update` |
 | Support | Resolved, Closed | `support_incident.resolve` |
 
+Transitions also require route-level `*.read` via `RequireStationPermission` plus the finer permission above.
 
-## Mutation requirements
-1. Validate request shape and domain policy.
-2. Authenticate actor and resolve current authorization scope.
-3. Verify target record belongs to an allowed station and current lifecycle state permits the action.
-4. Validate assignee is active and authorized for that station/category.
-5. Apply mutation atomically with concurrency protection.
-6. Write audit event containing actor, station, record, action, timestamp, and safe before/after metadata.
-7. Return a stable response; do not expose internal exception or credential details.
-
-## Audit and privacy
-- Record denied cross-station access attempts without copying sensitive payloads into logs.
-- Sanitize free-text and attachment names. Store attachments privately; issue short-lived, authorized download URLs only after record-level access checks.
-- Restrict exports by permission and station scope, paginate, and audit export generation.
-- Use UTC timestamps and explicit lifecycle transitions. Do not let clients directly set resolved/closed state or audit fields.
-
-## Readiness gates
-Before adding these routes to readiness checks, implement and test authorization, station isolation, audit persistence, error mapping, and dependency health. Until then, these are design requirements, not implemented controls.
+## Unwired / untested items
+- Attachment upload/download endpoints (not present).
+- Export endpoints (not present).
+- `operations.analytics.read` (documentation only).
+- Live PostgreSQL RLS proof (see `docs/security/postgres-isolation-test-plan.md`).

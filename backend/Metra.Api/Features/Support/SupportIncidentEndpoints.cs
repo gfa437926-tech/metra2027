@@ -295,10 +295,12 @@ public static class SupportIncidentEndpoints
                         return Results.NotFound(new { error = "support_incident_not_found" });
                     return Results.Problem(title: "Support incident detail unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);
                 }
-                if (result.Data.Value.TryGetProperty("station_id", out var stationProp))
+                // Defense in depth: require station_id and reject cross-station leakage.
+                if (!result.Data.Value.TryGetProperty("station_id", out var stationProp)
+                    || !Guid.TryParse(stationProp.GetString(), out var rowStation)
+                    || rowStation != stationId)
                 {
-                    if (!Guid.TryParse(stationProp.GetString(), out var rowStation) || rowStation != stationId)
-                        return Results.NotFound(new { error = "support_incident_not_found" });
+                    return Results.NotFound(new { error = "support_incident_not_found" });
                 }
                 return Results.Ok(result.Data);
             })

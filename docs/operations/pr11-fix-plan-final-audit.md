@@ -1,39 +1,36 @@
-# Final audit — METRA fix plan on PR #11 branch tip
+# Final audit — METRA fix plan (updated)
 
 **Branch:** `work/legacy-ui-migration-audit`  
-**Audited tip (isolation tests):** `76375dfdd7efb52df4ff70bdb057bd58bbc698c6`  
-**PR #11:** remains Draft — **not merged**  
-**Databases:** no apply, no legacy touch, no schema change
+**Previous tip with green CI:** `df02b37f2bbc53c407f1d67b947e9131ae33e509`  
+**This document tracks the follow-up risk-closure commits after that tip.**  
+**PR #11:** Draft — **not merged**  
+**Databases:** no apply, no legacy touch
 
-## Phase outcomes
+## Proven (automated)
 
-| Phase | Status | Evidence |
-|---|---|---|
-| 1 Flutter Analyzer | Closed | No `skip:` in tests; `flutter analyze` clean on prior tip; Client CI green |
-| 2 Daily 24h test | Closed | Test active without skip; Client CI green |
-| 3 Hourly/daily input tests | Closed | Local observation suite passed; Client CI green |
-| 4 Support/maintenance permissions | Closed | `*.update` vs `*.resolve` mapping + unit theories; commit `c5ca7a8` |
-| 5 Station isolation negatives | Closed at API layer | Cross-station forbid + update≠resolve tests; commit `76375df`; residual: live Postgres RLS |
-| 6 Full CI | Closed on tip | Backend #1134/#1135 success; Client #474/#475 success |
-| 7 Final audit | This document | No merge performed |
+| Area | Proof |
+|---|---|
+| Flutter analyze / observation tests | Client CI green on df02b37 lineage |
+| Backend build + permission unit/integration tests | Backend CI green on df02b37 lineage |
+| Transition permission split update vs resolve | Unit + API integration tests |
+| Cross-station API deny (list/detail/transition) | Equipment + support authorization tests |
+| Detail payload station mismatch | Fail-closed 404 tests (this change set) |
 
-## Problem → fix → proof
+## Not proven (explicit)
 
-1. **Analyzer String vs bool?** Temporary `skip: String` was invalid. Removed; 24h test re-enabled after form mount fix.  
-2. **24h / form submit failures.** Lazy `ListView` left required fields unmounted. Fixed with `SingleChildScrollView`+`Column` (earlier commits on branch).  
-3. **InProgress tied to resolve.** Split to `equipment_fault.update` / `support_incident.update`.  
-4. **Cross-station risk at API.** Expanded forbidden tests proving station A cannot list/detail/transition station B for faults and support.
+| Risk | Why unproven |
+|---|---|
+| PostgreSQL RLS / `SET LOCAL` live | Requires disposable DB + approved migration apply |
+| Attachments / export isolation | **No routes implemented** |
+| `operations.analytics.read` | Documented only, not wired |
+| Hosted Supabase schema drift | Not introspected from this environment |
+| `legacy_users_staging` origin | Owner decision |
 
-## Remaining risks (explicit)
-
-- Live PostgreSQL RLS / Npgsql `SET LOCAL` not proven against a real DB (requires approved SQL + secrets).
-- `legacy_users_staging` origin still owner decision.
-- Service-role residual risk after JWT checks.
-- Full legacy UI parity outside this fix plan.
-- PR #11 still Draft; do not merge without owner approval.
+## Documents
+- `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md` — matched to code/tests
+- `docs/security/service-role-support-maintenance-review.md`
+- `docs/security/postgres-isolation-test-plan.md`
+- `database/tests/ops_station_isolation_pg_test.sql` — placeholder for approved disposable run
 
 ## Confirmation
-
-- No Pull Request merged to `main`.
-- No SQL executed against any database.
-- No connection to the legacy database.
+No PR merge. No SQL applied to any hosted database. No legacy database contact.

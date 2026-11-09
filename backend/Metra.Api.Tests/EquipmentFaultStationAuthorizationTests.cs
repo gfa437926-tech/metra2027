@@ -246,6 +246,28 @@ public sealed class EquipmentFaultStationAuthorizationTests
         Assert.Equal(0, faults.TransitionCallCount);
     }
 
+
+    [Fact]
+    public async Task Detail_rejects_storage_row_with_mismatched_station_id()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var otherStation = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, stationId);
+        var service = new EquipmentFaultServiceFake { DetailPayloadStationId = otherStation };
+
+        await using var factory = CreateFactory(authorization, service);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{entityId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(1, service.GetByIdCallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(
         IStationAuthorizationService authorization,
         IEquipmentFaultService faults) =>
@@ -342,6 +364,8 @@ public sealed class EquipmentFaultStationAuthorizationTests
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("[]").RootElement));
         }
 
+        public Guid? DetailPayloadStationId { get; set; }
+
         public Task<EquipmentFaultServiceOutcome> GetByIdAsync(
             Guid stationId,
             Guid faultId,
@@ -350,7 +374,8 @@ public sealed class EquipmentFaultStationAuthorizationTests
             GetByIdCallCount++;
             LastGetStationId = stationId;
             LastGetFaultId = faultId;
-            var payload = "{\"station_id\":\"" + stationId.ToString() + "\"}";
+            var payloadStation = DetailPayloadStationId ?? stationId;
+            var payload = "{\"station_id\":\"" + payloadStation.ToString() + "\"}";
             return Task.FromResult(new EquipmentFaultServiceOutcome(
                 true, true, HttpStatusCode.OK, JsonDocument.Parse(payload).RootElement));
         }

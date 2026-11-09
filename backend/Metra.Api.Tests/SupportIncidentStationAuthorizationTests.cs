@@ -219,6 +219,28 @@ public sealed class SupportIncidentStationAuthorizationTests
         Assert.Equal(0, incidents.TransitionCallCount);
     }
 
+
+    [Fact]
+    public async Task Detail_rejects_storage_row_with_mismatched_station_id()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var otherStation = Guid.NewGuid();
+        var entityId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, stationId);
+        var service = new SupportIncidentServiceFake { DetailPayloadStationId = otherStation };
+
+        await using var factory = CreateFactory(authorization, service);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationId}/support-incidents/{entityId}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(1, service.GetByIdCallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(
         IStationAuthorizationService authorization,
         ISupportIncidentService incidents) =>
@@ -313,6 +335,8 @@ public sealed class SupportIncidentStationAuthorizationTests
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("[]").RootElement));
         }
 
+        public Guid? DetailPayloadStationId { get; set; }
+
         public Task<SupportIncidentServiceOutcome> GetByIdAsync(
             Guid stationId,
             Guid incidentId,
@@ -323,7 +347,7 @@ public sealed class SupportIncidentStationAuthorizationTests
             LastGetIncidentId = incidentId;
             return Task.FromResult(new SupportIncidentServiceOutcome(
                 true, true, HttpStatusCode.OK,
-                JsonDocument.Parse("{\"station_id\":\"" + stationId.ToString() + "\"}").RootElement));
+                JsonDocument.Parse("{\"station_id\":\"" + (DetailPayloadStationId ?? stationId).ToString() + "\"}").RootElement));
         }
 
         public int TransitionCallCount { get; private set; }

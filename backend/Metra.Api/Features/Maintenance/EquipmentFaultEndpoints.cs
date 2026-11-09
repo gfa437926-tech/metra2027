@@ -431,11 +431,12 @@ public static class EquipmentFaultEndpoints
                         statusCode: StatusCodes.Status503ServiceUnavailable);
                 }
 
-                // Defense in depth: reject cross-station leakage if storage ever returns a mismatched row.
-                if (result.Data.Value.TryGetProperty("station_id", out var stationProp))
+                // Defense in depth: require station_id and reject cross-station leakage.
+                if (!result.Data.Value.TryGetProperty("station_id", out var stationProp)
+                    || !Guid.TryParse(stationProp.GetString(), out var rowStation)
+                    || rowStation != stationId)
                 {
-                    if (!Guid.TryParse(stationProp.GetString(), out var rowStation) || rowStation != stationId)
-                        return Results.NotFound(new { error = "equipment_fault_not_found" });
+                    return Results.NotFound(new { error = "equipment_fault_not_found" });
                 }
 
                 return Results.Ok(result.Data);
