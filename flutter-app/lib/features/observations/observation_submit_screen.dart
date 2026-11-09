@@ -38,6 +38,14 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   final TextEditingController _pressureSlope = TextEditingController();
   final TextEditingController _pressureShape = TextEditingController();
   final TextEditingController _pastWeather = TextEditingController();
+  final Map<String, TextEditingController> _optionalFields = {
+    for (final key in <String>[
+      'vaporPressure', 'vaporPressureDiff', 'avgWindDirection', 'avgWindSpeed',
+      'currentWeather', 'cloud1Amount', 'cloud2Amount', 'cloud3Amount',
+      'cloud4Amount', 'cloud1Type', 'cloud2Type', 'cloud3Type',
+      'cloud1Height', 'cloud2Height', 'cloud3Height',
+    ]) key: TextEditingController(),
+  };
   final TextEditingController _remarks = TextEditingController();
 
   late DateTime _observationDate;
@@ -61,7 +69,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       _dryTemp, _wetTemp, _dewPoint, _stationPressure, _seaLevelPressure,
       _relativeHumidity, _windDirection, _windSpeed, _visibility,
       _totalCloudCover, _cover12, _cover123, _precipitationAmount,
-      _pressureSlope, _pressureShape, _pastWeather, _remarks,
+      _pressureSlope, _pressureShape, _pastWeather, ..._optionalFields.values, _remarks,
     ]) {
       controller.dispose();
     }
@@ -152,6 +160,10 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       values['pressureShape'] = _pressureShape.text.trim();
       values['pastWeather'] = _pastWeather.text.trim();
     }
+    for (final entry in _optionalFields.entries) {
+      final value = entry.value.text.trim();
+      if (value.isNotEmpty) values[entry.key] = value;
+    }
 
     try {
       final receipt = await widget.api.submitObservation(
@@ -228,6 +240,38 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
         validator: validator,
       ),
     );
+  }
+
+  Widget _optionalField(String key, String label) {
+    final controller = _optionalFields[key]!;
+    String? validator(String? value) {
+      final text = value?.trim() ?? '';
+      if (text.isEmpty || text == '#') return null;
+      switch (key) {
+        case 'vaporPressure':
+        case 'vaporPressureDiff':
+          return _boundedValue(text, label, r'^\\d{2}\\.\\d$', 0, 99);
+        case 'avgWindDirection':
+          return _twoDigitCode(text, label, maximum: 36);
+        case 'avgWindSpeed':
+        case 'currentWeather':
+          return _twoDigitCode(text, label);
+        case 'cloud1Amount':
+        case 'cloud2Amount':
+        case 'cloud3Amount':
+        case 'cloud4Amount':
+          return _cloudCode(text, label);
+        case 'cloud1Height':
+        case 'cloud2Height':
+        case 'cloud3Height':
+          return _boundedValue(text, label, r'^\\d{1,3}$', 0, 999);
+        default:
+          // The API recognizes cloud type fields but currently defines no
+          // field-level code rule; preserve the supplied string unchanged.
+          return null;
+      }
+    }
+    return _field(controller, label, validator: validator);
   }
 
   @override
@@ -322,6 +366,24 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
             _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
                 validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            const Divider(height: 28),
+            const Text('عناصر رصد إضافية (اختيارية)',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            _optionalField('vaporPressure', 'ضغط البخار (مثل 12.5)'),
+            _optionalField('vaporPressureDiff', 'فرق ضغط البخار (مثل 02.5)'),
+            _optionalField('avgWindDirection', 'متوسط اتجاه الرياح (00-36)'),
+            _optionalField('avgWindSpeed', 'متوسط سرعة الرياح (00-99)'),
+            _optionalField('currentWeather', 'الطقس الحالي (00-99)'),
+            _optionalField('cloud1Amount', 'كمية السحب الأولى (0-8)'),
+            _optionalField('cloud2Amount', 'كمية السحب الثانية (0-8)'),
+            _optionalField('cloud3Amount', 'كمية السحب الثالثة (0-8)'),
+            _optionalField('cloud4Amount', 'كمية السحب الرابعة (0-8)'),
+            _optionalField('cloud1Type', 'نوع السحب الأولى'),
+            _optionalField('cloud2Type', 'نوع السحب الثانية'),
+            _optionalField('cloud3Type', 'نوع السحب الثالثة'),
+            _optionalField('cloud1Height', 'ارتفاع السحب الأولى (0-999)'),
+            _optionalField('cloud2Height', 'ارتفاع السحب الثانية (0-999)'),
+            _optionalField('cloud3Height', 'ارتفاع السحب الثالثة (0-999)'),
             if (_needsPrecipitation)
               _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
                   validator: (value) => _boundedValue(
