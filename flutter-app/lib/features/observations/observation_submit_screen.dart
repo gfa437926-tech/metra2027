@@ -222,7 +222,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 style: const TextStyle(color: Color(0xFF64748B))),
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
-              value: _utcHour,
+              initialValue: _utcHour,
               decoration: const InputDecoration(
                 labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
                 border: OutlineInputBorder(),
