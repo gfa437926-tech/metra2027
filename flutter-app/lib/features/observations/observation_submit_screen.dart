@@ -311,7 +311,2616 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             if (_needsSynoptic) ...[
               _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
                   validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d)),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              key: const ValueKey('hourly-submit'),
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _boundedValue(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
                     value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 0, 1050)),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              key: const ValueKey('hourly-submit'),
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 0, 1050)),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 0, 99)),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 0, 1050)),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 850, 1050)),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) =>
+                    _boundedValue(value, 'الرطوبة النسبية', r'^\d{3}$', 1, 100),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+, 1, 100)),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('إرسال للمراجعة فوراً'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
+              value: _submitImmediately,
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _saving ? null : _save,
+              icon: const Icon(Icons.send),
+              label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+)),
               _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
                   validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
               _field(_pastWeather, 'الطقس السابق (0-9) *',
