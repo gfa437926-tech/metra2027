@@ -223,6 +223,8 @@ public sealed class NpgsqlEquipmentFaultService(
 
                 var fromStatusText = reader.GetString(reader.GetOrdinal("status"));
                 var progress = reader.GetInt32(reader.GetOrdinal("progress_percent"));
+                var assignedToOrdinal = reader.GetOrdinal("assigned_to");
+                Guid? currentAssignee = reader.IsDBNull(assignedToOrdinal) ? null : reader.GetGuid(assignedToOrdinal);
                 await reader.CloseAsync();
 
                 if (!Enum.TryParse<EquipmentFaultStatus>(fromStatusText, true, out var fromStatus) ||
@@ -237,6 +239,22 @@ public sealed class NpgsqlEquipmentFaultService(
                 {
                     await tx.RollbackAsync(cancellationToken);
                     return new(true, false, HttpStatusCode.BadRequest, null);
+                }
+
+                if (toStatus == EquipmentFaultStatus.Assigned)
+                {
+                    var assigneeId = request.AssignedTo ?? currentAssignee;
+                    if (assigneeId is null || assigneeId == Guid.Empty)
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return new(true, false, HttpStatusCode.BadRequest, null);
+                    }
+                    if (!await StationAssigneeAuthorization.CanAssignEquipmentFaultAsync(
+                        authorization, assigneeId.Value, stationId, cancellationToken))
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return new(true, false, HttpStatusCode.Forbidden, null);
+                    }
                 }
 
                 if (toStatus == EquipmentFaultStatus.Resolved && (request.ProgressPercent ?? progress) != 100)

@@ -220,6 +220,8 @@ public sealed class NpgsqlSupportIncidentService(
                 }
 
                 var fromStatusText = reader.GetString(reader.GetOrdinal("status"));
+                var assignedToOrdinal = reader.GetOrdinal("assigned_to");
+                Guid? currentAssignee = reader.IsDBNull(assignedToOrdinal) ? null : reader.GetGuid(assignedToOrdinal);
                 await reader.CloseAsync();
 
                 if (!Enum.TryParse<SupportIncidentStatus>(fromStatusText, true, out var fromStatus) ||
@@ -234,6 +236,22 @@ public sealed class NpgsqlSupportIncidentService(
                 {
                     await tx.RollbackAsync(cancellationToken);
                     return new(true, false, HttpStatusCode.BadRequest, null);
+                }
+
+                if (toStatus == SupportIncidentStatus.Assigned)
+                {
+                    var assigneeId = request.AssignedTo ?? currentAssignee;
+                    if (assigneeId is null || assigneeId == Guid.Empty)
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return new(true, false, HttpStatusCode.BadRequest, null);
+                    }
+                    if (!await StationAssigneeAuthorization.CanAssignSupportIncidentAsync(
+                        authorization, assigneeId.Value, stationId, cancellationToken))
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        return new(true, false, HttpStatusCode.Forbidden, null);
+                    }
                 }
 
                 await using var update = new NpgsqlCommand(
