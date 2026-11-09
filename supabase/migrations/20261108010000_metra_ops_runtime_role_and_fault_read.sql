@@ -1,6 +1,6 @@
 -- NEW METRA project only. Do not apply without explicit approval.
 -- Do not touch the legacy INSERT database.
--- Creates a constrained DB login role for API fault operations and tightens grants.
+-- Creates constrained NOLOGIN group roles for API operations and tightens grants.
 
 do $$
 begin
