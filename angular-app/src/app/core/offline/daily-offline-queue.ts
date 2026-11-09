@@ -51,14 +51,12 @@ export class DailyOfflineQueue {
 
   // A short IndexedDB lease prevents daily and hourly pages from draining the
   // shared outbox concurrently. Server idempotency remains the final safeguard.
-  async acquireSyncLease(owner: string, leaseMs = 120_000, waitMs = 300_000): Promise<boolean> {
-    const startedAt = Date.now();
-    do {
-      const acquired = await this.tryAcquireSyncLease(owner, leaseMs);
-      if (acquired) return true;
-      if (Date.now() - startedAt >= waitMs) return false;
-      await new Promise(resolve => setTimeout(resolve, 100));
-    } while (true);
+  async acquireSyncLease(owner: string, leaseMs = 120_000): Promise<boolean> {
+    // Never wait while holding a component's local syncing flag. A competing
+    // tab will retry when it receives the lease-released BroadcastChannel event.
+    // This keeps ownership handoff event-driven instead of leaving a tab stuck
+    // in a long polling loop after another tab has already drained the queue.
+    return this.tryAcquireSyncLease(owner, leaseMs);
   }
 
   private async tryAcquireSyncLease(owner: string, leaseMs: number): Promise<boolean> {
