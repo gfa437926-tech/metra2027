@@ -141,4 +141,76 @@ void main() {
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
 
+
+  test('registration roles and account status use authenticated .NET routes', () async {
+    final paths = <String>[];
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'registration-token',
+      client: MockClient((request) async {
+        paths.add(request.url.path);
+        expect(request.headers['authorization'], 'Bearer registration-token');
+        if (request.url.path == '/api/v1/registration-roles') {
+          return http.Response(jsonEncode([{
+            'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'
+          }]), 200);
+        }
+        return http.Response(jsonEncode({
+          'account_state': 'pending_station_approval',
+          'state_reason': null,
+          'request_id': '22222222-2222-4222-8222-222222222222',
+          'request_status': 'pending_station_approval',
+          'submitted_at': '2026-11-10T10:00:00Z',
+          'review_note': null,
+        }), 200);
+      }),
+    );
+    final roles = await client.getRequestableRegistrationRoles();
+    final status = await client.getMyRegistrationStatus();
+    expect(roles.single.code, 'observer');
+    expect(roles.single.nameArabic, 'راصد');
+    expect(status.accountState, 'pending_station_approval');
+    expect(status.requestStatus, 'pending_station_approval');
+    expect(paths, ['/api/v1/registration-roles', '/api/v1/account/registration-status']);
+    client.close();
+  });
+
+  test('registration submission sends only user fields and idempotency key to .NET', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'registration-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode({
+          'result_status': 'created',
+          'account_id': '22222222-2222-4222-8222-222222222222',
+          'request_id': '33333333-3333-4333-8333-333333333333',
+        }), 201);
+      }),
+    );
+    final result = await client.submitRegistration(
+      firstName: 'أحمد',
+      fatherName: 'محمد',
+      lastName: 'علي',
+      roleCode: 'observer',
+      stationId: stationId,
+      idempotencyKey: 'registration-test-key',
+    );
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/registration-requests');
+    expect(captured.headers['authorization'], 'Bearer registration-token');
+    expect(body['firstName'], 'أحمد');
+    expect(body['roleCode'], 'observer');
+    expect(body['stationId'], stationId);
+    expect(body['termsVersion'], 'metra-terms-2026-11');
+    expect(body['idempotencyKey'], 'registration-test-key');
+    expect(body.containsKey('userId'), isFalse);
+    expect(body.containsKey('actorUserId'), isFalse);
+    expect(result['result_status'], 'created');
+    client.close();
+  });
+
+
 }
