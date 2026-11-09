@@ -182,11 +182,11 @@ void main() {
       accessTokenProvider: () async => 'registration-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode({
+        return http.Response(jsonEncode([{
           'result_status': 'created',
           'account_id': '22222222-2222-4222-8222-222222222222',
           'request_id': '33333333-3333-4333-8333-333333333333',
-        }), 201);
+        }]), 201);
       }),
     );
     final result = await client.submitRegistration(
