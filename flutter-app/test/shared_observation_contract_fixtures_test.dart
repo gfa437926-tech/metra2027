@@ -137,7 +137,7 @@ File _locateSharedManifest() {
   for (final candidate in candidates) {
     if (candidate.existsSync()) return candidate;
   }
-  throw FileSystemException(
+  throw const FileSystemException(
     'Could not locate contracts/observation-v1/fixtures/manifest.json',
   );
 }
