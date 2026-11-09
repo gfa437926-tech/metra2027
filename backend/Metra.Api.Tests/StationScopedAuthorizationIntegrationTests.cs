@@ -380,7 +380,8 @@ public sealed class StationScopedAuthorizationIntegrationTests
                 "observation.create",
                 "observation.review",
                 "observation.return_for_correction",
-                "users.station.view"
+                "users.station.view",
+                "users.station.manage"
             };
             return Task.FromResult(
                 IsConfigured &&
@@ -503,6 +504,81 @@ public sealed class StationScopedAuthorizationIntegrationTests
         Assert.Equal(HttpStatusCode.Forbidden, deniedResponse.StatusCode);
         Assert.Equal(1, audit.CallCount);
         Assert.Equal(new[] { allowedStationId, deniedStationId }, authorization.CheckedStationIds);
+    }
+
+    [Fact]
+    public async Task Station_assignment_request_is_denied_before_rpc_for_another_station()
+    {
+        var userId = Guid.NewGuid();
+        var allowedStationId = Guid.NewGuid();
+        var deniedStationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, allowedStationId);
+        var assignments = new StationAssignmentFake();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IStationAssignmentService>();
+                    services.AddSingleton<IStationAssignmentService>(assignments);
+                });
+            });
+
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{deniedStationId}/assignments",
+            new StringContent(
+                "{\"userId\":\"22222222-2222-4222-8222-222222222222\",\"roleCode\":\"observer\",\"reason\":\"approved station staffing need\",\"validFrom\":\"2026-11-09T08:00:00Z\",\"validTo\":null}",
+                Encoding.UTF8,
+                "application/json"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, assignments.RequestCallCount);
+        Assert.Contains(deniedStationId, authorization.CheckedStationIds);
+    }
+
+    private sealed class StationAssignmentFake : IStationAssignmentService
+    {
+        public bool IsConfigured => true;
+        public int RequestCallCount { get; private set; }
+
+        public Task<JsonElement?> GetAssignableRolesAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<JsonElement?>(null);
+
+        public Task<StationAssignmentOutcome> RequestAsync(
+            Guid stationId, Guid actorUserId, StationAssignmentRequest request,
+            CancellationToken cancellationToken)
+        {
+            RequestCallCount++;
+            using var document = JsonDocument.Parse("{\"status\":\"created\"}");
+            return Task.FromResult(new StationAssignmentOutcome(
+                true, true, HttpStatusCode.OK, document.RootElement.Clone()));
+        }
+
+        public Task<StationAssignmentOutcome> DecideAsync(
+            Guid stationId, Guid assignmentId, Guid actorUserId,
+            StationAssignmentDecisionRequest request, CancellationToken cancellationToken) =>
+            Task.FromResult(new StationAssignmentOutcome(false, false, null, null));
+
+        public Task<StationAssignmentOutcome> RevokeAsync(
+            Guid stationId, Guid assignmentId, Guid actorUserId,
+            StationAssignmentRevocationRequest request, CancellationToken cancellationToken) =>
+            Task.FromResult(new StationAssignmentOutcome(false, false, null, null));
     }
 
     private sealed class StationAuditFake : IStationAuditService
