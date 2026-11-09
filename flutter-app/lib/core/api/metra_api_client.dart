@@ -184,14 +184,22 @@ class MetraApiClient {
     );
   }
 
-  Future<void> submitObservation({required String stationId,
+  /// Submits the canonical observation envelope and requires a persisted receipt.
+  /// A 2xx response without the database observation id is not treated as success.
+  Future<Map<String, dynamic>> submitObservation({required String stationId,
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
     bool submit = false}) async {
-    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
+    final response = await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
       body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
         'payload': payload, 'submit': submit});
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map || decoded['id'] is! String ||
+        (decoded['id'] as String).trim().isEmpty) {
+      throw const FormatException('observation_persistence_receipt_missing_id');
+    }
+    return Map<String, dynamic>.from(decoded);
   }
 
 
