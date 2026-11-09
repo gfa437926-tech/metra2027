@@ -199,6 +199,170 @@ public sealed class StationScopedAuthorizationIntegrationTests
         Assert.Contains("self_review_forbidden", body);
     }
 
+    [Fact]
+    public async Task Direct_hourly_submission_rejects_missing_conditional_fields_before_persistence()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, stationId);
+        var submission = new ObservationSubmissionFake();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IObservationSubmissionService>();
+                    services.AddSingleton<IObservationSubmissionService>(submission);
+                });
+            });
+
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+        const string request = """
+        {
+          "idempotencyKey":"hourly-invalid-00",
+          "observationType":"hourly",
+          "observedAt":"2026-11-09T00:00:00Z",
+          "submit":true,
+          "payload":{"values":{
+            "utcTime":"00","dryTemp":"+25.0","wetTemp":"+18.0",
+            "dewPoint":"+12.0","stationPressure":"1013.2",
+            "seaLevelPressure":"1015.0","relativeHumidity":"045",
+            "windDirection":"18","windSpeed":"05","visibility":"010",
+            "totalCloudCover":"4","cover12":"3","cover123":"4"
+          }}
+        }
+        """;
+
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{stationId}/observations",
+            new StringContent(request, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, submission.CallCount);
+        Assert.Contains("invalid_observation_fields", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Direct_daily_submission_rejects_missing_24_hour_fields_before_persistence()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, stationId);
+        var submission = new ObservationSubmissionFake();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IObservationSubmissionService>();
+                    services.AddSingleton<IObservationSubmissionService>(submission);
+                });
+            });
+
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+        const string request = """
+        {
+          "idempotencyKey":"daily-invalid-24h",
+          "observationType":"daily",
+          "observedAt":"2026-11-08T00:00:00Z",
+          "submit":true,
+          "payload":{
+            "reportType":"24h",
+            "responsibilityAgreement":true,
+            "values":{"minTemp":"-05.3","maxTemp":"25.7","precipitation":"012.5","snowThickness":"015"}
+          }
+        }
+        """;
+
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{stationId}/observations",
+            new StringContent(request, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, submission.CallCount);
+        Assert.Contains("invalid_observation_fields", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Direct_valid_hourly_submission_reaches_persistence_after_contract_validation()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var authorization = new StationScopedAuthorizationFake(userId, stationId);
+        var submission = new ObservationSubmissionFake();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureTestServices(services =>
+                {
+                    services.AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                        TestAuthenticationHandler.Scheme, _ => { });
+                    services.RemoveAll<IStationAuthorizationService>();
+                    services.AddSingleton<IStationAuthorizationService>(authorization);
+                    services.RemoveAll<IObservationSubmissionService>();
+                    services.AddSingleton<IObservationSubmissionService>(submission);
+                });
+            });
+
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+        const string request = """
+        {
+          "idempotencyKey":"hourly-valid-12",
+          "observationType":"hourly",
+          "observedAt":"2026-11-09T12:00:00Z",
+          "submit":true,
+          "payload":{"values":{
+            "utcTime":"12","dryTemp":"+25.0","wetTemp":"+18.0",
+            "dewPoint":"+12.0","stationPressure":"1013.2",
+            "seaLevelPressure":"1015.0","relativeHumidity":"045",
+            "windDirection":"18","windSpeed":"05","visibility":"010",
+            "totalCloudCover":"4","cover12":"3","cover123":"4",
+            "precipitationAmount":"000.0","pressureSlope":"1.2",
+            "pressureShape":"3","pastWeather":"0"
+          }}
+        }
+        """;
+
+        using var response = await client.PostAsync(
+            $"/api/v1/stations/{stationId}/observations",
+            new StringContent(request, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, submission.CallCount);
+    }
+
     private sealed class StationScopedAuthorizationFake(Guid userId, Guid allowedStationId)
         : IStationAuthorizationService
     {
