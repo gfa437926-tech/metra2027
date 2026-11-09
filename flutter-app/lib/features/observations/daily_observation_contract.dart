@@ -65,11 +65,11 @@ class DailyObservationContract {
     }
     if (field == null) return null;
     if (!RegExp(field.pattern).hasMatch(value)) {
-      return 'تنسيق ' + field.label + ' غير صحيح';
+      return 'تنسيق ${field.label} غير صحيح';
     }
     final number = double.tryParse(value);
     if (number == null || number < field.min || number > field.max) {
-      return 'قيمة ' + field.label + ' خارج المجال المسموح';
+      return 'قيمة ${field.label} خارج المجال المسموح';
     }
     return null;
   }
