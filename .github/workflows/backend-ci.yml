@@ -103,6 +103,8 @@ jobs:
         run: bash database/tests/verify_ops_transition_permission_contract.sh
       - name: Verify station isolation static security contract
         run: bash database/tests/verify_ops_station_isolation_contract.sh
+      - name: Verify read-only staging smoke script syntax
+        run: bash -n scripts/deployment/staging-smoke-test.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
