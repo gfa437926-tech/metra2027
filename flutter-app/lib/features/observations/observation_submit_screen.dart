@@ -97,9 +97,6 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   String? _temperature(String? value, String label) =>
       _boundedValue(value, label, r'^[+-]\d{2}\.\d$', -20, 50);
 
-  String? _pressure(String? value, String label) =>
-      _boundedValue(value, label, r'^\d{4}\.\d$', 0, 1050);
-
   String? _twoDigitCode(String? value, String label, {int? maximum}) =>
       _boundedValue(value, label, r'^\d{2}$', 0, (maximum ?? 99).toDouble());
 
