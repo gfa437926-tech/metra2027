@@ -304,6 +304,233 @@ async function main() {
     mockStatus = 503;
     await context.setOffline(false);
     await page.getByText('1 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    await page.waitForFunction(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.some(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts === 1 && Boolean(item.lastError));
+    }, { timeout: 10000 });
+    await page.getByText(/جارٍ الإرسال تلقائياً/).waitFor({ state: 'hidden', timeout: 10000 });
+    const transient = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.payload.observerName === 'راصد الانقطاع' && item.attempts >= 1 && Boolean(item.lastError));
+    });
+    assert.ok(transient);
+    assert.equal(transient.state, 'pending', JSON.stringify(transient));
+    assert.equal(transient.attempts, 1);
+    assert.match(transient.lastError, /تعطل مؤقت في خادم الاختبار/);
+
+    mockStatus = 200;
+    await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
+    await context.setOffline(false);
+    await page.getByText('0 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    const finalQueue = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows;
+    });
+    assert.equal(finalQueue.length, 1, 'Only the explicitly rejected item should remain blocked');
+    assert.equal(finalQueue[0].state, 'blocked');
+
+    assert.equal(acceptedPosts.length, 4, 'Success, rejection, transient failure, and retry should all reach the mocked API');
+
+    // Real hourly form: offline persistence, reload and reopening.
+    await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
+    await page.goto('http://127.0.0.1:' + port + '/reports/hourly', { waitUntil: 'domcontentloaded' });
+    await page.locator('metra-hourly-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await page.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
+    await page.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
+    await page.locator('select[name="utcTime"]').selectOption('01');
+    const hourlyValues = { dryTemp: '+25.5', wetTemp: '+20.0', stationPressure: '1013.2', seaLevelPressure: '1013.2', relativeHumidity: '065', dewPoint: '+18.5', windDirection: '18', windSpeed: '12', visibility: '050', totalCloudCover: '2', cover12: '2', cover123: '2' };
+    for (const [name, value] of Object.entries(hourlyValues)) { if (name === 'totalCloudCover') await page.locator('[name="' + name + '"]').selectOption(value); else await page.locator('[name="' + name + '"]').fill(value); }
+    await page.locator('input[name="responsibilityAgreement"]').check();
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    await page.getByText('نشرات ساعية محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    const hourlySaved = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.observationType === 'hourly');
+    });
+    assert.ok(hourlySaved);
+    assert.equal(hourlySaved.state, 'pending');
+    assert.equal(hourlySaved.reportType, '01');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('metra-hourly-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await page.getByText('نشرات ساعية محفوظة على هذا الجهاز').waitFor({ timeout: 10000 });
+    await page.getByRole('button', { name: 'إعادة فتح النشرة' }).click();
+    const hourlyRestored = await page.evaluate(() => ({
+      online: navigator.onLine,
+      station: document.querySelector('select[name="stationId"]')?.value,
+      hour: document.querySelector('select[name="utcTime"]')?.value,
+      dryTemp: document.querySelector('input[name="dryTemp"]')?.value,
+      dewPoint: document.querySelector('input[name="dewPoint"]')?.value,
+      agreement: document.querySelector('input[name="responsibilityAgreement"]')?.checked
+    }));
+    assert.equal(hourlyRestored.online, false);
+    assert.equal(hourlyRestored.station, '00000000-0000-4000-8000-000000000002');
+    assert.equal(hourlyRestored.hour, '01');
+    assert.equal(hourlyRestored.dryTemp, '+25.5');
+    assert.equal(hourlyRestored.dewPoint, '+18.5');
+    assert.equal(hourlyRestored.agreement, true);
+
+    // Queue a daily report in a second tab while the hourly tab remains active.
+    const dailyPage = await context.newPage();
+    await dailyPage.goto('http://127.0.0.1:' + port + '/reports/daily', { waitUntil: 'domcontentloaded' });
+    await dailyPage.locator('metra-daily-reports').waitFor({ state: 'attached', timeout: 20000 });
+    await dailyPage.locator('select[name="stationId"] option[value="00000000-0000-4000-8000-000000000002"]').waitFor({ state: 'attached', timeout: 10000 });
+    await dailyPage.locator('select[name="stationId"]').selectOption('00000000-0000-4000-8000-000000000002');
+    await dailyPage.locator('input[name="currentDate"]').fill('2099-01-02');
+    await dailyPage.locator('input[name="observer"]').fill('راصد التزامن');
+    await dailyPage.getByRole('button', { name: /إدخال بيانات تجريبية/ }).click();
+    await dailyPage.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await dailyPage.getByText(/تم حفظ النشرة محلياً داخل صندوق الإرسال/).waitFor({ timeout: 10000 });
+
+    // Verify both record types are durably queued before restoring connectivity.
+    const concurrentBefore = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.map(item => ({ observationType: item.observationType ?? 'daily', state: item.state }));
+    });
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'daily' && item.state === 'pending').length, 1);
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'hourly' && item.state === 'pending').length, 1);
+    assert.equal(concurrentBefore.filter(item => item.observationType === 'daily' && item.state === 'blocked').length, 1);
+
+    // Restore the network in the browser context, then notify both live tabs.
+    // The persistent BroadcastChannel relays connectivity and lease handoff
+    // when a background tab does not receive the browser's online event.
+    holdConcurrentResponses = true;
+    mockStatus = 200;
+    await context.setOffline(false);
+    await Promise.all([
+      page.waitForFunction(() => navigator.onLine === true),
+      dailyPage.waitForFunction(() => navigator.onLine === true)
+    ]);
+    // Dispatch one online event in the initiating tab; the other tab must
+    // learn about reconnection through the shared BroadcastChannel.
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    // Hold the first response behind an explicit gate. This proves the
+    // competing tab cannot POST until the current lease owner is released,
+    // without relying on a wall-clock delay that can race CI scheduling.
+    const firstPostDeadline = Date.now() + 20000;
+    while (acceptedPosts.length < 5 && Date.now() < firstPostDeadline) await page.waitForTimeout(50);
+    assert.ok(acceptedPosts.length >= 5, 'The lease owner should start the first queued request after reconnection');
+    await concurrentResponseStarted;
+    const firstConcurrentPosts = acceptedPosts.slice(4);
+    assert.equal(firstConcurrentPosts.length, 1, 'Only one POST may be in flight while its response is held');
+    assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+    assert.equal(typeof releaseConcurrentResponse, 'function', 'The held response must be controllably releasable');
+    holdConcurrentResponses = false;
+    releaseConcurrentResponse();
+
+    // Wait for actual API activity, not a transient IndexedDB snapshot. The
+    // subsequent durable queue assertion remains the source of truth.
+    const drainDeadline = Date.now() + 20000;
+    while (acceptedPosts.length < 6 && Date.now() < drainDeadline) await page.waitForTimeout(50);
+    const concurrentPosts = acceptedPosts.slice(4);
+    const concurrentAfter = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => { const request = indexedDB.open('metra-offline-outbox', 3); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+      const rows = await new Promise((resolve, reject) => { const tx = db.transaction('daily-submissions', 'readonly'); const request = tx.objectStore('daily-submissions').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+      const lease = await new Promise((resolve, reject) => { const tx = db.transaction('sync-locks', 'readonly'); const request = tx.objectStore('sync-locks').get('observations'); request.onsuccess = () => resolve(request.result ?? null); request.onerror = () => reject(request.error); });
+      db.close();
+      return { rows: rows.map(item => ({ observationType: item.observationType ?? 'daily', state: item.state, attempts: item.attempts, lastError: item.lastError })), lease };
+    });
+    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after serialized connectivity recovery. Diagnostics=' + JSON.stringify({ allPosts: acceptedPosts, concurrentPosts, remaining: concurrentAfter }));
+    assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
+    assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
+
+    assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+
+    // Hourly permanent rejection must retain the record as blocked with the
+    // server's reason; transient failure must stay pending and retry later.
+    await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
+    await page.locator('input[name="dryTemp"]').fill('+26.0');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    mockStatus = 422;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة متوقفة بسبب رفض الخادم').waitFor({ timeout: 10000 });
+    await page.getByText('بيانات النشرة مرفوضة في اختبار المتصفح').waitFor({ timeout: 10000 });
+    const hourlyRejected = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => {
+        const request = indexedDB.open('metra-offline-outbox', 3);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      const rows = await new Promise((resolve, reject) => {
+        const tx = db.transaction('daily-submissions', 'readonly');
+        const request = tx.objectStore('daily-submissions').getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      db.close();
+      return rows.find(item => item.observationType === 'hourly');
+    });
+    assert.ok(hourlyRejected);
+    assert.equal(hourlyRejected.state, 'blocked');
+    assert.match(hourlyRejected.lastError, /بيانات النشرة مرفوضة/);
+
+    await context.setOffline(true);
+    await page.waitForFunction(() => navigator.onLine === false);
+    await page.locator('input[name="dryTemp"]').fill('+27.0');
+    await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
+    await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
+    mockStatus = 503;
+    await context.setOffline(false);
+    await page.getByText('1 نشرة ساعية بانتظار المزامنة').waitFor({ timeout: 10000 });
     // Capture the exact queue row in the same IndexedDB read that observes the retry.
     // A second read can race with another automatic sync pass and see a newer state.
     let hourlyTransient;
