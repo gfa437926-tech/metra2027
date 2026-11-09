@@ -38,7 +38,13 @@ BEGIN
   IF NOT has_table_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'SELECT')
      OR NOT has_table_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'INSERT')
      OR NOT has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'status', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'assigned_to', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'progress_percent', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'progress_note', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'updated_at', 'UPDATE')
      OR has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'reporter_user_id', 'UPDATE')
+     OR has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'station_id', 'UPDATE')
+     OR has_column_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'created_at', 'UPDATE')
      OR has_table_privilege('metra_ops_faults', 'public.metra_equipment_faults', 'DELETE') THEN
     RAISE EXCEPTION 'equipment fault grants exceed or fail the approved column-level boundary';
   END IF;
@@ -46,7 +52,11 @@ BEGIN
   IF NOT has_table_privilege('metra_ops_faults', 'public.metra_support_incidents', 'SELECT')
      OR NOT has_table_privilege('metra_ops_faults', 'public.metra_support_incidents', 'INSERT')
      OR NOT has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'status', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'assigned_to', 'UPDATE')
+     OR NOT has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'updated_at', 'UPDATE')
      OR has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'reporter_user_id', 'UPDATE')
+     OR has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'station_id', 'UPDATE')
+     OR has_column_privilege('metra_ops_faults', 'public.metra_support_incidents', 'created_at', 'UPDATE')
      OR has_table_privilege('metra_ops_faults', 'public.metra_support_incidents', 'DELETE') THEN
     RAISE EXCEPTION 'support incident grants exceed or fail the approved column-level boundary';
   END IF;
@@ -60,6 +70,13 @@ BEGIN
      OR has_table_privilege('metra_ops_faults', 'public.metra_support_incident_audit_events', 'UPDATE')
      OR has_table_privilege('metra_ops_faults', 'public.metra_support_incident_audit_events', 'DELETE') THEN
     RAISE EXCEPTION 'audit grants must remain read/insert only';
+  END IF;
+
+  IF NOT has_sequence_privilege('metra_ops_faults', 'public.metra_equipment_fault_audit_events_id_seq', 'USAGE')
+     OR NOT has_sequence_privilege('metra_ops_faults', 'public.metra_support_incident_audit_events_id_seq', 'USAGE')
+     OR has_sequence_privilege('anon', 'public.metra_equipment_fault_audit_events_id_seq', 'USAGE')
+     OR has_sequence_privilege('authenticated', 'public.metra_equipment_fault_audit_events_id_seq', 'USAGE') THEN
+    RAISE EXCEPTION 'operational audit sequence grants exceed or fail the intended boundary';
   END IF;
 
   RAISE NOTICE 'ops_role_grant_boundary_pg_test: PASS';
