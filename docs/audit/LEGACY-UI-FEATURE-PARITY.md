@@ -27,8 +27,8 @@ Legacy HEAD: `12a96f301102fb75bd053dd7be188a04ed38b408`
 | Authentication / `index.html`, `js/auth-manager.js`, `js/login.js` | Login and registration routes/components exist | Supabase auth/session client exists | Verify full role lifecycle, recovery, lockout, and API authorization |
 | Main dashboard / `main.html`, `managers/manager-dashboard.html` | Dashboard component exists | Home overview exists | Reconcile role-specific widgets and legacy workflows |
 | Station catalogue | Station API and station-related UI exist | Station directory/map exists | Verify only the approved new station catalogue is used; validate pagination and coordinates |
-| Hourly observation entry / `pages/hourly/hourly_send/hourly_reports.html` | `reports/hourly` component exists with detailed fields and API submission path | No hourly form screen identified | Port all original fields, conditional rules, UTC/local hour mapping, and server validation to Flutter |
-| Daily observation entry / `pages/daily/daily_send/daily.html` | `reports/daily` component exists with field validation and API path | No daily form screen identified | Compare every original field, missing-data markers, time/sign controls, and persistence contract |
+| Hourly observation entry / `pages/hourly/hourly_send/hourly_reports.html` | `reports/hourly` component has API submission, offline queue and executable hourly validator | `ObservationSubmitScreen` exposes hourly entry and `HourlyObservationContract`; shared hourly fixtures and all 24 UTC-hour conditional rules are tested | Continue field-by-field legacy formatting parity, optional cloud/vapor widget tests, and UTC/local date semantics; not yet full visual/interaction parity |
+| Daily observation entry / `pages/daily/daily_send/daily.html` | `reports/daily` has API-backed submission, offline queue and executable report-type validator | `DailyObservationSubmitScreen` and `DailyObservationContract` exist; six canonical daily fixtures are executed | Verify phenomenon/observer metadata mapping, three report-type date boundaries, offline replay and end-to-end persistence |
 | Hourly reports / `view-data/pages/hourly_reports.html` | Hourly reports component exists | No reports screen identified | Verify query filters, station scoping, charts/tables, export, and API-backed data |
 | Daily reports / `view-data/pages/daily_reports.html` | Daily reports component exists | No reports screen identified | Verify date/station filters, calculations, summaries, and export |
 | Climate hourly / `pages/h_climate/h_climate_send/h_climate_send.html`, `view-data/pages/climate_hourly_reports.html` | Climate reports component exists | No screen identified | Verify full field model, statistics, persistence, and reporting |
@@ -50,9 +50,9 @@ Legacy HEAD: `12a96f301102fb75bd053dd7be188a04ed38b408`
 ## Flutter packaging and feature gaps
 
 - Flutter source and package configuration are present.
-- At audited HEAD, `flutter-app/README.md` says Android/iOS runners must be generated with `flutter create --platforms=android,ios .`; no `android/` or `ios/` source trees were found in the repository tree.
+- Android and iOS runner source trees are now present under `flutter-app/android/` and `flutter-app/ios/`; this does not yet prove signed release builds or real-device installation.
 - The mobile shell currently exposes Home, Stations, Review, Entry, Operations, and Settings. Review and entry require a selected station; current README states station selection and live weather/operational reports are not fully connected end-to-end.
-- No dedicated Flutter pages were identified for hourly/daily/climate/rainfall/agriculture/soil/phenomena/analytics reports or manager dashboards.
+- Dedicated Flutter pages now exist for daily/hourly entry, observation review, equipment faults, support incidents and station operations. Dedicated Flutter analytics, climate/rainfall/agriculture/soil/phenomena reporting and full manager dashboards remain absent or incomplete.
 - Before release: generate and commit required platform runners, configure signing and app identifiers, then build and install on real Android devices; build/test iOS on macOS if iOS is in scope.
 
 ## Next implementation sequence
@@ -217,3 +217,33 @@ Still open:
 - A live authenticated end-to-end submission has not been performed; actual persistence must be confirmed in the configured environment by checking the returned observation ID and the station review queue.
 - Confirm the correct reporting-day timestamp convention for `24h` before treating the timestamp semantics as final.
 - Add automated Angular component/API tests once a test runner is configured for `angular-app`.
+
+
+## Current branch status superseding historical notes (2026-11-10)
+
+Current branch: `work/legacy-ui-migration-audit`. Current audit is source-level
+and CI-backed only; it is not staging/UAT acceptance.
+
+- The Flutter hourly and daily entry screens and their client contracts now exist.
+  The shared fixture manifest is executed by Flutter, Angular and .NET for the
+  implemented daily/hourly contract cases.
+- Angular now executes its daily/hourly validators rather than only checking
+  source structure. The all-24-UTC-hour conditional field matrix is covered.
+- The authenticated .NET observation write boundary validates canonical daily
+  and hourly payloads before persistence.
+- Android/iOS runner source trees are present. Signed release builds, device
+  installs, biometric/passkey flows, and store-ready packaging have not been
+  evidenced by the current CI workflow.
+- PostgreSQL 17 disposable CI validates station isolation, assignee permission,
+  Npgsql column grants, and the separate Supabase `service_role` boundary.
+  Current tests confirm the REST service role has SELECT-only access to
+  operational records, no direct audit-table access, and RPC-only write access.
+- The support/maintenance manager dashboards, attachment handling, exports,
+  full analytics, climate/rainfall/agriculture/soil persistence, and complete
+  visual parity remain open.
+- No real staging host or authenticated staging test identity is currently
+  configured. Docker smoke tests in CI are not a hosted deployment.
+- No hosted database has been changed; the legacy database remains untouched.
+
+Historical implementation notes above are retained as dated audit history;
+where they conflict with this section, this 2026-11-10 status is authoritative.
