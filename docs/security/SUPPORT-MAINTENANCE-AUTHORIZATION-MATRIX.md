@@ -25,14 +25,20 @@ The `metra_ops_faults` group has:
 - No DELETE on operational records and no direct table grants to `anon`
   or `authenticated`.
 
+The Supabase REST adapter's `service_role` has direct SELECT only on
+the two operational tables used by list/detail endpoints. It has no direct
+INSERT, UPDATE, or DELETE on operational records and no direct access to audit
+tables; all writes must pass through the explicitly granted, permission-checking
+RPCs. This prevents the server key from bypassing transition and assignee
+validation through direct PostgREST mutations. The key remains a highly
+privileged server-only credential and must never be placed in Angular/Flutter.
+
 The PostgreSQL 17 disposable CI test `ops_role_grant_boundary_pg_test.sql`
-checks role flags, runtime membership, client denials, column-level UPDATE,
-audit immutability grants, and sequence boundaries. It does not test the
-privileges of a future hosted login until that login is provisioned and tested
-in an approved staging environment. The Supabase `service_role` used by
-REST adapters remains a separate highly privileged server-only credential;
-it must never be placed in Angular/Flutter or treated as the constrained
-Npgsql runtime role.
+checks both the constrained Npgsql role and the Supabase `service_role`
+read-only/RPC-only boundary, including role flags, membership, client denials,
+column-level UPDATE, audit grants, function EXECUTE grants, and sequence
+boundaries. It does not test the privileges of a future hosted Npgsql login
+until that login is provisioned and tested in an approved staging environment.
 
 ## Station boundary
 - Every list, detail, create, and transition is under `/api/v1/stations/{stationId}/...`.
