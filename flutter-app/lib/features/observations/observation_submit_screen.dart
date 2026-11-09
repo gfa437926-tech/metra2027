@@ -1,7 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 
-/// Hourly observation intake against the real station-scoped submit API.
+/// Hourly observation intake using the canonical v1 API field contract.
 class ObservationSubmitScreen extends StatefulWidget {
   const ObservationSubmitScreen({
     super.key,
@@ -21,163 +23,186 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _dryTemp = TextEditingController();
   final TextEditingController _wetTemp = TextEditingController();
-  final TextEditingController _windSpeed = TextEditingController();
-  final TextEditingController _windDirection = TextEditingController();
-  final TextEditingController _relativeHumidity = TextEditingController();
+  final TextEditingController _dewPoint = TextEditingController();
   final TextEditingController _stationPressure = TextEditingController();
+  final TextEditingController _seaLevelPressure = TextEditingController();
+  final TextEditingController _relativeHumidity = TextEditingController();
+  final TextEditingController _windDirection = TextEditingController();
+  final TextEditingController _windSpeed = TextEditingController();
   final TextEditingController _visibility = TextEditingController();
-  final TextEditingController _cloudCover = TextEditingController();
+  final TextEditingController _totalCloudCover = TextEditingController();
+  final TextEditingController _cover12 = TextEditingController();
+  final TextEditingController _cover123 = TextEditingController();
+  final TextEditingController _precipitationAmount = TextEditingController();
+  final TextEditingController _pressureSlope = TextEditingController();
+  final TextEditingController _pressureShape = TextEditingController();
+  final TextEditingController _pastWeather = TextEditingController();
   final TextEditingController _remarks = TextEditingController();
+
+  late int _utcHour;
   bool _submitImmediately = true;
   bool _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _utcHour = DateTime.now().toUtc().hour;
+  }
+
+  @override
   void dispose() {
-    _dryTemp.dispose();
-    _wetTemp.dispose();
-    _windSpeed.dispose();
-    _windDirection.dispose();
-    _relativeHumidity.dispose();
-    _stationPressure.dispose();
-    _visibility.dispose();
-    _cloudCover.dispose();
-    _remarks.dispose();
+    for (final controller in <TextEditingController>[
+      _dryTemp, _wetTemp, _dewPoint, _stationPressure, _seaLevelPressure,
+      _relativeHumidity, _windDirection, _windSpeed, _visibility,
+      _totalCloudCover, _cover12, _cover123, _precipitationAmount,
+      _pressureSlope, _pressureShape, _pastWeather, _remarks,
+    ]) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
-  String? _validateTemp(String? value, String label) {
-    final String text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return '$label مطلوب';
-    }
-    final double? number = double.tryParse(text.replaceAll('+', ''));
-    if (number == null) {
-      return '$label يجب أن يكون رقماً';
-    }
-    if (number < -90 || number > 60) {
-      return '$label خارج المدى المسموح (-90..60)';
-    }
+  bool get _needsPrecipitation => const {0, 6, 12, 18}.contains(_utcHour);
+  bool get _needsSynoptic => const {0, 3, 6, 9, 12, 15, 18, 21}.contains(_utcHour);
+
+  String? _requiredPattern(String? value, String label, String pattern) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return '$label مطلوب';
+    if (!RegExp(pattern).hasMatch(text)) return '$label بتنسيق غير صحيح';
     return null;
   }
 
-  String? _validateOptionalNumber(
-    String? value, {
-    required String label,
-    required double min,
-    required double max,
-  }) {
-    final String text = value?.trim() ?? '';
-    if (text.isEmpty) {
-      return null;
-    }
-    final double? number = double.tryParse(text);
-    if (number == null) {
-      return '$label يجب أن يكون رقماً';
-    }
-    if (number < min || number > max) {
-      return '$label خارج المدى ($min..$max)';
-    }
+  String? _temperature(String? value, String label) =>
+      _requiredPattern(value, label, r'^[+-]\d{2}\.\d$');
+
+  String? _pressure(String? value, String label) =>
+      _requiredPattern(value, label, r'^\d{4}\.\d$');
+
+  String? _twoDigitCode(String? value, String label, {int? maximum}) {
+    final error = _requiredPattern(value, label, r'^\d{2}$');
+    if (error != null) return error;
+    if (maximum != null && int.parse(value!) > maximum) return '$label خارج المجال';
     return null;
   }
 
-  String? _validateCrossField() {
-    final double? dry = double.tryParse(_dryTemp.text.trim().replaceAll('+', ''));
-    final double? wet = double.tryParse(_wetTemp.text.trim().replaceAll('+', ''));
-    if (dry != null && wet != null && wet > dry) {
-      return 'الحرارة الرطبة لا يجوز أن تتجاوز الجافة';
-    }
+  String? _threeDigitCode(String? value, String label, {int? maximum}) {
+    final error = _requiredPattern(value, label, r'^\d{3}$');
+    if (error != null) return error;
+    if (maximum != null && int.parse(value!) > maximum) return '$label خارج المجال';
     return null;
+  }
+
+  String? _cloudCode(String? value, String label) {
+    final error = _requiredPattern(value, label, r'^[0-8]$');
+    return error;
+  }
+
+  String _newIdempotencyKey() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    return 'hourly-${bytes.map((value) => value.toRadixString(16).padLeft(2, '0')).join()}';
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _saving) {
-      return;
-    }
-    final String? cross = _validateCrossField();
-    if (cross != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cross)));
-      return;
-    }
+    if (!_formKey.currentState!.validate() || _saving) return;
+
     setState(() => _saving = true);
-    final String idempotencyKey =
-        'hourly-${widget.stationId}-${DateTime.now().toUtc().millisecondsSinceEpoch}';
+    final now = DateTime.now().toUtc();
+    final observedAt = DateTime.utc(now.year, now.month, now.day, _utcHour);
+    final values = <String, dynamic>{
+      'utcTime': _utcHour.toString().padLeft(2, '0'),
+      'dryTemp': _dryTemp.text.trim(),
+      'wetTemp': _wetTemp.text.trim(),
+      'dewPoint': _dewPoint.text.trim(),
+      'stationPressure': _stationPressure.text.trim(),
+      'seaLevelPressure': _seaLevelPressure.text.trim(),
+      'relativeHumidity': _relativeHumidity.text.trim(),
+      'windDirection': _windDirection.text.trim(),
+      'windSpeed': _windSpeed.text.trim(),
+      'visibility': _visibility.text.trim(),
+      'totalCloudCover': _totalCloudCover.text.trim(),
+      'cover12': _cover12.text.trim(),
+      'cover123': _cover123.text.trim(),
+    };
+    if (_needsPrecipitation) {
+      values['precipitationAmount'] = _precipitationAmount.text.trim();
+    }
+    if (_needsSynoptic) {
+      values['pressureSlope'] = _pressureSlope.text.trim();
+      values['pressureShape'] = _pressureShape.text.trim();
+      values['pastWeather'] = _pastWeather.text.trim();
+    }
+
     try {
-      await widget.api.submitObservation(
+      final receipt = await widget.api.submitObservation(
         stationId: widget.stationId,
-        idempotencyKey: idempotencyKey,
+        idempotencyKey: _newIdempotencyKey(),
         observationType: 'hourly',
-        observedAt: DateTime.now().toUtc(),
+        observedAt: observedAt,
         payload: <String, dynamic>{
-          'dryTemp': _dryTemp.text.trim(),
-          'wetTemp': _wetTemp.text.trim(),
-          'windSpeed': _windSpeed.text.trim(),
-          'windDirection': _windDirection.text.trim(),
-          'relativeHumidity': _relativeHumidity.text.trim(),
-          'stationPressure': _stationPressure.text.trim(),
-          'visibility': _visibility.text.trim(),
-          'cloudCover': _cloudCover.text.trim(),
-          'remarks': _remarks.text.trim(),
+          'values': values,
+          if (_remarks.text.trim().isNotEmpty) 'remarks': _remarks.text.trim(),
         },
         submit: _submitImmediately,
       );
-      if (!mounted) {
-        return;
-      }
-      _dryTemp.clear();
-      _wetTemp.clear();
-      _windSpeed.clear();
-      _windDirection.clear();
-      _relativeHumidity.clear();
-      _stationPressure.clear();
-      _visibility.clear();
-      _cloudCover.clear();
-      _remarks.clear();
+      if (!mounted) return;
+      _clearFields();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             _submitImmediately
-                ? 'تم إرسال النشرة للمراجعة'
-                : 'تم حفظ مسودة النشرة',
+                ? 'تم حفظ النشرة وإرسالها للمراجعة: ${receipt['id']}'
+                : 'تم حفظ مسودة النشرة: ${receipt['id']}',
           ),
         ),
       );
     } on MetraApiException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      final String message = switch (error.statusCode) {
-        400 => 'بيانات النشرة غير صالحة',
+      if (!mounted) return;
+      final message = switch (error.statusCode) {
+        400 => 'بيانات النشرة غير صالحة؛ راجع الحقول المطلوبة',
         401 => 'يلزم تسجيل الدخول',
         403 => 'ليست لديك صلاحية الإرسال لهذه المحطة',
         409 => 'تعارض مفتاح منع التكرار',
         503 => 'خدمة الرصد غير متاحة حالياً',
         _ => 'تعذر إرسال النشرة (${error.statusCode})',
       };
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } on FormatException {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        const SnackBar(content: Text('لم يؤكد الخادم حفظ النشرة؛ لم يتم مسح البيانات')),
       );
     } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _clearFields() {
+    for (final controller in <TextEditingController>[
+      _dryTemp, _wetTemp, _dewPoint, _stationPressure, _seaLevelPressure,
+      _relativeHumidity, _windDirection, _windSpeed, _visibility,
+      _totalCloudCover, _cover12, _cover123, _precipitationAmount,
+      _pressureSlope, _pressureShape, _pastWeather, _remarks,
+    ]) {
+      controller.clear();
     }
   }
 
   Widget _field(
     TextEditingController controller,
     String label, {
-    String? Function(String?)? validator,
-    int maxLines = 1,
+    required String? Function(String?) validator,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
-        maxLines: maxLines,
         enabled: !_saving,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          helperText: 'أدخل الرمز بالتنسيق المحدد في عقد النشرة',
         ),
         validator: validator,
       ),
@@ -193,92 +218,90 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: <Widget>[
-            Text(
-              'المحطة: ${widget.stationId}',
-              style: const TextStyle(color: Color(0xFF64748B)),
+            Text('المحطة: ${widget.stationId}',
+                style: const TextStyle(color: Color(0xFF64748B))),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              value: _utcHour,
+              decoration: const InputDecoration(
+                labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
+                border: OutlineInputBorder(),
+              ),
+              items: List<DropdownMenuItem<int>>.generate(
+                24,
+                (hour) => DropdownMenuItem<int>(
+                  value: hour,
+                  child: Text(hour.toString().padLeft(2, '0')),
+                ),
+              ),
+              onChanged: _saving ? null : (hour) {
+                if (hour != null) setState(() => _utcHour = hour);
+              },
             ),
             const SizedBox(height: 12),
-            _field(
-              _dryTemp,
-              'الحرارة الجافة (°م) *',
-              validator: (String? value) => _validateTemp(value, 'الحرارة الجافة'),
-            ),
-            _field(
-              _wetTemp,
-              'الحرارة الرطبة (°م) *',
-              validator: (String? value) => _validateTemp(value, 'الحرارة الرطبة'),
-            ),
-            _field(
-              _relativeHumidity,
-              'الرطوبة النسبية %',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'الرطوبة',
-                min: 0,
-                max: 100,
+            _field(_dryTemp, 'الحرارة الجافة (مثل +25.0) *',
+                validator: (value) => _temperature(value, 'الحرارة الجافة')),
+            _field(_wetTemp, 'الحرارة الرطبة (مثل +20.0) *',
+                validator: (value) => _temperature(value, 'الحرارة الرطبة')),
+            _field(_dewPoint, 'نقطة الندى (مثل +18.5) *',
+                validator: (value) => _temperature(value, 'نقطة الندى')),
+            _field(_stationPressure, 'ضغط المحطة (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط المحطة')),
+            _field(_seaLevelPressure, 'الضغط عند سطح البحر (مثل 1013.2) *',
+                validator: (value) => _pressure(value, 'ضغط سطح البحر')),
+            _field(_relativeHumidity, 'الرطوبة النسبية (ثلاث خانات مثل 065) *',
+                validator: (value) {
+                  final error = _threeDigitCode(value, 'الرطوبة النسبية', maximum: 100);
+                  if (error != null) return error;
+                  if (int.parse(value!) == 0) return 'الرطوبة النسبية يجب أن تكون أكبر من صفر';
+                  return null;
+                }),
+            _field(_windDirection, 'اتجاه الرياح (00-36) *',
+                validator: (value) => _twoDigitCode(value, 'اتجاه الرياح', maximum: 36)),
+            _field(_windSpeed, 'سرعة الرياح (خانتان) *',
+                validator: (value) => _twoDigitCode(value, 'سرعة الرياح')),
+            _field(_visibility, 'مدى الرؤية (000-200) *',
+                validator: (value) => _threeDigitCode(value, 'مدى الرؤية', maximum: 200)),
+            _field(_totalCloudCover, 'التغطية الكلية للسحب (0-8) *',
+                validator: (value) => _cloudCode(value, 'التغطية الكلية')),
+            _field(_cover12, 'تغطية الطبقتين الأولى والثانية (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقتين')),
+            _field(_cover123, 'تغطية الطبقات الثلاث (0-8) *',
+                validator: (value) => _cloudCode(value, 'تغطية الطبقات الثلاث')),
+            if (_needsPrecipitation)
+              _field(_precipitationAmount, 'كمية الهطول (مثل 000.0) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'كمية الهطول', r'^\d{3}\.\d$')),
+            if (_needsSynoptic) ...[
+              _field(_pressureSlope, 'ميل الضغط (مثل 2.3) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'ميل الضغط', r'^\d{1,2}\.\d$')),
+              _field(_pressureShape, 'شكل تغير الضغط (0-8) *',
+                  validator: (value) => _cloudCode(value, 'شكل تغير الضغط')),
+              _field(_pastWeather, 'الطقس السابق (0-9) *',
+                  validator: (value) => _requiredPattern(
+                    value, 'الطقس السابق', r'^\d$')),
+            ],
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextFormField(
+                controller: _remarks,
+                enabled: !_saving,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'ملاحظات الراصد (اختياري)',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
-            _field(
-              _windDirection,
-              'اتجاه الرياح (درجة)',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'اتجاه الرياح',
-                min: 0,
-                max: 360,
-              ),
-            ),
-            _field(
-              _windSpeed,
-              'سرعة الرياح',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'سرعة الرياح',
-                min: 0,
-                max: 150,
-              ),
-            ),
-            _field(
-              _stationPressure,
-              'ضغط المحطة (هكتوباسكال)',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'ضغط المحطة',
-                min: 800,
-                max: 1100,
-              ),
-            ),
-            _field(
-              _visibility,
-              'الرؤية الأفقية (كم)',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'الرؤية',
-                min: 0,
-                max: 70,
-              ),
-            ),
-            _field(
-              _cloudCover,
-              'الغطاء السحابي (أوكتا 0-8)',
-              validator: (String? value) => _validateOptionalNumber(
-                value,
-                label: 'الغطاء السحابي',
-                min: 0,
-                max: 8,
-              ),
-            ),
-            _field(_remarks, 'ملاحظات الراصد', maxLines: 3),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('إرسال للمراجعة فوراً'),
-              subtitle: const Text('إذا أُوقف الحفظ كمسودة فقط'),
+              subtitle: const Text('عند إيقاف الخيار تُحفظ النشرة كمسودة فقط'),
               value: _submitImmediately,
-              onChanged: _saving
-                  ? null
-                  : (bool value) {
-                      setState(() => _submitImmediately = value);
-                    },
+              onChanged: _saving ? null : (value) {
+                setState(() => _submitImmediately = value);
+              },
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
