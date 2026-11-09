@@ -183,6 +183,7 @@ app.MapGet("/api/v1/ready", async (
     IStationAuditService stationAudit,
     IAuthorityAccessService authorityAccess,
     IEquipmentFaultService equipmentFaults,
+    ISupportIncidentService supportIncidents,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -213,6 +214,11 @@ app.MapGet("/api/v1/ready", async (
         if (!equipmentFaults.IsConfigured)
             return Results.Problem(
                 title: "MetraOps equipment fault adapter is not configured",
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+
+        if (!supportIncidents.IsConfigured)
+            return Results.Problem(
+                title: "MetraOps support incident adapter is not configured",
                 statusCode: StatusCodes.Status503ServiceUnavailable);
 
         var opsOk = await NpgsqlOpsSession.CanConnectAsync(metraOps, cancellationToken);
