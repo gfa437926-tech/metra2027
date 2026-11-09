@@ -212,12 +212,12 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
       ].map((e) => ObservationFieldSpec(key: e[0], label: e[1], kind: ObservationFieldKind.number, unit: '°س')),
       ObservationFieldSpec(key: 'logEvaporation', label: 'التبخر من السجل', kind: ObservationFieldKind.number, unit: 'مم'),
     ],
-    metadataFields: [
+    fields: [
       ...[
         ['dew', 'ندى'], ['fog', 'ضباب'], ['hail', 'برد'], ['sandstorm', 'عواصف رملية أو ترابية'],
       ].map((e) => ObservationFieldSpec(key: e[0], label: e[1], kind: ObservationFieldKind.boolean)),
-      _notes, _ack,
     ],
+    metadataFields: [_notes, _ack],
     sourceNotes: ['قواعد required/range والمفقودات الزراعية لم تُستخلص بعد من جميع سكربتات التحقق؛ لا تُفعّل الإرسال حتى اعتمادها.'],
   ),
   ObservationModuleSpec(
