@@ -46,7 +46,7 @@ class _DailyObservationSubmitScreenState
 
   String _idempotencyKey() {
     final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-    return 'daily-' + bytes.map((v) => v.toRadixString(16).padLeft(2, '0')).join();
+    return 'daily-${bytes.map((v) => v.toRadixString(16).padLeft(2, '0')).join()}';
   }
 
   DateTime get _observedAt {
@@ -113,8 +113,8 @@ class _DailyObservationSubmitScreenState
       }
       setState(() => _responsibilityAgreement = false);
       final message = _submitImmediately
-          ? 'تم حفظ النشرة اليومية وإرسالها للمراجعة: ' + receipt['id'].toString()
-          : 'تم حفظ مسودة النشرة اليومية: ' + receipt['id'].toString();
+          ? 'تم حفظ النشرة اليومية وإرسالها للمراجعة: ${receipt['id']}'
+          : 'تم حفظ مسودة النشرة اليومية: ${receipt['id']}';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -126,7 +126,7 @@ class _DailyObservationSubmitScreenState
         403 => 'ليست لديك صلاحية الإرسال لهذه المحطة',
         409 => 'تعارض مفتاح منع التكرار',
         503 => 'خدمة الرصد غير متاحة حالياً',
-        _ => 'تعذر إرسال النشرة (' + error.statusCode.toString() + ')',
+        _ => 'تعذر إرسال النشرة (${error.statusCode})',
       };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -147,7 +147,7 @@ class _DailyObservationSubmitScreenState
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        key: ValueKey('daily-field-' + key),
+        key: ValueKey('daily-field-$key'),
         controller: _controllers[key],
         enabled: !_saving,
         keyboardType: TextInputType.text,
@@ -172,9 +172,7 @@ class _DailyObservationSubmitScreenState
   @override
   Widget build(BuildContext context) {
     final visible = DailyObservationContract.requiredFields(_reportType);
-    final dateLabel = _observationDate.year.toString().padLeft(4, '0') + '-' +
-        _observationDate.month.toString().padLeft(2, '0') + '-' +
-        _observationDate.day.toString().padLeft(2, '0');
+    final dateLabel = '${_observationDate.year.toString().padLeft(4, '0')}-${_observationDate.month.toString().padLeft(2, '0')}-${_observationDate.day.toString().padLeft(2, '0')}';
     return Scaffold(
       appBar: AppBar(title: const Text('إدخال نشرة يومية')),
       body: Form(
@@ -182,7 +180,7 @@ class _DailyObservationSubmitScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Text('المحطة: ' + widget.stationId,
+            Text('المحطة: ${widget.stationId}',
                 style: const TextStyle(color: Color(0xFF64748B))),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
@@ -221,11 +219,11 @@ class _DailyObservationSubmitScreenState
                       }
                     },
               icon: const Icon(Icons.calendar_today),
-              label: Text('تاريخ الرصد UTC: ' + dateLabel),
+              label: Text('تاريخ الرصد UTC: $dateLabel'),
             ),
             const SizedBox(height: 8),
             Text(
-              'وقت اعتماد النشرة: ' + _observedAt.toIso8601String(),
+              'وقت اعتماد النشرة: ${_observedAt.toIso8601String()}',
               style: const TextStyle(color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 16),
