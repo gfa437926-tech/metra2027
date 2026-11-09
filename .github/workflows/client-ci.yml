@@ -47,12 +47,24 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.56.1
           npx playwright install --with-deps chromium
-      - name: Run real Chromium PWA and IndexedDB smoke test
+      - name: Run real Chromium PWA and IndexedDB smoke test three times
+        shell: bash
         run: |
+          failures=0
           for attempt in 1 2 3; do
             echo "Offline Chromium PWA test run ${attempt}/3"
-            npm run test:browser
+            if npm run test:browser; then
+              echo "Offline Chromium PWA test run ${attempt}/3: PASS"
+            else
+              status=$?
+              echo "Offline Chromium PWA test run ${attempt}/3: FAIL (exit ${status})"
+              failures=1
+            fi
           done
+          if [ "$failures" -ne 0 ]; then
+            echo "One or more Chromium runs failed; see individual run output above."
+            exit 1
+          fi
 
   flutter:
     name: Flutter analyze and test
