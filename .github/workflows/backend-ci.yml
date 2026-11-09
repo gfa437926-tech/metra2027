@@ -111,3 +111,21 @@ jobs:
         run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release
       - name: Build production container image
         run: docker build --file backend/Metra.Api/Dockerfile --tag metra-api:ci .
+      - name: Smoke-test container liveness and fail-closed readiness
+        run: |
+          set -euo pipefail
+          docker run --detach --name metra-api-smoke --publish 127.0.0.1:18080:8080 metra-api:ci
+          trap 'docker rm --force metra-api-smoke >/dev/null 2>&1 || true' EXIT
+          healthy=0
+          for attempt in $(seq 1 20); do
+            if curl --silent --show-error --fail http://127.0.0.1:18080/api/v1/health -o /tmp/metra-health.json; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          test "$healthy" -eq 1
+          grep -Eq '"status"[[:space:]]*:[[:space:]]*"healthy"' /tmp/metra-health.json
+          ready_status="$(curl --silent --show-error -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/api/v1/ready)"
+          test "$ready_status" = "503"
+          echo "Container liveness passed; readiness correctly fails closed without server credentials."
