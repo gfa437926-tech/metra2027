@@ -65,14 +65,14 @@ void main() {
       await tester.enterText(field, entry.value);
     }
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
-    await tester.scrollUntilVisible(
-      agreement, 300, scrollable: find.byType(Scrollable).first, alignment: 0.5,
+    await tester.dragUntilVisible(
+      agreement, find.byType(ListView), const Offset(0, -100),
     );
     await tester.tap(agreement);
     await tester.pumpAndSettle();
     final submit = find.byKey(const ValueKey('daily-submit'));
-    await tester.scrollUntilVisible(
-      submit, 300, scrollable: find.byType(Scrollable).first, alignment: 0.5,
+    await tester.dragUntilVisible(
+      submit, find.byType(ListView), const Offset(0, -100),
     );
     await tester.tap(submit);
     await tester.pumpAndSettle();
