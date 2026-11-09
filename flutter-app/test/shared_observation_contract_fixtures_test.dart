@@ -58,6 +58,8 @@ void main() {
 Directory _locateFixtures() {
   // Prefer repo-root relative paths from package working directory (flutter-app).
   final ordered = <Directory>[
+    Directory('test/fixtures/observation-v1/fixtures'),
+    Directory('fixtures/observation-v1/fixtures'),
     Directory('contracts/observation-v1/fixtures'),
     Directory('../contracts/observation-v1/fixtures'),
     Directory('../../contracts/observation-v1/fixtures'),
