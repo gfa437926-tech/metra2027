@@ -4,7 +4,7 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/features/observations/returned_observation_editor.dart';
 
 void main() {
-  testWidgets('shows reviewer note and editable fields then returns payload', skip: 'isolating non-widget failures in CI',
+  testWidgets('shows reviewer note and editable fields then returns payload',
       (tester) async {
     final item = ObservationQueueItem(
       id: '33333333-3333-4333-8333-333333333333',

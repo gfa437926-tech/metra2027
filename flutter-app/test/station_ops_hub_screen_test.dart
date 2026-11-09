@@ -6,7 +6,7 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/features/ops/station_ops_hub_screen.dart';
 
 void main() {
-  testWidgets('ops hub shows equipment and support entries', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('ops hub shows equipment and support entries', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'token',

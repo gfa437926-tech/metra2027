@@ -38,7 +38,7 @@ void main() {
     );
   }
 
-  testWidgets('renders queue returned by the API', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('renders queue returned by the API', (tester) async {
     final api = buildApi(
       review: [
         {
@@ -63,7 +63,7 @@ void main() {
     api.close();
   });
 
-  testWidgets('shows an empty state for an empty server queue', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('shows an empty state for an empty server queue', (tester) async {
     final api = buildApi(
       review: <Map<String, dynamic>>[],
       returned: <Map<String, dynamic>>[],
@@ -77,7 +77,7 @@ void main() {
     api.close();
   });
 
-  testWidgets('shows returned observations for resubmit', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('shows returned observations for resubmit', (tester) async {
     final api = buildApi(
       review: <Map<String, dynamic>>[],
       returned: [

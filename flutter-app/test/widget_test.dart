@@ -8,7 +8,7 @@ import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
 
 void main() {
-  testWidgets('configuration screen explains missing secure environment values', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('configuration screen explains missing secure environment values', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: MetraConfigurationScreen()));
     expect(find.textContaining('إعداد تطبيق METRA 2027'), findsOneWidget);
     expect(find.textContaining('METRA_API_BASE_URL'), findsOneWidget);
@@ -16,7 +16,7 @@ void main() {
     expect(find.textContaining('service_role'), findsOneWidget);
   });
 
-  testWidgets('station directory displays classic and automatic records together', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('station directory displays classic and automatic records together', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-token',

@@ -117,7 +117,7 @@ void main() {
     expect(errors.keys, containsAll(['maxTemp', 'minHumidity', 'responsibilityAgreement']));
   });
 
-  testWidgets('06 UTC daily report submits the exact canonical envelope', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('06 UTC daily report submits the exact canonical envelope', (tester) async {
     late http.Request captured;
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -183,7 +183,7 @@ void main() {
     api.close();
   });
 
-  testWidgets('24-hour daily report submits all canonical required fields', skip: 'isolating non-widget failures in CI',
+  testWidgets('24-hour daily report submits all canonical required fields',
       (tester) async {
     final body = await submitDailyType(tester, '24h');
     expect(body['observationType'], 'daily');
@@ -199,7 +199,7 @@ void main() {
     expect(body['observedAt'], endsWith('T00:00:00.000Z'));
   });
 
-  testWidgets('18 UTC daily report submits only its canonical required fields', skip: 'isolating non-widget failures in CI',
+  testWidgets('18 UTC daily report submits only its canonical required fields',
       (tester) async {
     final body = await submitDailyType(tester, '18utc');
     expect(body['observationType'], 'daily');
@@ -214,7 +214,7 @@ void main() {
     expect(body['observedAt'], endsWith('T18:00:00.000Z'));
   });
 
-  testWidgets('hourly entry exposes navigation to the daily form', skip: 'isolating non-widget failures in CI', (tester) async {
+  testWidgets('hourly entry exposes navigation to the daily form', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'navigation-token',
@@ -233,7 +233,7 @@ void main() {
     api.close();
   });
 
-  testWidgets('daily form refuses submission until responsibility is acknowledged', skip: 'isolating non-widget failures in CI',
+  testWidgets('daily form refuses submission until responsibility is acknowledged',
       (tester) async {
     var requests = 0;
     final api = MetraApiClient(
