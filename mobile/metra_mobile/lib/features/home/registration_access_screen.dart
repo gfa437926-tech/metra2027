@@ -93,7 +93,8 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
         409 => 'يوجد طلب تسجيل قائم أو تعارض في حالة الحساب.',
         503 => 'خدمة التسجيل غير متاحة حالياً. حاول لاحقاً.',
         _ => 'تعذر إرسال طلب التسجيل.',
-      });
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة التسجيل.');
     } finally {
