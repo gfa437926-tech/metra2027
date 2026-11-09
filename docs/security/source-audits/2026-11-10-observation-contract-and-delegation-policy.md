@@ -128,3 +128,27 @@ Dependency review must then compare all package manifests and lockfiles with act
 - No legacy database or legacy station data was accessed.
 - No application DTO or API behavior was changed because the source-contract conflicts above remain unresolved.
 - No pull request was merged.
+
+
+## 8. Exact six missing migration-source candidates
+
+The six historical candidates carried forward by the authorization audit are:
+
+1. `20261102172226_create_provenance_preserving_observation_store.sql`
+2. `20261103122944_grant_runtime_station_coordinate_read.sql`
+3. `20261103123005_link_membership_and_assignment_roles.sql`
+4. `20261103123127_index_role_catalogue_foreign_keys.sql`
+5. `20261103162707_enforce_explicit_role_permission_allowlist.sql`
+6. `20261103162738_seed_conservative_observation_role_permissions.sql`
+
+The last two are critical to verifying the exact `metra_role_permissions` allow-list. All six remain unrecovered as exact historical sources in the inspected source inventory. No substitute SQL was fabricated and no database was inspected to infer their contents.
+
+## 9. Dependency manifest and lockfile review — source-only
+
+Manifests and lockfiles inspected:
+- `angular-app/package.json` and `angular-app/package-lock.json`: lockfile v3 is present and its root package declarations match the manifest. The manifest uses semver ranges (including Angular 20.3.x and Supabase JS 2.x); exact resolved versions are recorded in the lockfile.
+- `backend/Metra.Api/Metra.Api.csproj`: .NET 10 target; direct package versions are explicit, including ASP.NET OpenAPI 10.0.0, JWT bearer 10.0.0, and Microsoft.OpenApi 2.7.5.
+- `backend/Metra.Api.Tests/Metra.Api.Tests.csproj`: explicit test package versions are present.
+- `mobile/metra_mobile/pubspec.yaml` and `pubspec.lock`: lockfile is present; Flutter SDK packages are SDK sourced and hosted dependencies have resolved versions in the lockfile. The manifest intentionally contains compatible version ranges for some dependencies and exact pins for others.
+
+This is a manifest/lockfile consistency review only. No package restore, build, SBOM generation, licence scan, malware scan, or vulnerability database audit was run in this pass. No dependency was upgraded, removed, or re-pinned. A complete supply-chain sign-off still requires CI restore/build evidence and current advisory checks for npm, NuGet, and pub.dev against the committed lockfiles.
