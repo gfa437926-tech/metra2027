@@ -100,7 +100,7 @@ void main() {
       'الحرارة الرطبة (مثل +20.0) *': '+25.0',
     };
     for (final entry in values.entries) {
-      final field = find.byKey(ValueKey('hourly-field-' + entry.key));
+      final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
       await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
       await tester.enterText(field, entry.value);
     }
