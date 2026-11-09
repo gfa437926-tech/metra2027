@@ -530,7 +530,7 @@ async function main() {
     await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
     mockStatus = 503;
     await context.setOffline(false);
-    await page.getByText('1 نشرة بانتظار المزامنة').waitFor({ timeout: 10000 });
+    await page.getByText('1 نشرة ساعية بانتظار المزامنة').waitFor({ timeout: 10000 });
     await page.waitForFunction(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
