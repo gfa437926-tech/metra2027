@@ -76,4 +76,44 @@ void main() {
     expect(find.text('حمولة الرصد بصيغة JSON'), findsOneWidget);
     expect(find.text('حفظ الرصد'), findsOneWidget);
   });
+
+  testWidgets('observation retry reuses the same idempotency key after an ambiguous failure', (tester) async {
+    final keys = <String>[];
+    var attempts = 0;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'screen-test-token',
+      client: MockClient((request) async {
+        attempts++;
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        keys.add(body['idempotencyKey'] as String);
+        if (attempts == 1) {
+          return http.Response('temporarily unavailable', 503);
+        }
+        return http.Response('{}', 200, headers: {'content-type': 'application/json'});
+      }),
+    );
+    addTearDown(api.close);
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationEntryScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('حفظ الرصد'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    expect(find.text('تعذر الاتصال بخدمة الرصد.'), findsNothing);
+    expect(find.text('خدمة الرصد غير متاحة حالياً.'), findsOneWidget);
+
+    await tester.tap(find.text('حفظ الرصد'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(attempts, 2);
+    expect(keys, hasLength(2));
+    expect(keys.first, isNotEmpty);
+    expect(keys[1], keys.first);
+  });
+
 }
