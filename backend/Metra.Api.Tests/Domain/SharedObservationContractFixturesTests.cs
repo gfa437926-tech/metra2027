@@ -1,3 +1,4 @@
+using Xunit;
 using System.Text.Json;
 using Metra.Api.Features.Observations;
 
