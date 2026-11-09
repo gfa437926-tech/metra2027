@@ -72,6 +72,54 @@ BEGIN
     RAISE EXCEPTION 'audit grants must remain read/insert only';
   END IF;
 
+  -- Supabase service_role is used only for REST reads and explicit RPC calls.
+  -- It must not bypass transition/assignment validation with direct table writes.
+  IF NOT has_table_privilege('service_role', 'public.metra_equipment_faults', 'SELECT')
+     OR has_table_privilege('service_role', 'public.metra_equipment_faults', 'INSERT')
+     OR has_table_privilege('service_role', 'public.metra_equipment_faults', 'UPDATE')
+     OR has_table_privilege('service_role', 'public.metra_equipment_faults', 'DELETE')
+     OR NOT has_table_privilege('service_role', 'public.metra_support_incidents', 'SELECT')
+     OR has_table_privilege('service_role', 'public.metra_support_incidents', 'INSERT')
+     OR has_table_privilege('service_role', 'public.metra_support_incidents', 'UPDATE')
+     OR has_table_privilege('service_role', 'public.metra_support_incidents', 'DELETE')
+     OR has_table_privilege('service_role', 'public.metra_equipment_fault_audit_events', 'SELECT')
+     OR has_table_privilege('service_role', 'public.metra_equipment_fault_audit_events', 'INSERT')
+     OR has_table_privilege('service_role', 'public.metra_equipment_fault_audit_events', 'UPDATE')
+     OR has_table_privilege('service_role', 'public.metra_equipment_fault_audit_events', 'DELETE')
+     OR has_table_privilege('service_role', 'public.metra_support_incident_audit_events', 'SELECT')
+     OR has_table_privilege('service_role', 'public.metra_support_incident_audit_events', 'INSERT')
+     OR has_table_privilege('service_role', 'public.metra_support_incident_audit_events', 'UPDATE')
+     OR has_table_privilege('service_role', 'public.metra_support_incident_audit_events', 'DELETE') THEN
+    RAISE EXCEPTION 'service_role must have read-only operational access and no direct audit-table access';
+  END IF;
+
+  IF NOT has_function_privilege(
+       'service_role',
+       'public.metra_submit_equipment_fault(uuid,uuid,text,text,text,text,timestamptz,boolean)',
+       'EXECUTE')
+     OR NOT has_function_privilege(
+       'service_role',
+       'public.metra_transition_equipment_fault(uuid,uuid,uuid,text,text,integer,uuid)',
+       'EXECUTE')
+     OR NOT has_function_privilege(
+       'service_role',
+       'public.metra_submit_support_incident(uuid,uuid,text,text,text,text,text,text,timestamptz,boolean)',
+       'EXECUTE')
+     OR NOT has_function_privilege(
+       'service_role',
+       'public.metra_transition_support_incident(uuid,uuid,uuid,text,text,uuid)',
+       'EXECUTE')
+     OR has_function_privilege(
+       'anon',
+       'public.metra_submit_equipment_fault(uuid,uuid,text,text,text,text,timestamptz,boolean)',
+       'EXECUTE')
+     OR has_function_privilege(
+       'authenticated',
+       'public.metra_transition_equipment_fault(uuid,uuid,uuid,text,text,integer,uuid)',
+       'EXECUTE') THEN
+    RAISE EXCEPTION 'operational RPC execute grants exceed or fail the service_role-only boundary';
+  END IF;
+
   IF NOT has_sequence_privilege('metra_ops_faults', 'public.metra_equipment_fault_audit_events_id_seq', 'USAGE')
      OR NOT has_sequence_privilege('metra_ops_faults', 'public.metra_support_incident_audit_events_id_seq', 'USAGE')
      OR has_sequence_privilege('anon', 'public.metra_equipment_fault_audit_events_id_seq', 'USAGE')
