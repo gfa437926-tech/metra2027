@@ -22,7 +22,7 @@ void main() {
               {'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'}
             ])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
           case '/api/v1/stations':
-            return http.Response(jsonEncode([{
+            return http.Response.bytes(utf8.encode(jsonEncode([{
               'id': stationId,
               'local_station_code': 'ST-001',
               'name_ar': 'محطة اختبار',
@@ -32,7 +32,7 @@ void main() {
               'approval_status': 'approved',
               'is_demo': false,
               'station_coordinates': <Map<String, dynamic>>[],
-            }]), 200);
+            }])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
           case '/api/v1/account/registration-status':
             return http.Response(jsonEncode({
               'account_state': null,
