@@ -141,3 +141,15 @@ Latest PR head checked: `2cd829a6da11225a5cef649db071f4e47b353173`.
 - Client workflow run `42712994757`: completed successfully; Flutter analyze/tests and Angular build passed.
 
 This verifies the latest PR head in CI. It does not replace database-side or staging acceptance tests.
+
+
+### Authority-level delegation review — additional evidence
+
+The target migrations `020_authority_membership_and_permission_grant_lifecycle.sql`, `021_authority_permission_grant_lifecycle.sql`, `022_harden_authority_access_revocation_and_audit_index.sql`, `023_bind_authority_access_decisions_to_route_scope.sql`, and `025_require_active_subject_for_authority_approval.sql` were inspected.
+
+- Membership and permission-grant decisions lock the target row with `FOR UPDATE`, require an active actor, reject self-review (and the original requester), bind the operation to the authority ID from the locked target row, and require an active approved authority membership plus the `authority.access.review` role permission and a separately approved, currently valid grant for the actor.
+- Permission-grant approval additionally checks that the target user's active authority membership role allows the exact requested permission code before approving it. This is a database-side ceiling tied to the target role's permission allow-list.
+- Membership revocation cascades revocation to active permission grants for that subject and authority, recording audit events. Permission-grant revocation is bound to the locked grant's authority and records an audit event.
+- The API routes derive the actor from the verified JWT `sub`; actor IDs are not accepted from client request bodies on the reviewed authority routes.
+
+**Why the delegation ceiling is still not fully proven:** the tracked target SQL tree references `public.metra_role_permissions` but contains no tracked `CREATE TABLE public.metra_role_permissions` definition or complete authoritative role-permission seed/allow-list. Therefore, although the transaction functions enforce a role-based ceiling, the actual contents of that ceiling cannot be verified from the repository. The missing allow-list is a release blocker, not a reason to infer or invent permissions. The live database was not queried.
