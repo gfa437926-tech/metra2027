@@ -126,63 +126,52 @@ artifacts. Android/iOS runner generation, signing, release builds, and real-devi
 installation tests remain open.
 
 
-### Validation API wiring gap
+### Validation API wiring — current status (2026-11-09)
 
-The backend exposes separate `POST /api/v1/observations/hourly/validate` and
-`POST /api/v1/observations/daily/validate` endpoints. The current Flutter
-`MetraApiClient` exposes submission but no methods for either validation route;
-the Flutter hourly screen therefore performs its own smaller client-side checks
-and submits directly. The Angular hourly/daily components also need a call-site
-audit to prove they invoke the authoritative validators before submission.
-The submission endpoint validates request shape/type/size and delegates to the
-database RPC; it does not itself call `HourlyObservationValidator` or
-`DailyObservationValidator`.
+The write endpoint now calls
+`ObservationFieldContract.ValidateSubmission` before invoking persistence.
+That contract delegates hourly payloads to `HourlyObservationValidator` and
+daily payloads to `DailyObservationValidator`, selects the report-type-specific
+required fields, and requires the daily responsibility acknowledgement.
+Direct submission therefore cannot bypass those field checks by skipping the
+separate validation endpoints.
 
-Additionally, the daily validation endpoint currently calls
-`DailyObservationValidator.Validate(request.Values)` without a
-`requiredFields` set. The validator supports report-type-specific required
-fields, but this endpoint invocation does not supply them. This leaves the
-required-field policy incomplete at that API boundary. Define and validate
-approved daily report-type required-field sets before treating daily validation
-as production-ready.
+The clients now have executable local mirrors:
+- Flutter runs the six daily and two hourly canonical JSON fixtures against
+  `DailyObservationContract` and `HourlyObservationContract`.
+- Angular runs the same fixtures against its daily and hourly executable
+  validators, and the hourly/daily submit handlers call those validators before
+  submission.
+- .NET runs the shared manifest through `ObservationFieldContract`.
 
-Required remediation:
-1. Define one authoritative field schema and required-field policy per report type.
-2. Make submission enforce that policy server-side (not merely expose a separate
-   optional validation route).
-3. Ensure daily report type is explicit and selects its required-field set.
-4. Add Flutter and Angular API client methods for server validation where
-   pre-submit feedback is required.
-5. Add negative integration tests proving malformed/missing/conditional fields
-   cannot be persisted by direct API submission.
+Remaining validation work:
+1. Add endpoint-level tests that submit invalid direct requests and prove the
+   persistence service is never called.
+2. Extend shared fixtures to cover the full hourly optional cloud/vapor field
+   matrix, all UTC-hour condition combinations, and additional daily boundary
+   values.
+3. Compare client auto-formatting and user-facing validation behavior against
+   every original legacy JavaScript helper; fixture parity alone does not prove
+   visual/interaction parity.
+4. Consider server-side validation-preview client methods only if a workflow
+   needs them; the authenticated write endpoint already enforces the contract.
 
-
-### Daily report-type behavior and persistence gap
+### Daily report-type behavior and persistence — current status
 
 The legacy daily form has three report types: `24h`, `06utc`, and `18utc`.
-For `24h`, the original client requires the minimum/maximum temperatures,
-precipitation, snow thickness, evaporation, sunshine duration/percentage,
-maximum gust speed/direction/time, and maximum/minimum humidity with their
-occurrence times. For `06utc` and `18utc`, only minimum/maximum temperatures,
-precipitation, and snow thickness are required; the 24-hour-only phenomena,
-evaporation/sunshine, wind, and humidity sections are disabled/hidden.
-The legacy form also requires the responsibility agreement before submission.
+The backend contract now applies the report-specific required-field set and
+requires responsibility acknowledgement at the write boundary. Angular has
+API-backed daily submission and offline queuing, and Flutter has a daily entry
+screen with its own client contract and canonical submission envelope.
 
-The current Angular daily component reproduces report-type controls and much of
-the field validation, but its `submit()` handler creates a draft in the
-component's in-memory `previews` array and explicitly reports that the draft is
-temporary to the current page. Its `saveDraft()` also does not persist outside
-the page. The displayed "API" label therefore must not be interpreted as proof
-of API-backed daily persistence. Flutter has no daily form yet.
-
-The current backend daily validator supports a set of field rules, but the
-validation endpoint does not pass a report-type-specific required-field set.
-Implement explicit `24h` / `06utc` / `18utc` policy in the backend and enforce
-it in the submission path, then connect Angular and Flutter to the authenticated
-station-scoped submission API. Preserve the responsibility acknowledgement,
-phenomena selection, local/UTC date semantics, missing-value `#` handling,
-and all report-specific visibility/required behavior.
-
+Still open:
+- Verify the original phenomenon checkboxes and observer metadata are mapped
+  into the persisted payload and read model without loss.
+- Test local/UTC report-date semantics for all three report types at day
+  boundaries.
+- Test offline replay and server rejection/retry behavior for every report type.
+- Confirm persisted values and review/read-model projections against a
+  disposable integration database before production use.
 
 ## Unified hourly/daily field contract — implementation record (2026-11-08)
 
