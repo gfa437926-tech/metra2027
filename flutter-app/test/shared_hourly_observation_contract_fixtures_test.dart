@@ -35,7 +35,11 @@ void main() {
   });
 
   test('conditional hourly fields follow UTC synoptic and precipitation hours', () {
-    final base = _validValues('00');
+    final base = _validValues('00')
+      ..remove('precipitationAmount')
+      ..remove('pressureSlope')
+      ..remove('pressureShape')
+      ..remove('pastWeather');
     final errors = HourlyObservationContract.validate(base);
     expect(errors.keys, containsAll(['precipitationAmount', 'pressureSlope', 'pressureShape', 'pastWeather']));
     expect(HourlyObservationContract.validate(_validValues('01')), isEmpty);
