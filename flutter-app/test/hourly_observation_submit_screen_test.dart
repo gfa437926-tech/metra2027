@@ -101,11 +101,11 @@ void main() {
     };
     for (final entry in values.entries) {
       final field = find.byKey(ValueKey('hourly-field-' + entry.key));
-      await tester.ensureVisible(field);
+      await tester.scrollUntilVisible(field, 300, scrollable: find.byType(Scrollable).first);
       await tester.enterText(field, entry.value);
     }
     final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.ensureVisible(submit);
+    await tester.scrollUntilVisible(submit, 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
