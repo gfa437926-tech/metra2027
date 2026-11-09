@@ -18,12 +18,22 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
   DateTime _observedAt = DateTime.now();
   bool _submitForReview = true, _busy = false;
   String? _error;
+  String? _pendingIdempotencyKey;
+  String? _pendingFingerprint;
 
   @override
   void dispose() { _payload.dispose(); super.dispose(); }
 
-  String _idempotencyKey() => List<int>.generate(32, (_) => Random.secure().nextInt(256))
+  String _newIdempotencyKey() => List<int>.generate(32, (_) => Random.secure().nextInt(256))
     .map((v) => v.toRadixString(16).padLeft(2, '0')).join();
+
+  String _fingerprint(Map<String, dynamic> payload) => jsonEncode({
+    'stationId': widget.stationId,
+    'type': _type,
+    'observedAt': _observedAt.toUtc().toIso8601String(),
+    'payload': payload,
+    'submit': _submitForReview,
+  });
 
   Future<void> _save() async {
     if (_busy || !_formKey.currentState!.validate()) return;
@@ -36,16 +46,23 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
       setState(() => _error = 'يجب أن تكون البيانات JSON صحيحة على شكل كائن.');
       return;
     }
+    final fingerprint = _fingerprint(payload);
+    if (_pendingFingerprint != fingerprint || _pendingIdempotencyKey == null) {
+      _pendingFingerprint = fingerprint;
+      _pendingIdempotencyKey = _newIdempotencyKey();
+    }
     setState(() { _busy = true; _error = null; });
     try {
       await widget.api.submitObservation(
         stationId: widget.stationId,
-        idempotencyKey: _idempotencyKey(),
+        idempotencyKey: _pendingIdempotencyKey!,
         observationType: _type,
         observedAt: _observedAt,
         payload: payload,
         submit: _submitForReview,
       );
+      _pendingIdempotencyKey = null;
+      _pendingFingerprint = null;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('تم حفظ بيانات الرصد وإرسالها إلى الخادم.')));
