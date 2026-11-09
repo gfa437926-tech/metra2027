@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import 'daily_observation_submit_screen.dart';
+import 'hourly_observation_contract.dart';
 
 /// Convert the station's historical UTC+3 clock to the canonical UTC instant.
 DateTime hourlyObservedAtForLocalHour(DateTime localDate, int localHour) {
@@ -187,6 +188,18 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     for (final entry in _optionalFields.entries) {
       final value = entry.value.text.trim();
       if (value.isNotEmpty) values[entry.key] = value;
+    }
+
+    final contractErrors = HourlyObservationContract.validate(
+      values.map((key, value) => MapEntry(key, value.toString())),
+    );
+    if (contractErrors.isNotEmpty) {
+      setState(() => _saving = false);
+      final firstError = contractErrors.entries.first;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${firstError.key}: ${firstError.value}')),
+      );
+      return;
     }
 
     try {
