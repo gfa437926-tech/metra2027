@@ -132,7 +132,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
     final submit = find.byKey(const ValueKey('daily-submit'));
-    await tester.ensureVisible(submit);
+    await tester.scrollUntilVisible(submit, 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(submit);
     await tester.pumpAndSettle();
     expect(requests, 0);
