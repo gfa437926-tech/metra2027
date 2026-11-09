@@ -52,7 +52,7 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: RegistrationAccessScreen(api: api)));
     await tester.pumpAndSettle();
 
-    expect(find.text('حالة الحساب'), findsOneWidget);
+    expect(find.text('حالة الحساب'), findsNWidgets(2));
     expect(find.text('طلب انتساب أو تحديث الطلب المرفوض'), findsOneWidget);
     expect(find.text('راصد'), findsOneWidget);
     expect(find.textContaining('محطة اختبار'), findsOneWidget);
