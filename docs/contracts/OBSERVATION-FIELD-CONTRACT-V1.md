@@ -142,7 +142,7 @@ Examples: local 00 → UTC 21 (previous UTC date), local 01 → UTC 22, local 02
 
 - Angular and Flutter must share these exact field identifiers and envelope semantics.
 - Client-side validation may mirror the contract for immediate feedback, but must not become the security boundary.
-- Angular daily currently uses page-memory previews; it still needs a real API submission integration.
-- Flutter now has a daily entry screen for `24h`, `06utc`, and `18utc`, with the responsibility acknowledgement, exact field identifiers, string values, missing-value marker, and persisted-receipt handling. Widget tests cover the 06 UTC API submission path and the acknowledgement gate.
+- Angular daily now submits the canonical daily envelope through the authenticated observation API, requires a confirmed persisted receipt, and retains offline submissions in the local outbox until synchronization succeeds.
+- Flutter now has a daily entry screen for `24h`, `06utc`, and `18utc`, with the responsibility acknowledgement, exact field identifiers, string values, missing-value marker, and persisted-receipt handling. Widget tests cover the 06 UTC, 18 UTC, and 24-hour API submission envelopes, as well as the acknowledgement gate.
 - Flutter hourly has a dedicated intake screen with UTC+3 date rollover handling, required/conditional fields, server-aligned range checks, and widget tests for canonical submission and temperature relationships.
-- Remaining parity work: audit every optional hourly field and legacy daily field against the original forms; add broader cross-client fixtures and UTC boundary tests; complete the Angular daily API integration. Client checks remain advisory; server validation is authoritative.
+- Remaining parity work: continue auditing optional hourly fields and legacy daily fields against the original forms; add broader cross-client fixtures and UTC boundary tests. Angular daily API submission is implemented; keep its payload and offline queue aligned with this contract. Client checks remain advisory; server validation is authoritative.
