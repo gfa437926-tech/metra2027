@@ -45,6 +45,41 @@ void main() {
     expect(HourlyObservationContract.validate(_validValues('01')), isEmpty);
   });
 
+  test('all 24 UTC hours enforce the exact conditional field matrix', () {
+    const synopticHours = {0, 3, 6, 9, 12, 15, 18, 21};
+    const precipitationHours = {0, 6, 12, 18};
+    for (var hour = 0; hour < 24; hour++) {
+      final text = hour.toString().padLeft(2, '0');
+      final valid = _validValues(text);
+      expect(HourlyObservationContract.validate(valid), isEmpty, reason: '$text UTC should be valid');
+
+      final expected = <String>{
+        if (synopticHours.contains(hour)) ...{'pressureSlope', 'pressureShape', 'pastWeather'},
+        if (precipitationHours.contains(hour)) 'precipitationAmount',
+      };
+      for (final field in expected) {
+        final missing = Map<String, String>.from(valid)..remove(field);
+        expect(
+          HourlyObservationContract.validate(missing).containsKey(field),
+          isTrue,
+          reason: '$field must be required at $text UTC',
+        );
+      }
+      final optional = <String>{
+        if (!synopticHours.contains(hour)) ...{'pressureSlope', 'pressureShape', 'pastWeather'},
+        if (!precipitationHours.contains(hour)) 'precipitationAmount',
+      };
+      for (final field in optional) {
+        final missing = Map<String, String>.from(valid)..remove(field);
+        expect(
+          HourlyObservationContract.validate(missing).containsKey(field),
+          isFalse,
+          reason: '$field must remain optional at $text UTC',
+        );
+      }
+    }
+  });
+
   test('dry temperature cannot be lower than wet temperature', () {
     final values = _validValues('01');
     values['dryTemp'] = '+10.0';
