@@ -6,7 +6,11 @@ import 'package:metra_mobile/features/observations/daily_observation_contract.da
 
 /// Loads the same JSON fixtures used by .NET SharedObservationContractFixturesTests.
 void main() {
-  final fixturesDir = _locateFixtures();
+  late Directory fixturesDir;
+
+  setUpAll(() {
+    fixturesDir = _locateFixtures();
+  });
 
   test('shared observation fixtures directory is present', () {
     expect(File('${fixturesDir.path}/manifest.json').existsSync(), isTrue);
@@ -52,24 +56,38 @@ void main() {
 }
 
 Directory _locateFixtures() {
-  // flutter-app/test -> repo root contracts/
-  final candidates = [
-    Directory('../../contracts/observation-v1/fixtures'),
-    Directory('../contracts/observation-v1/fixtures'),
+  // Prefer repo-root relative paths from package working directory (flutter-app).
+  final ordered = <Directory>[
     Directory('contracts/observation-v1/fixtures'),
+    Directory('../contracts/observation-v1/fixtures'),
+    Directory('../../contracts/observation-v1/fixtures'),
   ];
-  for (final dir in candidates) {
-    if (dir.existsSync() && File('${dir.path}/manifest.json').existsSync()) {
+
+  // Walk upward from Directory.current and from this test file location.
+  var current = Directory.current.absolute;
+  for (var i = 0; i < 8; i++) {
+    ordered.add(Directory('${current.path}/contracts/observation-v1/fixtures'));
+    current = current.parent;
+  }
+
+  final script = File.fromUri(Platform.script);
+  if (script.existsSync()) {
+    var dir = script.parent.absolute;
+    for (var i = 0; i < 8; i++) {
+      ordered.add(Directory('${dir.path}/contracts/observation-v1/fixtures'));
+      dir = dir.parent;
+    }
+  }
+
+  for (final dir in ordered) {
+    final manifest = File('${dir.path}/manifest.json');
+    if (dir.existsSync() && manifest.existsSync()) {
       return dir.absolute;
     }
   }
-  // Walk up from current
-  var current = Directory.current;
-  for (var i = 0; i < 6; i++) {
-    final candidate =
-        Directory('${current.path}/contracts/observation-v1/fixtures');
-    if (candidate.existsSync()) return candidate;
-    current = current.parent;
-  }
-  fail('Could not locate contracts/observation-v1/fixtures');
+
+  fail(
+    'Could not locate contracts/observation-v1/fixtures '
+    '(cwd=${Directory.current.path})',
+  );
 }
