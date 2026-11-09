@@ -95,25 +95,27 @@ void main() {
     );
     addTearDown(api.close);
 
+    // Keep the full form visible: this test verifies retry semantics, not scrolling.
+    tester.view.physicalSize = const Size(800, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     await tester.pumpWidget(MaterialApp(
       home: ObservationEntryScreen(api: api, stationId: stationId),
     ));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('حفظ الرصد'), 300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text('حفظ الرصد'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('حفظ الرصد'));
     await tester.pump();
     await tester.pumpAndSettle();
     expect(find.text('تعذر الاتصال بخدمة الرصد.'), findsNothing);
     expect(find.text('خدمة الرصد غير متاحة حالياً.'), findsOneWidget);
 
-    await tester.scrollUntilVisible(
-      find.text('حفظ الرصد'), 300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await tester.ensureVisible(find.text('حفظ الرصد'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('حفظ الرصد'));
     await tester.pump();
     await tester.pumpAndSettle();
