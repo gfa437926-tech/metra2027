@@ -471,7 +471,13 @@ async function main() {
       return rows.length === 1 && rows[0].state === 'blocked';
     }, { timeout: 20000 });
     const concurrentPosts = acceptedPosts.slice(4);
-    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after connectivity is restored');
+    const concurrentAfter = await page.evaluate(async () => {
+      const db = await new Promise((resolve, reject) => { const request = indexedDB.open('metra-offline-outbox', 3); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+      const rows = await new Promise((resolve, reject) => { const tx = db.transaction('daily-submissions', 'readonly'); const request = tx.objectStore('daily-submissions').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+      db.close();
+      return rows.map(item => ({ observationType: item.observationType ?? 'daily', state: item.state, attempts: item.attempts, lastError: item.lastError }));
+    });
+    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after connectivity is restored. Diagnostics=' + JSON.stringify({ allPosts: acceptedPosts, concurrentPosts, remaining: concurrentAfter }));
     assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
     assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
 
