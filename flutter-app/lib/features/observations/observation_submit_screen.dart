@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import 'daily_observation_submit_screen.dart';
 
+/// Convert the station's historical UTC+3 clock to the canonical UTC instant.
+DateTime hourlyObservedAtForLocalHour(DateTime localDate, int localHour) {
+  if (localHour < 0 || localHour > 23) {
+    throw ArgumentError.value(localHour, 'localHour', 'Must be between 0 and 23');
+  }
+  return DateTime.utc(localDate.year, localDate.month, localDate.day)
+      .add(Duration(hours: localHour - 3));
+}
+
 /// Hourly observation intake using the canonical v1 API field contract.
 class ObservationSubmitScreen extends StatefulWidget {
   const ObservationSubmitScreen({
@@ -134,9 +143,9 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
-    final observedAt = DateTime.utc(
-      _observationDate.year, _observationDate.month, _observationDate.day,
-    ).add(Duration(hours: _localHour - 3));
+    final observedAt = hourlyObservedAtForLocalHour(
+      _observationDate, _localHour,
+    );
     final values = <String, dynamic>{
       'utcTime': observedAt.hour.toString().padLeft(2, '0'),
       'dryTemp': _dryTemp.text.trim(),
