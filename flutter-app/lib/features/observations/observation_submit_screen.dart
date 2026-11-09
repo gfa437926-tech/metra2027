@@ -214,7 +214,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
-        key: ValueKey('hourly-field-' + label),
+        key: ValueKey('hourly-field-$label'),
         controller: controller,
         enabled: !_saving,
         keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
