@@ -29,21 +29,8 @@ grant metra_ops_faults to metra_api_runtime;
 alter table if exists public.metra_equipment_faults enable row level security;
 alter table if exists public.metra_equipment_fault_audit_events enable row level security;
 
--- Only the two operational audit identity sequences are in scope. Do not grant
--- access to unrelated sequences in the public schema.
-do $
-declare
-  v_sequence text;
-begin
-  for v_sequence in
-    select pg_get_serial_sequence('public.metra_equipment_fault_audit_events', 'id')
-    where to_regclass('public.metra_equipment_fault_audit_events') is not null
-    union all
-    select pg_get_serial_sequence('public.metra_support_incident_audit_events', 'id')
-    where to_regclass('public.metra_support_incident_audit_events') is not null
-  loop
-    if v_sequence is not null then
-      execute format('grant usage, select on sequence %s to metra_ops_faults', v_sequence::regclass);
-    end if;
-  end loop;
-end $seq$;
+-- Grant only the identity sequences used by operational audit inserts.
+grant usage, select on sequence
+  public.metra_equipment_fault_audit_events_id_seq,
+  public.metra_support_incident_audit_events_id_seq
+  to metra_ops_faults;
