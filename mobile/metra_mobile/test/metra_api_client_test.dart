@@ -151,9 +151,9 @@ void main() {
         paths.add(request.url.path);
         expect(request.headers['authorization'], 'Bearer registration-token');
         if (request.url.path == '/api/v1/registration-roles') {
-          return http.Response(jsonEncode([{
+          return http.Response.bytes(utf8.encode(jsonEncode([{
             'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'
-          }]), 200);
+          }])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
         }
         return http.Response(jsonEncode({
           'account_state': 'pending_station_approval',
