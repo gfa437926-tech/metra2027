@@ -100,12 +100,14 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('حفظ الرصد'));
     await tester.tap(find.text('حفظ الرصد'));
     await tester.pump();
     await tester.pumpAndSettle();
     expect(find.text('تعذر الاتصال بخدمة الرصد.'), findsNothing);
     expect(find.text('خدمة الرصد غير متاحة حالياً.'), findsOneWidget);
 
+    await tester.ensureVisible(find.text('حفظ الرصد'));
     await tester.tap(find.text('حفظ الرصد'));
     await tester.pump();
     await tester.pumpAndSettle();
