@@ -217,6 +217,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
+        key: ValueKey('hourly-field-' + label),
         controller: controller,
         enabled: !_saving,
         keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
@@ -260,6 +261,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<int>(
+              key: const ValueKey('hourly-local-hour'),
               initialValue: _localHour,
               decoration: const InputDecoration(
                 labelText: 'ساعة الرصد المحلية (UTC+3)',
@@ -342,6 +344,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             ),
             const SizedBox(height: 12),
             FilledButton.icon(
+              key: const ValueKey('hourly-submit'),
               onPressed: _saving ? null : _save,
               icon: const Icon(Icons.send),
               label: Text(_saving ? 'جارٍ الحفظ...' : 'حفظ النشرة'),
