@@ -94,11 +94,11 @@ These are adaptations to the existing target architecture, not wholesale copies 
 
 ## Next controlled phases
 
-1. Inspect Flutter source files individually and map dependencies/API contracts.
-2. Port one vertical slice at a time (domain model + service + screen + tests) into `mobile/metra_mobile`.
-3. Port backend hardening patterns only where missing and add tests.
-4. Compare all non-identical migrations by content, dependency, and chronology; produce a no-write migration reconciliation report.
-5. Run target CI and review the resulting draft PR. Keep all changes unmerged pending review.
+1. Flutter source feature review is complete for the main candidate screens/services; see `docs/security/source-audits/flutter-transfer-decisions.md`.
+2. Adapt the registration and observation screens to the existing .NET endpoints rather than copying Supabase Edge Function calls.
+3. Continue checking the API's verified-actor binding and the database-side delegation ceiling; the current code/SQL evidence does not close those audit blockers.
+4. Complete the no-write reconciliation of remaining source-only migrations and the missing tracked `metra_role_permissions` definition/allow-list source.
+5. Run target CI after each code slice and keep all changes in draft PRs until review. Do not merge automatically.
 
 ## Safety record
 
