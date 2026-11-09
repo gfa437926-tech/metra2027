@@ -77,3 +77,18 @@
 - Browser-level tests using a real IndexedDB implementation and simulated network transitions are still required; current Node tests inspect contracts and source wiring, not actual browser IndexedDB behavior. CI must pass on the final commit before this slice is accepted.
 - IndexedDB data remains browser-origin storage without app-level encryption. Shared-device protection, retention/clearance controls, and device policy remain release gates.
 - No Supabase schema changes, migrations, or live database writes were made.
+
+## Chromium offline queue concurrency regression — verified
+
+- The Chromium Playwright E2E test now exercises daily and hourly offline enqueue, reload restoration, automatic submission after connectivity returns, server-side 422 blocking, transient 5xx retention/retry, and simultaneous daily/hourly drains.
+- On commit `7348df3e0aeee5c0e84a7efdbea40239e87490bc`, the browser run reported: `serviceWorker=true`, `savedOffline=true`, `reopenedAfterReload=true`, `autoSyncConfirmed=true`, `serverRejectionBlocked=true`, `transientFailureRetainedAndRetried=true`, `hourlySavedAndReopened=true`, `hourlyRejectionBlocked=true`, `hourlyTransientFailureRetried=true`, `concurrentDailyHourlySync=true`, `maxConcurrentPosts=1`, `apiAttempts=8`, `remainingBlocked=2`, and `runtimeErrors=0`.
+- The test uses a local static server, disposable browser identity, synthetic station data, and intercepted API responses. It does not contact a real Supabase project or verify live database persistence.
+- The cross-tab retry fix communicates lease-release retry eligibility and avoids immediately retrying after a transient failure. The real-browser concurrency test confirms no overlapping POSTs in this scenario.
+- This is browser E2E evidence for the tested scenarios, not a proof of every possible browser crash, storage quota, multi-device, or network race.
+- On the same commit, Client CI passed Angular tests/build, real Chromium PWA/IndexedDB E2E, and Flutter analyze/tests; Backend build passed. PR #11 remains open and Draft. No database migration or live database write was performed.
+
+## Angular shared observation fixture structural checks
+
+- Added `angular-app/tests/shared-observation-contract.test.cjs` to validate the shared fixture manifest, unique IDs, daily required-key presence across 24h/06utc/18utc, canonical required hourly keys, invalid fixture error declarations, and documented optional hourly field names.
+- Wired this test into `npm test`, which is already a required Client CI step.
+- These checks detect fixture and documentation drift but do not run the Angular component's full field validator against each fixture. Flutter's shared fixture test currently executes daily fixtures only; .NET executes all manifest fixtures. Full runtime parity remains open.
