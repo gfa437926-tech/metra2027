@@ -124,3 +124,44 @@ The target API registration contract was verified directly in `RegistrationSubmi
 The registration endpoint requires an authenticated Supabase identity. The screen is therefore an authenticated registration/profile-completion flow, not anonymous account creation. This matches the current server contract; do not expose a public registration route or send an actor UUID from the client.
 
 No SQL was executed, no database was connected to, no migration was replayed, and no staging test was run.
+
+### Confirmed target observation-review queue TOCTOU — 2026-11-10
+
+A direct source read of `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
+confirms the previously recorded race is present in the current target branch:
+
+1. The endpoint loops through `observation.review`, `observation.approve`, and
+   `observation.return_for_correction`, calling
+   `IStationAuthorizationService.HasStationPermissionAsync(userId, stationId, permission, ct)`.
+2. After that check returns `allowed`, it separately calls
+   `IObservationQueueService.GetSubmittedAsync(stationId, take, ct)`.
+3. `SupabaseObservationQueueService` then uses the server-held service-role key
+   to issue a separate PostgREST SELECT filtered by station and
+   `status=eq.submitted`.
+
+The authorization decision and protected queue read are therefore separate
+database requests. A permission/assignment revocation can occur between them;
+the endpoint has no single database operation that binds the reviewer check
+to the returned queue rows. This is a concrete read-path TOCTOU finding, not
+merely a theoretical concern.
+
+The observation decision write path is distinct: the endpoint performs a
+pre-check, but `metra_decide_observation` also calls
+`metra_user_has_station_permission` inside the database function before
+updating the observation. That second check is useful defense in depth; it
+does not repair the queue-read race.
+
+**Required remediation before release:** replace the split permission-check
+and service-role table read with one narrowly scoped database RPC that
+validates the actor's exact station permission and returns only submitted
+queue rows for that station in one transaction. The RPC must have a fixed
+search_path, explicit EXECUTE grants (service_role only), bounded limit,
+and tests for cross-station access and revoked/expired permissions. The API
+must continue deriving the actor UUID from the verified JWT and must never
+accept it from the client. Review the function's locking/isolation behavior
+against concurrent grant and assignment revocation before calling the race
+closed.
+
+No RPC or migration has been authored or applied in this follow-up because
+the role-permission allow-list source is still incomplete and no database
+change has been approved. No database was connected to or queried.
