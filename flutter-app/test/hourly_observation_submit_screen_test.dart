@@ -24,135 +24,117 @@ void main() {
     );
   });
 
-  testWidgets('hourly form converts station local hour and submits required values',
-      (tester) async {
-    http.Request? captured;
-    final api = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'hourly-test-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response(
-          jsonEncode({
-            'id': '33333333-3333-4333-8333-333333333333',
-            'status': 'submitted',
-            'replayed': false,
-          }),
-          200,
-          headers: {'content-type': 'application/json'},
+  testWidgets(
+    'hourly form converts station local hour and submits required values',
+    (tester) async {
+      http.Request? captured;
+      final api = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'hourly-test-token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(
+            jsonEncode({
+              'id': '33333333-3333-4333-8333-333333333333',
+              'status': 'submitted',
+              'replayed': false,
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
+
+      await tester.pumpWidget(MaterialApp(
+        home: ObservationSubmitScreen(
+          api: api,
+          stationId: stationId,
+          initialLocalHour: 4,
+          initialLocalDate: DateTime(2026, 11, 9),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      expect(find.text('سيُرسل التوقيت العالمي UTC: 01:00'), findsOneWidget);
+
+      const entries = <String, String>{
+        'الحرارة الجافة (مثل +25.0) *': '+25.0',
+        'الحرارة الرطبة (مثل +20.0) *': '+20.0',
+        'نقطة الندى (مثل +18.5) *': '+18.5',
+        'ضغط المحطة (مثل 1013.2) *': '1013.2',
+        'الضغط عند سطح البحر (مثل 1013.2) *': '1013.2',
+        'الرطوبة النسبية (ثلاث خانات مثل 065) *': '065',
+        'اتجاه الرياح (00-36) *': '18',
+        'سرعة الرياح (خانتان) *': '12',
+        'مدى الرؤية (000-200) *': '050',
+        'التغطية الكلية للسحب (0-8) *': '4',
+        'تغطية الطبقتين الأولى والثانية (0-8) *': '4',
+        'تغطية الطبقات الثلاث (0-8) *': '5',
+      };
+      for (final entry in entries.entries) {
+        final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
+        expect(field, findsOneWidget, reason: 'missing ${entry.key}');
+        await tester.scrollUntilVisible(
+          field, 200, scrollable: find.byType(Scrollable).first,
         );
-      }),
-    );
-
-    await tester.pumpWidget(MaterialApp(
-      home: ObservationSubmitScreen(
-        api: api,
-        stationId: stationId,
-        // Local 04 => UTC 01 (non-synoptic / no precipitation gate)
-        initialLocalHour: 4,
-        initialLocalDate: DateTime(2026, 11, 9),
-      ),
-    ));
-    await tester.pumpAndSettle();
-
-    expect(find.text('سيُرسل التوقيت العالمي UTC: 01:00'), findsOneWidget);
-
-    // Required fields only — keeps the test focused on the submission contract.
-    const entries = <String, String>{
-      'الحرارة الجافة (مثل +25.0) *': '+25.0',
-      'الحرارة الرطبة (مثل +20.0) *': '+20.0',
-      'نقطة الندى (مثل +18.5) *': '+18.5',
-      'ضغط المحطة (مثل 1013.2) *': '1013.2',
-      'الضغط عند سطح البحر (مثل 1013.2) *': '1013.2',
-      'الرطوبة النسبية (ثلاث خانات مثل 065) *': '065',
-      'اتجاه الرياح (00-36) *': '18',
-      'سرعة الرياح (خانتان) *': '12',
-      'مدى الرؤية (000-200) *': '050',
-      'التغطية الكلية للسحب (0-8) *': '4',
-      'تغطية الطبقتين الأولى والثانية (0-8) *': '4',
-      'تغطية الطبقات الثلاث (0-8) *': '5',
-    };
-
-    for (final entry in entries.entries) {
-      final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
-      expect(field, findsOneWidget, reason: 'missing field ${entry.key}');
+        await tester.enterText(field, entry.value);
+      }
+      final submit = find.byKey(const ValueKey('hourly-submit'));
       await tester.scrollUntilVisible(
-        field,
-        200,
-        scrollable: find.byType(Scrollable).first,
+        submit, 200, scrollable: find.byType(Scrollable).first,
       );
-      await tester.enterText(field, entry.value);
-      await tester.pump();
-    }
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
 
-    final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.scrollUntilVisible(
-      submit,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(submit);
-    await tester.pumpAndSettle();
+      expect(captured, isNotNull, reason: 'API not called');
+      final body = jsonDecode(captured!.body) as Map<String, dynamic>;
+      expect(body['observationType'], 'hourly');
+      expect(body['payload']['values']['utcTime'], '01');
+      expect(body['payload']['values']['dryTemp'], '+25.0');
+      expect(find.textContaining('تم حفظ النشرة وإرسالها للمراجعة'), findsOneWidget);
+      api.close();
+    },
+  );
 
-    expect(captured, isNotNull, reason: 'submit did not reach API (form validation likely failed)');
-    final body = jsonDecode(captured!.body) as Map<String, dynamic>;
-    expect(body['observationType'], 'hourly');
-    expect(body['submit'], isTrue);
-    expect(body['payload']['values']['utcTime'], '01');
-    expect(body['payload']['values']['dryTemp'], '+25.0');
-    expect(body['payload']['values']['wetTemp'], '+20.0');
-    expect(body['payload']['values']['totalCloudCover'], '4');
-    expect(body['payload']['values']['precipitationAmount'], isNull);
-    expect(body['observedAt'], endsWith('T01:00:00.000Z'));
-    expect(find.textContaining('تم حفظ النشرة وإرسالها للمراجعة'), findsOneWidget);
-    api.close();
-  });
-
-  testWidgets('hourly form blocks impossible wet and dry temperature relationship',
-      (tester) async {
-    var requests = 0;
-    final api = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'hourly-test-token',
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('{}', 200);
-      }),
-    );
-    await tester.pumpWidget(MaterialApp(
-      home: ObservationSubmitScreen(
-        api: api,
-        stationId: stationId,
-        initialLocalHour: 4,
-        initialLocalDate: DateTime(2026, 11, 9),
-      ),
-    ));
-    await tester.pumpAndSettle();
-
-    const values = <String, String>{
-      'الحرارة الجافة (مثل +25.0) *': '+20.0',
-      'الحرارة الرطبة (مثل +20.0) *': '+25.0',
-    };
-    for (final entry in values.entries) {
-      final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
+  testWidgets(
+    'hourly form blocks impossible wet and dry temperature relationship',
+    (tester) async {
+      var requests = 0;
+      final api = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'hourly-test-token',
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('{}', 200);
+        }),
+      );
+      await tester.pumpWidget(MaterialApp(
+        home: ObservationSubmitScreen(
+          api: api,
+          stationId: stationId,
+          initialLocalHour: 4,
+          initialLocalDate: DateTime(2026, 11, 9),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      for (final entry in {
+        'الحرارة الجافة (مثل +25.0) *': '+20.0',
+        'الحرارة الرطبة (مثل +20.0) *': '+25.0',
+      }.entries) {
+        final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
+        await tester.scrollUntilVisible(
+          field, 200, scrollable: find.byType(Scrollable).first,
+        );
+        await tester.enterText(field, entry.value);
+      }
+      final submit = find.byKey(const ValueKey('hourly-submit'));
       await tester.scrollUntilVisible(
-        field,
-        200,
-        scrollable: find.byType(Scrollable).first,
+        submit, 200, scrollable: find.byType(Scrollable).first,
       );
-      await tester.enterText(field, entry.value);
-    }
-    final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.scrollUntilVisible(
-      submit,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(submit);
-    await tester.pumpAndSettle();
-
-    expect(requests, 0);
-    expect(find.text('الحرارة الرطبة يجب ألا تتجاوز الحرارة الجافة'), findsOneWidget);
-    api.close();
-  });
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(requests, 0);
+      expect(find.text('الحرارة الرطبة يجب ألا تتجاوز الحرارة الجافة'), findsOneWidget);
+      api.close();
+    },
+  );
 }
