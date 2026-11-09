@@ -8,6 +8,32 @@
 - `IStationAuthorizationService` must be configured; missing configuration fails closed (503 / forbid paths).
 - `Supabase:ServiceRoleKey` is server configuration only — never in Angular/Flutter.
 
+## Database role and column-grant boundary
+
+The Npgsql adapter's `ConnectionStrings:MetraOps` connection must use a
+dedicated non-superuser login provisioned out of band. That login should be a
+member of `metra_api_runtime`; the migration-created group role is NOLOGIN
+and is itself a member of `metra_ops_faults`. Neither group role may be
+SUPERUSER, CREATEDB, CREATEROLE, REPLICATION, or BYPASSRLS.
+
+The `metra_ops_faults` group has:
+- SELECT and INSERT on equipment-fault and support-incident operational tables.
+- UPDATE only on equipment fault columns `status`, `assigned_to`, `progress_percent`, `progress_note`, `updated_at`.
+- UPDATE only on support incident columns `status`, `assigned_to`, `updated_at`.
+- SELECT and INSERT on operational audit tables; no UPDATE or DELETE on audit.
+- USAGE/SELECT only on the two operational audit identity sequences.
+- No DELETE on operational records and no direct table grants to `anon`
+  or `authenticated`.
+
+The PostgreSQL 17 disposable CI test `ops_role_grant_boundary_pg_test.sql`
+checks role flags, runtime membership, client denials, column-level UPDATE,
+audit immutability grants, and sequence boundaries. It does not test the
+privileges of a future hosted login until that login is provisioned and tested
+in an approved staging environment. The Supabase `service_role` used by
+REST adapters remains a separate highly privileged server-only credential;
+it must never be placed in Angular/Flutter or treated as the constrained
+Npgsql runtime role.
+
 ## Station boundary
 - Every list, detail, create, and transition is under `/api/v1/stations/{stationId}/...`.
 - Supabase REST filters include `station_id=eq.{stationId}` on reads; RPCs pass `p_station_id`.
