@@ -152,3 +152,26 @@ Manifests and lockfiles inspected:
 - `mobile/metra_mobile/pubspec.yaml` and `pubspec.lock`: lockfile is present; Flutter SDK packages are SDK sourced and hosted dependencies have resolved versions in the lockfile. The manifest intentionally contains compatible version ranges for some dependencies and exact pins for others.
 
 This is a manifest/lockfile consistency review only. No package restore, build, SBOM generation, licence scan, malware scan, or vulnerability database audit was run in this pass. No dependency was upgraded, removed, or re-pinned. A complete supply-chain sign-off still requires CI restore/build evidence and current advisory checks for npm, NuGet, and pub.dev against the committed lockfiles.
+
+
+## 10. Snow-depth reporting decision based on WMO guidance — 2026-11-10
+
+The domain-owner instruction is to follow WMO guidance. The relevant authoritative references reviewed are:
+- WMO-No. 1160, Manual on the WMO Integrated Global Observing System (2019), section 5.1.7–5.1.8, page 84.
+- WMO-No. 100, Guide to Climatological Practices (2018), section 2.6.1.
+- WMO-No. 8, Guide to Instruments and Methods of Observation, 2024 edition, Volume II, Chapter 2 (Measurement of snow); the WMO page identifies this as the latest published edition as of this review.
+
+WMO-No. 1160 states that Members including snow depth in synoptic observations should observe it at least at the main standard times; it also states that snow-depth observations must be made at least once per day, at the same time each day. When snow is absent, report 0 cm during the period in which snow is expected but absent, as determined by the relevant regional association. WMO-No. 100 states that climatological observation times should be fixed and unchanged, and that 24-hour summaries depend on the defined observation period and are not interchangeable across different periods.
+
+### Application to METRA daily form types
+
+- Do not treat `snowThickness` as a generic optional field that is silently omitted from the 06 UTC and 18 UTC forms.
+- For stations whose approved observing programme includes snow depth as a synoptic variable, require a measured snow-depth value at the main standard synoptic times represented by the station's reporting schedule (including 06 and 18 UTC; and 00/12 UTC where those reports are part of the station schedule). This is the operational interpretation of WMO-No. 1160 section 5.1.7.
+- For a climatological daily snow-depth series, require at least one observation every day at the station's fixed designated observation time. Do not invent a universal UTC hour; the national meteorological service must define the fixed station/network time and document any change.
+- Distinguish a measured depth of 0 cm from missing/not observed. During the locally/regionally defined snow-expected season, absence of snow is reported as 0 cm; outside that season, use the approved national coding for not applicable/not observed rather than fabricating a zero.
+- Store the actual observation timestamp, UTC offset/time basis, station observing-programme designation, and whether the value is measured, zero-by-observation, or missing with a reason. Do not infer snow depth from snowfall amount.
+- Keep `snowThickness` semantically explicit as **snow depth on the ground**. If new snowfall depth is also collected, it must be a separate field and must not be conflated with total snow depth.
+
+### Remaining contract gate
+
+Before implementing the DTO required-field matrix, the METRA domain owner / Syrian NMHS must confirm which station classes and report types are designated synoptic snow-depth observations, the nationally adopted fixed climatological snow observation time, the snow-expected season and missing-value codes. Until those national operational parameters are confirmed, implement the WMO structure and station-programme configuration, not a hard-coded assumption that every station must report snow depth year-round. No API code or database schema was changed by this policy clarification.
