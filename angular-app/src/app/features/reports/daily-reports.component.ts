@@ -3,6 +3,7 @@ import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey, getSubmissionErrorMessage } from './daily-submission.utils';
 import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
+import { validateDailyObservation } from '../observations/daily-observation-contract.cjs';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -525,42 +526,14 @@ export class DailyReportsComponent implements OnDestroy {
   }
 
   private validateValues(values: Record<string,string>): string[] {
-    const issues: string[] = [];
-    const required = this.reportType === '24h'
-      ? ['minTemp','maxTemp','precipitation','snowThickness','evaporation','sunshineDuration','sunshinePercentage','maxGustSpeed','maxGustDirection','maxGustTime','maxHumidity','maxHumidityTime','minHumidity','minHumidityTime']
-      : ['minTemp','maxTemp','precipitation','snowThickness'];
-    for (const key of required) if (!values[key]) issues.push(this.label(key) + ': هذا الحقل مطلوب لهذا النوع من التقرير.');
-
-    const rules: Record<string,{pattern:RegExp,min:number,max:number,label:string}> = {
-      minTemp:{pattern:/^-?\d{2}\.\d$/,min:-20,max:50,label:'الحرارة الصغرى'},
-      maxTemp:{pattern:/^-?\d{2}\.\d$/,min:-20,max:50,label:'الحرارة العظمى'},
-      precipitation:{pattern:/^\d{3}\.\d$/,min:0,max:999.9,label:'الهطول'},
-      snowThickness:{pattern:/^\d{3}$/,min:0,max:999,label:'سماكة الثلج'},
-      evaporation:{pattern:/^\d{2}\.\d$/,min:0,max:99.9,label:'التبخر'},
-      sunshineDuration:{pattern:/^\d{2}\.\d$/,min:0,max:24,label:'مدة سطوع الشمس'},
-      sunshinePercentage:{pattern:/^\d{3}$/,min:0,max:100,label:'نسبة سطوع الشمس'},
-      maxGustSpeed:{pattern:/^\d{2}$/,min:0,max:36,label:'سرعة هبات الرياح'},
-      maxGustDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'اتجاه هبات الرياح'},
-      maxGustTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الهبات القصوى'},
-      maxHumidity:{pattern:/^\d{3}$/,min:0,max:100,label:'الرطوبة العظمى'},
-      minHumidity:{pattern:/^\d{2}$/,min:0,max:99,label:'الرطوبة الصغرى'},
-      maxHumidityTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الرطوبة العظمى'},
-      minHumidityTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الرطوبة الصغرى'}
-    };
-    for (const [key,rule] of Object.entries(rules)) {
-      const value = values[key] ?? '';
-      if (!value || value === '#') continue;
-      const numeric = Number(value);
-      if (!rule.pattern.test(value) || !Number.isFinite(numeric) || numeric < rule.min || numeric > rule.max)
-        issues.push(rule.label + ': التنسيق أو القيمة خارج المجال المقبول.');
-    }
-    if (values['precipitationTrace'] && values['precipitationTrace'] !== '#' && !/^[Tt]$/.test(values['precipitationTrace']))
-      issues.push('أثر الهطول: أدخل T فقط أو اترك الحقل فارغاً.');
-    if (values['minTemp'] && values['maxTemp'] && values['minTemp'] !== '#' && values['maxTemp'] !== '#' && Number(values['maxTemp']) < Number(values['minTemp']))
-      issues.push('درجة الحرارة العظمى يجب أن تكون أكبر من أو تساوي درجة الحرارة الصغرى.');
-    if (values['maxHumidity'] && values['minHumidity'] && values['maxHumidity'] !== '#' && values['minHumidity'] !== '#' && Number(values['minHumidity']) > Number(values['maxHumidity']))
-      issues.push('الرطوبة الصغرى لا يمكن أن تتجاوز الرطوبة العظمى.');
-    return issues;
+    const errors = validateDailyObservation(
+      this.reportType,
+      values,
+      values['responsibilityAgreement'] === 'on'
+    );
+    return Object.entries(errors).map(
+      ([key, message]) => this.label(key) + ': ' + message
+    );
   }
 
   private readForm(form: HTMLFormElement): Record<string,string> {
