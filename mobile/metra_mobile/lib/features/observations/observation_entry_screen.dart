@@ -95,7 +95,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                 final picked = await showDatePicker(context: context,
                   initialDate: _observedAt, firstDate: DateTime(2000),
                   lastDate: DateTime.now().add(const Duration(days: 2)));
-                if (!mounted) {
+                if (!context.mounted) {
                   return;
                 }
                 if (picked == null) {
@@ -103,7 +103,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                 }
                 final time = await showTimePicker(context: context,
                   initialTime: TimeOfDay.fromDateTime(_observedAt));
-                if (!mounted || time == null) {
+                if (!context.mounted || time == null) {
                   return;
                 }
                 setState(() => _observedAt = DateTime(
