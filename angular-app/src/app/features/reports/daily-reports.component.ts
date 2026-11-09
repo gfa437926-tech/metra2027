@@ -204,12 +204,13 @@ export class DailyReportsComponent implements OnDestroy {
     try {
       leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
       if (!leaseAcquired) return;
-      const items = await this.offlineQueue.list();
-      for (const item of items) {
+      // Re-read the shared outbox after each item: the queue can receive
+      // records from another tab while a request is in flight.
+      while (this.isOnline) {
+        const item = (await this.offlineQueue.list()).find(candidate => candidate.state === 'pending');
+        if (!item) break;
         // The shared lease owner drains both daily and hourly records.
-        if (!this.isOnline) break;
         if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
-        if (item.state === 'blocked') continue;
         try {
           const result = await this.api.submitObservation(item.stationId, {
             idempotencyKey: item.idempotencyKey,
