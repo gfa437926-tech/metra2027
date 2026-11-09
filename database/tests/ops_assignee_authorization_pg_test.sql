@@ -22,12 +22,14 @@ DECLARE
   v_audit_after bigint;
 BEGIN
   INSERT INTO public.station_catalogue(id,code,name)
-  VALUES (s_a,'AUTH-A','Authorization Station A'),(s_b,'AUTH-B','Authorization Station B');
+  VALUES (s_a,'AUTH-A','Authorization Station A'),(s_b,'AUTH-B','Authorization Station B')
+  ON CONFLICT (id) DO NOTHING;
   INSERT INTO auth.users(id,email) VALUES
     (actor,'actor@test.invalid'),(tech_ok,'tech-ok@test.invalid'),
     (tech_no_permission,'tech-denied@test.invalid'),
     (tech_other_station,'tech-other@test.invalid'),
-    (actor_no_assign,'actor-no-assign@test.invalid');
+    (actor_no_assign,'actor-no-assign@test.invalid')
+  ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.metra_test_station_permissions(user_id,station_id,permission_code) VALUES
     (actor,s_a,'equipment_fault.review'),
