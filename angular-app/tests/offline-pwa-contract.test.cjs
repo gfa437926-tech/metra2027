@@ -128,10 +128,11 @@ test('hourly queue exposes durable pending items and restores them after reload'
   assert.match(hourly, /observationType: 'hourly'/);
 });
 
-test('shared observation lease waits for the competing queue instead of abandoning it', () => {
-  assert.match(queue, /waitMs = 300_000/);
-  assert.match(queue, /tryAcquireSyncLease\(owner, leaseMs\)/);
-  assert.match(queue, /setTimeout\(resolve, 100\)/);
+test('shared observation lease acquisition is non-blocking and relies on cross-tab handoff', () => {
+  assert.match(queue, /async acquireSyncLease\(owner: string, leaseMs = 120_000\)/);
+  assert.match(queue, /return this\.tryAcquireSyncLease\(owner, leaseMs\)/);
+  assert.match(queue, /lease-released BroadcastChannel event/);
+  assert.doesNotMatch(queue, /waitMs = 300_000|setTimeout\(resolve, 100\)/);
 });
 
 
