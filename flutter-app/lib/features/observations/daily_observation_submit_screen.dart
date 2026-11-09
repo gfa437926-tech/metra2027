@@ -202,7 +202,7 @@ class _DailyObservationSubmitScreenState
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               key: const ValueKey('daily-report-type'),
-              value: _reportType,
+              initialValue: _reportType,
               decoration: const InputDecoration(
                 labelText: 'نوع النشرة',
                 border: OutlineInputBorder(),
