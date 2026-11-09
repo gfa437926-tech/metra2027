@@ -229,6 +229,7 @@ export class HourlyReportsComponent implements OnDestroy {
     if (!this.isOnline || !this.apiReady) return;
     this.syncing = true;
     let leaseAcquired = false;
+    let stoppedForTransientFailure = false;
     try {
       leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
       if (!leaseAcquired) return;
@@ -248,7 +249,11 @@ export class HourlyReportsComponent implements OnDestroy {
         } catch (error) {
           const status = error && typeof error === 'object' && 'status' in error ? Number((error as {status:unknown}).status) : 0;
           if ([400,403,422].includes(status)) await this.offlineQueue.update({...item,state:'blocked',lastError:getSubmissionErrorMessage(error,'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.')});
-          else { await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:getSubmissionErrorMessage(error,'تعذر الاتصال بالخادم.')}); break; }
+          else {
+            await this.offlineQueue.update({...item,state:'pending',attempts:item.attempts+1,lastError:getSubmissionErrorMessage(error,'تعذر الاتصال بالخادم.')});
+            stoppedForTransientFailure = true;
+            break;
+          }
         }
       }
     } finally {
@@ -260,9 +265,13 @@ export class HourlyReportsComponent implements OnDestroy {
       }
       this.syncing = false;
       await this.refreshOfflineCount();
-      if (this.syncRequested && this.isOnline && this.apiReady) {
+      const pendingRemain = (await this.offlineQueue.list()).some(item => item.state === 'pending');
+      if (this.isOnline && this.apiReady && !stoppedForTransientFailure &&
+          (this.syncRequested || (leaseAcquired && pendingRemain))) {
         this.syncRequested = false;
-        void this.flushHourlyQueue();
+        // Retry after releasing the lease so a missed cross-tab wake-up
+        // cannot leave the other report type pending indefinitely.
+        window.setTimeout(() => void this.flushHourlyQueue(), 150);
       }
     }
   }
