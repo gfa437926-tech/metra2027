@@ -44,21 +44,11 @@ grant update (status, assigned_to, updated_at)
   on table public.metra_support_incidents to metra_ops_faults;
 grant select, insert on table public.metra_support_incident_audit_events to metra_ops_faults;
 
--- Only grant the identity sequences required by the two audit tables.
-do $
-declare
-  v_sequence text;
-begin
-  for v_sequence in
-    select pg_get_serial_sequence('public.metra_equipment_fault_audit_events', 'id')
-    union all
-    select pg_get_serial_sequence('public.metra_support_incident_audit_events', 'id')
-  loop
-    if v_sequence is not null then
-      execute format('grant usage, select on sequence %s to metra_ops_faults', v_sequence::regclass);
-    end if;
-  end loop;
-end $seq$;
+-- Grant only the identity sequences used by operational audit inserts.
+grant usage, select on sequence
+  public.metra_equipment_fault_audit_events_id_seq,
+  public.metra_support_incident_audit_events_id_seq
+  to metra_ops_faults;
 
 -- Drop previous ops policies if re-applied
 drop policy if exists metra_ops_faults_station_isolation on public.metra_equipment_faults;
