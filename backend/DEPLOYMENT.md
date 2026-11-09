@@ -19,6 +19,7 @@ Set these variables in the API host's environment/secret manager:
 |---|---:|---|
 | `Supabase__Url` | Yes | `https://tbdnklyxjvbrilvnwgmq.supabase.co` |
 | `Supabase__ServiceRoleKey` | Yes | Secret; API server only |
+| `ConnectionStrings__MetraOps` | Optional for Npgsql operations path | Use a dedicated non-superuser login; it must be a member of the NOLOGIN `metra_api_runtime` group. Never use a superuser or `service_role` connection for this constrained path. |
 | `Authentication__Authority` | Recommended | `https://tbdnklyxjvbrilvnwgmq.supabase.co/auth/v1` |
 | `Authentication__Audience` | No | Defaults to `authenticated` |
 | `Cors__AllowedOrigins__0` | Yes for browser | Exact deployed Angular origin |
