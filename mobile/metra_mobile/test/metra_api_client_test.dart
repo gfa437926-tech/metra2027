@@ -213,4 +213,38 @@ void main() {
   });
 
 
+
+  test('observation submission uses the .NET station route and never sends actor identity', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'observation-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 200, headers: {'content-type': 'application/json'});
+      }),
+    );
+    await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'observation-idempotency-key',
+      observationType: 'hourly',
+      observedAt: DateTime.utc(2026, 11, 10, 12),
+      payload: {'temperature': 22.5},
+      submit: true,
+    );
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+    expect(captured.headers['authorization'], 'Bearer observation-token');
+    expect(body['idempotencyKey'], 'observation-idempotency-key');
+    expect(body['observationType'], 'hourly');
+    expect(body['observedAt'], '2026-11-10T12:00:00.000Z');
+    expect(body['payload']['temperature'], 22.5);
+    expect(body['submit'], isTrue);
+    expect(body.containsKey('userId'), isFalse);
+    expect(body.containsKey('actorUserId'), isFalse);
+    client.close();
+  });
+
+
 }
