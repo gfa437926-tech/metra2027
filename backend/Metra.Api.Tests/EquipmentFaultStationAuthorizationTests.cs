@@ -128,6 +128,124 @@ public sealed class EquipmentFaultStationAuthorizationTests
         Assert.Equal(20, faults.LastListLimit);
     }
 
+
+    [Fact]
+    public async Task User_of_station_A_cannot_list_faults_of_station_B()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, stationA);
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationB}/equipment-faults");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, faults.ListCallCount);
+    }
+
+    [Fact]
+    public async Task User_of_station_A_cannot_read_fault_detail_of_station_B()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, stationA);
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationB}/equipment-faults/{faultId}");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, faults.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task Update_permission_allows_InProgress_but_not_Resolved()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(
+            userId,
+            stationId,
+            "equipment_fault.read",
+            "equipment_fault.update");
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var progress = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{faultId}/transitions",
+            new { toStatus = "InProgress", progressPercent = 40, note = (string?)null });
+        Assert.Equal(HttpStatusCode.OK, progress.StatusCode);
+        Assert.Equal(1, faults.TransitionCallCount);
+
+        using var resolve = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{faultId}/transitions",
+            new { toStatus = "Resolved", progressPercent = 100, note = (string?)null });
+        Assert.Equal(HttpStatusCode.Forbidden, resolve.StatusCode);
+        Assert.Equal(1, faults.TransitionCallCount);
+    }
+
+    [Fact]
+    public async Task Resolve_permission_cannot_start_InProgress_without_update()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(
+            userId,
+            stationId,
+            "equipment_fault.read",
+            "equipment_fault.resolve");
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationId}/equipment-faults/{faultId}/transitions",
+            new { toStatus = "InProgress", progressPercent = 10, note = (string?)null });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, faults.TransitionCallCount);
+    }
+
+    [Fact]
+    public async Task Cross_station_transition_is_forbidden_even_with_full_permissions_on_home_station()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var faultId = Guid.NewGuid();
+        var authorization = new FaultAuthorizationFake(userId, stationA);
+        var faults = new EquipmentFaultServiceFake();
+
+        await using var factory = CreateFactory(authorization, faults);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationB}/equipment-faults/{faultId}/transitions",
+            new { toStatus = "InProgress", progressPercent = 20, note = (string?)null });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, faults.TransitionCallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(
         IStationAuthorizationService authorization,
         IEquipmentFaultService faults) =>
@@ -151,8 +269,23 @@ public sealed class EquipmentFaultStationAuthorizationTests
             });
         });
 
-    private sealed class FaultAuthorizationFake(Guid userId, Guid allowedStationId) : IStationAuthorizationService
+    private sealed class FaultAuthorizationFake(
+        Guid userId,
+        Guid allowedStationId,
+        params string[] allowedPermissions) : IStationAuthorizationService
     {
+        private readonly HashSet<string> _permissions = allowedPermissions.Length == 0
+            ? new HashSet<string>(StringComparer.Ordinal)
+            {
+                "equipment_fault.create",
+                "equipment_fault.read",
+                "equipment_fault.review",
+                "equipment_fault.assign",
+                "equipment_fault.update",
+                "equipment_fault.resolve"
+            }
+            : new HashSet<string>(allowedPermissions, StringComparer.Ordinal);
+
         public bool IsConfigured => true;
 
         public Task<bool> HasStationPermissionAsync(
@@ -164,7 +297,7 @@ public sealed class EquipmentFaultStationAuthorizationTests
             return Task.FromResult(
                 authenticatedUserId == userId
                 && stationId == allowedStationId
-                && permissionCode.StartsWith("equipment_fault.", StringComparison.Ordinal));
+                && _permissions.Contains(permissionCode));
         }
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
@@ -222,6 +355,9 @@ public sealed class EquipmentFaultStationAuthorizationTests
                 true, true, HttpStatusCode.OK, JsonDocument.Parse(payload).RootElement));
         }
 
+        public int TransitionCallCount { get; private set; }
+        public Guid? LastTransitionStationId { get; private set; }
+
         public Task<EquipmentFaultServiceOutcome> TransitionAsync(
             Guid userId,
             Guid stationId,
@@ -229,6 +365,8 @@ public sealed class EquipmentFaultStationAuthorizationTests
             EquipmentFaultTransitionRequest request,
             CancellationToken cancellationToken)
         {
+            TransitionCallCount++;
+            LastTransitionStationId = stationId;
             return Task.FromResult(new EquipmentFaultServiceOutcome(
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("{}").RootElement));
         }

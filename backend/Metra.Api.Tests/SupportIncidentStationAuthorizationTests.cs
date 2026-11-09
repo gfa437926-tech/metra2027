@@ -129,6 +129,96 @@ public sealed class SupportIncidentStationAuthorizationTests
         Assert.Equal(15, incidents.LastListLimit);
     }
 
+
+    [Fact]
+    public async Task User_of_station_A_cannot_list_support_incidents_of_station_B()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, stationA);
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync($"/api/v1/stations/{stationB}/support-incidents");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, incidents.ListCallCount);
+    }
+
+    [Fact]
+    public async Task User_of_station_A_cannot_get_support_incident_detail_of_station_B()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var incidentId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, stationA);
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.GetAsync(
+            $"/api/v1/stations/{stationB}/support-incidents/{incidentId}");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, incidents.GetByIdCallCount);
+    }
+
+    [Fact]
+    public async Task Update_permission_allows_WaitingForInformation_but_not_Closed()
+    {
+        var userId = Guid.NewGuid();
+        var stationId = Guid.NewGuid();
+        var incidentId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(
+            userId,
+            stationId,
+            "support_incident.read",
+            "support_incident.update");
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var waiting = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationId}/support-incidents/{incidentId}/transitions",
+            new { toStatus = "WaitingForInformation", note = "بانتظار بيانات من الراصد" });
+        Assert.Equal(HttpStatusCode.OK, waiting.StatusCode);
+        Assert.Equal(1, incidents.TransitionCallCount);
+
+        using var closed = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationId}/support-incidents/{incidentId}/transitions",
+            new { toStatus = "Closed", note = "إغلاق غير مصرح" });
+        Assert.Equal(HttpStatusCode.Forbidden, closed.StatusCode);
+        Assert.Equal(1, incidents.TransitionCallCount);
+    }
+
+    [Fact]
+    public async Task Cross_station_support_transition_is_forbidden()
+    {
+        var userId = Guid.NewGuid();
+        var stationA = Guid.NewGuid();
+        var stationB = Guid.NewGuid();
+        var incidentId = Guid.NewGuid();
+        var authorization = new SupportAuthorizationFake(userId, stationA);
+        var incidents = new SupportIncidentServiceFake();
+
+        await using var factory = CreateFactory(authorization, incidents);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Test-User", userId.ToString());
+
+        using var response = await client.PostAsJsonAsync(
+            $"/api/v1/stations/{stationB}/support-incidents/{incidentId}/transitions",
+            new { toStatus = "InProgress", note = (string?)null });
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, incidents.TransitionCallCount);
+    }
+
     private static WebApplicationFactory<Program> CreateFactory(
         IStationAuthorizationService authorization,
         ISupportIncidentService incidents) =>
@@ -152,8 +242,23 @@ public sealed class SupportIncidentStationAuthorizationTests
             });
         });
 
-    private sealed class SupportAuthorizationFake(Guid userId, Guid allowedStationId) : IStationAuthorizationService
+    private sealed class SupportAuthorizationFake(
+        Guid userId,
+        Guid allowedStationId,
+        params string[] allowedPermissions) : IStationAuthorizationService
     {
+        private readonly HashSet<string> _permissions = allowedPermissions.Length == 0
+            ? new HashSet<string>(StringComparer.Ordinal)
+            {
+                "support_incident.create",
+                "support_incident.read",
+                "support_incident.review",
+                "support_incident.assign",
+                "support_incident.update",
+                "support_incident.resolve"
+            }
+            : new HashSet<string>(allowedPermissions, StringComparer.Ordinal);
+
         public bool IsConfigured => true;
 
         public Task<bool> HasStationPermissionAsync(
@@ -164,7 +269,7 @@ public sealed class SupportIncidentStationAuthorizationTests
             Task.FromResult(
                 authenticatedUserId == userId
                 && stationId == allowedStationId
-                && permissionCode.StartsWith("support_incident.", StringComparison.Ordinal));
+                && _permissions.Contains(permissionCode));
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
             Guid authenticatedUserId,
@@ -221,14 +326,19 @@ public sealed class SupportIncidentStationAuthorizationTests
                 JsonDocument.Parse("{\"station_id\":\"" + stationId.ToString() + "\"}").RootElement));
         }
 
+        public int TransitionCallCount { get; private set; }
+
         public Task<SupportIncidentServiceOutcome> TransitionAsync(
             Guid userId,
             Guid stationId,
             Guid incidentId,
             SupportIncidentTransitionRequest request,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(new SupportIncidentServiceOutcome(
+            CancellationToken cancellationToken)
+        {
+            TransitionCallCount++;
+            return Task.FromResult(new SupportIncidentServiceOutcome(
                 true, true, HttpStatusCode.OK, JsonDocument.Parse("{}").RootElement));
+        }
     }
 
     private sealed class SupportTestAuthenticationHandler(
