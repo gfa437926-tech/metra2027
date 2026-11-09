@@ -54,6 +54,21 @@ void main() {
       'التغطية الكلية للسحب (0-8) *': '4',
       'تغطية الطبقتين الأولى والثانية (0-8) *': '4',
       'تغطية الطبقات الثلاث (0-8) *': '5',
+      'ضغط البخار (مثل 12.5)': '12.5',
+      'فرق ضغط البخار (مثل 02.5)': '02.5',
+      'متوسط اتجاه الرياح (00-36)': '18',
+      'متوسط سرعة الرياح (00-99)': '08',
+      'الطقس الحالي (00-99)': '45',
+      'كمية السحب الأولى (0-8)': '2',
+      'كمية السحب الثانية (0-8)': '3',
+      'كمية السحب الثالثة (0-8)': '4',
+      'كمية السحب الرابعة (0-8)': '5',
+      'نوع السحب الأولى': 'Ci',
+      'نوع السحب الثانية': 'Ac',
+      'نوع السحب الثالثة': 'Sc',
+      'ارتفاع السحب الأولى (0-999)': '120',
+      'ارتفاع السحب الثانية (0-999)': '250',
+      'ارتفاع السحب الثالثة (0-999)': '900',
     };
     for (final entry in entries.entries) {
       final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
@@ -74,6 +89,17 @@ void main() {
     expect(body['payload']['values']['utcTime'], '01');
     expect(body['payload']['values']['dryTemp'], '+25.0');
     expect(body['payload']['values']['totalCloudCover'], '4');
+    expect(body['payload']['values']['vaporPressure'], '12.5');
+    expect(body['payload']['values']['vaporPressureDiff'], '02.5');
+    expect(body['payload']['values']['avgWindDirection'], '18');
+    expect(body['payload']['values']['avgWindSpeed'], '08');
+    expect(body['payload']['values']['currentWeather'], '45');
+    expect(body['payload']['values']['cloud1Amount'], '2');
+    expect(body['payload']['values']['cloud4Amount'], '5');
+    expect(body['payload']['values']['cloud1Type'], 'Ci');
+    expect(body['payload']['values']['cloud3Type'], 'Sc');
+    expect(body['payload']['values']['cloud1Height'], '120');
+    expect(body['payload']['values']['cloud3Height'], '900');
     expect(body['payload']['values']['cloudCover'], isNull);
     expect(body['payload']['values']['precipitationAmount'], isNull);
     expect(body['observedAt'], endsWith('T01:00:00.000Z'));
