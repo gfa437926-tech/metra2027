@@ -3,6 +3,7 @@ import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
 import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
 import { createIdempotencyKey, getConfirmedDailySubmission, getSubmissionErrorMessage } from './daily-submission.utils';
+import { validateHourlyObservation } from '../observations/hourly-observation-contract.cjs';
 
 type HourlyStatus = 'draft' | 'submitted';
 interface HourlyPreview {
@@ -426,61 +427,10 @@ export class HourlyReportsComponent implements OnDestroy {
       if (typeof value === 'string') values[key] = value.trim();
     });
 
-    const required = ['dryTemp','wetTemp','stationPressure','seaLevelPressure','windDirection','windSpeed','visibility','totalCloudCover','relativeHumidity','dewPoint','cover12','cover123'];
-    if (this.isSynoptic) required.push('pressureSlope','pressureShape','pastWeather');
-    if (this.isPrecipitationHour) required.push('precipitationAmount');
-
-    for (const key of required) {
-      const value = values[key] ?? '';
-      if (!value) this.issues.push(this.label(key) + ': هذا الحقل مطلوب في ساعة الرصد المختارة.');
-    }
-
-    const rules: Record<string, { pattern: RegExp; min: number; max: number; label: string }> = {
-      dryTemp:{pattern:/^[+-]\d{2}\.\d$/,min:-20,max:50,label:'الحرارة الجافة'},
-      wetTemp:{pattern:/^[+-]\d{2}\.\d$/,min:-20,max:50,label:'الحرارة الرطبة'},
-      dewPoint:{pattern:/^[+-]\d{2}\.\d$/,min:-20,max:50,label:'نقطة الندى'},
-      stationPressure:{pattern:/^\d{4}\.\d$/,min:850,max:1050,label:'ضغط المحطة'},
-      seaLevelPressure:{pattern:/^\d{4}\.\d$/,min:0,max:1050,label:'ضغط سطح البحر'},
-      relativeHumidity:{pattern:/^\d{3}$/,min:1,max:100,label:'الرطوبة النسبية'},
-      vaporPressure:{pattern:/^\d{2}\.\d$/,min:0,max:99,label:'ضغط البخار'},
-      vaporPressureDiff:{pattern:/^\d{2}\.\d$/,min:0,max:99,label:'فرق ضغط البخار'},
-      windDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'اتجاه الرياح'},
-      avgWindDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'متوسط الاتجاه (درجة)'},
-      windSpeed:{pattern:/^\d{2}$/,min:0,max:99,label:'سرعة الرياح'},
-      avgWindSpeed:{pattern:/^\d{2}$/,min:0,max:99,label:'متوسط السرعة (م/ثا)'},
-      visibility:{pattern:/^\d{3}$/,min:0,max:200,label:'مدى الرؤية'},
-      currentWeather:{pattern:/^\d{2}$/,min:0,max:99,label:'الطقس الحاضر (الكود)'},
-      pastWeather:{pattern:/^\d$/,min:0,max:9,label:'الطقس السابق'},
-      pressureSlope:{pattern:/^\d{1,2}\.\d$/,min:0,max:99,label:'ميل الضغط'},
-      pressureShape:{pattern:/^[0-8]$/,min:0,max:8,label:'شكل الضغط'},
-      precipitationAmount:{pattern:/^\d{3}\.\d$/,min:0,max:999.9,label:'كمية الهطول'},
-      cover12:{pattern:/^[0-8]$/,min:0,max:8,label:'تغطية الطبقتين'},
-      cover123:{pattern:/^[0-8]$/,min:0,max:8,label:'تغطية الطبقات الثلاث'}
-    };
-
-    for (const [key, rule] of Object.entries(rules)) {
-      const value = values[key] ?? '';
-      if (!value || value === '#') continue;
-      const numeric = Number(value);
-      if (!rule.pattern.test(value) || !Number.isFinite(numeric) || numeric < rule.min || numeric > rule.max) {
-        this.issues.push(rule.label + ': التنسيق أو القيمة خارج المجال المسموح.');
-      }
-    }
-
-    for (const key of ['cloud1Amount','cloud2Amount','cloud3Amount','cloud4Amount']) {
-      const value = values[key] ?? '';
-      if (value && value !== '#' && !/^[0-8]$/.test(value)) this.issues.push(this.label(key) + ': أدخل رقماً من 0 إلى 8 أو #.');
-    }
-    for (const key of ['cloud1Height','cloud2Height','cloud3Height']) {
-      const value = values[key] ?? '';
-      if (value && value !== '#' && !/^\d{1,3}$/.test(value)) this.issues.push(this.label(key) + ': أدخل ارتفاعاً من 0 إلى 999 أو #.');
-    }
-
-    const dry = values['dryTemp'];
-    const wet = values['wetTemp'];
-    if (dry && wet && dry !== '#' && wet !== '#' && Number(dry) < Number(wet)) {
-      this.issues.push('يجب أن تكون درجة الحرارة الجافة أكبر من أو تساوي درجة الحرارة الرطبة.');
-    }
+    const contractErrors = validateHourlyObservation(values);
+    this.issues = Object.entries(contractErrors).map(
+      ([key, message]) => this.label(key) + ': ' + message
+    );
 
     if (this.issues.length) return;
 
