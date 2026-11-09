@@ -51,7 +51,8 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
         content: Text('تم حفظ بيانات الرصد وإرسالها إلى الخادم.')));
       Navigator.of(context).pop(true);
     } on MetraApiException catch (error) {
-      if (mounted) setState(() => _error = switch (error.statusCode) {
+      if (mounted) {
+        setState(() => _error = switch (error.statusCode) {
         400 => 'رفض الخادم بنية البيانات أو نوع الرصد.',
         401 => 'انتهت جلسة الدخول. سجّل الدخول مجدداً.',
         403 => 'لا تملك صلاحية إدخال الرصد لهذه المحطة.',
@@ -78,7 +79,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
             const Text('بيانات الرصد', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 14),
             DropdownButtonFormField<String>(
-              value: _type,
+              initialValue: _type,
               decoration: const InputDecoration(labelText: 'نوع الرصد', border: OutlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: 'hourly', child: Text('نشرة ساعية')),
@@ -93,10 +94,15 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                 final picked = await showDatePicker(context: context,
                   initialDate: _observedAt, firstDate: DateTime(2000),
                   lastDate: DateTime.now().add(const Duration(days: 2)));
-                if (picked == null || !mounted) return;
+                if (picked == null || !mounted) {
+                  return;
+                }
                 final time = await showTimePicker(context: context,
                   initialTime: TimeOfDay.fromDateTime(_observedAt));
-                if (time != null) setState(() => _observedAt = DateTime(
+                if (!mounted || time == null) {
+                  return;
+                }
+                setState(() => _observedAt = DateTime(
                   picked.year, picked.month, picked.day, time.hour, time.minute));
               },
               icon: const Icon(Icons.schedule),
