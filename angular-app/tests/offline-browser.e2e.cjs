@@ -52,6 +52,9 @@ async function main() {
     let inFlightPosts = 0;
     let maxConcurrentPosts = 0;
     let holdConcurrentResponses = false;
+    let releaseConcurrentResponse;
+    let concurrentResponseStartedResolve;
+    const concurrentResponseStarted = new Promise(resolve => { concurrentResponseStartedResolve = resolve; });
     const station = {
       id: '00000000-0000-4000-8000-000000000002', local_station_code: 'E2E', wmo_station_id: null,
       name_ar: 'محطة اختبار المتصفح', name_en: 'Browser test station', station_type: 'classic',
@@ -69,7 +72,10 @@ async function main() {
       inFlightPosts++;
       maxConcurrentPosts = Math.max(maxConcurrentPosts, inFlightPosts);
       try {
-        if (holdConcurrentResponses) await new Promise(resolve => setTimeout(resolve, 350));
+        if (holdConcurrentResponses) {
+          concurrentResponseStartedResolve();
+          await new Promise(resolve => { releaseConcurrentResponse = resolve; });
+        }
         if (mockStatus === 422) {
           await route.fulfill({ status: 422, contentType: 'application/problem+json', body: JSON.stringify({
             title: 'بيانات النشرة مرفوضة في اختبار المتصفح',
@@ -455,32 +461,24 @@ async function main() {
     // Dispatch one online event in the initiating tab; the other tab must
     // learn about reconnection through the shared BroadcastChannel.
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
-    // The shared lease intentionally serializes requests. Keep the first
-    // response held to prove the second tab cannot start a parallel POST,
-    // then release it so the lease owner can drain the other observation type.
+    // Hold the first response behind an explicit gate. This proves the
+    // competing tab cannot POST until the current lease owner is released,
+    // without relying on a wall-clock delay that can race CI scheduling.
     const firstPostDeadline = Date.now() + 20000;
     while (acceptedPosts.length < 5 && Date.now() < firstPostDeadline) await page.waitForTimeout(50);
     assert.ok(acceptedPosts.length >= 5, 'The lease owner should start the first queued request after reconnection');
+    await concurrentResponseStarted;
     const firstConcurrentPosts = acceptedPosts.slice(4);
     assert.equal(firstConcurrentPosts.length, 1, 'Only one POST may be in flight while its response is held');
     assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+    assert.equal(typeof releaseConcurrentResponse, 'function', 'The held response must be controllably releasable');
     holdConcurrentResponses = false;
+    releaseConcurrentResponse();
 
-    await page.waitForFunction(async () => {
-      const db = await new Promise((resolve, reject) => {
-        const request = indexedDB.open('metra-offline-outbox', 3);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      const rows = await new Promise((resolve, reject) => {
-        const tx = db.transaction('daily-submissions', 'readonly');
-        const request = tx.objectStore('daily-submissions').getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      db.close();
-      return rows.length === 1 && rows[0].state === 'blocked';
-    }, { timeout: 20000 });
+    // Wait for actual API activity, not a transient IndexedDB snapshot. The
+    // subsequent durable queue assertion remains the source of truth.
+    const drainDeadline = Date.now() + 20000;
+    while (acceptedPosts.length < 6 && Date.now() < drainDeadline) await page.waitForTimeout(50);
     const concurrentPosts = acceptedPosts.slice(4);
     const concurrentAfter = await page.evaluate(async () => {
       const db = await new Promise((resolve, reject) => { const request = indexedDB.open('metra-offline-outbox', 3); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
