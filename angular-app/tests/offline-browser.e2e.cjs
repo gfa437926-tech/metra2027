@@ -529,8 +529,19 @@ async function main() {
     await page.getByRole('button', { name: /إرسال النشرة للمراجعة/ }).click();
     await page.getByText(/حُفظت النشرة الساعية محلياً/).waitFor({ timeout: 10000 });
     mockStatus = 503;
+    const transientPostsBefore = acceptedPosts.length;
     await context.setOffline(false);
     await page.getByText('1 نشرة ساعية بانتظار المزامنة').waitFor({ timeout: 10000 });
+    // The pending-count label can be visible before the online handler starts
+    // its POST. Wait for the mocked API request before inspecting retry metadata.
+    const transientPostDeadline = Date.now() + 10000;
+    while (acceptedPosts.length === transientPostsBefore && Date.now() < transientPostDeadline) {
+      await page.waitForTimeout(50);
+    }
+    assert.ok(
+      acceptedPosts.length > transientPostsBefore,
+      'Reconnection must trigger an API retry for the queued hourly report'
+    );
     // Capture the exact queue row in the same IndexedDB read that observes the retry.
     // A second read can race with another automatic sync pass and see a newer state.
     let hourlyTransient;
@@ -553,7 +564,11 @@ async function main() {
         // the row, the attempt counter, or the server error was actually missing.
         const item = rows.find(row =>
           row.observationType === 'hourly' &&
-          row.payload?.values?.dryTemp === '+27.0'
+          row.payload?.values?.dryTemp === '+27.0' &&
+          row.state === 'pending' &&
+          row.attempts >= 1 &&
+          typeof row.lastError === 'string' &&
+          row.lastError.includes('تعطل مؤقت في خادم الاختبار')
         );
         return item ? {
           stationId: item.stationId,
