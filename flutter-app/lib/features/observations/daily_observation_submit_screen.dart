@@ -11,10 +11,15 @@ class DailyObservationSubmitScreen extends StatefulWidget {
     super.key,
     required this.api,
     required this.stationId,
+    this.initialReportType,
+    this.initialObservationDate,
   });
 
   final MetraApiClient api;
   final String stationId;
+  /// Deterministic report type for widget tests (24h|06utc|18utc).
+  final String? initialReportType;
+  final DateTime? initialObservationDate;
 
   @override
   State<DailyObservationSubmitScreen> createState() =>
@@ -30,11 +35,23 @@ class _DailyObservationSubmitScreenState
     'precipitationTrace': TextEditingController(),
   };
 
-  String _reportType = '24h';
-  DateTime _observationDate = DateTime.now().toUtc();
+  late String _reportType;
+  late DateTime _observationDate;
   bool _responsibilityAgreement = false;
   bool _submitImmediately = true;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final seededType = widget.initialReportType;
+    _reportType = seededType != null &&
+            DailyObservationContract.reportTypes.containsKey(seededType)
+        ? seededType
+        : '24h';
+    final seededDate = widget.initialObservationDate;
+    _observationDate = seededDate?.toUtc() ?? DateTime.now().toUtc();
+  }
 
   @override
   void dispose() {

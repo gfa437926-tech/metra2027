@@ -34,15 +34,14 @@ void main() {
       }),
     );
     await tester.pumpWidget(MaterialApp(
-      home: DailyObservationSubmitScreen(api: api, stationId: stationId),
+      home: DailyObservationSubmitScreen(
+        api: api,
+        stationId: stationId,
+        initialReportType: reportType,
+        initialObservationDate: DateTime.utc(2026, 11, 9),
+      ),
     ));
     await tester.pumpAndSettle();
-    if (reportType != '24h') {
-      await tester.tap(find.byKey(const ValueKey('daily-report-type')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(DailyObservationContract.reportTypes[reportType]!).last);
-      await tester.pumpAndSettle();
-    }
     final values = reportType == '24h'
         ? <String, String>{
             'minTemp': '-05.3', 'maxTemp': '25.7',
@@ -138,13 +137,13 @@ void main() {
     );
 
     await tester.pumpWidget(MaterialApp(
-      home: DailyObservationSubmitScreen(api: api, stationId: stationId),
+      home: DailyObservationSubmitScreen(
+        api: api,
+        stationId: stationId,
+        initialReportType: '06utc',
+        initialObservationDate: DateTime.utc(2026, 11, 9),
+      ),
     ));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.byKey(const ValueKey('daily-report-type')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('نشرة الرصد عند 06 UTC').last);
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('daily-field-minTemp')), findsOneWidget);
