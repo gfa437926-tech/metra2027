@@ -7,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/features/observations/daily_observation_contract.dart';
 import 'package:metra_mobile/features/observations/daily_observation_submit_screen.dart';
+import 'package:metra_mobile/features/observations/observation_submit_screen.dart';
 
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
@@ -113,6 +114,25 @@ void main() {
     });
     expect(body['observedAt'], endsWith('T06:00:00.000Z'));
     expect(find.textContaining('تم حفظ النشرة اليومية وإرسالها للمراجعة'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('hourly entry exposes navigation to the daily form', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'navigation-token',
+      client: MockClient((_) async => http.Response('{}', 200)),
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationSubmitScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    final openDaily = find.byKey(const ValueKey('open-daily-observation'));
+    await tester.ensureVisible(openDaily);
+    await tester.tap(openDaily);
+    await tester.pumpAndSettle();
+    expect(find.text('إدخال نشرة يومية'), findsOneWidget);
+    expect(find.text('نوع النشرة'), findsOneWidget);
     api.close();
   });
 
