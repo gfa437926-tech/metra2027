@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import 'observation_entry_screen.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 class ObservationReviewScreen extends StatefulWidget {
@@ -28,8 +29,15 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('مراجعة النشرات'),
-      actions: [IconButton(tooltip: 'تحديث', onPressed: _refresh,
-        icon: const Icon(Icons.refresh))]),
+      actions: [
+        IconButton(tooltip: 'إدخال رصد جديد', onPressed: () async {
+          final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+            builder: (_) => ObservationEntryScreen(api: widget.api, stationId: widget.stationId)));
+          if (saved == true && mounted) await _refresh();
+        }, icon: const Icon(Icons.add_circle_outline)),
+        IconButton(tooltip: 'تحديث', onPressed: _refresh,
+          icon: const Icon(Icons.refresh)),
+      ]),
     body: FutureBuilder<List<ObservationQueueItem>>(
       future: _queue,
       builder: (context, snapshot) {
