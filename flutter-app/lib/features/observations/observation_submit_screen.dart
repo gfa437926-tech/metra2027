@@ -39,14 +39,19 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   final TextEditingController _pastWeather = TextEditingController();
   final TextEditingController _remarks = TextEditingController();
 
-  late int _utcHour;
+  late DateTime _observationDate;
+  late int _localHour;
+  int get _utcHour => (_localHour - 3 + 24) % 24;
   bool _submitImmediately = true;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _utcHour = DateTime.now().toUtc().hour;
+    final stationLocalNow = DateTime.now().toUtc().add(const Duration(hours: 3));
+    _observationDate = DateTime(
+      stationLocalNow.year, stationLocalNow.month, stationLocalNow.day);
+    _localHour = stationLocalNow.hour;
   }
 
   @override
@@ -108,9 +113,11 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
 
     setState(() => _saving = true);
     final now = DateTime.now().toUtc();
-    final observedAt = DateTime.utc(now.year, now.month, now.day, _utcHour);
+    final observedAt = DateTime.utc(
+      _observationDate.year, _observationDate.month, _observationDate.day,
+    ).add(Duration(hours: _localHour - 3));
     final values = <String, dynamic>{
-      'utcTime': _utcHour.toString().padLeft(2, '0'),
+      'utcTime': observedAt.hour.toString().padLeft(2, '0'),
       'dryTemp': _dryTemp.text.trim(),
       'wetTemp': _wetTemp.text.trim(),
       'dewPoint': _dewPoint.text.trim(),
@@ -221,10 +228,27 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             Text('المحطة: ${widget.stationId}',
                 style: const TextStyle(color: Color(0xFF64748B))),
             const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _saving ? null : () async {
+                final stationLocalNow = DateTime.now().toUtc().add(const Duration(hours: 3));
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: _observationDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(stationLocalNow.year, stationLocalNow.month, stationLocalNow.day),
+                );
+                if (picked != null && mounted) {
+                  setState(() => _observationDate = picked);
+                }
+              },
+              icon: const Icon(Icons.calendar_today),
+              label: Text('تاريخ الرصد المحلي: ${_observationDate.year.toString().padLeft(4, '0')}-${_observationDate.month.toString().padLeft(2, '0')}-${_observationDate.day.toString().padLeft(2, '0')}'),
+            ),
+            const SizedBox(height: 8),
             DropdownButtonFormField<int>(
-              initialValue: _utcHour,
+              initialValue: _localHour,
               decoration: const InputDecoration(
-                labelText: 'ساعة الرصد بالتوقيت العالمي UTC',
+                labelText: 'ساعة الرصد المحلية (UTC+3)',
                 border: OutlineInputBorder(),
               ),
               items: List<DropdownMenuItem<int>>.generate(
@@ -235,9 +259,12 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
                 ),
               ),
               onChanged: _saving ? null : (hour) {
-                if (hour != null) setState(() => _utcHour = hour);
+                if (hour != null) setState(() => _localHour = hour);
               },
             ),
+            const SizedBox(height: 8),
+            Text('سيُرسل التوقيت العالمي UTC: ${_utcHour.toString().padLeft(2, '0')}:00',
+                style: const TextStyle(color: Color(0xFF64748B))),
             const SizedBox(height: 12),
             _field(_dryTemp, 'الحرارة الجافة (مثل +25.0) *',
                 validator: (value) => _temperature(value, 'الحرارة الجافة')),
