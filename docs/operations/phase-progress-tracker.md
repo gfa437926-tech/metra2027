@@ -1,20 +1,26 @@
 # METRA Weather Intelligence — phase progress tracker
 
-Updated from repository evidence only (no live DB writes).
+Updated from repository evidence only. No live DB writes.
 
 | Phase | Title | Status | Notes |
 |---|---|---|---|
-| 1 | DB isolation review | Partial | Repo targets new Supabase only; `legacy_users_staging` source not in Git |
-| 2 | DB design close | Partial | Inventory from migrations published; owner approval pending |
-| 3 | Security & permissions | In progress | JWT + station checks in API; service-role residual risk documented |
-| 4 | SQL apply | Blocked | Awaiting explicit approval |
+| 1 | DB isolation review | Partial | Repo targets new Supabase only; staging table origin still owner decision |
+| 2 | DB design close | Partial | Schema inventory + SQL review package published for approval |
+| 3 | Security & permissions | In progress | JWT + station checks; service-role residual risk documented |
+| 4 | SQL apply | **Blocked** | Awaiting explicit owner approval |
 | 5 | .NET API complete | Partial | Observations, stations, users, faults, support present |
-| 6 | Web UI complete | Partial | Core routes exist; full legacy parity not proven |
-| 7 | Flutter complete | Partial | Core observation/ops flows; pilot build docs |
+| 6 | Web UI complete | Partial | Core routes; full legacy parity not proven |
+| 7 | Flutter complete | Partial | Observation input stabilized; CI green on recent tip |
 | 8 | Met domain complete | Partial | Hourly/daily strong; other bulletin types incomplete |
-| 9 | Full test suite | Partial | CI green on tip does not equal full isolation matrix live |
-| 10 | Cybersecurity package | Partial | Docs + gates; no full pen-test report |
+| 9 | Full test suite | Partial | Backend + Client CI green does not equal full live isolation matrix |
+| 10 | Cybersecurity package | Partial | Docs + gates; no full pen-test |
 | 11 | Staging pilot | Not started | Needs secrets + host |
 | 12 | Final delivery | Not started | Blocked on 4–11 |
 
-**Immutable gates:** no old DB touch · no SQL apply without approval · no PR merge without approval.
+**Immutable gates:** no old DB · no SQL apply without approval · no PR merge without approval.
+
+## Recent verified tip
+
+- Branch: `work/legacy-ui-migration-audit`
+- Flutter observation forms: SingleChildScrollView + Column (validate/submit reliability)
+- Client CI and Backend CI reported success on tip `25c1c06` class commits
