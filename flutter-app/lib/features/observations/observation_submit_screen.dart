@@ -250,7 +250,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       switch (key) {
         case 'vaporPressure':
         case 'vaporPressureDiff':
-          return _boundedValue(text, label, r'^\\d{2}\\.\\d$', 0, 99);
+          return _boundedValue(text, label, r'^\d{2}\.\d$', 0, 99);
         case 'avgWindDirection':
           return _twoDigitCode(text, label, maximum: 36);
         case 'avgWindSpeed':
@@ -264,7 +264,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
         case 'cloud1Height':
         case 'cloud2Height':
         case 'cloud3Height':
-          return _boundedValue(text, label, r'^\\d{1,3}$', 0, 999);
+          return _boundedValue(text, label, r'^\d{1,3}$', 0, 999);
         default:
           // The API recognizes cloud type fields but currently defines no
           // field-level code rule; preserve the supplied string unchanged.
