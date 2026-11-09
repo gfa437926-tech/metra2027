@@ -10,6 +10,20 @@ import 'package:metra_mobile/features/observations/observation_submit_screen.dar
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
 
+  test('local UTC+3 hour 02 rolls back to previous UTC date at 23:00', () {
+    expect(
+      hourlyObservedAtForLocalHour(DateTime(2026, 11, 9), 2),
+      DateTime.utc(2026, 11, 8, 23),
+    );
+  });
+
+  test('hourly local-hour conversion rejects values outside 00-23', () {
+    expect(
+      () => hourlyObservedAtForLocalHour(DateTime(2026, 11, 9), 24),
+      throwsArgumentError,
+    );
+  });
+
   testWidgets('hourly form converts station local hour and submits canonical values',
       (tester) async {
     late http.Request captured;
@@ -104,78 +118,6 @@ void main() {
     expect(body['payload']['values']['precipitationAmount'], isNull);
     expect(body['observedAt'], endsWith('T01:00:00.000Z'));
     expect(find.textContaining('تم حفظ النشرة وإرسالها للمراجعة'), findsOneWidget);
-    api.close();
-  });
-
-  testWidgets('hourly local 02 converts to previous UTC date at 23:00',
-      (tester) async {
-    late http.Request captured;
-    final api = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'hourly-boundary-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response(
-          jsonEncode({
-            'id': '33333333-3333-4333-8333-333333333333',
-            'status': 'submitted',
-            'replayed': false,
-          }),
-          200,
-        );
-      }),
-    );
-    final stationLocalNow = DateTime.now().toUtc().add(const Duration(hours: 3));
-    final expectedObservedAt = DateTime.utc(
-      stationLocalNow.year, stationLocalNow.month, stationLocalNow.day,
-    ).subtract(const Duration(hours: 1));
-
-    await tester.pumpWidget(MaterialApp(
-      home: ObservationSubmitScreen(api: api, stationId: stationId),
-    ));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('hourly-local-hour')));
-    await tester.pumpAndSettle();
-    final hour02 = find.text('02').last;
-    await tester.drag(find.byType(Scrollable).last, const Offset(0, 260));
-    await tester.pumpAndSettle();
-    await tester.tap(hour02);
-    await tester.pumpAndSettle();
-    expect(find.text('سيُرسل التوقيت العالمي UTC: 23:00'), findsOneWidget);
-
-    const entries = <String, String>{
-      'الحرارة الجافة (مثل +25.0) *': '+25.0',
-      'الحرارة الرطبة (مثل +20.0) *': '+20.0',
-      'نقطة الندى (مثل +18.5) *': '+18.5',
-      'ضغط المحطة (مثل 1013.2) *': '1013.2',
-      'الضغط عند سطح البحر (مثل 1013.2) *': '1013.2',
-      'الرطوبة النسبية (ثلاث خانات مثل 065) *': '065',
-      'اتجاه الرياح (00-36) *': '18',
-      'سرعة الرياح (خانتان) *': '12',
-      'مدى الرؤية (000-200) *': '050',
-      'التغطية الكلية للسحب (0-8) *': '4',
-      'تغطية الطبقتين الأولى والثانية (0-8) *': '4',
-      'تغطية الطبقات الثلاث (0-8) *': '5',
-      'ميل الضغط (مثل 2.3) *': '2.3',
-      'شكل تغير الضغط (0-8) *': '5',
-      'الطقس السابق (0-9) *': '0',
-    };
-    for (final entry in entries.entries) {
-      final field = find.byKey(ValueKey('hourly-field-${entry.key}'));
-      await tester.scrollUntilVisible(
-        field, 300, scrollable: find.byType(Scrollable).first,
-      );
-      await tester.enterText(field, entry.value);
-    }
-    final submit = find.byKey(const ValueKey('hourly-submit'));
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
-    await tester.pumpAndSettle();
-    await tester.tap(submit);
-    await tester.pumpAndSettle();
-
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['payload']['values']['utcTime'], '23');
-    expect(body['observedAt'], expectedObservedAt.toIso8601String());
     api.close();
   });
 
