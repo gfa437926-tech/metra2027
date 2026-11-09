@@ -109,7 +109,7 @@ export class DailyReportsComponent implements OnDestroy {
   private readonly offlineQueue = new DailyOfflineQueue();
   private readonly syncOwner = 'daily-' + Date.now() + '-' + Math.random().toString(36).slice(2);
   private syncChannel?: BroadcastChannel;
-  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string; type?: string }>): void => { if (event.data?.owner === this.syncOwner) return; if (event.data?.type === 'network-online') this.isOnline = true; if (this.isOnline) void this.flushOfflineQueue(); };
+  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string; type?: string; retry?: boolean }>): void => { if (event.data?.owner === this.syncOwner) return; if (event.data?.type === 'network-online') { this.isOnline = true; void this.flushOfflineQueue(); return; } if (event.data?.type === 'lease-released' && event.data.retry !== false && this.isOnline) void this.flushOfflineQueue(); };
   isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
   syncing = false;
   private syncRequested = false;
@@ -245,7 +245,7 @@ export class DailyReportsComponent implements OnDestroy {
       if (leaseAcquired) {
         try {
           await this.offlineQueue.releaseSyncLease(this.syncOwner);
-          this.syncChannel?.postMessage({ type: 'lease-released', owner: this.syncOwner, at: Date.now() });
+          this.syncChannel?.postMessage({ type: 'lease-released', owner: this.syncOwner, at: Date.now(), retry: !stoppedForTransientFailure });
         } catch { /* lease expires automatically */ }
       }
       this.syncing = false;
@@ -254,10 +254,12 @@ export class DailyReportsComponent implements OnDestroy {
       if (this.isOnline && this.apiReady && !stoppedForTransientFailure &&
           (this.syncRequested || pendingRemain)) {
         this.syncRequested = false;
-        // If another tab held the lease when this attempt began, retry with a
-        // longer backoff. This closes the missed-notification race without
-        // polling continuously or retrying a transient API failure.
-        window.setTimeout(() => void this.flushOfflineQueue(), leaseAcquired ? 150 : 500);
+        // When a competing tab owns the lease, rely on its explicit release
+        // message. A transient failure releases the lease with retry=false,
+        // preventing another tab from immediately repeating the failed POST.
+        if (leaseAcquired || !this.syncChannel) {
+          window.setTimeout(() => void this.flushOfflineQueue(), leaseAcquired ? 150 : 500);
+        }
       }
     }
   }
