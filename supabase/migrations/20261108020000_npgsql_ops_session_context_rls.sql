@@ -58,7 +58,7 @@ begin
       execute format('grant usage, select on sequence %s to metra_ops_faults', v_sequence::regclass);
     end if;
   end loop;
-end $;
+end $seq$;
 
 -- Drop previous ops policies if re-applied
 drop policy if exists metra_ops_faults_station_isolation on public.metra_equipment_faults;
