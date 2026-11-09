@@ -96,6 +96,68 @@ void main() {
     client.close();
   });
 
+  test('hourly submission sends canonical nested values and requires a receipt', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'submission-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode({
+          'id': '33333333-3333-4333-8333-333333333333',
+          'status': 'submitted',
+          'replayed': false,
+        }), 200);
+      }),
+    );
+
+    final receipt = await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'hourly-test-key',
+      observationType: 'hourly',
+      observedAt: DateTime.utc(2026, 11, 9, 12),
+      payload: {
+        'values': {
+          'utcTime': '12',
+          'dryTemp': '+25.0',
+          'totalCloudCover': '4',
+        },
+      },
+      submit: true,
+    );
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.headers['authorization'], 'Bearer submission-token');
+    expect(body['observationType'], 'hourly');
+    expect(body['payload']['values']['utcTime'], '12');
+    expect(body['payload']['values']['totalCloudCover'], '4');
+    expect(body['payload']['cloudCover'], isNull);
+    expect(receipt['id'], '33333333-3333-4333-8333-333333333333');
+    client.close();
+  });
+
+  test('does not treat a 2xx response without an observation id as saved', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'submission-token',
+      client: MockClient((_) async => http.Response(
+        jsonEncode({'status': 'submitted', 'replayed': false}), 200)),
+    );
+
+    await expectLater(
+      client.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'hourly-no-receipt',
+        observationType: 'hourly',
+        observedAt: DateTime.utc(2026, 11, 9, 12),
+        payload: {'values': {'utcTime': '12'}},
+        submit: true,
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
