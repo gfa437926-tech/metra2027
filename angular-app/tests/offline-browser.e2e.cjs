@@ -559,7 +559,7 @@ async function main() {
         request.onerror = () => reject(request.error);
       });
       db.close();
-      return rows.find(item => item.observationType === 'hourly' && item.payload.values.dryTemp === '+27.0');
+      return rows.find(item => item.observationType === 'hourly' && item.payload.values.dryTemp === '+27.0' && item.attempts === 1 && Boolean(item.lastError));
     });
     assert.equal(hourlyTransient.state, 'pending');
     assert.equal(hourlyTransient.attempts, 1);
