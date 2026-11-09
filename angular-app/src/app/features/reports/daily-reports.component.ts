@@ -201,6 +201,7 @@ export class DailyReportsComponent implements OnDestroy {
     this.syncing = true;
     this.syncMessage = '';
     let leaseAcquired = false;
+    let stoppedForTransientFailure = false;
     try {
       leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
       if (!leaseAcquired) return;
@@ -233,6 +234,7 @@ export class DailyReportsComponent implements OnDestroy {
           } else {
             await this.offlineQueue.update({ ...item, state: 'pending', attempts: item.attempts + 1,
               lastError: getSubmissionErrorMessage(error, 'تعذر الاتصال بالخادم.') });
+            stoppedForTransientFailure = true;
             break;
           }
         }
@@ -248,9 +250,13 @@ export class DailyReportsComponent implements OnDestroy {
       }
       this.syncing = false;
       await this.refreshOfflineCount();
-      if (this.syncRequested && this.isOnline && this.apiReady) {
+      const pendingRemain = (await this.offlineQueue.list()).some(item => item.state === 'pending');
+      if (this.isOnline && this.apiReady && !stoppedForTransientFailure &&
+          (this.syncRequested || (leaseAcquired && pendingRemain))) {
         this.syncRequested = false;
-        void this.flushOfflineQueue();
+        // A second tab may enqueue while this owner is draining. Re-enter after
+        // releasing the lease so a missed cross-tab wake-up cannot strand it.
+        window.setTimeout(() => void this.flushOfflineQueue(), 150);
       }
     }
   }
