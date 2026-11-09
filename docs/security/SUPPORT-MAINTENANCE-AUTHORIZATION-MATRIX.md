@@ -1,6 +1,6 @@
 # Support and maintenance authorization matrix
 
-**Status:** aligned with API code on `work/legacy-ui-migration-audit` (service-role + station permission gates).  
+**Status:** aligned with API and transition RPC permission codes on `work/legacy-ui-migration-audit` (service-role + station permission gates).  
 **Not a grant of database apply.** Persistence still uses server-side `service_role` or Npgsql ops role after API authorization.
 
 ## Principal identity
@@ -54,3 +54,4 @@ Transitions also require route-level `*.read` via `RequireStationPermission` plu
 - Export endpoints (not present).
 - `operations.analytics.read` (documentation only).
 - Live PostgreSQL RLS proof (see `docs/security/postgres-isolation-test-plan.md`).
+- The SQL transition RPC permission mapping is guarded by `database/tests/verify_ops_transition_permission_contract.sh`; live role grants and RLS still require disposable PostgreSQL execution.

@@ -76,9 +76,9 @@ begin
   v_permission := case p_to_status
     when 'UnderReview' then 'equipment_fault.review'
     when 'Assigned' then 'equipment_fault.assign'
-    when 'InProgress' then 'equipment_fault.progress'
+    when 'InProgress' then 'equipment_fault.update'
     when 'Resolved' then 'equipment_fault.resolve'
-    when 'Closed' then 'equipment_fault.close'
+    when 'Closed' then 'equipment_fault.resolve'
     when 'Rejected' then 'equipment_fault.review'
     else 'equipment_fault.review'
   end;
@@ -116,7 +116,7 @@ begin
       raise exception 'assignee_required' using errcode = '22023';
     end if;
     if p_assigned_to is not null then
-      if not public.metra_user_has_station_permission(p_assigned_to, p_station_id, 'equipment_fault.progress') then
+      if not public.metra_user_has_station_permission(p_assigned_to, p_station_id, 'equipment_fault.update') then
         raise exception 'assignee_not_authorized_for_station' using errcode = '42501';
       end if;
     end if;
@@ -181,10 +181,10 @@ begin
   v_permission := case p_to_status
     when 'UnderReview' then 'support_incident.review'
     when 'Assigned' then 'support_incident.assign'
-    when 'InProgress' then 'support_incident.progress'
-    when 'WaitingForInformation' then 'support_incident.progress'
+    when 'InProgress' then 'support_incident.update'
+    when 'WaitingForInformation' then 'support_incident.update'
     when 'Resolved' then 'support_incident.resolve'
-    when 'Closed' then 'support_incident.close'
+    when 'Closed' then 'support_incident.resolve'
     when 'Rejected' then 'support_incident.review'
     else 'support_incident.review'
   end;
@@ -223,7 +223,7 @@ begin
       raise exception 'assignee_required' using errcode = '22023';
     end if;
     if p_assigned_to is not null then
-      if not public.metra_user_has_station_permission(p_assigned_to, p_station_id, 'support_incident.progress') then
+      if not public.metra_user_has_station_permission(p_assigned_to, p_station_id, 'support_incident.update') then
         raise exception 'assignee_not_authorized_for_station' using errcode = '42501';
       end if;
     end if;

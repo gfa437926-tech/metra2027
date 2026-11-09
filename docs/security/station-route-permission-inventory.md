@@ -7,7 +7,7 @@ Static scan: each `RequireStationPermission` paired with nearest preceding `Map*
 | `/api/v1/stations/{stationId:guid}/equipment-faults` | `equipment_fault.create` | `EquipmentFaultEndpoints.cs` |
 | `/api/v1/stations/{stationId:guid}/equipment-faults` | `equipment_fault.read` | `EquipmentFaultEndpoints.cs` |
 | `/api/v1/stations/{stationId:guid}/equipment-faults/{faultId:guid}` | `equipment_fault.read` | `EquipmentFaultEndpoints.cs` |
-| `(unknown route)` | `equipment_fault.read` | `EquipmentFaultEndpoints.cs` |
+| `/api/v1/stations/{stationId:guid}/equipment-faults/{faultId:guid}/transitions` (route membership gate) | `equipment_fault.read` | `EquipmentFaultEndpoints.cs` |
 | `/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/resubmit` | `observation.submit` | `ObservationResubmitEndpoints.cs` |
 | `/api/v1/stations/{stationId:guid}/observations/returned` | `observation.submit` | `ObservationReturnedQueueEndpoints.cs` |
 | `/api/v1/stations/{stationId:guid}/observations` | `observation.create` | `ObservationSubmissionEndpoints.cs` |
