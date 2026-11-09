@@ -132,8 +132,8 @@ begin
     raise exception 'TEST_FAIL: transition to UnderReview failed';
   end if;
 
-  select count(*) into audit_count from public.metra_equipment_fault_audit_events
-  where fault_id = fault_id and to_status = 'UnderReview';
+  select count(*) into audit_count from public.metra_equipment_fault_audit_events audit_event
+  where audit_event.fault_id = fault_id and audit_event.to_status = 'UnderReview';
   if audit_count < 1 then
     raise exception 'TEST_FAIL: missing transition audit row';
   end if;
