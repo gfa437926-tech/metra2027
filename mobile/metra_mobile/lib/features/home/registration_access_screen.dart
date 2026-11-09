@@ -24,6 +24,8 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
   RegistrationStatus? _status;
   String? _roleCode, _stationId, _error;
   bool _busy = false;
+  String? _pendingIdempotencyKey;
+  String? _pendingFingerprint;
 
   @override
   void initState() {
@@ -60,17 +62,27 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
     }
   }
 
-  String _idempotencyKey() {
+  String _newIdempotencyKey() {
     final random = Random.secure();
     return List<int>.generate(32, (_) => random.nextInt(256))
       .map((value) => value.toRadixString(16).padLeft(2, '0')).join();
   }
+
+  String _registrationFingerprint() => [
+    _first.text.trim(), _father.text.trim(), _last.text.trim(),
+    _phone.text.trim(), _roleCode ?? '', _stationId ?? '',
+  ].join('\\u001f');
 
   Future<void> _submit() async {
     if (_busy || !_formKey.currentState!.validate()) return;
     if (_roleCode == null || _stationId == null) {
       setState(() => _error = 'لا توجد أدوار أو محطات مؤهلة للتسجيل حالياً.');
       return;
+    }
+    final fingerprint = _registrationFingerprint();
+    if (_pendingFingerprint != fingerprint || _pendingIdempotencyKey == null) {
+      _pendingFingerprint = fingerprint;
+      _pendingIdempotencyKey = _newIdempotencyKey();
     }
     setState(() { _busy = true; _error = null; });
     try {
@@ -81,8 +93,10 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
         phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
         roleCode: _roleCode!,
         stationId: _stationId!,
-        idempotencyKey: _idempotencyKey(),
+        idempotencyKey: _pendingIdempotencyKey!,
       );
+      _pendingIdempotencyKey = null;
+      _pendingFingerprint = null;
       await _loadData();
       if (mounted) setState(() => _load = Future<void>.value());
     } on MetraApiException catch (error) {
