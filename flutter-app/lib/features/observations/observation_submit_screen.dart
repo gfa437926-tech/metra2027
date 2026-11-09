@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import 'daily_observation_submit_screen.dart';
 
 /// Hourly observation intake using the canonical v1 API field contract.
 class ObservationSubmitScreen extends StatefulWidget {
@@ -279,6 +280,22 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
             const SizedBox(height: 8),
             Text('سيُرسل التوقيت العالمي UTC: ${_utcHour.toString().padLeft(2, '0')}:00',
                 style: const TextStyle(color: Color(0xFF64748B))),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const ValueKey('open-daily-observation'),
+              onPressed: _saving
+                  ? null
+                  : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => DailyObservationSubmitScreen(
+                            api: widget.api,
+                            stationId: widget.stationId,
+                          ),
+                        ),
+                      ),
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: const Text('الانتقال إلى إدخال النشرة اليومية'),
+            ),
             const SizedBox(height: 12),
             _field(_dryTemp, 'الحرارة الجافة (مثل +25.0) *',
                 validator: (value) => _temperature(value, 'الحرارة الجافة')),
