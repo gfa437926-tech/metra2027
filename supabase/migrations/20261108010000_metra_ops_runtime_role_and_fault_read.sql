@@ -46,4 +46,4 @@ begin
       execute format('grant usage, select on sequence %s to metra_ops_faults', v_sequence::regclass);
     end if;
   end loop;
-end $;
+end $seq$;
