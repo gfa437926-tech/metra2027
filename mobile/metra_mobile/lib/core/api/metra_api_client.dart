@@ -244,8 +244,11 @@ class MetraApiClient {
       'idempotencyKey': idempotencyKey,
     });
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! Map) throw const FormatException('invalid_registration_response');
-    return Map<String, dynamic>.from(decoded);
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+      return Map<String, dynamic>.from(decoded.first as Map);
+    }
+    throw const FormatException('invalid_registration_response');
   }
 
   Future<http.Response> _send(String method, String path,
