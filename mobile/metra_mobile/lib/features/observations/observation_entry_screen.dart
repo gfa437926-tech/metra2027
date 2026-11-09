@@ -59,7 +59,8 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
         409 => 'تعارض في مفتاح الإرسال أو حالة الرصد.',
         503 => 'خدمة الرصد غير متاحة حالياً.',
         _ => 'تعذر حفظ الرصد.',
-      });
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة الرصد.');
     } finally {
