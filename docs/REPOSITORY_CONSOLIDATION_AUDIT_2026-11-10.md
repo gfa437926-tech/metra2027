@@ -103,3 +103,41 @@ These are adaptations to the existing target architecture, not wholesale copies 
 ## Safety record
 
 No database was connected to or queried. No SQL was executed or applied. No legacy database or legacy repository was accessed. No deployment was performed. No repository or source file was deleted.
+
+
+## Follow-up authorization trace (2026-11-10)
+
+### Verified API actor provenance
+
+The target ASP.NET API validates JWT issuer, audience, signature and lifetime with `MapInboundClaims = false`. The reviewed write endpoints obtain the actor UUID from the validated `sub` claim (`HttpContext.User`) and pass that server-derived UUID to the server-only Supabase service. The reviewed routes do not accept an actor UUID in their request DTOs:
+
+- Registration submission/status: `RegistrationSubmissionEndpoints.cs`
+- Observation submission/decision: `ObservationSubmissionEndpoints.cs`
+- Station assignment request/decision/revocation: `StationAssignmentEndpoints.cs`
+- Authority membership/permission-grant actions and audit reads: `AuthorityAccessEndpoints.cs`
+
+The service-role credential is read from server configuration and is not sent by Flutter. This closes the API-boundary question for these inspected routes only; it does not establish that every endpoint in the repository follows the same rule.
+
+### Database-side checks observed
+
+- Observation decision RPC `metra_decide_observation` checks the requested user's station permission inside the same database function/transaction, locks the observation row with `FOR UPDATE`, checks the submitted state, and writes the decision plus audit event. The API also performs a preflight permission check; the database check is the authoritative transactional check.
+- Station assignment request/decision RPCs constrain the assignable role set to `observer` and `station_auditor`, require the actor's `users.station.manage` permission, validate the target's active account and approved authority membership, bind the assignment to the station's owning authority, and write audit events. The decision path locks the assignment row and prevents self-approval / approval by the original requester.
+- The station-bound registration decision wrapper locks the request row and compares its requested station with the route station before delegating to the transactional registration decision function.
+- Registration submission uses the active-station wrapper; the API derives `p_auth_user_id` from the verified JWT subject and only the server-side service-role client calls the privileged RPC.
+
+### Remaining authorization gaps (not closed)
+
+1. The authority-level membership and permission-grant RPC implementations still need a line-by-line transaction review proving the maximum authority an actor may delegate, preventing self-escalation and role/permission amplification, and checking concurrent grant/revocation changes under row locks. API actor provenance alone is not proof of the delegation ceiling.
+2. Observation review-queue authorization currently calls the permission RPC and then performs a separate service-role table read. The queue read is not visibly bound to the same database transaction as the permission check. Review whether a single narrowly scoped RPC should combine authorization and queue selection to remove the revocation/read TOCTOU window.
+3. Station-assignment revocation must be reviewed for consistency with the full station/authority state and scheduled-revocation rules; the inspected function checks current assignment state and station permission, but does not repeat all of the request/approval path's target-account and authority-membership checks.
+4. The latest source-only migration `20261110120000_honor_scheduled_permission_revocation.sql` is not part of the target migration history. It dynamically rewrites function definitions using exact string needles; compare the target's actual tracked function definitions and test the migration on a disposable schema before deciding whether to port it. Do not apply it to any hosted database during this audit.
+5. No direct database connection was made, so no live schema, migration history, role grants, or deployed function definitions have been independently confirmed.
+
+### CI confirmation on the latest audit head
+
+Latest PR head checked: `2cd829a6da11225a5cef649db071f4e47b353173`.
+
+- Backend workflow run `42712994936`: completed successfully; contract checks, .NET build/tests and production container build passed.
+- Client workflow run `42712994757`: completed successfully; Flutter analyze/tests and Angular build passed.
+
+This verifies the latest PR head in CI. It does not replace database-side or staging acceptance tests.
