@@ -73,10 +73,15 @@ public static class SupportIncidentRequestGuard
 
     public static string PermissionForTransition(SupportIncidentStatus toStatus) => toStatus switch
     {
+        // Review / reject decisions
         SupportIncidentStatus.UnderReview or SupportIncidentStatus.Rejected => "support_incident.review",
+        // Assignment to support staff
         SupportIncidentStatus.Assigned => "support_incident.assign",
+        // Active work and information requests — not resolve/close
         SupportIncidentStatus.InProgress or SupportIncidentStatus.WaitingForInformation
-            or SupportIncidentStatus.Resolved or SupportIncidentStatus.Closed => "support_incident.resolve",
+            => "support_incident.update",
+        // Final resolve and close
+        SupportIncidentStatus.Resolved or SupportIncidentStatus.Closed => "support_incident.resolve",
         _ => "support_incident.review"
     };
 }

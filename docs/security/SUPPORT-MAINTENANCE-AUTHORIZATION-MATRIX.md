@@ -19,14 +19,30 @@ Status: proposed server-side contract; not yet wired to routes or persistence.
 |---|---|
 | Submit equipment fault | `equipment_fault.create` |
 | Read station fault queue/details | `equipment_fault.read` |
-| Assign or reassign workshop technician | `maintenance.assign` |
-| Record maintenance progress | `maintenance.update` |
-| Resolve/close maintenance | `maintenance.resolve` |
+| Review / reject equipment fault | `equipment_fault.review` |
+| Assign or reassign workshop technician | `equipment_fault.assign` |
+| Start or update maintenance work (`InProgress`) | `equipment_fault.update` |
+| Resolve or close maintenance | `equipment_fault.resolve` |
 | Submit IT/telecom incident | `support_incident.create` |
 | Read support incident | `support_incident.read` |
+| Review / reject support incident | `support_incident.review` |
 | Assign support incident | `support_incident.assign` |
-| Change incident status | `support_incident.transition` |
+| Start work or wait for information (`InProgress`, `WaitingForInformation`) | `support_incident.update` |
+| Resolve or close support incident | `support_incident.resolve` |
 | View station-scoped analytics | `operations.analytics.read` |
+
+### Transition → permission mapping (API contract)
+| Domain | Target status | Required permission |
+|---|---|---|
+| Equipment | UnderReview, Rejected | `equipment_fault.review` |
+| Equipment | Assigned | `equipment_fault.assign` |
+| Equipment | InProgress | `equipment_fault.update` |
+| Equipment | Resolved, Closed | `equipment_fault.resolve` |
+| Support | UnderReview, Rejected | `support_incident.review` |
+| Support | Assigned | `support_incident.assign` |
+| Support | InProgress, WaitingForInformation | `support_incident.update` |
+| Support | Resolved, Closed | `support_incident.resolve` |
+
 
 ## Mutation requirements
 1. Validate request shape and domain policy.

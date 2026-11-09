@@ -138,10 +138,14 @@ public static class EquipmentFaultRequestGuard
 
     public static string PermissionForTransition(EquipmentFaultStatus toStatus) => toStatus switch
     {
+        // Review / reject decisions
         EquipmentFaultStatus.UnderReview or EquipmentFaultStatus.Rejected => "equipment_fault.review",
+        // Assignment to workshop staff
         EquipmentFaultStatus.Assigned => "equipment_fault.assign",
-        EquipmentFaultStatus.InProgress or EquipmentFaultStatus.Resolved or EquipmentFaultStatus.Closed
-            => "equipment_fault.resolve",
+        // Technician progress (start / continue work) — not resolve/close
+        EquipmentFaultStatus.InProgress => "equipment_fault.update",
+        // Final resolve and close
+        EquipmentFaultStatus.Resolved or EquipmentFaultStatus.Closed => "equipment_fault.resolve",
         _ => "equipment_fault.review"
     };
 }

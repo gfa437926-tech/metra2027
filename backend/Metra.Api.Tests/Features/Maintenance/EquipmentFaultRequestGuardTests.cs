@@ -39,8 +39,11 @@ public sealed class EquipmentFaultRequestGuardTests
 
     [Theory]
     [InlineData("UnderReview", "equipment_fault.review")]
+    [InlineData("Rejected", "equipment_fault.review")]
     [InlineData("Assigned", "equipment_fault.assign")]
+    [InlineData("InProgress", "equipment_fault.update")]
     [InlineData("Resolved", "equipment_fault.resolve")]
+    [InlineData("Closed", "equipment_fault.resolve")]
     public void Maps_transition_permissions(string status, string permission)
     {
         Assert.True(EquipmentFaultRequestGuard.TryParseStatus(status, out var parsed));

@@ -50,4 +50,19 @@ public sealed class SupportIncidentRequestGuardTests
                 "station_support_incident_create_forbidden",
                 System.Net.HttpStatusCode.InternalServerError));
     }
+
+    [Theory]
+    [InlineData("UnderReview", "support_incident.review")]
+    [InlineData("Rejected", "support_incident.review")]
+    [InlineData("Assigned", "support_incident.assign")]
+    [InlineData("InProgress", "support_incident.update")]
+    [InlineData("WaitingForInformation", "support_incident.update")]
+    [InlineData("Resolved", "support_incident.resolve")]
+    [InlineData("Closed", "support_incident.resolve")]
+    public void Maps_transition_permissions(string status, string permission)
+    {
+        Assert.True(SupportIncidentRequestGuard.TryParseStatus(status, out var parsed));
+        Assert.Equal(permission, SupportIncidentRequestGuard.PermissionForTransition(parsed));
+    }
+
 }
