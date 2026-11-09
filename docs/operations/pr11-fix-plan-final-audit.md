@@ -1,45 +1,54 @@
-# Final audit — METRA fix plan (updated)
+# Final audit — METRA fix plan (CI evidence refreshed)
 
 **Branch:** `work/legacy-ui-migration-audit`  
-**Previous tip with green CI:** `df02b37f2bbc53c407f1d67b947e9131ae33e509`  
-**Latest audited code change:** `10bfc3314d9be10d345a6ad9e7b54157e5527060`  
 **PR #11:** Draft — **not merged**  
+**Client CI run:** `42701716482` — success  
+**Backend build run:** `42701716535` — success  
 **Databases:** no hosted apply, no legacy access
 
-## Proven (automated)
+## Proven on the audited branch
 
-| Area | Proof |
+| Area | Evidence |
 |---|---|
-| Flutter analyze / observation tests | Client CI green on df02b37 lineage |
-| Backend build + permission unit/integration tests | Backend CI green on df02b37 lineage |
-| Transition permission split update vs resolve | Unit + API integration tests |
-| Cross-station API deny (list/detail/transition) | Equipment + support authorization tests |
-| Detail payload station mismatch | Fail-closed 404 tests (10bfc331) |
+| Flutter | `flutter pub get`, `flutter analyze`, and `flutter test` all passed in Client CI run `42701716482` |
+| Angular | `npm test` and production `npm run build` passed in the same Client CI run |
+| Real Chromium PWA / IndexedDB E2E | Three independent Playwright runs passed; each reported service worker, offline save/reopen, automatic sync, server rejection blocking, transient retry, hourly queue recovery, and daily/hourly concurrency checks as true; `maxConcurrentPosts=1`; `runtimeErrors=0` |
+| .NET | API build, domain/API tests, production container build, and liveness/readiness smoke checks passed in Backend build run `42701716535` |
+| PostgreSQL role grants and RLS | Disposable PostgreSQL 17 service container; bootstrap and operational security migrations applied to that disposable database only; least-privilege grant test passed |
+| Station and assignee isolation | Real PostgreSQL harness passed station isolation, assigned-technician authorization, fault/support isolation, audit immutability, audited transitions, and rollback-on-audit-failure cases; fixtures rolled back |
 
-## Not yet proven
+## Remaining gaps — not represented as complete
 
-| Risk | Why unproven |
+| Risk / feature | Current state |
 |---|---|
-| PostgreSQL RLS / `SET LOCAL` live | A disposable-Postgres SQL harness now exists, but it has not been executed in CI or staging |
-| Hosted Supabase schema drift | Not introspected in this review; no hosted connection used |
-| Attachments / export isolation | **No API routes implemented** |
-| `operations.analytics.read` | Documented only, not wired |
-| `legacy_users_staging` origin | Owner decision |
+| Hosted Supabase schema drift | Not introspected; no hosted database connection used |
+| Attachments and export isolation | No corresponding API routes are mapped in `Program.cs`; implementation and authorization tests remain outstanding |
+| `operations.analytics.read` | Documented only; not wired to an API endpoint/policy |
+| `legacy_users_staging` origin | Requires owner decision before any migration or use |
+| Live authenticated staging E2E | Not run; requires operator-provisioned staging credentials and approved environment |
+| Full Flutter/Angular UI parity with all legacy reports | Not established by these CI runs; requires screen-by-screen acceptance review |
 
 ## Disposable PostgreSQL harness
 
-- `database/tests/ops_station_isolation_pg_test.sql` is an executable psql harness, not a placeholder.
-- It refuses any database other than `metra_ops_test`, requires the target operational tables to be empty, checks RLS and FORCE RLS, includes station isolation and assignee authorization scenarios, and rolls fixtures back.
+- `database/tests/ops_station_isolation_pg_test.sql` is an executable psql harness.
+- It refuses any database other than `metra_ops_test`, requires the target operational tables to be empty, checks RLS and FORCE RLS, exercises station isolation and assignee authorization, and rolls fixtures back.
 - It includes `database/tests/equipment_fault_npgsql_isolation.sql` and `database/tests/ops_assignee_authorization_pg_test.sql`.
-- `database/tests/ops_role_grant_boundary_pg_test.sql` separately checks role flags, grants, client denials, RPC execute privileges and audit boundaries.
-- Remaining gap: these scripts are not currently wired into an automated disposable-Postgres CI job, and no live run is claimed.
+- `database/tests/ops_role_grant_boundary_pg_test.sql` checks role flags, grants, client denials, RPC execute privileges, and audit boundaries.
+- These tests now run in the automated disposable-PostgreSQL CI job. This is not a claim that hosted Supabase was inspected or changed.
 
-## Documents
+## Security and release boundaries
 
-- `docs/security/SUPPORT-MAINTENANCE-AUTHORIZATION-MATRIX.md` — aligned with API code/tests
-- `docs/security/service-role-support-maintenance-review.md`
-- `docs/security/postgres-isolation-test-plan.md`
+- No PR merge.
+- No SQL applied to any hosted database.
+- No connection to, modification of, or migration from the legacy database.
+- No production-readiness claim based solely on green CI.
+- Attachments/export and analytics permissions must be implemented with station-scoped authorization, least-privilege storage access, audit coverage, and negative cross-station tests before release.
 
-## Confirmation
+## Next work sequence
 
-No PR merge. No SQL applied to any hosted database. No connection to the legacy database.
+1. Define the attachment metadata/storage contract and export data scope from the approved new-project schema; do not assume or create hosted tables.
+2. Implement authenticated attachment metadata/download/upload routes with station and record ownership checks, safe content validation, size limits, and audit events; test cross-station denial.
+3. Define analytics query scope and wire `operations.analytics.read` to explicit policy and station/authority scoping; add allow/deny tests.
+4. Resolve the provenance and intended disposition of `legacy_users_staging` with the owner.
+5. Complete legacy-screen parity review and approved staging E2E.
+
