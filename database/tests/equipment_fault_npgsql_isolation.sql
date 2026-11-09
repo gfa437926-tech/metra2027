@@ -107,11 +107,11 @@ do $$
 declare
   station uuid := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
   actor uuid := '11111111-1111-1111-1111-111111111111';
-  fault_id uuid;
+  v_fault_id uuid;
   status_now text;
   audit_count int;
 begin
-  select id into fault_id from public.metra_equipment_faults
+  select id into v_fault_id from public.metra_equipment_faults
   where station_id = station and status = 'Submitted' limit 1;
 
   perform set_config('app.station_id', station::text, true);
@@ -119,12 +119,12 @@ begin
 
   update public.metra_equipment_faults
   set status = 'UnderReview', updated_at = now()
-  where id = fault_id and station_id = station
+  where id = v_fault_id and station_id = station
   returning status into status_now;
 
   insert into public.metra_equipment_fault_audit_events (
     fault_id, station_id, actor_user_id, event_type, from_status, to_status, note)
-  values (fault_id, station, actor, 'status_transition', 'Submitted', 'UnderReview', 'review started');
+  values (v_fault_id, station, actor, 'status_transition', 'Submitted', 'UnderReview', 'review started');
 
   reset role;
 
@@ -133,7 +133,7 @@ begin
   end if;
 
   select count(*) into audit_count from public.metra_equipment_fault_audit_events audit_event
-  where audit_event.fault_id = fault_id and audit_event.to_status = 'UnderReview';
+  where audit_event.fault_id = v_fault_id and audit_event.to_status = 'UnderReview';
   if audit_count < 1 then
     raise exception 'TEST_FAIL: missing transition audit row';
   end if;
