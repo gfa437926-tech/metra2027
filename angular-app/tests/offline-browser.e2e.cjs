@@ -455,6 +455,15 @@ async function main() {
     // Dispatch one online event in the initiating tab; the other tab must
     // learn about reconnection through the shared BroadcastChannel.
     await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    // The shared lease intentionally serializes requests. Keep the first
+    // response held to prove the second tab cannot start a parallel POST,
+    // then release it so the lease owner can drain the other observation type.
+    await page.waitForFunction(() => acceptedPosts.length >= 5, { timeout: 20000 });
+    const firstConcurrentPosts = acceptedPosts.slice(4);
+    assert.equal(firstConcurrentPosts.length, 1, 'Only one POST may be in flight while its response is held');
+    assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
+    holdConcurrentResponses = false;
+
     await page.waitForFunction(async () => {
       const db = await new Promise((resolve, reject) => {
         const request = indexedDB.open('metra-offline-outbox', 3);
@@ -477,12 +486,11 @@ async function main() {
       db.close();
       return rows.map(item => ({ observationType: item.observationType ?? 'daily', state: item.state, attempts: item.attempts, lastError: item.lastError }));
     });
-    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after connectivity is restored. Diagnostics=' + JSON.stringify({ allPosts: acceptedPosts, concurrentPosts, remaining: concurrentAfter }));
+    assert.equal(concurrentPosts.length, 2, 'Both queue types must drain after serialized connectivity recovery. Diagnostics=' + JSON.stringify({ allPosts: acceptedPosts, concurrentPosts, remaining: concurrentAfter }));
     assert.deepEqual(concurrentPosts.map(item => item.observationType).sort(), ['daily', 'hourly']);
     assert.equal(new Set(concurrentPosts.map(item => item.idempotencyKey)).size, 2);
 
     assert.equal(maxConcurrentPosts, 1, 'Shared IndexedDB lease must serialize requests from both tabs');
-    holdConcurrentResponses = false;
 
     // Hourly permanent rejection must retain the record as blocked with the
     // server's reason; transient failure must stay pending and retry later.
