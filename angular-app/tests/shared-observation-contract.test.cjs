@@ -120,6 +120,44 @@ test('shared hourly fixtures execute against Angular hourly validation rules', (
   }
 });
 
+test('all 24 UTC hours enforce the exact conditional field matrix', () => {
+  const synopticHours = new Set([0, 3, 6, 9, 12, 15, 18, 21]);
+  const precipitationHours = new Set([0, 6, 12, 18]);
+  const base = JSON.parse(fs.readFileSync(path.join(fixturesDir, 'hourly-valid-synoptic.json'), 'utf8')).values;
+  for (let hour = 0; hour < 24; hour++) {
+    const utcTime = String(hour).padStart(2, '0');
+    const values = { ...base, utcTime };
+    if (!synopticHours.has(hour)) {
+      delete values.pressureSlope;
+      delete values.pressureShape;
+      delete values.pastWeather;
+    }
+    if (!precipitationHours.has(hour)) delete values.precipitationAmount;
+    assert.deepEqual(validateHourlyObservation(values), {}, utcTime + ' UTC should be valid');
+
+    const required = [
+      ...(synopticHours.has(hour) ? ['pressureSlope', 'pressureShape', 'pastWeather'] : []),
+      ...(precipitationHours.has(hour) ? ['precipitationAmount'] : [])
+    ];
+    for (const field of required) {
+      const missing = { ...values };
+      delete missing[field];
+      assert.ok(Object.hasOwn(validateHourlyObservation(missing), field),
+        field + ' must be required at ' + utcTime + ' UTC');
+    }
+    const optional = [
+      ...(!synopticHours.has(hour) ? ['pressureSlope', 'pressureShape', 'pastWeather'] : []),
+      ...(!precipitationHours.has(hour) ? ['precipitationAmount'] : [])
+    ];
+    for (const field of optional) {
+      const missing = { ...values };
+      delete missing[field];
+      assert.ok(!Object.hasOwn(validateHourlyObservation(missing), field),
+        field + ' must remain optional at ' + utcTime + ' UTC');
+    }
+  }
+});
+
 test('hourly conditional requirements and cross-field checks execute', () => {
   const valid = JSON.parse(fs.readFileSync(path.join(fixturesDir, 'hourly-valid-synoptic.json'), 'utf8')).values;
   const missing = { ...valid, utcTime: '01' };
