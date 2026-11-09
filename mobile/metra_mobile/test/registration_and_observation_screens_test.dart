@@ -110,7 +110,10 @@ void main() {
     expect(find.text('تعذر الاتصال بخدمة الرصد.'), findsNothing);
     expect(find.text('خدمة الرصد غير متاحة حالياً.'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('حفظ الرصد'));
+    await tester.scrollUntilVisible(
+      find.text('حفظ الرصد'), 300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('حفظ الرصد'));
     await tester.pump();
     await tester.pumpAndSettle();
