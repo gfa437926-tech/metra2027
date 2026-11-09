@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 /// Arabic labels for known observation payload keys.
 const Map<String, String> observationFieldLabels = {
   'minTemp': 'درجة الحرارة الصغرى',
-  'precipitationTrace': 'الهطول الأثري',
-  'snowThickness': 'سماكة الثلج',
   'maxTemp': 'درجة الحرارة العظمى',
   'precipitation': 'الهطول',
   'snowThickness': 'سماكة الثلج',
