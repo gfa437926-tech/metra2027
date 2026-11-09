@@ -88,12 +88,12 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('daily-field-snowThickness')), '015');
 
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
-    await tester.ensureVisible(agreement);
+    await tester.scrollUntilVisible(agreement, 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(agreement);
     await tester.pumpAndSettle();
 
     final submit = find.byKey(const ValueKey('daily-submit'));
-    await tester.ensureVisible(submit);
+    await tester.scrollUntilVisible(submit, 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(submit);
     await tester.pumpAndSettle();
 
