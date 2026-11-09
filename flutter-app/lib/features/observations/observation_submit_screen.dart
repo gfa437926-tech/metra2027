@@ -113,7 +113,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate() || _saving) return;
+    if (_saving) return;
     final dry = double.tryParse(_dryTemp.text.trim());
     final wet = double.tryParse(_wetTemp.text.trim());
     if (dry != null && wet != null && wet > dry) {
@@ -122,6 +122,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       );
       return;
     }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
     final observedAt = DateTime.utc(
