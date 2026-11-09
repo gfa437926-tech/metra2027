@@ -214,7 +214,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       _dryTemp, _wetTemp, _dewPoint, _stationPressure, _seaLevelPressure,
       _relativeHumidity, _windDirection, _windSpeed, _visibility,
       _totalCloudCover, _cover12, _cover123, _precipitationAmount,
-      _pressureSlope, _pressureShape, _pastWeather, _remarks,
+      _pressureSlope, _pressureShape, _pastWeather, ..._optionalFields.values, _remarks,
     ]) {
       controller.clear();
     }
