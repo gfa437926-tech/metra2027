@@ -136,7 +136,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('hourly-local-hour')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('02').last);
+    final hour02 = find.text('02').last;
+    await tester.scrollUntilVisible(
+      hour02, 100, scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(hour02);
     await tester.pumpAndSettle();
     expect(find.text('سيُرسل التوقيت العالمي UTC: 23:00'), findsOneWidget);
 
