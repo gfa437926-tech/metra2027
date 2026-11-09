@@ -65,15 +65,13 @@ void main() {
       await tester.enterText(field, entry.value);
     }
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
-    await tester.dragUntilVisible(
-      agreement, find.byType(ListView), const Offset(0, -100),
-    );
+    await tester.drag(find.byType(ListView), const Offset(0, -220));
+    await tester.pumpAndSettle();
     await tester.tap(agreement);
     await tester.pumpAndSettle();
     final submit = find.byKey(const ValueKey('daily-submit'));
-    await tester.dragUntilVisible(
-      submit, find.byType(ListView), const Offset(0, -100),
-    );
+    await tester.drag(find.byType(ListView), const Offset(0, -220));
+    await tester.pumpAndSettle();
     await tester.tap(submit);
     await tester.pumpAndSettle();
     final body = jsonDecode(captured.body) as Map<String, dynamic>;
