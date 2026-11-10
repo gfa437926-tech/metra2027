@@ -1,2 +1,3 @@
 export(metra_validate_homogenization_request)
 export(metra_run_homogenization)
+export(metra_climatology_summary)
