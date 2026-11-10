@@ -161,3 +161,17 @@ B-013 remains in progress. No SQL, RPC, migration, RLS, seed or Supabase operati
 Reviewed the master requirement sections for hourly and daily report lists, details, correction, immutable version history, station isolation, UTC filters, pagination, stale-version conflicts and audit history. Added `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` as a proposal covering general list/detail/version/correction routes, illustrative response shapes, error mapping and owner decisions.
 
 The route family and JSON examples are explicitly proposed, not existing API behavior. The reviewed backend source still has only the submitted queue GET and decision POST for this workflow; general list/detail/correction/history endpoints were not found. Exact field catalogues, workflow states, daily boundaries, role grants, auditor scope and database schema remain approval dependencies. No endpoint, DTO, SQL, migration, RPC, RLS or seed was implemented.
+
+
+## Round 4 — QA-06 review response and endpoint tests (2026-11-10T23:36:51Z)
+
+A PR review comment reiterated the P1 review-queue TOCTOU issue and requested endpoint tests proving 401/403/400/503 behavior and no queue service call when station scope is denied. Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` with five `WebApplicationFactory` tests using a test authentication scheme and fake authorization/queue services.
+
+Coverage added:
+- unauthenticated request returns 401 and does not call authorization or queue;
+- invalid limit returns 400 before authorization/queue;
+- denied station permission returns 403 and never calls queue;
+- unconfigured queue dependency returns 503;
+- downstream queue read failure returns 503 after authorization.
+
+Tests were not executed locally. No CI result for the new test commit has been confirmed. These endpoint tests do not fix TOCTOU and do not replace the required database integration/race tests. B-013 remains P1 and open.
