@@ -159,3 +159,17 @@
 - آخر HEAD للفرع قبل هذا التحديث: [129538bf](https://github.com/gfa437926-tech/metra2027/commit/129538bf21eb1eaf2103f51db0a68d46c859a7cb).
 - GitHub Actions runs على HEAD: 0؛ Check Runs: 0. لم تُشغّل الاختبارات.
 - PR #26: مفتوح، Draft، غير مدمج؛ base SHA المعروض 87f7135 بينما main الحالي 43c72da. تحديث base/rebase مؤجل للتنسيق مع المساعد رقم 1.
+
+
+## 14. مطابقة Backend validators مع مسار الحفظ
+- **توقيت UTC:** 2026-11-10T23:34:26.137Z.
+- **الحالة:** قيد التنفيذ.
+- فُحصت 13 ملفاً بين validators وworkflow وendpoints واختبارات الوحدة/request guards.
+- اكتشاف DB-017: مسار حفظ الرصد لا يستدعي validators اليومية/الساعية/الظواهر؛ SQL يتحقق من شكل JSON والحجم فقط. يمكن نظرياً حفظ بيانات لا تجتاز validator المنفصل.
+- اكتشاف DB-018: validators تتجاهل مفاتيح الحقول غير المعروفة بدلاً من رفضها.
+- اكتشاف DB-019: نموذج الظواهر يقارن أوقات TimeOnly ضمن يوم واحد ولا يمثل ظاهرة تعبر منتصف الليل.
+- توثيق ملاحظات إيجابية: actor مشتق من JWT في endpoints، وفحص الصلاحية في API وRPC، وworkflow له انتقالات محددة؛ لا يعني ذلك اكتمال تغطية الحفظ.
+- **الملف المعدل:** `docs/database/DATABASE-ENGINEERING-AUDIT.md` فقط في هذه الخطوة.
+- **الاختبارات:** تمت قراءة ملفات الاختبار فقط؛ لم تُشغّل.
+- **Commit:** [dc73b6d](https://github.com/gfa437926-tech/metra2027/commit/dc73b6d16c9c2dbf6c93be230fc8be65ae5b2466).
+- لم يتم تعديل كود Backend أو SQL أو الاتصال بـ Supabase.
