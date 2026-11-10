@@ -100,6 +100,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('الانتقال إلى أعمال الرصد'));
     await tester.pumpAndSettle();
+    // Distinguish navigation failure from workspace data/loading failure.
+    expect(find.byIcon(Icons.assignment), findsOneWidget,
+        reason: 'The observation destination should be selected after the home action.');
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
     expect(find.text('محطة آلية — AU-01'), findsOneWidget);
     expect(find.text('فتح واجهة الإدخال'), findsOneWidget);
