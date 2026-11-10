@@ -164,3 +164,7 @@ These cross-PR results are not QA-06 test results. Estimated QA-06 completion re
 3. Complete cross-layer authorization, UTC, RTL, responsive and accessibility verification.
 
 The presence of new tests in Assistant 02's branch is credited to that branch, not counted as completion of QA-06's implementation/execution packages.
+
+
+### QA-07 CI outcome correction — PR #22 exact latest head
+The previously in-progress Backend build for PR #22 head `8134c9e4546693d717a10329436d646b08dbb94f` has now completed successfully: [Backend build run 42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135). This confirms the workflow completed successfully on that exact SHA, including the CI test job configured in `.github/workflows/backend-ci.yml`. It does **not** close the source-confirmed TOCTOU finding or substitute for DB revocation/race integration tests. QA-06 itself still did not run tests locally.
