@@ -193,7 +193,7 @@ class _ObservationWorkspaceState extends State<_ObservationWorkspace> {
       final selectedId = stations.any((s) => s.id == widget.selectedStationId)
           ? widget.selectedStationId
           : (stations.isEmpty ? null : stations.first.id);
-      final selected = stations.where((s) => s.id == selectedId).firstOrNull;
+      final selected = selectedId == null ? null : stations.firstWhere((s) => s.id == selectedId);
 
       return ListView(
         padding: const EdgeInsets.all(18),
