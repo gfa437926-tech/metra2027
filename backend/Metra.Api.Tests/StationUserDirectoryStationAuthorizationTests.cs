@@ -95,11 +95,11 @@ public sealed class StationUserDirectoryStationAuthorizationTests
                     services.AddSingleton(directory);
                     services.AddAuthentication(options =>
                     {
-                        options.DefaultAuthenticateScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
-                        options.DefaultChallengeScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
-                        options.DefaultForbidScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
-                    }).AddScheme<AuthenticationSchemeOptions, MetraIsolationMetraIsolationTestAuthenticationHandler>(
-                        MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme, _ => { });
+                        options.DefaultAuthenticateScheme = MetraUserDirTestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = MetraUserDirTestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = MetraUserDirTestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, MetraUserDirTestAuthenticationHandler>(
+                        MetraUserDirTestAuthenticationHandler.Scheme, _ => { });
                 });
             });
 
@@ -140,7 +140,7 @@ public sealed class StationUserDirectoryStationAuthorizationTests
         }
     }
 
-    private sealed class MetraIsolationMetraIsolationTestAuthenticationHandler(
+    private sealed class MetraUserDirTestAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
