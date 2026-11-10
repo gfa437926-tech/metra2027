@@ -29,3 +29,13 @@ This file is append-only. Add new dated entries below; do not rewrite or remove 
 - **PR:** [#27 — open, Draft, not merged](https://github.com/gfa437926-tech/metra2027/pull/27).
 - **Remaining:** Pages runtime configuration diagnosis; canonical `واجهات/` handoff confirmation; R/Climatol coordination after PR #23 review/integration; Flutter SDK version pinning.
 - **Not performed:** production deployment, Pages deployment, GHCR publication, database changes, secret changes, workflow deletion, or merge to `main`.
+
+
+## 2026-11-10T23:30:03Z — Commit-reference correction
+
+- **Task:** `DEVOPS-09-001`; **status:** in progress; **progress:** 67% (8/12).
+- Corrected the progress report to distinguish the progress-file commit from the initial change-log commit and to list the later audit/reporting commits.
+- **Correction commit:** [6363cd76b51de025a9d11cff845bee83e49a7d1b](https://github.com/gfa437926-tech/metra2027/commit/6363cd76b51de025a9d11cff845bee83e49a7d1b).
+- **PR:** [#27 — open, Draft, unmerged](https://github.com/gfa437926-tech/metra2027/pull/27).
+- **CI evidence remains:** [Client CI #725 — success](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265).
+- No runtime, database, secret, deployment or workflow-trigger changes in this documentation-only correction.
