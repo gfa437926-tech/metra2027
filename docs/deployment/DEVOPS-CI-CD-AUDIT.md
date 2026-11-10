@@ -132,3 +132,14 @@ The requested files `واجهات/مهما.md`, `واجهات/تغيير.md` and
 - Append-only change log: https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09-changelog.md
 - PR validation: Client CI #725 passed Angular and Flutter jobs; https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265
 - Follow-up: investigate Pages runtime configuration validation; confirm canonical `واجهات/` handoff files; reconcile R/Climatol after PR #23; pin Flutter SDK.
+
+
+## Follow-up diagnostic addendum — 2026-11-10T23:31:43Z
+
+- Pages main run #158: https://github.com/gfa437926-tech/metra2027/actions/runs/41951012675
+- The Angular production build passed; `Validate and inject public runtime configuration` failed. Artifact upload and deploy were skipped.
+- The checked-in workflow requires `METRA_API_BASE_URL` and `METRA_SUPABASE_ANON_KEY`; `METRA_SUPABASE_URL` has a public project URL fallback. The API URL must be HTTPS and end in `/api/v1`; the Supabase URL must be a clean HTTPS origin.
+- The job-level evidence confirms the failed step but does not establish which setting was missing or malformed. Secret values were not accessed. Exact cause remains unverified; repository maintainers must check secret/environment availability and formatting without disclosing values.
+- R package check #19 on the separate climate branch succeeded: https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783. PR #23 remains Draft/open/unmerged: https://github.com/gfa437926-tech/metra2027/pull/23. Passing package check is not equivalent to operational Climatol validation or PR approval.
+- No Pages deployment/re-run, secret/environment change, Climatol production run, database operation, or merge was performed.
+- Assistant 09 progress remains 67% (8/12); four work items remain open. See https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09.md and the append-only log at https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09-changelog.md.
