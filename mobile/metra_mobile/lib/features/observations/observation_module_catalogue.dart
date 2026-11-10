@@ -135,7 +135,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     metadataFields: [_notes, _ack],
     sourceNotes: [
       'الهطول مطلوب عند 00 و06 و12 و18 UTC بحسب hourly-send.js.',
-      'ميل الضغط وشكله مطلوبان عند 00 و03 و06 و09 و12 و15 و18 و21 UTC.',
+      'ميل الضغط وشكله مطلوبان عند 00 و03 و06 و09 و12 و15 و18 و21 UTC، وتشمل الساعات 03 و09.',
       'رمز # ليس قيمة مفقودة عامة؛ يلزم تعريفه لكل حقل.',
     ],
   ),
