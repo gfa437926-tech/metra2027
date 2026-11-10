@@ -2,7 +2,7 @@
 
 - Repository: gfa437926-tech/metra2027
 - Branch: work/backend-api-audit-assistant-2
-- Updated at (UTC): 2026-11-10T23:31:49Z
+- Updated at (UTC): 2026-11-10T23:34:04Z
 - Round: 3 — review-queue TOCTOU analysis and mitigation design
 - Overall task status: In progress
 - Draft PR: https://github.com/gfa437926-tech/metra2027/pull/22
@@ -13,7 +13,7 @@
 3. Confirmed the authorization check and service-role PostgREST queue read are separate operations; the queue read does not receive the actor ID.
 4. Documented the TOCTOU scenario, security invariants, atomic RPC/read-model proposal, concurrency/revocation semantics, rejected alternatives and required test plan.
 5. Added `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md`.
-6. Updated the task tracker, change log and this progress report.
+6. Updated the task tracker, change log and this progress report.\n7. Read the master requirements for hourly/daily list, detail, correction and history workflows; drafted `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` for owner review.
 
 ## Files inspected
 - `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
@@ -27,13 +27,13 @@
 - Branch comparison against main.
 
 ## Files changed in this round
-- `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md` (new)
+- `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md` (new)\n- `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` (new)
 - `واجهات/مهما.md`
 - `واجهات/تغيير.md`
 - `docs/progress/assistant-02.md`
 - `docs/backend/API-BACKEND-AUDIT-2026-11-11.md`
 
-## B-013 finding and disposition
+## B-008 contract draft and disposition\nA draft now describes general list, detail, version-history and correction routes, proposed filters/pagination, immutable version behavior, stale-version conflicts, station authorization and outstanding owner decisions. It is not an approved OpenAPI contract and no endpoints were implemented. B-008 remains in progress.\n\n## B-013 finding and disposition
 The current flow performs permission RPC checks first, then a separate PostgREST SELECT using the server service-role credential. A revocation can commit between the operations, leaving an in-flight request with a stale authorization decision.
 
 Recommended remediation is one narrowly scoped database-side operation that validates the JWT-derived actor ID, exact station scope and current queue-read permission while selecting submitted rows atomically. The database reviewer must define snapshot/locking/serialization semantics. The decision operation must independently validate the decision-specific permission in the same atomic operation as the status transition.
