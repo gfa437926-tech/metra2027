@@ -56,3 +56,11 @@ No variable-specific thresholds, Climatol settings, completeness rules, normal p
 ## Safety
 
 No database/Supabase/SQL changes, production-data access, raw-series mutation, merge, deployment, or Angular/Flutter changes are included.
+
+## Coordination-file availability
+
+The requested paths `واجهات/مهما.md`, `واجهات/تغيير.md`, and `واجهات/10-التجانس-المناخي.md` were checked on the inspected bootstrap branch and were not present in its repository tree. They were not fabricated or overwritten. The coordinator should merge/provide those shared coordination files on the target working branch before this specialist can append round notes there.
+
+## Local execution limitation
+
+The editing environment did not contain an R executable. No local `R CMD check` or local test run is claimed. GitHub Actions run #16 is the required verification for the hardening code; its completion must be checked before merge.
