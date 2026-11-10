@@ -305,3 +305,5 @@ A dedicated GitHub Actions R package-check workflow and supporting architecture,
 **Not implemented:** .NET job adapter, METRA observation export mapping, artifact persistence, Angular review UI, climatology aggregates/indices, production deployment, or scientific acceptance. No database connection or SQL was added. This work is isolated from the existing working branch and main.
 
 The METRA export mapping remains an owner/scientific review gate: station metadata, variable codes/units, temporal resolution, missing-value representation, completeness, and reference periods must be explicitly approved before operational data is processed.
+
+The worker package also contains a generic daily-input monthly/yearly summary function. It requires the caller to choose the statistic and completeness fraction, uses calendar-day denominators (including leap years), rejects duplicate station/date pairs, and returns an unavailable value when the requested completeness is not met. This is a reusable calculation primitive, not yet a complete climatology reporting module.
