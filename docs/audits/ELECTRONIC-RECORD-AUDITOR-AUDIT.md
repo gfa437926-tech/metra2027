@@ -190,3 +190,42 @@ A second pass located the authoritative auditor requirements on the separate doc
 | Human decision and immutable event workflow | Required by specification; no implementation evidence |
 
 This is now a source-backed module-level inventory, not a claim that every repository directory or every possible branch has been exhaustively searched. No implementation files were changed.
+
+
+## 11. Follow-up implementation-boundary and CI inventory — 2026-11-10T23:34:37.134Z (UTC)
+
+### Backend and test pipeline evidence
+
+Inspected on `work/legacy-ui-migration-audit`:
+
+- `backend/Metra.Api/Metra.Api.csproj` (SHA `0bd4baeabab746f890bbad64305ef091058dd2e3`): ASP.NET Core Web SDK, `net10.0`, nullable/implicit usings; references ASP.NET OpenAPI 10.0.0, JWT bearer 10.0.0, Microsoft.OpenApi 2.7.5 (pinned security advisory fix), and Npgsql 9.0.3. No image-processing package is declared in this project file.
+- `backend/Metra.Api.Tests/Metra.Api.Tests.csproj` (SHA `b3865614f5829ba1753f4a5884383dd670984242`): `net10.0`, xUnit 2.9.3, Microsoft.NET.Test.Sdk 17.14.1, ASP.NET MVC Testing 10.0.0; references the API project.
+- `.github/workflows/backend-ci.yml` (SHA `8bcf0e73bfe59b91557ee90d52d3b9b75bdab952`): runs disposable PostgreSQL isolation tests, .NET restore with high/critical NuGet advisory warnings treated as errors, authorization SQL contract scripts, API build, `dotnet test`, Docker build, and container liveness/readiness checks. Its PostgreSQL job uses a disposable CI service, not the user's Supabase project.
+- `angular-app/package.json` (SHA `bca051e8722a14bc30494f9179ce38fb5250426f`): Angular 20; current test script runs TypeScript tests and three Node contract test files. No auditor-specific test command is declared.
+- The expected test project file exists. Several guessed auditor/general test filenames were not found at the guessed paths; this does not prove the test directory has no tests. Exact test-source inventory remains open.
+
+### Contract conflicts that block implementation
+
+The two formal design documents use different API and permission namespaces:
+
+| Source | API prefix | Permission namespace |
+|---|---|---|
+| `docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md` | `/api/v1/stations/{stationId}/electronic-audits` | `electronic_auditor.*` |
+| `docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md` | `/api/v1/stations/{stationId}/intelligent-audits` | `intelligent_audit.*` |
+
+They also use different logical naming conventions (`ElectronicAuditCase` / `electronic_audit_*` versus `intelligent_audit_*`). Both label these as proposed/logical and not wired. No API route or permission has been implemented for the auditor in the inspected API composition root. Do not implement either namespace until the owner/architecture authority selects one canonical contract and confirms the relationship between the mechanical-only design and the broader paper + mechanical + training program.
+
+### Proposed contract gates (documentation only)
+
+Before API/worker code is written, require explicit decisions for:
+
+1. Canonical route prefix, permission namespace, case identifier, and track enum.
+2. Whether the older mechanical-chart design is superseded by the broader intelligent-audit specification, or remains a compatible subset.
+3. Upload policy: accepted MIME types, maximum bytes/pixels/pages, decompression limits, content sniffing, malware scanning, retention, private object-store location, and immutable-original enforcement. These values must be set by the owner/security policy, not invented here.
+4. Storage authorization ordering: station permission must be checked before any object-store read/write; clients receive no service-role or worker credentials.
+5. Extraction provenance contract: original artifact id + SHA-256, derived artifact id, extractor/model version, calibration reference/version, per-reading confidence, source (machine/human override), bounding box or curve locus, and UTC timestamps.
+6. Comparison contract: explicit source identifiers, element mapping, time alignment policy, units, tolerance/rule-set version, missing-data handling, and uncertainty; no silent unit conversion.
+7. Decision contract: authorized human actor, outcome, note, timestamp, immutable event, and an explicit invariant that observation payload is unchanged.
+8. Test fixture policy: owner-provided de-identified register pages and chart images, human reference labels, train/validation/test isolation, and held-out station/device evaluation.
+
+This is a readiness checklist, not a finalized API contract or permission grant. No DB schema, migration, storage bucket, OCR worker, or application source was changed.
