@@ -118,3 +118,34 @@ This section supersedes the prior in-progress snapshot for the listed runs:
 - QA PR #24 — no associated Actions run found for head `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`; QA-06 did not run tests.
 
 **QA conclusion:** latest observed heads for PRs #21, #22 and #23 have successful workflow evidence. PR #27 latest head remains unverified. None of these results constitutes test execution by QA-06 or validates QA PR #24. No application, workflow, database, migration or deployment changes were made by QA-06.
+
+
+---
+
+## QA-05 — Source-level station authorization and test audit (2026-11-10T23:34:44Z UTC)
+
+### P1 — Review-queue authorization TOCTOU remains open
+Current source path:
+1. `ObservationQueueEndpoints` extracts actor ID from the verified JWT `sub`.
+2. It calls `IStationAuthorizationService.HasStationPermissionAsync(userId, stationId, permission)` sequentially for `observation.review`, `observation.approve`, and `observation.return_for_correction`.
+3. After one permission check succeeds, it calls `IObservationQueueService.GetSubmittedAsync(stationId, limit)`.
+4. `SupabaseObservationQueueService` performs a separate service-role PostgREST SELECT filtered by station ID and submitted status. The queue read receives no actor ID and does not re-check the grant.
+
+A permission revocation between steps 2 and 3 may leave an in-flight request able to return queue data after revocation. The station filter scopes rows but is not an actor authorization check under service-role access. This is a source-confirmed TOCTOU design flaw, not proof of unauthenticated access or a reproduced live exploit. The backend's B-013 design note independently identifies this issue and leaves implementation pending schema review/owner approval.
+
+**Required fix:** an owner/schema-reviewed database RPC/read operation should accept the verified actor ID, exact station ID and bounded page size, and authorize + select in one atomic database operation with explicitly defined revocation/concurrency semantics. Do not implement SQL or alter schema until approval.
+
+### P1/P2 — Missing queue endpoint integration evidence
+- PR #22 adds submission request-guard tests for idempotency, type, payload and UTC offset.
+- No `ObservationQueueEndpointTests.cs` exists at the inspected current PR #22 head.
+- No endpoint integration test was found in the PR change set demonstrating missing-subject 401, cross-station 403, queue service not called after denial, or unavailable-service 503.
+- No race test was found for permission revocation vs queue read.
+- The test project references `Microsoft.AspNetCore.Mvc.Testing`; use a test server with fake authorization/queue services for endpoint behavior, then add isolated database integration tests only after the RPC/schema is approved.
+
+### Decision workflow coverage still required
+The decision endpoint performs a decision-specific API permission check and passes actor + station IDs to the service RPC. Source inspection does not establish that the database RPC rechecks permission atomically with the state transition. Required tests: queue reviewer without approve permission cannot approve; approve-only cannot return for correction; observation from station B cannot be decided through station A; concurrent conflicting decisions produce one valid transition and an auditable outcome.
+
+### QA action
+A review comment was submitted to [PR #22](https://github.com/gfa437926-tech/metra2027/pull/22) (review ID `5851183143`) anchored to commit `1ac10c4f083b5975bf1b95a456610725feecb704`. It records the TOCTOU finding, missing endpoint tests, atomic RPC recommendation and test cases.
+
+No QA code, SQL, migration, database schema/data, or production resource was changed. QA-06 did not execute tests and does not claim the finding was exploited against a live system.
