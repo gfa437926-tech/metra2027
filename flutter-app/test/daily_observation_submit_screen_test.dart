@@ -45,7 +45,7 @@ void main() {
     final values = reportType == '24h'
         ? <String, String>{
             'minTemp': '-05.3', 'maxTemp': '25.7',
-            'precipitation': '012.5', 'snowThickness': '015',
+            'precipitation': '012.5',
             'evaporation': '12.5', 'sunshineDuration': '08.5',
             'sunshinePercentage': '075', 'maxGustSpeed': '15',
             'maxGustDirection': '25', 'maxGustTime': '14.5',
@@ -54,7 +54,7 @@ void main() {
           }
         : <String, String>{
             'minTemp': '-05.3', 'maxTemp': '25.7',
-            'precipitation': '012.5', 'snowThickness': '015',
+            'precipitation': '012.5',
           };
     for (final entry in values.entries) {
       final field = find.byKey(ValueKey('daily-field-${entry.key}'));
@@ -155,7 +155,6 @@ void main() {
     await tester.enterText(find.byKey(const ValueKey('daily-field-minTemp')), '-05.3');
     await tester.enterText(find.byKey(const ValueKey('daily-field-maxTemp')), '25.7');
     await tester.enterText(find.byKey(const ValueKey('daily-field-precipitation')), '012.5');
-    await tester.enterText(find.byKey(const ValueKey('daily-field-snowThickness')), '015');
 
     final agreement = find.byKey(const ValueKey('daily-responsibility-agreement'));
     await tester.scrollUntilVisible(agreement, 300, scrollable: find.byType(Scrollable).first);
@@ -180,7 +179,6 @@ void main() {
       'minTemp': '-05.3',
       'maxTemp': '25.7',
       'precipitation': '012.5',
-      'snowThickness': '015',
     });
     expect(body['observedAt'], endsWith('T06:00:00.000Z'));
     expect(find.textContaining('تم حفظ النشرة اليومية وإرسالها للمراجعة'), findsOneWidget);
@@ -215,7 +213,6 @@ void main() {
       'minTemp': '-05.3',
       'maxTemp': '25.7',
       'precipitation': '012.5',
-      'snowThickness': '015',
     });
     expect(body['observedAt'], endsWith('T18:00:00.000Z'));
   });
