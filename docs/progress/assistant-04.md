@@ -86,14 +86,13 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 ## Remaining tasks and next action
 
-**Remaining: 7 major work items**, counting partially completed items that still require closure:
+**Remaining: 6 major work items**, counting partially completed items that still require closure:
 1. Complete input schema and METRA-to-Climatol export mapping approval.
-2. Add and run real Climatol fixture smoke tests with pinned dependencies. **Completed in CI run #22**; broader adversarial tests remain under item 3.
-3. Add hostile-path, symlink, malformed/oversized input, concurrency, cancellation, and cleanup tests.
-4. Implement secure .NET job orchestration and authorization.
-5. Implement durable artifact storage and the review/approval UI integration.
-6. Validate the method on an independently curated climate reference dataset.
-7. Obtain scientific sign-off for variable-specific settings, thresholds, completeness rules, and publication criteria.
+2. Complete hostile-path, symlink, malformed/oversized input, concurrency, cancellation, and cleanup tests.
+3. Implement secure .NET job orchestration and authorization.
+4. Implement durable artifact storage and the review/approval UI integration.
+5. Validate the method on an independently curated climate reference dataset.
+6. Obtain scientific sign-off for variable-specific settings, thresholds, completeness rules, and publication criteria.
 
 **Next step:** expand adversarial input-boundary tests (symlink escape, traversal, malformed/oversized inputs) and verify them in CI.
 
@@ -151,3 +150,8 @@ No merge to main, production deployment, database/Supabase changes, raw observat
 - [Run #23](https://github.com/gfa437926-tech/metra2027/actions/runs/42924449733) completed successfully for the symlink-boundary test commit `0915fe7b11b36b3e34d4c9189ba734be7c6a68a1`. The CI job passed Climatol 4.5-0 version verification and R CMD check/testthat.
 - The newer validation-hardening commit is `bd472e2ae498f7a5e63a63b364998a07ef7c131a`; [run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) targets this commit and was still running at report time. It includes finite/complex year tests, directory-as-input rejection, and dot-dot traversal rejection.
 - Task estimate remains 55%; 6 major work items remain. CI #22 verifies the Climatol fixture; CI #23 verifies symlink and same-directory tests. CI #24 is pending.
+
+
+## Remaining-worklist correction — 2026-11-10T23:36:18Z
+
+The Climatol fixture smoke-test milestone is now verified by CI run #22 and is no longer counted as a remaining major task. The outstanding list is therefore six items: input/export approval; broader adversarial/security tests; secure .NET orchestration; durable artifacts and review UI; independent climate-reference validation; and scientific sign-off. The overall estimate remains 55% because the reproducibility/security workstream is still partial.
