@@ -39,7 +39,7 @@ void main() {
               'state_reason': null,
               'request_id': null,
               'request_status': null,
-              'submitted_at': null,
+              'submitted_at': '2026-11-10T12:00:00Z',
               'review_note': null,
             }), 200);
           default:
@@ -53,6 +53,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('حالة الحساب'), findsNWidgets(2));
+    expect(find.textContaining('2026-11-10T12:00:00.000Z'), findsOneWidget);
     expect(find.text('طلب انتساب أو تحديث الطلب المرفوض'), findsOneWidget);
     expect(find.text('راصد'), findsOneWidget);
     expect(find.textContaining('محطة اختبار'), findsOneWidget);
@@ -73,6 +74,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('إدخال رصد جديد'), findsOneWidget);
+    expect(find.textContaining('وقت الرصد (UTC):'), findsOneWidget);
+    expect(find.textContaining('وقت الرصد:'), findsNothing);
     expect(find.text('حمولة الرصد بصيغة JSON'), findsOneWidget);
     expect(find.text('حفظ الرصد'), findsOneWidget);
   });

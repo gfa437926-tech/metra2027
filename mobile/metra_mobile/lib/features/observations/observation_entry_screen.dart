@@ -15,7 +15,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _payload = TextEditingController(text: '{\n  "temperature": 0\n}');
   String _type = 'hourly';
-  DateTime _observedAt = DateTime.now();
+  DateTime _observedAt = DateTime.now().toUtc();
   bool _submitForReview = true, _busy = false;
   String? _error;
   String? _pendingIdempotencyKey;
@@ -23,6 +23,13 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
 
   @override
   void dispose() { _payload.dispose(); super.dispose(); }
+
+  String _formatUtc(DateTime value) {
+    final utc = value.toUtc();
+    String two(int number) => number.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
+        '${two(utc.hour)}:${two(utc.minute)} UTC';
+  }
 
   String _newIdempotencyKey() => List<int>.generate(32, (_) => Random.secure().nextInt(256))
     .map((v) => v.toRadixString(16).padLeft(2, '0')).join();
@@ -110,8 +117,8 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
             OutlinedButton.icon(
               onPressed: _busy ? null : () async {
                 final picked = await showDatePicker(context: context,
-                  initialDate: _observedAt, firstDate: DateTime(2000),
-                  lastDate: DateTime.now().add(const Duration(days: 2)));
+                  initialDate: _observedAt.toUtc(), firstDate: DateTime.utc(2000),
+                  lastDate: DateTime.now().toUtc().add(const Duration(days: 2)));
                 if (!context.mounted) {
                   return;
                 }
@@ -119,15 +126,15 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                   return;
                 }
                 final time = await showTimePicker(context: context,
-                  initialTime: TimeOfDay.fromDateTime(_observedAt));
+                  initialTime: TimeOfDay.fromDateTime(_observedAt.toUtc()));
                 if (!context.mounted || time == null) {
                   return;
                 }
-                setState(() => _observedAt = DateTime(
+                setState(() => _observedAt = DateTime.utc(
                   picked.year, picked.month, picked.day, time.hour, time.minute));
               },
               icon: const Icon(Icons.schedule),
-              label: Text('وقت الرصد: ${_observedAt.toLocal()}'),
+              label: Text('وقت الرصد (UTC): ${_formatUtc(_observedAt)}'),
             ),
             const SizedBox(height: 12),
             TextFormField(

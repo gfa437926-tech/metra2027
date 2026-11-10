@@ -9,7 +9,7 @@ on:
       - ".github/workflows/client-ci.yml"
       - ".github/workflows/deploy-pages.yml"
   pull_request:
-    branches: [main]
+    branches: [main, integration/repository-consolidation-audit]
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"

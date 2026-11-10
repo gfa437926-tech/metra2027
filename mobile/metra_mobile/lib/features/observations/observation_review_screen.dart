@@ -78,9 +78,19 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.assignment_outlined)),
                     title: Text(_typeLabel(item.observationType)),
-                    subtitle: Text('${item.observedAt.toLocal()} • ${item.status}',
+                    subtitle: Text('${item.observedAt.toUtc().toIso8601String()} • ${_statusLabel(item.status)}',
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
+                  if (item.payload.isNotEmpty)
+                    ExpansionTile(
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                      title: const Text('تفاصيل بيانات النشرة'),
+                      children: item.payload.entries.map((entry) => ListTile(
+                        dense: true,
+                        title: Text(_fieldLabel(entry.key)),
+                        subtitle: Text(_displayValue(entry.value)),
+                      )).toList(),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: Row(children: [
@@ -189,6 +199,53 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     'daily' => 'نشرة يومية',
     'hourly' => 'نشرة ساعية',
     'phenomenon' => 'بلاغ ظاهرة جوية',
-    _ => 'نشرة: $type',
+    'agricultural' => 'نشرة زراعية',
+    'rainfall' => 'نشرة مطرية',
+    'soil_temperature' => 'حرارة التربة',
+    'equipment_fault' => 'عطل جهاز رصد',
+    'telecommunications_fault' => 'عطل اتصالات',
+    'it_incident' => 'بلاغ تقنية معلومات',
+    _ => 'نشرة أخرى',
   };
+
+  String _statusLabel(String status) => switch (status) {
+    'draft' => 'مسودة',
+    'submitted' => 'بانتظار المراجعة',
+    'pending_review' => 'بانتظار المراجعة',
+    'approved' => 'معتمدة',
+    'returned_for_correction' => 'معادة للتصحيح',
+    'rejected' => 'مرفوضة',
+    'cancelled' => 'ملغاة',
+    _ => 'حالة غير معروفة',
+  };
+
+  String _fieldLabel(String key) => switch (key) {
+    'utcTime' => 'ساعة الرصد UTC',
+    'dryTemp' => 'درجة الحرارة الجافة',
+    'wetTemp' => 'درجة الحرارة الرطبة',
+    'stationPressure' => 'ضغط المحطة',
+    'seaLevelPressure' => 'ضغط سطح البحر',
+    'relativeHumidity' => 'الرطوبة النسبية',
+    'dewPoint' => 'درجة الندى',
+    'windDirection' => 'اتجاه الرياح',
+    'windSpeed' => 'سرعة الرياح',
+    'visibility' => 'الرؤية الأفقية',
+    'precipitationAmount' || 'precipitation' || 'rainAmount' => 'كمية الهطول',
+    'minTemp' => 'درجة الحرارة الصغرى',
+    'maxTemp' => 'درجة الحرارة العظمى',
+    'snowThickness' || 'snowDepth' => 'سماكة الثلج',
+    'phenomenonType' => 'نوع الظاهرة',
+    'startTime' => 'وقت بدء الظاهرة',
+    'endTime' => 'وقت انتهاء الظاهرة',
+    'observerNotes' || 'notes' => 'ملاحظات',
+    _ => key,
+  };
+
+  String _displayValue(Object? value) {
+    if (value == null) return '—';
+    if (value is bool) return value ? 'نعم' : 'لا';
+    if (value is Map || value is List) return value.toString();
+    final raw = value.toString();
+    return raw.isEmpty ? '—' : raw;
+  }
 }
