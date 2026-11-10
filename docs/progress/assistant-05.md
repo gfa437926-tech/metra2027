@@ -78,3 +78,40 @@ Changelog creation commit: `58a220f4b6ee5b65110f4a07e346e16e4468d2bc` — https:
 ## Safety constraints
 
 No database or Supabase modification. No raw observation changes. No automatic acceptance of OCR/AI output. No invented scientific scales, units, graduations, tolerances, or calibration. No production deployment. No merge to main. No work in metra-old.
+
+
+## Round 3 — requirements recovery and source-level inventory
+
+**Updated (UTC):** 2026-11-10T23:32:37.175Z  
+**Round status:** منجزة (documentation/evidence pass); overall task remains قيد التنفيذ.  
+**Evidence branch:** `docs/metra-all-ui-specification` for specifications; `work/legacy-ui-migration-audit` for implementation sources.
+
+### Newly inspected files
+
+- `واجهات/مهما.md`, `واجهات/تغيير.md`, `واجهات/README.md`, `واجهات/09-المدقق-الإلكتروني.md` — fetched from `docs/metra-all-ui-specification`.
+- `docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md` — fetched; formal spec status is owner review, not production implementation.
+- `docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md` — fetched.
+- `docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md` and `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-MASTER-PLAN.md` — fetched from `work/legacy-ui-migration-audit`.
+- `angular-app/src/app/app.routes.ts` — fetched; `/electronic-auditor` route exists and uses `requireAuthenticatedUser`.
+- `angular-app/src/app/features/electronic-auditor/electronic-auditor-workspace.component.ts` — fetched; static scaffold only, with no OCR/API binding and all workflow sections unavailable.
+- `backend/Metra.Api/Program.cs` — fetched; no auditor service registration or endpoint mapping in the inspected composition root.
+
+### Findings / corrections
+
+- The earlier 404 conclusion was ref-specific. The required coordination and specification documents exist on the separate UI specification branch.
+- The master plan's statement that the Angular auditor route is missing is stale: the route is present on the inspected implementation branch, but it loads a scaffold only.
+- The formal AI auditor spec, feature design, and master plan consistently describe OCR/CV, chart digitization, training, API and persistence as not implemented/design-only.
+- A module-level source inventory is now supported by actual files. A full repository-wide source-tree inventory is still not complete.
+
+### Changes and verification
+
+- Updated `docs/audits/ELECTRONIC-RECORD-AUDITOR-AUDIT.md` with the recovered requirements, source SHAs, revised inventory, and route/master-plan discrepancy.
+- Audit document update commit: `d863f8a695e22dbda05d5ec3abd81e655d0b241b` — https://github.com/gfa437926-tech/metra2027/commit/d863f8a695e22dbda05d5ec3abd81e655d0b241b.
+- No application source, API, database, migration, or raw observation was modified.
+- No software tests or GitHub Actions run; this round changes documentation only.
+
+### Progress and remaining work
+
+- Overall completion remains **25% (2/8 milestones)**. The module-level inventory is materially improved, but milestone 3 is not marked complete until the remaining backend feature tree, worker, storage, authorization, and test locations are inventoried.
+- **Remaining milestones:** 6.
+- Next: inspect the actual feature and test directories using repository tree evidence; then produce a precise, DB-independent contract/fixture proposal only after confirming the current API/domain ownership boundaries.
