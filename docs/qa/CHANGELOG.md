@@ -199,3 +199,31 @@ Current PR #23 adds testthat coverage for symlink/path traversal boundaries, inp
 - PR #22 success is CI evidence for that backend head, not proof that the queue authorization TOCTOU is fixed.
 - PR #21 pending and PR #23 without a current-head run remain unverified at this snapshot.
 - No app code, workflow, SQL, migration, database, or deployment was changed by QA-06.
+
+
+---
+
+## QA-07 — Recheck Backend queue tests, cross-PR CI and migration triggers (2026-11-11 UTC)
+
+### PR #22 — new endpoint tests found; P1 remains open
+- Latest PR #22 head at inspection: `8134c9e4546693d717a10329436d646b08dbb94f` (open, Draft).
+- Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` (198 lines). Static review confirms six test cases: unauthenticated 401; invalid limit 400; denied station scope 403 with queue call count zero; Station B request denied when fake grant is for Station A; unconfigured dependency 503; queue-read failure 503.
+- These are useful WebApplicationFactory endpoint tests, but the Station A/B case uses a fake authorization service and does not exercise database grants or real PostgREST isolation. No revoke-before-read or concurrent read/revocation test was added.
+- Re-read `ObservationQueueEndpoints.cs` at the current head. It still calls permission RPC(s) first, then calls `GetSubmittedAsync(stationId, take)`; the service-role SELECT still does not receive actor ID or re-check permission atomically. P1 B-013 remains open. No SQL/schema change was made by QA.
+- Current Backend build for head `8134c9e...` was **in progress** at inspection; do not infer test success from the earlier successful SHA or from the existence of test source.
+
+### Current PR-head Actions snapshot
+- PR #21 Flutter head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: Client CI pending.
+- PR #22 Backend head `8134c9e4546693d717a10329436d646b08dbb94f`: Backend build in progress.
+- PR #23 R/Climatol head `42db1be81790d4dda47584019b729df8a1f53c07`: Climate Analytics R completed success.
+- PR #27 DevOps head `71888fbecbaaf147db98aa632784b476fba047cd`: Client CI completed success.
+- QA PR #24 head `fd5e575c6818497bd82cbadc51eea61039b8e8a5`: no PR-triggered workflow run returned.
+
+### P2 migration-trigger finding revalidated
+- Re-read `.github/workflows/backend-ci.yml` at PR #22's latest head. Both push and pull_request path filters still include `database/migrations/**` and `database/tests/**`, but omit `supabase/migrations/**`.
+- P2 remains open; QA did not edit another assistant's workflow.
+
+### Boundaries and progress
+- QA performed static source review and GitHub Actions metadata review only; no local tests were run by QA.
+- No application code, CI workflow, SQL, migration, database, deployment or merge was changed.
+- QA-06 remains estimated at 50%; three major work packages remain. Adding tests in the Backend PR is progress by Assistant 02, not completion of QA-06's own test implementation/execution work.
