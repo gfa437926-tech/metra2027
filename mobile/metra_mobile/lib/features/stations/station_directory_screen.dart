@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
+import 'station_clusters.dart';
 
 class StationDirectoryScreen extends StatefulWidget {
   const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
@@ -53,6 +54,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       return _empty(Icons.location_off, 'لا توجد إحداثيات موثقة',
         'يعرض الدليل ${rows.length} محطة، لكن لا توجد إحداثيات صالحة لرسمها. راجع القائمة للتفاصيل.');
     }
+    final clusters = clusterStationsByCoordinates(located);
     final center = LatLng(
       located.map((s) => s.latitude!).reduce((a,b) => a+b) / located.length,
       located.map((s) => s.longitude!).reduce((a,b) => a+b) / located.length);
@@ -70,17 +72,39 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       ), children: [
         TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'org.metra.metra2027'),
-        MarkerLayer(markers: located.map((station) => Marker(
-          point: LatLng(station.latitude!, station.longitude!), width: 48, height: 58,
-          alignment: Alignment.topCenter,
-          child: Tooltip(message: '${station.nameArabic} • ${station.localCode}',
-            child: GestureDetector(
-              onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
-              child: Icon(station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
-                size: 38, color: station.stationType == 'classic'
-                  ? const Color(0xFF2463B5) : const Color(0xFF16835D)),
-            )),
-        )).toList()),
+        MarkerLayer(markers: clusters.values.map((cluster) {
+          final station = cluster.first;
+          final color = station.stationType == 'classic'
+              ? const Color(0xFF2463B5) : const Color(0xFF16835D);
+          return Marker(
+            point: LatLng(station.latitude!, station.longitude!),
+            width: cluster.length > 1 ? 58 : 48,
+            height: cluster.length > 1 ? 58 : 58,
+            alignment: Alignment.topCenter,
+            child: Tooltip(
+              message: cluster.length == 1
+                  ? '${station.nameArabic} • ${station.localCode}'
+                  : '${cluster.length} محطات في الموقع نفسه',
+              child: GestureDetector(
+                onTap: () => _openCluster(cluster),
+                child: cluster.length == 1
+                    ? Icon(station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
+                        size: 38, color: color)
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 5)],
+                        ),
+                        alignment: Alignment.center,
+                        child: Text('${cluster.length}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+              ),
+            ),
+          );
+        }).toList()),
         const RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
       ]),
       PositionedDirectional(start: 12, top: 12, child: Card(child: Padding(
@@ -91,6 +115,8 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
             const SizedBox(height: 4),
             Text('المعروضة: ${located.length} من ${rows.length}',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+            Text('المواقع المتقاربة: ${clusters.length}',
+              style: const TextStyle(fontSize: 11)),
             if (located.length != rows.length)
               Text('بلا إحداثيات: ${rows.length-located.length}', style: const TextStyle(fontSize: 11)),
           ],
@@ -100,6 +126,50 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         heroTag: 'refresh-station-map', onPressed: () => setState(_load), child: const Icon(Icons.refresh))),
     ]);
   }
+
+  Future<void> _openCluster(List<StationDirectoryItem> cluster) async {
+    if (cluster.length == 1) {
+      widget.onStationSelected?.call(cluster.single.id);
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Text('المحطات الموجودة في هذا الموقع',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              ),
+              for (final station in cluster)
+                ListTile(
+                  leading: Icon(
+                    station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
+                    color: station.stationType == 'classic'
+                        ? const Color(0xFF2463B5) : const Color(0xFF16835D),
+                  ),
+                  title: Text(station.nameArabic),
+                  subtitle: Text(station.localCode),
+                  trailing: widget.onStationSelected == null ? null : const Icon(Icons.chevron_left),
+                  onTap: widget.onStationSelected == null
+                      ? null
+                      : () {
+                          Navigator.of(sheetContext).pop();
+                          widget.onStationSelected!(station.id);
+                        },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _legend(IconData icon, Color color, String label) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 2), child: Row(mainAxisSize: MainAxisSize.min,
       children: [Icon(icon, color: color, size: 19), const SizedBox(width: 6), Text(label)]));

@@ -27,8 +27,12 @@ class ObservationQueueItem {
     final id = json['id'];
     final stationId = json['station_id'];
     final type = json['observation_type'];
-    final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
-    if (id is! String || stationId is! String || type is! String || observedAt == null) {
+    final rawObservedAt = '${json['observed_at'] ?? ''}';
+    final hasUtcDesignator = rawObservedAt.endsWith('Z') || rawObservedAt.endsWith('+00:00');
+    final parsedObservedAt = DateTime.tryParse(rawObservedAt);
+    final observedAt = parsedObservedAt?.toUtc();
+    if (id is! String || stationId is! String || type is! String ||
+        !hasUtcDesignator || observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
     final rawPayload = json['payload'];
@@ -36,6 +40,44 @@ class ObservationQueueItem {
       observationType: type, observedAt: observedAt,
       status: json['status'] is String ? json['status'] as String : 'submitted',
       payload: rawPayload is Map<String, dynamic> ? rawPayload : const {});
+  }
+}
+
+class RegistrationRole {
+  const RegistrationRole({required this.code, required this.nameArabic, required this.nameEnglish});
+  final String code, nameArabic, nameEnglish;
+
+  factory RegistrationRole.fromJson(Map<String, dynamic> json) {
+    final code = json['role_code'];
+    final nameArabic = json['name_ar'];
+    final nameEnglish = json['name_en'];
+    if (code is! String || nameArabic is! String || nameEnglish is! String) {
+      throw const FormatException('invalid_registration_role');
+    }
+    return RegistrationRole(code: code, nameArabic: nameArabic, nameEnglish: nameEnglish);
+  }
+}
+
+class RegistrationStatus {
+  const RegistrationStatus({this.accountState, this.stateReason, this.requestId,
+    this.requestStatus, this.submittedAt, this.reviewNote});
+  final String? accountState, stateReason, requestId, requestStatus, reviewNote;
+  final DateTime? submittedAt;
+
+  factory RegistrationStatus.fromJson(Map<String, dynamic> json) {
+    final rawDate = json['submitted_at'];
+    final submittedAt = rawDate == null ? null : DateTime.tryParse('$rawDate');
+    if (rawDate != null && submittedAt == null) {
+      throw const FormatException('invalid_registration_status_date');
+    }
+    return RegistrationStatus(
+      accountState: json['account_state'] as String?,
+      stateReason: json['state_reason'] as String?,
+      requestId: json['request_id'] as String?,
+      requestStatus: json['request_status'] as String?,
+      submittedAt: submittedAt,
+      reviewNote: json['review_note'] as String?,
+    );
   }
 }
 
@@ -162,6 +204,55 @@ class MetraApiClient {
       body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
         'payload': payload, 'submit': submit});
+  }
+
+  Future<List<RegistrationRole>> getRequestableRegistrationRoles() async {
+    final response = await _send('GET', '/api/v1/registration-roles');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_registration_roles');
+    return decoded.map((item) => RegistrationRole.fromJson(
+      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+  }
+
+  Future<RegistrationStatus> getMyRegistrationStatus() async {
+    final response = await _send('GET', '/api/v1/account/registration-status');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_registration_status');
+    return RegistrationStatus.fromJson(Map<String, dynamic>.from(decoded));
+  }
+
+  Future<Map<String, dynamic>> submitRegistration({
+    required String firstName,
+    required String fatherName,
+    required String lastName,
+    String? phone,
+    required String roleCode,
+    required String stationId,
+    required String idempotencyKey,
+  }) async {
+    final values = [firstName, fatherName, lastName, roleCode, stationId, idempotencyKey];
+    if (values.any((value) => value.trim().isEmpty || value != value.trim())) {
+      throw const MetraApiException(400, 'invalid_registration_request');
+    }
+    if (phone != null && (phone.trim().isEmpty || phone != phone.trim())) {
+      throw const MetraApiException(400, 'invalid_registration_phone');
+    }
+    final response = await _send('POST', '/api/v1/registration-requests', body: {
+      'firstName': firstName,
+      'fatherName': fatherName,
+      'lastName': lastName,
+      'phone': phone,
+      'roleCode': roleCode,
+      'stationId': stationId,
+      'termsVersion': 'metra-terms-2026-11',
+      'idempotencyKey': idempotencyKey,
+    });
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+      return Map<String, dynamic>.from(decoded.first as Map);
+    }
+    throw const FormatException('invalid_registration_response');
   }
 
   Future<http.Response> _send(String method, String path,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
+import 'registration_access_screen.dart';
 import '../stations/station_directory_screen.dart';
 
 const _navy = Color(0xFF061B4A);
@@ -31,8 +32,18 @@ class _MetraHomeState extends State<MetraHome> {
         message: 'التقارير التشغيلية غير مفعلة حتى ربط مصدر موثق للرصدات المعتمدة.'),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
-        action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
-          onPressed: widget.onSignOut, icon: const Icon(Icons.logout), label: const Text('تسجيل الخروج'))),
+        action: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => RegistrationAccessScreen(api: widget.api))),
+            icon: const Icon(Icons.assignment_ind_outlined),
+            label: const Text('التسجيل وحالة الحساب')),
+          if (widget.onSignOut != null) ...[
+            const SizedBox(height: 10),
+            FilledButton.tonalIcon(onPressed: widget.onSignOut,
+              icon: const Icon(Icons.logout), label: const Text('تسجيل الخروج')),
+          ],
+        ])),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
       appBar: AppBar(backgroundColor: _navy, foregroundColor: Colors.white,

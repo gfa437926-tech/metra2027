@@ -48,6 +48,21 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Api_responses_include_defensive_security_headers()
+    {
+        using var response = await _client.GetAsync("/api/v1/stations");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
+        Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").Single());
+        Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
+        Assert.Equal("camera=(), microphone=(), geolocation=()",
+            response.Headers.GetValues("Permissions-Policy").Single());
+        Assert.Equal("default-src 'none'; frame-ancestors 'none'",
+            response.Headers.GetValues("Content-Security-Policy").Single());
+    }
+
+    [Fact]
     public async Task Health_endpoint_is_anonymous()
     {
         using var response = await _client.GetAsync("/api/v1/health");

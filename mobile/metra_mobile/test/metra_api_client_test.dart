@@ -27,6 +27,40 @@ void main() {
     client.close();
   });
 
+  test('review queue timestamps are normalized to UTC', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'utc-token',
+      client: MockClient((_) async => http.Response(jsonEncode([{
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': stationId,
+        'observation_type': 'hourly',
+        'observed_at': '2026-11-10T12:00:00+00:00',
+        'status': 'submitted',
+      }]), 200)),
+    );
+    final rows = await client.getReviewQueue(stationId);
+    expect(rows.single.observedAt.isUtc, isTrue);
+    expect(rows.single.observedAt.toIso8601String(), '2026-11-10T12:00:00.000Z');
+    client.close();
+  });
+
+  test('review queue rejects timestamps without an explicit UTC designator', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'utc-token',
+      client: MockClient((_) async => http.Response(jsonEncode([{
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': stationId,
+        'observation_type': 'hourly',
+        'observed_at': '2026-11-10T12:00:00',
+        'status': 'submitted',
+      }]), 200)),
+    );
+    await expectLater(client.getReviewQueue(stationId), throwsFormatException);
+    client.close();
+  });
+
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
@@ -140,5 +174,111 @@ void main() {
     expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
+
+
+  test('registration roles and account status use authenticated .NET routes', () async {
+    final paths = <String>[];
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'registration-token',
+      client: MockClient((request) async {
+        paths.add(request.url.path);
+        expect(request.headers['authorization'], 'Bearer registration-token');
+        if (request.url.path == '/api/v1/registration-roles') {
+          return http.Response.bytes(utf8.encode(jsonEncode([{
+            'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'
+          }])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
+        }
+        return http.Response(jsonEncode({
+          'account_state': 'pending_station_approval',
+          'state_reason': null,
+          'request_id': '22222222-2222-4222-8222-222222222222',
+          'request_status': 'pending_station_approval',
+          'submitted_at': '2026-11-10T10:00:00Z',
+          'review_note': null,
+        }), 200);
+      }),
+    );
+    final roles = await client.getRequestableRegistrationRoles();
+    final status = await client.getMyRegistrationStatus();
+    expect(roles.single.code, 'observer');
+    expect(roles.single.nameArabic, 'راصد');
+    expect(status.accountState, 'pending_station_approval');
+    expect(status.requestStatus, 'pending_station_approval');
+    expect(paths, ['/api/v1/registration-roles', '/api/v1/account/registration-status']);
+    client.close();
+  });
+
+  test('registration submission sends only user fields and idempotency key to .NET', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'registration-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode([{
+          'result_status': 'created',
+          'account_id': '22222222-2222-4222-8222-222222222222',
+          'request_id': '33333333-3333-4333-8333-333333333333',
+        }]), 201);
+      }),
+    );
+    final result = await client.submitRegistration(
+      firstName: 'أحمد',
+      fatherName: 'محمد',
+      lastName: 'علي',
+      roleCode: 'observer',
+      stationId: stationId,
+      idempotencyKey: 'registration-test-key',
+    );
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/registration-requests');
+    expect(captured.headers['authorization'], 'Bearer registration-token');
+    expect(body['firstName'], 'أحمد');
+    expect(body['roleCode'], 'observer');
+    expect(body['stationId'], stationId);
+    expect(body['termsVersion'], 'metra-terms-2026-11');
+    expect(body['idempotencyKey'], 'registration-test-key');
+    expect(body.containsKey('userId'), isFalse);
+    expect(body.containsKey('actorUserId'), isFalse);
+    expect(result['result_status'], 'created');
+    client.close();
+  });
+
+
+
+  test('observation submission uses the .NET station route and never sends actor identity', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'observation-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 200, headers: {'content-type': 'application/json'});
+      }),
+    );
+    await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'observation-idempotency-key',
+      observationType: 'hourly',
+      observedAt: DateTime.utc(2026, 11, 10, 12),
+      payload: {'temperature': 22.5},
+      submit: true,
+    );
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+    expect(captured.headers['authorization'], 'Bearer observation-token');
+    expect(body['idempotencyKey'], 'observation-idempotency-key');
+    expect(body['observationType'], 'hourly');
+    expect(body['observedAt'], '2026-11-10T12:00:00.000Z');
+    expect(body['payload']['temperature'], 22.5);
+    expect(body['submit'], isTrue);
+    expect(body.containsKey('userId'), isFalse);
+    expect(body.containsKey('actorUserId'), isFalse);
+    client.close();
+  });
+
 
 }

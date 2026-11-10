@@ -165,6 +165,9 @@ public static class ObservationSubmissionRequestGuard
             request.Payload.Value.GetRawText().Length > 65536)
             return "invalid_observation_payload";
 
+        if (request.ObservedAt.Value.Offset != TimeSpan.Zero)
+            return "observation_timestamp_must_be_utc";
+
         return null;
     }
 }

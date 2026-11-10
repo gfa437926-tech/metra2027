@@ -37,6 +37,21 @@ public sealed class ObservationSubmissionRequestGuardTests
             ObservationSubmissionRequestGuard.GetError(ValidRequest(type: "climate")));
 
     [Fact]
+    public void Accepts_an_explicit_zero_offset_utc_timestamp()
+    {
+        Assert.Null(ObservationSubmissionRequestGuard.GetError(
+            ValidRequest(observedAt: DateTimeOffset.Parse("2026-11-10T12:00:00+00:00"))));
+    }
+
+    [Fact]
+    public void Rejects_a_non_utc_observation_timestamp_before_submission()
+    {
+        Assert.Equal("observation_timestamp_must_be_utc",
+            ObservationSubmissionRequestGuard.GetError(
+                ValidRequest(observedAt: DateTimeOffset.Parse("2026-11-10T15:00:00+03:00"))));
+    }
+
+    [Fact]
     public void Rejects_non_object_payload()
         => Assert.Equal("invalid_observation_payload",
             ObservationSubmissionRequestGuard.GetError(ValidRequest(payload: "[1,2,3]")));

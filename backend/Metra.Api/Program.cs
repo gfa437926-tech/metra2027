@@ -2,6 +2,9 @@ using Metra.Api.Features.Observations;
 using Metra.Api.Security;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -68,6 +71,27 @@ builder.Services
         };
     });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var partitionKey = context.User.FindFirstValue("sub")
+            ?? context.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
+
 builder.Services.AddAuthorization(options =>
 {
     // All endpoints require a valid Supabase access token unless explicitly anonymous.
@@ -90,10 +114,28 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+// API-wide defensive headers. These are deliberately response headers only;
+// the Angular/Flutter clients retain their own content security policies.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+    await next();
+});
+
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors("MetraClients");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
