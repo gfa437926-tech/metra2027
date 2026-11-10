@@ -21,6 +21,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
   Map<String, dynamic>? _summary;
   String _reportKind = 'daily';
   final _fileCtrl = TextEditingController();
+  String _fileName = '';
   final _noteCtrl = TextEditingController();
   DateTime _start = DateTime.now().toUtc();
   DateTime _end = DateTime.now().toUtc();
@@ -145,7 +146,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
             ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: _reportKind,
+            value: _reportKind,
             decoration: const InputDecoration(labelText: 'نوع التقرير'),
             items: const [
               DropdownMenuItem(value: 'hourly', child: Text('ساعي')),
@@ -160,6 +161,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
           TextFormField(
             controller: _fileCtrl,
             decoration: const InputDecoration(labelText: 'اسم ملف Excel'),
+            onChanged: (v) => setState(() => _fileName = v.trim()),
           ),
           TextFormField(
             controller: _noteCtrl,
@@ -168,7 +170,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
           ),
           const SizedBox(height: 8),
           FilledButton(
-            onPressed: _saving || _fileCtrl.text.trim().isEmpty ? null : _confirm,
+            onPressed: _saving || _fileName.isEmpty ? null : _confirm,
             child: Text(_saving ? 'جارٍ الحفظ...' : 'تأكيد الأرشفة اليدوية'),
           ),
           const SizedBox(height: 16),
