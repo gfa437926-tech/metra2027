@@ -106,6 +106,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     module: ObservationModule.hourly,
     title: 'النشرة الساعية',
     sourcePath: 'hourly_reports.html',
+    reportVariant: ObservationReportVariant.standardHourly,
     apiObservationType: 'hourly',
     submitSupportedByCurrentApi: true,
     fields: [
