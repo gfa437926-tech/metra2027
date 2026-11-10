@@ -158,3 +158,8 @@ This illustrates why CI evidence is stored against exact commit SHAs rather than
 - PR #23 current head `42db1be81790d4dda47584019b729df8a1f53c07`: [Climate Analytics R #42924761774](https://github.com/gfa437926-tech/metra2027/actions/runs/42924761774) completed **success** on that exact SHA.
 - PR #21 current head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: [Client CI #42924658140](https://github.com/gfa437926-tech/metra2027/actions/runs/42924658140) remained **pending** at the latest check.
 - PR #22 current head `efa5870e555d4f74584e44bd439002daf784afa3`: no associated workflow run was returned for this exact SHA. Earlier Backend build #42924878526 belongs to previous head `e771f056...`.
+
+
+### Backend PR latest-head update — 2026-11-10T23:40:22.052Z
+
+PR #22 advanced from `efa5870e...` to current head `8134c9e4546693d717a10329436d646b08dbb94f`. A new exact-head Backend build [#42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135) is now **in progress**. The prior snapshot's "no run found" was accurate at its timestamp but is superseded by this newly created run. PR #21 Client CI #42924658140 remains pending; PR #23 Climate Analytics R #42924761774 remains successful on its current head.
