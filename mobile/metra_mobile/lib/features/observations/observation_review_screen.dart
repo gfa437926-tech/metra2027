@@ -78,7 +78,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.assignment_outlined)),
                     title: Text(_typeLabel(item.observationType)),
-                    subtitle: Text('${item.observedAt.toLocal()} • ${item.status}',
+                    subtitle: Text('${_formatUtc(item.observedAt)} UTC • ${item.status}',
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
                   Padding(
@@ -183,6 +183,12 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
         SnackBar(content: Text(message)),
       );
     }
+  }
+
+  String _formatUtc(DateTime value) {
+    final utc = value.toUtc();
+    String two(int part) => part.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} ${two(utc.hour)}:${two(utc.minute)}';
   }
 
   String _typeLabel(String type) => switch (type) {
