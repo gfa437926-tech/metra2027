@@ -32,6 +32,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.textContaining('2026-11-03T12:00:00.000Z'), findsOneWidget);
     api.close();
   });
 
