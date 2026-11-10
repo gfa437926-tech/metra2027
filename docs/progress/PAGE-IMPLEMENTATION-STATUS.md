@@ -92,3 +92,9 @@
 - Admin station links shown only when authenticated session present (UX only; API still enforces).
 - Shared `.metra-state-*` CSS tokens for loading/empty/error/ok/warn.
 - Flutter `MaterialApp` forced RTL + `locale: ar`.
+
+
+## Phase G — security tests
+- Added `ManualArchiveStationAuthorizationTests` for cross-station archive isolation.
+- Coverage matrix: `docs/security/phase-g-security-test-coverage.md`
+- No SQL applied; no PR merge.
