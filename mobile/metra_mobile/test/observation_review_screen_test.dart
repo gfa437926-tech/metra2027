@@ -35,6 +35,30 @@ void main() {
     api.close();
   });
 
+  testWidgets('renders timestamps as UTC even when the API returns an offset', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((_) async => http.Response(jsonEncode([
+        {
+          'id': '33333333-3333-4333-8333-333333333333',
+          'station_id': stationId,
+          'observation_type': 'hourly',
+          'observed_at': '2026-11-03T15:00:00+03:00',
+          'status': 'submitted',
+          'payload': {}
+        }
+      ]), 200)),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('2026-11-03T12:00:00.000Z'), findsOneWidget);
+    api.close();
+  });
+
   testWidgets('shows an empty state for an empty server queue', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
