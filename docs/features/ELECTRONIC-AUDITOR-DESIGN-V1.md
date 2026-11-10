@@ -190,3 +190,13 @@ Listed in Master Plan §6 and §7. Blocks that depend on owner:
 | SQL | Not written for apply |
 | Accuracy | Not measured |
 
+
+---
+
+## Superseding program specification
+
+The broader program (paper registers + mechanical charts + training lab + triple-source engine) is specified in:
+
+`docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md`
+
+This file remains the mechanical-chart–focused design note and is consistent with that specification. Implementation status is still **design/scaffold only**.

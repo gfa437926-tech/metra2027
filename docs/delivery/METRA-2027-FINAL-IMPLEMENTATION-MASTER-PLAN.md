@@ -273,3 +273,20 @@ Estimates are engineering judgment from inventory, **not** a formal acceptance c
 - `docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md`  
 
 **End of Phase 0 master plan.**
+
+---
+
+## Addendum — Intelligent Audit program (AI paper + mechanical)
+
+**Formal specification:** `docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md`
+
+Program scope beyond single-chart digitization:
+- Track A: official paper station registers (page OCR / document understanding)
+- Track B: mechanical recorder charts (curve digitization)
+- Triple-source compare: paper ↔ mechanical ↔ electronic METRA
+- Controlled AI training laboratory (human-approved labels only)
+- Offline extraction without station connectivity; electronic match optional
+
+**Status:** Specification + Angular structural scaffold only. No production models, no SQL apply, no accuracy claims.
+
+**Phased codes:** IA-0 (spec) → IA-10 (acceptance). Prefer manual-digitization MVP (IA-3/IA-4) before any model promotion.

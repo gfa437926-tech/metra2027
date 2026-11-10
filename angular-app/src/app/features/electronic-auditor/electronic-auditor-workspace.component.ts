@@ -16,7 +16,7 @@ import { RouterLink } from '@angular/router';
       <header class="ea-header">
         <h1><i class="fa-solid fa-ruler-combined"></i> المدقق الإلكتروني</h1>
         <p class="ea-sub">
-          منظومة تدقيق مخططات المسجلات الميكانيكية ومقارنتها بالرصد الإلكتروني —
+          منظومة التدقيق الذكي للسجلات الورقية ومخططات المسجلات الميكانيكية ومقارنتها بالرصد الإلكتروني —
           <strong>واجهة هيكلية فقط</strong> حتى اعتماد التصميم وتوفير مخططات مرجعية.
         </p>
       </header>
@@ -27,12 +27,17 @@ import { RouterLink } from '@angular/router';
           لن تُعرض نتائج مطابقة ولن تُعدَّل النشرات الأصلية من هنا.
         </p>
         <p>
-          المرجع التصميمي:
-          <code>docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md</code>
+          المواصفات الرسمية:
+          <code>docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md</code>
         </p>
       </section>
 
       <section class="ea-grid">
+        <article class="ea-card">
+          <h2>0) السجلات الورقية الرسمية</h2>
+          <p>رفع صفحات السجل، التعرف على الخانات، استخراج القيم، المقارنة بالإرسال الإلكتروني.</p>
+          <p class="muted">غير متاح — مواصفات IA فقط</p>
+        </article>
         <article class="ea-card">
           <h2>1) سجل التدقيق</h2>
           <p>إنشاء حالة مرتبطة بمحطة وجهاز وفترة مخطط (UTC).</p>

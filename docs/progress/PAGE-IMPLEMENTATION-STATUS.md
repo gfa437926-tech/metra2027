@@ -143,3 +143,18 @@
 | EA-05 Decision & report | قرار وتقرير | Missing | Missing | Missing | Separate permissions from observer roles |
 
 **Inventory date:** 2026-11-10 UTC — Phase 0 master plan published; no SQL applied; no main merge.
+
+## Intelligent Audit program (AI)
+
+**Spec:** `docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md`
+
+| Area | Status |
+|---|---|
+| Formal requirements | Documented (IA-0) |
+| Paper register track | Not implemented |
+| Mechanical chart track | Design only |
+| Training laboratory | Not implemented |
+| Triple-source engine | Not implemented |
+| Angular UI | Scaffold `/electronic-auditor` only |
+| Flutter capture | Not implemented |
+| Production models | None |
