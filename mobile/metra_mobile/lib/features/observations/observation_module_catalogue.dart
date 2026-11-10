@@ -19,7 +19,7 @@ enum ObservationModule {
 enum ObservationFieldKind { text, number, date, time, choice, boolean, multiline }
 
 class ObservationFieldSpec {
-  ObservationFieldSpec({
+  const ObservationFieldSpec({
     required this.key,
     required this.label,
     this.kind = ObservationFieldKind.text,
