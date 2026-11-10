@@ -154,3 +154,10 @@ This creates a stale-authorization window if the relevant grant/assignment is re
 A detailed, owner-reviewable design is recorded in `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md`. The preferred option is a single narrowly scoped database-side operation that validates JWT-derived actor identity, exact station scope and current queue-read permission while selecting submitted rows atomically. The database review must define the transaction snapshot and lock/serialization semantics needed for the required revocation guarantee. Decision-specific authorization must likewise be rechecked atomically with the decision state change.
 
 B-013 remains in progress. No SQL, RPC, migration, RLS, seed or Supabase operation was performed. No code change or test was made in this round. Local tests were not run and no new CI result is claimed. Implementation requires schema review and owner approval.
+
+
+## Round 3 — B-008 observation read/correction contract draft (2026-11-10T23:34:04Z)
+
+Reviewed the master requirement sections for hourly and daily report lists, details, correction, immutable version history, station isolation, UTC filters, pagination, stale-version conflicts and audit history. Added `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` as a proposal covering general list/detail/version/correction routes, illustrative response shapes, error mapping and owner decisions.
+
+The route family and JSON examples are explicitly proposed, not existing API behavior. The reviewed backend source still has only the submitted queue GET and decision POST for this workflow; general list/detail/correction/history endpoints were not found. Exact field catalogues, workflow states, daily boundaries, role grants, auditor scope and database schema remain approval dependencies. No endpoint, DTO, SQL, migration, RPC, RLS or seed was implemented.
