@@ -1,41 +1,58 @@
 # Climate Analytics Implementation Status
 
-**Branch:** work/climate-analytics-r-bootstrap  
-**Latest code change:** 36c7937db51cdb7fdf2f87b64fae62f32e64e418  
-**Baseline verification:** R package check and Backend build passed on the preceding implementation commit `e081fb57db925663de11c5cd39b9eabdf380a1c6`. The new edge-case tests added after that run require a fresh CI result.
+**Branch:** work/climate-analytics-r-hardening  
+**PR #18:** remains open, draft, and unmodified by this hardening branch.  
+**Implementation baseline:** branch `work/climate-analytics-r-bootstrap`, commit `a1f51e83df5c02f659a5505da096f81bc4586080`.
 
-| Capability | State | Evidence |
-|---|---|---|
-| R package structure | Implemented | services/climate-analytics-r |
-| Climatol dependency declaration | Implemented | DESCRIPTION |
-| Request and workspace path validation | Implemented | R/request-validation.R |
-| Input pair staging before Climatol execution | Implemented | R/homogenization.R |
-| Climatol execution wrapper | Implemented; package check passed on baseline commit | R/homogenization.R |
-| Daily monthly/yearly summaries | Implemented; statistic and completeness threshold are explicit caller inputs | R/climatology-summary.R |
-| Unit tests | Implemented; baseline package check passed; new leap-year and omitted-calendar-date cases await CI | tests/testthat |
-| GitHub R package workflow | Passed run #12 on baseline commit; rerun expected for latest test commit | .github/workflows/climate-analytics-r.yml |
-| Backend build | Passed run #1384 on baseline commit | GitHub Actions |
-| .NET job adapter | Not started | — |
-| METRA export mapping | Blocked on owner-approved data contract | — |
-| Database persistence | Not started; owner approval required | — |
-| Angular review workspace | Not started | — |
-| Variable-specific climate indices and reporting | Not started | — |
-| Independent scientific acceptance | Not started | — |
+## Verified before hardening
 
-## Verification evidence
+- PR #18 was open, draft, and not merged; head was `work/climate-analytics-r-bootstrap`.
+- Climate Analytics R workflow run #15 passed on the PR head.
+- Backend build run #1386 passed on the PR head.
+- The R workflow completed setup-r, dependency installation, and R CMD check successfully.
 
-- Commit `e081fb57db925663de11c5cd39b9eabdf380a1c6`: Climate Analytics R workflow run #12 completed successfully, including `R CMD check`.
-- The same commit: Backend build run #1384 completed successfully.
-- Commit `36c7937db51cdb7fdf2f87b64fae62f32e64e418`: added tests for missing calendar dates without explicit NA rows, leap-year annual completeness, and invalid period/statistic inputs. These new tests are not yet certified by CI.
+## Current capabilities
 
-## Immediate sequence
+| Capability | State |
+|---|---|
+| R package and Climatol dependency | Implemented |
+| Workspace/input validation and .dat/.est presence checks | Implemented; hardening remains |
+| Staged copies before Climatol invocation | Implemented |
+| Climatol homogenization call | Implemented; requires approved scientific configuration |
+| Daily monthly/yearly generic summary helper | Implemented; not a climate normals/indices module |
+| Unit tests | Implemented; orchestration tests use an injected runner |
+| Run provenance and SHA-256 artifact inventory | Added in this branch; awaiting CI |
+| .NET job adapter | Not implemented |
+| Approved METRA data export mapping | Blocked on owner/scientific approval |
+| Artifact persistence and review UI | Not implemented |
+| Variable-specific indices and climatological normals | Not implemented |
+| Independent scientific validation | Not implemented |
 
-1. Obtain a green R package check on the latest test commit.
-2. Review and approve the METRA-to-Climatol export contract, including variable units, temporal resolution, missing-value codes, station metadata, and period rules.
-3. Add a private .NET adapter with authorization, resource limits, bounded execution, and audit events.
-4. Add immutable artifact storage and a human review workflow.
-5. Implement climate indices and reports only after definitions, reference periods, and completeness standards are approved.
+## Scientific workflow proposed
 
-## Safety gates
+1. Select variable, frequency, stations, and analysis period from an approved catalogue.
+2. Review station history (relocation, instruments, exposure, observation practice, and known metadata changes).
+3. Validate chronology, units, missing-value representation, duplicates, completeness, and station metadata.
+4. Produce an immutable Climatol .dat/.est package and record its schema/version and hashes.
+5. Run quality control and homogenization in an isolated R job directory.
+6. Review outliers, candidate breakpoints, reference series, diagnostics, and adjusted series.
+7. Compare raw, quality-controlled, and homogenized values without replacing the source.
+8. Record reviewer identity, decision, rationale, method/package versions, parameters, and artifact hashes.
+9. Publish only an explicitly approved derived product through a separately authorized process.
 
-No SQL, migrations, RLS, seeds, Supabase changes, production credentials, merge to main, or deployment are part of this phase. Raw observation series remain unchanged. Homogenized values remain derived outputs and must not replace official observations without explicit scientific and operational approval.
+## Required scientific approvals
+
+No variable-specific thresholds, Climatol settings, completeness rules, normal periods, or climate-index definitions are selected by this implementation. These require the responsible climate-science authority. A statistical breakpoint is a candidate discontinuity, not proof of a non-climatic cause.
+
+## Remaining engineering work
+
+- Pin R, package dependencies, OS/container image, and build provenance.
+- Add hostile-path, symlink, malformed/oversized input, concurrency, cancellation, and cleanup tests.
+- Add actual Climatol example-data smoke tests and independent reference datasets.
+- Implement .NET service identity, authorization, bounded process execution, cancellation, idempotency, audit, and result-read authorization.
+- Implement artifact quarantine, retention, access control, and review/approval interfaces.
+- Add UTC-only time contract validation across export and display.
+
+## Safety
+
+No database/Supabase/SQL changes, production-data access, raw-series mutation, merge, deployment, or Angular/Flutter changes are included.

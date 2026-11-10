@@ -1,56 +1,49 @@
-# METRA Climate Analytics — R worker bootstrap
+# METRA Climate Analytics — R worker
 
-**Status:** first executable worker slice; not connected to ASP.NET Core, Angular, Flutter, Supabase, or production storage.
+**Status:** isolated worker bootstrap with reproducible run provenance; not connected to ASP.NET Core, production observations, database storage, Angular, or Flutter.
 
-## Scope
+## Scope implemented
 
-- Validates a Climatol job request and the required .dat / .est input pair.
-- Restricts input and output directories to METRA_CLIMATE_WORK_ROOT.
-- Copies submitted inputs into a unique job directory before execution; Climatol never receives the source files as writable working files.
-- Runs climatol::homogen() with UTC timezone handling and records generated artifact names.
-- Calculates daily-input monthly/yearly summaries only when the caller explicitly supplies the statistic and completeness threshold; missing values are not converted to zero.
-- Includes unit tests with an injected runner; these do not claim scientific validation or model accuracy.
+- Validates the Climatol job request, workspace containment, and matching non-empty .dat/.est pair.
+- Copies inputs to a unique job directory and verifies SHA-256 equality before execution.
+- Invokes `climatol::homogen()` with UTC, graphics, verbose logging, and the package's documented defaults.
+- Writes `metra-provenance.json` with request, UTC start/end times, R/package versions, effective Climatol formal defaults, input/output SHA-256 hashes, source-integrity result, and completion/failure state.
+- Retains failed-job provenance for diagnosis; original input files are checked after execution.
+- Includes unit tests using an injected runner. These test orchestration and integrity, not scientific validity.
 
-## Job JSON shape
+## Job input contract
 
-    {
-      "variable": "TX",
-      "start_year": 1991,
-      "end_year": 2000,
-      "input_dir": "/workspace/input/example-job",
-      "output_dir": "/workspace/output"
-    }
+The request contains `variable`, `start_year`, `end_year`, `input_dir`, and `output_dir`. The input directory must contain `VRB_YEAR-YEAR.dat` and the matching `.est` file.
 
-This is a contract example, not METRA observation data. The input directory must contain {variable}_{start_year}-{end_year}.dat and the matching .est file.
-
-Climatol documents .dat as a blank-separated time series matrix, station by station, and .est as station longitude, latitude, elevation, code, and name. The owner must approve the actual METRA export mapping, units, missing-value representation, and station metadata before operational jobs are enabled.
+Climatol documents .dat as the time-series matrix and .est as station longitude, latitude, elevation, code, and name. METRA's export mapping, units, frequency, missing-value codes, station metadata, station histories, and study period must be approved before production data can be exported.
 
 ## Local checks
 
-From this directory, with R and the listed packages installed:
+From this directory, with R and dependencies installed:
 
-    R CMD build .
-    R CMD INSTALL metraClimate_0.1.0.tar.gz
-    R -e 'testthat::test_dir("tests/testthat")'
+```sh
+R CMD build .
+R CMD INSTALL metraClimate_0.2.0.tar.gz
+R -e 'testthat::test_dir("tests/testthat")'
+```
 
-Install dependencies from the configured CRAN mirror with install.packages(c("climatol", "jsonlite", "testthat")).
+## Scientific and safety boundaries
 
-## Safety boundaries
+- No SQL, migrations, RLS, seeds, Supabase access, or database credentials.
+- No public listener or .NET integration.
+- No invented station data, units, thresholds, reference periods, or acceptance criteria.
+- No automatic promotion of homogenized values to official observations.
+- The generic daily summary helper is not a variable-specific climate-normal/index implementation.
+- Homogenized series, filled values, detected outliers, and break adjustments remain derived outputs subject to human scientific review.
 
-- No database connection, SQL, migration, RLS, seed, or Supabase access.
-- No API listener or public network port.
-- No invented station coordinates, values, units, reference periods, or climate thresholds.
-- No automatic promotion of homogenized output to official observations.
-- No automatic corrections to original series. Derived output requires scientific review and approval.
-- No METRA export adapter until the canonical station catalogue, variable units, temporal resolution, missing-value codes, and completeness rules are approved.
+## Outstanding gates
 
-## Next gates
-
-1. Approve the METRA-to-Climatol export mapping and metadata source.
-2. Add synthetic fixtures and a reproducible R package/container build.
-3. Add a private .NET worker adapter with authorization, bounded execution time, resource limits, and artifact quarantine.
-4. Add Angular review UI and an audit trail for raw versus homogenized series.
-5. Obtain independent climate-science acceptance before enabling corrections or publication.
+1. Approve the METRA-to-Climatol export contract and station-history source.
+2. Add representative synthetic fixtures and a pinned, reproducible container/toolchain.
+3. Review Climatol parameters separately for each variable and temporal resolution.
+4. Add authenticated, private .NET orchestration with process/resource limits, cancellation, idempotency, and audit.
+5. Add quarantined artifact storage and reviewer comparison/approval workflow.
+6. Validate on an independently curated reference dataset before scientific acceptance.
 
 ## References
 
