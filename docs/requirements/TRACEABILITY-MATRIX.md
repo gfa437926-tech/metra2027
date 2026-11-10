@@ -94,3 +94,10 @@ The earlier failure on PR #30 head `9689ab82...` is superseded by the owning ass
 - Client CI [#42924701234](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701234) succeeded, including Angular dependency audit/build and Flutter dependency resolution, analyze and tests.
 - The earlier 8/234 failure remains useful historical evidence of the rate-limiter/test interaction, but it is no longer the latest head's CI result. Current CI success is not a penetration test or production authorization verification.
 - PR #27 latest inspected head also has successful Angular and Flutter CI; PR #21 is pending, PR #22 and #23 are in progress, and PR #24/#28 have no associated workflow runs in the latest exact-head lookup.
+
+
+### Latest exact-head CI delta
+
+- PR #23 R/Climatol: current head `42db1be81790d4dda47584019b729df8a1f53c07` has a completed successful run [#42924761774](https://github.com/gfa437926-tech/metra2027/actions/runs/42924761774).
+- PR #21 Flutter: current head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412` still has Client CI #42924658140 pending.
+- PR #22 Backend: current head advanced to `efa5870e555d4f74584e44bd439002daf784afa3`; no workflow run was returned for this exact head. The earlier run on `e771f056...` is not current-head evidence.
