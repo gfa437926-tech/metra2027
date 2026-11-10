@@ -74,3 +74,18 @@ Remaining (4/8):
 8. Compare responsive desktop/mobile rendering against the approved original UI reference.
 
 The 50% figure is only this task's checkpoint ratio, not the whole Angular app or METRA project.
+
+
+## Implementation increment — UI-IMPL-002 (continued, 2026-11-11 UTC)
+
+- Status: **In progress — focus restoration implemented; verification remains open**.
+- Task-scope progress: **62.5% (5 of 8 acceptance checkpoints completed)**. This is a checkpoint count for UI-IMPL-002 only, not the Angular application or whole METRA project.
+- Commit: [465b830c78ca0dbb40fe17b18cc0fad0f97d51d5](https://github.com/gfa437926-tech/metra2027/commit/465b830c78ca0dbb40fe17b18cc0fad0f97d51d5).
+- Updated `angular-app/src/app/app.component.ts`:
+  - Added a template reference and `ViewChild` for the existing mobile menu trigger.
+  - When Escape closes an open sidebar, focus returns to that trigger.
+  - The trigger's accessible label now changes between open and close states.
+- Post-commit source verification: all three expected code markers were re-fetched from the implementation branch and confirmed present.
+- CI verification on this exact commit: no associated PR workflow runs were returned; combined status returned no checks. **No build/test/CI success is claimed.**
+- Remaining checkpoints (3/8): keyboard navigation/focus-order review; Angular build/tests plus successful exact-head CI; responsive desktop/mobile screenshot comparison against the approved original UI reference.
+- PR [#32](https://github.com/gfa437926-tech/metra2027/pull/32) remains Draft and unmerged. No merge, rebase, deployment, database or Supabase operation was performed.
