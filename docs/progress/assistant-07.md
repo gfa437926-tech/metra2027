@@ -238,3 +238,31 @@
 - لا نعتبر إصلاح الاختبارات ناجحاً حتى ينتهي التشغيل بنتيجة Success.
 
 **الحالة:** SEC-07 قيد التنفيذ، نسبة الإنجاز 40% من نطاق المهمة فقط. PR [#30](https://github.com/gfa437926-tech/metra2027/pull/30) مفتوح Draft وغير مدمج. لا تغييرات DB/RLS ولا نشر.
+
+
+## متابعة أمنية — تأكيد CI وحدود حجم الطلبات
+
+**التاريخ:** 2026-11-11 UTC  
+**المهمة:** SEC-07 — الأمن السيبراني وحماية المعلومات  
+**الحالة:** قيد التنفيذ  
+**نسبة الإنجاز التقديرية:** 45% من نطاق المساعد رقم 7 فقط.  
+**طريقة الحساب:** إنجاز المراجعة الساكنة الأولية، وقواعد تجاهل الأسرار، وفحص npm، وترويسات API/HSTS، وRate Limiting مع اختبارات CI ناجحة؛ إضافة إلى تنفيذ سقف body على مستوى Kestrel ورفض Content-Length الزائد مع اختبارات حدودية، بانتظار CI لهذه الجولة.
+
+### تحقق CI
+- [Backend build run 42924648212](https://github.com/gfa437926-tech/metra2027/actions/runs/42924648212) — **Success** على commit `2d285d6c446364976d340233993aca34d18e1d73`؛ job `build` مكتمل بنجاح.
+- [Backend build run 42924701188](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701188) — **Success** على commit التوثيق `32e5ecce8db2ad8899a49174d9d628fa1faf193b`.
+- [Client CI run 42924701234](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701234) — **Success** على SHA نفسه.
+- بعد إضافة سقف حجم الطلبات والاختبارات، بدأ [Backend build run 42925267116](https://github.com/gfa437926-tech/metra2027/actions/runs/42925267116) بحالة **in_progress**، و[Client CI run 42925267010](https://github.com/gfa437926-tech/metra2027/actions/runs/42925267010) بحالة **queued** عند التحديث. لا تُنسب لهما نتيجة نجاح قبل اكتمالهما.
+
+### الملفات التي عُدلت في هذه الجولة
+- `backend/Metra.Api/Program.cs`: تحديد حد أقصى عام لحجم body قدره 1 MiB عبر Kestrel، مع middleware يرفض Content-Length الأكبر من الحد قبل المصادقة وربط النماذج. حد Kestrel يبقى طبقة الإنفاذ للطلبات chunked/streamed.
+- `backend/Metra.Api.Tests/Security/ApiAuthenticationTests.cs`: إضافة اختبار يثبت رفض 1 MiB + 1 بايت بـ HTTP 413، واختبار أن 1 MiB بالضبط لا يُرفض بواسطة middleware ويصل إلى طبقة المصادقة.
+
+### القيود والمخاطر المفتوحة
+- لم يُعتمد trusted proxy chain؛ لذلك لا يتم الوثوق بـ `X-Forwarded-For` ولا تقسيم الحصة المجهولة حسب IP.
+- سقف 1 MiB إعداد عام أولي؛ يجب التأكد من ملاءمته لكل عقود الطلبات الفعلية، وخاصة أي عمليات استيراد أو ملفات كبيرة، قبل الإنتاج.
+- لم تُجر اختبارات على خدمة حية، ولم تُعدل قاعدة البيانات أو migrations أو RLS أو حسابات المستخدمين.
+
+### المتبقي والخطوة التالية
+- **6 حزم متابعة:** (1) التحقق النهائي من CI على سقف body، (2) trusted proxy والحدود per-client، (3) تدقيق CSP/XSS وتخزين جلسة Angular، (4) فحص Flutter dependencies، (5) تدقيق Git history والأسرار وإعدادات النشر، (6) اختبارات IDOR وتداخل صلاحيات الحسابات والمحطات والسلطات.
+- PR [#30](https://github.com/gfa437926-tech/metra2027/pull/30) ما زال مفتوحاً Draft وغير مدمج. لا نشر ولا تغييرات DB/RLS.
