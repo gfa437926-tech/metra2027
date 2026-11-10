@@ -48,3 +48,17 @@ All timestamps are UTC. New rounds are appended; prior entries must not be delet
 - **Tests:** no software tests or Actions run; documentation-only changes. Source files were fetched/read, not executed.
 - **Progress:** remains 25% = 2/8 defined milestones. Six milestones remain; module-level source inventory is improved but full source-tree inventory is not complete.
 - **Next:** inspect backend feature/test and image worker/storage paths; then establish DB-independent contracts only after ownership boundaries are confirmed.
+
+
+## 2026-11-10T23:34:37.134Z — Round 4: backend/CI inventory and contract readiness
+
+- **Task:** METRA 2027 Assistant 05 — paper-register and mechanical-chart auditor.
+- **Status:** evidence/documentation round complete; overall task remains قيد التنفيذ.
+- **Inspected:** API and test project files, backend CI workflow, Angular package test scripts, full relevant AI auditor specification and master-plan sections.
+- **Findings:** .NET 10/xUnit test project and backend CI integration points exist; CI includes disposable PostgreSQL isolation, security advisory gate, authorization contracts, API build/test, Docker and readiness checks. No auditor-specific test command was found in Angular package scripts.
+- **Blocking contract discrepancy:** mechanical design uses `electronic-audits` + `electronic_auditor.*`; broad AI spec uses `intelligent-audits` + `intelligent_audit.*`. Neither is wired. Canonical namespace/scope needs owner decision before code.
+- **Created:** `docs/audits/ELECTRONIC-AUDITOR-CONTRACT-READINESS.md` — owner decisions, proposed logical fields, security and test gates, and non-actions. Commit `a9a1fe51dabbe132866371f2f428f68e4f6346c2` — https://github.com/gfa437926-tech/metra2027/commit/a9a1fe51dabbe132866371f2f428f68e4f6346c2.
+- **Updated:** audit evidence inventory. Commit `3df5531baa076ddce6b478e8ae396df65036bb5c` — https://github.com/gfa437926-tech/metra2027/commit/3df5531baa076ddce6b478e8ae396df65036bb5c.
+- **Tests:** no software tests/Actions run; workflow inspected only. No app, API, DB, migration, storage, or raw observation changes.
+- **Progress:** 25% (2/8 milestones); six remain. Exact test-source tree and worker/storage inventory remain incomplete.
+- **Next:** request/record owner decision on canonical route/permission/scope, then complete exact test-source inventory before any implementation.
