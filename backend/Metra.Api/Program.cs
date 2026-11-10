@@ -5,6 +5,7 @@ using Metra.Api.Features.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,34 @@ var authority = builder.Configuration["Authentication:Authority"]
 var audience = builder.Configuration["Authentication:Audience"] ?? "authenticated";
 
 builder.Services.AddProblemDetails();
+
+// Partition by the verified JWT subject, never by an untrusted forwarded-IP
+// header. Until the deployment proxy chain is explicitly configured and
+// trusted, unauthenticated traffic shares a conservative fallback bucket.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) =>
+    {
+        context.HttpContext.Response.Headers["Retry-After"] = "60";
+        return ValueTask.CompletedTask;
+    };
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var subject = httpContext.User.FindFirst("sub")?.Value;
+        var partition = string.IsNullOrWhiteSpace(subject) ? "anonymous" : $"subject:{subject}";
+        var permitLimit = string.IsNullOrWhiteSpace(subject) ? 30 : 120;
+
+        return RateLimitPartition.GetFixedWindowLimiter(partition, _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+});
 // Bound every server-side Supabase request. A stalled dependency must not
 // hold an API request or authorization decision open for HttpClient's 100s default.
 static void AddBoundedSupabaseClient(IServiceCollection services, string name) =>
@@ -116,8 +145,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseCors("MetraClients");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
