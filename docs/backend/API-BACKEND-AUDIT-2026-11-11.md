@@ -125,8 +125,10 @@ Observation decision currently performs explicit subject and permission checks i
 
 ## Verification status
 - Source-level review completed.
-- Backend tests were not executed in this environment; no local .NET SDK/test runner was available through the GitHub source connector.
-- A CI result for this branch must be checked after the commits are pushed. Do not interpret prior README CI references as verification of this branch.
+- Local Backend tests were not executed in this environment.
+- GitHub Actions run 42922191087 completed with success: https://github.com/gfa437926-tech/metra2027/actions/runs/42922191087
+- GitHub Actions run 42922249720 completed with success: https://github.com/gfa437926-tech/metra2027/actions/runs/42922249720. Its job steps confirm package restore/advisory checks, authorization contract checks, API build, Domain/API tests and production container image build all succeeded.
+- These are CI results, not evidence of a local test run or production deployment.
 - No production endpoint was contacted.
 
 ## Next work
