@@ -21,3 +21,20 @@
 ## Residual risks
 - Service-role PostgREST path still relies on API filters; RLS reduction remains an approved-SQL follow-up.
 - Npgsql ops path sets transaction-local `app.station_id` / `app.user_id` in code; prove with isolated Postgres tests after owner approval of migrations and secrets.
+
+
+### Station user directory
+- Unauthorized user cannot `GET /api/v1/stations/{id}/users` (directory not called).
+- Authorized user reads only the requested station.
+- Station A credentials cannot list users for station B.
+
+### Registration review
+- Unauthorized user cannot read station registration queue (service not called).
+- Station A cannot read registration queue for station B.
+- Unauthorized user cannot post registration decisions.
+- Authorized reviewer reads only the requested station queue.
+
+## Evidence files
+- `backend/Metra.Api.Tests/StationUserDirectoryStationAuthorizationTests.cs`
+- `backend/Metra.Api.Tests/RegistrationReviewStationAuthorizationTests.cs`
+- (existing) ObservationQueue, EquipmentFault, SupportIncident, ManualArchive, StationScopedAuthorizationIntegrationTests

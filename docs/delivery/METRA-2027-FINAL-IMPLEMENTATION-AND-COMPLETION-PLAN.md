@@ -191,3 +191,9 @@
 - نُقل انتقائياً من #14: سياسة daily 24h، عدم إلزام الثلج للجميع، عرض UTC في hourly/daily.
 - #15/#16: مرجع فهرس وحدات على `mobile/metra_mobile`؛ لم تُدمَج بالكامل بسبب المسار وفشل Flutter على #16.
 - عقود الوحدات الناقصة: `docs/contracts/PENDING-OBSERVATION-UNITS-CONTRACT-DRAFT.md`.
+
+
+## تحديث عزل المحطات وحزمة DB
+
+- اختبارات عزل إضافية: دليل مستخدمي المحطة + طابور/قرار التسجيل.
+- حزمة مراجعة DB للمالك: `docs/security/DATABASE-REVIEW-PACKAGE-FOR-OWNER-APPROVAL.md` (لا تطبيق SQL).
