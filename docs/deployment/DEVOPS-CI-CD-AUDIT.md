@@ -116,7 +116,19 @@ The requested files `واجهات/مهما.md`, `واجهات/تغيير.md` and
 
 ## Validation status for this PR
 
-- GitHub Actions will execute Client CI against this PR after it is opened.
-- Existing historical main checks were inspected as listed above.
+- GitHub Actions PR run #725 completed successfully on 2026-11-10: Angular `npm ci` and production build passed; Flutter locked dependency resolution, `flutter analyze`, and `flutter test` passed. Evidence: https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265
+- Assistant-specific progress and append-only change log were added at `docs/progress/assistant-09.md` and `docs/progress/assistant-09-changelog.md`.
+- Existing historical main checks were inspected as listed above; they are not substituted for fresh PR checks.
 - No production deployment, Pages deployment, GHCR publication, database change, secret mutation or merge to `main` was performed.
-- Workflow run results for this branch must be recorded after GitHub completes the PR checks.
+- PR #27 remains open as Draft pending review and the follow-up items in the assistant progress report.
+
+## Assistant 09 reporting protocol — 2026-11-10T23:29:00Z
+
+- Task ID: `DEVOPS-09-001`; status: in progress.
+- Progress: 67% (8/12 explicitly tracked work items; 4 remaining).
+- Branch: `assistant-9/devops-ci-hardening`.
+- PR: https://github.com/gfa437926-tech/metra2027/pull/27 (open, Draft, not merged).
+- Progress report: https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09.md
+- Append-only change log: https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09-changelog.md
+- PR validation: Client CI #725 passed Angular and Flutter jobs; https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265
+- Follow-up: investigate Pages runtime configuration validation; confirm canonical `واجهات/` handoff files; reconcile R/Climatol after PR #23; pin Flutter SDK.
