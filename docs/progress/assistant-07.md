@@ -266,3 +266,8 @@
 ### المتبقي والخطوة التالية
 - **6 حزم متابعة:** (1) التحقق النهائي من CI على سقف body، (2) trusted proxy والحدود per-client، (3) تدقيق CSP/XSS وتخزين جلسة Angular، (4) فحص Flutter dependencies، (5) تدقيق Git history والأسرار وإعدادات النشر، (6) اختبارات IDOR وتداخل صلاحيات الحسابات والمحطات والسلطات.
 - PR [#30](https://github.com/gfa437926-tech/metra2027/pull/30) ما زال مفتوحاً Draft وغير مدمج. لا نشر ولا تغييرات DB/RLS.
+
+
+### نتيجة التحقق اللاحقة لحدود body
+- [Backend build run 42925267116](https://github.com/gfa437926-tech/metra2027/actions/runs/42925267116) اكتمل بنتيجة **Success** على commit `20c81e14c1086bd1f3fc4638b174eac9e8d3f362`، والـ job `build` مكتمل دون خطوات فاشلة. هذا يؤكد نجاح اختبارات 413 وحد 1 MiB في ذلك التشغيل.
+- بعد تحديث تقارير الجولة، بدأت فحوص أحدث توثيق على HEAD `fa8cbc0a6e7e3d4b34828835e3ed90134a0ea95e`: [Backend run 42925353655](https://github.com/gfa437926-tech/metra2027/actions/runs/42925353655) و[Client CI run 42925353698](https://github.com/gfa437926-tech/metra2027/actions/runs/42925353698) كانا **in_progress** وقت التسجيل. لم تُسجل نتيجة نهائية لهذين التشغيلين.
