@@ -86,6 +86,9 @@ The daily endpoint calls DailyObservationValidator.Validate(values) without requ
 ### P1 — Unknown observation field names can be silently ignored
 The daily and hourly validators iterate known rule dictionaries but do not reject every unknown key. The request guard bounds field count/name/value lengths but does not validate keys against an approved catalogue. A misspelled or unsupported field may therefore be omitted from semantic validation. A strict allow-list should be introduced only after the owner-approved field catalogue is complete, so valid but not-yet-inventoried fields are not accidentally rejected.
 
+### P1 — Review queue has a time-of-check/time-of-use authorization window
+The queue endpoint checks station permission through a separate authorization RPC, then the queue service performs a service-role PostgREST read by station ID. A station assignment or grant revoked between those two operations may still permit the in-flight request to return queue data. The master specification explicitly requires atomic queue authorization/read or equivalent TOCTOU protection. Resolve with a reviewed server-side RPC/read model that rechecks actor and scope as part of the data read; do not invent or execute SQL in this task.
+
 ### P1 — Operational read/correction API coverage is incomplete relative to the master page specification
 The reviewed API exposes a submitted review queue and decision routes, but no complete general report list/detail/version-history/correction routes were found in the backend tree for daily/hourly observation workflows. The master specification requires lists, details, corrections, retained versions and auditable transitions. These contracts need design and implementation before client parity can be claimed.
 
