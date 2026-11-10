@@ -62,3 +62,19 @@ All timestamps are UTC. New rounds are appended; prior entries must not be delet
 - **Tests:** no software tests/Actions run; workflow inspected only. No app, API, DB, migration, storage, or raw observation changes.
 - **Progress:** 25% (2/8 milestones); six remain. Exact test-source tree and worker/storage inventory remain incomplete.
 - **Next:** request/record owner decision on canonical route/permission/scope, then complete exact test-source inventory before any implementation.
+
+
+## 2026-11-10T23:40:50.968Z — Round 5: exact backend test-tree and worker/storage inventory
+
+- **Task:** METRA 2027 Assistant 05 — paper-register and mechanical-chart auditor.
+- **Status:** evidence/documentation round complete; overall task remains قيد التنفيذ.
+- **Implementation source branch inspected:** work/legacy-ui-migration-audit.
+- **Evidence:** recursive backend Git tree SHA 243f0f4f7a649ad64087ab424cde940b54f2dece; recursive branch tree rooted at commit 964f6e067642378e7c7205ec24c5950065a48da3.
+- **Test inventory:** enumerated 43 C# test source files plus Metra.Api.Tests.csproj. Existing tests cover domain validators/workflows, station authorization/isolation, authentication/security, feature request guards, maintenance, support, and user-registration workflows. No auditor-specific test source was found in the enumerated backend test tree.
+- **Backend inventory:** API tree contains domain, feature endpoints, persistence services and security. Persistence files include Npgsql equipment-fault, manual-archive, operations-session, support-incident and station-assignee authorization components. No dedicated image/OCR/chart worker or auditor storage adapter appears in the inspected backend tree.
+- **Repository path scan:** among paths matching worker/storage/upload/image/OCR/OpenCV/Tesseract/auditor/chart terms, only the Angular auditor scaffold and design document were found. This is a path-name inventory, not a claim about undocumented or external services.
+- **Progress:** milestone 3 (implementation/source inventory) marked complete for the inspected implementation branch; overall **37.5% = 3/8 milestones**, five remain.
+- **Tests/Actions:** no test suite or workflow was run; source files were inventoried only.
+- **Changed:** audit report, progress report, and this append-only changelog on the Assistant 05 branch only.
+- **Non-actions:** no application code, API contract, DB/Supabase, migration, storage bucket, raw observation, metra-old, or other assistant-owned source changed; no merge/deploy.
+- **Blocker/next:** owner decision required on canonical API prefix, permission namespace, and whether the product scope is mechanical-only or paper + mechanical + training. No code will be written against conflicting proposals before approval.
