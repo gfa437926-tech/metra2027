@@ -96,8 +96,11 @@ void main() {
     expect(find.text('الرصد'), findsOneWidget);
     expect(find.text('مركز أعمال الرصد'), findsNothing);
 
-    tester.ensureSemantics();
-    await tester.tap(find.bySemanticsLabel('الرصد'));
+    final navigationBarRect = tester.getRect(find.byType(NavigationBar));
+    await tester.tapAt(Offset(
+      navigationBarRect.left + navigationBarRect.width * 0.5,
+      navigationBarRect.center.dy,
+    ));
     await tester.pumpAndSettle();
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
     expect(find.text('محطة آلية — AU-01'), findsOneWidget);
