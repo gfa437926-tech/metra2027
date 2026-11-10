@@ -9,12 +9,12 @@
 |---|---|---|---|---|---|
 | AC-01 Login | تسجيل الدخول | Partial | Partial | Auth via Supabase JWT | Exists; not full session matrix |
 | AC-02 Registration | طلب تسجيل | Partial | Missing | Yes (registration endpoints) | Angular registration present |
-| AC-03 Registration review | مراجعة الطلبات | Partial | Missing | Yes | API services exist; dedicated UI incomplete |
+| AC-03 Registration review | مراجعة الطلبات | Partial | Missing | Yes | Angular UI at `/admin/registration-review` wired to API |
 | AC-04 Password recovery | استعادة كلمة المرور | Missing | Missing | External/Supabase | Not found as app page |
 | AC-05 Profile | الملف الشخصي | Missing | Missing | TBD | Not found |
 | AC-06 User management | إدارة المستخدمين | Scaffold | Missing | Partial | Static role list only |
 | AC-07 Roles/permissions | الأدوار والصلاحيات | Scaffold | Missing | Partial | Labels only; server grants exist |
-| AC-08 Station assignment | تعيين المحطات | Partial | Missing | Yes | API present; UI incomplete |
+| AC-08 Station assignment | تعيين المحطات | Partial | Missing | Yes | Angular UI at `/admin/station-assignments` wired to API |
 | ST-01 Station directory | دليل المحطات | Partial→Done* | Partial | Yes `GET /api/v1/stations` | *Directory page added this cycle |
 | ST-02 Station detail | تفاصيل المحطة | Missing | Missing | Partial | No dedicated detail route |
 | ST-03 Station status | حالة المحطة | Partial | Partial | Partial | observation-status route |
