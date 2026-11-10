@@ -163,3 +163,16 @@
 ### المتبقي والخطوة التالية
 - **7 حزم متابعة**: تحقق CI على HEAD؛ Rate Limiting بعد تحديد proxy؛ request-body limits؛ مراجعة CSP/XSS/session؛ فحص Flutter وملفات الاعتماديات؛ تدقيق Git history/secrets والنشر؛ واختبارات IDOR وتداخل المحطات والسلطات.
 - الخطوة التالية: التأكد من تشغيل Backend build وClient CI على HEAD الحالي، ثم معالجة أي فشل قبل تنفيذ تقوية إضافية.
+
+
+## تحقق CI على التغييرات الأمنية الحالية
+
+**وقت التحقق:** 2026-11-10T23:31:36.078Z UTC.  
+**Commit الكود الذي اختُبرت عليه التغييرات:** [deb1b86b0a7e9f53a5ec07787edbed7c7755bb04](https://github.com/gfa437926-tech/metra2027/commit/deb1b86b0a7e9f53a5ec07787edbed7c7755bb04).
+
+فحوص GitHub Actions على SHA المذكور كانت جميعها **قيد التنفيذ** وقت الاستعلام، ولم تُعلن ناجحة:
+- [Backend build — run 42924025780](https://github.com/gfa437926-tech/metra2027/actions/runs/42924025780).
+- [Angular build — run 42924025817](https://github.com/gfa437926-tech/metra2027/actions/runs/42924025817).
+- [Flutter analyze and test — run 42924025817](https://github.com/gfa437926-tech/metra2027/actions/runs/42924025817).
+
+هذا التحقق يؤكد أن CI بدأ على HEAD الخاص بـ PR #30. لا يوجد حتى هذه اللحظة تأكيد نجاح بناء .NET أو اختبار ترويسات API؛ يجب إعادة فحص النتيجة النهائية قبل اعتماد التغيير.
