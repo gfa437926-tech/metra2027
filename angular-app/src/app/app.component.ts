@@ -47,6 +47,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
           <a class="nav-link" routerLink="/stations" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-map-location-dot users"></i><span>دليل المحطات</span></a>
           <a class="nav-link" routerLink="/admin/registration-review" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-check users"></i><span>مراجعة التسجيل</span></a>
           <a class="nav-link" routerLink="/admin/station-assignments" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-people-arrows users"></i><span>تعيين المحطات</span></a>
+          <a class="nav-link" routerLink="/admin/manual-archive" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-file-excel users"></i><span>تأكيد أرشفة Excel</span></a>
         <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
         <div class="section-title">إدارة النظام</div>
         <nav>

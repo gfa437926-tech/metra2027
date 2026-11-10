@@ -5,6 +5,7 @@ using Metra.Api.Security;
 using Metra.Api.Infrastructure.Persistence;
 using Metra.Api.Features.Stations;
 using Metra.Api.Features.Users;
+using Metra.Api.Features.Archive;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -68,6 +69,7 @@ builder.Services.AddScoped<ISupportIncidentService>(sp =>
     return ActivatorUtilities.CreateInstance<SupabaseSupportIncidentService>(sp);
 });
 builder.Services.AddSingleton<ISupabaseAccessTokenValidator, SupabaseAccessTokenValidator>();
+builder.Services.AddSingleton<IManualArchiveLedgerService, InMemoryManualArchiveLedgerService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
@@ -153,6 +155,7 @@ app.MapRegistrationSubmissionEndpoints();
 app.MapStationUserDirectoryEndpoints();
 app.MapStationAuditEndpoints();
 app.MapStationAssignmentEndpoints();
+app.MapManualArchiveEndpoints();
 app.MapAuthorityAccessEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new

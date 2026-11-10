@@ -57,3 +57,11 @@
 - Hourly/daily entry pages link into the review workflow with station context.
 - Flutter review queue shows UTC (not device local time).
 - Server remains authoritative for decisions and station scope.
+
+
+## Phase C closure notes (manual Excel archive ledger)
+- API: `GET/POST /api/v1/stations/{stationId}/archive-confirmations`, monthly summary endpoint.
+- Permissions: `archive.read`, `archive.confirm` (fail closed).
+- UI: `/admin/manual-archive` — records confirmation only; no archive DB connection; no observation data migration.
+- Persistence: process-local interim ledger until owner approves durable migration (`20261110180000_manual_archive_ledger_review_only.sql` is review placeholder only).
+- Monthly summary counts confirmations only; full missing-field meteorology formulas remain TBD.
