@@ -175,3 +175,10 @@ Coverage added:
 - downstream queue read failure returns 503 after authorization.
 
 Tests were not executed locally. No CI result for the new test commit has been confirmed. These endpoint tests do not fix TOCTOU and do not replace the required database integration/race tests. B-013 remains P1 and open.
+
+
+## Round 5 — station-isolation endpoint coverage (2026-11-10T23:39:06Z)
+
+Extended `ObservationQueueEndpointTests.cs` with a station-specific grant scenario: a principal whose grant is restricted to station A requests station B and must receive 403; the test also asserts that all authorization attempts used station B and that the queue service was not invoked. The fake authorization service now supports a station-specific allowed grant and records requested station IDs.
+
+The new test commit is `efa5870e555d4f74584e44bd439002daf784afa3`. The available workflow lookup returned no PR-triggered workflow run for this commit; no CI success is claimed. No local `dotnet test` execution was performed. This is endpoint fake-service coverage, not DB-backed station isolation, revocation testing or TOCTOU remediation. B-013 remains P1/open.
