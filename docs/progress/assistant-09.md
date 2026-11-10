@@ -99,3 +99,50 @@ This percentage applies only to Assistant 09's scoped DevOps task, not to the wh
 ## Safety boundaries
 
 Continue using this branch and Draft PR. Do not merge to `main`, deploy production, change database settings/data, or alter secrets without explicit authorization.
+
+## 2026-11-10T23:31:43Z — Follow-up round: Pages diagnosis and R workflow recheck
+
+**Task ID:** `DEVOPS-09-001`  
+**Status:** In progress  
+**Progress:** 67% (8/12 tracked work items; calculation unchanged because this round identified blockers but did not resolve them).
+
+### New evidence inspected
+
+- [Pages deployment run #158](https://github.com/gfa437926-tech/metra2027/actions/runs/41951012675), main branch: failed. The Angular production build step passed; the exact failing step was **Validate and inject public runtime configuration**. Pages artifact upload and deployment were skipped.
+- The checked-in Pages workflow explicitly requires `METRA_API_BASE_URL` and `METRA_SUPABASE_ANON_KEY`. `METRA_SUPABASE_URL` has a public project URL fallback. The API URL must be HTTPS and end in `/api/v1`; the Supabase URL must be a clean HTTPS origin. The workflow emits a distinct error for each validation failure.
+- The available job summary confirms the failing step but does not reveal which input was missing or malformed. Secret values were not accessed, displayed, or changed. Therefore the precise invalid/missing setting remains **unverified**; do not infer that a particular secret is absent.
+- [R workflow run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) on the separate climate branch completed successfully, including the R package check. [PR #23](https://github.com/gfa437926-tech/metra2027/pull/23) remains open as Draft and unmerged. A successful package check does not by itself establish a validated operational Climatol pipeline or merge readiness.
+
+### Files inspected in this round
+
+- `.github/workflows/deploy-pages.yml` on `assistant-9/devops-ci-hardening`
+- `angular-app/angular.json`
+- `docs/progress/assistant-09.md`
+- `docs/progress/assistant-09-changelog.md`
+- `docs/deployment/DEVOPS-CI-CD-AUDIT.md`
+- GitHub Actions job records for Pages run #158 and R run #19
+- PR #23 metadata
+
+### Files changed in this round
+
+- `docs/progress/assistant-09.md`
+- `docs/progress/assistant-09-changelog.md`
+- `docs/deployment/DEVOPS-CI-CD-AUDIT.md`
+
+No workflow source, application code, secrets, environment settings, database, or deployment configuration was changed.
+
+### Work performed / not performed
+
+- Performed: traced the Pages failure to its exact validation step; inspected the validation contract and non-secret fallback behavior; rechecked the R PR's latest job status.
+- Not performed: did not read secret values, identify a specific missing secret, change GitHub environment configuration, rerun Pages deployment, deploy Pages, execute Climatol operational data processing, merge PR #23, or merge PR #27.
+- No new tests were run in this documentation/diagnostic round. Existing evidence remains Client CI #725 success and R package check #19 success.
+
+### Remaining work and next action
+
+**Remaining: 4 work items** under the existing 12-item denominator:
+1. Pages: maintainer must verify the configured Actions secrets/environment availability and format for `METRA_API_BASE_URL` and `METRA_SUPABASE_ANON_KEY`; then run a controlled validation only after authorization. Exact cause is currently unverified.
+2. Confirm canonical location of `واجهات/مهما.md`, `واجهات/تغيير.md`, and `واجهات/README.md`; update only after their location is confirmed.
+3. R/Climatol: review PR #23's complete workflow, fixtures and scientific/operational safeguards; its R package check is passing but PR remains Draft.
+4. Pin Flutter SDK version after agreeing the supported version with the mobile owner.
+
+**Next action:** document the Pages required-setting checklist for the repository maintainer and request confirmation of the canonical `واجهات/` path; do not attempt to set or reveal secrets.
