@@ -16,10 +16,12 @@ metra_climatology_summary <- function(data, period, statistic, min_completeness)
   if (anyDuplicated(data[c("station_id", "date")])) {
     stop("Duplicate station_id/date records are not allowed.", call. = FALSE)
   }
-  if (length(period) != 1L || !period %in% c("month", "year")) {
+  if (!is.character(period) || length(period) != 1L || is.na(period) ||
+      !period %in% c("month", "year")) {
     stop("period must be 'month' or 'year'.", call. = FALSE)
   }
-  if (length(statistic) != 1L || !statistic %in% c("mean", "sum", "min", "max")) {
+  if (!is.character(statistic) || length(statistic) != 1L || is.na(statistic) ||
+      !statistic %in% c("mean", "sum", "min", "max")) {
     stop("statistic must be explicitly selected: mean, sum, min, or max.", call. = FALSE)
   }
   if (!is.numeric(min_completeness) || length(min_completeness) != 1L ||
@@ -34,14 +36,9 @@ metra_climatology_summary <- function(data, period, statistic, min_completeness)
     key <- period_key[index[1]]
     start <- if (period == "month") as.Date(paste0(key, "-01")) else as.Date(paste0(key, "-01-01"))
     next_start <- if (period == "month") {
-      if (as.integer(format(start, "%m")) == 12L) as.Date(paste0(as.integer(format(start, "%Y")) + 1L, "-01-01"))
-      else as.Date(paste0(format(start, "%Y-%m"), "-01")) + 31
+      seq(start, by = "month", length.out = 2L)[2]
     } else {
       as.Date(paste0(as.integer(key) + 1L, "-01-01"))
-    }
-    if (period == "month" && as.integer(format(start, "%m")) != 12L) {
-      next_start <- as.Date(format(start, "%Y-%m-01")) + 31
-      next_start <- as.Date(format(next_start, "%Y-%m-01"))
     }
     expected <- as.integer(next_start - start)
     values <- data$value[index]
