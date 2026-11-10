@@ -91,7 +91,7 @@ const _rainAck = ObservationFieldSpec(
 );
 
 final observationModuleCatalogue = <ObservationModuleSpec>[
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.hourly,
     title: 'النشرة الساعية',
     sourcePath: 'hourly_reports.html',
@@ -218,7 +218,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     metadataFields: [_notes, _ack],
     sourceNotes: ['قواعد required/range والمفقودات الزراعية لم تُستخلص بعد من جميع سكربتات التحقق؛ لا تُفعّل الإرسال حتى اعتمادها.'],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.rainfall,
     title: 'النشرة المطرية',
     sourcePath: 'rainfall_reports.html',
@@ -233,7 +233,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     metadataFields: [_rainAck],
     sourceNotes: ['توقيت الإرسال وحدود الفترة الزمنية مذكورة في إقرار النموذج الأصلي؛ يلزم التحقق من قواعد UTC والتحويل قبل الإرسال.'],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.weatherPhenomenon,
     title: 'بلاغ ظاهرة جوية',
     sourcePath: 'weather_phenomena.html',
@@ -249,7 +249,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     ],
     sourceNotes: ['قائمة أنواع الظواهر الدقيقة تؤخذ من خيارات select الأصلية وتحتاج مطابقة مع WeatherPhenomenonValidator قبل الإرسال.'],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.agriculturalPhenomenon,
     title: 'الظواهر الزراعية',
     sourcePath: 'agricultural_reports.html',
@@ -261,7 +261,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     ],
     metadataFields: [_notes, _ack],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.soilTemperature,
     title: 'حرارة التربة',
     sourcePath: 'soil-send.html',
@@ -275,7 +275,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     metadataFields: [_notes, _soilAck],
     sourceNotes: ['soil-validation.js يسمح بالقيمة # لدرجة الحرارة ويحدد ساعات UTC: 23,02,05,08,11,14,17,20.'],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.observationEquipmentFault,
     title: 'أعطال أجهزة الرصد',
     sourcePath: 'fix.html',
@@ -300,7 +300,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     ],
     sourceNotes: ['حقول الصور تحتاج مسار رفع آمن مستقل؛ لا تحفظ صوراً كقيمة نصية ولا ترفعها قبل تصميم Storage وصلاحياته.'],
   ),
-  ObservationModuleSpec(
+  const ObservationModuleSpec(
     module: ObservationModule.telecommunicationsFault,
     title: 'أعطال الاتصالات',
     sourcePath: 'fix-tel.html',
