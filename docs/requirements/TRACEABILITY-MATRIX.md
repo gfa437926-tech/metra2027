@@ -101,3 +101,8 @@ The earlier failure on PR #30 head `9689ab82...` is superseded by the owning ass
 - PR #23 R/Climatol: current head `42db1be81790d4dda47584019b729df8a1f53c07` has a completed successful run [#42924761774](https://github.com/gfa437926-tech/metra2027/actions/runs/42924761774).
 - PR #21 Flutter: current head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412` still has Client CI #42924658140 pending.
 - PR #22 Backend: current head advanced to `efa5870e555d4f74584e44bd439002daf784afa3`; no workflow run was returned for this exact head. The earlier run on `e771f056...` is not current-head evidence.
+
+
+### Backend latest-head CI update
+
+PR #22's current head advanced to `8134c9e4546693d717a10329436d646b08dbb94f`; exact-head Backend build [#42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135) is in progress. Do not rely on the previous no-run snapshot for this new head. PR #21 remains pending; PR #23 latest-head R/Climatol CI is successful.
