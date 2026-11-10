@@ -54,7 +54,7 @@
 ## Commit وPull Request
 
 - Commit السابق الذي أضاف السجلات العلمية: [b85bf6656c1340db3e3f8eda10919361d9103360](https://github.com/gfa437926-tech/metra2027/commit/b85bf6656c1340db3e3f8eda10919361d9103360).
-- Commit هذه الجولة: يُضاف رابط SHA النهائي بعد إتمام تحديث هذا الملف وسجل التغييرات.
+- Commit إنشاء تقرير التقدم: [22989212493f258c30b7a4dcfb0268ef826af5e4](https://github.com/gfa437926-tech/metra2027/commit/22989212493f258c30b7a4dcfb0268ef826af5e4).\n- Commit تحديث سجل التغييرات: [478171b4c60636775d5988b52995bcc372f43818](https://github.com/gfa437926-tech/metra2027/commit/478171b4c60636775d5988b52995bcc372f43818).
 - Pull Request: [#25](https://github.com/gfa437926-tech/metra2027/pull/25) – مفتوح، Draft، غير مدمج.
 
 ## المهام المتبقية والخطوة التالية
