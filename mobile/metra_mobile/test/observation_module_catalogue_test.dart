@@ -45,6 +45,16 @@ void main() {
     }
   });
 
+  test('all catalogue date and time fields are explicitly UTC', () {
+    for (final module in observationModuleCatalogue) {
+      for (final field in module.fields.where((field) =>
+          field.kind == ObservationFieldKind.date ||
+          field.kind == ObservationFieldKind.time)) {
+        expect(field.label, contains('UTC'), reason: '${module.title}: ${field.key}');
+      }
+    }
+  });
+
   test('notes and acknowledgement are separate from meteorological payload fields', () {
     for (final module in observationModuleCatalogue) {
       final dataKeys = module.fields.map((field) => field.key).toSet();
