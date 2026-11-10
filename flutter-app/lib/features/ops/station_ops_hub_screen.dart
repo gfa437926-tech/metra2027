@@ -4,6 +4,8 @@ import '../maintenance/equipment_fault_screen.dart';
 import '../support/support_incident_screen.dart';
 import 'station_ops_summary_screen.dart';
 import '../admin/manual_archive_screen.dart';
+import '../admin/registration_review_screen.dart';
+import '../admin/station_assignment_screen.dart';
 
 /// Hub that opens station-scoped equipment faults and support incidents.
 class StationOpsHubScreen extends StatelessWidget {
@@ -39,7 +41,46 @@ class StationOpsHubScreen extends StatelessWidget {
             },
           ),
         ),
+        
         const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.person_add_alt_1_outlined),
+            title: const Text('مراجعة التسجيل'),
+            subtitle: const Text('اعتماد أو رفض طلبات التسجيل ضمن المحطة'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => RegistrationReviewScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: const Text('تعيينات المحطة'),
+            subtitle: const Text('طلب أدوار والمحطات وإدارتها عبر API'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => StationAssignmentScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+const SizedBox(height: 12),
         Card(
           child: ListTile(
             leading: const Icon(Icons.build_circle_outlined),

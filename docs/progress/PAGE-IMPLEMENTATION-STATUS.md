@@ -109,3 +109,9 @@
 - Expanded in-memory list/summary/station isolation tests.
 - Flutter `ManualArchiveScreen` + API client methods.
 - Report inventory: `docs/progress/phase-d-report-inventory.md`
+
+
+## Flutter admin parity
+- Registration review screen (station + system stages) wired to live API.
+- Station assignment request/decision/revoke wired to live API.
+- Linked from station ops hub with station scope.

@@ -343,6 +343,128 @@ class MetraApiClient {
   }
 
 
+
+  Future<List<Map<String, dynamic>>> listRegistrationRequests(
+    String stationId, {
+    bool systemStage = false,
+    int limit = 50,
+  }) async {
+    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
+    final String path = systemStage
+        ? '/api/v1/stations/${Uri.encodeComponent(stationId)}/system-registration-requests?limit=$limit'
+        : '/api/v1/stations/${Uri.encodeComponent(stationId)}/registration-requests?limit=$limit';
+    final response = await _send('GET', path);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_registration_request_list');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<void> decideRegistrationRequest({
+    required String stationId,
+    required String requestId,
+    required String decision,
+    String? note,
+    bool systemStage = false,
+  }) async {
+    final String path = systemStage
+        ? '/api/v1/stations/${Uri.encodeComponent(stationId)}/system-registration-requests/${Uri.encodeComponent(requestId)}/decision'
+        : '/api/v1/stations/${Uri.encodeComponent(stationId)}/registration-requests/${Uri.encodeComponent(requestId)}/decision';
+    await _send(
+      'POST',
+      path,
+      body: {
+        'decision': decision,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> listStationUsers(
+    String stationId, {
+    int limit = 50,
+  }) async {
+    if (limit < 1 || limit > 500) throw const MetraApiException(400, 'invalid_limit');
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/users?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is List) {
+      return decoded
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(growable: false);
+    }
+    if (decoded is Map && decoded['items'] is List) {
+      return (decoded['items'] as List)
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList(growable: false);
+    }
+    throw const FormatException('invalid_station_user_list');
+  }
+
+  Future<List<Map<String, dynamic>>> listAssignableRoles(String stationId) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/assignable-roles',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_assignable_role_list');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<void> requestStationAssignment({
+    required String stationId,
+    required String userId,
+    required String roleCode,
+    required String reason,
+    required String validFrom,
+    String? validTo,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/assignments',
+      body: {
+        'userId': userId,
+        'roleCode': roleCode,
+        'reason': reason,
+        'validFrom': validFrom,
+        if (validTo != null && validTo.isNotEmpty) 'validTo': validTo,
+      },
+    );
+  }
+
+  Future<void> decideStationAssignment({
+    required String stationId,
+    required String assignmentId,
+    required String decision,
+    String? note,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/assignments/${Uri.encodeComponent(assignmentId)}/decision',
+      body: {
+        'decision': decision,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+  }
+
+  Future<void> revokeStationAssignment({
+    required String stationId,
+    required String assignmentId,
+    required String reason,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/assignments/${Uri.encodeComponent(assignmentId)}/revoke',
+      body: {'reason': reason},
+    );
+  }
+
   Future<List<Map<String, dynamic>>> listArchiveConfirmations(
     String stationId, {
     int limit = 50,
