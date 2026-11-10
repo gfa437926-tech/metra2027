@@ -32,6 +32,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.textContaining('2026-11-03T12:00:00.000Z'), findsOneWidget);
     api.close();
   });
 
@@ -49,4 +50,34 @@ void main() {
     expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
     api.close();
   });
+
+  testWidgets('localizes queue status and expands payload details', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((_) async => http.Response(jsonEncode([
+        {
+          'id': '33333333-3333-4333-8333-333333333333',
+          'station_id': stationId,
+          'observation_type': 'hourly',
+          'observed_at': '2026-11-10T12:00:00Z',
+          'status': 'submitted',
+          'payload': {'dryTemp': '+21.0', 'relativeHumidity': 65}
+        }
+      ]), 200)),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('بانتظار المراجعة'), findsOneWidget);
+    await tester.tap(find.text('تفاصيل بيانات النشرة'));
+    await tester.pumpAndSettle();
+    expect(find.text('درجة الحرارة الجافة'), findsOneWidget);
+    expect(find.text('+21.0'), findsOneWidget);
+    expect(find.text('الرطوبة النسبية'), findsOneWidget);
+    api.close();
+  });
+
 }

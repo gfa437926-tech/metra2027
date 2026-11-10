@@ -24,6 +24,13 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
   @override
   void dispose() { _payload.dispose(); super.dispose(); }
 
+  String _formatUtc(DateTime value) {
+    final utc = value.toUtc();
+    String two(int number) => number.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
+        '${two(utc.hour)}:${two(utc.minute)} UTC';
+  }
+
   String _newIdempotencyKey() => List<int>.generate(32, (_) => Random.secure().nextInt(256))
     .map((v) => v.toRadixString(16).padLeft(2, '0')).join();
 
@@ -85,12 +92,6 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
     }
   }
 
-  String _formatUtc(DateTime value) {
-    final utc = value.toUtc();
-    String two(int part) => part.toString().padLeft(2, '0');
-    return '${utc.year}-${two(utc.month)}-${two(utc.day)} ${two(utc.hour)}:${two(utc.minute)}';
-  }
-
   @override
   Widget build(BuildContext context) => Directionality(
     textDirection: TextDirection.rtl,
@@ -116,7 +117,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
             OutlinedButton.icon(
               onPressed: _busy ? null : () async {
                 final picked = await showDatePicker(context: context,
-                  initialDate: _observedAt, firstDate: DateTime(2000),
+                  initialDate: _observedAt.toUtc(), firstDate: DateTime.utc(2000),
                   lastDate: DateTime.now().toUtc().add(const Duration(days: 2)));
                 if (!context.mounted) {
                   return;
@@ -125,7 +126,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                   return;
                 }
                 final time = await showTimePicker(context: context,
-                  initialTime: TimeOfDay.fromDateTime(_observedAt));
+                  initialTime: TimeOfDay.fromDateTime(_observedAt.toUtc()));
                 if (!context.mounted || time == null) {
                   return;
                 }
@@ -133,7 +134,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                   picked.year, picked.month, picked.day, time.hour, time.minute));
               },
               icon: const Icon(Icons.schedule),
-              label: Text('وقت الرصد: ${_formatUtc(_observedAt)} UTC'),
+              label: Text('وقت الرصد (UTC): ${_formatUtc(_observedAt)}'),
             ),
             const SizedBox(height: 12),
             TextFormField(
