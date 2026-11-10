@@ -7,7 +7,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using System.Threading.RateLimiting;
 
+const long MaxRequestBodyBytes = 1_048_576;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Enforce a hard ceiling at the HTTP server, including chunked requests.
+builder.WebHost.ConfigureKestrel(options =>
+    options.Limits.MaxRequestBodySize = MaxRequestBodyBytes);
 
 var supabaseUrl = builder.Configuration["Supabase:Url"]
     ?? "https://tbdnklyxjvbrilvnwgmq.supabase.co";
@@ -132,6 +138,19 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+// Reject oversized declared bodies before authentication/model binding. Kestrel's
+// MaxRequestBodySize remains the enforcement layer for chunked/streamed bodies.
+app.Use(async (context, next) =>
+{
+    if (context.Request.ContentLength is > MaxRequestBodyBytes)
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        return;
+    }
+
+    await next();
+});
 
 // Defense-in-depth headers for the JSON API. Keep the CSP restrictive because
 // this host serves API responses, not the Angular application shell.
