@@ -13,6 +13,7 @@ class ObservationReviewScreen extends StatefulWidget {
 
 class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   late Future<List<ObservationQueueItem>> _queue;
+  final Set<String> _processingObservationIds = <String>{};
 
   @override
   void initState() {
@@ -64,6 +65,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final item = rows[index];
+              final isProcessing = _processingObservationIds.contains(item.id);
               return Card(child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 child: Column(children: [
@@ -77,13 +79,13 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: Row(children: [
                       Expanded(child: OutlinedButton.icon(
-                        onPressed: () => _decide(item, 'return_for_correction'),
+                        onPressed: isProcessing ? null : () => _decide(item, 'return_for_correction'),
                         icon: const Icon(Icons.replay),
                         label: const Text('إرجاع للتصحيح'),
                       )),
                       const SizedBox(width: 8),
                       Expanded(child: FilledButton.icon(
-                        onPressed: () => _decide(item, 'approve'),
+                        onPressed: isProcessing ? null : () => _decide(item, 'approve'),
                         icon: const Icon(Icons.check),
                         label: const Text('اعتماد'),
                       )),
@@ -152,6 +154,8 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       if (confirmed != true) return;
     }
 
+    if (_processingObservationIds.contains(item.id)) return;
+    setState(() => _processingObservationIds.add(item.id));
     try {
       await widget.api.decideObservation(
         stationId: widget.stationId,
@@ -174,6 +178,13 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر الاتصال بالخادم. تحقق من الشبكة وحاول مجدداً.')),
+      );
+    } finally {
+      if (mounted) setState(() => _processingObservationIds.remove(item.id));
     }
   }
 
