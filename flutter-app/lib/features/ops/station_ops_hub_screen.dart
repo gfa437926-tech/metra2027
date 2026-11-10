@@ -6,6 +6,7 @@ import 'station_ops_summary_screen.dart';
 import '../admin/manual_archive_screen.dart';
 import '../admin/registration_review_screen.dart';
 import '../admin/station_assignment_screen.dart';
+import '../reports/station_reports_hub_screen.dart';
 
 /// Hub that opens station-scoped equipment faults and support incidents.
 class StationOpsHubScreen extends StatelessWidget {
@@ -23,7 +24,27 @@ class StationOpsHubScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
+        
+        const SizedBox(height: 12),
         Card(
+          child: ListTile(
+            leading: const Icon(Icons.assessment_outlined),
+            title: const Text('التقارير'),
+            subtitle: const Text('حالة النشرات والأرشفة الإدارية — بدون مجاميع مخترعة'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => StationReportsHubScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+Card(
           child: ListTile(
             leading: const Icon(Icons.analytics_outlined),
             title: const Text('ملخص التشغيل'),

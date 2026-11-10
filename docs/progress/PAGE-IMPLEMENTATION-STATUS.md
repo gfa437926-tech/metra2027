@@ -115,3 +115,9 @@
 - Registration review screen (station + system stages) wired to live API.
 - Station assignment request/decision/revoke wired to live API.
 - Linked from station ops hub with station scope.
+
+
+## Final honest UI pass
+- Soil and agriculture converted to unbound shells (no fake save).
+- Flutter reports hub: observation status + archive monthly path.
+- Completion boundary: `docs/operations/PROJECT-COMPLETION-BOUNDARY.md`
