@@ -112,3 +112,31 @@ The failed job log for [Backend build #42924494881](https://github.com/gfa437926
 - API build and preceding SQL authorization contract checks passed in that run; Docker image build was skipped after test failure.
 - The client workflow was cancelled in the Flutter setup step; Angular build and npm audit passed, but Flutter pub get/analyze/test were skipped.
 - Assistant 10 did not modify PR #30 or rerun its workflow. The failure is recorded for the owning assistants to resolve.
+
+
+## Second live snapshot — 2026-11-10T23:38:13.441Z (supersedes prior latest-head table)
+
+The owning assistants pushed additional commits during this review. Latest PR heads and exact-head Actions lookup now show:
+
+| PR | Latest inspected head | Workflow run(s) for exact head | Current observed state |
+|---|---|---|---|
+| #21 Flutter | `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412` | [Client CI #42924658140](https://github.com/gfa437926-tech/metra2027/actions/runs/42924658140) | Pending |
+| #22 Backend | `e771f056835a17c894ef01542f7b55fd0aa2ce4e` | [Backend build #42924878526](https://github.com/gfa437926-tech/metra2027/actions/runs/42924878526) | In progress |
+| #23 R / Climatol | `42db1be81790d4dda47584019b729df8a1f53c07` | [Climate Analytics R #42924761774](https://github.com/gfa437926-tech/metra2027/actions/runs/42924761774) | In progress |
+| #24 QA | `fd5e575c6818497bd82cbadc51eea61039b8e8a5` | No associated workflow run returned | No run found |
+| #27 DevOps | `71888fbecbaaf147db98aa632784b476fba047cd` | [Client CI #42924596524](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524) | Success — Angular build and Flutter dependency resolution, analyze and tests all passed |
+| #28 Integration | `9b3ad187de7cbbf861dd7b091c193172e5a77ea9` | No associated workflow run returned | No run found; static source audit only |
+| #30 Security | `32e5ecce8db2ad8899a49174d9d628fa1faf193b` | [Backend build #42924701188](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701188); [Client CI #42924701234](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701234) | Both **success** |
+
+### Resolution evidence for PR #30's earlier CI failure
+
+The previous head `9689ab82...` failed 8/234 tests because rate-limiter behavior caused 429 responses where tests expected 401/503. The owner then updated the branch; the current PR body states that the shared anonymous bucket issue was corrected by applying the global limiter to authenticated subjects and a separate readiness-only anonymous policy.
+
+For the new head `32e5ecce...`:
+- Backend build #42924701188: restore/NuGet audit, all SQL authorization contract checks, API build, all domain/API tests, and Docker image build passed.
+- Client CI #42924701234: Angular `npm ci`, high/critical npm audit, Angular build, Flutter dependency resolution, `flutter analyze`, and `flutter test` all passed.
+- These are verified successes on the exact current PR #30 head, unlike the earlier failed/cancelled runs. This validates the CI scope executed, not live production security or penetration resistance.
+
+PR #27's current head also now has successful Angular and Flutter CI. PRs #21, #22 and #23 still have newer pending/in-progress runs; prior successful SHAs must not be substituted for those runs. No workflow run was found for QA #24 or integration #28 at this snapshot.
+
+All PRs remain open Draft/WIP and unmerged in the latest PR inventory. No assistant 10 approval or merge action was performed.
