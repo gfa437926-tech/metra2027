@@ -44,6 +44,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
           <a class="nav-link" routerLink="/soil-temperature" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-temperature-half soil"></i><span>حرارة التربة</span></a>
           <a class="nav-link" routerLink="/agriculture" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-seedling agriculture"></i><span>النشرات الزراعية</span></a>
         </nav>
+          <a class="nav-link" routerLink="/stations" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-map-location-dot users"></i><span>دليل المحطات</span></a>
         <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
         <div class="section-title">إدارة النظام</div>
         <nav>
