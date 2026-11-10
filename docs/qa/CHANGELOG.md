@@ -171,3 +171,31 @@ The observation decision handler explicitly checks a decision-specific permissio
 - [B-013 TOCTOU design](https://github.com/gfa437926-tech/metra2027/blob/work/backend-api-audit-assistant-2/docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md)
 - QA-06 did not run tests. This is a static source review finding; do not report it as a reproduced exploit.
 - QA-06 estimated completion remains 50%; source review and review comment are evidence gathering, not test implementation/execution.
+
+
+---
+
+## QA-06 — Cross-PR CI freshness and migration trigger audit (2026-11-10T23:37:30Z UTC)
+
+### Current head status snapshot
+- PR #22 Backend head `705668b9c3ff9f4011a622e5001099ca01f69931`: Backend build completed successfully on this head. The review-queue endpoint source remains the two-call permission-check + service-role SELECT path; no queue endpoint integration test file is present in this head's changed-file set. B-013 remains open.
+- PR #21 Flutter head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: Client CI is pending at the time of this check. Earlier success on an older SHA must not be presented as validation of this current head.
+- PR #23 R/Climatol head `42db1be81790d4dda47584019b729df8a1f53c07`: no workflow run was returned for this head. Its new workflow is defined for R package checks, but this head's PR is stacked against `work/climate-analytics-r-bootstrap`; the run is not yet evidenced on the current head.
+- PR #27 DevOps head `71888fbecbaaf147db98aa632784b476fba047cd`: Client CI completed successfully on this head.
+
+### New CI trigger finding — backend migration path filter (P2)
+The baseline `.github/workflows/backend-ci.yml` path filters include `database/migrations/**` and `database/tests/**`, but omit `supabase/migrations/**`. The main branch currently contains five operational observation migration files under `supabase/migrations/` (submission, client-access denial, FK indexes, review decision, and decision null-validation hardening). Therefore a PR that changes only one of those Supabase migration files may not trigger Backend build via the path filter. This is a CI coverage/trigger gap; it does not prove the SQL itself is incorrect.
+
+Recommended action: add `supabase/migrations/**` to both push and pull_request path filters, and add appropriate migration contract checks or isolated database migration validation. Keep `database/migrations/**` as well; do not replace it. This is a DevOps/backend CI change, not applied by QA-06.
+
+### Flutter test observations
+Current PR #21 adds API-client tests for bearer-token forwarding, HTTPS-only API origin, missing-token rejection, bounded queue limit, station directory pagination and overflow; widget tests cover Arabic review queue rendering, UTC-normalized display of an offset timestamp, empty state and safe network failure messaging. These are useful client-level tests but do not validate server-side station authorization or actual API/database integration. The current PR #21 head CI was pending during this snapshot.
+
+### R/Climatol test observations
+Current PR #23 adds testthat coverage for symlink/path traversal boundaries, input/output directory separation, input file type checks, request variable/year validation, staged input copies, provenance hashes and failed-run provenance. These are useful service-level tests. No current-head CI run was available in the snapshot, so test success is not asserted here.
+
+### Evidence limits
+- QA-06 still has not executed local test commands.
+- PR #22 success is CI evidence for that backend head, not proof that the queue authorization TOCTOU is fixed.
+- PR #21 pending and PR #23 without a current-head run remain unverified at this snapshot.
+- No app code, workflow, SQL, migration, database, or deployment was changed by QA-06.
