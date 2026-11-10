@@ -117,3 +117,10 @@ These tests are source additions only at this point: they have not been run loca
 Added a test in `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` proving that a principal whose fake grant is restricted to station A receives 403 when requesting station B, and that the queue service is not called. The fake authorization records every requested station ID to ensure the endpoint checks the route's station B ID.
 
 This is not a database isolation or revocation-race test. It does not close the P1 TOCTOU finding. Commit: `efa5870e555d4f74584e44bd439002daf784afa3`. No CI run was returned by the available commit workflow lookup; no local test run is claimed.
+
+
+## Round 5 CI result (2026-11-10T23:39:59Z)
+
+GitHub Actions run `42925098754` completed successfully on the test commit `efa5870e555d4f74584e44bd439002daf784afa3`. The workflow passed dependency restore/advisory checks, authorization contract checks, API build, Domain/API tests and production container image build.
+
+The test suite success confirms the added endpoint test compiles and runs within CI. It does not provide DB-backed proof of station row isolation, revocation-before-request or concurrent read/revocation serialization. B-013 remains P1/open.
