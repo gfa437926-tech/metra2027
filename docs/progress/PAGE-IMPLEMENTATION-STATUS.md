@@ -124,5 +124,5 @@
 
 
 ## Phenomena
-- Angular phenomena input requires station selection and submits `observationType: phenomenon` to the live API on stop.
-- Local-only end without station/API is rejected with an explicit error (no silent fake save).
+- Backend accepts `observationType: phenomenon` and exposes `/api/v1/observations/phenomena/validate`.
+- Angular phenomena UI remains local-preview until a build-verified client binding is merged (attempted binding was reverted after Client CI Angular build failure).
