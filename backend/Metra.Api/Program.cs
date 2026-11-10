@@ -31,18 +31,30 @@ builder.Services.AddRateLimiter(options =>
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
     {
         var subject = httpContext.User.FindFirst("sub")?.Value;
-        var partition = string.IsNullOrWhiteSpace(subject) ? "anonymous" : $"subject:{subject}";
-        var permitLimit = string.IsNullOrWhiteSpace(subject) ? 30 : 120;
+        if (string.IsNullOrWhiteSpace(subject))
+            return RateLimitPartition.GetNoLimiter("anonymous");
 
-        return RateLimitPartition.GetFixedWindowLimiter(partition, _ =>
+        return RateLimitPartition.GetFixedWindowLimiter($"subject:{subject}", _ =>
             new FixedWindowRateLimiterOptions
             {
-                PermitLimit = permitLimit,
+                PermitLimit = 120,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0,
                 AutoReplenishment = true
             });
     });
+
+    // Readiness performs a server-side dependency probe, so protect that
+    // anonymous endpoint separately without sharing a bucket with auth failures.
+    options.AddPolicy("readiness", _ =>
+        RateLimitPartition.GetFixedWindowLimiter("readiness", _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
 });
 // Bound every server-side Supabase request. A stalled dependency must not
 // hold an API request or authorization decision open for HttpClient's 100s default.
@@ -225,6 +237,7 @@ app.MapGet("/api/v1/ready", async (
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
+.RequireRateLimiting("readiness")
 .WithName("GetApiReadiness");
 
 app.Run();
