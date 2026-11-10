@@ -28,8 +28,7 @@ class MetraApp extends StatelessWidget {
     ),
     theme: ThemeData(
       useMaterial3: true,
-      fontFamily: 'Roboto',
-      colorScheme: ColorScheme.fromSeed(seedColor: _blue),
+colorScheme: ColorScheme.fromSeed(seedColor: _blue),
       scaffoldBackgroundColor: const Color(0xFFF3F6FC),
     ),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
