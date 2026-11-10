@@ -1,10 +1,23 @@
 # تقرير تقدم المساعد رقم 3 — Flutter
 
-**آخر تحديث (UTC):** 2026-11-10T23:28:13Z  
+**آخر تحديث (UTC):** 2026-11-10T23:30:45.510Z
 **المهمة:** M3 — تدقيق واستكمال تطبيق الهاتف Flutter  
 **الحالة:** قيد التنفيذ  
 **الفرع:** [assistant-3/flutter-mobile-audit](https://github.com/gfa437926-tech/metra2027/tree/assistant-3/flutter-mobile-audit)  
 **Pull Request:** [#21 — Draft](https://github.com/gfa437926-tech/metra2027/pull/21)
+
+## الجولة 3 — استكمال جرد Flutter واختبار UTC (تحديث 2026-11-10T23:30:45.510Z)
+
+### ما تم التحقق منه
+- شجرة `mobile/metra_mobile/lib` تحتوي فقط على `main.dart` و`api_config.dart` ووحدات `core/api` و`core/auth` وثلاث وحدات واجهة: `home` و`observations` و`stations`.
+- مجلد `test` يحتوي `widget_test.dart` و`metra_api_client_test.dart` و`observation_review_screen_test.dart`.
+- لا تظهر في شجرة الفرع وحدات واجهة مستقلة لإدخال الرصدات أو الملف الشخصي أو الصيانة أو الدعم أو التنبيهات؛ التقارير تظهر كصفحة معلومات غير موصولة بمصدر بيانات.
+- لا يزال `docs/requirements` غير موجود على هذا الفرع، و`واجهات/README.md` غير موجود؛ الموجود ملفا السجل فقط.
+- أضيف اختبار Widget لانحدار UTC يمرر توقيتاً بصيغة `+03:00` ويتوقع عرضه كـ UTC. الاختبار أُضيف ولم يُشغّل بعد.
+- آخر استعلام Actions للـ commit السابق أظهر تشغيل `Client CI` واحداً بحالة `success`؛ لم يتوفر من النتيجة ما يثبت أن هذا التشغيل شغّل Flutter تحديداً. Commit statuses فارغة.
+
+### ملفات الجولة الثالثة
+- `mobile/metra_mobile/test/observation_review_screen_test.dart`: إضافة اختبار Widget للتحويل من إزاحة `+03:00` إلى ISO-8601 UTC.
 
 ## نسبة الإنجاز
 **10% (تقدير مرحلي، وليس قياساً لاكتمال التطبيق).**
@@ -47,9 +60,11 @@
 
 ## الاختبارات وGitHub Actions
 - مراجعة ساكنة لملفات الاختبار: تمت.
+- أضيف اختبار UTC جديد في `mobile/metra_mobile/test/observation_review_screen_test.dart`، ولم يتم تشغيله.
 - `flutter analyze`: لم يُشغّل.
 - `flutter test`: لم يُشغّل.
-- GitHub Actions / Commit status: [عرض حالة commit السابق](https://github.com/gfa437926-tech/metra2027/commit/bb97dcce75f208eba733a54bc70369fff9a79c7b) — لم تظهر status checks في الاستعلام السابق.
+- GitHub Actions على commit `9fa9b04`: تشغيل [Client CI #729](https://github.com/gfa437926-tech/metra2027/actions/runs/42923668955) نتيجته `success`؛ لا يوجد ما يثبت أنه شغّل Flutter تحديداً.
+- Commit statuses على `9fa9b04`: قائمة فارغة.
 - لا ندعي نجاح أي اختبار لم يتم تشغيله.
 
 ## Commit
@@ -65,3 +80,12 @@
 ## العوائق والخطوة التالية
 العائق: لم تكن `واجهات/مهما.md` و`واجهات/تغيير.md` و`واجهات/README.md` ووثيقة `METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md` متاحة بالمسارات المحددة على `main` عند التدقيق.  
 الخطوة التالية: تأكيد الفرع أو المسار الصحيح لهذه الوثائق، ثم جرد ملفات Flutter كاملةً ومتابعة التدقيق مقابل العقود الفعلية دون اختراع API أو بيانات.
+
+
+## الجولة الثالثة — توثيق التنفيذ
+- **التاريخ UTC:** 2026-11-10T23:30:45.510Z
+- **المهمة:** M3 — قيد التنفيذ.
+- **الحالة:** أضيف اختبار انحدار UTC؛ لم يتم تشغيله. جرد شجرة Flutter أكد الوحدات الموجودة والناقصة المذكورة أعلاه.
+- **الاختبارات:** لا تزال `flutter analyze` و`flutter test` غير مشغلتين.
+- **النسبة:** 10%؛ لم يتغير وزن المجالات لأن الجرد ما زال غير مكتمل ومواصفات المقارنة غائبة.
+- **المتبقي:** 9 مجالات وفق التقسيم المرحلي، مع بدء جرد المجال الثاني.
