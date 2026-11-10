@@ -68,11 +68,11 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
         for (var requestNumber = 1; requestNumber <= 30; requestNumber++)
         {
-            using var allowed = await client.GetAsync("/api/v1/health");
-            Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+            using var allowed = await client.GetAsync("/api/v1/ready");
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, allowed.StatusCode);
         }
 
-        using var rejected = await client.GetAsync("/api/v1/health");
+        using var rejected = await client.GetAsync("/api/v1/ready");
 
         Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
         Assert.Equal("60", rejected.Headers.GetValues("Retry-After").Single());
