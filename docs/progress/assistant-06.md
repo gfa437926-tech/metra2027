@@ -112,7 +112,7 @@ No test pass/fail is attributed to QA-06. PR #22 is the only one among these rev
 ## QA-04 — Final Actions outcomes (2026-11-10T23:33:00Z UTC)
 
 - PR #21 [Client CI #42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) completed success on head `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da`; Angular build and Flutter `pub get`, `analyze`, and `test` all passed. This includes the UTC widget test added in the latest observed PR #21 head.
-- PR #22 [Backend build #42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) completed success on head `cfe43d00e729b6dbec76690d0734f8344dfe3abd`; SQL authorization contracts, API build/tests and Docker build passed.
+- PR #22 [Backend build #42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) completed success on head `cfe43d00e729b6dbec76690a5734f8344dfe3abd`; SQL authorization contracts, API build/tests and Docker build passed.
 - PR #23 [Climate Analytics R #42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) completed success on head `0c5ba868acf74fe7506d81d073f73c538ccec4d5`; pinned fixture validation and R package check passed.
 - PR #27 latest observed head `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c` had [Client CI #42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) cancelled with no jobs. Its earlier success #42922825265 is on an older SHA.
 - QA PR #24 remains open, Draft and unmerged, with no associated Actions run. QA-06 has not executed tests.
