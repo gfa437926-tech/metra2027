@@ -1,11 +1,11 @@
 # تقرير تقدم المساعد رقم 10 — المتطلبات والتوثيق
 
-- آخر تحديث: 2026-11-10T23:37:18.965Z (UTC)
+- آخر تحديث: 2026-11-10T23:38:40.606Z (UTC)
 - المهمة: M10 — حوكمة الوثائق ومصفوفة تتبع المتطلبات.
 - الحالة: **قيد التنفيذ**.
 - الفرع: `docs/requirements-traceability-audit-2026-11-11`
 - Pull Request: [#29 — Draft](https://github.com/gfa437926-tech/metra2027/pull/29)
-- آخر Commit موثق قبل تحديث هذا التقرير: [1d3f83edb5dc0ca1ceee03ab5dfd12bcabf182dd](https://github.com/gfa437926-tech/metra2027/commit/1d3f83edb5dc0ca1ceee03ab5dfd12bcabf182dd) — تشخيص فشل اختبارات PR الأمني.
+- آخر Commit موثق قبل تحديث هذا التقرير: [a9ffb4381d7ea6d88eb5f1002aed2d1921eeb4fd](https://github.com/gfa437926-tech/metra2027/commit/a9ffb4381d7ea6d88eb5f1002aed2d1921eeb4fd) — تحديث أحدث رؤوس PR ونتائج CI.
 
 ## نسبة إنجاز المهمة
 
@@ -145,6 +145,24 @@
 - نجح API build وفحوص SQL السابقة؛ لم يُنفذ Docker build بسبب فشل الاختبارات.
 - Client CI: نجح Angular build وnpm audit، لكن Flutter job أُلغي أثناء الإعداد قبل pub get/analyze/test.
 - الإجراء التالي على مالكي PR الأمن/Backend: عزل حالة المحدد أو تعطيله في اختبارات 401/503، والتحقق من سياسة readiness، وإضافة اختبار مستقل لسلوك 429. لم أعدل فرعهم أو أعد تشغيل الوظيفة.
+
+
+
+## تحديث رؤوس PR بعد دفع commits جديدة
+
+أعيد الاستعلام عن PRs لأن الفروع تحركت خلال المراجعة. الحالة الجديدة الموثقة:
+- PR #21 head `58d1d6c3...`: Client CI #42924658140 pending.
+- PR #22 head `e771f056...`: Backend build #42924878526 in progress.
+- PR #23 head `42db1be8...`: Climate Analytics R #42924761774 in progress.
+- PR #24 head `fd5e575c...`: لا تشغيل Actions مرتبط في الاستعلام.
+- PR #27 head `71888fbe...`: Client CI #42924596524 **success**؛ Angular build وFlutter dependency resolution/analyze/test كلها ناجحة.
+- PR #28 head `9b3ad187...`: لا تشغيل Actions مرتبط في الاستعلام؛ تقرير التكامل يبقى تدقيقاً ساكناً.
+- PR #30 head `32e5ecce...`: Backend build #42924701188 **success**، وClient CI #42924701234 **success**. تحققنا من تفاصيل الوظائف: backend SQL contracts وAPI build و234 domain/API tests وDocker build كلها ناجحة؛ Angular npm ci/audit/build وFlutter pub get/analyze/test كلها ناجحة.
+
+### ملاحظة على فشل PR #30 السابق
+الفشل السابق على head أقدم `9689ab82...` (8 فاشلة من 234) عولج في commit أحدث من المساعد 7. وصف PR يذكر فصل محدد المعدل العام عن الطلبات مجهولة الهوية وتخصيص سياسة readiness. النجاح الحالي على head `32e5ecce...` هو الدليل الأحدث ويحل محل الاستنتاج التشغيلي السابق للفشل، مع بقاء سجل الفشل محفوظاً لأغراض التاريخ. لا يثبت ذلك اختبار اختراق أو جاهزية إنتاج.
+
+تم تحديث سجل أدلة المساعدين ومصفوفة التتبع وسجل التغييرات بهذه النتائج. نسبة M10 لا تزال 65%؛ لا أرفعها لأن قبول المتطلبات وتفصيل الصفحات والحقول ومراجعة patches الشاملة لم تكتمل.
 
 
 > هذا التقرير يخص المساعد 10 ومهمته التوثيقية فقط، ولا يمثل تقرير حالة المشروع بأكمله.
