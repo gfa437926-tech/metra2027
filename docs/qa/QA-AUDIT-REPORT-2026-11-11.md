@@ -169,3 +169,28 @@ Flutter PR #21 tests cover bearer token forwarding, missing token, HTTPS-only or
 R PR #23 testthat coverage includes symlink/path traversal, file type and directory boundaries, request validation, staged-copy integrity and provenance for successful/failed worker runs. No current-head CI result was available.
 
 No QA-local test execution or application/workflow/SQL change was performed.
+
+
+---
+
+## QA-07 — Follow-up review of Backend endpoint tests and current CI (2026-11-11 UTC)
+
+### PR #22 latest head
+Latest inspected head: `8134c9e4546693d717a10329436d646b08dbb94f` (open Draft). Assistant 02 added `ObservationQueueEndpointTests.cs` with six WebApplicationFactory cases covering 401, invalid-limit 400, denied-scope 403/no queue read, fake Station A grant vs Station B request, unconfigured dependency 503, and queue-read failure 503.
+
+**Coverage interpretation:** this closes the previously recorded *absence of endpoint-level queue tests* at source-presence level, but does not close B-013 or establish database-level station isolation. The cross-station test substitutes a fake authorization service. There are still no demonstrated integration tests for real station grants, permission revocation before read, concurrent read/revocation, or atomic authorization + queue selection.
+
+### P1 — B-013 remains unresolved
+At the latest inspected source, `ObservationQueueEndpoints` still calls `HasStationPermissionAsync(userId, stationId, permission)` and subsequently `GetSubmittedAsync(stationId, take)`. The service-role PostgREST queue read does not receive actor ID and does not atomically re-check the grant. This remains a source-confirmed TOCTOU design gap, not a reproduced live exploit. Keep P1 open until owner/schema-reviewed atomic read authorization and meaningful database integration/race tests are provided.
+
+### P2 — backend CI migration path filter remains open
+The current `.github/workflows/backend-ci.yml` inspected on PR #22 still omits `supabase/migrations/**` from both push and pull_request path filters while retaining `database/migrations/**` and `database/tests/**`. Changes limited to Supabase migration files may therefore fail to trigger Backend CI. QA did not modify the workflow.
+
+### Current PR-head Actions snapshot
+- PR #21 Flutter `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: Client CI pending.
+- PR #22 Backend `8134c9e4546693d717a10329436d646b08dbb94f`: Backend build in progress; no final outcome claimed.
+- PR #23 R/Climatol `42db1be81790d4dda47584019b729df8a1f53c07`: Climate Analytics R success.
+- PR #27 DevOps `71888fbecbaaf147db98aa632784b476fba047cd`: Client CI success.
+- QA PR #24 `fd5e575c6818497bd82cbadc51eea61039b8e8a5`: no workflow run returned.
+
+Cross-assistant CI results are not QA-06 test execution. QA-06 did not run tests locally. No code, workflow, SQL, migration, database or deployment changes were made by QA.
