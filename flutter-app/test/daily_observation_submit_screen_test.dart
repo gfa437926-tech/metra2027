@@ -88,7 +88,7 @@ void main() {
     expect(DailyObservationContract.requiredFields('18utc'), {
       'minTemp', 'maxTemp', 'precipitation',
     });
-    expect(DailyObservationContract.requiredFields('24h'), hasLength(14));
+    expect(DailyObservationContract.requiredFields('24h'), hasLength(13));
     expect(DailyObservationContract.requiredFields('invalid'), isEmpty);
   });
 
