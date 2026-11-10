@@ -145,18 +145,17 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
               ),
             ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _reportKind,
-            decoration: const InputDecoration(labelText: 'نوع التقرير'),
-            items: const [
-              DropdownMenuItem(value: 'hourly', child: Text('ساعي')),
-              DropdownMenuItem(value: 'daily', child: Text('يومي')),
-              DropdownMenuItem(value: 'monthly', child: Text('شهري')),
-              DropdownMenuItem(value: 'rainfall', child: Text('مطري')),
-              DropdownMenuItem(value: 'climate', child: Text('مناخي')),
-              DropdownMenuItem(value: 'other', child: Text('أخرى')),
+          const Text('نوع التقرير'),
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final kind in const ['hourly', 'daily', 'monthly', 'rainfall', 'climate', 'other'])
+                ChoiceChip(
+                  label: Text(kind),
+                  selected: _reportKind == kind,
+                  onSelected: (_) => setState(() => _reportKind = kind),
+                ),
             ],
-            onChanged: (v) => setState(() => _reportKind = v ?? 'daily'),
           ),
           TextFormField(
             controller: _fileCtrl,

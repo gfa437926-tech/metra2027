@@ -22,8 +22,6 @@ class MetraApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'METRA 2027',
     debugShowCheckedModeBanner: false,
-    locale: const Locale('ar'),
-    supportedLocales: const [Locale('ar'), Locale('en')],
     builder: (context, child) => Directionality(
       textDirection: TextDirection.rtl,
       child: child ?? const SizedBox.shrink(),
