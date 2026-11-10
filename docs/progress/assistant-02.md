@@ -2,7 +2,7 @@
 
 - Repository: gfa437926-tech/metra2027
 - Branch: work/backend-api-audit-assistant-2
-- Updated at (UTC): 2026-11-10T23:34:41Z
+- Updated at (UTC): 2026-11-10T23:36:51Z
 - Round: 3 — review-queue TOCTOU analysis and mitigation design
 - Overall task status: In progress
 - Draft PR: https://github.com/gfa437926-tech/metra2027/pull/22
@@ -33,7 +33,10 @@
 - `docs/progress/assistant-02.md`
 - `docs/backend/API-BACKEND-AUDIT-2026-11-11.md`
 
-## B-008 contract draft and disposition\nA draft now describes general list, detail, version-history and correction routes, proposed filters/pagination, immutable version behavior, stale-version conflicts, station authorization and outstanding owner decisions. It is not an approved OpenAPI contract and no endpoints were implemented. B-008 remains in progress.\n\n## B-013 finding and disposition
+## B-008 contract draft and disposition\nA draft now describes general list, detail, version-history and correction routes, proposed filters/pagination, immutable version behavior, stale-version conflicts, station authorization and outstanding owner decisions. It is not an approved OpenAPI contract and no endpoints were implemented. B-008 remains in progress.\n\n## Round 4 — QA review response and endpoint tests
+A QA-06 PR review comment reiterated the P1 TOCTOU finding and specifically requested endpoint-level 401/403/400/503 tests plus an assertion that the queue service is not called on denied station scope. Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` with five WebApplicationFactory tests covering unauthenticated requests, invalid limit, denied permissions/no queue call, unconfigured dependency, and queue read failure. Tests were not run locally; no CI result for the new commit is confirmed yet. These tests do not remediate TOCTOU; B-013 remains open.
+
+## B-013 finding and disposition
 The current flow performs permission RPC checks first, then a separate PostgREST SELECT using the server service-role credential. A revocation can commit between the operations, leaving an in-flight request with a stale authorization decision.
 
 Recommended remediation is one narrowly scoped database-side operation that validates the JWT-derived actor ID, exact station scope and current queue-read permission while selecting submitted rows atomically. The database reviewer must define snapshot/locking/serialization semantics. The decision operation must independently validate the decision-specific permission in the same atomic operation as the status transition.
