@@ -7,7 +7,7 @@
 - valid request resolves the matching .dat and .est files;
 - directories outside the configured workspace are rejected;
 - invalid variable identifiers and reversed year ranges are rejected;
-- the runner receives UTC and runs against staged copies;
+- the runner receives UTC and runs against staged copies;\n- daily climatology monthly/yearly summaries use calendar-day completeness, preserve missingness, and reject duplicate station-date records;
 - original source input files remain present after execution.
 
 ## Required next tests
