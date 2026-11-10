@@ -144,3 +144,23 @@ These cross-PR results are not QA-06 test results. Estimated QA-06 completion re
 - Found P2 CI trigger gap: `.github/workflows/backend-ci.yml` watches `database/migrations/**` but not `supabase/migrations/**`, although five operational observation migrations currently exist under the latter path on main. Recommended adding the Supabase path to push and pull_request filters, retaining existing paths.
 - No QA-local test commands executed. No application code, workflow, SQL, migration, database, or deployment changed.
 - QA-06 progress remains **50%**; weighted work packages are unchanged.
+
+
+---
+
+## QA-07 — Backend queue-test follow-up and CI freshness (2026-11-11 UTC)
+
+- Rechecked PR #22 latest head `8134c9e4546693d717a10329436d646b08dbb94f` and source files.
+- Confirmed Assistant 02 added six WebApplicationFactory queue endpoint tests: unauthenticated 401, invalid-limit 400, denied scope 403/no queue invocation, fake Station A grant vs Station B request, unconfigured dependency 503, and queue read failure 503.
+- This resolves the earlier *missing endpoint-test file* observation, but does not establish real database station isolation or close P1 B-013. The endpoint still performs separate permission RPC and service-role SELECT; actor ID is not passed to the queue read. Revocation-before-read and concurrent race tests remain absent.
+- Revalidated P2: current backend workflow still omits `supabase/migrations/**` from push and pull_request path filters.
+- Current PR-head Actions: #21 pending; #22 in progress; #23 success; #27 success. QA PR #24 current head has no associated PR-triggered run returned.
+- QA did not execute tests locally. No application code, workflow, SQL, migration, database, deployment or merge was changed.
+
+### Progress unchanged
+**Estimated QA-06 completion: 50%.** Three major work packages remain:
+1. Execute QA's own suites/CI and capture exact-head evidence.
+2. Implement/coordinate missing integration and E2E suites.
+3. Complete cross-layer authorization, UTC, RTL, responsive and accessibility verification.
+
+The presence of new tests in Assistant 02's branch is credited to that branch, not counted as completion of QA-06's implementation/execution packages.
