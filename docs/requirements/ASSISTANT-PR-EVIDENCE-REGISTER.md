@@ -98,3 +98,17 @@ For PR #30's exact head, Backend build #42924494881 failed specifically at the `
 - The latest-head workflow states are a point-in-time snapshot and may change; refresh before any merge decision.
 - No application code, SQL, migrations, Supabase configuration, production data or database were changed.
 - No PR was approved, marked ready, or merged by this register.
+
+
+### PR #30 Backend failure — job log diagnosis (2026-11-10T23:36:55.798Z)
+
+The failed job log for [Backend build #42924494881](https://github.com/gfa437926-tech/metra2027/actions/runs/42924494881) was retrieved and inspected.
+
+- Test result: **8 failed, 226 passed, 0 skipped, 234 total**.
+- The failed cases include `ApiAuthenticationTests.Every_authority_access_endpoint_requires_authentication`: expected HTTP 401 Unauthorized, received HTTP 429 Too Many Requests.
+- `Readiness_endpoint_is_anonymous_but_fails_when_server_dependencies_are_missing`: expected HTTP 503 Service Unavailable, received HTTP 429 Too Many Requests.
+- The security branch's `Program.cs` adds a global fixed-window rate limiter and a named readiness policy; the pipeline calls `UseRateLimiter()`. The tests issue multiple requests through the test host and currently observe 429 before the expected endpoint/authentication outcome.
+- This establishes a **test/limiter interaction and status-contract regression** in the current PR #30 head. It does not by itself prove the production limiter's partitioning is unsafe. The precise fix should be made by the security/backend owners: isolate or disable limiter state in tests where appropriate, explicitly apply the readiness policy as intended, and retain separate tests that verify real 429 behavior without masking 401/503 endpoint contracts.
+- API build and preceding SQL authorization contract checks passed in that run; Docker image build was skipped after test failure.
+- The client workflow was cancelled in the Flutter setup step; Angular build and npm audit passed, but Flutter pub get/analyze/test were skipped.
+- Assistant 10 did not modify PR #30 or rerun its workflow. The failure is recorded for the owning assistants to resolve.
