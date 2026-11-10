@@ -73,6 +73,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('إدخال رصد جديد'), findsOneWidget);
+    expect(find.textContaining('وقت الرصد:'), findsOneWidget);
+    expect(find.textContaining(' UTC'), findsOneWidget);
     expect(find.text('حمولة الرصد بصيغة JSON'), findsOneWidget);
     expect(find.text('حفظ الرصد'), findsOneWidget);
   });
