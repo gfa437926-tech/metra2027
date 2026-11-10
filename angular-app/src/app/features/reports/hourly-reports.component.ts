@@ -165,16 +165,20 @@ export class HourlyReportsComponent {
     }
   }
 
-  readonly today = this.localDate(new Date());
-  private localDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+  readonly today = this.utcDate(new Date());
+  private utcDate(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
-
-  readonly now = new Intl.DateTimeFormat('ar', { hour: '2-digit', minute: '2-digit' }).format(new Date());
+  readonly now = this.utcTime(new Date());
+  private utcTime(date: Date): string {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    }).format(date) + ' UTC';
+  }
   readonly hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   readonly cloudValues = ['0','1','2','3','4','5','6','7','8'];
   readonly cloudLayers = [1,2,3,4];
