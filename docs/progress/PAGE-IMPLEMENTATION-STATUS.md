@@ -85,3 +85,10 @@
 - Archive SQL remains review-only / not applied.
 - No hosted Supabase apply performed in this phase.
 - Owner decision form included before any migration execution.
+
+
+## Phase F — UX shell
+- Angular sidebar regrouped (رصد / مراجعة / تقارير / إدارة محطة / صيانة).
+- Admin station links shown only when authenticated session present (UX only; API still enforces).
+- Shared `.metra-state-*` CSS tokens for loading/empty/error/ok/warn.
+- Flutter `MaterialApp` forced RTL + `locale: ar`.

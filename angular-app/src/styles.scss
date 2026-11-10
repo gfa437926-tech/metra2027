@@ -8,3 +8,31 @@
 body { margin: 0; min-width: 320px; }
 button, input { font: inherit; }
 a { color: inherit; }
+/* Phase F — shared UX tokens (RTL Arabic) */
+html[dir="rtl"] body {
+  font-family: 'Tajawal', Tahoma, Arial, sans-serif;
+}
+
+.metra-state {
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 10px 0;
+  line-height: 1.7;
+}
+.metra-state--loading { background: #eef6fa; color: #1f5f7a; }
+.metra-state--empty { background: #f5f7f9; color: #5c6b75; }
+.metra-state--error { background: #fdecee; color: #8a1f2d; }
+.metra-state--ok { background: #e8f6ee; color: #1f6b3c; }
+.metra-state--warn { background: #fff7e8; color: #8a5a12; }
+
+.metra-utc-hint {
+  font-size: 12px;
+  color: #6a7882;
+}
+
+.nav-footnote {
+  margin: 14px 12px 20px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.6;
+}

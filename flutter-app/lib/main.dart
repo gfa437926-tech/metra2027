@@ -20,9 +20,20 @@ class MetraApp extends StatelessWidget {
   const MetraApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'METRA 2027', debugShowCheckedModeBanner: false,
-    theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: _blue),
-      scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
+    title: 'METRA 2027',
+    debugShowCheckedModeBanner: false,
+    locale: const Locale('ar'),
+    supportedLocales: const [Locale('ar'), Locale('en')],
+    builder: (context, child) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: child ?? const SizedBox.shrink(),
+    ),
+    theme: ThemeData(
+      useMaterial3: true,
+      fontFamily: 'Roboto',
+      colorScheme: ColorScheme.fromSeed(seedColor: _blue),
+      scaffoldBackgroundColor: const Color(0xFFF3F6FC),
+    ),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
         ? const MetraAuthGate()
         : const MetraConfigurationScreen());
