@@ -229,3 +229,37 @@ Before API/worker code is written, require explicit decisions for:
 8. Test fixture policy: owner-provided de-identified register pages and chart images, human reference labels, train/validation/test isolation, and held-out station/device evaluation.
 
 This is a readiness checklist, not a finalized API contract or permission grant. No DB schema, migration, storage bucket, OCR worker, or application source was changed.
+
+
+## 12. Exact backend test-tree and worker/storage inventory — 2026-11-10T23:40:50.968Z (UTC)
+
+### Evidence scope
+
+The implementation baseline was enumerated from work/legacy-ui-migration-audit, not from the Assistant 05 documentation branch.
+
+- Recursive backend tree: backend/, tree SHA 243f0f4f7a649ad64087ab424cde940b54f2dece.
+- Recursive implementation-branch tree rooted at commit 964f6e067642378e7c7205ec24c5950065a48da3.
+
+### Backend test sources
+
+The test tree contains **43 C# test source files**, plus Metra.Api.Tests.csproj. They are organized into:
+
+- Domain: observation validators/workflow/authorization, maintenance policies, manual archive, forecasting, support, and shared fixture tests.
+- Features: maintenance, observations, stations, support, and users request guards and service tests.
+- Security: API authentication, Supabase token validation, and station authorization tests.
+- Root-level tests: security headers, station-scoped authorization integration, and feature-specific station authorization tests.
+
+No auditor-specific test source was found in this complete enumerated backend test tree. This does not imply the existing tests are absent; rather, the tree confirms the existing test baseline and its current domains.
+
+### Worker, image and storage inventory
+
+- The complete enumerated backend/Metra.Api tree has domain, feature, infrastructure/persistence, and security directories.
+- Its persistence directory contains Npgsql services for equipment faults, manual archive ledger, operations sessions, support incidents, and station-assignee authorization.
+- No dedicated electronic-auditor worker, OCR/image processor, mechanical-chart digitizer, or auditor-specific storage adapter is present in the inspected backend tree.
+- A repository-wide recursive path-name scan on the same implementation branch for worker/storage/upload/image/OCR/OpenCV/Tesseract/auditor/chart terms returned only the Angular auditor scaffold and the design document. This is evidence about named paths in the inspected tree; it does not rule out a generic or external service whose path does not identify its purpose.
+
+### Milestone and safety status
+
+Milestone 3 (implementation/source inventory) is complete for the inspected implementation branch. Overall progress is **37.5% (3/8 milestones)**; five milestones remain. The next milestone—requirements and ownership alignment—remains blocked by the unresolved canonical API/permission/scope decisions documented in the contract readiness register.
+
+No source implementation, API contract, database, migration, Supabase project, storage bucket, raw observation, Angular/Flutter/Backend owner files, or metra-old data was modified. No tests or GitHub Actions were run; this round is a Git-tree inventory and documentation update only.
