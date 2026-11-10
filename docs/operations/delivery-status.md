@@ -1,5 +1,9 @@
 # METRA 2027 — delivery status (honest)
 
+**Latest delivery package:** `docs/operations/phase-h-delivery-package.md`  
+**Branch tip reference at package authorship:** `work/legacy-ui-migration-audit` (see git log)  
+**PR #11:** remains Draft until owner merge approval.
+
 ## Code branch status (`work/legacy-ui-migration-audit`)
 
 Implemented in repository (not proof of hosted production by itself):
@@ -26,3 +30,9 @@ Implemented in repository (not proof of hosted production by itself):
 - Never touch the legacy INSERT database
 - Never put service-role or DB passwords in Angular/Flutter
 - Do not declare production readiness solely from green CI
+
+
+## Phase H
+- Delivery package published: `docs/operations/phase-h-delivery-package.md`
+- No production deploy performed in-repo
+- No PR merge performed

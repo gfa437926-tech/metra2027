@@ -28,3 +28,7 @@ Updated from repository evidence only. No live DB writes.
 
 ## Phase E
 Status: review package published; **awaiting owner apply approval**.
+
+
+## Phase H — delivery
+Status: **documentation and acceptance gates published**. Production cutover blocked on owner approvals (DB apply, secrets, staging E2E, PR merge).

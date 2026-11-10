@@ -98,3 +98,8 @@
 - Added `ManualArchiveStationAuthorizationTests` for cross-station archive isolation.
 - Coverage matrix: `docs/security/phase-g-security-test-coverage.md`
 - No SQL applied; no PR merge.
+
+
+## Phase H — delivery package
+- See `docs/operations/phase-h-delivery-package.md`
+- Staging/production and PR merge remain owner-gated
