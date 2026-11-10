@@ -73,3 +73,11 @@
 - Added tests for infinite/complex years, directory-as-data-file, and dot-dot traversal outside the configured workspace.
 - No input-size ceiling was invented; a maximum-size policy remains a product/security decision requiring an agreed value.
 - CI for these additions is pending.
+
+
+## 2026-11-10T23:35:48Z — Symlink security tests passed; validation-edge CI pending
+
+- [Run #23](https://github.com/gfa437926-tech/metra2027/actions/runs/42924449733) passed for commit `0915fe7b11b36b3e34d4c9189ba734be7c6a68a1`, including the new symlinked input-directory, symlinked input-file, and same input/output directory tests.
+- Current code commit: `bd472e2ae498f7a5e63a63b364998a07ef7c131a`.
+- [Run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) targets the latest code and remains in progress. It adds finite/complex year, directory-as-data-file, and dot-dot traversal cases.
+- Progress remains 55%; 6 major work items remain.

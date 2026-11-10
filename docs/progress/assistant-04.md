@@ -144,3 +144,10 @@ No merge to main, production deployment, database/Supabase changes, raw observat
 - Input paths ending in .dat/.est are now rejected if they resolve to directories, in addition to existing missing/empty-file checks.
 - Added tests for infinite and complex year values, directory masquerading as a data file, and dot-dot path traversal after canonical path resolution.
 - These changes are committed but await the next CI result. No arbitrary maximum file-size limit was introduced because the project has not approved a size policy.
+
+
+## CI update — 2026-11-10T23:35:48Z
+
+- [Run #23](https://github.com/gfa437926-tech/metra2027/actions/runs/42924449733) completed successfully for the symlink-boundary test commit `0915fe7b11b36b3e34d4c9189ba734be7c6a68a1`. The CI job passed Climatol 4.5-0 version verification and R CMD check/testthat.
+- The newer validation-hardening commit is `bd472e2ae498f7a5e63a63b364998a07ef7c131a`; [run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) targets this commit and was still running at report time. It includes finite/complex year tests, directory-as-input rejection, and dot-dot traversal rejection.
+- Task estimate remains 55%; 6 major work items remain. CI #22 verifies the Climatol fixture; CI #23 verifies symlink and same-directory tests. CI #24 is pending.

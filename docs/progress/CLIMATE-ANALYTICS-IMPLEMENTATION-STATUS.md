@@ -125,3 +125,9 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - Added tests for infinite/complex years, directory masquerading as a data file, and dot-dot traversal.
 - CI verification is pending for this additional commit.
 - A maximum input-size policy remains undecided; no arbitrary cap was imposed.
+
+
+## CI update — 2026-11-10T23:35:48Z
+
+- Symlink-boundary and same input/output directory tests passed in [run #23](https://github.com/gfa437926-tech/metra2027/actions/runs/42924449733).
+- Additional request-validation edge cases were committed at `bd472e2ae498f7a5e63a63b364998a07ef7c131a`; [run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) was still in progress.
