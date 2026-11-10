@@ -131,3 +131,43 @@ Append-only log for QA work on METRA 2027. Entries are newest last; do not delet
 - DevOps latest head remains unverified because its latest Client CI was cancelled; the older success must not be attributed to the latest head.
 - These are results for the respective assistant branches, not for QA-06 or PR #24.
 - QA-06 progress remains **50%**; the evidence refresh does not implement or execute QA's own outstanding test suites.
+
+
+---
+
+## QA-05 — Source-level authorization and endpoint-test audit (2026-11-10T23:34:44Z UTC)
+
+### Files inspected on current PR #22 head
+- `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
+- `backend/Metra.Api/Security/StationAuthorizationService.cs`
+- `backend/Metra.Api/Features/Observations/ObservationSubmissionEndpoints.cs`
+- `backend/Metra.Api.Tests/Features/Observations/ObservationSubmissionRequestGuardTests.cs`
+- `backend/Metra.Api.Tests/Features/Observations/ObservationDecisionRequestGuardTests.cs`
+- `backend/Metra.Api.Tests/Metra.Api.Tests.csproj`
+- `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md`
+- `docs/backend/API-BACKEND-AUDIT-2026-11-11.md`
+
+### Confirmed finding — P1 authorization TOCTOU
+The current queue endpoint calls `HasStationPermissionAsync(userId, stationId, permission)` for one of three permissions, then calls `GetSubmittedAsync(stationId, take)`. The queue service executes a separate PostgREST SELECT using the service-role credential and does not receive `userId`. Therefore the authorization decision and data read are not one atomic operation. A grant revoked after the authorization RPC but before the SELECT may still allow the in-flight request to return submitted rows. The queue SELECT filters by the requested station ID and submitted status, but that filter is not an actor authorization check when service-role access is used.
+
+This is a source-confirmed authorization TOCTOU window, not proof of unauthenticated access or a demonstrated exploit against a live database. B-013's own design document records the same gap and leaves remediation pending schema review/owner approval.
+
+### Confirmed test gap
+- PR #22 adds `ObservationSubmissionRequestGuardTests.cs`, which covers request-shape validation and UTC offset rejection.
+- No `ObservationQueueEndpointTests.cs` exists at the current PR #22 head.
+- No endpoint-level evidence was found in the inspected PR changes proving the queue returns 401 for missing subject, 403 for a user scoped to another station, and that the queue service is never invoked when authorization fails.
+- No race/concurrency test was found for queue read vs grant revocation.
+- The test project references `Microsoft.AspNetCore.Mvc.Testing`, so test-server integration infrastructure is available as a dependency; actual configured integration fixtures/routes still need inspection and implementation.
+
+### Additional decision-endpoint note
+The observation decision handler explicitly checks a decision-specific permission before calling its service, and the service RPC receives user ID and station ID. However, this source inspection alone does not prove the database RPC atomically revalidates that permission while changing the observation state. Tests must cover reviewer-without-approve, reviewer-without-return, wrong-station observation ID, and concurrent decisions.
+
+### QA action
+- Submitted a review comment on PR #22 (review ID `5851183143`) anchored to head `1ac10c4f083b5975bf1b95a456610725feecb704`, identifying the P1 TOCTOU issue, missing queue endpoint tests, recommended atomic actor+station RPC and required concurrency cases.
+- No code or SQL was changed by QA-06. No schema/RPC remediation was attempted because the backend design explicitly requires schema review and owner approval first.
+
+### Evidence and status
+- [PR #22 review](https://github.com/gfa437926-tech/metra2027/pull/22)
+- [B-013 TOCTOU design](https://github.com/gfa437926-tech/metra2027/blob/work/backend-api-audit-assistant-2/docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md)
+- QA-06 did not run tests. This is a static source review finding; do not report it as a reproduced exploit.
+- QA-06 estimated completion remains 50%; source review and review comment are evidence gathering, not test implementation/execution.
