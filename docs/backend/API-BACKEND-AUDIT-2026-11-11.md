@@ -138,3 +138,19 @@ Observation decision currently performs explicit subject and permission checks i
 4. Add cross-station, token revocation, stale decision and end-to-end tests.
 5. Complete specialist module and archive-ledger API gap analysis.
 6. Reconcile client runtime integration with the real deployed API host after owner supplies/configures it.
+
+
+## Round 3 — B-013 source verification and remediation design (2026-11-10T23:31:49Z)
+
+The review-queue TOCTOU finding is now confirmed against the current branch source:
+
+- `ObservationQueueEndpoints.MapObservationQueueEndpoints` calls `HasStationPermissionAsync` for review/approve/return permissions.
+- After that separate permission request completes, the endpoint calls `IObservationQueueService.GetSubmittedAsync(stationId, ...)`.
+- `SupabaseObservationQueueService.GetSubmittedAsync` issues a separate service-role PostgREST GET filtered by station ID and submitted status. It does not receive the actor ID or repeat authorization.
+- `SupabaseStationAuthorizationService` performs the permission check through a separate RPC request.
+
+This creates a stale-authorization window if the relevant grant/assignment is revoked between the permission check and queue read. The endpoint remains authenticated; this finding is specifically an in-flight authorization TOCTOU risk.
+
+A detailed, owner-reviewable design is recorded in `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md`. The preferred option is a single narrowly scoped database-side operation that validates JWT-derived actor identity, exact station scope and current queue-read permission while selecting submitted rows atomically. The database review must define the transaction snapshot and lock/serialization semantics needed for the required revocation guarantee. Decision-specific authorization must likewise be rechecked atomically with the decision state change.
+
+B-013 remains in progress. No SQL, RPC, migration, RLS, seed or Supabase operation was performed. No code change or test was made in this round. Local tests were not run and no new CI result is claimed. Implementation requires schema review and owner approval.
