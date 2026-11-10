@@ -53,3 +53,16 @@
 5. Verify all date/time inputs, serialization, DB writes, report queries, and exports under UTC-only semantics.
 6. Obtain product-owner decisions for unresolved paper audit, Climatol, forecast-centre, data catalogue, and full report calculation requirements.
 7. Record production smoke-test evidence separately from CI evidence.
+
+
+## Cross-assistant branch evidence
+
+The current `main` matrix above records baseline evidence only. Do not silently replace its statuses with work from unmerged branches. See [ASSISTANT-PR-EVIDENCE-REGISTER.md](ASSISTANT-PR-EVIDENCE-REGISTER.md) for a PR-by-PR ledger, exact branch heads, changed-file scope, selected Actions run SHAs, and acceptance limitations.
+
+Key interpretation rules:
+- A PR description is an owner-reported claim, not independent implementation proof.
+- Successful CI on an ancestor SHA does not certify tests or changes added later on the branch.
+- Flutter UTC work (#21), API UTC enforcement (#22), R/Climatol hardening (#23), client CI changes (#27), and security hardening (#30) remain branch proposals until latest-head validation and review.
+- The scientific review PR (#25) reports possible operational validation and humidity-range consistency gaps; these require direct source/test reproduction before being classified as confirmed defects.
+- Database proposal PR (#26) is not authorization to apply SQL or migrations.
+- PR #24's QA matrix is an audit artifact; it is not a substitute for executing tests.
