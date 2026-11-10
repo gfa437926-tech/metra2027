@@ -140,3 +140,15 @@ For the new head `32e5ecce...`:
 PR #27's current head also now has successful Angular and Flutter CI. PRs #21, #22 and #23 still have newer pending/in-progress runs; prior successful SHAs must not be substituted for those runs. No workflow run was found for QA #24 or integration #28 at this snapshot.
 
 All PRs remain open Draft/WIP and unmerged in the latest PR inventory. No assistant 10 approval or merge action was performed.
+
+
+## Final head movement check — 2026-11-10T23:39:25.062Z
+
+PR #22 advanced again after the previous snapshot:
+- Current PR #22 head: `efa5870e555d4f74584e44bd439002daf784afa3` (updated `2026-11-10T23:39:00Z`).
+- An exact-head Actions lookup returned no associated workflow run at this check. The previously observed run #42924878526 belongs to earlier head `e771f056...` and must not be attributed to this newer head.
+- PR #21 run #42924658140 remains `pending` on head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`.
+- PR #23 run #42924761774 remains `completed` on head `42db1be81790d4dda47584019b729df8a1f53c07`.
+- PR #27 and #30 latest successful runs remain the verified results in the preceding snapshot.
+
+This illustrates why CI evidence is stored against exact commit SHAs rather than PR numbers alone.
