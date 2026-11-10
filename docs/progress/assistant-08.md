@@ -199,3 +199,16 @@
 - لم يتم تعديل كود التطبيقات أو SQL، ولم يتم الاتصال بـ Supabase.
 - نسبة الإنجاز تبقى **10%** وفق معيار المحاور المكتملة بالكامل (1 من 10)، والمتبقي 9 محاور.
 - الخطوة التالية: بناء مصفوفة required-fields مع المساعدين 2 و11 انطلاقاً من مواصفات الرصد المعتمدة، ثم مراجعة ربط validators بمسار الحفظ.
+
+
+## 17. إغلاق توثيق الجولة الرابعة والتحقق من GitHub — 2026-11-10T23:37:48.115Z UTC
+- [Commit إضافة DB-020 إلى تقرير التدقيق](https://github.com/gfa437926-tech/metra2027/commit/912a45182f50e1bd8357ba641063c172986341cd)
+- [Commit سجل التقدم](https://github.com/gfa437926-tech/metra2027/commit/3f6a1e968162496895157894404b39bbe9945f77)
+- [Commit سجل التغييرات](https://github.com/gfa437926-tech/metra2027/commit/12ba9dde103320621cb65f434c751aabfc1ec655)
+- [Commit تحديث المهام](https://github.com/gfa437926-tech/metra2027/commit/64c5c9fbbf9546a6ec1228b6641dbeff725f6bb8)
+- [PR #26](https://github.com/gfa437926-tech/metra2027/pull/26) تم تحديث وصفه ليتضمن DB-020 ونتيجة إعادة التحقق؛ ما زال مفتوحاً Draft وغير مدمج.
+- فحص HEAD `64c5c9fbbf9546a6ec1228b6641dbeff725f6bb8`: GitHub Actions workflow runs = 0؛ Check Runs = 0. [Checks](https://github.com/gfa437926-tech/metra2027/commit/64c5c9fbbf9546a6ec1228b6641dbeff725f6bb8/checks).
+- الاختبارات وbuild لم تُشغّل؛ لا توجد نتيجة نجاح مزعومة.
+- PR base SHA ما زال أقدم من main HEAD؛ لم يُجر rebase أو merge. التنسيق مع المساعد 1 مطلوب.
+- النسبة: 10% وفق معيار 1 محور مكتمل بالكامل من 10؛ 9 محاور متبقية. DB-020 نتيجة تدقيق جزئية ولا ترفع نسبة المحاور المكتملة.
+- الخطوة التالية: مصفوفة required-fields مستندة إلى مواصفات الرصد المعتمدة، ثم التنسيق مع المساعد 2 لربط validation بمسار الحفظ ومع المساعد 11 لمراجعة المتطلبات العلمية.
