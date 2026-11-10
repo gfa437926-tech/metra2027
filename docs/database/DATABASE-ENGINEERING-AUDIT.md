@@ -245,3 +245,32 @@
 - `backend/Metra.Api.Tests/Features/Observations/ObservationDecisionRequestGuardTests.cs`
 
 لم يتم تشغيل هذه الاختبارات؛ تمت قراءتها فقط. لم يتم تعديل أي كود Backend أو SQL.
+
+
+## 13. إعادة التحقق من main وإضافة DB-020 — 2026-11-10T23:37:06.581Z UTC
+
+تم فحص HEAD الحالي لـ `main` (`43c72da0604e49a74d2128cc9d3d881e2c912f26`) ومقارنته بفرع التدقيق. ملفات Backend الأساسية التالية متطابقة في محتواها (blob SHA) بين الفرعين، لذلك لم تُحل DB-017/018/019 بعد في main:
+- `ObservationSubmissionEndpoints.cs`
+- `ObservationValidationEndpoints.cs`
+- `ObservationValidationRequestGuard.cs`
+- `DailyObservationValidator.cs`
+- `HourlyObservationValidator.cs`
+- `WeatherPhenomenonValidator.cs`
+- `ObservationWorkflow.cs`
+
+### DB-020 — واجهات تحقق اليومي والساعي لا تمرر requiredFields — مرتفع
+في `ObservationValidationEndpoints.cs` يستدعي endpoint اليومي `DailyObservationValidator.Validate(request.Values)` ويستدعي endpoint الساعي `HourlyObservationValidator.Validate(request.Values)` دون تمرير `requiredFields`. في كلا validator، المعامل `requiredFields` اختياري وقيمته الافتراضية null؛ وفحص الحقول الإلزامية لا يحدث إلا عند تمرير مجموعة صريحة. كما أن الحقول الفارغة لا تنتج issue عندما لا يكون الحقل ضمن requiredFields. النتيجة: endpoint التحقق الحالي يستطيع اعتبار قاموس يحتوي حقولاً اختيارية/فارغة صالحاً، ولا يثبت اكتمال النشرة المطلوبة. يلزم تحديد profile للحقول المطلوبة حسب نوع النشرة/ساعة الرصد والمحطة، وتمريره إلى validator، مع اختبارات endpoint تثبت رفض الحقول المطلوبة الناقصة. لا يجوز افتراض أن جميع الحقول مطلوبة دائماً؛ القرار يجب أن يستند إلى مواصفة الرصد المعتمدة.
+
+### ملاحظة تكامل واجهة الظواهر
+ملف `phenomena-input.component.ts` يعلن صراحة أنه معاينة محلية غير محفوظة ولا يرسل السجلات إلى قاعدة البيانات. لذلك لا يُعد هذا الملف حالياً واجهة كتابة فعلية لـ `metra_observations`، ولا ينبغي اعتباره دليلاً على تكامل نموذج الظواهر مع مسار الحفظ.
+
+### ملفات إضافية فُحصت
+- `angular-app/src/app/core/api/observation-api.service.ts`
+- `angular-app/src/app/features/observations/observation-workflow.component.ts`
+- `angular-app/src/app/features/phenomena/phenomena-input.component.ts`
+- `backend/Metra.Api.Tests/Domain/WeatherPhenomenonValidatorTests.cs`
+- `supabase/migrations/20261103164003_create_operational_observation_submission.sql`
+- `supabase/migrations/20261103215400_observation_review_decision.sql`
+
+### حدود الجولة
+تمت مقارنة الملفات وقراءة المصدر فقط. لم يتم تشغيل build أو tests، ولم يتم تعديل Backend أو Angular أو Flutter أو SQL. لم يتم الاتصال بـ Supabase.
