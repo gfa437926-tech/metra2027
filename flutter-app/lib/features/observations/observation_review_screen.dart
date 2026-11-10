@@ -306,6 +306,14 @@ class _QueueBody extends StatelessWidget {
         'phenomenon' => 'بلاغ ظاهرة جوية',
         _ => 'نشرة: $type',
       };
+
+  /// Always render UTC; never convert to the device local timezone.
+  static String _formatUtc(DateTime value) {
+    final utc = value.toUtc();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
+        '${two(utc.hour)}:${two(utc.minute)}:${two(utc.second)} UTC';
+  }
 }
 
 class _ReviewActions extends StatelessWidget {
