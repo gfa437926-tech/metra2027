@@ -54,6 +54,6 @@ Scope: Angular shell, routing, shared navigation and UI implementation.
 - Changed files:
   - `angular-app/src/styles.scss`: added shared CSS variables preserving the existing shell palette, width, border and shadows.
   - `angular-app/src/app/app.component.ts`: used shared variables for existing sidebar/content colors and dimensions; added `aria-controls`, dynamic `aria-expanded`, and Escape-to-close.
-- Verification: files re-fetched and diff inspected. Local build/tests not run. The first workflow lookup returned no PR-associated runs; no CI success is claimed.
+- Verification: files re-fetched and diff inspected. Local build/tests not run: a shallow Git clone was attempted but failed because this runtime could not resolve github.com, so no local checkout was available. The workflow-run lookup and combined commit status both returned empty results; no CI success is claimed.
 - PR #32 is open Draft and not merged. Screenshot comparison, focus restoration/trapping and full shell refactor remain outstanding.
 - No database/Supabase/legacy repository/deployment changes.
