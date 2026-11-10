@@ -143,3 +143,23 @@ The requested files `واجهات/مهما.md`, `واجهات/تغيير.md` and
 - R package check #19 on the separate climate branch succeeded: https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783. PR #23 remains Draft/open/unmerged: https://github.com/gfa437926-tech/metra2027/pull/23. Passing package check is not equivalent to operational Climatol validation or PR approval.
 - No Pages deployment/re-run, secret/environment change, Climatol production run, database operation, or merge was performed.
 - Assistant 09 progress remains 67% (8/12); four work items remain open. See https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09.md and the append-only log at https://github.com/gfa437926-tech/metra2027/blob/assistant-9/devops-ci-hardening/docs/progress/assistant-09-changelog.md.
+
+
+## Flutter SDK pin and R workflow review — 2026-11-10T23:34:30Z
+
+### Flutter
+
+The successful Client CI #725 job log records the resolved SDK path as `flutter/stable-3.47.9-x64`. Assistant 09 used this observed, passing toolchain version to pin `flutter-version: '3.47.9'` in `.github/workflows/client-ci.yml`. This avoids an unreviewed SDK version choice and converts the previous moving `stable` target into a reproducible explicit version.
+
+- Change commit: https://github.com/gfa437926-tech/metra2027/commit/feacff5ac43479baba8141a4a2b9e27cd50c9ac7
+- Post-pin CI: https://github.com/gfa437926-tech/metra2027/actions/runs/42924440412 (pending at time of this note; success is not yet claimed).
+
+### R / Climatol branch review
+
+- R package check #19 passed: https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783.
+- PR #23 remains Draft/open/unmerged: https://github.com/gfa437926-tech/metra2027/pull/23.
+- The workflow `.github/workflows/climate-analytics-r.yml` on `work/climate-analytics-r-hardening` limits its push trigger to `work/climate-analytics-r-bootstrap`. After merge to `main`, direct pushes to `main` will not trigger this workflow. The PR trigger can validate PR changes, but the post-merge push coverage should be corrected by the owning assistant before integration.
+- R is configured as `4.5` (minor line) and Climatol as `4.5-0` in the R CI dependency setup; this does not pin an exact R patch release.
+- Assistant 09 did not modify PR #23 or the R workflow owned by Assistant 04.
+
+No production deployment, secret/environment change, database operation, Climatol production processing, or merge was performed.
