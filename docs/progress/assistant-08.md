@@ -5,7 +5,9 @@
 - **الحالة:** قيد التنفيذ.
 - **الفرع:** [work/database-engineering-audit](https://github.com/gfa437926-tech/metra2027/tree/work/database-engineering-audit)
 - **Pull Request:** [#26 — Draft](https://github.com/gfa437926-tech/metra2027/pull/26) — مفتوح، Draft، غير مدمج.
-- **Commit المرجعي قبل هذا التحديث:** [469f8cd8982cb953321bea176f23758c474231ba](https://github.com/gfa437926-tech/metra2027/commit/469f8cd8982cb953321bea176f23758c474231ba)
+- **Commit سابق للتحديث:** [469f8cd8982cb953321bea176f23758c474231ba](https://github.com/gfa437926-tech/metra2027/commit/469f8cd8982cb953321bea176f23758c474231ba)
+- **Commit سجل التغييرات:** [d5e6f5db621485fffd0f6cda79ce6fe3e14b608c](https://github.com/gfa437926-tech/metra2027/commit/d5e6f5db621485fffd0f6cda79ce6fe3e14b608c)
+- **Commit تحديث المهام:** [75928461216e3ba0a2b8219b80f5c3da04d5c032](https://github.com/gfa437926-tech/metra2027/commit/75928461216e3ba0a2b8219b80f5c3da04d5c032)
 
 ## 1. ملخص الجولة الحالية
 
@@ -25,6 +27,11 @@
 - `docs/progress/assistant-08.md` — إنشاء هذا التقرير.
 - `واجهات/تغيير.md` — إضافة سجل الجولة الحالية مع توقيت UTC وروابط الدليل.
 - `واجهات/مهما.md` — تحديث حالة المهمة والمهام المتبقية والخطوة التالية.
+
+## 3.1 روابط commits التوثيق
+- [Commit إنشاء تقرير التقدم](https://github.com/gfa437926-tech/metra2027/commit/998cefb63b0ee7b18cce5dabe8ec95c11aca44b1)
+- [Commit سجل التغييرات](https://github.com/gfa437926-tech/metra2027/commit/d5e6f5db621485fffd0f6cda79ce6fe3e14b608c)
+- [Commit تحديث المهام](https://github.com/gfa437926-tech/metra2027/commit/75928461216e3ba0a2b8219b80f5c3da04d5c032)
 
 ## 4. ما نُفذ فعلياً
 
