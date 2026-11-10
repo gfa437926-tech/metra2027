@@ -54,7 +54,7 @@
 
 ## Commit
 - الجولة السابقة: [bb97dcce75f208eba733a54bc70369fff9a79c7b](https://github.com/gfa437926-tech/metra2027/commit/bb97dcce75f208eba733a54bc70369fff9a79c7b)
-- Commit هذا التحديث سيُضاف بعد رفع التقرير.
+- تحديث التقرير وسجل المهمة: [d777a7ea0192181da8133156d6796043e82158dd](https://github.com/gfa437926-tech/metra2027/commit/d777a7ea0192181da8133156d6796043e82158dd).
 
 ## Pull Request
 - [PR #21](https://github.com/gfa437926-tech/metra2027/pull/21) — مفتوح، Draft، غير مدمج.
