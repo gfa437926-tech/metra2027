@@ -116,16 +116,17 @@ public sealed class RegistrationReviewStationAuthorizationTests
                     services.AddSingleton(review);
                     services.AddAuthentication(options =>
                     {
-                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
-                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
-                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
-                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                        TestAuthenticationHandler.Scheme, _ => { });
+                        options.DefaultAuthenticateScheme = MetraIsolationTestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = MetraIsolationTestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = MetraIsolationTestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, MetraIsolationTestAuthenticationHandler>(
+                        MetraIsolationTestAuthenticationHandler.Scheme, _ => { });
                 });
             });
 
     private sealed class RegistrationAuthorizationFake(Guid userId, Guid allowedStationId) : IStationAuthorizationService
     {
+        public bool IsConfigured => true;
         public List<Guid> CheckedStationIds { get; } = [];
 
         public Task<bool> HasStationPermissionAsync(
@@ -137,6 +138,10 @@ public sealed class RegistrationReviewStationAuthorizationTests
                 stationId == allowedStationId &&
                 permissionCode is "registrations.station.approve");
         }
+
+        public Task<bool> HasStationOwnerAuthorityPermissionAsync(
+            Guid actorUserId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class RegistrationReviewFake : IRegistrationReviewService
@@ -169,12 +174,12 @@ public sealed class RegistrationReviewStationAuthorizationTests
         }
     }
 
-    private sealed class TestAuthenticationHandler(
+    private sealed class MetraIsolationTestAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
-        public const string Scheme = "Test";
+        public new const string Scheme = "MetraRegReviewTest";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {

@@ -95,17 +95,19 @@ public sealed class StationUserDirectoryStationAuthorizationTests
                     services.AddSingleton(directory);
                     services.AddAuthentication(options =>
                     {
-                        options.DefaultAuthenticateScheme = TestAuthenticationHandler.Scheme;
-                        options.DefaultChallengeScheme = TestAuthenticationHandler.Scheme;
-                        options.DefaultForbidScheme = TestAuthenticationHandler.Scheme;
-                    }).AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                        TestAuthenticationHandler.Scheme, _ => { });
+                        options.DefaultAuthenticateScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
+                        options.DefaultChallengeScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
+                        options.DefaultForbidScheme = MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme;
+                    }).AddScheme<AuthenticationSchemeOptions, MetraIsolationMetraIsolationTestAuthenticationHandler>(
+                        MetraIsolationMetraIsolationTestAuthenticationHandler.Scheme, _ => { });
                 });
             });
 
     private sealed class DirectoryAuthorizationFake(Guid userId, Guid allowedStationId) : IStationAuthorizationService
     {
         public List<Guid> CheckedStationIds { get; } = [];
+
+        public bool IsConfigured => true;
 
         public Task<bool> HasStationPermissionAsync(
             Guid actorUserId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default)
@@ -116,6 +118,10 @@ public sealed class StationUserDirectoryStationAuthorizationTests
                 stationId == allowedStationId &&
                 permissionCode == "users.station.view");
         }
+
+        public Task<bool> HasStationOwnerAuthorityPermissionAsync(
+            Guid actorUserId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class StationUserDirectoryFake : IStationUserDirectoryService
@@ -134,12 +140,12 @@ public sealed class StationUserDirectoryStationAuthorizationTests
         }
     }
 
-    private sealed class TestAuthenticationHandler(
+    private sealed class MetraIsolationMetraIsolationTestAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder) : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
     {
-        public const string Scheme = "Test";
+        public new const string Scheme = "MetraUserDirTest";
 
         protected override Task<AuthenticateResult> HandleAuthenticateAsync()
         {
