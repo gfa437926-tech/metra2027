@@ -102,3 +102,10 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - CI dependency setup explicitly requests Climatol 4.5-0 and checks the installed version before R CMD check.
 - New [run #21](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) was in progress at the time of this update; the new test's result is pending.
 - No METRA data, database, .NET integration, UI, or scientific approval was added.
+
+
+## CI tracking for the example-data smoke test — 2026-11-10T23:31:25Z
+
+- Code commit: [015a470646e108f2f38977e08b196bd959e9137c](https://github.com/gfa437926-tech/metra2027/commit/015a470646e108f2f38977e08b196bd959e9137c).
+- [Run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106) is the workflow run for this commit and was still in progress at the time of reporting.
+- The earlier [run #21](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) passed the package check before the example-data test was added.

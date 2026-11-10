@@ -44,3 +44,12 @@
 - **Progress:** held at 55% pending CI evidence; (3 + 5 × 0.5) / 10.
 - **Remaining:** 7 major work items.
 - **Safety:** no merge, deployment, database/Supabase, raw observation, Angular, or Flutter changes.
+
+
+## 2026-11-10T23:31:25Z — Commit and CI tracking for Climatol fixture test
+
+- **Code commit:** [015a470646e108f2f38977e08b196bd959e9137c](https://github.com/gfa437926-tech/metra2027/commit/015a470646e108f2f38977e08b196bd959e9137c).
+- **CI:** [Climate Analytics R run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106) targets this exact commit and was still in progress at the time of this entry. Its final conclusion must be checked before declaring the new fixture test passed.
+- **PR:** [#23](https://github.com/gfa437926-tech/metra2027/pull/23) remains Open / Draft / not merged.
+- **Files committed:** new real Climatol fixture smoke test, pinned CI dependency/version assertion, README test scope, and assistant progress records.
+- **Task estimate:** 55%; 7 major work items remain. No scientific validation or METRA observation processing is claimed.
