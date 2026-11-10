@@ -65,3 +65,10 @@
 - UI: `/admin/manual-archive` — records confirmation only; no archive DB connection; no observation data migration.
 - Persistence: process-local interim ledger until owner approves durable migration (`20261110180000_manual_archive_ledger_review_only.sql` is review placeholder only).
 - Monthly summary counts confirmations only; full missing-field meteorology formulas remain TBD.
+
+
+## Phase D notes (reports — partial, honest)
+- Monthly report page now binds to **manual archive confirmation** API + station directory (administrative only).
+- Station observation status uses review/returned queues with UTC display and hourly/daily counts.
+- Climate / annual / rainfall remain **not data-bound** for meteorological aggregates until formulas and report APIs are approved.
+- No fabricated observation totals are shown as real data.
