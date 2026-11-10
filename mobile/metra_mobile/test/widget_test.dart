@@ -96,7 +96,8 @@ void main() {
     expect(find.text('الرصد'), findsOneWidget);
     expect(find.text('مركز أعمال الرصد'), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.assignment_outlined));
+    await tester.ensureSemantics();
+    await tester.tap(find.bySemanticsLabel('الرصد'));
     await tester.pumpAndSettle();
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
     expect(find.text('محطة آلية — AU-01'), findsOneWidget);
