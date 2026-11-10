@@ -27,7 +27,7 @@ interface LocalPhenomenon {
     <div class="page" id="mainContainer" dir="rtl">
       <header class="topbar">
         <div class="brand"><span class="brand-icon"><i class="fa-solid fa-cloud-sun-rain"></i></span><div><h1>نظام تسجيل الظواهر الجوية</h1><p>تسجيل بدء وانتهاء الظواهر الجوية ومتابعتها في الوقت الفعلي</p></div></div>
-        <div class="header-actions"><span class="preview-badge"><i class="fa-solid fa-flask"></i> {{ stationId ? (api.isConfigured ? "محطة محددة · إرسال عند الإنهاء" : "API غير مضبوط") : "اختر محطة أولاً" }}</span><span class="identity-meta">المستخدم: <strong id="currentUser">غير مسجل</strong></span><span class="identity-meta">المحطة: <strong id="currentStation">غير محددة</strong></span><span class="identity-meta">الصفة: <strong id="currentRole">غير محددة</strong></span><span>{{ currentDate }} · {{ currentTime }}</span><button type="button" (click)="resetLocalSession()">إعادة ضبط المعاينة</button></div>
+        <div class="header-actions"><span class="preview-badge"><i class="fa-solid fa-flask"></i> {{ statusBadge }}</span><span class="identity-meta">المستخدم: <strong id="currentUser">غير مسجل</strong></span><span class="identity-meta">المحطة: <strong id="currentStation">غير محددة</strong></span><span class="identity-meta">الصفة: <strong id="currentRole">غير محددة</strong></span><span>{{ currentDate }} · {{ currentTime }}</span><button type="button" (click)="resetLocalSession()">إعادة ضبط المعاينة</button></div>
       </header>
 
       <section class="warning">
@@ -116,10 +116,16 @@ export class PhenomenaInputComponent implements OnInit, OnDestroy {
   notes = '';
   stationId = '';
   stations: StationDirectoryItem[] = [];
-  private readonly api = inject(ObservationApiService);
+  readonly api = inject(ObservationApiService);
   private readonly stationContext = inject(StationContextService);
   private readonly route = inject(ActivatedRoute);
   saving = false;
+  get statusBadge(): string {
+    if (!this.stationId) return 'اختر محطة أولاً';
+    if (!this.api.isConfigured) return 'API غير مضبوط';
+    return 'محطة محددة · إرسال عند الإنهاء';
+  }
+
 
   showSuggestions = false;
   phenomena: LocalPhenomenon[] = [];
@@ -318,6 +324,12 @@ export class PhenomenaInputComponent implements OnInit, OnDestroy {
       this.showNotification(message, 'error');
     } finally {
       this.saving = false;
+  get statusBadge(): string {
+    if (!this.stationId) return 'اختر محطة أولاً';
+    if (!this.api.isConfigured) return 'API غير مضبوط';
+    return 'محطة محددة · إرسال عند الإنهاء';
+  }
+
     }
   }
   private updateDuration(): void {
