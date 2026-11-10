@@ -1,7 +1,7 @@
 # Assistant 09 — DevOps Progress
 
 **Task ID:** DEVOPS-09-001  
-**Last updated (UTC):** 2026-11-10T23:34:30Z  
+**Last updated (UTC):** 2026-11-10T23:35:00Z  
 **Status:** In progress  
 **Owner:** Assistant 09 — DevOps / Infrastructure / Automation
 
@@ -86,7 +86,6 @@ Calculation: 12 explicitly scoped DevOps work items are tracked for this task. N
 1. Diagnose and safely resolve the Pages runtime configuration failure.
 2. Confirm canonical handoff path and update the requested interface handoff files when available/confirmed.
 3. Reconcile and verify R/Climatol workflow after PR #23 is reviewed/integrated.
-4. Agree and pin the Flutter SDK version for exact toolchain reproducibility.
 
 This percentage applies only to Assistant 09's scoped DevOps task, not to the whole METRA project.
 
@@ -94,7 +93,7 @@ This percentage applies only to Assistant 09's scoped DevOps task, not to the wh
 
 **Remaining: 3 work items.**
 
-**Next action:** inspect the Pages runtime-configuration validation step and workflow contract without accessing secret values; determine which required public configuration inputs are missing or malformed, then prepare a reviewed fix and add the evidence to this report and append-only change log.
+**Next action:** obtain maintainer confirmation of the Pages required settings and canonical `واجهات/` handoff location; then coordinate the R workflow push-branch coverage finding with Assistant 04.
 
 ## Safety boundaries
 
