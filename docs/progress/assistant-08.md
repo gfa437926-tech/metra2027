@@ -137,3 +137,15 @@
 - فحص commit `26647b563c353ebbb0ec6acfa52bdd69ab393f4a`: GitHub Actions workflow runs = 0، Check Runs = 0. [Checks](https://github.com/gfa437926-tech/metra2027/commit/26647b563c353ebbb0ec6acfa52bdd69ab393f4a/checks).
 - الاختبارات لم تُشغّل؛ عدم وجود Checks لا يعني نجاح الاختبارات.
 - أحدث commit قبل تحديث هذا السطر: [26647b563c353ebbb0ec6acfa52bdd69ab393f4a](https://github.com/gfa437926-tech/metra2027/commit/26647b563c353ebbb0ec6acfa52bdd69ab393f4a).
+
+
+## 12. البحث عن baseline في فروع أخرى
+- **توقيت UTC:** 2026-11-10T23:33:06.593Z.
+- **الحالة:** قيد التنفيذ، مع عائق baseline.
+- فُحصت أشجار الفروع: `main`, `work/identity-migration-audit`, `work/backend-api-audit-assistant-2`, `integration/repository-consolidation-audit`, `audit/assistant-13-independent-final-review`؛ لم يظهر في أي منها migration 001/002 أو schema snapshot مطابق.
+- أضيف DB-016 إلى تقرير التدقيق: غياب baseline في الفروع الخمسة المفحوصة، ما يمنع إثبات العلاقات وأنواع الأعمدة التأسيسية.
+- فُحص main الحالي: [43c72da](https://github.com/gfa437926-tech/metra2027/commit/43c72da0604e49a74d2128cc9d3d881e2c912f26). بيانات PR #26 ما زالت تشير إلى base SHA أقدم 87f7135؛ لا rebase تلقائي قبل تنسيق المساعد رقم 1.
+- **Commit تقرير التدقيق:** [070d51fc](https://github.com/gfa437926-tech/metra2027/commit/070d51fcf2519358d1a28d43fa2d50f6ca99344b).
+- لم يتم تشغيل اختبارات أو SQL أو الاتصال بـ Supabase. لم يحدث دمج أو نشر.
+- نسبة المهمة ما زالت 10% (محور واحد من عشرة مكتمل بالكامل). المتبقي 9 محاور.
+- الخطوة التالية: الحصول على baseline schema معتمد من مالك المشروع، ثم متابعة قاموس الجداول والعلاقات والقيود.
