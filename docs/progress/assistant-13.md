@@ -94,3 +94,133 @@ Method: 12 substantive audit workstreams are defined by the assignment (delivera
 **Blocker:** required reviewable results from assistants 1–12 are not yet assembled in a reliable, accessible baseline; the three entry-point files are not readable from `main`.
 
 **Next:** inspect the report and implementation branches/PRs for assistants 1–12, starting with their latest head commits and associated CI evidence; establish the canonical integration baseline, then begin evidence-based review workstream by workstream. Keep this PR Draft and unmerged.
+
+
+## Round 2 — independent evidence intake and preliminary cross-PR audit
+
+**Updated:** 2026-11-10T23:37:42.555Z (UTC)  
+**Task status:** In progress — the entry condition is now met; preliminary audit has started.  
+**Audit branch:** `audit/assistant-13-independent-final-review`
+
+### Evidence intake: assistants 1–12
+
+Retrieved the current progress reports for assistants 01–12 from their feature branches. The reports are evidence leads, not accepted completion proofs. The authors' reported task percentages are:
+
+| Assistant | Self-reported progress | Current report-level status |
+|---|---:|---|
+| 01 Angular | Audit 100%; implementation slice 50% | Audit report complete; separate implementation PR #32 open |
+| 02 Backend | 54% | In progress |
+| 03 Flutter | 10% | In progress |
+| 04 R/Climatol | 55% | In progress |
+| 05 Electronic auditor | 25% | In progress |
+| 06 QA | 50% | In progress |
+| 07 Security | 40% | In progress |
+| 08 Database | 10% | In progress |
+| 09 DevOps | 75% | In progress |
+| 10 Requirements/docs | 65% | In progress |
+| 11 Scientific review | 10% | In progress |
+| 12 Integration | 83% | In progress |
+
+These percentages are copied as author-reported figures only. They are not independent acceptance scores and do not indicate project completion.
+
+### PR heads and changed-file inventory
+
+Inspected GitHub PR metadata and changed-file lists for PRs #19–#30, and separately inspected new Angular implementation PR #32.
+
+- PRs #19–#30 are open, Draft, and unmerged.
+- PR #32 is open, Draft, unmerged, and targets `work/legacy-ui-migration-audit`.
+- PR #19 also targets `work/legacy-ui-migration-audit`.
+- PR #23 targets `work/climate-analytics-r-bootstrap`.
+- The other reviewed PRs #20–#22 and #24–#30 target `main`.
+
+The different base branches mean the PR set is not a single flat stack. The integration owner must preserve the intended parent branches and inspect ancestry before any merge/rebase decision.
+
+### Confirmed cross-PR collision risk
+
+The changed-file lists show several independent PRs adding the same shared paths:
+
+- `واجهات/مهما.md`
+- `واجهات/تغيير.md)
+- `واجهات/README.md`
+
+Fetched `واجهات/مهما.md` from eight assistant branches (#19, #21, #22, #25, #26, #28, #29, #30). All eight versions had different contents. This confirms competing versions of the same shared file path, not merely a theoretical overlap. Do not merge these branches blindly. Reconcile the shared records append-only under one controlled integration owner, preserving every assistant's entries. PR #20, #23, #24 and #27 do not add those same coordination paths in their inspected file lists.
+
+### Current-head GitHub Actions evidence
+
+Queried workflow runs by the exact current PR head SHA:
+
+| PR | Assistant / area | Current-head workflow evidence |
+|---|---|---|
+| #19 | 01 UI specification | No run returned |
+| #20 | 05 electronic auditor | No run returned |
+| #21 | 03 Flutter | Client CI #42924658140 — pending |
+| #22 | 02 Backend | Backend build #42924570653 — success |
+| #23 | 04 R/Climatol | Climate Analytics R #42924712490 — success |
+| #24 | 06 QA | No run returned |
+| #25 | 11 scientific | No run returned |
+| #26 | 08 database | No run returned |
+| #27 | 09 DevOps | Client CI #42924596524 — success |
+| #28 | 12 integration | No run returned |
+| #29 | 10 requirements/docs | No run returned |
+| #30 | 07 security | Backend build #42924701188 — success; Client CI #42924701234 — success |
+| #32 | 01 Angular implementation | No run returned |
+
+Run links:
+- [PR #21 Client CI](https://github.com/gfa437926-tech/metra2027/actions/runs/42924658140)
+- [PR #22 Backend build](https://github.com/gfa437926-tech/metra2027/actions/runs/42924570653)
+- [PR #23 Climate Analytics R](https://github.com/gfa437926-tech/metra2027/actions/runs/42924712490)
+- [PR #27 Client CI](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524)
+- [PR #30 Backend build](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701188)
+- [PR #30 Client CI](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701234)
+
+“No run returned” is recorded as no verified workflow evidence for that exact head, not as a pass or failure. Historical runs cited inside assistant reports were not substituted for current-head evidence.
+
+### Preliminary source-level review
+
+Read the current branch versions of:
+- `backend/Metra.Api/Features/Observations/ObservationSubmissionEndpoints.cs`
+- `backend/Metra.Api.Tests/Features/Observations/ObservationSubmissionRequestGuardTests.cs`
+- `mobile/metra_mobile/lib/core/api/metra_api_client.dart`
+- `mobile/metra_mobile/lib/features/observations/observation_review_screen.dart`
+- `backend/Metra.Api/Program.cs`
+- `.github/workflows/climate-analytics-r.yml`
+
+Preliminary findings requiring full audit tracking:
+
+1. **SEC-AUD-001 — anonymous API rate-limit gap (candidate P1):** in the current security branch, the global limiter returns `GetNoLimiter("anonymous")` when there is no JWT subject. The separately configured `readiness` policy only protects the readiness endpoint. Therefore the code does not apply the stated conservative anonymous fallback limit to other unauthenticated routes. Confirm the effective middleware behavior and add a negative test before accepting this hardening.
+2. **API/UTC — partial boundary enforcement:** the observation submission request guard rejects non-zero DateTimeOffset offsets and has a corresponding unit test. It does not call the hourly/daily/phenomenon domain validators in the inspected endpoint. UTC enforcement is therefore not proof of complete payload/domain validation.
+3. **Flutter station DTO — compatibility risk:** the inspected Flutter parser requires `local_station_code` and `name_en` to be non-null strings. Assistant 12 reports that the API projection permits null for those fields. This remains a cross-file compatibility finding to confirm against the exact endpoint projection and fixtures.
+4. **R workflow trigger coverage:** the workflow's push branch list contains `work/climate-analytics-r-bootstrap` only; pull-request and manual triggers exist. Pushes to `main` will not trigger this workflow under the current configuration. Confirm intended post-integration CI policy with DevOps and R owners.
+
+No finding above is treated as release-closed. The anonymous limiter issue is a source-level discrepancy; no live penetration test was performed.
+
+### Files examined in this round
+
+- Assistant progress reports 01–12 on their respective feature branches.
+- PR metadata and changed-file lists for #19–#30 and #32.
+- Current-head Actions run records for #19–#30 and #32.
+- The six source/workflow files listed in the preliminary source-level review.
+- Eight branch versions of `واجهات/مهما.md` to verify shared-file divergence.
+
+### Files changed by assistant 13
+
+- `docs/progress/assistant-13.md` — appended this round.
+- `docs/changelog/assistant-13.md` — appended this round.
+
+No other assistant's report, shared coordination file, application source, database, migration, or original observation was modified.
+
+### Tests and safety
+
+- Tests run by assistant 13: none. This round was a GitHub evidence and static-source inspection.
+- CI: the statuses above are queried GitHub Actions results, not tests run locally by assistant 13.
+- No database or Supabase connection or modification.
+- No migration, merge, rebase, deployment, or production access.
+- PR #31 remains Draft and unmerged.
+
+### M13 progress and remaining work
+
+**Independent audit completion: 0% of 12 workstreams closed; 3 workstreams have been opened.** The strict completion numerator counts only fully verified and closed audit workstreams. PR inventory, branch collision discovery, and initial source/CI triage are in progress but do not yet satisfy full acceptance criteria.
+
+**Remaining:** 12 audit workstreams remain open; 3 have preliminary evidence collected. No final readiness recommendation is possible.
+
+**Next:** complete a patch-level review of the high-risk security, backend validation, Flutter DTO, R workflow and database contract changes; verify the disputed findings against endpoint projections, SQL/RPC and tests; then reconcile the shared-file collision and PR ancestry with the integration owner. Keep all PRs unmerged pending owner review.
