@@ -562,22 +562,40 @@ async function main() {
         // First observe the durable submission by its test payload.
         // Retry metadata is asserted separately so the failure identifies whether
         // the row, the attempt counter, or the server error was actually missing.
-        const item = rows.find(row =>
-          row.observationType === 'hourly' &&
-          row.payload?.values?.dryTemp === '+27.0' &&
-          row.state === 'pending' &&
-          row.attempts >= 1 &&
-          typeof row.lastError === 'string' &&
-          row.lastError.includes('تعطل مؤقت في خادم الاختبار')
-        );
-        return item ? {
-          stationId: item.stationId,
-          observationType: item.observationType,
-          state: item.state,
-          attempts: item.attempts,
-          lastError: item.lastError,
-          dryTemp: item.payload.values.dryTemp
-        } : false;
+        // Match the durable hourly row by payload first, then require retry metadata.
+        // Do not assume payload.values exists — missing shape is a real failure to diagnose.
+        const candidates = rows.filter(row => row && row.observationType === 'hourly');
+        const byPayload = candidates.find(row => {
+          const values = row.payload && row.payload.values;
+          return values && values.dryTemp === '+27.0';
+        });
+        if (!byPayload) {
+          return false;
+        }
+        if (byPayload.state !== 'pending') {
+          return false;
+        }
+        if (!(byPayload.attempts >= 1)) {
+          return false;
+        }
+        if (typeof byPayload.lastError !== 'string' || !byPayload.lastError.includes('تعطل مؤقت في خادم الاختبار')) {
+          return false;
+        }
+        const values = byPayload.payload && byPayload.payload.values;
+        if (!values || typeof values.dryTemp !== 'string') {
+          throw new Error(
+            'Hourly outbox row matched but payload.values.dryTemp is missing. Keys=' +
+            Object.keys(byPayload).join(',')
+          );
+        }
+        return {
+          stationId: byPayload.stationId,
+          observationType: byPayload.observationType,
+          state: byPayload.state,
+          attempts: byPayload.attempts,
+          lastError: byPayload.lastError,
+          dryTemp: values.dryTemp
+        };
       }, { timeout: 10000 });
       hourlyTransient = await snapshotHandle.jsonValue();
     } catch (error) {
@@ -608,7 +626,13 @@ async function main() {
         JSON.stringify(queueDiagnostics) + '; cause=' + error.message
       );
     }
-    assert.ok(hourlyTransient, 'Hourly transient retry must be present in the durable outbox');
+    if (hourlyTransient === undefined || hourlyTransient === null || hourlyTransient === false) {
+      throw new Error(
+        'Hourly transient retry must be present in the durable outbox (got ' +
+        String(hourlyTransient) + ')'
+      );
+    }
+    assert.equal(typeof hourlyTransient, 'object');
     assert.equal(hourlyTransient.observationType, 'hourly');
     assert.equal(hourlyTransient.dryTemp, '+27.0');
     assert.equal(hourlyTransient.state, 'pending', JSON.stringify(hourlyTransient));
