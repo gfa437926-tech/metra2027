@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
   ObservationApiService,
   StationDirectoryItem
@@ -13,7 +12,7 @@ type LayerKey = 'none' | 'elevation' | 'coordinates';
 @Component({
   standalone: true,
   selector: 'metra-forecasting-center',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
     <section class="page" dir="rtl">
       <header class="head">
@@ -121,7 +120,7 @@ type LayerKey = 'none' | 'elevation' | 'coordinates';
         <tbody>
           <tr *ngFor="let s of filtered" [class.active]="detail?.id === s.id">
             <td>
-              <input type="checkbox" [checked]="selectedIds.has(s.id)" (change)="toggleSelect(s.id, $event)" />
+              <input type="checkbox" [checked]="selectedIds.has(s.id)" (change)="toggleSelect(s.id, $any($event))" />
             </td>
             <td>{{ s.name_ar }}</td>
             <td>{{ code(s) }}</td>

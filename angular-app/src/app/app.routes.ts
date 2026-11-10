@@ -25,11 +25,11 @@ export const routes: Routes = [
       .then((m) => m.DashboardComponent)
   },
   {
-      {
     path: 'forecasting',
     canActivate: [requireAuthenticatedUser],
     loadComponent: () => import('./features/forecasting/forecasting-center.component').then(m => m.ForecastingCenterComponent)
   },
+  {
     path: 'phenomena/input',
     canActivate: [requireAuthenticatedUser],
     loadComponent: () => import('./features/phenomena/phenomena-input.component')
