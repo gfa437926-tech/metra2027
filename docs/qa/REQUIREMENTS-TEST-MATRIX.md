@@ -29,3 +29,12 @@ Audit baseline: main as inspected on 2026-11-11. Repository inventory only; test
 - README reports historical successful CI runs dated 2026-11-04; those are not executions of this audit branch.
 - Requested coordination/specification files were not found on main: واجهات/مهما.md, واجهات/تغيير.md, واجهات/README.md, docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md.
 - This matrix records test-file presence, not adequacy or passing status. A test source file is not proof that its cases pass.
+
+## QA-07 update — Observation review queue
+
+| Requirement / area | New evidence on PR #22 | Status after static review | Remaining required work |
+|---|---|---|---|
+| Observation queue endpoint status handling | `ObservationQueueEndpointTests.cs`: six WebApplicationFactory tests for unauthenticated 401, invalid limit 400, denied scope 403/no queue call, fake station-A grant vs station-B request, dependency-unconfigured 503 and read-failure 503 | Endpoint test source now exists; execution for latest PR head was still in progress, so no pass claim | Confirm CI on exact latest SHA; add real DB integration for station grants, revocation-before-read, concurrent read/revocation and atomic auth+read |
+| Review queue authorization atomicity | Endpoint still makes permission RPC then a separate service-role PostgREST SELECT without actor ID in the read | P1 TOCTOU remains open | Owner/schema-reviewed atomic actor+station-scoped queue read and race/linearization tests |
+
+The fake Station A/Station B endpoint test verifies endpoint wiring to the authorization abstraction; it is not proof of real database station isolation. QA-06 did not execute tests locally.
