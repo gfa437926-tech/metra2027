@@ -44,3 +44,16 @@ Scope: Angular shell, routing, shared navigation and UI implementation.
 ## Next task
 
 - **UI-IMPL-002** — implement the shared responsive RTL shell/navigation architecture in a controlled, reviewable change, preserving the existing single Sidebar and verifying against the original UI reference before visual changes.
+
+## Implementation increment — UI-IMPL-002 (2026-11-11 UTC)
+
+- Status: **In progress — first implementation increment committed; CI not yet verified**.
+- Implementation branch: `work/angular-shell-implementation-assistant-01`.
+- Draft PR: [#32](https://github.com/gfa437926-tech/metra2027/pull/32).
+- Head SHA: `b0a4718d7be838e225ac9c035c96b0c3710d5d0e`.
+- Changed files:
+  - `angular-app/src/styles.scss`: added shared CSS variables preserving the existing shell palette, width, border and shadows.
+  - `angular-app/src/app/app.component.ts`: used shared variables for existing sidebar/content colors and dimensions; added `aria-controls`, dynamic `aria-expanded`, and Escape-to-close.
+- Verification: files re-fetched and diff inspected. Local build/tests not run. The first workflow lookup returned no PR-associated runs; no CI success is claimed.
+- PR #32 is open Draft and not merged. Screenshot comparison, focus restoration/trapping and full shell refactor remain outstanding.
+- No database/Supabase/legacy repository/deployment changes.
