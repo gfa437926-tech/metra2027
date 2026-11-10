@@ -9,14 +9,16 @@
 | Climatol dependency declaration | Implemented | DESCRIPTION |
 | Request and path validation | Implemented | R/request-validation.R |
 | Input pair staging | Implemented | R/homogenization.R |
-| Climatol execution wrapper | Implemented, unverified in CI | R/homogenization.R |\n| Daily monthly/yearly summaries | Implemented, unverified in CI; caller must supply statistic and completeness | R/climatology-summary.R |
+| Climatol execution wrapper | Implemented, unverified in CI | R/homogenization.R |
+| Daily monthly/yearly summaries | Implemented, unverified in CI; caller must supply statistic and completeness | R/climatology-summary.R |
 | Unit tests | Added, not yet run | tests/testthat |
 | GitHub R CI workflow | Added, run pending | .github/workflows/climate-analytics-r.yml |
 | .NET job adapter | Not started | — |
 | METRA export mapping | Blocked on owner-approved data contract | — |
 | Database persistence | Not started; owner approval required | — |
 | Angular review workspace | Not started | — |
-| Generic daily monthly/yearly summaries | Implemented, not CI-verified | R/climatology-summary.R |\n| Variable-specific climate indices and reporting | Not started | — |
+| Generic daily monthly/yearly summaries | Implemented, not CI-verified | R/climatology-summary.R |
+| Variable-specific climate indices and reporting | Not started | — |
 | Scientific acceptance | Not started | — |
 
 ## Immediate sequence
