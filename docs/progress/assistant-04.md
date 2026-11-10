@@ -63,7 +63,8 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 ## Test evidence
 
-- [Climate Analytics R — GitHub Actions run #16](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198272): **Success**. This run was triggered for the code commit `dde09bdecb356c6f90d10e2809536936c4eed3f0`, which contains the worker/provenance/test changes. Later commits in this PR added documentation only.
+- [Climate Analytics R — GitHub Actions run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783): **Success** for code/documentation commit `c9d26c55d0743ea96830ba1df157f2cc05c7455f`.
+- Earlier R runs #16, #17, and #18 also completed successfully: [#16](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198272), [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719), [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649). Run #16 exercised the worker/provenance/test code commit `dde09bdecb356c6f90d10e2809536936c4eed3f0`; later commits in the PR added documentation and progress records only.
 - [Backend build — GitHub Actions run #1388](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198331): **Success** for the same PR event/head code commit. This is not evidence of a completed .NET/R integration.
 - Baseline runs before this hardening: [R run #15](https://github.com/gfa437926-tech/metra2027/actions/runs/42919914442) and [Backend build #1386](https://github.com/gfa437926-tech/metra2027/actions/runs/42919914413), both reported successful.
 - Local R CMD check: **Not run**.

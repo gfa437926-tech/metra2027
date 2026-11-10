@@ -84,3 +84,10 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - **Task completion estimate:** 55%, calculated as (3 completed + 5 partially completed × 0.5) / 10 equally weighted workstreams.
 - **Remaining:** 7 major work items. Next: inspect R CMD check job details and add a deterministic Climatol fixture smoke test.
 - **Safety:** no main merge, deployment, database/Supabase change, raw observation edit, or Angular/Flutter change.
+
+
+## Follow-up CI verification — 2026-11-10T23:29:30Z
+
+- [Climate Analytics R run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) passed on commit c9d26c55d0743ea96830ba1df157f2cc05c7455f.
+- Earlier R runs [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719) and [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649) also passed.
+- These are automated package/workflow checks, not scientific validation on METRA observations.
