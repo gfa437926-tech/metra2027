@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
-import '../observations/observation_review_screen.dart';
 import 'registration_access_screen.dart';
 import '../stations/station_directory_screen.dart';
 
@@ -15,23 +14,23 @@ class MetraHome extends StatefulWidget {
   @override
   State<MetraHome> createState() => _MetraHomeState();
 }
+
 class _MetraHomeState extends State<MetraHome> {
   int _index = 0;
-  String? _selectedStationId;
+
   @override
   Widget build(BuildContext context) {
+    // The meteorological review/audit workflow is intentionally not exposed
+    // until the API provides a trusted auditor-vs-station-head access context.
+    // Hiding a destination is not the security boundary: the API must still
+    // enforce every read and decision request independently.
     final pages = [
       _HomeOverview(onOpenStations: () => setState(() => _index = 1)),
-      StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
-        onStationSelected: (id) => setState(() => _selectedStationId = id)),
-      _selectedStationId == null
-        ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
-            message: 'اختر محطة أولاً من دليل المحطات. سيطبّق الخادم صلاحيات حسابك على المحطة والعمليات المتاحة.')
-        : ObservationReviewScreen(api: widget.api, stationId: _selectedStationId!),
+      StationDirectoryScreen(api: widget.api),
       const _InformationPage(icon: Icons.analytics_outlined, title: 'التقارير والتحليلات',
         message: 'التقارير التشغيلية غير مفعلة حتى ربط مصدر موثق للرصدات المعتمدة.'),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
-        message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
+        message: 'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           FilledButton.icon(
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
@@ -45,6 +44,7 @@ class _MetraHomeState extends State<MetraHome> {
           ],
         ])),
     ];
+
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
       appBar: AppBar(backgroundColor: _navy, foregroundColor: Colors.white,
         title: const Text('METRA 2027'),
@@ -56,13 +56,13 @@ class _MetraHomeState extends State<MetraHome> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
-          NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'الرصد'),
           NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'التقارير'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
         ]),
     ));
   }
 }
+
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview({required this.onOpenStations});
   final VoidCallback onOpenStations;
@@ -83,6 +83,7 @@ class _HomeOverview extends StatelessWidget {
       description: 'عرض المحطات الكلاسيكية والآلية من الدليل المعتمد.', onTap: onOpenStations),
   ]);
 }
+
 class _InformationPage extends StatelessWidget {
   const _InformationPage({required this.icon, required this.title, required this.message, this.action});
   final IconData icon; final String title; final String message; final Widget? action;
@@ -91,6 +92,7 @@ class _InformationPage extends StatelessWidget {
     child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520),
       child: _StatusCard(icon: icon, title: title, description: message, action: action))));
 }
+
 class _StatusCard extends StatelessWidget {
   const _StatusCard({required this.icon, required this.title, required this.description, this.action});
   final IconData icon; final String title; final String description; final Widget? action;
@@ -104,6 +106,7 @@ class _StatusCard extends StatelessWidget {
       if (action != null) ...[const SizedBox(height: 16), action!],
     ])));
 }
+
 class _ActionCard extends StatelessWidget {
   const _ActionCard({required this.icon, required this.title, required this.description, required this.onTap});
   final IconData icon; final String title; final String description; final VoidCallback onTap;
