@@ -227,3 +227,7 @@ Current PR #23 adds testthat coverage for symlink/path traversal boundaries, inp
 - QA performed static source review and GitHub Actions metadata review only; no local tests were run by QA.
 - No application code, CI workflow, SQL, migration, database, deployment or merge was changed.
 - QA-06 remains estimated at 50%; three major work packages remain. Adding tests in the Backend PR is progress by Assistant 02, not completion of QA-06's own test implementation/execution work.
+
+
+### QA-07 CI outcome correction — PR #22 exact latest head
+The previously in-progress Backend build for PR #22 head `8134c9e4546693d717a10329436d646b08dbb94f` has now completed successfully: [Backend build run 42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135). This confirms the workflow completed successfully on that exact SHA, including the CI test job configured in `.github/workflows/backend-ci.yml`. It does **not** close the source-confirmed TOCTOU finding or substitute for DB revocation/race integration tests. QA-06 itself still did not run tests locally.
