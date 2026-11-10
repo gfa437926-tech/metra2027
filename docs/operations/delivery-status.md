@@ -36,3 +36,8 @@ Implemented in repository (not proof of hosted production by itself):
 - Delivery package published: `docs/operations/phase-h-delivery-package.md`
 - No production deploy performed in-repo
 - No PR merge performed
+
+
+## Operator path to production
+See `docs/operations/OPERATOR-NEXT-STEPS-END-TO-END.md` (O1–O7).
+Repository phases A–H are closed at the code/docs level; live cutover remains operator-gated.

@@ -1,34 +1,23 @@
-# METRA Weather Intelligence — phase progress tracker
+# متتبع المراحل — METRA 2027
 
-Updated from repository evidence only. No live DB writes.
+**فرع العمل:** `work/legacy-ui-migration-audit`  
+**آخر نقطة مرجعية للكود:** راجع `git log -1` على الفرع.
 
-| Phase | Title | Status | Notes |
+| المرحلة | النطاق | حالة المستودع | حالة التشغيل الحي |
 |---|---|---|---|
-| 1 | DB isolation review | Partial | Repo targets new Supabase only; staging table origin still owner decision |
-| 2 | DB design close | Partial | Schema inventory + SQL review package published for approval |
-| 3 | Security & permissions | In progress | JWT + station checks; service-role residual risk documented |
-| 4 | SQL apply | **Blocked** | Awaiting explicit owner approval |
-| 5 | .NET API complete | Partial | Observations, stations, users, faults, support present |
-| 6 | Web UI complete | Partial | Core routes; full legacy parity not proven |
-| 7 | Flutter complete | Partial | Observation input stabilized; CI green on recent tip |
-| 8 | Met domain complete | Partial | Hourly/daily strong; other bulletin types incomplete |
-| 9 | Full test suite | Partial | Backend + Client CI green does not equal full live isolation matrix |
-| 10 | Cybersecurity package | Partial | Docs + gates; no full pen-test |
-| 11 | Staging pilot | Not started | Needs secrets + host |
-| 12 | Final delivery | Not started | Blocked on 4–11 |
+| A | هوية / محطات | مكتمل في الكود | يعتمد على Staging |
+| B | دورة الرصد | مكتمل في الكود | يعتمد على Staging |
+| C | أرشفة Excel يدوية | مكتمل في الكود (دائم DB بانتظار موافقة) | معلّق على O1 |
+| D | تقارير صادقة | مكتمل ضمن القيود | توسعات مناخية اختيارية |
+| E | اعتماد DB | حزمة مراجعة جاهزة | **بانتظار قرار المالك** |
+| F | UX / RTL | مكتمل في الكود | — |
+| G | أمن / عزل / اختبارات | مكتمل في نطاق المستودع | اختبار اختراق اختياري لاحقاً |
+| H | تسليم وتوثيق | حزم جاهزة | **بانتظار O2–O6** |
 
-**Immutable gates:** no old DB · no SQL apply without approval · no PR merge without approval.
+**المراحل O1–O7:** انظر `docs/operations/OPERATOR-NEXT-STEPS-END-TO-END.md`.
 
-## Recent verified tip
+## سياسة الإغلاق
 
-- Branch: `work/legacy-ui-migration-audit`
-- Flutter observation forms: SingleChildScrollView + Column (validate/submit reliability)
-- Client CI and Backend CI reported success on tip `25c1c06` class commits
-
-
-## Phase E
-Status: review package published; **awaiting owner apply approval**.
-
-
-## Phase H — delivery
-Status: **documentation and acceptance gates published**. Production cutover blocked on owner approvals (DB apply, secrets, staging E2E, PR merge).
+- لا تُعلن «إنتاج مكتمل» من نجاح CI وحده.
+- لا تُطبَّق migrations دون موافقة صريحة.
+- القاعدة القديمة خارج النطاق دائماً.
