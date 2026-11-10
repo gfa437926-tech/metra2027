@@ -47,7 +47,8 @@ Scope: Angular shell, routing, shared navigation and UI implementation.
 
 ## Implementation increment — UI-IMPL-002 (2026-11-11 UTC)
 
-- Status: **In progress — first implementation increment committed; CI not yet verified**.
+- Status: **In progress — first implementation increment committed; CI not yet verified**
+- Task-scope progress: **50% (4 of 8 acceptance checkpoints completed)**.
 - Implementation branch: `work/angular-shell-implementation-assistant-01`.
 - Draft PR: [#32](https://github.com/gfa437926-tech/metra2027/pull/32).
 - Head SHA: `b0a4718d7be838e225ac9c035c96b0c3710d5d0e`.
@@ -55,5 +56,21 @@ Scope: Angular shell, routing, shared navigation and UI implementation.
   - `angular-app/src/styles.scss`: added shared CSS variables preserving the existing shell palette, width, border and shadows.
   - `angular-app/src/app/app.component.ts`: used shared variables for existing sidebar/content colors and dimensions; added `aria-controls`, dynamic `aria-expanded`, and Escape-to-close.
 - Verification: files re-fetched and diff inspected. Local build/tests not run: a shallow Git clone was attempted but failed because this runtime could not resolve github.com, so no local checkout was available. The workflow-run lookup and combined commit status both returned empty results; no CI success is claimed.
-- PR #32 is open Draft and not merged. Screenshot comparison, focus restoration/trapping and full shell refactor remain outstanding.
+- PR #32 is open Draft and not merged. Remaining checkpoints: focus restoration, keyboard/focus-order verification, build/tests + CI, and responsive screenshot acceptance.
 - No database/Supabase/legacy repository/deployment changes.
+
+### UI-IMPL-002 checkpoint accounting
+
+Completed (4/8):
+1. Shared shell tokens defined in the global stylesheet.
+2. Existing shell/sidebar consumes the shared width, color and shadow tokens with current visual values preserved.
+3. Mobile menu trigger exposes `aria-controls` and dynamic `aria-expanded`.
+4. Escape key closes the open mobile sidebar.
+
+Remaining (4/8):
+5. Restore focus to the trigger after keyboard close and validate focus behavior.
+6. Verify keyboard navigation and focus order.
+7. Run Angular build/tests and obtain a successful CI result.
+8. Compare responsive desktop/mobile rendering against the approved original UI reference.
+
+The 50% figure is only this task's checkpoint ratio, not the whole Angular app or METRA project.
