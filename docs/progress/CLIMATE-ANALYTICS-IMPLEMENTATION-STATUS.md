@@ -139,3 +139,11 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - To avoid concurrent in-process jobs racing on one process-global working directory, the worker now acquires an atomic workspace lock and rejects overlapping invocations. It records PID and UTC lock time and releases on normal exit.
 - Forced termination may leave a stale lock; operator recovery must verify that the recorded process is no longer running before removal. No automatic stale-lock deletion is implemented.
 - A nested-call regression test is added. Fresh CI is pending. This is serialized safe execution, not multi-job parallelism.
+
+
+## Latest verification and worker serialization — 2026-11-10T23:42:08Z
+
+- [Run #25](https://github.com/gfa437926-tech/metra2027/actions/runs/42925278790) passed on commit `bc3ee2421cb054e2b87295ad46d21d933fb25004`; R CMD build/check/testthat completed with 0 errors, 0 warnings, 0 notes.
+- Worker now uses an atomic workspace lock to reject overlapping Climatol invocations in the same workspace while it relies on process working-directory changes. Lock PID and UTC start time are recorded; forced termination can leave a stale lock requiring verified manual recovery.
+- Regression test covers nested overlapping invocation rejection. [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) for commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88` was pending at this update.
+- This is serialized execution, not multi-job parallel support. Progress remains 55%; six major work items remain.

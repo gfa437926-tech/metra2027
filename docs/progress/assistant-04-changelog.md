@@ -96,3 +96,13 @@
 - **Not done:** cross-process concurrency orchestration, cancellation/timeouts, stale-lock automated recovery, .NET adapter, production data, artifact persistence/review UI, independent validation, scientific sign-off.
 - **Progress:** 55%; six major work items remain. Serialization is a safety boundary, not a completed concurrency workstream.
 - **Safety:** no database/Supabase/SQL, raw observation, Angular/Flutter, merge, or deployment changes.
+
+
+## CI verification update — 2026-11-10T23:42:08Z
+
+- [Run #25](https://github.com/gfa437926-tech/metra2027/actions/runs/42925278790) completed successfully for commit `bc3ee2421cb054e2b87295ad46d21d933fb25004`. Logs confirm R CMD build, R CMD check, testthat, `Status: OK`, and 0 errors / 0 warnings / 0 notes. This verifies staging cleanup, working-directory restoration, and repeated-job output isolation tests.
+- Added an atomic workspace lock to serialize Climatol worker invocations because the current adapter changes the R process working directory. Nested overlapping calls are rejected. A stale lock after forced termination requires an operator to verify the recorded PID is no longer active before manual removal.
+- New serialization commit: [`3bb44f842cce30473be36e25e5798cc4ffcf1e88`](https://github.com/gfa437926-tech/metra2027/commit/3bb44f842cce30473be36e25e5798cc4ffcf1e88).
+- [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) is the fresh CI run for the serialization commit and was in progress at report time; no pass is claimed for the lock changes yet.
+- PR #23 remains Open / Draft / not merged; PR #18 remains untouched and unmerged.
+- Progress remains 55%; six major work items remain. No database, raw observation, .NET, Angular/Flutter, merge, or deployment changes.
