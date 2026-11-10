@@ -18,6 +18,15 @@ enum ObservationModule {
 
 enum ObservationFieldKind { text, number, date, time, choice, boolean, multiline }
 
+/// Distinguishes report forms that share a navigation module but have
+/// different meteorological meanings and validation contracts.
+enum ObservationReportVariant {
+  standardHourly,
+  daily24Hours,
+  synoptic06Utc,
+  synoptic18Utc,
+}
+
 class ObservationFieldSpec {
   const ObservationFieldSpec({
     required this.key,
@@ -47,6 +56,7 @@ class ObservationModuleSpec {
     required this.title,
     required this.sourcePath,
     required this.fields,
+    this.reportVariant,
     this.metadataFields = const [],
     this.sourceNotes = const [],
     this.apiObservationType,
@@ -59,6 +69,7 @@ class ObservationModuleSpec {
 
   /// Meteorological, operational, or incident data only.
   final List<ObservationFieldSpec> fields;
+  final ObservationReportVariant? reportVariant;
 
   /// Notes, acknowledgement and reporter metadata are deliberately separate.
   final List<ObservationFieldSpec> metadataFields;
@@ -139,15 +150,51 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
       'رمز # ليس قيمة مفقودة عامة؛ يلزم تعريفه لكل حقل.',
     ],
   ),
+  const ObservationModuleSpec(
+    module: ObservationModule.hourly,
+    title: 'تقرير ساعي 06:00 UTC',
+    sourcePath: 'daily.html (06utc)',
+    reportVariant: ObservationReportVariant.synoptic06Utc,
+    fields: [
+      ObservationFieldSpec(key: 'minTemp', label: 'درجة الحرارة الصغرى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
+      ObservationFieldSpec(key: 'maxTemp', label: 'درجة الحرارة العظمى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
+      ObservationFieldSpec(key: 'precipitation', label: 'كمية الهطول', kind: ObservationFieldKind.number, unit: 'مم', requiredBySource: true),
+      ObservationFieldSpec(key: 'snowThickness', label: 'أكبر سماكة للثلج', kind: ObservationFieldKind.number, unit: 'سم', requiredBySource: true),
+    ],
+    metadataFields: [_notes, _ack],
+    sourceNotes: [
+      'نموذج مستقل ضمن قسم الساعي، ووقت التقرير ثابت 06:00 UTC.',
+      'لا يعرض أو يحسب أي توقيت محلي.',
+      'حقول التقرير مستمدة من نموذج 06utc القديم؛ الإرسال غير مدعوم حالياً إلى أن يعتمد عقد API والتحقق المستقل.',
+    ],
+  ),
+  const ObservationModuleSpec(
+    module: ObservationModule.hourly,
+    title: 'تقرير ساعي 18:00 UTC',
+    sourcePath: 'daily.html (18utc)',
+    reportVariant: ObservationReportVariant.synoptic18Utc,
+    fields: [
+      ObservationFieldSpec(key: 'minTemp', label: 'درجة الحرارة الصغرى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
+      ObservationFieldSpec(key: 'maxTemp', label: 'درجة الحرارة العظمى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
+      ObservationFieldSpec(key: 'precipitation', label: 'كمية الهطول', kind: ObservationFieldKind.number, unit: 'مم', requiredBySource: true),
+      ObservationFieldSpec(key: 'snowThickness', label: 'أكبر سماكة للثلج', kind: ObservationFieldKind.number, unit: 'سم', requiredBySource: true),
+    ],
+    metadataFields: [_notes, _ack],
+    sourceNotes: [
+      'نموذج مستقل ضمن قسم الساعي، ووقت التقرير ثابت 18:00 UTC.',
+      'لا يعرض أو يحسب أي توقيت محلي.',
+      'حقول التقرير مستمدة من نموذج 18utc القديم؛ الإرسال غير مدعوم حالياً إلى أن يعتمد عقد API والتحقق المستقل.',
+    ],
+  ),
   ObservationModuleSpec(
     module: ObservationModule.daily,
-    title: 'النشرة اليومية',
-    sourcePath: 'daily.html',
+    title: 'النشرة اليومية — 24 ساعة',
+    sourcePath: 'daily.html (24h)',
+    reportVariant: ObservationReportVariant.daily24Hours,
     apiObservationType: 'daily',
     submitSupportedByCurrentApi: true,
     fields: [
       const ObservationFieldSpec(key: 'currentDate', label: 'تاريخ التقرير', kind: ObservationFieldKind.date, requiredBySource: true),
-      const ObservationFieldSpec(key: 'reportType', label: 'نوع التقرير', kind: ObservationFieldKind.choice, choices: ['24h', '06utc', '18utc'], requiredBySource: true),
       const ObservationFieldSpec(key: 'minTemp', label: 'درجة الحرارة الصغرى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
       const ObservationFieldSpec(key: 'maxTemp', label: 'درجة الحرارة العظمى', kind: ObservationFieldKind.number, unit: '°س', requiredBySource: true),
       const ObservationFieldSpec(key: 'precipitation', label: 'كمية الهطول', kind: ObservationFieldKind.number, unit: 'مم', requiredBySource: true),
@@ -175,9 +222,8 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
       _ack,
     ],
     sourceNotes: [
+      'هذه الواجهة مخصصة لتقرير 24 ساعة فقط؛ تقريري 06:00 و18:00 UTC معرفان كنموذجين مستقلين ضمن قسم الساعي.',
       'حقول الظواهر والتبخر والسطوع والرياح والرطوبة تظهر لتقرير 24h فقط في daily_fields_control.js.',
-      'snowThickness remains required in HTML for all report types while explanatory text for 06utc/18utc says temperatures and precipitation only; unresolved.',
-      'المطلوب النهائي لكل نوع تقرير لم يعتمد بعد.',
     ],
   ),
   ObservationModuleSpec(
