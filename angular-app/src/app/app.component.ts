@@ -34,6 +34,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
 
         <div class="section-title">الرصد والإدخال</div>
         <nav aria-label="الرصد والإدخال">
+          <a class="nav-link" routerLink="/forecasting" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain users"></i><span>مركز التنبؤ الجوي</span></a>
           <a class="nav-link" routerLink="/reports/hourly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-clock hourly"></i><span>النشرات الساعية</span></a>
           <a class="nav-link" routerLink="/reports/daily" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-calendar-days daily"></i><span>النشرات اليومية</span></a>
           <a class="nav-link" routerLink="/phenomena/input" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain daily"></i><span>تسجيل الظواهر الجوية</span></a>

@@ -4,6 +4,7 @@ import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../ops/station_ops_hub_screen.dart';
 import '../observations/observation_submit_screen.dart';
+import '../forecasting/forecasting_center_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -22,7 +23,9 @@ class _MetraHomeState extends State<MetraHome> {
   @override
   Widget build(BuildContext context) {
     final pages = [
-      _HomeOverview(onOpenStations: () => setState(() => _index = 1)),
+      _HomeOverview(
+        api: widget.api,
+        onOpenStations: () => setState(() => _index = 1)),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
         onStationSelected: (id) => setState(() => _selectedStationId = id)),
       _selectedStationId == null
@@ -62,7 +65,8 @@ class _MetraHomeState extends State<MetraHome> {
   }
 }
 class _HomeOverview extends StatelessWidget {
-  const _HomeOverview({required this.onOpenStations});
+  const _HomeOverview({required this.api, required this.onOpenStations});
+  final MetraApiClient api;
   final VoidCallback onOpenStations;
   @override
   Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(20), children: [
@@ -79,6 +83,19 @@ class _HomeOverview extends StatelessWidget {
     const SizedBox(height: 12),
     _ActionCard(icon: Icons.map_outlined, title: 'استعراض المحطات',
       description: 'عرض المحطات الكلاسيكية والآلية من الدليل المعتمد.', onTap: onOpenStations),
+    const SizedBox(height: 12),
+    _ActionCard(
+      icon: Icons.cloud_outlined,
+      title: 'مركز التنبؤ الجوي',
+      description: 'مقارنة جغرافية وتفاصيل الكتالوج — اطلاع فقط بدون تعديل السجلات.',
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => ForecastingCenterScreen(api: api),
+          ),
+        );
+      },
+    ),
   ]);
 }
 class _InformationPage extends StatelessWidget {

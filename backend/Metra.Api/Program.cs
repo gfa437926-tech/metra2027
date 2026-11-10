@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 
+using Metra.Api.Features.Forecasting;
 var builder = WebApplication.CreateBuilder(args);
 
 var supabaseUrl = builder.Configuration["Supabase:Url"]
@@ -157,6 +158,7 @@ app.MapEquipmentFaultEndpoints();
 app.MapSupportIncidentEndpoints();
 app.MapObservationQueueEndpoints();
 app.MapStationDirectoryEndpoints();
+app.MapForecastingEndpoints();
 app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();
 app.MapRegistrationSubmissionEndpoints();
