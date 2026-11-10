@@ -14,9 +14,9 @@
 | AC-05 Profile | الملف الشخصي | Missing | Missing | TBD | Not found |
 | AC-06 User management | إدارة المستخدمين | Scaffold | Missing | Partial | Static role list only |
 | AC-07 Roles/permissions | الأدوار والصلاحيات | Scaffold | Missing | Partial | Labels only; server grants exist |
-| AC-08 Station assignment | تعيين المحطات | Partial | Missing | Yes | Angular UI at `/admin/station-assignments` wired to API |
-| ST-01 Station directory | دليل المحطات | Partial→Done* | Partial | Yes `GET /api/v1/stations` | *Directory page added this cycle |
-| ST-02 Station detail | تفاصيل المحطة | Missing | Missing | Partial | No dedicated detail route |
+| AC-08 Station assignment | تعيين المحطات | Done | Missing | Yes | request / pending decide / revoke UI |
+| ST-01 Station directory | دليل المحطات | Done | Partial | Yes `GET /api/v1/stations` | Angular `/stations` + links to detail |
+| ST-02 Station detail | تفاصيل المحطة | Done | Missing | Partial (from directory list) | Angular `/stations/:stationId` |
 | ST-03 Station status | حالة المحطة | Partial | Partial | Partial | observation-status route |
 | HR-01 Hourly entry | إدخال ساعي | Done | Done | Yes | UTC; offline queue Angular |
 | HR-02 Hourly list | قائمة ساعية | Partial | Partial | Partial | Local/offline-oriented |
@@ -42,3 +42,11 @@
 3. Auditor archive confirmation (manual Excel) page without auto-migration  
 4. Replace report scaffolds with API-backed lists only when endpoints exist  
 5. Password recovery / profile after identity product decision
+
+
+## Phase A closure notes (admin + stations)
+- Registration review UI: `/admin/registration-review`
+- Station assignment UI with pending decisions: `/admin/station-assignments`
+- Station directory + detail: `/stations`, `/stations/:stationId`
+- Password recovery / profile remain product decisions (Supabase Auth); not invented as custom pages without owner rule set
+- Flutter admin parity still open

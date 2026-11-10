@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   ObservationApiService,
   StationDirectoryItem
@@ -9,7 +10,7 @@ import {
 @Component({
   standalone: true,
   selector: 'metra-station-directory',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <section class="page" dir="rtl">
       <header class="page-header">
@@ -56,7 +57,7 @@ import {
           <tbody>
             <tr *ngFor="let s of filtered">
               <td>
-                <strong>{{ s.name_ar }}</strong>
+                <a class="name-link" [routerLink]="['/stations', s.id]"><strong>{{ s.name_ar }}</strong></a>
                 <small *ngIf="s.name_en">{{ s.name_en }}</small>
               </td>
               <td><code>{{ s.local_station_code || '—' }}</code></td>
@@ -97,7 +98,7 @@ import {
     td small{display:block;color:#7a8791}
     code{direction:ltr;unicode-bidi:plaintext}
     .coords{direction:ltr;text-align:right}
-    .footnote{margin-top:12px;font-size:11px;color:#7a8791}
+    .name-link{color:#1f6f8b;text-decoration:none}.name-link:hover{text-decoration:underline}.footnote{margin-top:12px;font-size:11px;color:#7a8791}
     @media(max-width:800px){.toolbar{grid-template-columns:1fr}.page-header{flex-direction:column}}
   `]
 })
