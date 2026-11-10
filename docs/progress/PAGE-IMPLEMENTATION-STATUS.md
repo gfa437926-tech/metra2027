@@ -1,3 +1,5 @@
+**خطة الإكمال المركزية:** `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-AND-COMPLETION-PLAN.md`
+
 # METRA 2027 — Page implementation status (live repository audit)
 
 **Audited tip:** `work/legacy-ui-migration-audit`  
