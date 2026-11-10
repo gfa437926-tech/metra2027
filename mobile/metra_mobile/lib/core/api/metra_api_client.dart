@@ -27,8 +27,12 @@ class ObservationQueueItem {
     final id = json['id'];
     final stationId = json['station_id'];
     final type = json['observation_type'];
-    final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
-    if (id is! String || stationId is! String || type is! String || observedAt == null) {
+    final rawObservedAt = '${json['observed_at'] ?? ''}';
+    final hasUtcDesignator = rawObservedAt.endsWith('Z') || rawObservedAt.endsWith('+00:00');
+    final parsedObservedAt = DateTime.tryParse(rawObservedAt);
+    final observedAt = parsedObservedAt?.toUtc();
+    if (id is! String || stationId is! String || type is! String ||
+        !hasUtcDesignator || observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
     final rawPayload = json['payload'];
