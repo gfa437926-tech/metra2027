@@ -17,6 +17,34 @@ void main() {
     });
   });
 
+  test('06 and 18 UTC synoptic reports belong to hourly and daily is 24h only', () {
+    final hourlyReports = observationModuleSpecs(ObservationModule.hourly);
+    final variants = hourlyReports.map((item) => item.reportVariant).toSet();
+    expect(variants, containsAll({
+      ObservationReportVariant.standardHourly,
+      ObservationReportVariant.synoptic06Utc,
+      ObservationReportVariant.synoptic18Utc,
+    }));
+
+    final daily = observationModuleSpec(ObservationModule.daily);
+    expect(daily.reportVariant, ObservationReportVariant.daily24Hours);
+    expect(daily.fields.any((field) => field.key == 'reportType'), isFalse);
+
+    for (final variant in [
+      ObservationReportVariant.synoptic06Utc,
+      ObservationReportVariant.synoptic18Utc,
+    ]) {
+      final report = hourlyReports.singleWhere((item) => item.reportVariant == variant);
+      expect(report.module, ObservationModule.hourly);
+      expect(report.fields.map((field) => field.key), containsAll([
+        'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+      ]));
+      expect(report.submitSupportedByCurrentApi, isFalse);
+      expect(report.apiObservationType, isNull);
+      expect(report.sourceNotes.any((note) => note.contains('لا يعرض أو يحسب أي توقيت محلي')), isTrue);
+    }
+  });
+
   test('notes and acknowledgement are separate from meteorological payload fields', () {
     for (final module in observationModuleCatalogue) {
       final dataKeys = module.fields.map((field) => field.key).toSet();
