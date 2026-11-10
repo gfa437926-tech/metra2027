@@ -61,6 +61,22 @@ public sealed class ObservationQueueEndpointTests
     }
 
     [Fact]
+    public async Task Station_B_request_is_denied_when_actor_has_only_station_A_grant()
+    {
+        using var factory = new QueueApiFactory();
+        factory.Authorization.AllowedStationId = StationId;
+        var stationB = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        using var client = AuthenticatedClient(factory);
+
+        var response = await client.GetAsync($"/api/v1/stations/{stationB}/observations");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(3, factory.Authorization.Calls);
+        Assert.All(factory.Authorization.RequestedStationIds, id => Assert.Equal(stationB, id));
+        Assert.Equal(0, factory.Queue.Calls);
+    }
+
+    [Fact]
     public async Task Unconfigured_queue_dependency_returns_503_without_authorization_or_queue_read()
     {
         using var factory = new QueueApiFactory();
@@ -147,14 +163,17 @@ internal sealed class FakeStationAuthorization : IStationAuthorizationService
 {
     public bool IsConfigured { get; set; } = true;
     public bool Allowed { get; set; } = true;
+    public Guid? AllowedStationId { get; set; }
     public int Calls { get; private set; }
+    public List<Guid> RequestedStationIds { get; } = [];
 
     public Task<bool> HasStationPermissionAsync(
         Guid userId, Guid stationId, string permissionCode,
         CancellationToken cancellationToken = default)
     {
         Calls++;
-        return Task.FromResult(Allowed);
+        RequestedStationIds.Add(stationId);
+        return Task.FromResult(Allowed && (AllowedStationId is null || AllowedStationId == stationId));
     }
 
     public Task<bool> HasStationOwnerAuthorityPermissionAsync(
