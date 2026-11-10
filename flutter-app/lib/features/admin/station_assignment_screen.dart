@@ -171,6 +171,30 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
               labelText: 'معرّف المستخدم (UUID)',
             ),
           ),
+          const Text('الدور'),
+          Wrap(
+            spacing: 8,
+            children: <Widget>[
+              ChoiceChip(
+                label: const Text('راصد'),
+                selected: _roleCode == 'observer',
+                onSelected: (bool selected) {
+                  if (selected) {
+                    setState(() => _roleCode = 'observer');
+                  }
+                },
+              ),
+              ChoiceChip(
+                label: const Text('مدقق محطة'),
+                selected: _roleCode == 'station_auditor',
+                onSelected: (bool selected) {
+                  if (selected) {
+                    setState(() => _roleCode = 'station_auditor');
+                  }
+                },
+              ),
+            ],
+          ),
           FutureBuilder<List<Map<String, dynamic>>>(
             future: _roles,
             builder: (
@@ -180,40 +204,28 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
               final List<Map<String, dynamic>> roles =
                   snapshot.data ?? const <Map<String, dynamic>>[];
               if (roles.isEmpty) {
-                return DropdownButtonFormField<String>(
-                  value: _roleCode,
-                  items: const <DropdownMenuItem<String>>[
-                    DropdownMenuItem(value: 'observer', child: Text('راصد')),
-                    DropdownMenuItem(
-                      value: 'station_auditor',
-                      child: Text('مدقق محطة'),
-                    ),
-                  ],
-                  onChanged: (String? value) {
-                    if (value != null) {
-                      setState(() => _roleCode = value);
-                    }
-                  },
-                  decoration: const InputDecoration(labelText: 'الدور'),
-                );
+                return const SizedBox.shrink();
               }
-              return DropdownButtonFormField<String>(
-                value: _roleCode,
-                items: <DropdownMenuItem<String>>[
+              return Wrap(
+                spacing: 8,
+                children: <Widget>[
                   for (final Map<String, dynamic> role in roles)
-                    DropdownMenuItem<String>(
-                      value: '${role['role_code'] ?? role['roleCode']}',
-                      child: Text(
+                    ChoiceChip(
+                      label: Text(
                         '${role['name_ar'] ?? role['nameAr'] ?? role['role_code'] ?? role['roleCode']}',
                       ),
+                      selected: _roleCode ==
+                          '${role['role_code'] ?? role['roleCode']}',
+                      onSelected: (bool selected) {
+                        if (selected) {
+                          setState(() {
+                            _roleCode =
+                                '${role['role_code'] ?? role['roleCode']}';
+                          });
+                        }
+                      },
                     ),
                 ],
-                onChanged: (String? value) {
-                  if (value != null) {
-                    setState(() => _roleCode = value);
-                  }
-                },
-                decoration: const InputDecoration(labelText: 'الدور'),
               );
             },
           ),
