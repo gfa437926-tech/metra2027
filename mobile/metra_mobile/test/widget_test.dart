@@ -64,21 +64,47 @@ void main() {
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
   });
-  testWidgets('review navigation stays hidden until trusted scoped access exists', (tester) async {
+  testWidgets('home connects station directory to the observation workspace', (tester) async {
+    const stationId = '22222222-2222-4222-8222-222222222222';
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-token',
-      client: MockClient((_) async => http.Response('[]', 200)),
+      client: MockClient((request) async {
+        if (request.url.path == '/api/v1/stations') {
+          return http.Response(jsonEncode([{
+            'id': stationId,
+            'local_station_code': 'AU-01',
+            'name_ar': 'محطة آلية',
+            'name_en': 'Automatic station',
+            'station_type': 'automatic',
+            'operational_status': 'active',
+            'approval_status': 'approved',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          }]), 200);
+        }
+        return http.Response('{}', 200);
+      }),
     );
+    addTearDown(api.close);
 
     await tester.pumpWidget(MaterialApp(home: MetraHome(api: api)));
     await tester.pumpAndSettle();
 
-    expect(find.text('الرصد'), findsNothing);
-    expect(find.text('مراجعة الرصدات'), findsNothing);
     expect(find.text('المحطات'), findsOneWidget);
     expect(find.text('التقارير'), findsOneWidget);
+    expect(find.text('الرصد'), findsOneWidget);
+    expect(find.text('مركز أعمال الرصد'), findsNothing);
 
-    api.close();
+    await tester.tap(find.text('الرصد'));
+    await tester.pumpAndSettle();
+    expect(find.text('مركز أعمال الرصد'), findsOneWidget);
+    expect(find.text('محطة آلية — AU-01'), findsOneWidget);
+    expect(find.text('فتح واجهة الإدخال'), findsOneWidget);
+    expect(find.text('فتح واجهة المراجعة'), findsOneWidget);
+
+    await tester.tap(find.text('فتح واجهة الإدخال'));
+    await tester.pumpAndSettle();
+    expect(find.text('إدخال رصد جديد'), findsOneWidget);
   });
 }
