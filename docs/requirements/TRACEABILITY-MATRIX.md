@@ -85,3 +85,12 @@ The detailed timestamped branch heads and workflow run references are maintained
 ### Security PR #30 — test evidence refinement
 
 The failed Backend build is now diagnosed from its job log: 8 of 234 tests failed and 226 passed. The failures include authentication endpoint tests expecting 401 but receiving 429, and a readiness test expecting 503 but receiving 429. The security branch introduces a global rate limiter; the test host's repeated requests are encountering the limiter before the expected status assertions. This is a branch-level test/status-contract regression requiring owner remediation and a fresh run. It is not proof of production exploitability. The Angular job passed, while the Flutter job was cancelled before Flutter tests. See the exact run, head SHA and limitations in the evidence register.
+
+
+### Security CI revalidation on subsequent PR #30 head
+
+The earlier failure on PR #30 head `9689ab82...` is superseded by the owning assistant's later head `32e5ecce8db2ad8899a49174d9d628fa1faf193b`:
+- Backend build [#42924701188](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701188) succeeded, including all 234 domain/API tests and Docker build.
+- Client CI [#42924701234](https://github.com/gfa437926-tech/metra2027/actions/runs/42924701234) succeeded, including Angular dependency audit/build and Flutter dependency resolution, analyze and tests.
+- The earlier 8/234 failure remains useful historical evidence of the rate-limiter/test interaction, but it is no longer the latest head's CI result. Current CI success is not a penetration test or production authorization verification.
+- PR #27 latest inspected head also has successful Angular and Flutter CI; PR #21 is pending, PR #22 and #23 are in progress, and PR #24/#28 have no associated workflow runs in the latest exact-head lookup.
