@@ -208,3 +208,40 @@
 **DB-016 — baseline غير متاح في الفروع المفحوصة — حرج/حاجب لاستكمال تدقيق العلاقات والأنواع.** هذا لا يثبت أن المخطط غير موجود في أي نسخة احتياطية أو مصدر خارجي؛ يثبت فقط عدم وجود ملفات تأسيسية في الفروع الخمسة التي فُحصت. يلزم من مالك Backend/المشروع توفير schema snapshot معتمد أو استعادة migration history من مصدر موثوق، دون الاتصال بقاعدة قديمة أو الجديدة ودون استيراد بيانات.
 
 لوحظ أيضاً أن فرع `main` الحالي تقدم إلى commit `43c72da0604e49a74d2128cc9d3d881e2c912f26`، بينما بيانات PR #26 ما زالت تعرض base SHA `87f71356083843b2abdef76baf011a82510686be`. لا أجري rebase أو دمجاً تلقائياً؛ يجب تنسيق تحديث قاعدة PR مع المساعد رقم 1 لتجنب الكتابة فوق أعمال المساعدين الآخرين.
+
+
+## 12. مطابقة عقود Backend للرصد مع طبقة التخزين — 2026-11-10T23:34:26.137Z UTC
+
+تم فحص validators اليومية والساعية والظواهر، workflow، endpoints للإرسال والقراءة والتحقق والقرار، واختبارات request guards ذات الصلة.
+
+### DB-017 — تحقق النماذج العلمية غير مربوط بمسار الحفظ — مرتفع
+مسار `POST /api/v1/stations/{stationId}/observations` يستدعي `ObservationSubmissionRequestGuard` الذي يتحقق من idempotency key ونوع الرصد ووجود observedAt وأن payload كائن JSON وحجمه النصي. لكنه لا يستدعي `DailyObservationValidator` أو `HourlyObservationValidator` أو `WeatherPhenomenonValidator`. هذه validators مرتبطة بمسارات منفصلة `/api/v1/observations/{daily,hourly,phenomena}/validate`، بينما SQL `metra_submit_observation` يتحقق فقط من نوع الرصد وJSON object والحجم والصلاحية. لذلك يمكن لعميل يتجاوز endpoint التحقق أن يحاول حفظ payload غير مطابق لقواعد الحقول اليومية/الساعية/الظواهر. يلزم جعل التحقق الخادمي جزءاً إلزامياً من command الحفظ، أو تكراره في قاعدة البيانات/خدمة موثوقة، وعدم الاعتماد على استدعاء validation منفصل من الواجهة.
+
+### DB-018 — validators تسمح بمرور مفاتيح غير معروفة — متوسط
+الـ daily/hourly validators تتجاهل الحقول التي لا توجد في قاموس Rules، ولا ترفض unknown keys. هذا قد يسمح بخطأ إملائي في اسم حقل أو حقول غير معتمدة بالمرور دون issue، ثم تخزينها في JSONB. يلزم قائمة حقول مسموحة ذات إصدار، مع سياسة صريحة لحقول التوسعة، واختبار رفض unknown fields.
+
+### DB-019 — نموذج الظاهرة لا يمثل عبور منتصف الليل — متوسط / قرار علمي
+`WeatherPhenomenonValidator` يقارن `endTime` و`startTime` كـ TimeOnly ويمنع أن يكون وقت النهاية أصغر من وقت البداية في اليوم نفسه. النموذج يحمل `phenomenonDate` واحداً ولا يحمل تاريخ نهاية أو timestamp كامل. إذا كانت الظاهرة قد تستمر بعد منتصف الليل، فالنموذج لا يستطيع تمثيل ذلك بصورة صحيحة. يلزم قرار علمي/تشغيلي حول السماح بعبور اليوم، ثم تخزين start/end كـ timestamptz أو تاريخ/وقت منفصلين مع المنطقة الزمنية المرجعية للمحطة.
+
+### ملاحظات إيجابية موثقة
+- `ObservationWorkflow` يعرّف انتقالات Draft→Submitted وReturned→Submitted وSubmitted→Returned/Approved، ويعامل Approved كحالة نهائية.
+- Endpoint قرار الرصد يشتق actor من JWT sub ويتحقق من صلاحية station قبل استدعاء RPC، كما تعيد قاعدة البيانات فحص الصلاحية.
+- Queue endpoint يتحقق من صلاحية عامة أو صلاحيات القرار المحددة قبل استخدام service-role في القراءة.
+- Validators اليومية/الساعية تتضمن مجالات وتنسيقات ورموز missing marker #، واختبارات unit تغطي بعض الحالات والحدود؛ لكنها لا تثبت أن مسار الحفظ يفرض هذه القواعد.
+
+### الملفات التي فُحصت في هذه الجولة
+- `backend/Metra.Api/Domain/Observations/DailyObservationValidator.cs`
+- `backend/Metra.Api/Domain/Observations/HourlyObservationValidator.cs`
+- `backend/Metra.Api/Domain/Observations/WeatherPhenomenonValidator.cs`
+- `backend/Metra.Api/Domain/Observations/ObservationWorkflow.cs`
+- `backend/Metra.Api/Features/Observations/ObservationSubmissionEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationValidationEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationValidationRequestGuard.cs`
+- `backend/Metra.Api.Tests/Domain/DailyObservationValidatorTests.cs`
+- `backend/Metra.Api.Tests/Domain/HourlyObservationValidatorTests.cs`
+- `backend/Metra.Api.Tests/Domain/ObservationWorkflowTests.cs`
+- `backend/Metra.Api.Tests/Features/Observations/ObservationSubmissionRequestGuardTests.cs`
+- `backend/Metra.Api.Tests/Features/Observations/ObservationDecisionRequestGuardTests.cs`
+
+لم يتم تشغيل هذه الاختبارات؛ تمت قراءتها فقط. لم يتم تعديل أي كود Backend أو SQL.
