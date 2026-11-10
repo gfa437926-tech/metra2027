@@ -103,3 +103,10 @@ The decision endpoint must independently re-check the actor's decision-specific 
 - `واجهات/مهما.md`
 - `واجهات/تغيير.md`
 - `docs/progress/assistant-02.md`
+
+
+## Round 4 addendum — endpoint test coverage requested by QA
+
+QA review on PR #22 explicitly requested endpoint-level assertions for 401/403/400/503 and that the queue service is never invoked after denied scope. Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` with five WebApplicationFactory tests for those paths (including a downstream queue failure case).
+
+These tests are source additions only at this point: they have not been run locally and the new commit's CI result is not yet confirmed. They do not close the TOCTOU vulnerability. Cross-station isolation, revocation-before-request, concurrent read/revocation race, and atomic decision authorization remain outstanding.
