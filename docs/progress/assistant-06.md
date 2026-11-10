@@ -132,3 +132,15 @@ These cross-PR results are not QA-06 test results. Estimated QA-06 completion re
 - No application code, SQL, migration, database schema/data or deployment was changed. No QA tests were executed.
 - This is static source evidence, not a reproduced exploit. B-013 remains open pending schema review and owner approval.
 - QA-06 progress remains **50%**; three major work packages remain: execute QA tests, implement missing suites, and complete cross-layer security/UTC/UI/E2E verification.
+
+
+---
+
+## QA-06 — CI freshness and migration trigger review (2026-11-10T23:37:30Z UTC)
+
+- Rechecked current PR heads and associated workflow evidence: PR #22 current-head Backend build succeeded; PR #21 current-head Client CI was pending; PR #23 current-head R workflow had no run returned; PR #27 current-head Client CI succeeded.
+- Confirmed PR #22 review-queue endpoint still has separate authorization RPC and service-role SELECT; B-013 remains unresolved, and no queue endpoint integration test file is present.
+- Reviewed Flutter client tests and R/Climatol testthat files on their current PR heads; recorded coverage scope and limits in QA report.
+- Found P2 CI trigger gap: `.github/workflows/backend-ci.yml` watches `database/migrations/**` but not `supabase/migrations/**`, although five operational observation migrations currently exist under the latter path on main. Recommended adding the Supabase path to push and pull_request filters, retaining existing paths.
+- No QA-local test commands executed. No application code, workflow, SQL, migration, database, or deployment changed.
+- QA-06 progress remains **50%**; weighted work packages are unchanged.
