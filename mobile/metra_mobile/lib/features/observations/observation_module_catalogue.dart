@@ -165,7 +165,6 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     metadataFields: [_notes, _ack],
     sourceNotes: [
       'نموذج مستقل ضمن قسم الساعي، ووقت التقرير ثابت 06:00 UTC.',
-      'لا يعرض أو يحسب أي توقيت محلي.',
       'حقول التقرير مستمدة من نموذج 06utc القديم؛ الإرسال غير مدعوم حالياً إلى أن يعتمد عقد API والتحقق المستقل.',
     ],
   ),
@@ -278,7 +277,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
       ObservationFieldSpec(key: 'observationDate', label: 'تاريخ الرصد UTC', kind: ObservationFieldKind.date),
     ],
     metadataFields: [_rainAck],
-    sourceNotes: ['يعتمد التطبيق الجديد UTC حصراً؛ حقل الوقت المحلي الموجود في النموذج المرجعي القديم مستبعد ولا يعرض أو يخزن. يجب اعتماد قواعد الفترة الزمنية قبل تفعيل الإرسال.'],
+    sourceNotes: ['يعتمد النموذج الجديد UTC حصراً. يجب اعتماد قواعد الفترة الزمنية قبل تفعيل الإرسال.'],
   ),
   const ObservationModuleSpec(
     module: ObservationModule.weatherPhenomenon,
