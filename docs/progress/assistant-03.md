@@ -14,7 +14,7 @@
 - لا تظهر في شجرة الفرع وحدات واجهة مستقلة لإدخال الرصدات أو الملف الشخصي أو الصيانة أو الدعم أو التنبيهات؛ التقارير تظهر كصفحة معلومات غير موصولة بمصدر بيانات.
 - لا يزال `docs/requirements` غير موجود على هذا الفرع، و`واجهات/README.md` غير موجود؛ الموجود ملفا السجل فقط.
 - أضيف اختبار Widget لانحدار UTC يمرر توقيتاً بصيغة `+03:00` ويتوقع عرضه كـ UTC. الاختبار أُضيف ولم يُشغّل بعد.
-- آخر استعلام Actions للـ commit السابق أظهر تشغيل `Client CI` واحداً بحالة `success`؛ لم يتوفر من النتيجة ما يثبت أن هذا التشغيل شغّل Flutter تحديداً. Commit statuses فارغة.
+- فُحصت تفاصيل تشغيل [Client CI #729](https://github.com/gfa437926-tech/metra2027/actions/runs/42923668955): نجح job باسم `Flutter analyze and test` بما في ذلك `flutter pub get` و`flutter analyze` و`flutter test` على commit `9fa9b04`. هذا التشغيل سبق إضافة اختبار UTC الجديد، لذا لا يغطي الاختبار المضاف في الجولة الثالثة. كما نجح job بناء Angular؛ لا يُعد ذلك ضمن نطاق المساعد 3. Commit statuses الفورية كانت فارغة.
 
 ### ملفات الجولة الثالثة
 - `mobile/metra_mobile/test/observation_review_screen_test.dart`: إضافة اختبار Widget للتحويل من إزاحة `+03:00` إلى ISO-8601 UTC.
@@ -63,7 +63,7 @@
 - أضيف اختبار UTC جديد في `mobile/metra_mobile/test/observation_review_screen_test.dart`، ولم يتم تشغيله.
 - `flutter analyze`: لم يُشغّل.
 - `flutter test`: لم يُشغّل.
-- GitHub Actions على commit `9fa9b04`: تشغيل [Client CI #729](https://github.com/gfa437926-tech/metra2027/actions/runs/42923668955) نتيجته `success`؛ لا يوجد ما يثبت أنه شغّل Flutter تحديداً.
+- GitHub Actions على commit `9fa9b04`: [Flutter analyze and test](https://github.com/gfa437926-tech/metra2027/actions/runs/42923668955) نجح، مع نجاح `flutter pub get` و`flutter analyze` و`flutter test`. الاختبار الجديد أضيف بعد هذا التشغيل ولم يتم التحقق منه بعد.
 - Commit statuses على `9fa9b04`: قائمة فارغة.
 - لا ندعي نجاح أي اختبار لم يتم تشغيله.
 
@@ -89,3 +89,7 @@
 - **الاختبارات:** لا تزال `flutter analyze` و`flutter test` غير مشغلتين.
 - **النسبة:** 10%؛ لم يتغير وزن المجالات لأن الجرد ما زال غير مكتمل ومواصفات المقارنة غائبة.
 - **المتبقي:** 9 مجالات وفق التقسيم المرحلي، مع بدء جرد المجال الثاني.
+
+
+### تصحيح توثيق CI — 2026-11-10T23:32Z UTC
+فُحصت تفاصيل jobs لتشغيل Client CI #729 بدلاً من الاكتفاء بعنوان workflow: job `Flutter analyze and test` وجميع خطواته بما فيها `flutter analyze` و`flutter test` انتهت بنجاح على commit `9fa9b04`. هذا يثبت نجاح الاختبارات على نسخة ذلك commit، وليس على تعديل اختبار UTC الجديد الذي أضيف لاحقاً.
