@@ -176,3 +176,43 @@
 - [Flutter analyze and test — run 42924025817](https://github.com/gfa437926-tech/metra2027/actions/runs/42924025817).
 
 هذا التحقق يؤكد أن CI بدأ على HEAD الخاص بـ PR #30. لا يوجد حتى هذه اللحظة تأكيد نجاح بناء .NET أو اختبار ترويسات API؛ يجب إعادة فحص النتيجة النهائية قبل اعتماد التغيير.
+
+
+## جولة متابعة — Rate Limiting على API
+
+**تاريخ التحديث:** 2026-11-10T23:34:50.847Z UTC  
+**المهمة:** SEC-07 — حماية API من إساءة الاستخدام  
+**الحالة:** قيد التنفيذ  
+**نسبة إنجاز المهمة:** 40% من نطاق SEC-07 فقط (تقدير موزون؛ تمت إضافة rate limiting مع اختبار تكاملي، لكن التحقق الآلي لم ينتهِ بعد، كما أن ضبط proxy موثوق لم يُعتمد).
+
+### ما تمت مراجعته
+- `backend/Metra.Api/Program.cs` — خط أنابيب HTTP والمصادقة وترويسات الحماية.
+- `backend/Metra.Api.Tests/Security/ApiAuthenticationTests.cs` — اختبارات API الأمنية.
+- `render.yaml` — إعداد نشر Render ومسار readiness؛ لا يتضمن إعداداً صريحاً لسلسلة proxies موثوقة.
+- `.github/workflows/backend-ci.yml` — خطوات البناء واختبارات .NET.
+
+### الملفات المعدلة
+- `backend/Metra.Api/Program.cs`: إضافة global fixed-window rate limiter؛ 120 طلباً/دقيقة لكل JWT subject موثّق، و30 طلباً/دقيقة لمسار الطلبات غير المصادق عليها. لا يعتمد partitioning على `X-Forwarded-For` أو أي ترويسة عميل غير موثوقة. إضافة `Retry-After: 60` عند HTTP 429. ترتيب middleware صريح: routing ثم CORS ثم authentication ثم rate limiter ثم authorization. استثناء liveness `/api/v1/health` من الحصة حتى لا تتعطل مراقبة الخدمة؛ readiness يبقى خاضعاً للحصة.
+- `backend/Metra.Api.Tests/Security/ApiAuthenticationTests.cs`: اختبار يرسل 30 طلب readiness متتالياً ويتوقع رفض الطلب 31 بـ 429 مع `Retry-After`.
+
+### ملاحظة تشغيلية مهمة
+- لا يوجد في ملفات النشر التي تمت مراجعتها تعريف موثّق للـ trusted proxy chain أو forwarded headers؛ لذلك لم يتم تفعيل الثقة في `X-Forwarded-For`. الحصة الحالية للطلبات المجهولة مشتركة على مستوى العملية، وليست per-client-IP. هذا يمنع تزوير IP لكنه قد يجعل bucket المجهول مورداً مشتركاً؛ يجب حسم إعداد proxy الموثوق واختبار السلوك قبل الإنتاج. لم يتم ادعاء اكتمال هذا الجزء تشغيلياً.
+
+### CI على HEAD الكودي
+- آخر commit كودي يحوي التغييرات: [9689ab821a2dfb8200ded46cf30c33ed8068208f](https://github.com/gfa437926-tech/metra2027/commit/9689ab821a2dfb8200ded46cf30c33ed8068208f).
+- [Backend build — run 42924494881](https://github.com/gfa437926-tech/metra2027/actions/runs/42924494881) — queued وقت الفحص.
+- [Client CI — run 42924494937](https://github.com/gfa437926-tech/metra2027/actions/runs/42924494937) — pending وقت الفحص.
+- لا توجد نتيجة نهائية بعد؛ لا نعلن نجاح الاختبارات قبل اكتمال التشغيل.
+
+### GitHub وPR
+- الفرع: [security/initial-hardening-audit](https://github.com/gfa437926-tech/metra2027/tree/security/initial-hardening-audit).
+- PR [#30](https://github.com/gfa437926-tech/metra2027/pull/30) مفتوح، Draft، غير مدمج.
+- Commit التوثيق لهذه الجولة سيُسجل بعد إضافة هذا التقرير وسجل التغييرات.
+
+### حدود التنفيذ
+- لا تغييرات في قاعدة البيانات أو migrations أو RLS أو حسابات المستخدمين.
+- لا نشر ولا دمج إلى `main`.
+
+### المتبقي والخطوة التالية
+- **7 حزم متابعة:** التحقق من CI واختبار 429؛ اعتماد trusted proxy/forwarded headers ثم تحسين partitioning per-client؛ حدود request body؛ مراجعة CSP/XSS/session؛ فحص Flutter dependencies؛ تدقيق Git history والأسرار وإعدادات النشر؛ واختبارات صلاحيات متعددة الحسابات والمحطات والسلطات.
+- الخطوة التالية: مراجعة Backend build على HEAD ومعالجة أي أخطاء ترجمة أو اختبار قبل توسيع إعدادات proxy أو تنفيذ حدود body.
