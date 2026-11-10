@@ -76,3 +76,17 @@ This file is append-only. Add new dated entries below; do not rewrite or remove 
 - **Not performed:** no production/Pages deployment, no secret or DB changes, no PR merges, no production Climatol processing.
 - **Remaining:** (1) Pages settings maintainer verification/diagnosis; (2) confirm canonical `واجهات/` path; (3) coordinate R workflow branch coverage and PR #23 review/integration with Assistant 04.
 - **Next:** wait for post-pin CI result, then record it; coordinate the R trigger gap with Assistant 04.
+
+
+## 2026-11-10T23:40:25.106Z — Post-pin Client CI verified
+
+- **Task:** `DEVOPS-09-001`; **status:** in progress; **progress:** 75% (9/12); **remaining:** 3.
+- **CI result:** [Client CI #42924596524](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524) completed successfully on commit `71888fbecbaaf147db98aa632784b476fba047cd`.
+- **Angular job:** locked dependency install and production build passed.
+- **Flutter job:** Flutter SDK setup, `flutter pub get --enforce-lockfile`, `flutter analyze`, and `flutter test` all passed after pinning SDK `3.47.9`.
+- Intermediate runs from sequential commits were cancelled by concurrency; the final run above is the authoritative post-pin result.
+- **Files changed in this round:** `docs/progress/assistant-09.md`, this append-only log, and `docs/deployment/DEVOPS-CI-CD-AUDIT.md`.
+- **Tests:** no local tests run; GitHub Actions #42924596524 is the verified evidence.
+- **Not performed:** no deployment, secret/environment changes, database operation, workflow deletion, or merge.
+- **Remaining:** Pages runtime settings confirmation; canonical `واجهات/` path confirmation; R workflow trigger/PR #23 coordination with Assistant 04.
+- **Next:** coordinate R workflow branch coverage with Assistant 04 and await maintainer input on Pages and handoff path.
