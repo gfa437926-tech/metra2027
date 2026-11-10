@@ -154,3 +154,39 @@ After source-tree access and requirements review, implement an isolated, databas
 - tests proving no raw observation mutation.
 
 Do not add migrations, database tables, API endpoints, Angular/Flutter screens, or production OCR dependencies until the Backend owner and product/security owners agree on contracts and ownership.
+
+
+## 10. Follow-up source inspection — 2026-11-10T23:32:37.175Z (UTC)
+
+A second pass located the authoritative auditor requirements on the separate documentation branch `docs/metra-all-ui-specification`, rather than on the previously inspected refs. This corrects the earlier limitation: the documents are available on that branch, but are not necessarily merged into the implementation branch.
+
+### Requirements and coordination evidence
+
+- `واجهات/مهما.md` — fetched from `docs/metra-all-ui-specification`; defines UI-IMPL-001 as the global next task and lists UI-IMPL-008 (electronic auditor) and UI-IMPL-009 (mechanical charts) as not yet implemented. It requires UTC, no old DB, no schema changes without approval, no raw observation mutation, and no merge/deploy without approval.
+- `واجهات/تغيير.md` and `واجهات/README.md` — fetched from the same branch; they define append-only reporting and distinguish specifications from verified implementation.
+- `واجهات/09-المدقق-الإلكتروني.md` — fetched; specifies paper register upload, SHA-256, quality checks, OCR as unapproved suggestion, mechanical chart support, human decision, provenance, role separation, and no raw payload mutation.
+- `docs/requirements/METRA-AI-INTELLIGENT-AUDIT-SYSTEM-SPECIFICATION.md` — fetched from the same branch (blob SHA `423f3c46f73df649b776862e636d86e63aa32594`); explicitly says owner review/specification only, not production capability. It defines paper and mechanical tracks, triple-source comparison, human-approved training labels, authorization, logical entities (no migration), and IA-0 through IA-10 phases.
+- `docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md` — fetched from the same branch; confirms application boundaries and the need to inspect the actual source branch before implementation.
+
+### Source-level findings on `work/legacy-ui-migration-audit`
+
+- `angular-app/src/app/app.routes.ts` (blob SHA `80c4a288c8fb799e1604e4ce958a9819f8133039`) registers `/electronic-auditor` behind `requireAuthenticatedUser` and lazy-loads `ElectronicAuditorWorkspaceComponent`. This corrects the stale master-plan row that described the route as missing.
+- `angular-app/src/app/features/electronic-auditor/electronic-auditor-workspace.component.ts` (blob SHA `cc97ba225699fbf4c99fe758b8ffb5426da81508`) is a standalone inline-template scaffold. It explicitly states there is no chart OCR or API binding; all six workflow areas are marked unavailable. No separate HTML or component spec file was found at the expected sibling paths.
+- `backend/Metra.Api/Program.cs` (blob SHA `59f50db0ff791f6e1e3e3474543046695639625f`) registers existing services and maps existing endpoint groups, but contains no electronic-auditor service registration or auditor endpoint mapping. The master implementation plan also records the auditor API/worker as not started.
+- `docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md` (blob SHA `c44b5bb5dd60aa74c7b1cf53c3b4e739fd60500b`) is a design note only; it explicitly states API, UI functionality, OpenCV worker, SQL, and measured accuracy are not implemented.
+- `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-MASTER-PLAN.md` (blob SHA `8401af9262e11a91f349d80fe21f4989ccc6002f`) records the auditor module as not started and lists the workflow as planned. Its route inventory is stale relative to the inspected `app.routes.ts`; the actual route is present but points to a scaffold.
+
+### Revised verified inventory
+
+| Area | Current evidence-based finding |
+|---|---|
+| Requirements | Formal UI and AI auditor specifications exist on the documentation branch; owner review remains required |
+| Angular route | Present and authenticated-guarded |
+| Angular workspace | Scaffold only; no upload/extraction/API/review behavior |
+| Backend auditor endpoints/services | Not found in inspected API composition root; master plan says not started |
+| OCR / CV worker and training lab | Not implemented per formal specification and design status |
+| Mechanical chart calibration/digitization | Design only; no implementation evidence |
+| Persistence/schema | Logical design only; no migration applied or authorized |
+| Human decision and immutable event workflow | Required by specification; no implementation evidence |
+
+This is now a source-backed module-level inventory, not a claim that every repository directory or every possible branch has been exhaustively searched. No implementation files were changed.
