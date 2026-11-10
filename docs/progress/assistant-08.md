@@ -126,3 +126,14 @@
 - [Commit تقرير التدقيق التفصيلي](https://github.com/gfa437926-tech/metra2027/commit/13de4ec9f2baba6563c83e3b9e5209e0d8ebccdc)
 - [Commit سجل مراجعة migrations](https://github.com/gfa437926-tech/metra2027/commit/8f1a7f57b9b9115a89485a784af437604a3b32ef)
 - [PR #26 — Draft](https://github.com/gfa437926-tech/metra2027/pull/26)
+
+
+## 11. توثيق روابط الجولة والتحقق من GitHub — 2026-11-10T23:32:28.837Z UTC
+- [Commit تقرير التدقيق](https://github.com/gfa437926-tech/metra2027/commit/13de4ec9f2baba6563c83e3b9e5209e0d8ebccdc)
+- [Commit سجل مراجعة migrations](https://github.com/gfa437926-tech/metra2027/commit/8f1a7f57b9b9115a89485a784af437604a3b32ef)
+- [Commit سجل التغييرات](https://github.com/gfa437926-tech/metra2027/commit/83e36b6940fcb6953d7ab7ab4be3690a502b4a5f)
+- [Commit تحديث قائمة المهام](https://github.com/gfa437926-tech/metra2027/commit/26647b563c353ebbb0ec6acfa52bdd69ab393f4a)
+- [PR #26](https://github.com/gfa437926-tech/metra2027/pull/26): مفتوح، Draft، غير مدمج وقت التحقق.
+- فحص commit `26647b563c353ebbb0ec6acfa52bdd69ab393f4a`: GitHub Actions workflow runs = 0، Check Runs = 0. [Checks](https://github.com/gfa437926-tech/metra2027/commit/26647b563c353ebbb0ec6acfa52bdd69ab393f4a/checks).
+- الاختبارات لم تُشغّل؛ عدم وجود Checks لا يعني نجاح الاختبارات.
+- أحدث commit قبل تحديث هذا السطر: [26647b563c353ebbb0ec6acfa52bdd69ab393f4a](https://github.com/gfa437926-tech/metra2027/commit/26647b563c353ebbb0ec6acfa52bdd69ab393f4a).
