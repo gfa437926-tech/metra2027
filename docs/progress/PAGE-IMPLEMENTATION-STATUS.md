@@ -72,3 +72,9 @@
 - Station observation status uses review/returned queues with UTC display and hourly/daily counts.
 - Climate / annual / rainfall remain **not data-bound** for meteorological aggregates until formulas and report APIs are approved.
 - No fabricated observation totals are shown as real data.
+
+
+### Phase D continuation
+- Climate and annual pages converted to **honest unbound shells** with real station picker and links to live observation/archive flows.
+- No fabricated climate totals.
+- Rainfall remains preview-only until rainfall contract is approved.

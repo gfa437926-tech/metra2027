@@ -11,6 +11,7 @@ import { Component } from '@angular/core';
         <div><h1>النشرة المطرية اليومية</h1><p>إرسال النشرة المطرية من الساعة 8:30 إلى 9:30 صباحاً (توقيت سورية)</p></div>
         <span class="mode">وضع المعاينة</span>
       </header>
+      <div class="notice-hard"><strong>وضع المعاينة:</strong> هذه الشاشة لا تكتب إلى قاعدة البيانات ولا تعتمد نشرة مطرية عبر API حتى يُعتمد عقد الهطل. لا تُعرض مجاميع مطرية مخترعة.</div>
 
       <form #rainForm (submit)="preview($event, rainForm)" novalidate>
       <section class="panel">
@@ -80,6 +81,8 @@ import { Component } from '@angular/core';
     </div>
   `,
   styles: [`
+    .notice-hard{padding:12px 15px;background:#fdecea;border-right:4px solid #c0392b;border-radius:8px;margin:12px 0;line-height:1.8;color:#7b241c}
+    
     .rain-page{max-width:1200px;margin:0 auto;color:#2c3e50}
     .page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:24px 28px;background:linear-gradient(135deg,#3498db,#2c3e50);color:#fff;border-radius:15px 15px 0 0}
     h1{font-size:1.65rem;margin:0} .page-head p{margin:7px 0 0;opacity:.9}.mode{background:#fff3cd;color:#856404;padding:7px 12px;border-radius:8px;white-space:nowrap}
