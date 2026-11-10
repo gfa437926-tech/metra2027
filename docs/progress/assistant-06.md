@@ -118,3 +118,17 @@ No test pass/fail is attributed to QA-06. PR #22 is the only one among these rev
 - QA PR #24 remains open, Draft and unmerged, with no associated Actions run. QA-06 has not executed tests.
 
 These cross-PR results are not QA-06 test results. Estimated QA-06 completion remains **50%**; three major work packages remain.
+
+
+---
+
+## QA-05 — Station review-queue authorization audit (2026-11-10T23:34:44Z UTC)
+
+- Inspected the current PR #22 head source for queue endpoint, service-role PostgREST read, station authorization service, observation decision endpoint, guard tests and test project.
+- Confirmed a P1 TOCTOU window: permission RPC is called separately before service-role queue SELECT; the SELECT receives station ID but not actor ID and does not re-check current permission.
+- Confirmed no `ObservationQueueEndpointTests.cs` at the inspected PR #22 head and no test evidence for 401/403/503 mapping, denied-request queue suppression or revocation/read race.
+- Confirmed decision endpoint checks action-specific API permission but DB-side atomic authorization + state transition is not established by source inspection.
+- Submitted review comment to PR #22 (review ID `5851183143`) with the P1 finding, atomic RPC recommendation and endpoint/concurrency test requirements.
+- No application code, SQL, migration, database schema/data or deployment was changed. No QA tests were executed.
+- This is static source evidence, not a reproduced exploit. B-013 remains open pending schema review and owner approval.
+- QA-06 progress remains **50%**; three major work packages remain: execute QA tests, implement missing suites, and complete cross-layer security/UTC/UI/E2E verification.
