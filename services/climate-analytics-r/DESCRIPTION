@@ -7,7 +7,7 @@ License: GPL-3
 Encoding: UTF-8
 Depends: R (>= 4.3.0)
 Imports:
-    climatol (>= 4.5.0),
+    climatol (>= 4.5-0),
     jsonlite
 Suggests:
     testthat (>= 3.0.0)
