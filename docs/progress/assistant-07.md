@@ -119,3 +119,47 @@
 - تم تحديث وصف PR #30 ليربط تقرير التقدم وسجل التغييرات.
 - بعد هذا التوثيق، شُغّلت مجدداً فحوص Client CI وBackend build على HEAD الجديد؛ كان Client CI بحالة pending وBackend build بحالة queued عند التحقق. لا توجد نتيجة نهائية بعد.
 - الحالة الحالية لطلب المراجعة: مفتوح، Draft، غير مدمج؛ HEAD: `34c3c54af6f602be73f6529b4bdaabe9fc96efb5`.
+
+
+## جولة متابعة — تقوية ترويسات API
+
+**تاريخ التحديث:** 2026-11-10T23:31:02.214Z UTC  
+**المهمة:** SEC-07  
+**الحالة:** قيد التنفيذ  
+**نسبة إنجاز المهمة:** 35% (تقدير موزون لنطاق SEC-07 فقط؛ أُضيفت معالجة ترويسات API كجزء منفذ مع اختبار آلي، بينما بقية حزم التحقق الديناميكي والاعتماديات والإنتاج لم تكتمل).
+
+### الملفات التي فُحصت في هذه الجولة
+- `backend/Metra.Api/Program.cs`
+- `backend/Metra.Api.Tests/Security/ApiAuthenticationTests.cs`
+- `backend/Metra.Api.Tests/Metra.Api.Tests.csproj`
+- حالة PR #30، حالة الفرع، وسجلات GitHub Actions.
+
+### الملفات التي عُدلت
+- `backend/Metra.Api/Program.cs` — إضافة `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, وسياسة CSP مقيدة لاستجابات API، وتفعيل HSTS خارج Development.
+- `backend/Metra.Api.Tests/Security/ApiAuthenticationTests.cs` — إضافة اختبار يتحقق من وجود الترويسات الخمس في استجابة health.
+
+### المنفذ فعلياً
+- إضافة middleware لترويسات الأمان على استجابات API.
+- تفعيل HSTS في البيئات غير Development.
+- إضافة اختبار تكاملي للترويسات.
+- لم يُضف Rate Limiting بعد؛ يلزم حسم بنية reverse proxy وموثوقية forwarded headers حتى لا تُجمع عناوين العملاء أو تُطبق حدود غير صحيحة.
+
+### الاختبارات وActions
+- [Backend build على commit e9fd620 السابق](https://github.com/gfa437926-tech/metra2027/actions/runs/42923822634) — Success، لكنه لا يشمل التغييرات الحالية.
+- [Client CI على commit e9fd620 السابق](https://github.com/gfa437926-tech/metra2027/actions/runs/42923822616) — Success، لكنه لا يختبر تغييرات Backend الحالية.
+- [Backend build على commit f68e065](https://github.com/gfa437926-tech/metra2027/actions/runs/42923854797) — Success على SHA مختلف عن HEAD الذي تحققت منه؛ لا يُنسب نجاحه إلى التغييرات الحالية.
+- عند تسجيل هذه الجولة، لم يظهر تشغيل نهائي موثق للـ HEAD الحالي `1bf6e3ab14901d7d1cb31a2e7fc513e7ba4b2ccb`. اختبار الترويسات لم يُعلن ناجحاً بعد.
+
+### Commit وPR
+- آخر commit في الفرع وقت تسجيل الجولة: [1bf6e3ab14901d7d1cb31a2e7fc513e7ba4b2ccb](https://github.com/gfa437926-tech/metra2027/commit/1bf6e3ab14901d7d1cb31a2e7fc513e7ba4b2ccb).
+- [الفرع security/initial-hardening-audit](https://github.com/gfa437926-tech/metra2027/tree/security/initial-hardening-audit).
+- [PR #30](https://github.com/gfa437926-tech/metra2027/pull/30) — مفتوح، Draft، غير مدمج.
+
+### ما لم يُنفذ والعوائق
+- لم يُنفذ Rate Limiting، ولا حدود body عامة، ولا تدقيق XSS كامل، ولا مراجعة تاريخ الأسرار، ولا اختبارات صلاحيات حقيقية متعددة الحسابات.
+- لم تُعدل قاعدة البيانات أو RLS، ولم يحدث نشر أو دمج.
+- العائق: عدم توثيق proxy/forwarded headers والـ production hostname؛ وعدم وجود هوية اختبار إنتاجية متعددة المحطات والسلطات.
+
+### المتبقي والخطوة التالية
+- **7 حزم متابعة**: تحقق CI على HEAD؛ Rate Limiting بعد تحديد proxy؛ request-body limits؛ مراجعة CSP/XSS/session؛ فحص Flutter وملفات الاعتماديات؛ تدقيق Git history/secrets والنشر؛ واختبارات IDOR وتداخل المحطات والسلطات.
+- الخطوة التالية: التأكد من تشغيل Backend build وClient CI على HEAD الحالي، ثم معالجة أي فشل قبل تنفيذ تقوية إضافية.
