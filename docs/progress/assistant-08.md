@@ -212,3 +212,19 @@
 - PR base SHA ما زال أقدم من main HEAD؛ لم يُجر rebase أو merge. التنسيق مع المساعد 1 مطلوب.
 - النسبة: 10% وفق معيار 1 محور مكتمل بالكامل من 10؛ 9 محاور متبقية. DB-020 نتيجة تدقيق جزئية ولا ترفع نسبة المحاور المكتملة.
 - الخطوة التالية: مصفوفة required-fields مستندة إلى مواصفات الرصد المعتمدة، ثم التنسيق مع المساعد 2 لربط validation بمسار الحفظ ومع المساعد 11 لمراجعة المتطلبات العلمية.
+
+
+## 18. مصفوفة required-fields اليومية والساعية — 2026-11-10T23:40:49.398Z UTC
+- **المهمة:** METRA-DB-08 — إعداد مصفوفة أولية من مصادر المستودع.
+- **الحالة:** منجزة كمسودة توثيقية؛ اعتماد المتطلبات العلمية وربطها بالحفظ ما زال محجوباً/مفتوحاً.
+- **الملفات المفحوصة:** `daily_validation.js`, `daily_fields_control.js`, `daily_reports.html`, `hourly_reports.html`, `hourly-send.js`, `DailyObservationValidator.cs`, `HourlyObservationValidator.cs`, `ObservationValidationEndpoints.cs`, `daily-reports.component.ts`, وعقد `docs/api/operational-observation-submission.md`.
+- **الملفات الجديدة/المعدلة:** [مصفوفة الحقول](../database/REQUIRED-FIELDS-MATRIX.md)؛ تحديث `DATABASE-ENGINEERING-AUDIT.md` بإضافة DB-021؛ تحديث هذا التقرير وسجل التغيير وقائمة المهام.
+- **النتائج:** اليومي 24h يفرض 14 حقلاً في المصدر، و06/18 UTC يفرضان أربعة؛ الساعي يفرض 12 حقلاً دائماً إضافة إلى utcTime، والهطول في 00/06/12/18، وميل/شكل الضغط والطقس السابق في الساعات السينوبتية. هذه قوائم سلوك كود وليست اعتماداً علمياً.
+- **مخاطر مرتبطة:** DB-017 وDB-020 ما زالت قائمة؛ endpoint اليومي لا يمرر requiredFields ومسار الحفظ لا يثبت أنه يفرض validators. كما أن `#` مقبول كرمز missing ولا بد من قرار علمي لدلالته.
+- **ما لم يُنفذ:** لم تُشغّل الاختبارات أو build أو CI؛ لم يُعدّل كود أو SQL أو migration؛ لم يتم الاتصال بـ Supabase أو تنفيذ SQL/seed؛ لا دمج ولا نشر.
+- **التنسيق المطلوب:** المساعد 11 لاعتماد profiles ودلالة missing marker؛ المساعد 2 لتصميم ربط profile/version بالتحقق والحفظ.
+- **الإنجاز:** 10% (محور واحد من عشرة مكتمل بالكامل؛ إعداد المصفوفة وحده لا يغلق محوراً كاملاً).
+- **المتبقي:** 9 محاور.
+- **الخطوة التالية:** الحصول على اعتماد علمي للحقول/الوحدات/رمز #، ثم تسليم عقد profile-version للمساعد 2 لربط validator بمسار الحفظ.
+- **Commit المصفوفة:** [eaa6262ac9ab2c6c61bb164e1e8a7bd6f3e15431](https://github.com/gfa437926-tech/metra2027/commit/eaa6262ac9ab2c6c61bb164e1e8a7bd6f3e15431).
+- **Commit التدقيق DB-021:** [37e65558b4144baddc3ad3182d678db6bb01efa9](https://github.com/gfa437926-tech/metra2027/commit/37e65558b4144baddc3ad3182d678db6bb01efa9).
