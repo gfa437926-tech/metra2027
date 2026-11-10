@@ -96,6 +96,74 @@ void main() {
     client.close();
   });
 
+
+  test('station directory accepts exactly the configured maximum row count', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        requests++;
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final count = offset < 10000 ? 500 : 0;
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    final rows = await client.getAllStationDirectory();
+    expect(rows, hasLength(10000));
+    expect(requests, 21); // 20 pages plus the one-row overflow probe.
+    client.close();
+  });
+
+  test('station directory rejects rows beyond the configured maximum', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final count = offset < 10000 ? 500 : 1;
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    await expectLater(
+      client.getAllStationDirectory(),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 413)
+          .having((error) => error.code, 'code', 'station_directory_limit_exceeded')),
+    );
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
