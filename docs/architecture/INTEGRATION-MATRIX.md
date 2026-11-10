@@ -4,25 +4,33 @@
 
 | Producer → Consumer | Contract / evidence inspected | Source-level status | Runtime status | Gap / next proof |
 |---|---|---|---|---|
-| Angular → Supabase Auth | `SupabaseAuthService`, `SupabaseAuthService.getAccessToken()`, app config | Implemented in source | Not live-tested | Verify login, refresh, expiry, sign-out and revocation in isolated env |
-| Flutter → Supabase Auth | `main.dart`, `core/auth/metra_auth.dart` referenced by main | Partially evidenced | Not live-tested | Inspect auth implementation and secure storage/session lifecycle |
-| Angular → API station directory | `ObservationApiService.getStations()`, GET `/api/v1/stations` | Implemented in source | Blocked/unverified without deployed API config | Authenticated browser request + response contract test |
-| Angular → API submit | `submitObservation()`, POST `/api/v1/stations/{stationId}/observations` | Implemented in source | Not live-tested | Verify each report screen invokes service and payload is domain-complete |
-| Angular → API review | `getReviewQueue()`, `decide()` | Implemented in source | Not live-tested | Test station-scoped reviewer authorization and state transitions |
-| Flutter → API directory | `MetraApiClient.getStationDirectory()` | Implemented in source | Not live-tested | Device test with HTTPS host and valid token |
-| Flutter → API submit | `MetraApiClient.submitObservation()` | Implemented in source | Not live-tested | Verify all mobile entry screens use it; payload schema contract test |
-| Flutter → API review | `getReviewQueue()`, `decideObservation()` | Implemented in source | Not live-tested | Device test for queue, approve and return-for-correction |
+| Angular → Supabase Auth | `SupabaseAuthService`, password sign-in and access-token provider | Implemented in source | Not live-tested | Verify login, refresh, expiry, sign-out and revocation in isolated env |
+| Flutter → Supabase Auth | `MetraAuthGate`, auth-state listener and secure session storage | Implemented in source | Not live-tested | Verify secure-storage lifecycle, refresh and sign-out on device |
+| Angular → API station directory | `ObservationApiService.getStations()`, GET `/api/v1/stations` | Implemented in source; used by hourly/daily/register flows | Not live-tested | Authenticated browser request + response contract test |
+| Angular → API submit | `submitObservation()`; hourly and daily forms call it | Partial: hourly/daily only | Not live-tested | Other report/phenomena forms are local or unconnected; verify payload contracts |
+| Angular → API review | `getReviewQueue()`, `decide()` in observation workflow | Implemented in source | Not live-tested | Test station-scoped reviewer authorization and state transitions |
+| Angular → API registration/admin | Registration, registration review, assignment, station user directory and audit services | Implemented in source | Not live-tested | Exercise each route and negative authorization cases |
+| Angular → API phenomenon input/list | `phenomena-input` local timer; `phenomena.component` empty collection and no-op refresh | Not evidenced as API-connected | Not connected in inspected client | Wire `phenomenon` submission/read contract; define start/end and timezone behavior |
+| Angular → API rainfall/climate/soil/agriculture | Components explicitly use preview/local forms; agriculture uses localStorage | Not connected | Not connected in inspected client | Approve DTOs and endpoints before enabling operational submission |
+| Angular → API monthly/annual reports | Empty station arrays, placeholder metrics, local filter messages | Not connected | Not connected | Define authoritative read endpoints, aggregation and provenance |
+| Angular dashboard → identity | Reads `localStorage.currentUser`; local-only logout | Local / placeholder | Not a verified auth session | Use authenticated session/profile and real Supabase sign-out |
+| Flutter → API directory | `MetraApiClient.getStationDirectory()`; station directory screen calls it | Implemented in source | Not live-tested | Device test with HTTPS host and valid token |
+| Flutter → API review | `getReviewQueue()`, `decideObservation()`; review screen calls both | Implemented in source | Not live-tested | Device test for queue, approve and return-for-correction |
+| Flutter → API submit | Client method exists, but no observation-entry screen invoking it was found in inspected navigation tree | Client capability only; no screen integration evidenced | Not connected from inspected screen | Implement actual observation entry screen and contract tests |
+| Flutter → reports/analytics | Home screen explicitly marks reports unavailable pending approved source | Not connected | Not connected | Implement read/report endpoints and screens |
 | API → Supabase station catalogue | `SupabaseStationDirectoryService`, `station_catalogue` | Implemented in source | Readiness-gated; not live-tested here | Verify exact new-project projection, permissions and returned JSON |
 | API → Supabase observation submission | RPC `metra_submit_observation` | Implemented in source | Not live-tested here | Migration/RPC contract + idempotency and rollback tests |
 | API → Supabase decision/queue | RPC/service registrations in `Program.cs` | Partially evidenced | Not live-tested | Inspect each feature service, RPC and migration pair |
 | API → JWT authorization | `Program.cs`, station permission endpoint extensions | Implemented in source | Not live-tested | Invalid token, wrong station, revoked assignment and role escalation tests |
 | API → CORS | `Cors:AllowedOrigins` | Implemented in source | Blocked until host config | Positive exact-origin and negative unlisted-origin browser tests |
 | API → production host | `backend/DEPLOYMENT.md`, `render.yaml` | Deployment recipe exists | Blocked; no host URL supplied | Provision only after owner approval; then health/readiness and TLS checks |
-| Angular feature pages → API coverage | Route list includes reports, climate, agriculture, soil, users, workflow | Mixed / unverified | Unknown | Trace each feature's data source and classify live/local/mock |
-| Flutter feature parity → API | One API client with station/observation/review operations | Partial | Unknown | Inventory every screen and bind each to shared contracts |
 | R / Climatol → METRA | No executable/job/contract evidence found in inspected paths | Not evidenced | Not connected | Define versioned batch input/output contract and isolated worker |
 | Paper images → electronic auditor | No upload/storage/auditor service evidence found in inspected paths | Not evidenced | Not connected | Define evidence storage, metadata, comparison and human adjudication contracts |
 | API → reports/exports | No end-to-end report generation trace completed | Not evidenced by this audit | Unknown | Identify authoritative query/read endpoints and report provenance |
+
+## Feature-level source inventory
+
+See [CLIENT-DATA-SOURCE-INVENTORY.md](CLIENT-DATA-SOURCE-INVENTORY.md) for route-by-route Angular and Flutter screen classification, concrete file evidence and prioritized integration gaps.
 
 ## Contract baseline
 - API prefix: `/api/v1`.
@@ -39,14 +47,16 @@
 1. Configure and verify a real HTTPS API host and runtime client config; prove health and readiness.
 2. Prove API auth and station-scoped authorization with positive and negative integration tests.
 3. Verify Supabase schema/RPC contracts against the new project without applying unapproved migrations.
-4. Trace every Angular/Flutter form to an API call or explicitly label it local-only/demo.
+4. Prevent dashboard-local identity from being treated as authenticated authority; connect phenomena input/list.
 
 **P1 — data correctness**
 5. Freeze shared observation DTOs, UTC/time-zone semantics, enumerations and validation error codes.
 6. Verify review state machine, audit trail and idempotency behavior end-to-end.
 7. Reconcile missing station coordinates using authoritative evidence only.
+8. Connect rainfall/climate/soil/agriculture and monthly/annual read/report features only after their contracts are approved.
+9. Add Flutter observation entry and report-read screens before claiming parity.
 
 **P2 — specialized integrations**
-8. Define R/Climatol batch interface and reproducible worker runtime.
-9. Define paper-image evidence ingestion and auditor result interface.
-10. Complete reports/export integration and client parity.
+10. Define R/Climatol batch interface and reproducible worker runtime.
+11. Define paper-image evidence ingestion and auditor result interface.
+12. Complete reports/export integration and client parity.
