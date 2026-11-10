@@ -211,8 +211,6 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
         ['fieldSoilTemp10cm', 'حرارة تربة الحقل على عمق 10 سم'],
       ].map((e) => ObservationFieldSpec(key: e[0], label: e[1], kind: ObservationFieldKind.number, unit: '°س')),
       ObservationFieldSpec(key: 'logEvaporation', label: 'التبخر من السجل', kind: ObservationFieldKind.number, unit: 'مم'),
-    ],
-    fields: [
       ...[
         ['dew', 'ندى'], ['fog', 'ضباب'], ['hail', 'برد'], ['sandstorm', 'عواصف رملية أو ترابية'],
       ].map((e) => ObservationFieldSpec(key: e[0], label: e[1], kind: ObservationFieldKind.boolean)),
