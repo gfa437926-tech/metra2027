@@ -19,7 +19,8 @@
 - Branch: `work/electronic-record-auditor-audit`
 - Draft PR: https://github.com/gfa437926-tech/metra2027/pull/20
 - PR status: Open, Draft, not merged
-- Current reporting commit: pending creation of this progress record and its changelog entry.
+- Progress report creation commit: `203dc76150c2cbe0de7eb5bb4c934324aa69e54c` — https://github.com/gfa437926-tech/metra2027/commit/203dc76150c2cbe0de7eb5bb4c934324aa69e54c.
+Changelog creation commit: `58a220f4b6ee5b65110f4a07e346e16e4468d2bc` — https://github.com/gfa437926-tech/metra2027/commit/58a220f4b6ee5b65110f4a07e346e16e4468d2bc.
 
 ## Files inspected
 
