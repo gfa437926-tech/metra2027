@@ -35,7 +35,7 @@ void main() {
         'id': '22222222-2222-4222-8222-222222222222',
         'station_id': stationId,
         'observation_type': 'hourly',
-        'observed_at': '2026-11-10T15:00:00+03:00',
+        'observed_at': '2026-11-10T12:00:00+00:00',
         'status': 'submitted',
       }]), 200)),
     );
