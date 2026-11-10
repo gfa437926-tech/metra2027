@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
+import 'package:metra_mobile/features/home/metra_home.dart';
 
 void main() {
   testWidgets('configuration screen explains missing secure environment values', (tester) async {
@@ -61,6 +62,23 @@ void main() {
     expect(find.text('محطة آلية'), findsOneWidget);
     await tester.tap(find.text('محطة آلية'));
     expect(selected, '22222222-2222-4222-8222-222222222222');
+    api.close();
+  });
+  testWidgets('review navigation stays hidden until trusted scoped access exists', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'test-token',
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+
+    await tester.pumpWidget(MaterialApp(home: MetraHome(api: api)));
+    await tester.pump();
+
+    expect(find.text('الرصد'), findsNothing);
+    expect(find.text('مراجعة الرصدات'), findsNothing);
+    expect(find.text('المحطات'), findsOneWidget);
+    expect(find.text('التقارير'), findsOneWidget);
+
     api.close();
   });
 }
