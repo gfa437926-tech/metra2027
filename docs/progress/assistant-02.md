@@ -44,7 +44,7 @@ A QA-06 PR review comment reiterated the P1 TOCTOU finding and specifically requ
 ## Round 5 — station isolation endpoint test
 Reviewed the QA-06 finding and the actual queue endpoint, authorization interface, Program.cs and test project. Extended `ObservationQueueEndpointTests.cs` with a sixth test: an actor granted station A is denied (403) when requesting station B; the test asserts that each authorization check used station B and the queue service was never called. The fake authorization service now supports a station-specific grant and records requested station IDs.
 
-Commit: `efa5870e555d4f74584e44bd439002daf784afa3`. The available commit-workflow lookup returned no PR-triggered workflow run for this commit; CI success is not confirmed. Tests were not run locally. This is endpoint-level fake-service coverage only, not a DB integration test and not a TOCTOU remediation. Revocation-before-request, concurrent read/revocation, atomic decision, DB-backed station isolation and E2E remain outstanding.
+Commit: `efa5870e555d4f74584e44bd439002daf784afa3`. GitHub Actions run 42925098754 completed successfully on the test commit. Build, authorization contract checks, API build, Domain/API tests and production container image build all passed. No local test run is claimed. Tests were not run locally. This is endpoint-level fake-service coverage only, not a DB integration test and not a TOCTOU remediation. Revocation-before-request, concurrent read/revocation, atomic decision, DB-backed station isolation and E2E remain outstanding.
 
 ## B-013 finding and disposition
 The current flow performs permission RPC checks first, then a separate PostgREST SELECT using the server service-role credential. A revocation can commit between the operations, leaving an in-flight request with a stale authorization decision.
@@ -57,7 +57,7 @@ B-013 remains **in progress**. The design document is not an implementation and 
 | Check | Result | Evidence |
 |---|---|---|
 | Source-level review of queue and permission sequence | Completed | B-013 design document |
-| Local .NET tests in this round | Not run | No local execution claimed |
+| GitHub Actions run 42925098754 | Success | https://github.com/gfa437926-tech/metra2027/actions/runs/42925098754 |
 | GitHub Actions run 42924316537 | Success on commit d1ebc84289b3faca1a70c86413a531a5d33ecf78 | https://github.com/gfa437926-tech/metra2027/actions/runs/42924316537 |
 | Previous Actions run 42922191087 | Success in round 2 | https://github.com/gfa437926-tech/metra2027/actions/runs/42922191087 |
 | Previous Actions run 42922249720 | Success in round 2 | https://github.com/gfa437926-tech/metra2027/actions/runs/42922249720 |
@@ -98,3 +98,7 @@ Obtain the owner-approved schema review for station grants/assignments and obser
 The initial attempt to create this report in round 2 omitted the target branch and briefly created the file on the default branch. This was immediately corrected by deleting it from main; corrective commit:
 https://github.com/gfa437926-tech/metra2027/commit/43c72da0604e49a74d2128cc9d3d881e2c912f26
 A subsequent check confirmed the report is absent from the current main tree and exists on the assistant-02 branch. No source code or database files were changed by this incident; the add/delete commits remain visible in main history.
+
+
+## Round 5 CI result
+Actions run `42925098754` completed successfully on commit `efa5870e555d4f74584e44bd439002daf784afa3`: dependency restore/advisory checks, authorization contract checks, API build, Domain/API tests, and production container image build all passed. No local `dotnet test` run is claimed. The passing suite does not establish DB-backed revocation/race guarantees and does not close B-013.
