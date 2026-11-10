@@ -60,3 +60,19 @@ See [CLIENT-DATA-SOURCE-INVENTORY.md](CLIENT-DATA-SOURCE-INVENTORY.md) for route
 10. Define R/Climatol batch interface and reproducible worker runtime.
 11. Define paper-image evidence ingestion and auditor result interface.
 12. Complete reports/export integration and client parity.
+
+
+## Contract cross-check update — 2026-11-11
+
+Detailed evidence is recorded in [API-CONTRACT-CROSSCHECK.md](API-CONTRACT-CROSSCHECK.md).
+
+| Contract edge | New finding | Severity / disposition |
+|---|---|---|
+| ASP.NET Core station catalogue → Flutter | Flutter requires non-null `local_station_code` and `name_en`; Angular contract permits null for both; API forwards the database projection without normalizing them | **P1 confirmed source-level DTO mismatch**; align Flutter nullability or formally constrain schema after owner review |
+| Angular/Flutter observation submit → ASP.NET Core | Route, verb and camelCase request fields align with `ObservationSubmissionRequest` | Source-level match; runtime serialization/RPC response not tested |
+| Client validation → submission endpoint | Daily/hourly/phenomena domain validation endpoints exist, but inspected clients do not call them; submission guard checks only generic shape/type/time/idempotency/size before RPC | **P0/P1 validation assurance gap**; prove RPC enforces all meteorological rules or centralize validation in server persistence path |
+| Review queue → clients | Queue route, limit parameter and selected response fields align with Angular and Flutter models | Source-level match; schema/RPC behavior not tested |
+| Decision → clients/API | Route, `decision` and `note` fields align; API checks station-specific permission and requires note for return | Source-level match; DB transition/audit behavior unverified |
+| API → Supabase schema/RPC | RPC names and PostgREST projections are visible in C# services; exact migration signatures, nullability, grants and return shape not confirmed | Open until migration/RPC evidence and contract tests |
+
+The station-directory nullability issue and validation-boundary gap are now explicit blockers in the cross-client contract review. No code or schema change was made.
