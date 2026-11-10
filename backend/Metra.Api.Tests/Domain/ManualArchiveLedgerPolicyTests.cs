@@ -49,7 +49,6 @@ public sealed class ManualArchiveLedgerPolicyTests
         Assert.Equal(System.Net.HttpStatusCode.Conflict, second.StatusCode);
         Assert.Equal("duplicate_archive_confirmation", second.Error);
     }
-}
 
     [Fact]
     public async Task In_memory_list_and_monthly_summary_reflect_confirmations()
@@ -97,3 +96,4 @@ public sealed class ManualArchiveLedgerPolicyTests
         Assert.All(rowsA, r => Assert.Equal(stationA, r.StationId));
         Assert.DoesNotContain(rowsA, r => r.ExcelFileName == "b.xlsx");
     }
+}

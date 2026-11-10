@@ -145,7 +145,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
             ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _reportKind,
+            initialValue: _reportKind,
             decoration: const InputDecoration(labelText: 'نوع التقرير'),
             items: const [
               DropdownMenuItem(value: 'hourly', child: Text('ساعي')),
