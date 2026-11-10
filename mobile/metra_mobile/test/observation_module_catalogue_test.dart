@@ -41,7 +41,7 @@ void main() {
       ]));
       expect(report.submitSupportedByCurrentApi, isFalse);
       expect(report.apiObservationType, isNull);
-      expect(report.sourceNotes.any((note) => note.contains('لا يعرض أو يحسب أي توقيت محلي')), isTrue);
+      expect(report.title, contains(variant == ObservationReportVariant.synoptic06Utc ? '06:00 UTC' : '18:00 UTC'));
     }
   });
 
