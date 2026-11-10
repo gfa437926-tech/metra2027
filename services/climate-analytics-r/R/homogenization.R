@@ -5,6 +5,10 @@ metra_run_homogenization <- function(request, workspace_root = Sys.getenv("METRA
   if (!dir.create(job_dir, showWarnings = FALSE)) {
     stop("Could not create an isolated job directory.", call. = FALSE)
   }
+  staging_complete <- FALSE
+  on.exit({
+    if (!staging_complete) unlink(job_dir, recursive = TRUE, force = TRUE)
+  }, add = TRUE)
 
   input_paths <- c(validated$data_file, validated$station_file)
   input_hashes_before <- vapply(input_paths, digest::digest, character(1),
@@ -22,6 +26,7 @@ metra_run_homogenization <- function(request, workspace_root = Sys.getenv("METRA
   if (!identical(unname(input_hashes_before), unname(staged_hashes))) {
     stop("Staged input integrity check failed.", call. = FALSE)
   }
+  staging_complete <- TRUE
 
   original_wd <- getwd()
   on.exit(setwd(original_wd), add = TRUE)

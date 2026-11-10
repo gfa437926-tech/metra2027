@@ -121,3 +121,50 @@ test_that("non-finite and non-real year values are rejected cleanly", {
     "ordered integer years"
   )
 })
+
+
+test_that("worker restores the caller working directory after success and failure", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+  caller_wd <- getwd()
+
+  metra_run_homogenization(request, workspace_root = root,
+    runner = function(...) writeLines("ok", "success.txt"))
+  expect_identical(getwd(), caller_wd)
+
+  expect_error(metra_run_homogenization(request, workspace_root = root,
+    runner = function(...) stop("expected runner failure")),
+    "expected runner failure")
+  expect_identical(getwd(), caller_wd)
+})
+
+test_that("repeated jobs retain separate output directories and manifests", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+  runner <- function(...) writeLines("isolated", "artifact.txt")
+
+  first <- metra_run_homogenization(request, workspace_root = root, runner = runner)
+  second <- metra_run_homogenization(request, workspace_root = root, runner = runner)
+
+  expect_false(identical(first$output_directory, second$output_directory))
+  expect_true(file.exists(first$provenance_file))
+  expect_true(file.exists(second$provenance_file))
+  expect_true(file.exists(file.path(first$output_directory, "artifact.txt")))
+  expect_true(file.exists(file.path(second$output_directory, "artifact.txt")))
+})
