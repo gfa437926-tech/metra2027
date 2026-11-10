@@ -27,6 +27,40 @@ void main() {
     client.close();
   });
 
+  test('review queue timestamps are normalized to UTC', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'utc-token',
+      client: MockClient((_) async => http.Response(jsonEncode([{
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': stationId,
+        'observation_type': 'hourly',
+        'observed_at': '2026-11-10T12:00:00+00:00',
+        'status': 'submitted',
+      }]), 200)),
+    );
+    final rows = await client.getReviewQueue(stationId);
+    expect(rows.single.observedAt.isUtc, isTrue);
+    expect(rows.single.observedAt.toIso8601String(), '2026-11-10T12:00:00.000Z');
+    client.close();
+  });
+
+  test('review queue rejects timestamps without an explicit UTC designator', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'utc-token',
+      client: MockClient((_) async => http.Response(jsonEncode([{
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': stationId,
+        'observation_type': 'hourly',
+        'observed_at': '2026-11-10T12:00:00',
+        'status': 'submitted',
+      }]), 200)),
+    );
+    await expectLater(client.getReviewQueue(stationId), throwsFormatException);
+    client.close();
+  });
+
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
