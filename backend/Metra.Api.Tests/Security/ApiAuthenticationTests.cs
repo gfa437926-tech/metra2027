@@ -48,6 +48,32 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Requests_with_declared_body_over_one_megabyte_are_rejected_before_authentication()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/observations/daily/validate")
+        {
+            Content = new ByteArrayContent(new byte[1_048_577])
+        };
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Requests_at_the_one_megabyte_body_limit_continue_to_authentication()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/observations/daily/validate")
+        {
+            Content = new ByteArrayContent(new byte[1_048_576])
+        };
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Api_responses_include_defense_in_depth_security_headers()
     {
         using var response = await _client.GetAsync("/api/v1/health");
