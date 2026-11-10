@@ -88,3 +88,31 @@ Append-only log for QA work on METRA 2027. Entries are newest last; do not delet
 ### Progress
 - **Estimated QA-06 completion:** 50%, weighted work-package method documented in `docs/progress/assistant-06.md`.
 - **Remaining major work packages:** 3 — execute own CI/tests, implement missing suites, complete cross-layer verification and integration sign-off.
+
+
+---
+
+## QA-03 — Refresh parallel PR CI outcomes (2026-11-10T23:32:18Z UTC)
+
+### Verified current PR/Actions evidence
+- **PR #21 / Flutter:** current head at inspection was `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da`. Client CI run [42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) was in progress. Angular build passed; Flutter dependency resolution and `flutter analyze` passed; `flutter test` had not completed at inspection. Earlier run [42923951902](https://github.com/gfa437926-tech/metra2027/actions/runs/42923951902) was cancelled; do not interpret cancellation as a test failure or pass.
+- **PR #22 / Backend:** latest observed run [42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) completed successfully on head `cfe43d00e729b6dbec76690a5734f8344dfe3abd`. Job steps passed NuGet restore/audit, authorization SQL contract checks, API build, Domain/API tests and Docker image build.
+- **PR #23 / R:** latest head at inspection was `0c5ba868acf74fe7506d81d073f73c538ccec4d5`. Run [42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) was in progress. Earlier run [42923751451](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) completed successfully on earlier head `cb2fd0d486fcf22004edec100bde09f915e49b03`; it does not validate the latest head.
+- **PR #27 / DevOps:** latest observed head `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c`; Client CI run [42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) was cancelled with no jobs. Earlier Client CI [42922825265](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265) succeeded on earlier head `8f1687246fd0f41a1d6de188eebd6beeb372e0a9`, not the latest PR head.
+- **QA PR #24:** remains open, Draft, unmerged, mergeable at inspection. Latest QA head is `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`. No workflow run is associated with this branch/PR; QA-06 has not run its own tests.
+
+### QA interpretation
+- PR #22 has a current successful Backend build at the observed head.
+- PR #21's latest observed Flutter test step was still running; its result is unknown at this timestamp.
+- PR #23's latest R workflow was still running; its result is unknown at this timestamp.
+- PR #27's latest head has no completed successful Client CI run; its latest run was cancelled.
+- None of these cross-assistant runs is a test run for QA PR #24.
+
+### QA-06 work completed in this round
+- Retrieved full run and job/step outcomes, not just run summary status.
+- Corrected the previous round's queued/in-progress descriptions to final/observed statuses above.
+- No source code, tests, workflows, database, migrations or shared coordination files were modified.
+
+### Progress and remaining work
+- QA-06 remains **50%** complete. The refreshed evidence review improves confidence but does not execute QA's own test plan or add missing suites.
+- Three major work packages remain: own QA execution, missing test implementation, and cross-layer verification/integration sign-off.
