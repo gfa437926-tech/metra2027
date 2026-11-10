@@ -149,3 +149,23 @@ The decision endpoint performs a decision-specific API permission check and pass
 A review comment was submitted to [PR #22](https://github.com/gfa437926-tech/metra2027/pull/22) (review ID `5851183143`) anchored to commit `1ac10c4f083b5975bf1b95a456610725feecb704`. It records the TOCTOU finding, missing endpoint tests, atomic RPC recommendation and test cases.
 
 No QA code, SQL, migration, database schema/data, or production resource was changed. QA-06 did not execute tests and does not claim the finding was exploited against a live system.
+
+
+---
+
+## QA-06 — CI freshness and migration trigger audit (2026-11-10T23:37:30Z UTC)
+
+### Current PR-head evidence
+- PR #22 Backend head `705668b9c3ff9f4011a622e5001099ca01f69931`: current-head Backend build succeeded. Source review confirms the review queue still performs a separate permission RPC followed by a service-role SELECT; no queue endpoint integration test file is present. B-013 remains unresolved.
+- PR #21 Flutter head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: Client CI was pending at the time of snapshot. Earlier success belonged to an older SHA.
+- PR #23 R head `42db1be81790d4dda47584019b729df8a1f53c07`: no workflow run found for the current head. Do not claim this head's tests passed.
+- PR #27 DevOps head `71888fbecbaaf147db98aa632784b476fba047cd`: Client CI succeeded on current head.
+
+### P2 — Backend CI does not watch Supabase migration path
+`.github/workflows/backend-ci.yml` on main watches `database/migrations/**` and `database/tests/**`, but not `supabase/migrations/**`. Main currently contains five operational observation migration files in `supabase/migrations/`. A pull request changing only those files may therefore fail to trigger Backend build via paths. Add `supabase/migrations/**` to both push and pull_request filters, retaining the existing database paths. Add isolated migration validation/contract checks as appropriate. QA-06 recorded but did not modify the workflow.
+
+### Client and R test coverage review
+Flutter PR #21 tests cover bearer token forwarding, missing token, HTTPS-only origin, bounded queue limit, directory pagination/overflow and review UI behavior including UTC display normalization. These do not prove backend station isolation. Current head CI was pending.
+R PR #23 testthat coverage includes symlink/path traversal, file type and directory boundaries, request validation, staged-copy integrity and provenance for successful/failed worker runs. No current-head CI result was available.
+
+No QA-local test execution or application/workflow/SQL change was performed.
