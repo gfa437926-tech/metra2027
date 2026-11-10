@@ -116,3 +116,18 @@ Append-only log for QA work on METRA 2027. Entries are newest last; do not delet
 ### Progress and remaining work
 - QA-06 remains **50%** complete. The refreshed evidence review improves confidence but does not execute QA's own test plan or add missing suites.
 - Three major work packages remain: own QA execution, missing test implementation, and cross-layer verification/integration sign-off.
+
+
+## QA-04 — Finalize latest observed Actions outcomes (2026-11-10T23:33:00Z UTC)
+
+- **PR #21 Flutter:** [Client CI #42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) completed **success** on current observed head `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da`. Both Angular build and Flutter job passed; Flutter job explicitly passed `flutter pub get`, `flutter analyze` and `flutter test`. This run includes the newly added UTC widget test from that PR head.
+- **PR #22 Backend:** [Backend build #42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) completed **success** on observed head `cfe43d00e729b6dbec76690a5734f8344dfe3abd`; restore/audit, SQL authorization contracts, API build, Domain/API tests and Docker build passed.
+- **PR #23 R/Climatol:** [Climate Analytics R #42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) completed **success** on observed head `0c5ba868acf74fe7506d81d073f73c538ccec4d5`; dependency setup, pinned Climatol fixture version check and R package check passed.
+- **PR #27 DevOps:** latest observed head `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c`; [Client CI #42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) completed **cancelled**, with no jobs. Earlier successful run #42922825265 is on older head `8f1687246fd0f41a1d6de188eebd6beeb372e0a9`; latest PR head remains unverified by a successful run.
+- **QA PR #24:** remains open, Draft, unmerged. No QA branch workflow run was found; no QA-06 tests were executed.
+
+### QA interpretation
+- The current observed Flutter, Backend and R/Climatol branch heads now have successful Actions evidence.
+- DevOps latest head remains unverified because its latest Client CI was cancelled; the older success must not be attributed to the latest head.
+- These are results for the respective assistant branches, not for QA-06 or PR #24.
+- QA-06 progress remains **50%**; the evidence refresh does not implement or execute QA's own outstanding test suites.
