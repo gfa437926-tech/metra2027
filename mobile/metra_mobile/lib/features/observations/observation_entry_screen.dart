@@ -15,7 +15,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _payload = TextEditingController(text: '{\n  "temperature": 0\n}');
   String _type = 'hourly';
-  DateTime _observedAt = DateTime.now();
+  DateTime _observedAt = DateTime.now().toUtc();
   bool _submitForReview = true, _busy = false;
   String? _error;
   String? _pendingIdempotencyKey;
@@ -85,6 +85,12 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
     }
   }
 
+  String _formatUtc(DateTime value) {
+    final utc = value.toUtc();
+    String two(int part) => part.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} ${two(utc.hour)}:${two(utc.minute)}';
+  }
+
   @override
   Widget build(BuildContext context) => Directionality(
     textDirection: TextDirection.rtl,
@@ -111,7 +117,7 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
               onPressed: _busy ? null : () async {
                 final picked = await showDatePicker(context: context,
                   initialDate: _observedAt, firstDate: DateTime(2000),
-                  lastDate: DateTime.now().add(const Duration(days: 2)));
+                  lastDate: DateTime.now().toUtc().add(const Duration(days: 2)));
                 if (!context.mounted) {
                   return;
                 }
@@ -123,11 +129,11 @@ class _ObservationEntryScreenState extends State<ObservationEntryScreen> {
                 if (!context.mounted || time == null) {
                   return;
                 }
-                setState(() => _observedAt = DateTime(
+                setState(() => _observedAt = DateTime.utc(
                   picked.year, picked.month, picked.day, time.hour, time.minute));
               },
               icon: const Icon(Icons.schedule),
-              label: Text('وقت الرصد: ${_observedAt.toLocal()}'),
+              label: Text('وقت الرصد: ${_formatUtc(_observedAt)} UTC'),
             ),
             const SizedBox(height: 12),
             TextFormField(
