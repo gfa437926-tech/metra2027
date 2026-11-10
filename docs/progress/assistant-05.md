@@ -115,3 +115,37 @@ No database or Supabase modification. No raw observation changes. No automatic a
 - Overall completion remains **25% (2/8 milestones)**. The module-level inventory is materially improved, but milestone 3 is not marked complete until the remaining backend feature tree, worker, storage, authorization, and test locations are inventoried.
 - **Remaining milestones:** 6.
 - Next: inspect the actual feature and test directories using repository tree evidence; then produce a precise, DB-independent contract/fixture proposal only after confirming the current API/domain ownership boundaries.
+
+
+## Round 4 — backend/CI inventory and contract readiness register
+
+**Updated (UTC):** 2026-11-10T23:34:37.134Z  
+**Round status:** منجزة (documentation/evidence pass); overall task remains قيد التنفيذ.
+
+### Newly inspected
+
+- `backend/Metra.Api/Metra.Api.csproj`: .NET 10 API project; no image-processing package in this project file.
+- `backend/Metra.Api.Tests/Metra.Api.Tests.csproj`: .NET 10 xUnit test project using Microsoft.NET.Test.Sdk and ASP.NET MVC Testing.
+- `.github/workflows/backend-ci.yml`: disposable PostgreSQL station-isolation job, high/critical NuGet advisory gate, authorization contract scripts, API build/test, Docker build, and health/readiness smoke checks.
+- `angular-app/package.json`: Angular 20; current test script includes TypeScript tests and three Node contract test suites; no auditor-specific test script.
+- Re-read the complete relevant sections of the formal AI auditor specification and master plan.
+
+### Findings
+
+- Existing backend CI is suitable as the integration point for future auditor API and station-isolation tests; no separate test framework is needed.
+- The formal design documents conflict on canonical API prefix (`electronic-audits` vs `intelligent-audits`), permission namespace (`electronic_auditor.*` vs `intelligent_audit.*`), and logical entity naming. These are explicitly proposed/logical names, not wired permissions. Implementation is blocked until the owner/architecture authority resolves the canonical contract.
+- Upload limits, content scanning, storage retention, private bucket policy, calibration catalogue, scientific rules and reference-data acceptance thresholds remain owner inputs; none should be invented.
+- Several guessed test source paths were not found; exact test-source inventory remains incomplete. The test project and CI commands are verified.
+
+### GitHub changes
+
+- Updated `docs/audits/ELECTRONIC-RECORD-AUDITOR-AUDIT.md` with CI/test architecture and contract conflicts. Commit: `3df5531baa076ddce6b478e8ae396df65036bb5c` — https://github.com/gfa437926-tech/metra2027/commit/3df5531baa076ddce6b478e8ae396df65036bb5c.
+- Added `docs/audits/ELECTRONIC-AUDITOR-CONTRACT-READINESS.md` with proposed logical boundaries, security gates, test gates, owner inputs and explicit non-actions. Commit: `a9a1fe51dabbe132866371f2f428f68e4f6346c2` — https://github.com/gfa437926-tech/metra2027/commit/a9a1fe51dabbe132866371f2f428f68e4f6346c2.
+- No application source, API, database, migration, storage bucket, or raw observation changed.
+- No software tests or GitHub Actions were run. The CI workflow was inspected, not executed.
+
+### Progress and remaining work
+
+- Overall completion remains **25% (2/8 defined milestones)**. The module source/CI inventory is now materially richer but not complete because the full backend test tree, storage adapters and worker directories have not been enumerated.
+- **Remaining milestones:** 6.
+- Next: resolve canonical contract decisions with the owner; then inventory exact test sources and determine the safest pure-domain/test-only implementation slice. No implementation or schema work before required approvals.
