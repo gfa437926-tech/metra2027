@@ -114,6 +114,7 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
       ObservationFieldSpec(key: 'avgWindDirection', label: 'اتجاه المتوسط الساعي للرياح', kind: ObservationFieldKind.number),
       ObservationFieldSpec(key: 'avgWindSpeed', label: 'سرعة المتوسط الساعي للرياح', kind: ObservationFieldKind.number, unit: 'م/ث'),
       ObservationFieldSpec(key: 'visibility', label: 'الرؤية الأفقية', kind: ObservationFieldKind.number),
+      ObservationFieldSpec(key: 'waveHeight', label: 'ارتفاع الموج', kind: ObservationFieldKind.number, unit: 'م'),
       ObservationFieldSpec(key: 'currentWeather', label: 'الطقس الحالي', kind: ObservationFieldKind.choice),
       ObservationFieldSpec(key: 'pastWeather', label: 'الطقس السابق', kind: ObservationFieldKind.choice),
       ObservationFieldSpec(key: 'precipitationAmount', label: 'كمية الهطول', kind: ObservationFieldKind.number, unit: 'مم'),
