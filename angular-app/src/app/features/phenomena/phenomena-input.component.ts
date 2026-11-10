@@ -30,9 +30,17 @@ interface LocalPhenomenon {
         <div class="header-actions"><span class="preview-badge"><i class="fa-solid fa-flask"></i> {{ statusBadge }}</span><span class="identity-meta">المستخدم: <strong id="currentUser">غير مسجل</strong></span><span class="identity-meta">المحطة: <strong id="currentStation">غير محددة</strong></span><span class="identity-meta">الصفة: <strong id="currentRole">غير محددة</strong></span><span>{{ currentDate }} · {{ currentTime }}</span><button type="button" (click)="resetLocalSession()">إعادة ضبط المعاينة</button></div>
       </header>
 
+      <section class="panel" style="padding:16px 22px">
+        <label style="display:flex;flex-direction:column;gap:6px;max-width:420px">المحطة (مطلوبة للحفظ على الخادم)
+          <select [(ngModel)]="stationId" (ngModelChange)="onStationChange($event)">
+            <option value="">— اختر محطة —</option>
+            <option *ngFor="let s of stations" [value]="s.id">{{ s.name_ar }}</option>
+          </select>
+        </label>
+      </section>
       <section class="warning">
         <i class="fa-solid fa-triangle-exclamation"></i>
-        <div><strong>تنبيه: اتصال قاعدة البيانات غير مفعّل</strong><p>يمكن تجربة المؤقت والتحكم بالظاهرة في هذه الصفحة، لكن السجلات تبقى مؤقتة داخل الصفحة ولا تُرسل إلى قاعدة البيانات أو تُشارك مع المحطة. الوقت المحلي المعروض هو وقت الجهاز. يلزم تحديد المنطقة الزمنية الرسمية للمحطة وربط API وتسجيل دخول موثّق قبل تفعيل التسجيل الفعلي.</p></div>
+        <div><strong>الحفظ على الخادم عند إنهاء الظاهرة</strong><p>ابدأ المؤقت محلياً، وعند الإنهاء تُرسل الظاهرة كـ observationType=phenomenon إلى API ضمن نطاق المحطة المختارة. بدون محطة أو API مضبوط يُرفض الحفظ. الأوقات المرجعية للخادم UTC.</p></div>
       </section>
 
       <section class="stats">
