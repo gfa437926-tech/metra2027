@@ -27,4 +27,4 @@ Climatology calculations may consume raw, quality-controlled, or approved homoge
 
 ## Implementation status
 
-The R worker bootstrap currently executes Climatol homogenization only. Climatological aggregation functions, index calculations, map generation, reporting APIs, and user interfaces remain future work.
+The R worker bootstrap now includes a generic daily-input monthly/yearly summary function. It requires an explicit statistic and completeness threshold, uses calendar-day denominators, rejects duplicate station-date records, and withholds values below the requested completeness. It is not yet a production climatology module: variable-specific aggregation rules, climate indices, maps, reporting APIs, and user interfaces remain future work.
