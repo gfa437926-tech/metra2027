@@ -21,10 +21,10 @@
 | HR-01 Hourly entry | إدخال ساعي | Done | Done | Yes | UTC; offline queue Angular |
 | HR-02 Hourly list | قائمة ساعية | Partial | Partial | Partial | Local/offline-oriented |
 | HR-03 Hourly detail | تفاصيل | Partial | Partial | Partial | |
-| HR-04 Hourly review queue | طابور التدقيق | Partial | Partial | Yes | observation workflow |
-| HR-05 Decision | اعتماد/إرجاع | Partial | Partial | Yes | SoD on server |
+| HR-04 Hourly review queue | طابور التدقيق | Done | Done | Yes | workflow filter + Flutter review |
+| HR-05 Decision | اعتماد/إرجاع | Done | Done | Yes | detail + return note + SoD |
 | DY-01 Daily entry | إدخال يومي | Done | Done | Yes | 24h / 06utc / 18utc types |
-| DY-02–05 Daily list/review | يومي | Partial | Partial | Yes | |
+| DY-02–05 Daily list/review | يومي | Done | Done | Yes | shared review queue with type filter |
 | AD-* Auditor workspace | مساحة المدقق | Partial | Missing | Partial | No monthly archive confirmation page |
 | RP-03..10 Specialist reports | شهري/سنوي/مناخ/مطر/زراعة/تربة/ظواهر | Scaffold/Partial | Missing | Missing/Partial | climate/monthly/annual/users scaffolds |
 | OP Maintenance/Support | أعطال/دعم | Partial | Partial | Yes | Station-scoped |
@@ -50,3 +50,10 @@
 - Station directory + detail: `/stations`, `/stations/:stationId`
 - Password recovery / profile remain product decisions (Supabase Auth); not invented as custom pages without owner rule set
 - Flutter admin parity still open
+
+
+## Phase B closure notes (observation cycle)
+- Angular `/observations/workflow`: type filter (hourly/daily), detail panel, UTC-only timestamps, approve/return/resubmit.
+- Hourly/daily entry pages link into the review workflow with station context.
+- Flutter review queue shows UTC (not device local time).
+- Server remains authoritative for decisions and station scope.

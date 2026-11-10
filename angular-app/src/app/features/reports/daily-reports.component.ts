@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
@@ -11,10 +12,11 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
 @Component({
   standalone: true,
   selector: 'metra-daily-reports',
-  imports: [CommonModule],
+  imports: [RouterLink, CommonModule],
   template: `
     <div class="page" dir="rtl">
-      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
+      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1>
+        <p class="workflow-jump"><a routerLink="/observations/workflow" [queryParams]="selectedStationId ? { stationId: selectedStationId } : {}">مراجعة النشرات اليومية</a></p><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
       <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
       <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="blockedOfflineCount"> · {{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><ul *ngIf="blockedOfflineItems.length" class="offline-blocked-list"><li *ngFor="let item of blockedOfflineItems"><strong>{{ item.stationName }} — {{ item.reportDate }} ({{ item.reportType }})</strong><span>{{ item.lastError || 'رفض الخادم النشرة دون تفاصيل إضافية.' }}</span></li></ul><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
       <section class="panel preview-panel" *ngIf="pendingOfflineItems.length">

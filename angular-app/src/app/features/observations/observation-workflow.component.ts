@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StationContextService } from '../../core/station/station-context.service';
 import { StationPickerComponent } from '../../core/station/station-picker.component';
 import { ObservationApiService, ObservationQueueItem } from '../../core/api/observation-api.service';
@@ -10,7 +10,7 @@ import { EditableObservationField, buildEditableFields, fieldsToPayload, validat
 
 @Component({
   standalone: true,
-  imports: [CommonModule, FormsModule, StationPickerComponent],
+  imports: [CommonModule, FormsModule, StationPickerComponent, RouterLink],
   template: `
     <div class="page" dir="rtl">
       <header>
@@ -42,40 +42,86 @@ import { EditableObservationField, buildEditableFields, fieldsToPayload, validat
       </section>
 
       <section class="stats">
-        <article><span>النشرات المعروضة</span><strong>{{ rows.length }}</strong></article>
-        <article><span>بانتظار القرار</span><strong>{{ rows.length }}</strong></article>
-        <article><span>مصدر البيانات</span><strong class="source">الخادم</strong></article>
+        <article><span>إجمالي الطابور</span><strong>{{ rows.length }}</strong></article>
+        <article><span>ساعي</span><strong>{{ countByType('hourly') }}</strong></article>
+        <article><span>يومي (24س)</span><strong>{{ countByType('daily') }}</strong></article>
+        <article><span>المعروض بعد التصفية</span><strong>{{ filteredRows.length }}</strong></article>
+        <article><span>مصدر البيانات</span><strong class="source">الخادم · UTC</strong></article>
       </section>
+
+      <div class="workflow-links" *ngIf="stationId">
+        <a routerLink="/reports/hourly" [queryParams]="stationId ? { stationId: stationId } : {}">إدخال ساعي</a>
+        <a routerLink="/reports/daily" [queryParams]="stationId ? { stationId: stationId } : {}">إدخال يومي</a>
+        <span class="hint">أوقات 06:00 و18:00 UTC جزء من الرصد الساعي وليست تقريراً يومياً. الأوقات المعروضة UTC فقط.</span>
+      </div>
 
       <div class="tabs">
         <button type="button" [class.active]="activeTab==='review'" (click)="activeTab='review'; load()">طابور المراجعة</button>
         <button type="button" [class.active]="activeTab==='returned'" (click)="activeTab='returned'; loadReturned()">مُرجَعة لإعادة التقديم</button>
       </div>
 
+      <div class="filters" *ngIf="activeTab==='review'">
+        <label>تصفية النوع
+          <select [(ngModel)]="typeFilter">
+            <option value="all">الكل</option>
+            <option value="hourly">ساعي</option>
+            <option value="daily">يومي</option>
+            <option value="other">أخرى</option>
+          </select>
+        </label>
+      </div>
+
       <section class="card" *ngIf="activeTab==='review'">
-        <div class="card-heading"><div><h2>قائمة النشرات المرسلة</h2><p>تظهر هنا السجلات ذات الحالة submitted فقط وفق صلاحيات المحطة.</p></div>
-          <span class="count">{{ rows.length }} سجل</span>
+        <div class="card-heading"><div><h2>قائمة النشرات المرسلة</h2><p>سجلات الحالة submitted ضمن صلاحيات المحطة. التفاصيل والقرار من الخادم.</p></div>
+          <span class="count">{{ filteredRows.length }} سجل</span>
         </div>
         <div class="loading" *ngIf="loading"><i class="fa-solid fa-spinner spin"></i> جارٍ تحميل البيانات من الخادم...</div>
         <div class="table-wrap" *ngIf="!loading">
           <table>
-            <thead><tr><th>معرّف النشرة</th><th>نوع النشرة</th><th>وقت الرصد</th><th>وقت الإرسال</th><th>معرّف الراصد</th><th>الحالة</th><th>الإجراء</th></tr></thead>
+            <thead><tr><th>معرّف النشرة</th><th>نوع النشرة</th><th>وقت الرصد (UTC)</th><th>وقت الإرسال (UTC)</th><th>معرّف الراصد</th><th>الحالة</th><th>الإجراء</th></tr></thead>
             <tbody>
-              <tr *ngFor="let row of rows">
+              <tr *ngFor="let row of filteredRows" [class.selected]="detail?.id===row.id">
                 <td data-label="معرّف النشرة"><code>{{ row.id }}</code></td>
                 <td data-label="نوع النشرة">{{ typeLabel(row.observation_type) }}</td>
-                <td data-label="وقت الرصد">{{ dateLabel(row.observed_at) }}</td>
-                <td data-label="وقت الإرسال">{{ dateLabel(row.submitted_at) }}</td>
+                <td data-label="وقت الرصد (UTC)">{{ dateLabel(row.observed_at) }}</td>
+                <td data-label="وقت الإرسال (UTC)">{{ dateLabel(row.submitted_at) }}</td>
                 <td data-label="معرّف الراصد"><code>{{ row.created_by }}</code></td>
                 <td data-label="الحالة"><span class="status">بانتظار المراجعة</span></td>
                 <td class="actions" data-label="الإجراء">
+                  <button type="button" class="view" (click)="openDetail(row)" [disabled]="busyId !== null">تفاصيل</button>
                   <button type="button" class="approve" (click)="decide(row, 'approve')" [disabled]="busyId !== null">اعتماد</button>
-                  <button type="button" class="return" (click)="decide(row, 'return_for_correction')" [disabled]="busyId !== null">إرجاع</button>
+                  <button type="button" class="return" (click)="openReturn(row)" [disabled]="busyId !== null">إرجاع</button>
                 </td>
               </tr>
-              <tr *ngIf="rows.length === 0"><td colspan="7" class="empty">لا توجد نشرات مرسلة للمراجعة لهذه المحطة، أو لم يتم تحميل القائمة بعد.</td></tr>
+              <tr *ngIf="filteredRows.length === 0"><td colspan="7" class="empty">لا توجد نشرات مطابقة للتصفية في طابور هذه المحطة.</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <section class="card detail-card" *ngIf="detail && activeTab==='review'">
+        <div class="card-heading">
+          <div>
+            <h2>تفاصيل النشرة</h2>
+            <p>عرض للقراءة قبل القرار. الزمن UTC. الاعتماد/الإرجاع يمران بالخادم مع فصل الواجبات.</p>
+          </div>
+          <button type="button" class="ghost" (click)="detail=null">إغلاق</button>
+        </div>
+        <dl class="detail-grid">
+          <div><dt>المعرّف</dt><dd class="ltr">{{ detail.id }}</dd></div>
+          <div><dt>النوع</dt><dd>{{ typeLabel(detail.observation_type) }}</dd></div>
+          <div><dt>الحالة</dt><dd>{{ detail.status }}</dd></div>
+          <div><dt>وقت الرصد (UTC)</dt><dd class="ltr">{{ dateLabel(detail.observed_at) }}</dd></div>
+          <div><dt>وقت الإرسال (UTC)</dt><dd class="ltr">{{ dateLabel(detail.submitted_at) }}</dd></div>
+          <div><dt>آخر مراجعة (UTC)</dt><dd class="ltr">{{ dateLabel(detail.reviewed_at) }}</dd></div>
+          <div><dt>الراصد</dt><dd class="ltr">{{ detail.created_by }}</dd></div>
+          <div><dt>ملاحظة سابقة</dt><dd>{{ detail.review_note || '—' }}</dd></div>
+        </dl>
+        <h3>محتوى الحمولة</h3>
+        <pre class="payload">{{ payloadPreview(detail) }}</pre>
+        <div class="actions">
+          <button type="button" class="approve" (click)="decide(detail, 'approve')" [disabled]="busyId !== null">اعتماد</button>
+          <button type="button" class="return" (click)="openReturn(detail)" [disabled]="busyId !== null">إرجاع للتصحيح</button>
         </div>
       </section>
       
@@ -169,7 +215,7 @@ import { EditableObservationField, buildEditableFields, fieldsToPayload, validat
     button{font:inherit;cursor:pointer}.refresh{border:1px solid #cbd8e2;background:white;color:#2876a8;padding:10px 15px;border-radius:8px}.refresh:disabled,button:disabled{opacity:.5;cursor:not-allowed}
     .notice{display:flex;gap:12px;align-items:flex-start;background:#eaf4fb;border:1px solid #c9e2f3;border-right:4px solid #3498db;border-radius:10px;padding:14px 16px;margin-bottom:16px;color:#245575}.notice>i{font-size:20px;margin-top:3px}.notice.error{background:#fff0ee;border-color:#f4c7c2;border-right-color:#d9534f;color:#8e302c}.notice.success{background:#eaf7ef;border-color:#c8e8d2;border-right-color:#27ae60;color:#218348}.notice strong{font-size:14px}.notice code,td code{font-size:11px;overflow-wrap:anywhere}
     .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:18px}.stats article,.card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 5px 18px #2233440c}.stats article{display:grid;gap:7px;border-bottom:3px solid #3498db}.stats span{font-size:12px;color:#71808b}.stats strong{font-size:25px}.stats .source{font-size:17px;color:#218348}
-    .card{padding:22px}.card-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.count{background:#edf5fa;color:#2876a8;padding:6px 11px;border-radius:20px;font-size:12px;font-weight:700}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;padding:13px 11px}td{padding:13px 11px;border-bottom:1px solid #edf0f2;font-size:12px}tbody tr:hover{background:#f8fbfd}.status{background:#fff3cd;color:#946200;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700}.actions{display:flex;gap:6px}.actions button{border:0;border-radius:6px;padding:7px 10px;color:#fff;font-size:11px}.approve{background:#22965b}.return{background:#d9822b}.empty{text-align:center;color:#89949c;padding:30px}.loading{padding:30px;text-align:center;color:#61717d}.return-dialog{position:fixed;inset:0;z-index:1200;background:rgba(18,32,44,.52);display:grid;place-items:center;padding:18px}.return-panel{width:min(100%,520px);background:#fff;border-radius:14px;padding:24px;box-shadow:0 16px 50px #10203035}.return-panel h2{margin-bottom:8px}.return-panel label{display:block;font-size:13px;font-weight:700;margin:16px 0 7px}.return-panel textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #ccd7df;border-radius:8px;padding:11px;font:inherit;line-height:1.7}.return-actions{display:flex;justify-content:flex-start;gap:8px;margin-top:14px}.return-actions button{border:0;border-radius:7px;padding:9px 14px;font-size:12px}.cancel{background:#edf1f4;color:#4b5c68}.confirm-return{background:#d9822b;color:#fff}.return-actions button:disabled{opacity:.5;cursor:not-allowed}.footnote{margin-top:14px;font-size:11px;color:#85919a}.spin{display:inline-block;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .card{padding:22px}.card-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}.count{background:#edf5fa;color:#2876a8;padding:6px 11px;border-radius:20px;font-size:12px;font-weight:700}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;padding:13px 11px}td{padding:13px 11px;border-bottom:1px solid #edf0f2;font-size:12px}tbody tr:hover{background:#f8fbfd}.status{background:#fff3cd;color:#946200;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700}.actions{display:flex;gap:6px}.actions button{border:0;border-radius:6px;padding:7px 10px;color:#fff;font-size:11px}.approve{background:#22965b}.return{background:#d9822b}.empty{text-align:center;color:#89949c;padding:30px}.loading{padding:30px;text-align:center;color:#61717d}.return-dialog{position:fixed;inset:0;z-index:1200;background:rgba(18,32,44,.52);display:grid;place-items:center;padding:18px}.return-panel{width:min(100%,520px);background:#fff;border-radius:14px;padding:24px;box-shadow:0 16px 50px #10203035}.return-panel h2{margin-bottom:8px}.return-panel label{display:block;font-size:13px;font-weight:700;margin:16px 0 7px}.return-panel textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #ccd7df;border-radius:8px;padding:11px;font:inherit;line-height:1.7}.return-actions{display:flex;justify-content:flex-start;gap:8px;margin-top:14px}.return-actions button{border:0;border-radius:7px;padding:9px 14px;font-size:12px}.cancel{background:#edf1f4;color:#4b5c68}.confirm-return{background:#d9822b;color:#fff}.return-actions button:disabled{opacity:.5;cursor:not-allowed}.filters{display:flex;gap:12px;margin:0 0 12px} .filters label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#5b6a74} .filters select{border:1px solid #d5dee4;border-radius:8px;padding:8px 10px}.workflow-links{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px;padding:10px 12px;background:#f5f9fb;border-radius:10px}.workflow-links a{color:#1f6f8b;font-weight:700;text-decoration:none}.workflow-links .hint{color:#6a7882;font-size:12px}.detail-card{margin-top:14px}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}.detail-grid div{display:grid;gap:4px;padding:8px;border:1px solid #edf1f4;border-radius:8px}.detail-grid dt{font-size:11px;color:#6a7882} .detail-grid dd{margin:0;font-weight:600}.payload{background:#0f1c24;color:#d7e6ef;padding:12px;border-radius:10px;overflow:auto;max-height:280px;direction:ltr;text-align:left;font-size:12px}tr.selected{background:#eef7fb}button.view{background:#e8eef2;color:#2c3a44;border:0;border-radius:7px;padding:8px 10px}button.ghost{background:#edf1f4;border:0;border-radius:7px;padding:8px 12px}.ltr{direction:ltr;text-align:right}.footnote{margin-top:14px;font-size:11px;color:#85919a}.spin{display:inline-block;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
     @media(max-width:700px){header,.card-heading{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr}.card{padding:14px}table,thead,tbody,tr,td{display:block}thead{display:none}tbody tr{border:1px solid #e8edf0;border-radius:9px;margin-bottom:12px;padding:7px}td{display:flex;justify-content:space-between;gap:10px;white-space:normal;overflow-wrap:anywhere;padding:8px 5px}td:before{content:attr(data-label);font-weight:700;color:#77838c}.actions{justify-content:flex-start}.empty{display:block}.empty:before{display:none}}
   `]
 })
@@ -190,6 +236,16 @@ export class ObservationWorkflowComponent implements OnInit {
   feedback = '';
   returnTarget: ObservationQueueItem | null = null;
   returnNote = '';
+  typeFilter: 'all' | 'hourly' | 'daily' | 'other' = 'all';
+  detail: ObservationQueueItem | null = null;
+
+  get filteredRows(): ObservationQueueItem[] {
+    if (this.typeFilter === 'all') return this.rows;
+    if (this.typeFilter === 'other') {
+      return this.rows.filter(r => r.observation_type !== 'hourly' && r.observation_type !== 'daily');
+    }
+    return this.rows.filter(r => r.observation_type === this.typeFilter);
+  }
 
   ngOnInit(): void {
     this.stationId = this.stationContext.resolveStationId(this.route);
@@ -318,6 +374,7 @@ export class ObservationWorkflowComponent implements OnInit {
       await this.api.decide(this.stationId, row.id, decision, note);
       this.returnTarget = null;
       this.returnNote = '';
+      if (this.detail?.id === row.id) this.detail = null;
       await this.load();
       this.feedback = decision === 'approve' ? 'تم إرسال قرار الاعتماد بنجاح.' : 'تم إرسال قرار الإرجاع بنجاح.';
     } catch (error: unknown) {
@@ -337,14 +394,44 @@ export class ObservationWorkflowComponent implements OnInit {
     this.returnTarget = null;
     this.returnNote = '';
   }
+  countByType(type: string): number {
+    return this.rows.filter(r => r.observation_type === type).length;
+  }
+
+  openDetail(row: ObservationQueueItem): void {
+    this.detail = row;
+    this.feedback = '';
+  }
+
+  openReturn(row: ObservationQueueItem): void {
+    this.returnTarget = row;
+    this.returnNote = '';
+    this.error = '';
+  }
+
+  payloadPreview(row: ObservationQueueItem): string {
+    try {
+      return JSON.stringify(row.payload ?? {}, null, 2);
+    } catch {
+      return String(row.payload ?? '');
+    }
+  }
+
   typeLabel(type: string): string {
     return ({ daily: 'نشرة يومية', hourly: 'نشرة ساعية', phenomenon: 'ظاهرة جوية' } as Record<string, string>)[type] ?? type;
   }
 
-  dateLabel(value: string | null): string {
+  dateLabel(value: string | null | undefined): string {
     if (!value) return '—';
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? value : new Intl.DateTimeFormat('ar', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+    if (Number.isNaN(date.getTime())) return String(value);
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
+    const hh = String(date.getUTCHours()).padStart(2, '0');
+    const mm = String(date.getUTCMinutes()).padStart(2, '0');
+    const ss = String(date.getUTCSeconds()).padStart(2, '0');
+    return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss + ' UTC';
   }
 
   private errorMessage(error: unknown): string {

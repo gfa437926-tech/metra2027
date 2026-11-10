@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
@@ -18,12 +19,13 @@ interface HourlyPreview {
 @Component({
   standalone: true,
   selector: 'metra-hourly-reports',
-  imports: [CommonModule],
+  imports: [RouterLink, CommonModule],
   template: `
     <div class="page" dir="rtl">
       <header class="page-head">
         <div class="head-icon"><i class="fa-regular fa-clock"></i></div>
-        <div><h1>النشرات الساعية</h1><p>إدخال بيانات الرصد والتحقق منها قبل إرسالها للمراجعة</p></div>
+        <div><h1>النشرات الساعية</h1>
+        <p class="workflow-jump"><a routerLink="/observations/workflow" [queryParams]="selectedStationId ? { stationId: selectedStationId } : {}">مراجعة النشرات الساعية</a></p><p>إدخال بيانات الرصد والتحقق منها قبل إرسالها للمراجعة</p></div>
         <span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span>
       </header>
 

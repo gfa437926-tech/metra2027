@@ -279,7 +279,7 @@ class _QueueBody extends StatelessWidget {
                           title: Text(_typeLabel(item.observationType)),
                           subtitle: Text(
                             [
-                              item.observedAt.toLocal().toString(),
+                              _formatUtc(item.observedAt),
                               item.status,
                               if (item.reviewNote != null &&
                                   item.reviewNote!.isNotEmpty)
