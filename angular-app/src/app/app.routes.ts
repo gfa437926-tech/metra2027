@@ -99,5 +99,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/observations/observation-workflow.component')
       .then((m) => m.ObservationWorkflowComponent)
   },
+  {
+    path: 'electronic-auditor',
+    canActivate: [requireAuthenticatedUser],
+    loadComponent: () =>
+      import('./features/electronic-auditor/electronic-auditor-workspace.component').then(
+        (m) => m.ElectronicAuditorWorkspaceComponent
+      )
+  },
   { path: '**', redirectTo: '' }
 ];

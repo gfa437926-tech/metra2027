@@ -199,6 +199,7 @@ export class DashboardComponent implements OnInit {
   ];
 
   readonly maintenanceCards: DashboardCard[] = [
+    { title: 'المدقق الإلكتروني', icon: 'fa-solid fa-ruler-combined', description: 'تدقيق مخططات المسجلات الميكانيكية (هيكل تصميمي — بدون OCR بعد)', path: '/electronic-auditor', colorClass: 'card-report', iconColor: '#7c3aed', buttonClass: 'btn-primary', actionLabel: 'فتح المساحة' },
     { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', path: '/equipment-faults', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
     { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
     { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
