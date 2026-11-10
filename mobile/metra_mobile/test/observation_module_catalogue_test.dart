@@ -97,6 +97,11 @@ void main() {
       containsAll(['utcTime', 'rainAmount', 'snowDepth']),
     );
     expect(
+      observationModuleSpec(ObservationModule.rainfall)
+          .fields.map((field) => field.key),
+      isNot(contains('localTime')),
+    );
+    expect(
       observationModuleSpec(ObservationModule.telecommunicationsFault)
           .fields.map((field) => field.key),
       containsAll(['phoneType', 'towerType', 'satelliteType', 'wifiType']),
