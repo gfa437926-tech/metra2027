@@ -135,3 +135,67 @@
 ## 8. ما لم يتم فعله
 
 لم يتم الاتصال بـ Supabase، ولم يتم تنفيذ SELECT أو DDL أو migration على أي مشروع، ولم يتم تشغيل seed، ولم يتم تعديل قاعدة بيانات قديمة أو جديدة، ولم يتم استيراد بيانات أو كتالوج محطات.
+
+
+## 10. الجولة الثانية — مراجعة تفصيلية لمسارات migrations (2026-11-11)
+
+**توقيت الفحص:** 2026-11-10T23:31:27.570Z UTC.
+**النطاق:** قراءة ملفات SQL الـ32 الموجودة في `database/migrations` و`supabase/migrations`، وقراءة اختبارات shell وعقود API المتاحة ذات الصلة. لم يتم تشغيل SQL أو الاختبارات.
+
+### 10.1 سجل مجموعات migrations
+
+| المجموعة | الملفات | الوظيفة الظاهرة | ملاحظة الاعتماد |
+|---|---:|---|---|
+| صلاحيات المحطة والتسجيل | database 003–011 | دوال تفويض المحطة، صلاحيات مراجعة المحطات والتسجيل، قوائم المراجعة ودليل مستخدمي المحطة | تعتمد على جداول تأسيسية غير موجودة في الشجرة الحالية |
+| تعيينات المحطة والتدقيق | database 012–014 | طلب/اعتماد/رفض/إلغاء تعيينات المحطة وقراءة سجل التدقيق | تعتمد على station_assignments وstation_audit_log وقيود تداخل الفترات من baseline |
+| تفويض نطاق السلطة | database 015–019 | تفويض authority-scope وربط قرارات التسجيل والمحطة بالسلطة والمحطة المطلوبة والتحقق من NULL | تعيد تعريف دوال سابقة؛ يجب تثبيت ترتيبها وعدم تطبيقها منفردة |
+| دورة العضوية والمنح | database 020–025 | authority_id للمنح، سجل تدقيق، إنشاء/مراجعة/إلغاء العضويات والمنح، ربط المسار، منع اعتماد subject غير نشط | migration 020 يتطلب backfill سابقاً لقيم authority_id لكنه لا يتضمنه |
+| نماذج قراءة دليل السلطة | database 026–029 | خيارات الأدوار والصلاحيات، دليل السلطات، قوائم الانتظار والسجلات المجدولة للإلغاء | 029 يوسع نطاق دليل الإلغاء ليشمل السجلات المعتمدة مستقبلاً |
+| الرصد التشغيلي | supabase 5 ملفات | إنشاء الرصد، رفض وصول العملاء، فهارس FK، دالة قرار المراجعة، تشديد NULL | يوجد تعارض مثبت في event_type بين القيد ودالة القرار |
+
+### 10.2 نتائج إضافية مسجلة
+
+#### DB-011 — migration 020 يفتقر إلى خطوة backfill لـ authority_id — مرتفع / حاجب للنشر
+الملف يضيف `permission_grants.authority_id` كعمود nullable، ثم يوقف التنفيذ إذا بقي أي صف بقيمة NULL، وبعدها يجعله NOT NULL ويضيف FK. لا توجد في الملف عملية UPDATE/backfill ولا توجد وثيقة تشغيل تحدد خريطة إسناد grants القديمة إلى authority. لذلك قد يفشل تطبيقه على قاعدة تحتوي منحاً موجودة. المطلوب خطة backfill مراجعة ومتحققة، أو تأكيد أن الجدول فارغ في baseline، قبل أي تشغيل. لا تنفذ الآن.
+
+#### DB-012 — payload الرصد لا يملك عقداً بنيوياً لكل نوع — مرتفع
+التحقق الحالي يضمن JSON object وحجم 64 KiB فقط. لا توجد قيود SQL أو JSON Schema versioned تثبت الحقول المطلوبة والوحدات ومجالات القيم لكل من daily/hourly/phenomenon. عقد API يصف مثالاً فقط، ووثيقة الظواهر نفسها تقر بأن المخطط غير معتمد. يلزم contract version ومصفوفة قياسات/وحدات ومؤشرات missing/trace قبل اعتماد البيانات.
+
+#### DB-013 — سجل تدقيق الرصد أقل تحصيناً من سجل تدقيق السلطة — متوسط
+`authority_access_audit_events` يملك trigger statement-level يمنع UPDATE/DELETE/TRUNCATE، بينما `metra_observation_audit_events` يملك trigger row-level يمنع UPDATE/DELETE فقط. صلاحيات service_role الظاهرة هي SELECT/INSERT ولا تمنحه TRUNCATE، لذلك لا يوجد دليل على ثغرة استغلال مباشرة عبر الدور الحالي؛ لكن الاتساق الدفاعي ضعيف ويستحسن حماية TRUNCATE أيضاً ضمن مراجعة baseline/ownership.
+
+#### DB-014 — idempotency لا يحسم تكرار العمل المناخي — متوسط / قرار أعمال
+القيد الفريد هو (station_id, created_by, idempotency_key)، وهو مناسب لإعادة إرسال نفس الطلب، لكنه لا يمنع إدخال رصدين بمفتاحين مختلفين للمحطة والنوع والوقت نفسيهما. يجب تحديد قواعد uniqueness حسب daily/hourly/phenomenon وما إذا كان التصحيح يمثل revision مستقلاً.
+
+#### DB-015 — دوال القراءة تعتمد على تفويض API لا تفويض SQL مستقل — متوسط
+عدة read-model functions تقبل station_id أو authority_id وتُنفذ بصلاحية service_role ولا تتحقق داخلياً من actor permission (مثل قوائم تسجيل المحطة وسجل المحطة). العقود الحالية تعتمد على حواجز API. يجب إثبات أن كل endpoint يتحقق من النطاق قبل استدعاء RPC، ومراجعة عدم وجود مسار داخلي آخر يستدعيها دون تفويض. هذا ليس إثبات تجاوز حالياً، بل حد ثقة معماري يحتاج اختبار تكامل.
+
+### 10.3 ما تدعمه الاختبارات الموجودة وما لا تدعمه
+
+وجدت اختبارات shell تعتمد على grep للتحقق من وجود نصوص وعقود SQL/API في الملفات، منها:
+- `verify_station_permission_rpc.sh`
+- `verify_authority_permission_rpc.sh`
+- `verify_registration_review_contract.sh`
+- `verify_station_assignment_workflow_contract.sh`
+- `verify_station_audit_contract.sh`
+- `verify_authority_access_lifecycle_contract.sh`
+
+هذه اختبارات static contract وليست اختبارات PostgreSQL فعلية؛ لا تثبت نجاح تطبيق migrations أو صحة القيود وقت التشغيل أو سلوك المعاملات والتزامن. لم أشغلها في هذه الجولة لعدم وجود checkout محلي متاح عبر أدوات هذه الجولة، ولم أطلب CI. لا يوجد ادعاء نجاح.
+
+### 10.4 فجوات لا تزال محجوبة
+
+- لا توجد migrations تأسيسية 001/002 في الشجرة، ولذلك لا يمكن إثبات تعريفات CREATE TABLE الأصلية لكل الجداول أو جميع أنواع الأعمدة والقيود والفهارس.
+- لا يوجد كتالوج محطات جديد معتمد في هذه الملفات؛ لا يجوز تعبئة أو استنتاج station rows.
+- لا يوجد تصميم مرفقات مكتمل أو bucket policy ضمن الملفات التي تمت مراجعتها.
+- لا توجد بيانات حمل فعلية أو قياسات حجم تسمح بحكم partitioning أو retention thresholds.
+- لا توجد سياسة احتفاظ معتمدة للبيانات المناخية الأصلية والمرفقات وسجلات التدقيق.
+
+### 10.5 ملفات إضافية فُحصت
+
+- ملفات migrations: جميع 27 ملفاً من `database/migrations/003` حتى `029`، وجميع 5 ملفات في `supabase/migrations`.
+- اختبارات: `verify_authority_access_lifecycle_contract.sh`, `verify_authority_permission_rpc.sh`, `verify_registration_review_contract.sh`, `verify_station_assignment_workflow_contract.sh`, `verify_station_audit_contract.sh`, `verify_station_permission_rpc.sh`.
+- عقود: `docs/api/operational-observation-submission.md`, `docs/weather-phenomena-api-and-schema-proposal.md`.
+
+### 10.6 حالة التنفيذ
+
+تمت قراءة الملفات وتوثيق النتائج فقط. لم تُشغّل الاختبارات، ولم تُنفذ migrations أو SQL، ولم يتم الاتصال بأي مشروع Supabase أو تغيير أي قاعدة بيانات.
