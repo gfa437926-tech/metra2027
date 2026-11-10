@@ -176,6 +176,7 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
     version = "v1"
 }))
 .AllowAnonymous()
+.DisableRateLimiting()
 .WithName("GetApiHealth");
 
 // Readiness is separate from liveness: it verifies server configuration and a
