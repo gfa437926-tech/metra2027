@@ -3,7 +3,7 @@
 **Task:** METRA 2027 system architecture and cross-module integration  
 **Task number:** 12  
 **Status:** In progress  
-**Last updated (UTC):** 2026-11-10T23:32:40.920Z  
+**Last updated (UTC):** 2026-11-10T23:36:01.892Z
 **Repository:** [gfa437926-tech/metra2027](https://github.com/gfa437926-tech/metra2027)  
 **Branch:** [assistant-12/system-integration-audit](https://github.com/gfa437926-tech/metra2027/tree/assistant-12/system-integration-audit)  
 **Pull request:** [#28 — Draft](https://github.com/gfa437926-tech/metra2027/pull/28)  
@@ -12,14 +12,14 @@
 
 ## Progress for this task only
 
-**80% complete.** Revised weighted calculation for this integration-audit task:
+**83% complete.** Revised weighted calculation for this integration-audit task:
 - Architecture/source system map: 25/25.
 - Angular/Flutter feature-by-feature source inventory: 20/20.
-- Client/API contract inspection: 15/20; source endpoints and client use mapped, but complete DTO/RPC/migration cross-check remains open.
+- Client/API contract inspection: 18/20; route and DTO matching was checked across both clients and ASP.NET Core; migration/RPC signature, nullability and runtime response verification remain open.
 - Specialized reporting, R/Climatol and paper-evidence flow analysis: 10/20; architecture gaps and proposed contracts documented, implementations not evidenced.
 - Runtime tests and authenticated end-to-end verification: 0/5.
 - GitHub documentation, traceability and cumulative reporting: 10/10.
-- **Total: 80/100.**
+- **Total: 83/100.**
 
 This percentage measures assistant 12's deliverables only, not overall METRA project completion. Runtime integration is not being claimed.
 
@@ -113,3 +113,62 @@ Full file evidence and qualifications are in [CLIENT-DATA-SOURCE-INVENTORY.md](.
 ## Safety
 
 No database/schema/data changes. No legacy database access. No production deployment. No merge to `main`. No modifications to other assistants' implementation files.
+
+
+## Round 4 — API request/response contract cross-check
+
+**UTC timestamp:** 2026-11-10T23:36:01.892Z  
+**Status:** In progress — source-level contract cross-check partially complete.
+
+### Work completed
+- Matched station directory, observation submission, review queue and decision route paths, HTTP verbs and query/body property names across Angular, Flutter and ASP.NET Core.
+- Inspected API station projection, submission request record/guard, queue projection/authorization and decision request guard/RPC caller.
+- Created `docs/architecture/API-CONTRACT-CROSSCHECK.md`.
+- Updated `docs/architecture/INTEGRATION-MATRIX.md` with new contract findings.
+
+### Confirmed source-level findings
+1. **P1 — Flutter station DTO nullability mismatch:** Angular allows `local_station_code` and `name_en` to be null. Flutter parser requires both to be strings and casts them as non-null. ASP.NET Core passes the projection through. A station row with either null can fail Flutter parsing. This is a static compatibility finding; no fixture/runtime test was run.
+2. **P0/P1 — Domain validation assurance gap:** ASP.NET Core has daily/hourly/phenomena validation endpoints, but the inspected client forms do not invoke them. The observation submission guard checks general request shape, allowed observation type, timestamp presence and payload size before calling the RPC; it does not invoke the domain validators in the inspected endpoint. Whether the database RPC enforces all meteorological rules remains unknown and must be proven before operational acceptance.
+3. **Source-level matches:** station directory, submission, queue and decision route paths and property names align across clients and API. RPC signatures/return contracts and DB transition semantics remain unverified.
+
+### Files inspected
+- `backend/Metra.Api/Program.cs`
+- `backend/Metra.Api/Features/Stations/StationDirectoryEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationSubmissionEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
+- `backend/Metra.Api/Features/Observations/ObservationValidationEndpoints.cs`
+- `backend/Metra.Api/Security/StationAuthorizationEndpointExtensions.cs`
+- `angular-app/src/app/core/api/observation-api.service.ts`
+- `angular-app/src/app/features/reports/hourly-reports.component.ts`
+- `angular-app/src/app/features/reports/daily-reports.component.ts`
+- `mobile/metra_mobile/lib/core/api/metra_api_client.dart`
+
+### Files changed
+- `docs/architecture/API-CONTRACT-CROSSCHECK.md` — created.
+- `docs/architecture/INTEGRATION-MATRIX.md` — appended contract cross-check section.
+- `docs/progress/assistant-12.md` — updated progress and appended this round.
+- `واجهات/تغيير.md` — append-only round entry.
+
+### Tests / workflows
+- Automated tests: not run.
+- Build, browser/device or API runtime tests: not run.
+- Database/migration/RPC tests: not run.
+- GitHub Actions: not verified for this round's commits; no success is claimed.
+
+### Progress calculation
+**83/100** for assistant 12 only:
+- Architecture/source system map: 25/25.
+- Angular/Flutter feature inventory: 20/20.
+- Client/API contract inspection: 18/20.
+- Specialized reporting/R/Climatol/paper evidence: 10/20.
+- Runtime tests and authenticated E2E: 0/5.
+- GitHub documentation/traceability: 10/10.
+
+### Remaining work
+**4 groups remain:**
+1. Inspect actual migrations, RPC definitions and database tests to verify columns, nullability, grants, function signatures, return shapes and transaction/idempotency semantics.
+2. Obtain owner-approved isolated API configuration and run authenticated Angular/Flutter contract/E2E tests, including null station fields and invalid meteorological payloads.
+3. Verify report provenance and define/validate R/Climatol and paper-record evidence contracts.
+4. Record test evidence, update the matrix and prepare PR #28 for human review.
+
+No application code, migrations, database data, deployment or merge was changed.
