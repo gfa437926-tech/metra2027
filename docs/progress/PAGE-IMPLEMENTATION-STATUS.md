@@ -78,3 +78,10 @@
 - Climate and annual pages converted to **honest unbound shells** with real station picker and links to live observation/archive flows.
 - No fabricated climate totals.
 - Rainfall remains preview-only until rainfall contract is approved.
+
+
+## Phase E — database approval package
+- Document: `docs/security/phase-e-database-approval-package.md`
+- Archive SQL remains review-only / not applied.
+- No hosted Supabase apply performed in this phase.
+- Owner decision form included before any migration execution.

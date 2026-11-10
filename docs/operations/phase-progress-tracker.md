@@ -24,3 +24,7 @@ Updated from repository evidence only. No live DB writes.
 - Branch: `work/legacy-ui-migration-audit`
 - Flutter observation forms: SingleChildScrollView + Column (validate/submit reliability)
 - Client CI and Backend CI reported success on tip `25c1c06` class commits
+
+
+## Phase E
+Status: review package published; **awaiting owner apply approval**.
