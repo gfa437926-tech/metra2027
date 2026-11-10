@@ -34,13 +34,13 @@ class DailyObservationContract {
   ];
 
   static const _fullDay = <String>{
-    'minTemp', 'maxTemp', 'precipitation', 'snowThickness', 'evaporation',
+    'minTemp', 'maxTemp', 'precipitation', 'evaporation',
     'sunshineDuration', 'sunshinePercentage', 'maxGustSpeed',
     'maxGustDirection', 'maxGustTime', 'maxHumidity', 'maxHumidityTime',
     'minHumidity', 'minHumidityTime',
   };
   static const _synoptic = <String>{
-    'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+    'minTemp', 'maxTemp', 'precipitation',
   };
 
   static Set<String> requiredFields(String reportType) => switch (reportType) {

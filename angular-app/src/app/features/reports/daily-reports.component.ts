@@ -30,9 +30,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
-          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص يومي بتاريخ اليوم السابق</label>
-          <label><input type="radio" name="reportType" value="06utc" [checked]="reportType === '06utc'" (change)="setType('06utc')"> 06 UTC</label>
-          <label><input type="radio" name="reportType" value="18utc" [checked]="reportType === '18utc'" (change)="setType('18utc')"> 18 UTC</label>
+          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص يومي لمدة 24 ساعة</label>
         </div>
         <p>{{ typeDescription }}</p>
       </section>
@@ -48,7 +46,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <div class="daily-field"><label>القيمة الصغرى في النهايات (سْ)<input #minTempField name="minTemp" maxlength="6" placeholder="-05.3" required (blur)="formatField($event)"><small>الصيغة -dd.d أو dd.d، أو # عند عدم توفر البيانات</small></label><div class="field-actions"><button type="button" class="sign-toggle" (click)="toggleTemperatureSign(minTempField)" [disabled]="minTempField.value === '#'">{{ minTempField.value.startsWith('-') ? '+' : '−' }}</button><button type="button" class="no-data-btn" [class.active]="isNoData('minTemp')" (click)="toggleNoData(minTempField, 'minTemp')">{{ isNoData('minTemp') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>القيمة العظمى في النهايات (سْ)<input #maxTempField name="maxTemp" maxlength="6" placeholder="25.7" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="sign-toggle" (click)="toggleTemperatureSign(maxTempField)" [disabled]="maxTempField.value === '#'">{{ maxTempField.value.startsWith('-') ? '+' : '−' }}</button><button type="button" class="no-data-btn" [class.active]="isNoData('maxTemp')" (click)="toggleNoData(maxTempField, 'maxTemp')">{{ isNoData('maxTemp') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>كمية الهطول لأقرب مم<input #precipitationField name="precipitation" maxlength="5" placeholder="012.5" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('precipitation')" (click)="toggleNoData(precipitationField, 'precipitation')">{{ isNoData('precipitation') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
-          <div class="daily-field"><label>أكبر سماكة ثلج لأقرب سم<input #snowThicknessField name="snowThickness" maxlength="3" placeholder="015" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('snowThickness')" (click)="toggleNoData(snowThicknessField, 'snowThickness')">{{ isNoData('snowThickness') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
+          <div class="daily-field"><label>أكبر سماكة ثلج لأقرب سم<input #snowThicknessField name="snowThickness" maxlength="3" placeholder="015" (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('snowThickness')" (click)="toggleNoData(snowThicknessField, 'snowThickness')">{{ isNoData('snowThickness') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>الأثر (T)<input #precipitationTraceField name="precipitationTrace" maxlength="1" placeholder="T" (blur)="formatField($event)"><small>الحرف T أو t عند وجود أثر فقط</small></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('precipitationTrace')" (click)="toggleNoData(precipitationTraceField, 'precipitationTrace')">{{ isNoData('precipitationTrace') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
         </div></section>
 
@@ -315,7 +313,7 @@ export class DailyReportsComponent implements OnDestroy {
     // Form controls such as date, station, observer, agreement and phenomena
     // are envelope metadata and must never leak into the validator's field map.
     const fieldNames = [
-      'minTemp', 'maxTemp', 'precipitation', 'snowThickness', 'precipitationTrace',
+      'minTemp', 'maxTemp', 'precipitation', 'precipitationTrace',
       'evaporation', 'sunshineDuration', 'sunshinePercentage',
       'maxGustSpeed', 'maxGustDirection', 'maxGustTime',
       'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime'
@@ -418,11 +416,11 @@ export class DailyReportsComponent implements OnDestroy {
     }
   }
 
-  readonly today = this.localDate(new Date());
-  private localDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+  readonly today = this.utcDate(new Date());
+  private utcDate(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
 
@@ -441,9 +439,7 @@ export class DailyReportsComponent implements OnDestroy {
   whatsAppUrl = '';
 
   get typeDescription(): string {
-    if (this.reportType === '06utc') return 'نشرة الساعة 06:00 UTC؛ تُطلب الحرارة والهطول والثلوج فقط من حقول الملخص.';
-    if (this.reportType === '18utc') return 'نشرة الساعة 18:00 UTC؛ تُطلب الحرارة والهطول والثلوج فقط من حقول الملخص.';
-    return 'ملخص 24 ساعة؛ جميع عناصر الحرارة والهطول والتبخر والسطوع والرياح والرطوبة مطلوبة.';
+    return 'ملخص يومي لمدة 24 ساعة؛ تقارير 06:00 UTC و18:00 UTC تُسجَّل ضمن النشرات الساعية وفق العقد المعتمد.';
   }
 
   setType(value: string): void { this.reportType = value; this.issues = []; this.message = ''; }
@@ -472,7 +468,7 @@ export class DailyReportsComponent implements OnDestroy {
     field.value = field.value.startsWith('-') ? field.value.slice(1) : '-' + field.value;
   }
 
-  typeLabel(value: string): string { return value === '24h' ? 'ملخص 24 ساعة' : value === '06utc' ? 'رصد 06 UTC' : 'رصد 18 UTC'; }
+  typeLabel(_value: string): string { return 'ملخص 24 ساعة'; }
   resetState(form?: HTMLFormElement): void {
     this.issues = []; this.message = ''; this.noDataFields.clear(); this.clearPreview();
     form?.querySelectorAll<HTMLInputElement>('[data-original-pattern], [data-original-required]').forEach(field => {

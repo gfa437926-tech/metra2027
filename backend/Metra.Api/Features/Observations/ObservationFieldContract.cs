@@ -14,20 +14,21 @@ public static class ObservationFieldContract
     private static readonly IReadOnlyDictionary<string, IReadOnlySet<string>> DailyRequired =
         new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal)
         {
+            // snowThickness is optional until station observing-program policy is approved.
             ["24h"] = new HashSet<string>(StringComparer.Ordinal)
             {
-                "minTemp", "maxTemp", "precipitation", "snowThickness",
+                "minTemp", "maxTemp", "precipitation",
                 "evaporation", "sunshineDuration", "sunshinePercentage",
                 "maxGustSpeed", "maxGustDirection", "maxGustTime",
                 "maxHumidity", "maxHumidityTime", "minHumidity", "minHumidityTime"
             },
             ["06utc"] = new HashSet<string>(StringComparer.Ordinal)
             {
-                "minTemp", "maxTemp", "precipitation", "snowThickness"
+                "minTemp", "maxTemp", "precipitation"
             },
             ["18utc"] = new HashSet<string>(StringComparer.Ordinal)
             {
-                "minTemp", "maxTemp", "precipitation", "snowThickness"
+                "minTemp", "maxTemp", "precipitation"
             }
         };
 

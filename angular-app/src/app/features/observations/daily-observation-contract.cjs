@@ -16,11 +16,14 @@ const RULES = {
   maxHumidityTime: [/^\d{2}\.\d$/, 0, 23.9],
   minHumidityTime: [/^\d{2}\.\d$/, 0, 23.9]
 };
-const FULL_DAY = Object.keys(RULES);
-const SYNOPTIC = ['minTemp', 'maxTemp', 'precipitation', 'snowThickness'];
+// snowThickness stays in RULES for format checks when provided, but is not
+// universally required — station observing programs differ (pending policy).
+const FULL_DAY = Object.keys(RULES).filter((key) => key !== 'snowThickness');
+const SYNOPTIC = ['minTemp', 'maxTemp', 'precipitation'];
 
 function validateDailyObservation(reportType, values, responsibilityAgreement) {
   const errors = {};
+  // UI accepts 24h daily summary only; 06/18 UTC belong to hourly workflow.
   const required = reportType === '24h' ? FULL_DAY :
     (reportType === '06utc' || reportType === '18utc') ? SYNOPTIC : null;
   if (!required) {

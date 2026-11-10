@@ -83,10 +83,10 @@ void main() {
 
   test('daily contract selects report-specific required fields', () {
     expect(DailyObservationContract.requiredFields('06utc'), {
-      'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+      'minTemp', 'maxTemp', 'precipitation',
     });
     expect(DailyObservationContract.requiredFields('18utc'), {
-      'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+      'minTemp', 'maxTemp', 'precipitation',
     });
     expect(DailyObservationContract.requiredFields('24h'), hasLength(14));
     expect(DailyObservationContract.requiredFields('invalid'), isEmpty);
@@ -195,7 +195,7 @@ void main() {
       expect(body['payload']['reportType'], '24h');
       expect(body['payload']['responsibilityAgreement'], isTrue);
       expect((body['payload']['values'] as Map).keys, containsAll([
-        'minTemp', 'maxTemp', 'precipitation', 'snowThickness',
+        'minTemp', 'maxTemp', 'precipitation',
         'evaporation', 'sunshineDuration', 'sunshinePercentage',
         'maxGustSpeed', 'maxGustDirection', 'maxGustTime',
         'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime',

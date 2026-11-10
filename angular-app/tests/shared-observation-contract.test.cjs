@@ -26,11 +26,11 @@ test('shared observation fixture manifest is complete and has unique cases', () 
 
 test('valid daily fixtures contain the canonical required fields for each report type', () => {
   const required = {
-    '24h': ['minTemp', 'maxTemp', 'precipitation', 'snowThickness', 'evaporation',
+    '24h': ['minTemp', 'maxTemp', 'precipitation', 'evaporation',
       'sunshineDuration', 'sunshinePercentage', 'maxGustSpeed', 'maxGustDirection',
       'maxGustTime', 'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime'],
-    '06utc': ['minTemp', 'maxTemp', 'precipitation', 'snowThickness'],
-    '18utc': ['minTemp', 'maxTemp', 'precipitation', 'snowThickness']
+    '06utc': ['minTemp', 'maxTemp', 'precipitation'],
+    '18utc': ['minTemp', 'maxTemp', 'precipitation']
   };
   const seen = new Set();
   for (const name of manifest.fixtures) {

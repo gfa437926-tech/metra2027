@@ -7,9 +7,9 @@ namespace Metra.Api.Tests.Features.Observations;
 public sealed class ObservationFieldContractTests
 {
     [Theory]
-    [InlineData("24h", 14)]
-    [InlineData("06utc", 4)]
-    [InlineData("18utc", 4)]
+    [InlineData("24h", 13)]
+    [InlineData("06utc", 3)]
+    [InlineData("18utc", 3)]
     public void Daily_contract_exposes_report_type_specific_required_fields(string type, int count)
     {
         var fields = ObservationFieldContract.GetDailyRequiredFields(type);
