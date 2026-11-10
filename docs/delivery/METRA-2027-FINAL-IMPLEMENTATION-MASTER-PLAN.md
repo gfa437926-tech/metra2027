@@ -290,3 +290,18 @@ Program scope beyond single-chart digitization:
 **Status:** Specification + Angular structural scaffold only. No production models, no SQL apply, no accuracy claims.
 
 **Phased codes:** IA-0 (spec) → IA-10 (acceptance). Prefer manual-digitization MVP (IA-3/IA-4) before any model promotion.
+
+
+---
+
+## Addendum — R / Climatol worker bootstrap (2026-11-11)
+
+**Implementation branch:** work/climate-analytics-r-bootstrap
+
+A first executable R worker slice has been added under services/climate-analytics-r. It validates a Climatol request, constrains paths to a configured workspace, stages the input .dat/.est pair in a unique job directory, invokes climatol::homogen() with UTC handling, and inventories generated artifacts. Unit tests use an injected runner to test validation and source immutability.
+
+A dedicated GitHub Actions R package-check workflow and supporting architecture, security, test, homogenization, climatology, and progress documents have been added. The R CI result is not yet verified; do not mark this slice green until a workflow run is inspected.
+
+**Not implemented:** .NET job adapter, METRA observation export mapping, artifact persistence, Angular review UI, climatology aggregates/indices, production deployment, or scientific acceptance. No database connection or SQL was added. This work is isolated from the existing working branch and main.
+
+The METRA export mapping remains an owner/scientific review gate: station metadata, variable codes/units, temporal resolution, missing-value representation, completeness, and reference periods must be explicitly approved before operational data is processed.
