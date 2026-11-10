@@ -39,3 +39,17 @@ This file is append-only. Add new dated entries below; do not rewrite or remove 
 - **PR:** [#27 — open, Draft, unmerged](https://github.com/gfa437926-tech/metra2027/pull/27).
 - **CI evidence remains:** [Client CI #725 — success](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265).
 - No runtime, database, secret, deployment or workflow-trigger changes in this documentation-only correction.
+
+
+## 2026-11-10T23:31:43Z — Pages diagnosis / R workflow recheck
+
+- **Task:** `DEVOPS-09-001`; **status:** in progress; **progress:** 67% (8/12; unchanged).
+- **Pages evidence:** [Run #158](https://github.com/gfa437926-tech/metra2027/actions/runs/41951012675) failed specifically at `Validate and inject public runtime configuration`; Angular production build passed. The Pages artifact/deploy steps were skipped.
+- **Contract inspected:** `METRA_API_BASE_URL` and `METRA_SUPABASE_ANON_KEY` are required; `METRA_SUPABASE_URL` has a public URL fallback. The job summary does not identify which input was missing/invalid. Secret values were not accessed; the exact cause remains unverified.
+- **R evidence:** [R package check #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) succeeded. [PR #23](https://github.com/gfa437926-tech/metra2027/pull/23) remains Draft/open/unmerged; this check alone does not prove operational Climatol acceptance.
+- **Files inspected:** `.github/workflows/deploy-pages.yml`, `angular-app/angular.json`, assistant progress/change log, DevOps audit, Pages/R Actions job records, PR #23 metadata.
+- **Files changed:** `docs/progress/assistant-09.md`, this append-only log, and `docs/deployment/DEVOPS-CI-CD-AUDIT.md`.
+- **Not performed:** no secret access/change, no environment configuration change, no Pages deployment/re-run, no Climatol production processing, no PR merge, no database change.
+- **No new tests were run** in this documentation/diagnostic round. Previously recorded Client CI #725 remains successful.
+- **Next:** ask repository maintainer to verify presence/format of required Pages settings without disclosing values; confirm canonical `واجهات/` path; review full PR #23 before declaring R/Climatol integrated.
+- **Progress calculation:** remains 8/12 = 66.7%, rounded to 67%; four tracked items remain open.
