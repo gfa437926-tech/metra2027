@@ -161,7 +161,7 @@ class _RegistrationAccessScreenState extends State<RegistrationAccessScreen> {
         _statusLine('حالة الحساب', state),
         _statusLine('حالة الطلب', request),
         if (status?.submittedAt != null)
-          _statusLine('تاريخ الإرسال', status!.submittedAt!.toLocal().toString()),
+          _statusLine('تاريخ الإرسال', status!.submittedAt!.toUtc().toIso8601String()),
         if ((status?.reviewNote ?? '').isNotEmpty)
           _statusLine('ملاحظة المراجع', status!.reviewNote!),
         if ((status?.stateReason ?? '').isNotEmpty)
