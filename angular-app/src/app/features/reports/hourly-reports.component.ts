@@ -28,7 +28,7 @@ interface HourlyPreview {
 
       <section class="stats">
         <article><i class="fa-solid fa-calendar-day"></i><span>تاريخ اليوم</span><strong>{{ today }}</strong></article>
-        <article><i class="fa-regular fa-clock"></i><span>التوقيت المحلي</span><strong>{{ now }}</strong></article>
+        <article><i class="fa-regular fa-clock"></i><span>الوقت الحالي بالتوقيت العالمي UTC</span><strong>{{ now }}</strong></article>
         <article><i class="fa-solid fa-list-check"></i><span>نشرات هذه المعاينة</span><strong>{{ previews.length }}</strong></article>
       </section>
 
