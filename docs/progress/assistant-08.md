@@ -184,3 +184,18 @@
 - آخر HEAD قبل هذا التحديث: [3e7bb054](https://github.com/gfa437926-tech/metra2027/commit/3e7bb0544d65818d7c6235f75b11841023a66a6a).
 - GitHub Actions runs = 0 وCheck Runs = 0 على هذا HEAD؛ لم يتم تشغيل الاختبارات.
 - PR #26 ما زال مفتوحاً Draft وغير مدمج. base SHA في بيانات PR ما زال أقدم من main الحالي؛ لا rebase تلقائي.
+
+
+## 16. إعادة التحقق من main وإضافة DB-020
+- **توقيت UTC:** 2026-11-10T23:37:06.581Z.
+- **الحالة:** قيد التنفيذ.
+- تم التحقق من main HEAD `43c72da0604e49a74d2128cc9d3d881e2c912f26` ومقارنة blob SHA لسبعة ملفات Backend مع فرع التدقيق؛ الملفات متطابقة، ولم تظهر معالجة جديدة للمشكلات DB-017/018/019.
+- إضافة DB-020: endpoints التحقق اليومي والساعي لا تمرر requiredFields إلى validators، في حين أن هذه المعاملات اختيارية؛ لذلك لا يتم فرض اكتمال الحقول المطلوبة من endpoint نفسه.
+- مراجعة واجهة الظواهر في Angular: component يعلن صراحة أنها معاينة محلية غير محفوظة، وليس مسار كتابة فعلياً.
+- الملفات المفحوصة: `ObservationSubmissionEndpoints.cs`, `ObservationValidationEndpoints.cs`, `ObservationValidationRequestGuard.cs`, daily/hourly/phenomenon validators, `ObservationWorkflow.cs`, Angular observation API + workflow + phenomena component، اختبارات WeatherPhenomenonValidator، وملفا migration الخاصان بالإرسال والقرار.
+- **ملف التدقيق المعدل:** `docs/database/DATABASE-ENGINEERING-AUDIT.md`.
+- **Commit:** [912a451](https://github.com/gfa437926-tech/metra2027/commit/912a45182f50e1bd8357ba641063c172986341cd).
+- **الاختبارات:** لم تُشغّل؛ لم يُنفذ build أو CI في هذه الخطوة.
+- لم يتم تعديل كود التطبيقات أو SQL، ولم يتم الاتصال بـ Supabase.
+- نسبة الإنجاز تبقى **10%** وفق معيار المحاور المكتملة بالكامل (1 من 10)، والمتبقي 9 محاور.
+- الخطوة التالية: بناء مصفوفة required-fields مع المساعدين 2 و11 انطلاقاً من مواصفات الرصد المعتمدة، ثم مراجعة ربط validators بمسار الحفظ.
