@@ -72,7 +72,7 @@ void main() {
     );
 
     await tester.pumpWidget(MaterialApp(home: MetraHome(api: api)));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('الرصد'), findsNothing);
     expect(find.text('مراجعة الرصدات'), findsNothing);
