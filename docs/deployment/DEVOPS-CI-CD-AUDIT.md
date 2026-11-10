@@ -59,7 +59,7 @@ The workflow remains limited to client paths and has no deploy or publish step.
 
 - The app commits `pubspec.lock`; CI now enforces it.
 - CI performs `flutter analyze` and `flutter test`.
-- The action currently follows the moving `stable` channel. Exact Flutter SDK reproducibility is not guaranteed until the team agrees and records a specific Flutter version (for example in a checked-in version file and the workflow).
+- The Client CI workflow now pins Flutter SDK `3.47.9`, based on the resolved SDK in the previously successful Client CI #725 job. Post-pin Client CI #42924596524 passed SDK setup, locked dependency resolution, analysis and tests.
 
 ### R / Climatol
 
@@ -163,3 +163,11 @@ The successful Client CI #725 job log records the resolved SDK path as `flutter/
 - Assistant 09 did not modify PR #23 or the R workflow owned by Assistant 04.
 
 No production deployment, secret/environment change, database operation, Climatol production processing, or merge was performed.
+
+
+## Post-pin validation result — 2026-11-10T23:40:25.106Z
+
+- Client CI #42924596524 completed successfully on branch HEAD `71888fbecbaaf147db98aa632784b476fba047cd`: https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524
+- Angular locked install and production build passed.
+- Flutter SDK setup with version 3.47.9, locked dependency resolution, static analysis, and tests passed.
+- This is the verified post-pin run. Earlier queued runs superseded by rapid documentation commits were cancelled by concurrency and are not counted as failures.
