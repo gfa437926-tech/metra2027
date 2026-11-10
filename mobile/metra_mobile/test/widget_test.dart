@@ -96,6 +96,8 @@ void main() {
     expect(find.text('الرصد'), findsOneWidget);
     expect(find.text('مركز أعمال الرصد'), findsNothing);
 
+    await tester.drag(find.byType(ListView).first, const Offset(0, -520));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('الانتقال إلى أعمال الرصد'));
     await tester.pumpAndSettle();
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
