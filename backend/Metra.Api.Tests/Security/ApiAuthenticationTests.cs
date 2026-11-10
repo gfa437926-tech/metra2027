@@ -61,6 +61,24 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Anonymous_requests_are_rate_limited_with_retry_after()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
+
+        for (var requestNumber = 1; requestNumber <= 30; requestNumber++)
+        {
+            using var allowed = await client.GetAsync("/api/v1/health");
+            Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+        }
+
+        using var rejected = await client.GetAsync("/api/v1/health");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+        Assert.Equal("60", rejected.Headers.GetValues("Retry-After").Single());
+    }
+
+    [Fact]
     public async Task Health_endpoint_is_anonymous()
     {
         using var response = await _client.GetAsync("/api/v1/health");
