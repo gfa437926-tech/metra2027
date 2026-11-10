@@ -136,3 +136,11 @@ No merge to main, production deployment, database/Supabase changes, raw observat
 - **Remaining major items:** 6. The Climatol fixture smoke-test item is complete; hostile-input coverage remains part of the security-test work item.
 - **Not done:** no METRA station data processing, scientific validation/sign-off, .NET adapter, durable storage, review UI, or local R execution.
 - **Safety:** no database/Supabase, raw observations, shared coordination files, Angular/Flutter, main merge, or deployment changed.
+
+
+## Additional validation hardening — 2026-11-10T23:34:55Z
+
+- Code review identified edge cases in year validation: positive/negative infinity could produce an NA condition, and complex numeric values were not explicitly excluded. Validation now requires integer/double finite years before integer/range checks.
+- Input paths ending in .dat/.est are now rejected if they resolve to directories, in addition to existing missing/empty-file checks.
+- Added tests for infinite and complex year values, directory masquerading as a data file, and dot-dot path traversal after canonical path resolution.
+- These changes are committed but await the next CI result. No arbitrary maximum file-size limit was introduced because the project has not approved a size policy.

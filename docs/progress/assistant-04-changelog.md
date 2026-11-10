@@ -64,3 +64,12 @@
 - **Current test result:** new symlink-boundary tests are committed in this round and await a fresh CI result.
 - **Progress:** 55%; 6 major work items remain. The fixture smoke test item is complete; the wider security/reproducibility workstream remains partial.
 - **Safety:** no production observations, database, merge, deployment, Angular, or Flutter changes.
+
+
+## 2026-11-10T23:34:55Z — Reject non-finite years, directory inputs, and traversal
+
+- Hardened year validation to require finite integer/double values before modulo and range checks, avoiding an NA condition for infinite values and rejecting complex values.
+- Reject directory entries presented as .dat/.est files.
+- Added tests for infinite/complex years, directory-as-data-file, and dot-dot traversal outside the configured workspace.
+- No input-size ceiling was invented; a maximum-size policy remains a product/security decision requiring an agreed value.
+- CI for these additions is pending.

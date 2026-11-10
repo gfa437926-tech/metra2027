@@ -97,3 +97,27 @@ test_that("failed Climatol executions retain a failed provenance record", {
   expect_match(provenance$error, "simulated Climatol failure")
   expect_true(provenance$source_unchanged)
 })
+
+
+test_that("non-finite and non-real year values are rejected cleanly", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  base <- list(variable = "TX", end_year = 2001, input_dir = input, output_dir = output)
+
+  expect_error(
+    metra_validate_homogenization_request(
+      c(list(start_year = Inf), base), workspace_root = root
+    ),
+    "ordered integer years"
+  )
+  expect_error(
+    metra_validate_homogenization_request(
+      c(list(start_year = 2000 + 1i), base), workspace_root = root
+    ),
+    "ordered integer years"
+  )
+})

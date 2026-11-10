@@ -9,7 +9,8 @@ metra_validate_homogenization_request <- function(request, workspace_root = Sys.
     stop("variable must be a short alphanumeric Climatol variable code.", call. = FALSE)
   }
   years <- unlist(list(request$start_year, request$end_year), use.names = FALSE)
-  if (length(years) != 2L || !is.numeric(years) || anyNA(years) ||
+  if (length(years) != 2L || !(is.integer(years) || is.double(years)) ||
+      anyNA(years) || any(!is.finite(years)) ||
       any(years %% 1 != 0) || years[1] < 1800 || years[2] > 2200 ||
       years[1] > years[2]) {
     stop("start_year/end_year must be ordered integer years in 1800..2200.", call. = FALSE)
@@ -45,8 +46,9 @@ metra_validate_homogenization_request <- function(request, workspace_root = Sys.
       stop("Climatol input files must resolve inside input_dir.", call. = FALSE)
     }
     info <- file.info(resolved_file)
-    if (is.na(info$size) || info$size < 1) {
-      stop("Required non-empty Climatol input file is missing: ", basename(file), call. = FALSE)
+    if (is.na(info$size) || isTRUE(info$isdir) || info$size < 1) {
+      stop("Required non-empty regular Climatol input file is missing or invalid: ",
+           basename(file), call. = FALSE)
     }
   }
   list(variable = variable, start_year = as.integer(years[1]), end_year = as.integer(years[2]),

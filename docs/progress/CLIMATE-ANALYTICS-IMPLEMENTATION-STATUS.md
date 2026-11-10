@@ -116,3 +116,12 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - The real Climatol example fixture smoke test passed in [CI run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106), using Climatol 4.5-0. R CMD check ended `Status: OK`, 0 errors, 0 warnings, 0 notes.
 - Added test cases for symlinked input directory escape, symlinked input file escape, and identical input/output directories. The new tests require a fresh CI run before they are considered passing.
 - The fixture smoke-test milestone is complete. Broader security testing and reproducibility remain partial.
+
+
+## Input-validation edge cases — 2026-11-10T23:34:55Z
+
+- Year validation now explicitly rejects non-finite and non-real values before integer/range comparisons.
+- Climatol input paths resolving to directories are rejected.
+- Added tests for infinite/complex years, directory masquerading as a data file, and dot-dot traversal.
+- CI verification is pending for this additional commit.
+- A maximum input-size policy remains undecided; no arbitrary cap was imposed.
