@@ -37,8 +37,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: angular-app/package.json
-      - run: npm install --no-audit --no-fund
+          cache-dependency-path: angular-app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Audit Angular dependencies for high and critical advisories
+        run: npm audit --audit-level=high
       - run: npm run build
 
   flutter:

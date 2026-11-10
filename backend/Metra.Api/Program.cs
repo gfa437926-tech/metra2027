@@ -5,8 +5,15 @@ using Metra.Api.Features.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
+
+const long MaxRequestBodyBytes = 1_048_576;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enforce a hard ceiling at the HTTP server, including chunked requests.
+builder.WebHost.ConfigureKestrel(options =>
+    options.Limits.MaxRequestBodySize = MaxRequestBodyBytes);
 
 var supabaseUrl = builder.Configuration["Supabase:Url"]
     ?? "https://tbdnklyxjvbrilvnwgmq.supabase.co";
@@ -15,6 +22,46 @@ var authority = builder.Configuration["Authentication:Authority"]
 var audience = builder.Configuration["Authentication:Audience"] ?? "authenticated";
 
 builder.Services.AddProblemDetails();
+
+// Partition by the verified JWT subject, never by an untrusted forwarded-IP
+// header. Until the deployment proxy chain is explicitly configured and
+// trusted, unauthenticated traffic shares a conservative fallback bucket.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) =>
+    {
+        context.HttpContext.Response.Headers["Retry-After"] = "60";
+        return ValueTask.CompletedTask;
+    };
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var subject = httpContext.User.FindFirst("sub")?.Value;
+        if (string.IsNullOrWhiteSpace(subject))
+            return RateLimitPartition.GetNoLimiter("anonymous");
+
+        return RateLimitPartition.GetFixedWindowLimiter($"subject:{subject}", _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 120,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
+    });
+
+    // Readiness performs a server-side dependency probe, so protect that
+    // anonymous endpoint separately without sharing a bucket with auth failures.
+    options.AddPolicy("readiness", _ =>
+        RateLimitPartition.GetFixedWindowLimiter("readiness", _ =>
+            new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
 // Bound every server-side Supabase request. A stalled dependency must not
 // hold an API request or authorization decision open for HttpClient's 100s default.
 static void AddBoundedSupabaseClient(IServiceCollection services, string name) =>
@@ -91,9 +138,48 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+// Reject oversized declared bodies before authentication/model binding. Kestrel's
+// MaxRequestBodySize remains the enforcement layer for chunked/streamed bodies.
+app.Use(async (context, next) =>
+{
+    if (context.Request.ContentLength is > MaxRequestBodyBytes)
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        return;
+    }
+
+    await next();
+});
+
+// Defense-in-depth headers for the JSON API. Keep the CSP restrictive because
+// this host serves API responses, not the Angular application shell.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        headers["Content-Security-Policy"] = "default-src 'none'; base-uri 'none'; frame-ancestors 'none'";
+        return Task.CompletedTask;
+    });
+
+    await next();
+});
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
+app.UseRouting();
 app.UseCors("MetraClients");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
@@ -121,6 +207,7 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
     version = "v1"
 }))
 .AllowAnonymous()
+.DisableRateLimiting()
 .WithName("GetApiHealth");
 
 // Readiness is separate from liveness: it verifies server configuration and a
@@ -169,6 +256,7 @@ app.MapGet("/api/v1/ready", async (
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
+.RequireRateLimiting("readiness")
 .WithName("GetApiReadiness");
 
 app.Run();

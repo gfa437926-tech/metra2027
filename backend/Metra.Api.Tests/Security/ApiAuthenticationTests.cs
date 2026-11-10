@@ -48,6 +48,63 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
+    public async Task Requests_with_declared_body_over_one_megabyte_are_rejected_before_authentication()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/observations/daily/validate")
+        {
+            Content = new ByteArrayContent(new byte[1_048_577])
+        };
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Requests_at_the_one_megabyte_body_limit_continue_to_authentication()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/observations/daily/validate")
+        {
+            Content = new ByteArrayContent(new byte[1_048_576])
+        };
+
+        using var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Api_responses_include_defense_in_depth_security_headers()
+    {
+        using var response = await _client.GetAsync("/api/v1/health");
+
+        Assert.Equal("nosniff", response.Headers.GetValues("X-Content-Type-Options").Single());
+        Assert.Equal("DENY", response.Headers.GetValues("X-Frame-Options").Single());
+        Assert.Equal("strict-origin-when-cross-origin", response.Headers.GetValues("Referrer-Policy").Single());
+        Assert.Equal("camera=(), microphone=(), geolocation=()", response.Headers.GetValues("Permissions-Policy").Single());
+        Assert.Equal("default-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+            response.Headers.GetValues("Content-Security-Policy").Single());
+    }
+
+    [Fact]
+    public async Task Anonymous_requests_are_rate_limited_with_retry_after()
+    {
+        using var factory = new WebApplicationFactory<Program>();
+        using var client = factory.CreateClient();
+
+        for (var requestNumber = 1; requestNumber <= 30; requestNumber++)
+        {
+            using var allowed = await client.GetAsync("/api/v1/ready");
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, allowed.StatusCode);
+        }
+
+        using var rejected = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rejected.StatusCode);
+        Assert.Equal("60", rejected.Headers.GetValues("Retry-After").Single());
+    }
+
+    [Fact]
     public async Task Health_endpoint_is_anonymous()
     {
         using var response = await _client.GetAsync("/api/v1/health");
