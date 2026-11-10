@@ -82,3 +82,26 @@ PR #21 and PR #22 each add the first two paths independently; this is a merge co
 
 ## Change boundary
 This QA branch changes documentation only. It does not alter Angular, Flutter, .NET, R implementation, SQL migrations, database configuration or database data. No PR is merged.
+
+
+---
+
+## CI follow-up — job-level status refresh (2026-11-10T23:32:18Z UTC)
+
+The following records supersede the earlier queued/in-progress snapshot in the previous section. They are a point-in-time status review; no results are attributed to QA-06 itself.
+
+| PR | Latest observed head | Latest observed run | Verified outcome at inspection |
+|---|---|---|---|
+| #21 Flutter | `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da` | [42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) | In progress. Angular build, Flutter dependency resolution and `flutter analyze` passed; `flutter test` still running. |
+| #22 Backend | `cfe43d00e729b6dbec76690a5734f8344dfe3abd` | [42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) | Completed success. NuGet restore/audit, SQL authorization contracts, API build, Domain/API tests and Docker build passed. |
+| #23 R/Climatol | `0c5ba868acf74fe7506d81d073f73c538ccec4d5` | [42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) | In progress. Dependency setup completed; package check had not completed. Earlier run #42923751451 succeeded on an earlier SHA only. |
+| #27 DevOps | `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c` | [42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) | Cancelled with no jobs. Earlier run #42922825265 succeeded on an earlier SHA only. |
+
+### Additional interpretation
+- PR #21's run #42923951902 was cancelled; its later run #42924074199 was the relevant current run at inspection. Do not report the cancelled run as a failing Flutter test.
+- PR #22 has the strongest current positive evidence among these four branches because the completed success matches its observed head SHA.
+- PR #23's previous successful run does not certify its newest commit.
+- PR #27's earlier successful run does not certify its newest commit; the newest run was cancelled before jobs started.
+- QA PR #24 remains open, Draft and unmerged. No Actions run was found for its current head `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`. QA-06 did not run any test commands.
+
+No implementation, workflow, schema, migration, data or deployment changes were made by QA-06 in this follow-up.
