@@ -34,3 +34,12 @@
 ## اختبارات
 - `GeoDistanceTests` (وحدة)
 - CI Backend/Client بعد الدفعة
+
+
+## عقد لقطة الرصد (مقترح)
+
+انظر: `docs/contracts/WEATHER-OBSERVATION-SNAPSHOT-CONTRACT-V1.md`
+
+- Mapper مجال: `WeatherObservationSnapshot` / `WeatherObservationSnapshotMapper`
+- اختبارات وحدة للقيم الناقصة (تبقى null)
+- **لا** endpoint قراءة لقطة حية حتى موافقة المالك على السياسة وSQL إن لزم
