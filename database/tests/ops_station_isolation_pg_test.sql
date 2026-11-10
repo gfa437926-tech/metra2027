@@ -1,159 +1,61 @@
--- =============================================================================
--- ops_station_isolation_pg_test.sql
--- RUN ONLY against an EMPTY disposable PostgreSQL database.
--- DO NOT run against production, staged hosted Supabase, or the legacy METRA DB.
---
--- Expected environment (set by the harness, not hard-coded secrets):
---   METRA_OPS_TEST_DATABASE_URL  -> local ephemeral Postgres
---
--- This script:
---   1) Creates minimal station-scoped tables + session GUC helpers (self-contained
---      for isolation proof; not a substitute for production migrations).
---   2) Seeds station A / station B rows.
---   3) Forces app.station_id / app.user_id and asserts cross-station reads return 0.
---   4) Fails hard (RAISE EXCEPTION) on any cross-station leakage.
--- =============================================================================
+-- REAL TEST HARNESS — psql only.
+-- Strictly restricted to a fresh disposable database named metra_ops_test.
+-- It refuses non-empty data tables, verifies FORCE RLS, runs cross-station and
+-- permission/assignee scenarios, then rolls every fixture back.
+-- Never point this script at production, hosted Supabase, or the legacy DB.
+
+\set ON_ERROR_STOP on
+
+DO $guard$
+DECLARE
+  v_table text;
+  v_has_rows boolean;
+  v_rls_enabled boolean;
+  v_rls_forced boolean;
+  v_policy_count integer;
+BEGIN
+  IF current_database() <> 'metra_ops_test' THEN
+    RAISE EXCEPTION 'REFUSED: expected disposable database metra_ops_test, got %', current_database();
+  END IF;
+  IF current_setting('transaction_read_only') = 'on' THEN
+    RAISE EXCEPTION 'REFUSED: test connection is read-only';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'metra_ops_faults') THEN
+    RAISE EXCEPTION 'Missing required role metra_ops_faults; apply reviewed migrations only to the disposable DB first';
+  END IF;
+  FOREACH v_table IN ARRAY ARRAY[
+    'auth.users','public.station_catalogue','public.metra_equipment_faults',
+    'public.metra_equipment_fault_audit_events','public.metra_support_incidents',
+    'public.metra_support_incident_audit_events'
+  ] LOOP
+    IF to_regclass(v_table) IS NULL THEN
+      RAISE EXCEPTION 'Missing required relation %. Apply reviewed schema migrations to the disposable DB first', v_table;
+    END IF;
+    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %s LIMIT 1)', to_regclass(v_table)) INTO v_has_rows;
+    IF v_has_rows THEN
+      RAISE EXCEPTION 'REFUSED: %.% is not empty; use a fresh disposable database', v_table, current_database();
+    END IF;
+  END LOOP;
+  FOREACH v_table IN ARRAY ARRAY[
+    'public.metra_equipment_faults','public.metra_equipment_fault_audit_events',
+    'public.metra_support_incidents','public.metra_support_incident_audit_events'
+  ] LOOP
+    SELECT c.relrowsecurity,c.relforcerowsecurity INTO v_rls_enabled,v_rls_forced
+    FROM pg_class c WHERE c.oid=to_regclass(v_table);
+    IF NOT coalesce(v_rls_enabled,false) OR NOT coalesce(v_rls_forced,false) THEN
+      RAISE EXCEPTION 'REFUSED: RLS and FORCE RLS must both be enabled on %',v_table;
+    END IF;
+    SELECT count(*) INTO v_policy_count FROM pg_policies p
+    WHERE (p.schemaname||'.'||p.tablename)=v_table
+      AND p.roles::text[] @> ARRAY['metra_ops_faults'];
+    IF v_policy_count=0 THEN RAISE EXCEPTION 'REFUSED: no metra_ops_faults RLS policy found on %',v_table; END IF;
+  END LOOP;
+END
+$guard$;
 
 BEGIN;
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- Session context helpers mirroring NpgsqlOpsSession SET LOCAL usage.
-CREATE OR REPLACE FUNCTION metra_test_set_station_context(p_user_id uuid, p_station_id uuid)
-RETURNS void
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  PERFORM set_config('app.user_id', p_user_id::text, true);
-  PERFORM set_config('app.station_id', p_station_id::text, true);
-END;
-$$;
-
-CREATE TABLE IF NOT EXISTS metra_test_stations (
-  id uuid PRIMARY KEY
-);
-
-CREATE TABLE IF NOT EXISTS metra_test_equipment_faults (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  station_id uuid NOT NULL REFERENCES metra_test_stations(id),
-  title text NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS metra_test_support_incidents (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  station_id uuid NOT NULL REFERENCES metra_test_stations(id),
-  title text NOT NULL
-);
-
-ALTER TABLE metra_test_equipment_faults ENABLE ROW LEVEL SECURITY;
-ALTER TABLE metra_test_support_incidents ENABLE ROW LEVEL SECURITY;
-
--- Deny by default for the table owner in this test role model:
-DROP POLICY IF EXISTS metra_test_faults_station_isolation ON metra_test_equipment_faults;
-CREATE POLICY metra_test_faults_station_isolation ON metra_test_equipment_faults
-  FOR ALL
-  USING (station_id::text = current_setting('app.station_id', true))
-  WITH CHECK (station_id::text = current_setting('app.station_id', true));
-
-DROP POLICY IF EXISTS metra_test_support_station_isolation ON metra_test_support_incidents;
-CREATE POLICY metra_test_support_station_isolation ON metra_test_support_incidents
-  FOR ALL
-  USING (station_id::text = current_setting('app.station_id', true))
-  WITH CHECK (station_id::text = current_setting('app.station_id', true));
-
--- Force RLS even for table owner during this test session.
-ALTER TABLE metra_test_equipment_faults FORCE ROW LEVEL SECURITY;
-ALTER TABLE metra_test_support_incidents FORCE ROW LEVEL SECURITY;
-
-DO $$
-DECLARE
-  station_a uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-  station_b uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-  user_a uuid := '11111111-1111-4111-8111-111111111111';
-  user_b uuid := '22222222-2222-4222-8222-222222222222';
-  fault_a uuid;
-  fault_b uuid;
-  incident_a uuid;
-  incident_b uuid;
-  cnt integer;
-BEGIN
-  INSERT INTO metra_test_stations(id) VALUES (station_a), (station_b)
-  ON CONFLICT DO NOTHING;
-
-  INSERT INTO metra_test_equipment_faults(id, station_id, title)
-  VALUES (gen_random_uuid(), station_a, 'fault-a')
-  RETURNING id INTO fault_a;
-  INSERT INTO metra_test_equipment_faults(id, station_id, title)
-  VALUES (gen_random_uuid(), station_b, 'fault-b')
-  RETURNING id INTO fault_b;
-
-  INSERT INTO metra_test_support_incidents(id, station_id, title)
-  VALUES (gen_random_uuid(), station_a, 'incident-a')
-  RETURNING id INTO incident_a;
-  INSERT INTO metra_test_support_incidents(id, station_id, title)
-  VALUES (gen_random_uuid(), station_b, 'incident-b')
-  RETURNING id INTO incident_b;
-
-  -- Seed while bypassing RLS as owner without FORCE would still see all;
-  -- FORCE is on, so temporarily disable for seed completeness if needed.
-  -- With FORCE RLS, owner is also subject to policies — set context per insert.
-  -- Re-seed under explicit contexts to satisfy WITH CHECK.
-  DELETE FROM metra_test_equipment_faults;
-  DELETE FROM metra_test_support_incidents;
-
-  PERFORM metra_test_set_station_context(user_a, station_a);
-  INSERT INTO metra_test_equipment_faults(station_id, title) VALUES (station_a, 'fault-a');
-  INSERT INTO metra_test_support_incidents(station_id, title) VALUES (station_a, 'incident-a');
-
-  PERFORM metra_test_set_station_context(user_b, station_b);
-  INSERT INTO metra_test_equipment_faults(station_id, title) VALUES (station_b, 'fault-b');
-  INSERT INTO metra_test_support_incidents(station_id, title) VALUES (station_b, 'incident-b');
-
-  -- User A context: only station A visible.
-  PERFORM metra_test_set_station_context(user_a, station_a);
-
-  SELECT count(*) INTO cnt FROM metra_test_equipment_faults;
-  IF cnt <> 1 THEN
-    RAISE EXCEPTION 'FAULT_ISOLATION_FAIL: expected 1 fault for station A, got %', cnt;
-  END IF;
-
-  SELECT count(*) INTO cnt FROM metra_test_equipment_faults WHERE station_id = station_b;
-  IF cnt <> 0 THEN
-    RAISE EXCEPTION 'FAULT_CROSS_STATION_FAIL: station A context saw % station B faults', cnt;
-  END IF;
-
-  SELECT count(*) INTO cnt FROM metra_test_support_incidents;
-  IF cnt <> 1 THEN
-    RAISE EXCEPTION 'SUPPORT_ISOLATION_FAIL: expected 1 incident for station A, got %', cnt;
-  END IF;
-
-  SELECT count(*) INTO cnt FROM metra_test_support_incidents WHERE station_id = station_b;
-  IF cnt <> 0 THEN
-    RAISE EXCEPTION 'SUPPORT_CROSS_STATION_FAIL: station A context saw % station B incidents', cnt;
-  END IF;
-
-  -- Switch to station B: must not see station A.
-  PERFORM metra_test_set_station_context(user_b, station_b);
-
-  SELECT count(*) INTO cnt FROM metra_test_equipment_faults WHERE station_id = station_a;
-  IF cnt <> 0 THEN
-    RAISE EXCEPTION 'FAULT_CROSS_STATION_FAIL: station B context saw % station A faults', cnt;
-  END IF;
-
-  SELECT count(*) INTO cnt FROM metra_test_support_incidents WHERE station_id = station_a;
-  IF cnt <> 0 THEN
-    RAISE EXCEPTION 'SUPPORT_CROSS_STATION_FAIL: station B context saw % station A incidents', cnt;
-  END IF;
-
-  -- Empty station context must not leak rows.
-  PERFORM set_config('app.station_id', '', true);
-  PERFORM set_config('app.user_id', '', true);
-  SELECT count(*) INTO cnt FROM metra_test_equipment_faults;
-  IF cnt <> 0 THEN
-    RAISE EXCEPTION 'EMPTY_CONTEXT_FAIL: faults visible without station context (% rows)', cnt;
-  END IF;
-
-  RAISE NOTICE 'ops_station_isolation_pg_test: PASSED';
-END $$;
-
+\ir equipment_fault_npgsql_isolation.sql
+\ir ops_assignee_authorization_pg_test.sql
 ROLLBACK;
+
+\echo 'ops_station_isolation_pg_test: PASS (all fixtures rolled back; disposable DB only)'

@@ -1,23 +1,30 @@
-# PostgreSQL isolation test plan (review only — do not apply to hosted DB)
+# PostgreSQL isolation test plan (review only — do not apply)
 
-## Harness file
-`database/tests/ops_station_isolation_pg_test.sql`
+## Goal
+Prove that `SET LOCAL app.station_id` / `app.user_id` and RLS policies prevent cross-station reads/writes for equipment faults and support incidents **without** using the legacy database or production data.
 
-## What it proves on an empty disposable Postgres
-- FORCE ROW LEVEL SECURITY on test fault/incident tables
-- `app.station_id` / `app.user_id` session GUCs (same names used by `NpgsqlOpsSession`)
-- Cross-station SELECT counts must be 0 or the script raises `*_CROSS_STATION_FAIL`
-- Empty context must see 0 rows
+## Constraints
+- No connection to the old METRA database.
+- No apply of migrations to the hosted new Supabase project until owner approval.
+- Prefer an **ephemeral local Postgres** or disposable CI service container.
 
-## How to run (owner-approved local only)
-```bash
-# Example only — never point at production or legacy:
-createdb metra_ops_isolation_tmp
-psql "$METRA_OPS_TEST_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/tests/ops_station_isolation_pg_test.sql
-dropdb metra_ops_isolation_tmp
-```
+## Prerequisites (after owner approval only)
+1. Provision empty Postgres 15+.
+2. Apply **only** the reviewed scripts from `supabase/migrations` and `database/migrations` that define ops tables/roles/RLS (in filename order).
+3. Create limited role matching `metra_ops_faults` / session settings expected by `NpgsqlOpsSession`.
+4. Seed two stations (A, B), two users, grants only on A for user1.
 
-## Explicit bans
-- Do not run against the legacy METRA database
-- Do not run against hosted Supabase until written approval
-- This script is self-contained for isolation mechanics; it does not replace production migrations
+## Assertions
+1. Connection as ops role with `app.station_id = A` can select faults for A only.
+2. Same connection cannot select station B rows even if UUID is known.
+3. `UPDATE`/`transition` with station B id fails or affects 0 rows.
+4. Missing `SET LOCAL` yields no rows (deny by default) if RLS is enforced.
+5. Audit tables reject UPDATE/DELETE if triggers exist as designed.
+
+## Proposed automated harness (files for review)
+- `database/tests/ops_station_isolation_pg_test.sql` — declarative SQL expectations for a disposable DB.
+- Optional later: .NET test conditioned on `METRA_OPS_TEST_DATABASE_URL` (never default to production).
+
+## Explicit non-goals
+- Importing legacy stations or users.
+- Running against `tbdnklyxjvbrilvnwgmq` without written approval.
