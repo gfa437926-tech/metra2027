@@ -91,3 +91,8 @@ Latest post-merge checks on 2026-11-04:
 - [GitHub Pages deployment #157](https://github.com/gfa437926-tech/metra2027/actions/runs/41928353967) failed closed because the repository Actions secret `METRA_API_BASE_URL` was empty. This is an environment-configuration blocker, not an Angular build failure. See [multi-environment hosting and Pages secret prerequisites](docs/deployment/MULTI-ENVIRONMENT-HOSTING.md).
 
 A successful CI run or container publish is not the same as a live API deployment. Production readiness requires a deployed HTTPS API, configured server-side Supabase credentials and client runtime secrets, exact CORS, successful `/api/v1/health` and `/api/v1/ready` checks, and authenticated end-to-end tests. Real identity and authority-access tests, administrator onboarding, schema review/approval before applying migrations, and verified missing station coordinates remain outstanding.
+
+
+## واجهات METRA 2027
+
+المرجع العربي الشامل للواجهات المقترحة، تفاصيل كل شاشة، الصلاحيات، حالات العرض، التكامل والاختبارات موجود في [مجلد واجهات](واجهات/README.md). هذا المرجع يميز بين الشاشات المنفذة جزئياً والمقترحة وغير المتحققة، ولا يعد بديلاً عن اختبارات التنفيذ الفعلية.
