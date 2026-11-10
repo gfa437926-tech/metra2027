@@ -271,15 +271,14 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
     title: 'النشرة المطرية',
     sourcePath: 'rainfall_reports.html',
     fields: [
-      ObservationFieldSpec(key: 'currentDate', label: 'تاريخ التقرير', kind: ObservationFieldKind.date),
-      ObservationFieldSpec(key: 'localTime', label: 'التوقيت المحلي', kind: ObservationFieldKind.time),
-      ObservationFieldSpec(key: 'utcTime', label: 'التوقيت العالمي UTC', kind: ObservationFieldKind.time),
+      ObservationFieldSpec(key: 'currentDate', label: 'تاريخ التقرير UTC', kind: ObservationFieldKind.date),
+      ObservationFieldSpec(key: 'utcTime', label: 'وقت الرصد UTC', kind: ObservationFieldKind.time),
       ObservationFieldSpec(key: 'rainAmount', label: 'كمية الهطول المطري', kind: ObservationFieldKind.number, unit: 'مم'),
       ObservationFieldSpec(key: 'snowDepth', label: 'سماكة الثلج', kind: ObservationFieldKind.number, unit: 'سم'),
       ObservationFieldSpec(key: 'observationDate', label: 'تاريخ الرصد', kind: ObservationFieldKind.date),
     ],
     metadataFields: [_rainAck],
-    sourceNotes: ['توقيت الإرسال وحدود الفترة الزمنية مذكورة في إقرار النموذج الأصلي؛ يلزم التحقق من قواعد UTC والتحويل قبل الإرسال.'],
+    sourceNotes: ['يعتمد التطبيق الجديد UTC حصراً؛ حقل الوقت المحلي الموجود في النموذج المرجعي القديم مستبعد ولا يعرض أو يخزن. يجب اعتماد قواعد الفترة الزمنية قبل تفعيل الإرسال.'],
   ),
   const ObservationModuleSpec(
     module: ObservationModule.weatherPhenomenon,
