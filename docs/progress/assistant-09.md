@@ -1,7 +1,7 @@
 # Assistant 09 — DevOps Progress
 
 **Task ID:** DEVOPS-09-001  
-**Last updated (UTC):** 2026-11-10T23:31:43Z  
+**Last updated (UTC):** 2026-11-10T23:34:30Z  
 **Status:** In progress  
 **Owner:** Assistant 09 — DevOps / Infrastructure / Automation
 
@@ -80,9 +80,9 @@ The requested `واجهات/مهما.md`, `واجهات/تغيير.md`, and `و�
 
 ## Progress calculation
 
-**Current task progress: 67% (8/12 work items).**
+**Current task progress: 75% (9/12 work items).**
 
-Calculation: 12 explicitly scoped DevOps work items are tracked for this task. Eight are complete: workflow inventory, historical run review, Angular CI hardening, Flutter lockfile enforcement, PR creation, PR CI verification, audit documentation, and assistant-specific progress/change-log reporting. Four remain open:
+Calculation: 12 explicitly scoped DevOps work items are tracked for this task. Nine are complete: workflow inventory, historical run review, Angular CI hardening, Flutter lockfile enforcement, PR creation, PR CI verification, audit documentation, and assistant-specific progress/change-log reporting. Three remain open:
 1. Diagnose and safely resolve the Pages runtime configuration failure.
 2. Confirm canonical handoff path and update the requested interface handoff files when available/confirmed.
 3. Reconcile and verify R/Climatol workflow after PR #23 is reviewed/integrated.
@@ -92,7 +92,7 @@ This percentage applies only to Assistant 09's scoped DevOps task, not to the wh
 
 ## Remaining tasks and next action
 
-**Remaining: 4 work items.**
+**Remaining: 3 work items.**
 
 **Next action:** inspect the Pages runtime-configuration validation step and workflow contract without accessing secret values; determine which required public configuration inputs are missing or malformed, then prepare a reviewed fix and add the evidence to this report and append-only change log.
 
@@ -146,3 +146,59 @@ No workflow source, application code, secrets, environment settings, database, o
 4. Pin Flutter SDK version after agreeing the supported version with the mobile owner.
 
 **Next action:** document the Pages required-setting checklist for the repository maintainer and request confirmation of the canonical `واجهات/` path; do not attempt to set or reveal secrets.
+
+
+## 2026-11-10T23:34:30Z — Flutter SDK pin and R workflow review
+
+**Task ID:** `DEVOPS-09-001`  
+**Status:** In progress  
+**Progress:** 75% (9/12 tracked work items).
+
+### Flutter SDK reproducibility
+
+- Inspected the successful PR Client CI #725 job log, not just the workflow YAML.
+- The log records the resolved Flutter SDK as **3.47.9** (`/opt/hostedtoolcache/flutter/stable-3.47.9-x64`).
+- Updated `.github/workflows/client-ci.yml` to pin `subosito/flutter-action@v2` to `flutter-version: '3.47.9'`, while retaining stable channel and dependency lockfile enforcement.
+- New validation run for commit `feacff5ac43479baba8141a4a2b9e27cd50c9ac7` is queued/pending at [Client CI run #42924440412](https://github.com/gfa437926-tech/metra2027/actions/runs/42924440412). Do not mark the pinned workflow green until that run completes.
+
+### R / Climatol CI review
+
+- Inspected the R workflow and worker implementation on PR #23 branch `work/climate-analytics-r-hardening`.
+- Confirmed R CMD check run #19 passed: https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783.
+- **Potential workflow coverage gap for Assistant 04 to resolve:** the workflow's `push.branches` list currently names only `work/climate-analytics-r-bootstrap`; after the work is integrated to `main`, pushes directly to `main` will not trigger this R workflow. PR events do run it, but ongoing main-branch CI should be explicitly included if that is the intended policy.
+- The workflow specifies R `4.5` (minor line, not exact patch) and Climatol `4.5-0` for CI; the installed package is asserted as `4.5.0`. This is better constrained than an unpinned dependency but is not a full exact R toolchain pin.
+- The R worker remains isolated: no .NET adapter, DB, Supabase credentials, or production observations. Its documentation still requires scientific approval of variable mapping, metadata, frequency, and parameters.
+- PR #23 remains Draft/open/unmerged. This review did not change Assistant 04's files or PR.
+
+### Files inspected
+
+- `.github/workflows/client-ci.yml`
+- `mobile/metra_mobile/pubspec.yaml`
+- `mobile/metra_mobile/pubspec.lock`
+- `mobile/metra_mobile/DEPLOYMENT.md`
+- `.github/workflows/climate-analytics-r.yml` on PR #23 branch
+- `services/climate-analytics-r/DESCRIPTION`
+- `services/climate-analytics-r/R/homogenization.R`
+- `services/climate-analytics-r/R/request-validation.R`
+- `services/climate-analytics-r/tests/testthat/test-climatol-smoke.R`
+- Successful Flutter CI #725 logs and R CI #19 records.
+
+### Files changed
+
+- `.github/workflows/client-ci.yml` — pin Flutter SDK to observed successful version 3.47.9.
+- `docs/progress/assistant-09.md`
+- `docs/progress/assistant-09-changelog.md`
+- `docs/deployment/DEVOPS-CI-CD-AUDIT.md`
+
+### Remaining tasks
+
+1. Diagnose Pages required configuration with repository maintainer confirmation; exact missing/invalid value remains unknown.
+2. Confirm canonical location of the requested `واجهات/` handoff files.
+3. Coordinate with Assistant 04 on R workflow branch coverage and review/integration of PR #23; do not modify their branch or merge it.
+
+### Tests
+
+- Previous Client CI #725 succeeded on the pre-pin workflow and its logs prove Flutter 3.47.9 was used.
+- New post-pin Client CI #42924440412 was pending at report time. Its outcome must be recorded after completion.
+- No local Flutter/R build was run in this round.
+- No deployment, secret change, database operation, or merge was performed.
