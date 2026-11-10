@@ -406,5 +406,10 @@ final observationModuleCatalogue = <ObservationModuleSpec>[
   ),
 ];
 
+List<ObservationModuleSpec> observationModuleSpecs(ObservationModule module) =>
+    observationModuleCatalogue
+        .where((spec) => spec.module == module)
+        .toList(growable: false);
+
 ObservationModuleSpec observationModuleSpec(ObservationModule module) =>
-    observationModuleCatalogue.firstWhere((spec) => spec.module == module);
+    observationModuleSpecs(module).first;
