@@ -81,3 +81,7 @@ Key interpretation rules:
 | Database changes | PR #26 describes a proposal only; no SQL/migration/DB action is authorized by this audit. | Proposal only; no database mutation. | Explicit owner approval after schema review; separate migration review and tests. |
 
 The detailed timestamped branch heads and workflow run references are maintained in [ASSISTANT-PR-EVIDENCE-REGISTER.md](ASSISTANT-PR-EVIDENCE-REGISTER.md).
+
+### Security PR #30 — test evidence refinement
+
+The failed Backend build is now diagnosed from its job log: 8 of 234 tests failed and 226 passed. The failures include authentication endpoint tests expecting 401 but receiving 429, and a readiness test expecting 503 but receiving 429. The security branch introduces a global rate limiter; the test host's repeated requests are encountering the limiter before the expected status assertions. This is a branch-level test/status-contract regression requiring owner remediation and a fresh run. It is not proof of production exploitability. The Angular job passed, while the Flutter job was cancelled before Flutter tests. See the exact run, head SHA and limitations in the evidence register.
