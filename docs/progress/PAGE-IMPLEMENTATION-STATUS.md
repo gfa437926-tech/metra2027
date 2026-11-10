@@ -121,3 +121,8 @@
 - Soil and agriculture converted to unbound shells (no fake save).
 - Flutter reports hub: observation status + archive monthly path.
 - Completion boundary: `docs/operations/PROJECT-COMPLETION-BOUNDARY.md`
+
+
+## Phenomena
+- Angular phenomena input requires station selection and submits `observationType: phenomenon` to the live API on stop.
+- Local-only end without station/API is rejected with an explicit error (no silent fake save).
