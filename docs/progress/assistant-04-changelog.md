@@ -26,3 +26,21 @@
 - **New evidence:** [Climate Analytics R run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) completed with **Success** on commit c9d26c55d0743ea96830ba1df157f2cc05c7455f. Runs [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719) and [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649) also passed. This does not constitute scientific validation on METRA station data.
 - **Backend:** [Run #1388](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198331) passed on the worker-code PR event; no .NET/R integration is claimed.
 - **Next:** deterministic Climatol fixture smoke test and inspect R CMD check job details.
+
+
+## 2026-11-10T23:30:41Z — Climatol fixture smoke-test implementation
+
+- **Task:** Assistant 04 — R/Climatol.
+- **Status:** In progress; new end-to-end Climatol fixture test committed; CI pending.
+- **Branch:** [work/climate-analytics-r-hardening](https://github.com/gfa437926-tech/metra2027/tree/work/climate-analytics-r-hardening).
+- **PR:** [#23](https://github.com/gfa437926-tech/metra2027/pull/23) — Open / Draft / not merged. PR #18 remains untouched.
+- **Files inspected:** R worker and request validation, DESCRIPTION, existing testthat tests, R workflow, README, assistant report, append-only changelog, and implementation status.
+- **Files changed:** workflow, new `test-climatol-smoke.R`, R README, assistant-04 report, this append-only log, and implementation status.
+- **Verified previous evidence:** run #19 log shows `rcmdcheck::rcmdcheck()`, R CMD build, R CMD check, testthat execution, `Status: OK`, 0 errors, 0 warnings, 0 notes.
+- **New implementation:** smoke test builds Climatol's published monthly Temp example input pair (five stations, 1961–2005), invokes the actual default Climatol runner through `metra_run_homogenization()`, and checks completion, artifacts, provenance, and source-file immutability. CI requests Climatol 4.5-0 explicitly and asserts its installed version.
+- **Fixture source:** [CRAN Climatol 4.5-0 manual](https://cran.r-project.org/web/packages/climatol/climatol.pdf), datasets section and documented Temp example. No METRA observation data used.
+- **CI:** [Run #21](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) was still running at inspection time; no success claim for this new test.
+- **Not done:** local R run, METRA data processing, independent validation, .NET adapter, artifact storage, review UI, scientific approval.
+- **Progress:** held at 55% pending CI evidence; (3 + 5 × 0.5) / 10.
+- **Remaining:** 7 major work items.
+- **Safety:** no merge, deployment, database/Supabase, raw observation, Angular, or Flutter changes.

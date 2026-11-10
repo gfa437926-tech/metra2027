@@ -91,3 +91,14 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - [Climate Analytics R run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) passed on commit c9d26c55d0743ea96830ba1df157f2cc05c7455f.
 - Earlier R runs [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719) and [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649) also passed.
 - These are automated package/workflow checks, not scientific validation on METRA observations.
+
+
+---
+
+## Assistant 04 update — 2026-11-10T23:30:41Z
+
+- Previous [R run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783) logs were inspected directly. The job ran `rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "error")`, built and checked the package, ran testthat, and ended with **0 errors, 0 warnings, 0 notes**.
+- Added an end-to-end smoke test using Climatol's official `Temp.dat` / `Temp.est` package demonstration data (five monthly station series, 1961–2005). It invokes the real Climatol runner through the isolated worker and verifies outputs, provenance, and source immutability. This is a software integration smoke test, not scientific validation.
+- CI dependency setup explicitly requests Climatol 4.5-0 and checks the installed version before R CMD check.
+- New [run #21](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) was in progress at the time of this update; the new test's result is pending.
+- No METRA data, database, .NET integration, UI, or scientific approval was added.

@@ -9,7 +9,7 @@
 - Invokes `climatol::homogen()` with UTC, graphics, verbose logging, and the package's documented defaults.
 - Writes `metra-provenance.json` with request, UTC start/end times, R/package versions, effective Climatol formal defaults, input/output SHA-256 hashes, source-integrity result, and completion/failure state.
 - Retains failed-job provenance for diagnosis; original input files are checked after execution.
-- Includes unit tests using an injected runner. These test orchestration and integrity, not scientific validity.
+- Includes orchestration tests using an injected runner and an end-to-end smoke test against the CRAN Climatol `Temp.dat` / `Temp.est` demonstration dataset (monthly, five stations, 1961–2005). The fixture is package demonstration data, not METRA observations; the smoke test checks execution/provenance, not scientific validity.
 
 ## Job input contract
 
@@ -39,7 +39,7 @@ R -e 'testthat::test_dir("tests/testthat")'
 ## Outstanding gates
 
 1. Approve the METRA-to-Climatol export contract and station-history source.
-2. Add representative synthetic fixtures and a pinned, reproducible container/toolchain.
+2. Run the CRAN Climatol example-data smoke test in CI with Climatol 4.5-0 pinned; pin the remaining R/OS toolchain for full reproducibility.
 3. Review Climatol parameters separately for each variable and temporal resolution.
 4. Add authenticated, private .NET orchestration with process/resource limits, cancellation, idempotency, and audit.
 5. Add quarantined artifact storage and reviewer comparison/approval workflow.
