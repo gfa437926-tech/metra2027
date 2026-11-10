@@ -110,3 +110,10 @@ The decision endpoint must independently re-check the actor's decision-specific 
 QA review on PR #22 explicitly requested endpoint-level assertions for 401/403/400/503 and that the queue service is never invoked after denied scope. Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` with five WebApplicationFactory tests for those paths (including a downstream queue failure case).
 
 These tests are source additions only at this point: they have not been run locally and the new commit's CI result is not yet confirmed. They do not close the TOCTOU vulnerability. Cross-station isolation, revocation-before-request, concurrent read/revocation race, and atomic decision authorization remain outstanding.
+
+
+## Round 5 addendum — station-bound endpoint test
+
+Added a test in `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` proving that a principal whose fake grant is restricted to station A receives 403 when requesting station B, and that the queue service is not called. The fake authorization records every requested station ID to ensure the endpoint checks the route's station B ID.
+
+This is not a database isolation or revocation-race test. It does not close the P1 TOCTOU finding. Commit: `efa5870e555d4f74584e44bd439002daf784afa3`. No CI run was returned by the available commit workflow lookup; no local test run is claimed.
