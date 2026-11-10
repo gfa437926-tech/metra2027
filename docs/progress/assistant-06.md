@@ -86,3 +86,22 @@ Completed weight = 15 + 15 + 15 + 5 = 50%.
 
 ## Pull request
 [Draft PR #24](https://github.com/gfa437926-tech/metra2027/pull/24) — open, not merged.
+
+
+---
+
+## QA-03 — Latest Actions job-level review (2026-11-10T23:32:18Z UTC)
+
+- Refreshed PR and workflow status for assistant PRs #21, #22, #23 and #27, including individual job steps.
+- **PR #21:** current head `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da`; [Client CI #42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) was in progress. Angular build, Flutter dependency resolution and Flutter analysis passed; Flutter test step had not completed at inspection. Earlier run #42923951902 was cancelled.
+- **PR #22:** [Backend build #42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) completed successfully on head `cfe43d00e729b6dbec76690a5734f8344dfe3abd`. NuGet restore/audit, authorization SQL contracts, API build, Domain/API tests and Docker image build passed.
+- **PR #23:** current head `0c5ba868acf74fe7506d81d073f73c538ccec4d5`; [R workflow #42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) was in progress. Earlier #42923751451 succeeded on an earlier SHA only.
+- **PR #27:** current head `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c`; [Client CI #42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) was cancelled with no jobs. Earlier #42922825265 succeeded on an earlier SHA only.
+- **QA PR #24:** still open, Draft, unmerged; head `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`; no associated workflow run found. QA-06 did not execute tests.
+
+### Actual QA result
+No test pass/fail is attributed to QA-06. PR #22 is the only one among these reviewed branches with a completed successful run at its observed latest head. The Flutter and R latest runs remained in progress; the latest DevOps head's run was cancelled.
+
+### Progress
+- **50%** — unchanged; reviewing other assistants' CI is evidence gathering, not implementation or execution of QA-06 test suites.
+- **Remaining:** 3 major work packages — execute own tests/CI; implement missing suites; complete cross-layer authorization/UTC/RTL/accessibility/E2E verification.
