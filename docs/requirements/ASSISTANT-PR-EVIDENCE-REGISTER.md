@@ -152,3 +152,9 @@ PR #22 advanced again after the previous snapshot:
 - PR #27 and #30 latest successful runs remain the verified results in the preceding snapshot.
 
 This illustrates why CI evidence is stored against exact commit SHAs rather than PR numbers alone.
+
+### Completion update — R/Climatol and Flutter pending (2026-11-10T23:39:35.388Z)
+
+- PR #23 current head `42db1be81790d4dda47584019b729df8a1f53c07`: [Climate Analytics R #42924761774](https://github.com/gfa437926-tech/metra2027/actions/runs/42924761774) completed **success** on that exact SHA.
+- PR #21 current head `58d1d6c3a83af7bce893f992dfeb1ea6fd10b412`: [Client CI #42924658140](https://github.com/gfa437926-tech/metra2027/actions/runs/42924658140) remained **pending** at the latest check.
+- PR #22 current head `efa5870e555d4f74584e44bd439002daf784afa3`: no associated workflow run was returned for this exact SHA. Earlier Backend build #42924878526 belongs to previous head `e771f056...`.
