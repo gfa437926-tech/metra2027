@@ -66,3 +66,18 @@ Key interpretation rules:
 - The scientific review PR (#25) reports possible operational validation and humidity-range consistency gaps; these require direct source/test reproduction before being classified as confirmed defects.
 - Database proposal PR (#26) is not authorization to apply SQL or migrations.
 - PR #24's QA matrix is an audit artifact; it is not a substitute for executing tests.
+
+
+## Verified cross-cutting gaps from source review and refreshed PR status
+
+| Requirement | Verified evidence | Current classification | Acceptance evidence still required |
+|---|---|---|---|
+| Atomic station-scoped review queue authorization | `ObservationQueueEndpoints.cs` calls permission RPC(s), then a separate service-role queue SELECT; queue SELECT does not receive actor identity. | Confirmed source-level TOCTOU risk; remediation design only in PR #22 B-013. | Approved schema design, atomic authorization+read operation, revocation/concurrency tests, latest-head CI. |
+| Angular/Flutter operational feature parity | PR #28 source inventory: Angular phenomena/rainfall/climate/monthly/annual/agriculture/soil features are local, preview or unconnected; Flutter lacks a submit screen and reports remain unconnected. | Partial API wiring, not full feature parity. | Approved per-feature DTOs/endpoints, real client screens, authenticated integration tests and data provenance. |
+| UTC-only end-to-end | PR #21/#22 report client/API UTC changes, but current heads have newer CI runs in progress at the last refresh; QA found no cross-layer UTC suite. | Partial branch evidence; end-to-end invariant unproven. | Successful latest-head client/API tests plus persistence round-trip and cross-layer UTC contract tests. |
+| Cross-stack quality gate | QA inventory: 20 .NET test files, 3 Flutter test files, 12 SQL contract scripts; Angular baseline build-only; no E2E/accessibility suite identified. QA ran no tests. | Partial test foundation; major coverage gaps. | Test-server authorization tests, Angular unit/component tests, Flutter RTL/accessibility tests, PostgreSQL integration, Playwright/axe E2E. |
+| Security hardening CI | PR #30 exact head: backend build failed at domain/API tests; client workflow cancelled in Flutter before Flutter tests; Angular build/npm audit passed. | Not accepted; root cause unresolved and Flutter unverified. | Diagnose test failure, rerun backend; rerun full client workflow through Flutter tests on current head. |
+| R/Climatol | PR #23 has R worker/tests, but current head's workflow was in progress at last refresh; previous successful run belongs to older SHA. | Branch implementation; latest-head verification pending. | Successful CI on current head and scientific validation with approved METRA series/parameters. |
+| Database changes | PR #26 describes a proposal only; no SQL/migration/DB action is authorized by this audit. | Proposal only; no database mutation. | Explicit owner approval after schema review; separate migration review and tests. |
+
+The detailed timestamped branch heads and workflow run references are maintained in [ASSISTANT-PR-EVIDENCE-REGISTER.md](ASSISTANT-PR-EVIDENCE-REGISTER.md).
