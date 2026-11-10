@@ -79,7 +79,7 @@ void main() {
     expect(hourly.sourceNotes.any((note) => note.contains('03 و09')), isTrue);
 
     final daily = observationModuleSpec(ObservationModule.daily);
-    expect(daily.sourceNotes.any((note) => note.contains('snowThickness')), isTrue);
+    expect(daily.fields.any((field) => field.key == 'snowThickness'), isTrue);
 
     final soil = observationModuleSpec(ObservationModule.soilTemperature);
     expect(soil.sourceNotes.any((note) => note.contains('23,02,05,08')), isTrue);
