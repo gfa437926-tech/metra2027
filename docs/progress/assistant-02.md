@@ -2,18 +2,19 @@
 
 - Repository: gfa437926-tech/metra2027
 - Branch: work/backend-api-audit-assistant-2
-- Updated at (UTC): 2026-11-10T23:36:51Z
-- Round: 3 — review-queue TOCTOU analysis and mitigation design
+- Updated at (UTC): 2026-11-10T23:39:06Z
+- Round: 5 — station-isolation endpoint test follow-up
 - Overall task status: In progress
 - Draft PR: https://github.com/gfa437926-tech/metra2027/pull/22
 
 ## Work completed in this round
-1. Rechecked the assistant-02 branch and compared it with main. At inspection time the branch comparison was diverged: 14 commits ahead and 2 behind.
+1. Rechecked the assistant-02 branch and compared it with main. At inspection time the branch comparison was diverged: 33 commits ahead and 2 behind.
 2. Inspected the actual review queue endpoint and authorization service.
 3. Confirmed the authorization check and service-role PostgREST queue read are separate operations; the queue read does not receive the actor ID.
 4. Documented the TOCTOU scenario, security invariants, atomic RPC/read-model proposal, concurrency/revocation semantics, rejected alternatives and required test plan.
 5. Added `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md`.
-6. Updated the task tracker, change log and this progress report.\n7. Read the master requirements for hourly/daily list, detail, correction and history workflows; drafted `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` for owner review.
+6. Updated the task tracker, change log and this progress report.
+7. Read the master requirements for hourly/daily list, detail, correction and history workflows; drafted `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` for owner review.
 
 ## Files inspected
 - `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
@@ -27,14 +28,23 @@
 - Branch comparison against main.
 
 ## Files changed in this round
-- `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md` (new)\n- `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` (new)
+- `docs/backend/B-013-REVIEW-QUEUE-TOCTOU-DESIGN.md` (new)
+- `docs/backend/OBSERVATION-READ-API-CONTRACT-DRAFT.md` (new)
 - `واجهات/مهما.md`
 - `واجهات/تغيير.md`
 - `docs/progress/assistant-02.md`
 - `docs/backend/API-BACKEND-AUDIT-2026-11-11.md`
 
-## B-008 contract draft and disposition\nA draft now describes general list, detail, version-history and correction routes, proposed filters/pagination, immutable version behavior, stale-version conflicts, station authorization and outstanding owner decisions. It is not an approved OpenAPI contract and no endpoints were implemented. B-008 remains in progress.\n\n## Round 4 — QA review response and endpoint tests
+## B-008 contract draft and disposition
+A draft now describes general list, detail, version-history and correction routes, proposed filters/pagination, immutable version behavior, stale-version conflicts, station authorization and outstanding owner decisions. It is not an approved OpenAPI contract and no endpoints were implemented. B-008 remains in progress.
+
+## Round 4 — QA review response and endpoint tests
 A QA-06 PR review comment reiterated the P1 TOCTOU finding and specifically requested endpoint-level 401/403/400/503 tests plus an assertion that the queue service is not called on denied station scope. Added `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs` with five WebApplicationFactory tests covering unauthenticated requests, invalid limit, denied permissions/no queue call, unconfigured dependency, and queue read failure. Tests were not run locally; no CI result for the new commit is confirmed yet. These tests do not remediate TOCTOU; B-013 remains open.
+
+## Round 5 — station isolation endpoint test
+Reviewed the QA-06 finding and the actual queue endpoint, authorization interface, Program.cs and test project. Extended `ObservationQueueEndpointTests.cs` with a sixth test: an actor granted station A is denied (403) when requesting station B; the test asserts that each authorization check used station B and the queue service was never called. The fake authorization service now supports a station-specific grant and records requested station IDs.
+
+Commit: `efa5870e555d4f74584e44bd439002daf784afa3`. The available commit-workflow lookup returned no PR-triggered workflow run for this commit; CI success is not confirmed. Tests were not run locally. This is endpoint-level fake-service coverage only, not a DB integration test and not a TOCTOU remediation. Revocation-before-request, concurrent read/revocation, atomic decision, DB-backed station isolation and E2E remain outstanding.
 
 ## B-013 finding and disposition
 The current flow performs permission RPC checks first, then a separate PostgREST SELECT using the server service-role credential. A revocation can commit between the operations, leaving an in-flight request with a stale authorization decision.
