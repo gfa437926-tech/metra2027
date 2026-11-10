@@ -105,3 +105,16 @@ The following records supersede the earlier queued/in-progress snapshot in the p
 - QA PR #24 remains open, Draft and unmerged. No Actions run was found for its current head `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`. QA-06 did not run any test commands.
 
 No implementation, workflow, schema, migration, data or deployment changes were made by QA-06 in this follow-up.
+
+
+## Final observed parallel Actions outcomes (2026-11-10T23:33:00Z UTC)
+
+This section supersedes the prior in-progress snapshot for the listed runs:
+
+- PR #21 [Client CI #42924074199](https://github.com/gfa437926-tech/metra2027/actions/runs/42924074199) — **success** on head `3c5a2ee1f175e46bb903d2f6b30e816f3b45e8da`. Angular build and Flutter dependency resolution, analysis and tests passed. The Flutter test step includes the newly added UTC widget test in this PR head.
+- PR #22 [Backend build #42923926005](https://github.com/gfa437926-tech/metra2027/actions/runs/42923926005) — **success** on head `cfe43d00e729b6dbec76690d0734f8344dfe3abd`. SQL authorization contracts, API build/tests and Docker image build passed.
+- PR #23 [Climate Analytics R #42924091642](https://github.com/gfa437926-tech/metra2027/actions/runs/42924091642) — **success** on head `0c5ba868acf74fe7506d81d073f73c538ccec4d5`. Pinned Climatol fixture validation and R package check passed.
+- PR #27 [Client CI #42924162203](https://github.com/gfa437926-tech/metra2027/actions/runs/42924162203) — **cancelled** on latest observed head `2fbce51f567ec7e3418f44e7ef5420f44bef9f1c`, with no jobs. Earlier success #42922825265 is for older head `8f1687246fd0f41a1d6de188eebd6beeb372e0a9`; it does not validate the latest head.
+- QA PR #24 — no associated Actions run found for head `1a1c1f16e44e5b06aa1faf22f8061e11a42c1f10`; QA-06 did not run tests.
+
+**QA conclusion:** latest observed heads for PRs #21, #22 and #23 have successful workflow evidence. PR #27 latest head remains unverified. None of these results constitutes test execution by QA-06 or validates QA PR #24. No application, workflow, database, migration or deployment changes were made by QA-06.
