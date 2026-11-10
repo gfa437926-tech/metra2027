@@ -109,3 +109,10 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - Code commit: [015a470646e108f2f38977e08b196bd959e9137c](https://github.com/gfa437926-tech/metra2027/commit/015a470646e108f2f38977e08b196bd959e9137c).
 - [Run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106) is the workflow run for this commit and was still in progress at the time of reporting.
 - The earlier [run #21](https://github.com/gfa437926-tech/metra2027/actions/runs/42923751451) passed the package check before the example-data test was added.
+
+
+## 2026-11-10T23:33:54Z — Fixture verification and security-test expansion
+
+- The real Climatol example fixture smoke test passed in [CI run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106), using Climatol 4.5-0. R CMD check ended `Status: OK`, 0 errors, 0 warnings, 0 notes.
+- Added test cases for symlinked input directory escape, symlinked input file escape, and identical input/output directories. The new tests require a fresh CI run before they are considered passing.
+- The fixture smoke-test milestone is complete. Broader security testing and reproducibility remain partial.

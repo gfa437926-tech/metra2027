@@ -54,7 +54,7 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 - No real METRA station observations were loaded or processed.
 - No independent/reference climate dataset validation was performed.
-- No real Climatol data-fixture smoke test has yet been demonstrated by this task.
+- A real Climatol example-data smoke test now runs in CI using the published Temp fixture; no METRA production data is used.
 - No .NET-to-R process adapter, authenticated job API, cancellation, resource limits, or production orchestration was implemented.
 - No durable artifact store, review UI implementation, or approval/publishing workflow was implemented.
 - No variable-specific climate normals or indices were implemented.
@@ -62,6 +62,8 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 - No R local test execution is claimed because R was not installed in the editing environment.
 
 ## Test evidence
+
+- [Climate Analytics R — GitHub Actions run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106): **Success** on smoke-test code commit `015a470646e108f2f38977e08b196bd959e9137c`; verified Climatol 4.5-0, `R CMD check` `Status: OK`, and 0 errors / 0 warnings / 0 notes. The test suite includes the real Climatol Temp example fixture smoke test.
 
 - [Climate Analytics R — GitHub Actions run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783): **Success** for code/documentation commit `c9d26c55d0743ea96830ba1df157f2cc05c7455f`.
 - Earlier R runs #16, #17, and #18 also completed successfully: [#16](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198272), [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719), [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649). Run #16 exercised the worker/provenance/test code commit `dde09bdecb356c6f90d10e2809536936c4eed3f0`; later commits in the PR added documentation and progress records only.
@@ -80,20 +82,20 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 ## Task progress calculation
 
-**Estimated task completion: 55%.** This is an engineering-workstream estimate, not scientific acceptance. Ten workstreams are weighted equally: three completed (initial worker audit, workflow/architecture specification, provenance implementation); five partially completed (readiness/input contract, QC/breakpoint review, review UI specification, secure .NET boundary design, reproducible tests/environment); two not completed (actual .NET integration and independent scientific validation/approval). Calculation: (3 + 5 × 0.5) / 10 = 55%.
+**Estimated task completion: 55%.** This is an engineering-workstream estimate, not scientific acceptance. Ten workstreams are weighted equally: three completed (initial worker audit, workflow/architecture specification, provenance implementation); five partially completed (readiness/input contract, QC/breakpoint review, review UI specification, secure .NET boundary design, reproducible tests/environment); two not completed (actual .NET integration and independent scientific validation/approval). The reproducible-test workstream remains partial because hostile-input, concurrency, cancellation, and broader environment-locking coverage are still outstanding. Calculation: (3 + 5 × 0.5) / 10 = 55%.
 
 ## Remaining tasks and next action
 
 **Remaining: 7 major work items**, counting partially completed items that still require closure:
 1. Complete input schema and METRA-to-Climatol export mapping approval.
-2. Add and run real Climatol fixture smoke tests with pinned dependencies.
+2. Add and run real Climatol fixture smoke tests with pinned dependencies. **Completed in CI run #22**; broader adversarial tests remain under item 3.
 3. Add hostile-path, symlink, malformed/oversized input, concurrency, cancellation, and cleanup tests.
 4. Implement secure .NET job orchestration and authorization.
 5. Implement durable artifact storage and the review/approval UI integration.
 6. Validate the method on an independently curated climate reference dataset.
 7. Obtain scientific sign-off for variable-specific settings, thresholds, completeness rules, and publication criteria.
 
-**Next step:** inspect the completed R CMD check job details and the worker implementation against the Climatol 4.5-0 manual, then add a deterministic fixture-based Climatol smoke test without using METRA production observations.
+**Next step:** expand adversarial input-boundary tests (symlink escape, traversal, malformed/oversized inputs) and verify them in CI.
 
 ## Safety declaration
 
@@ -119,3 +121,18 @@ No merge to main, production deployment, database/Supabase changes, raw observat
 - **Task progress:** remains **55%** until the new CI test passes and additional workstreams close. Calculation unchanged: (3 completed + 5 partial × 0.5) / 10 equally weighted workstreams.
 - **Remaining:** 7 major work items. Next: verify the new CI result and address any smoke-test failures before expanding hostile-input/concurrency coverage.
 - **Safety:** no database/Supabase changes, raw observation edits, main merge, deployment, Angular/Flutter changes, or modifications to shared coordination files.
+
+
+---
+
+## Assistant 04 round update — 2026-11-10T23:33:54Z
+
+- **Status:** In progress. The real Climatol example-data smoke test passed CI; additional symlink/path-boundary tests have now been added and await CI.
+- **CI success:** [run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106), targeting code commit `015a470646e108f2f38977e08b196bd959e9137c). Logs confirm Climatol 4.5-0, the version assertion, `R CMD build`, `R CMD check`, testthat execution, `Status: OK`, 0 errors, 0 warnings, 0 notes.
+- **New tests added in this round:** symlinked input-directory escape rejection, symlinked input-file escape rejection, and same input/output directory rejection. These test existing validation behavior; they do not imply all hostile-input risks are closed.
+- **Files inspected:** request validation, worker, existing worker tests, smoke test, testthat runner, package DESCRIPTION, workflow, and current progress records.
+- **Files changed:** new `services/climate-analytics-r/tests/testthat/test-security-boundaries.R`, and progress/status records.
+- **Progress:** remains 55% under the existing 10-workstream model; the smoke test closes one explicit task item, but the reproducible-testing workstream remains partial due to broader adversarial/concurrency/cancellation/environment coverage.
+- **Remaining major items:** 6. The Climatol fixture smoke-test item is complete; hostile-input coverage remains part of the security-test work item.
+- **Not done:** no METRA station data processing, scientific validation/sign-off, .NET adapter, durable storage, review UI, or local R execution.
+- **Safety:** no database/Supabase, raw observations, shared coordination files, Angular/Flutter, main merge, or deployment changed.

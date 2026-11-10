@@ -53,3 +53,14 @@
 - **PR:** [#23](https://github.com/gfa437926-tech/metra2027/pull/23) remains Open / Draft / not merged.
 - **Files committed:** new real Climatol fixture smoke test, pinned CI dependency/version assertion, README test scope, and assistant progress records.
 - **Task estimate:** 55%; 7 major work items remain. No scientific validation or METRA observation processing is claimed.
+
+
+## 2026-11-10T23:33:54Z — Climatol smoke-test success and hostile-path test expansion
+
+- **Verified:** [CI run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106) passed on code commit `015a470646e108f2f38977e08b196bd959e9137c`. Logs show Climatol 4.5-0 installed, explicit version assertion passed, `R CMD build`, `R CMD check`, testthat, `Status: OK`, 0 errors, 0 warnings, 0 notes.
+- **Fixture test:** published Climatol Temp monthly dataset for five stations, 1961–2005; no METRA data. Test exercises the actual default Climatol runner and verifies artifacts/provenance/source immutability.
+- **New tests added:** symlinked input directory escape, symlinked input file escape, and same input/output directory rejection.
+- **Files changed:** new `services/climate-analytics-r/tests/testthat/test-security-boundaries.R`; updated assistant report, this append-only log, and implementation status.
+- **Current test result:** new symlink-boundary tests are committed in this round and await a fresh CI result.
+- **Progress:** 55%; 6 major work items remain. The fixture smoke test item is complete; the wider security/reproducibility workstream remains partial.
+- **Safety:** no production observations, database, merge, deployment, Angular, or Flutter changes.
