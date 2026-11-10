@@ -64,7 +64,7 @@ void main() {
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
   });
-  testWidgets('home connects station directory to the observation workspace', (tester) async {
+  testWidgets('home overview opens the observation workspace for the station directory', (tester) async {
     const stationId = '22222222-2222-4222-8222-222222222222';
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -96,11 +96,7 @@ void main() {
     expect(find.text('الرصد'), findsOneWidget);
     expect(find.text('مركز أعمال الرصد'), findsNothing);
 
-    final navigationBarRect = tester.getRect(find.byType(NavigationBar));
-    await tester.tapAt(Offset(
-      navigationBarRect.left + navigationBarRect.width * 0.5,
-      navigationBarRect.center.dy,
-    ));
+    await tester.tap(find.text('الانتقال إلى أعمال الرصد'));
     await tester.pumpAndSettle();
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
     expect(find.text('محطة آلية — AU-01'), findsOneWidget);
