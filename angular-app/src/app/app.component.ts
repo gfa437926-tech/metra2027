@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
@@ -8,7 +8,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <button id="mobileMenuBtn" class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" aria-label="فتح القائمة" aria-controls="mainSidebar" [attr.aria-expanded]="sidebarOpen">
+    <button id="mobileMenuBtn" #mobileMenuTrigger class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" [attr.aria-label]="sidebarOpen ? 'إغلاق القائمة' : 'فتح القائمة'" aria-controls="mainSidebar" [attr.aria-expanded]="sidebarOpen">
       <i class="fa-solid fa-bars"></i><span>القائمة</span>
     </button>
     <div id="mobileOverlay" class="sidebar-backdrop" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
@@ -115,6 +115,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
 export class AppComponent implements OnInit {
   private readonly auth = inject(SupabaseAuthService);
   private readonly router = inject(Router);
+  @ViewChild('mobileMenuTrigger') private mobileMenuTrigger?: ElementRef<HTMLButtonElement>;
   sidebarOpen = false;
   currentUserEmail: string | null = null;
 
@@ -143,7 +144,9 @@ export class AppComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
-    if (this.sidebarOpen) this.closeSidebar();
+    if (!this.sidebarOpen) return;
+    this.closeSidebar();
+    this.mobileMenuTrigger?.nativeElement.focus();
   }
 
   closeSidebar(): void { this.sidebarOpen = false; }
