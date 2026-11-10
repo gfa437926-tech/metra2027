@@ -1,7 +1,7 @@
 # Assistant 09 — DevOps Progress
 
 **Task ID:** DEVOPS-09-001  
-**Last updated (UTC):** 2026-11-10T23:35:00Z  
+**Last updated (UTC):** 2026-11-10T23:40:13.810Z  
 **Status:** In progress  
 **Owner:** Assistant 09 — DevOps / Infrastructure / Automation
 
@@ -24,7 +24,7 @@ The Draft PR is open and targets `main`; it has not been merged. GitHub Actions 
 | Angular production build | Passed | [Client CI #725](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265) |
 | Flutter dependency resolution | Passed — `flutter pub get --enforce-lockfile` | [Client CI #725](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265) |
 | Flutter static analysis | Passed — `flutter analyze` | [Client CI #725](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265) |
-| Flutter tests | Passed — `flutter test` | [Client CI #725](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265) |
+| Flutter tests | Passed — `flutter test` | [Client CI #725](https://github.com/gfa437926-tech/metra2027/actions/runs/42922825265); [post-pin #42924596524](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524) |
 
 Historical main-branch evidence inspected separately:
 - Backend build #774 passed restore/audit, SQL contract checks, API build/tests and Docker build.
@@ -54,7 +54,7 @@ The requested `واجهات/مهما.md`, `واجهات/تغيير.md`, and `و�
 
 ## Files changed by Assistant 09
 
-- `.github/workflows/client-ci.yml` — deterministic npm install/cache key and enforced Flutter lockfile.
+- `.github/workflows/client-ci.yml` — deterministic npm install/cache key, enforced Flutter lockfile, and pinned Flutter SDK 3.47.9.
 - `docs/deployment/DEVOPS-CI-CD-AUDIT.md` — workflow inventory, evidence, risk/overlap review, configuration and secrets guidance, release/rollback proposal.
 - `docs/progress/assistant-09-changelog.md` — append-only round history.
 - `docs/progress/assistant-09.md` — this status report.
@@ -67,6 +67,7 @@ The requested `واجهات/مهما.md`, `واجهات/تغيير.md`, and `و�
 4. Opened Draft PR #27.
 5. Verified PR Client CI #725: Angular install/build passed; Flutter SDK setup, locked dependency resolution, analyze and tests passed.
 6. Documented the historical Pages runtime configuration failure and separated it from Angular build status.
+7. Pinned Flutter SDK to 3.47.9 based on the successful prior job's resolved version, then verified the pinned workflow in Client CI #42924596524.
 
 ## What was not done
 
@@ -76,7 +77,8 @@ The requested `واجهات/مهما.md`, `واجهات/تغيير.md`, and `و�
 - No workflow was deleted.
 - No changes were pushed to `main`; PR #27 remains Draft/open.
 - No R/Climatol execution was performed by this task.
-- No local build was claimed; the listed passing tests are from the linked GitHub Actions run.
+- No local build was claimed; the listed passing tests are from the linked GitHub Actions runs.
+- Post-pin validation: [Client CI #42924596524](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524) completed successfully. Angular install/build and Flutter SDK setup, locked dependency resolution, analyze and tests all passed.
 
 ## Progress calculation
 
@@ -93,7 +95,7 @@ This percentage applies only to Assistant 09's scoped DevOps task, not to the wh
 
 **Remaining: 3 work items.**
 
-**Next action:** obtain maintainer confirmation of the Pages required settings and canonical `واجهات/` handoff location; then coordinate the R workflow push-branch coverage finding with Assistant 04.
+**Next action:** coordinate the R workflow push-trigger finding with Assistant 04, while awaiting maintainer confirmation of Pages settings and the canonical `واجهات/` handoff path.
 
 ## Safety boundaries
 
@@ -201,3 +203,19 @@ No workflow source, application code, secrets, environment settings, database, o
 - New post-pin Client CI #42924440412 was pending at report time. Its outcome must be recorded after completion.
 - No local Flutter/R build was run in this round.
 - No deployment, secret change, database operation, or merge was performed.
+
+
+## 2026-11-10T23:40:13.810Z — Post-pin CI verification
+
+**Task ID:** `DEVOPS-09-001`  
+**Status:** In progress  
+**Progress:** 75% (9/12 tracked work items; 3 remain).
+
+- [Client CI #42924596524](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596524) completed with conclusion `success` on branch HEAD `71888fbecbaaf147db98aa632784b476fba047cd`.
+- Job-level evidence: Angular build succeeded, including locked dependency installation and production build. Flutter job succeeded, including Flutter action setup, `flutter pub get --enforce-lockfile`, `flutter analyze`, and `flutter test`.
+- This is the first verified successful run after pinning Flutter `3.47.9`; the intermediate runs for earlier rapid commits were cancelled by concurrency and are not treated as failures.
+- **Files updated this round:** `docs/progress/assistant-09.md`, `docs/progress/assistant-09-changelog.md`, `docs/deployment/DEVOPS-CI-CD-AUDIT.md`.
+- **Tests:** no local test was run; GitHub Actions #42924596524 is the successful CI evidence.
+- **Not performed:** no Pages deployment, production deployment, secret/environment mutation, DB change, workflow deletion, or merge.
+- **Remaining:** (1) maintainer verification of Pages runtime settings; (2) confirmation of canonical `واجهات/` handoff path; (3) coordinate R workflow trigger coverage and PR #23 with Assistant 04.
+- **Next:** relay the verified R push-trigger gap to Assistant 04 and keep PR #27 Draft pending owner review.
