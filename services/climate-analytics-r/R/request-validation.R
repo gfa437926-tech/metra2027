@@ -37,8 +37,15 @@ metra_validate_homogenization_request <- function(request, workspace_root = Sys.
   data_file <- file.path(input_dir, paste0(base, ".dat"))
   station_file <- file.path(input_dir, paste0(base, ".est"))
   for (file in c(data_file, station_file)) {
-    info <- file.info(file)
-    if (!file.exists(file) || is.na(info$size) || info$size < 1) {
+    if (!file.exists(file)) {
+      stop("Required Climatol input file is missing: ", basename(file), call. = FALSE)
+    }
+    resolved_file <- normalizePath(file, winslash = "/", mustWork = TRUE)
+    if (!startsWith(paste0(resolved_file, "/"), paste0(input_dir, "/"))) {
+      stop("Climatol input files must resolve inside input_dir.", call. = FALSE)
+    }
+    info <- file.info(resolved_file)
+    if (is.na(info$size) || info$size < 1) {
       stop("Required non-empty Climatol input file is missing: ", basename(file), call. = FALSE)
     }
   }
