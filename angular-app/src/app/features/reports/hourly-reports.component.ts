@@ -38,7 +38,7 @@ interface HourlyPreview {
           <div class="grid">
             <label>المحطة<select name="stationId" required [value]="selectedStationId" (change)="setStation($any($event.target).value)"><option value="">اختر المحطة</option><option *ngFor="let station of stations" [value]="station.id">{{ station.name_ar }} — {{ station.local_station_code || station.wmo_station_id || station.station_type }}</option></select><small *ngIf="stationsLoading">جارٍ تحميل المحطات...</small></label>
             <label>التاريخ (ميلادي)<input type="text" name="observationDate" [value]="today" readonly></label>
-            <label>الوقت الحالي<input type="text" [value]="now" readonly></label>
+            <label>الوقت الحالي UTC<input type="text" [value]="now" readonly></label>
           </div>
         </section>
         <section class="panel">
