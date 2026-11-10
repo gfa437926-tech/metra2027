@@ -1,8 +1,10 @@
+**Master plan:** `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-MASTER-PLAN.md`
+
 **خطة الإكمال المركزية:** `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-AND-COMPLETION-PLAN.md`
 
 # METRA 2027 — Page implementation status (live repository audit)
 
-**Audited tip:** `work/legacy-ui-migration-audit`  
+**Audited tip:** `b069f648031c33aed478e20e11e9f3055f27eed9`  
 **Spec source:** `docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md`  
 **Method:** route/feature/API inventory in repo (not prior chat reports)  
 **Legend:** `Done` = wired to backend and usable · `Partial` = UI and/or API incomplete · `Missing` = no real route/workflow · `Scaffold` = page exists without authoritative API data
@@ -128,3 +130,16 @@
 ## Phenomena
 - Backend accepts `observationType: phenomenon` and exposes `/api/v1/observations/phenomena/validate`.
 - Angular phenomena input requires station UUID and submits to live API on stop (no silent local success).
+
+
+## Electronic Auditor (المدقق الإلكتروني)
+
+| Spec ID | Page | Angular | Flutter | Backend API | Notes |
+|---|---|---|---|---|---|
+| EA-01 Case list/create | سجل تدقيق إلكتروني | Missing | Missing | Missing | Design only: `docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md` |
+| EA-02 Chart upload & quality | رفع المخطط | Missing | Missing | Missing | Original image immutable policy |
+| EA-03 Calibration & extract | معايرة واستخراج | Missing | Missing | Missing | No accuracy claim without reference set |
+| EA-04 Compare & engines | مقارنة ومحركات | Missing | Missing | Missing | Must not mutate observations |
+| EA-05 Decision & report | قرار وتقرير | Missing | Missing | Missing | Separate permissions from observer roles |
+
+**Inventory date:** 2026-11-10 UTC — Phase 0 master plan published; no SQL applied; no main merge.

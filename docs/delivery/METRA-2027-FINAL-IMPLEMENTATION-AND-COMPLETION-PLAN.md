@@ -197,3 +197,13 @@
 
 - اختبارات عزل إضافية: دليل مستخدمي المحطة + طابور/قرار التسجيل.
 - حزمة مراجعة DB للمالك: `docs/security/DATABASE-REVIEW-PACKAGE-FOR-OWNER-APPROVAL.md` (لا تطبيق SQL).
+
+---
+
+## Update 2026-11-10 — Phase 0 master inventory
+
+- Canonical inventory + roadmap: `docs/delivery/METRA-2027-FINAL-IMPLEMENTATION-MASTER-PLAN.md`
+- Electronic Auditor design (no implementation): `docs/features/ELECTRONIC-AUDITOR-DESIGN-V1.md`
+- Tip at update: `b069f648031c33aed478e20e11e9f3055f27eed9` (parent of this docs commit)
+- Snapshot contract remains review status: `docs/contracts/WEATHER-OBSERVATION-SNAPSHOT-CONTRACT-V1.md`
+- No migrations applied; no merge to main.
