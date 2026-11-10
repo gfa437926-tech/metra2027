@@ -70,7 +70,7 @@ void main() {
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-token',
       client: MockClient((request) async {
-        if (request.url.path == '/api/v1/stations') {
+        if (request.url.path.startsWith('/api/v1/stations')) {
           return http.Response(jsonEncode([{
             'id': stationId,
             'local_station_code': 'AU-01',
@@ -96,7 +96,7 @@ void main() {
     expect(find.text('الرصد'), findsOneWidget);
     expect(find.text('مركز أعمال الرصد'), findsNothing);
 
-    await tester.tap(find.byIcon(Icons.assignment_outlined));
+    await tester.tap(find.ancestor(of: find.text('الرصد'), matching: find.byType(NavigationDestination)));
     await tester.pumpAndSettle();
     expect(find.text('مركز أعمال الرصد'), findsOneWidget);
     expect(find.text('محطة آلية — AU-01'), findsOneWidget);
