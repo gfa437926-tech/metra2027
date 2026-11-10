@@ -12,6 +12,30 @@ test_that("monthly summaries use calendar-day completeness and preserve missingn
   expect_equal(result$value, 1)
 })
 
+test_that("missing calendar dates count against completeness even without explicit NA rows", {
+  dates <- seq(as.Date("2024-02-01"), as.Date("2024-02-28"), by = "day")
+  data <- data.frame(station_id=rep("ST001", length(dates)), date=dates, value=rep(1, 28))
+  result <- metra_climatology_summary(data, period="month", statistic="sum",
+                                      min_completeness=1)
+  expect_equal(result$expected_days, 29L)
+  expect_equal(result$valid_days, 28L)
+  expect_equal(result$completeness, 28/29)
+  expect_false(result$accepted)
+  expect_true(is.na(result$value))
+})
+
+test_that("yearly completeness uses the leap-year calendar length", {
+  dates <- seq(as.Date("2024-01-01"), as.Date("2024-12-31"), by = "day")
+  data <- data.frame(station_id=rep("ST002", length(dates)), date=dates, value=rep(1, 366))
+  result <- metra_climatology_summary(data, period="year", statistic="sum",
+                                      min_completeness=1)
+  expect_equal(result$expected_days, 366L)
+  expect_equal(result$valid_days, 366L)
+  expect_equal(result$completeness, 1)
+  expect_true(result$accepted)
+  expect_equal(result$value, 366)
+})
+
 test_that("insufficient completeness withholds the summary value", {
   dates <- as.Date(c("2023-01-01", "2023-01-02"))
   data <- data.frame(station_id=c("ST001","ST001"), date=dates, value=c(0, NA_real_))
@@ -29,4 +53,6 @@ test_that("duplicate station dates and implicit aggregation choices are rejected
   expect_error(metra_climatology_summary(data, "month", "mean", 0.8), "Duplicate")
   data$date[2] <- as.Date("2020-01-02")
   expect_error(metra_climatology_summary(data, "month", "mean", NULL), "required")
+  expect_error(metra_climatology_summary(data, "season", "mean", 0.8), "period")
+  expect_error(metra_climatology_summary(data, "month", "median", 0.8), "statistic")
 })
