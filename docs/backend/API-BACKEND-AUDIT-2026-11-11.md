@@ -182,3 +182,8 @@ Tests were not executed locally. No CI result for the new test commit has been c
 Extended `ObservationQueueEndpointTests.cs` with a station-specific grant scenario: a principal whose grant is restricted to station A requests station B and must receive 403; the test also asserts that all authorization attempts used station B and that the queue service was not invoked. The fake authorization service now supports a station-specific allowed grant and records requested station IDs.
 
 The new test commit is `efa5870e555d4f74584e44bd439002daf784afa3`. The available workflow lookup returned no PR-triggered workflow run for this commit; no CI success is claimed. No local `dotnet test` execution was performed. This is endpoint fake-service coverage, not DB-backed station isolation, revocation testing or TOCTOU remediation. B-013 remains P1/open.
+
+
+## Round 5 CI verification (2026-11-10T23:39:59Z)
+
+GitHub Actions run `42925098754` completed with conclusion `success` on commit `efa5870e555d4f74584e44bd439002daf784afa3`: dependency restore/advisory checks, authorization contract checks, API build, Domain/API tests and production container image build all passed. The added station A/B endpoint test is therefore included in a passing CI run. No local test run is claimed. This does not close the TOCTOU finding or replace database-backed revocation/race tests.
