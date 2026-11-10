@@ -22,7 +22,7 @@ public sealed class WeatherObservationSnapshotMapperTests
         Assert.Null(snap.Elements.Visibility);
         Assert.Null(snap.Elements.WindSpeed);
         Assert.Null(snap.Elements.PrecipitationAmount);
-        Assert.DoesNotContain(snap.Elements.Visibility, v => v == "0");
+        Assert.True(snap.Elements.Visibility is null || snap.Elements.Visibility != "0");
         Assert.Equal("unknown_policy", snap.Freshness);
         Assert.Contains("DryTemp", snap.FieldProvenance.Keys);
     }
