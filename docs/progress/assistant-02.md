@@ -68,3 +68,8 @@ Continue B-013 by documenting the authorization/read sequence and a safe atomic-
 - No PR merge.
 - No production deployment.
 - No local .NET test execution.
+
+## Process correction recorded
+The initial attempt to create this report omitted the target branch and briefly created the file on the default branch. This was immediately corrected by deleting it from main; corrective commit:
+https://github.com/gfa437926-tech/metra2027/commit/43c72da0604e49a74d2128cc9d3d881e2c912f26
+A subsequent check confirmed the report is absent from the current main tree and exists on the assistant-02 branch. No source code or database files were changed by this incident; the add/delete commits remain visible in main history.
