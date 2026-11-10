@@ -52,6 +52,6 @@ metra_validate_homogenization_request <- function(request, workspace_root = Sys.
     }
   }
   list(variable = variable, start_year = as.integer(years[1]), end_year = as.integer(years[2]),
-       input_dir = input_dir, output_dir = output_dir,
+       workspace_root = root, input_dir = input_dir, output_dir = output_dir,
        data_file = data_file, station_file = station_file)
 }

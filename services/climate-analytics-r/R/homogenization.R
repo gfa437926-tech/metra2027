@@ -1,6 +1,15 @@
 metra_run_homogenization <- function(request, workspace_root = Sys.getenv("METRA_CLIMATE_WORK_ROOT"),
                                      runner = climatol::homogen) {
   validated <- metra_validate_homogenization_request(request, workspace_root)
+  lock_dir <- file.path(validated$workspace_root, ".metra-climatol-worker.lock")
+  if (!dir.create(lock_dir, showWarnings = FALSE)) {
+    stop("Another Climatol job is active for this R workspace; concurrent in-process execution is disabled.",
+         call. = FALSE)
+  }
+  on.exit(unlink(lock_dir, recursive = TRUE, force = TRUE), add = TRUE)
+  writeLines(c(paste0("pid=", Sys.getpid()),
+               paste0("started_at_utc=", format(Sys.time(), tz = "UTC", usetz = TRUE))),
+             file.path(lock_dir, "owner.txt"))
   job_dir <- tempfile(pattern = "metra-climatol-", tmpdir = validated$output_dir)
   if (!dir.create(job_dir, showWarnings = FALSE)) {
     stop("Could not create an isolated job directory.", call. = FALSE)

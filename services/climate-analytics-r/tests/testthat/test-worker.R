@@ -168,3 +168,31 @@ test_that("repeated jobs retain separate output directories and manifests", {
   expect_true(file.exists(file.path(first$output_directory, "artifact.txt")))
   expect_true(file.exists(file.path(second$output_directory, "artifact.txt")))
 })
+
+
+test_that("worker rejects overlapping jobs sharing the process working directory", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+
+  runner <- function(...) {
+    expect_true(dir.exists(file.path(root, ".metra-climatol-worker.lock")))
+    expect_error(
+      metra_run_homogenization(request, workspace_root = root,
+        runner = function(...) writeLines("nested", "nested.txt")),
+      "Another Climatol job is active"
+    )
+    writeLines("outer job completed", "outer.txt")
+  }
+
+  result <- metra_run_homogenization(request, workspace_root = root, runner = runner)
+  expect_equal(result$status, "completed")
+  expect_false(dir.exists(file.path(root, ".metra-climatol-worker.lock")))
+})

@@ -82,3 +82,17 @@
 - [Run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) targets the latest code and remains in progress. It adds finite/complex year, directory-as-data-file, and dot-dot traversal cases.
 - Progress remains 55%; 6 major work items remain.
 \n\n## 2026-11-10T23:40:02Z — Worker staging cleanup and lifecycle regression tests\n\n- Verified [R CI run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314): success; Climatol 4.5-0; R CMD check and testthat passed with 0 errors, 0 warnings, 0 notes.\n- Reviewed worker staging, runner failure, provenance retention, and working-directory restoration.\n- Added cleanup for job directories when input staging or staged SHA-256 verification fails, before provenance ownership begins. Completed/failed runs after successful staging continue to retain their manifests for audit.\n- Added regression tests for caller working-directory restoration on both success/failure and separate output/manifests for repeated runs.\n- These new tests await a fresh CI run. No local R test is claimed.\n- Progress remains 55%; six major work items remain.\n
+
+## Assistant 04 concurrency boundary — 2026-11-10T23:41:32Z
+
+- **Task:** Assistant 04 — R/Climatol climate homogenization.
+- **Status:** In progress; previous run #25 remained in progress during inspection; this commit adds workspace-level serialization and an overlap regression test, pending fresh CI.
+- **Verified prior CI:** [Run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) succeeded on `bd472e2ae498f7a5e63a63b364998a07ef7c131a`; R CMD check/testthat completed with Status: OK, 0 errors, 0 warnings, 0 notes.
+- **Reason for change:** Climatol currently executes after `setwd(job_dir)`. R documents setwd as changing the working directory of the R process; independent jobs in one process therefore cannot safely assume separate current directories. Added an atomic lock at the workspace root to reject overlapping calls rather than imply thread-safe concurrency.
+- **Implementation:** request validation now returns the canonical workspace root; worker creates `.metra-climatol-worker.lock` atomically, records PID and UTC start time, and releases it on normal exit. A stale lock after forced process termination requires operator verification and manual recovery; the worker does not guess whether a PID is still active.
+- **Regression:** nested worker invocation from an active runner is rejected; outer run completes and releases the lock.
+- **Files inspected:** R worker, request validation, worker tests, README, assistant report, append-only changelog, implementation status, PR #23, PR #18, and R CI job logs.
+- **Files changed:** worker, request validation, worker tests, README, assistant report, append-only changelog, implementation status.
+- **Not done:** cross-process concurrency orchestration, cancellation/timeouts, stale-lock automated recovery, .NET adapter, production data, artifact persistence/review UI, independent validation, scientific sign-off.
+- **Progress:** 55%; six major work items remain. Serialization is a safety boundary, not a completed concurrency workstream.
+- **Safety:** no database/Supabase/SQL, raw observation, Angular/Flutter, merge, or deployment changes.

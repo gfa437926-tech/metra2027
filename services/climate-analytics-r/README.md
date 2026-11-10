@@ -9,6 +9,7 @@
 - Invokes `climatol::homogen()` with UTC, graphics, verbose logging, and the package's documented defaults.
 - Writes `metra-provenance.json` with request, UTC start/end times, R/package versions, effective Climatol formal defaults, input/output SHA-256 hashes, source-integrity result, and completion/failure state.
 - Retains failed-job provenance for diagnosis; original input files are checked after execution.
+- Uses an atomic workspace lock to reject overlapping jobs in the same R process/workspace because the current Climatol adapter changes the process working directory. The lock is released on normal R exit from the worker; after an abrupt process termination, an operator must confirm no worker remains before removing the stale `.metra-climatol-worker.lock` directory. This is serialized execution, not parallel-job support.
 - Includes orchestration tests using an injected runner and an end-to-end smoke test against the CRAN Climatol `Temp.dat` / `Temp.est` demonstration dataset (monthly, five stations, 1961–2005). The fixture is package demonstration data, not METRA observations; the smoke test checks execution/provenance, not scientific validity.
 
 ## Job input contract
@@ -16,6 +17,10 @@
 The request contains `variable`, `start_year`, `end_year`, `input_dir`, and `output_dir`. The input directory must contain `VRB_YEAR-YEAR.dat` and the matching `.est` file.
 
 Climatol documents .dat as the time-series matrix and .est as station longitude, latitude, elevation, code, and name. METRA's export mapping, units, frequency, missing-value codes, station metadata, station histories, and study period must be approved before production data can be exported.
+
+## Concurrency and lock recovery
+
+The current adapter uses `setwd()` because Climatol writes outputs relative to the working directory. R documents `setwd()` as changing the working directory of the R process, so this adapter rejects overlapping jobs under one workspace rather than claiming safe concurrent execution. See the [R `getwd`/`setwd` reference](https://search.r-project.org/R/refmans/base/html/getwd.html). A stale lock after forced termination must be inspected and manually removed only after confirming the recorded PID is no longer running.
 
 ## Local checks
 

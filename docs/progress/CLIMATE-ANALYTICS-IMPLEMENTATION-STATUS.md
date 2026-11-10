@@ -132,3 +132,10 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - Symlink-boundary and same input/output directory tests passed in [run #23](https://github.com/gfa437926-tech/metra2027/actions/runs/42924449733).
 - Additional request-validation edge cases were committed at `bd472e2ae498f7a5e63a63b364998a07ef7c131a`; [run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) was still in progress.
 \n\n## Assistant 04 lifecycle hardening — 2026-11-10T23:40:02Z\n\n- [R workflow run #24](https://github.com/gfa437926-tech/metra2027/actions/runs/42924596314) passed on validation commit `bd472e2ae498f7a5e63a63b364998a07ef7c131a`: Climatol 4.5-0 verified; R CMD check/testthat successful; 0 errors, 0 warnings, 0 notes.\n- Worker now removes a partial job directory if staging or staged-input hash verification fails before the job enters the provenance-managed execution phase. Completed and failed executions retain provenance.\n- Added tests for working-directory restoration after success/failure and unique output directories/manifests across repeated jobs. Fresh CI verification is pending.\n- Overall progress remains 55%; this work expands, but does not complete, the reproducibility/security workstream.\n
+
+## Concurrency boundary — 2026-11-10T23:41:32Z
+
+- The current Climatol adapter changes the R process working directory via `setwd()`; R's base documentation defines this as the working directory of the R process ([reference](https://search.r-project.org/R/refmans/base/html/getwd.html)).
+- To avoid concurrent in-process jobs racing on one process-global working directory, the worker now acquires an atomic workspace lock and rejects overlapping invocations. It records PID and UTC lock time and releases on normal exit.
+- Forced termination may leave a stale lock; operator recovery must verify that the recorded process is no longer running before removal. No automatic stale-lock deletion is implemented.
+- A nested-call regression test is added. Fresh CI is pending. This is serialized safe execution, not multi-job parallelism.
