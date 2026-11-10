@@ -7,7 +7,8 @@
 - Validates a Climatol job request and the required .dat / .est input pair.
 - Restricts input and output directories to METRA_CLIMATE_WORK_ROOT.
 - Copies submitted inputs into a unique job directory before execution; Climatol never receives the source files as writable working files.
-- Runs climatol::homogen() with UTC timezone handling and records generated artifact names.\n- Calculates daily-input monthly/yearly summaries only when the caller explicitly supplies the statistic and completeness threshold; missing values are not converted to zero.
+- Runs climatol::homogen() with UTC timezone handling and records generated artifact names.
+- Calculates daily-input monthly/yearly summaries only when the caller explicitly supplies the statistic and completeness threshold; missing values are not converted to zero.
 - Includes unit tests with an injected runner; these do not claim scientific validation or model accuracy.
 
 ## Job JSON shape
