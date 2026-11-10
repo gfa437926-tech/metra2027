@@ -125,4 +125,4 @@
 
 ## Phenomena
 - Backend accepts `observationType: phenomenon` and exposes `/api/v1/observations/phenomena/validate`.
-- Angular phenomena UI remains local-preview until a build-verified client binding is merged (attempted binding was reverted after Client CI Angular build failure).
+- Angular phenomena input requires station UUID and submits to live API on stop (no silent local success).
