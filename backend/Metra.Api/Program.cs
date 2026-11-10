@@ -69,7 +69,15 @@ builder.Services.AddScoped<ISupportIncidentService>(sp =>
     return ActivatorUtilities.CreateInstance<SupabaseSupportIncidentService>(sp);
 });
 builder.Services.AddSingleton<ISupabaseAccessTokenValidator, SupabaseAccessTokenValidator>();
-builder.Services.AddSingleton<IManualArchiveLedgerService, InMemoryManualArchiveLedgerService>();
+builder.Services.AddSingleton<InMemoryManualArchiveLedgerService>();
+builder.Services.AddScoped<IManualArchiveLedgerService>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    // Durable path when MetraOps is configured (table apply still requires Phase E approval).
+    if (!string.IsNullOrWhiteSpace(configuration.GetConnectionString("MetraOps")))
+        return new Metra.Api.Infrastructure.Persistence.NpgsqlManualArchiveLedgerService(configuration);
+    return sp.GetRequiredService<InMemoryManualArchiveLedgerService>();
+});
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
 builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();

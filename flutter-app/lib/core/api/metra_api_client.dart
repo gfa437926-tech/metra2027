@@ -342,6 +342,59 @@ class MetraApiClient {
     );
   }
 
+
+  Future<List<Map<String, dynamic>>> listArchiveConfirmations(
+    String stationId, {
+    int limit = 50,
+  }) async {
+    if (limit < 1 || limit > 200) throw const MetraApiException(400, 'invalid_limit');
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/archive-confirmations?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_archive_confirmation_list');
+    return decoded.map((item) => Map<String, dynamic>.from(item as Map)).toList(growable: false);
+  }
+
+  Future<Map<String, dynamic>> confirmManualArchive({
+    required String stationId,
+    required String reportKind,
+    required String periodStartUtc,
+    required String periodEndUtc,
+    required String excelFileName,
+    String? note,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/archive-confirmations',
+      body: {
+        'reportKind': reportKind,
+        'periodStartUtc': periodStartUtc,
+        'periodEndUtc': periodEndUtc,
+        'excelFileName': excelFileName,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_archive_confirmation');
+    return Map<String, dynamic>.from(decoded);
+  }
+
+  Future<Map<String, dynamic>> archiveMonthlySummary({
+    required String stationId,
+    required int year,
+    required int month,
+  }) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/archive-confirmations/monthly-summary?year=$year&month=$month',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_archive_monthly_summary');
+    return Map<String, dynamic>.from(decoded);
+  }
+
   Future<http.Response> _send(String method, String path,
       {Map<String, dynamic>? body}) async {
     if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');

@@ -22,8 +22,8 @@ public sealed record ManualArchiveServiceOutcome(
 public interface IManualArchiveLedgerService
 {
     /// <summary>
-    /// Interim in-memory ledger is configured for development/tests.
-    /// Durable PostgreSQL persistence requires an approved migration apply.
+    /// True when a ledger backend is available (in-memory for tests/dev, or MetraOps when configured).
+    /// PostgreSQL table still requires Phase E owner approval before production use.
     /// </summary>
     bool IsConfigured { get; }
 
@@ -145,9 +145,11 @@ public static class ManualArchiveEndpoints
                     return Results.Forbid();
 
                 var result = await ledger.ListAsync(stationId, take, ct);
-                return result.Succeeded
-                    ? Results.Ok(result.Data)
-                    : Results.BadRequest(new { error = result.Error });
+                if (result.Succeeded)
+                    return Results.Ok(result.Data);
+                if (result.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    return Results.Problem(title: result.Error ?? "Archive ledger unavailable", statusCode: 503);
+                return Results.BadRequest(new { error = result.Error });
             })
             .RequireStationPermission("archive.read")
             .WithTags("Archive")
@@ -181,6 +183,8 @@ public static class ManualArchiveEndpoints
                     return Results.Json(result.Data, statusCode: StatusCodes.Status201Created);
                 if (result.StatusCode == HttpStatusCode.Conflict)
                     return Results.Conflict(new { error = result.Error });
+                if (result.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    return Results.Problem(title: result.Error ?? "Archive ledger unavailable", statusCode: 503);
                 return Results.BadRequest(new { error = result.Error });
             })
             .RequireStationPermission("archive.confirm")
@@ -210,9 +214,11 @@ public static class ManualArchiveEndpoints
                     return Results.Forbid();
 
                 var result = await ledger.MonthlySummaryAsync(stationId, year, month, ct);
-                return result.Succeeded
-                    ? Results.Ok(result.Data)
-                    : Results.BadRequest(new { error = result.Error });
+                if (result.Succeeded)
+                    return Results.Ok(result.Data);
+                if (result.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    return Results.Problem(title: result.Error ?? "Archive ledger unavailable", statusCode: 503);
+                return Results.BadRequest(new { error = result.Error });
             })
             .RequireStationPermission("archive.read")
             .WithTags("Archive")

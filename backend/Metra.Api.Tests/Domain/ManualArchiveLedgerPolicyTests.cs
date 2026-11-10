@@ -50,3 +50,50 @@ public sealed class ManualArchiveLedgerPolicyTests
         Assert.Equal("duplicate_archive_confirmation", second.Error);
     }
 }
+
+    [Fact]
+    public async Task In_memory_list_and_monthly_summary_reflect_confirmations()
+    {
+        var ledger = new Metra.Api.Features.Archive.InMemoryManualArchiveLedgerService();
+        var station = Guid.Parse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+        var user = Guid.Parse("22222222-2222-4222-8222-222222222222");
+        var request = new Metra.Api.Features.Archive.ManualArchiveConfirmRequest(
+            "daily", "2026-11-05", "2026-11-05", "daily-05.xlsx", null);
+
+        var created = await ledger.ConfirmAsync(station, user, request, CancellationToken.None);
+        Assert.True(created.Succeeded);
+
+        var list = await ledger.ListAsync(station, 10, CancellationToken.None);
+        Assert.True(list.Succeeded);
+        var rows = Assert.IsAssignableFrom<IEnumerable<ManualArchiveConfirmation>>(list.Data);
+        Assert.Contains(rows, r => r.ExcelFileName == "daily-05.xlsx" && r.StationId == station);
+
+        var summary = await ledger.MonthlySummaryAsync(station, 2026, 11, CancellationToken.None);
+        Assert.True(summary.Succeeded);
+        var monthly = Assert.IsType<ManualArchiveMonthlySummary>(summary.Data);
+        Assert.Equal(1, monthly.ConfirmationCount);
+        Assert.Contains("daily", monthly.ReportKinds);
+    }
+
+    [Fact]
+    public async Task In_memory_list_does_not_leak_other_station_rows()
+    {
+        var ledger = new Metra.Api.Features.Archive.InMemoryManualArchiveLedgerService();
+        var stationA = Guid.Parse("cccccccc-cccc-4ccc-8ccc-cccccccccccc");
+        var stationB = Guid.Parse("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+        var user = Guid.Parse("33333333-3333-4333-8333-333333333333");
+
+        await ledger.ConfirmAsync(stationA, user,
+            new Metra.Api.Features.Archive.ManualArchiveConfirmRequest(
+                "hourly", "2026-11-01", "2026-11-01", "a.xlsx", null),
+            CancellationToken.None);
+        await ledger.ConfirmAsync(stationB, user,
+            new Metra.Api.Features.Archive.ManualArchiveConfirmRequest(
+                "hourly", "2026-11-01", "2026-11-01", "b.xlsx", null),
+            CancellationToken.None);
+
+        var listA = await ledger.ListAsync(stationA, 50, CancellationToken.None);
+        var rowsA = Assert.IsAssignableFrom<IEnumerable<ManualArchiveConfirmation>>(listA.Data).ToArray();
+        Assert.All(rowsA, r => Assert.Equal(stationA, r.StationId));
+        Assert.DoesNotContain(rowsA, r => r.ExcelFileName == "b.xlsx");
+    }

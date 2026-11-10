@@ -103,3 +103,9 @@
 ## Phase H — delivery package
 - See `docs/operations/phase-h-delivery-package.md`
 - Staging/production and PR merge remain owner-gated
+
+## Continuation batch (C durable path + D inventory + Flutter archive)
+- Npgsql manual archive ledger adapter (activated by MetraOps; table apply still Phase E).
+- Expanded in-memory list/summary/station isolation tests.
+- Flutter `ManualArchiveScreen` + API client methods.
+- Report inventory: `docs/progress/phase-d-report-inventory.md`
