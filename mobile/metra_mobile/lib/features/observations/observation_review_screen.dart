@@ -70,7 +70,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   ListTile(
                     leading: const CircleAvatar(child: Icon(Icons.assignment_outlined)),
                     title: Text(_typeLabel(item.observationType)),
-                    subtitle: Text('${item.observedAt.toLocal()} • ${item.status}',
+                    subtitle: Text('${item.observedAt.toUtc().toIso8601String()} • ${item.status}',
                       maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
                   Padding(
