@@ -56,3 +56,14 @@ The API document should be reconciled by its owner; assistant 03 does not edit B
 6. Complete RTL/accessibility/responsive checks and end-to-end coverage.
 
 **Current completion estimate remains 10%** under the existing ten-domain audit rubric; this matrix is evidence gathering, not completion of the missing product areas.
+
+
+## Field-specification audit (M7)
+
+The backend validators were inspected as read-only evidence; they are not treated as a complete mobile form specification.
+
+- **Hourly:** `HourlyObservationValidator` defines field codes, formats, ranges, and conditional required fields. Precipitation is required at UTC hours 00/06/12/18; synoptic fields are required at 00/03/06/09/12/15/18/21. The validator does not define a complete mobile presentation contract (field grouping/order, reference option lists, display units, or interaction behavior).
+- **Daily:** `DailyObservationValidator` defines validation for known legacy field codes, but required fields are supplied externally through `requiredFields`. The inspected API documentation does not define how a report type selects that set.
+- **Submission API:** the generic `payload` object is capped by the API contract but has no detailed hourly/daily JSON schema in the inspected documentation.
+- **Decision:** do not build speculative forms or reuse old-database station data. Request an approved UI/payload specification covering required/optional fields, labels, units, reference values, and UTC behavior before implementation.
+- No Backend, Angular, Supabase, or database files were modified.
