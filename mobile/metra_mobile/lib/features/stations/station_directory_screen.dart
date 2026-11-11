@@ -121,8 +121,91 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       title: Text(station.nameArabic, style: const TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('$type • ${station.localCode}\\n$approval • $operation\\n$coords'),
       isThreeLine: true,
-      trailing: widget.onStationSelected == null ? null : Icon(station.id == widget.selectedStationId ? Icons.check_circle : Icons.chevron_left)));
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton(
+          tooltip: 'تفاصيل المحطة',
+          onPressed: () => _showStationDetails(station),
+          icon: const Icon(Icons.info_outline),
+        ),
+        if (widget.onStationSelected != null)
+          Icon(station.id == widget.selectedStationId ? Icons.check_circle : Icons.chevron_left),
+      ])));
   }
+
+  void _showStationDetails(StationDirectoryItem station) {
+    final coordinates = station.hasValidCoordinates
+        ? '${station.latitude!.toStringAsFixed(5)}, ${station.longitude!.toStringAsFixed(5)}'
+        : 'غير متاحة أو غير صالحة';
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(station.nameArabic,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(station.nameEnglish, style: Theme.of(context).textTheme.bodyMedium),
+                const Divider(height: 24),
+                _detailRow('الرمز المحلي', station.localCode),
+                _detailRow('معرّف WMO', station.wmoStationId ?? 'غير متوفر'),
+                _detailRow('نوع المحطة', _stationTypeLabel(station.stationType)),
+                _detailRow('الارتفاع عن سطح البحر', station.elevationM == null
+                    ? 'غير متوفر' : '${station.elevationM!.toStringAsFixed(1)} م'),
+                _detailRow('الإحداثيات', coordinates),
+                _detailRow('مصدر الإحداثيات', station.coordinateSource ?? 'غير موثق'),
+                _detailRow('دقة الإحداثيات', station.coordinateAccuracyM == null
+                    ? 'غير متوفرة' : '${station.coordinateAccuracyM!.toStringAsFixed(1)} م'),
+                _detailRow('حالة الاعتماد', _approvalLabel(station.approvalStatus)),
+                _detailRow('الحالة التشغيلية', _operationLabel(station.operationalStatus)),
+                const SizedBox(height: 8),
+                const Text(
+                  'هذه بيانات دليل المحطات. لا تمثل قياسات جوية لحظية أو حالة اتصال أجهزة الرصد.',
+                  style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(width: 132, child: Text(label, style: const TextStyle(color: Color(0xFF64748B)))),
+      Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600))),
+    ]),
+  );
+
+  String _stationTypeLabel(String type) => switch (type) {
+    'classic' => 'كلاسيكية',
+    'automatic' => 'آلية',
+    'synoptic' => 'سينوبتيكية',
+    _ => type,
+  };
+
+  String _approvalLabel(String status) => switch (status) {
+    'approved' => 'معتمدة',
+    'pending' => 'بانتظار الاعتماد',
+    _ => status,
+  };
+
+  String _operationLabel(String status) => switch (status) {
+    'active' => 'فعالة',
+    'inactive' => 'غير فعالة',
+    'unverified' => 'غير متحقق منها',
+    _ => status,
+  };
+
   Widget _empty(IconData icon, String title, String detail, [Widget? action]) =>
     Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 42), const SizedBox(height: 12),
