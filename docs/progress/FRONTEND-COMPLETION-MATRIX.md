@@ -184,3 +184,14 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - **Not complete operationally:** no AI gateway, Climatol worker, electronic-audit evidence/case API, AFTN gateway, or approved specialist aggregate/report APIs. Related controls remain disabled and no fabricated results are shown.
 - Password recovery still needs Supabase redirect allow-list and real-device email round-trip. Effective user access-context and searchable eligible-user directory are still missing.
 - No database changes, migrations/RLS/grants/seeds, legacy DB access, main merge or deployment.
+
+
+## Reports/history implementation update — 2026-11-11T18:32:18.872Z
+
+- `ObservationHistoryScreen`: up to 100 records from each currently authorized queue; type/status/text/UTC date filters; clear filters; detail payload; partial 403 handling without hiding the permitted queue.
+- `ObservationStatusScreen`: up to 100 records per queue, live queue counts by type, UTC-only display, Arabic status labels and explicit authorization/error states.
+- `ManualArchiveScreen`: Arabic report-kind labels; confirmation actor, note, period and UTC confirmation timestamp; monthly summary navigation. UI now warns that the ledger is process-local unless the approved MetraOps durable backend is configured, and that this is a manual confirmation only—not a file upload or observation migration.
+- The report hub explicitly marks climate/monthly/annual/rainfall/agriculture/soil-temperature aggregate reports as unavailable until approved backend read contracts and scientific field definitions exist.
+- Tests added/extended in `reports_history_screens_test.dart` and `observation_status_screen_test.dart`.
+- Prior exact-head CI run `43077020830` passed: 92 Flutter tests, Flutter analyze, Angular tests/build and Chromium PWA/IndexedDB smoke. Current exact HEAD `20c7d9e2d6caacc6debca73eb8e35c8752ad5c1d` CI run `43078467557` is pending; do not treat as green until completed.
+- Still blocked by missing API contracts: approved/rejected observation history, version history, missing-data register, aggregate climate/rainfall/agriculture/soil reports, PDF/Excel export. No fake data or client-side persistence substitute.
