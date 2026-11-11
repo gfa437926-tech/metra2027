@@ -282,3 +282,12 @@ No hosted Supabase migration, schema, RLS, policy, permission grant or data writ
 - CI verification is pending/unavailable in the current workflow-run lookup; do not count the new tests as passing until an exact-head Client CI run completes.
 - No forecast values, bulletin content, live feeds or synthetic observations were introduced.
 - No backend, database, Supabase, migration, RLS, permission grant, legacy repository or METRA OLD changes.
+## FLT-007 / FLT-008 follow-up — 2026-11-12
+
+- Added forecast-centre widget tests for catalogue loading, comparison values/provenance, reference-station changes, API denial, the four-station selection limit and missing coordinates.
+- The first Client CI attempt #1138 (`43102830955`) failed during `flutter analyze` before running tests because the newly added test import lacked the repository's `deprecated_member_use` ignore annotation. Angular build passed.
+- Corrected the test import in commit `018132d55926f51264ea92d2f470856518cb6137` and expanded the test cases in commit `806ae6d232d000df6b7e54fae36694b2c70c82ca`.
+- No Client CI run has yet been observed for the latest head `806ae6d232d000df6b7e54fae36694b2c70c82ca`; do not claim that analyzer or tests pass on this head.
+- Added `docs/delivery/FLT-008-LEGACY-OBSERVATION-FORM-SOURCE-AUDIT.md` from static inspection of hourly and daily legacy sources. The inspected daily_reports.html is a 24-hour report query/export page, not the authoritative daily-entry form.
+- The legacy hourly scripts contain overlapping client validators, localStorage identity attribution and local backup behavior. These must not be copied into the new client; server identity, station scope and persistence remain API-controlled.
+- No backend/database/Supabase changes or live grants were performed.
