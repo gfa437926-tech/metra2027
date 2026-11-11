@@ -58,3 +58,20 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - **Safety:** no DB, Supabase, migrations, raw observations, secrets, source-code edits, merge, rebase or deployment.
 - **Progress:** remains 0% of 12 substantive workstreams closed; all 12 remain open. Evidence collection advanced but no workstream closure criteria are met.
 - **Next:** verify remediation of Flutter analyzer errors; trace Backend domain validation; obtain anonymous-route rate-limit decision; continue database-contract, immutability, science and release review.
+
+
+## 2026-11-11T09:48:14Z — Round 4: database/RPC and client-contract cross-check (read-only)
+
+- **Task:** M13 — Independent final audit; status in progress.
+- **Branch / PR:** `audit/assistant-13-independent-final-review`; [PR #31](https://github.com/gfa437926-tech/metra2027/pull/31), open Draft, unmerged.
+- **Evidence:** PR #26 head `6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8`; PR #28 head `9b3ad187de7cbbf861dd7b091c193172e5a77ea9`; current-head PR workflow queries returned no runs for these PRs.
+- **Source blobs read from Git:** operational observation creation migration `9bbe23891aaecbedbea7537f7875ef7895442760`; review-decision RPC migration `bc62268432c94d481e5e274625c5d59eea8ce528`; DB proposal `8b66ba679f16436e61b72e86e3d1f1ea73d3630f`; API contract crosscheck `1e138fa5dcab2c8e5a53ddc861e31b14bde0f569`.
+- **M13-DB-001:** confirmed event-type constraint mismatch: table allows `approved/returned`, RPC inserts `approve/return_for_correction`; expected transaction rollback on decision audit insert. Proposed fix is review-only `.proposal`, not active/applied/tested.
+- **M13-DB-002:** baseline migrations 001/002 absent from inspected repository tree; cannot reconstruct schema from checked-in migration sequence. This does not prove live DB tables are absent.
+- **M13-INT-001:** daily/hourly validation endpoints exist but inspected clients do not invoke them; server-side enforcement in persistence path remains unproven.
+- **Additional inherited static risks:** DB-011 missing authority_id backfill prerequisite; DB-013 audit trigger does not cover TRUNCATE; DB-014 business duplicate policy unresolved; DB-015 SQL-side actor authorization of read-model RPCs needs verification.
+- **Files updated:** only `docs/progress/assistant-13.md` and `docs/changelog/assistant-13.md`.
+- **Tests:** none run by assistant 13; no SQL, Supabase access or live database test. Static Git source inspection only.
+- **Safety:** no database/schema/data/migration changes; no merge, rebase or deployment.
+- **Progress:** remains 0% of 12 substantive audit workstreams formally closed; all 12 remain open.
+- **Next:** recover owner-approved baseline; require isolated PostgreSQL tests for both review decisions; verify authoritative server-side meteorological validation with negative tests. No changes to either Supabase project without explicit approval.
