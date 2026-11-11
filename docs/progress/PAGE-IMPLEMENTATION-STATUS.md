@@ -239,3 +239,18 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Added identity creation + server-driven station/role request + approval-status tracking, linked from login and the shared menu.
 - Client CI #43034587973: Flutter analyze passed and **48 Flutter tests passed**. Source SHA `39452b0ada03dffb536773dbca59c5786e3e93b4`.
 - Detailed evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
+
+
+## FLT-FORECAST-UI-01 — Forecasting centre station map — 2026-11-11T14:11:00Z
+
+- Task status: **implemented baseline; exact-head CI verification pending**.
+- Added an interactive catalogue map to `flutter-app/lib/features/forecasting/forecasting_center_screen.dart` using the existing `flutter_map` / `latlong2` dependencies.
+- Only validated coordinates from the current approved station-directory API are plotted. Stations with missing/invalid coordinates remain visible in the station list and are explicitly counted; no coordinates or weather readings are fabricated.
+- Map markers toggle station selection; selected stations can be compared by great-circle distance and elevation difference. The comparison is geographic metadata only and is not described as a meteorological correlation.
+- Kept the live-observation boundary explicit: temperature, wind, rainfall and bulletin details remain unavailable until an approved live snapshot/bulletin API contract exists.
+- Added `flutter-app/test/forecasting_center_screen_test.dart` covering catalogue map availability, station selection, geographic comparison and elevation delta.
+- Source commit: `59cec32c4a37bbb921e87ba6e83f59d6549a91f1`.
+- Widget test commit: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`.
+- Current PR #11 head: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`. No workflow run was returned for this exact SHA at the time of this note.
+- Client CI #861 (`43036054744`) was pending for the prior head `4af504672a1d1fc45839a2d33558f5960ad9b31c`; it cannot verify these newer commits.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
