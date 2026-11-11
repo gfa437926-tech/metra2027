@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
-import '../stations/station_directory_screen.dart';
 
 /// Electronic audit UI. It intentionally does not claim OCR, chart digitization,
 /// image storage, or comparison until the server-side audit API is available.
@@ -130,7 +129,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
       ),
       const SizedBox(height: 10),
       DropdownButtonFormField<String>(
-        value: _track,
+        initialValue: _track,
         decoration: const InputDecoration(labelText: 'مسار التدقيق', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'paper', child: Text('السجل الورقي')),
@@ -161,7 +160,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
       _stationSelector(),
       const SizedBox(height: 10),
       DropdownButtonFormField<String>(
-        value: _registerType,
+        initialValue: _registerType,
         decoration: const InputDecoration(labelText: 'نوع السجل', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'daily', child: Text('سجل يومي')),
@@ -194,7 +193,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
       _stationSelector(),
       const SizedBox(height: 10),
       DropdownButtonFormField<String>(
-        value: _instrument,
+        initialValue: _instrument,
         decoration: const InputDecoration(labelText: 'نوع المسجل', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'thermograph', child: Text('Thermograph — الحرارة')),
@@ -228,7 +227,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
       CheckboxListTile(value: _electronic, title: const Text('الرصد الإلكتروني من METRA'), onChanged: (v) => setState(() => _electronic = v ?? false)),
       const SizedBox(height: 10),
       DropdownButtonFormField<String>(
-        value: _alignment,
+        initialValue: _alignment,
         decoration: const InputDecoration(labelText: 'قاعدة محاذاة الوقت UTC', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'exact_utc', child: Text('تطابق وقت UTC')),
@@ -258,7 +257,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
       _section('قرار المراجع'),
       const TextField(enabled: false, decoration: InputDecoration(labelText: 'ملاحظة المراجع', border: OutlineInputBorder())),
       const SizedBox(height: 10),
-      FilledButton(onPressed: null, child: const Text('حفظ القرار — بانتظار API')),
+      const FilledButton(onPressed: null, child: Text('حفظ القرار — بانتظار API')),
     ],
   );
 
@@ -319,7 +318,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
         }
         final stations = snapshot.data ?? const <StationDirectoryItem>[];
         return DropdownButtonFormField<String>(
-          value: stations.any((s) => s.id == _stationId) ? _stationId : null,
+          initialValue: stations.any((s) => s.id == _stationId) ? _stationId : null,
           decoration: const InputDecoration(labelText: 'المحطة', border: OutlineInputBorder()),
           items: stations.map((s) => DropdownMenuItem(value: s.id, child: Text('${s.nameArabic} — ${s.localCode}'))).toList(),
           onChanged: (v) => setState(() => _stationId = v),
