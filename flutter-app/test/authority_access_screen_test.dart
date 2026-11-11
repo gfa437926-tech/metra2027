@@ -8,6 +8,56 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/features/admin/authority_access_screen.dart';
 
 void main() {
+
+  testWidgets('authority access submits a self-membership request without granting locally',
+      (tester) async {
+    Map<String, dynamic>? membershipBody;
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/v1/authorities') {
+        return http.Response('[{"id":"authority-1","name_ar":"الهيئة الوطنية"}]', 200);
+      }
+      if (request.url.path.endsWith('/membership-roles')) {
+        return http.Response(
+          '[{"role_code":"observer","name_ar":"راصد","is_requestable":true}]',
+          200,
+        );
+      }
+      if (request.method == 'POST' &&
+          request.url.path == '/api/v1/authorities/authority-1/memberships') {
+        membershipBody = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response('{"id":"membership-request-1"}', 200);
+      }
+      if (request.url.path.endsWith('/access-audit') ||
+          request.url.path.endsWith('/access-queue')) {
+        return http.Response('[]', 200);
+      }
+      return http.Response('not_found', 404);
+    });
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'authority-access-token',
+      client: client,
+    );
+
+    await tester.pumpWidget(MaterialApp(home: AuthorityAccessScreen(api: api)));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('طلب عضوية لنفسي'));
+    await tester.pumpAndSettle();
+    expect(find.text('طلب عضوية جهة'), findsOneWidget);
+    await tester.tap(find.text('متابعة'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'طلب انضمام للعمل في الجهة');
+    await tester.tap(find.text('تأكيد'));
+    await tester.pumpAndSettle();
+
+    expect(membershipBody?['userId'], isNull);
+    expect(membershipBody?['roleCode'], 'observer');
+    expect(membershipBody?['reason'], 'طلب انضمام للعمل في الجهة');
+    expect(membershipBody?['validFrom'], isA<String>());
+    expect(find.text('أُرسل الطلب إلى الخادم للمراجعة.'), findsOneWidget);
+    api.close();
+  });
+
   testWidgets('authority access screen loads server catalogue, scoped queues and audit',
       (tester) async {
     final requested = <String>[];
