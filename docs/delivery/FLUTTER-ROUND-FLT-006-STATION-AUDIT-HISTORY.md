@@ -27,7 +27,7 @@ The current reviewed ASP.NET Core route inventory contains no daily/monthly/annu
 
 ## Verification and safety
 
-- Flutter analyzer and tests plus Angular build: **passed on Client CI #1093** for commit `06b24d64eb76170fae9bc020209e28a92945202f`. A later reports-hub UI/test commit is now awaiting a fresh exact-head Client CI run.
+- Flutter analyzer, Flutter tests and Angular build: **passed on Client CI #1099** for commit `1635b7064843ed5c13711bc0fd47b07a565c2128`.
 - No Backend, SQL, migration, Supabase, database, R/Climatol, raw observation or legacy repository changes.
 - No database schema change or production deployment.
 - CI status must be updated with the exact commit SHA after the workflow finishes.
