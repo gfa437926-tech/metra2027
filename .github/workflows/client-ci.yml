@@ -2,7 +2,7 @@ name: Client CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, work/flutter-canonical-consolidation]
     paths:
       - "angular-app/**"
       - "flutter-app/**"
