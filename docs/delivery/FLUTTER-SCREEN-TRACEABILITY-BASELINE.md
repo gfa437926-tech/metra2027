@@ -100,3 +100,9 @@ Important limits:
 - Station audit history is not the electronic meteorological-record audit module.
 - AI intelligence and Climatol workflows are still not implemented as complete operational modules.
 - The RAR requirements archive remains uninspected; full authoritative traceability is therefore blocked.
+## Forecast-centre widget test addition — 2026-11-12
+
+- Added `mobile/metra_mobile/test/forecast_centre_screen_test.dart`.
+- Test coverage: station-directory API loading, geographic comparison and coordinate provenance display, reference-station switching, and permission-specific API failure state.
+- Commit: `557435c6674466c3b13866af833c976ee4a0f12b`.
+- CI status for this commit: **not yet observed**. The test source is committed, but no passing analyze/test result is claimed for this new head.
