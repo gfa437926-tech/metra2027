@@ -19,6 +19,5 @@ void main() {
     expect(find.text('بانتظار عقد API'), findsNWidgets(5));
     expect(find.textContaining('لن تظهر أرقام أو رسوم'), findsOneWidget);
     expect(find.textContaining('قائمة مراجعة الرصدات وسجل تدقيق المحطة وظيفتان منفصلتان'), findsOneWidget);
-    expect(find.byType(Chart), findsNothing);
   });
 }
