@@ -64,8 +64,9 @@ void main() {
     await tester.tap(find.text('تأكيد'));
     await tester.pumpAndSettle();
 
-    expect(membershipBody?['userId'], isNull);
-    expect(membershipBody?['roleCode'], 'observer');
+    expect(membershipBody, isNotNull, reason: 'membership request was not captured');
+    expect(membershipBody, containsPair('userId', null));
+    expect(membershipBody, containsPair('roleCode', 'observer'), reason: 'captured request: $membershipBody');
     expect(membershipBody?['reason'], 'طلب انضمام للعمل في الجهة');
     expect(membershipBody?['validFrom'], isA<String>());
     expect(find.text('أُرسل الطلب إلى الخادم للمراجعة.'), findsOneWidget);
