@@ -16,6 +16,7 @@
 4. Added the navigation destination **سجل التدقيق**. A station must first be selected from the approved station directory.
 5. The screen explicitly distinguishes station/assignment audit events from meteorological observation history. It provides no edit/delete controls.
 6. Added API tests for route, token, response parsing and invalid-limit rejection, plus widget tests for event rendering and permission-denied handling.
+7. Replaced the generic reports placeholder with a dedicated reports capability hub covering historical observations, hourly/daily, monthly/annual, climate/homogeneity and export. Each module names the missing contract and is visibly marked as waiting for an API contract; it renders no invented measurements or charts.
 
 ## Reports and observation-history boundary
 
@@ -26,7 +27,7 @@ The current reviewed ASP.NET Core route inventory contains no daily/monthly/annu
 
 ## Verification and safety
 
-- Flutter analyzer/test and Angular build: **pending Client CI #1080** on the current PR head.
+- Flutter analyzer and tests plus Angular build: **passed on Client CI #1093** for commit `06b24d64eb76170fae9bc020209e28a92945202f`. A later reports-hub UI/test commit is now awaiting a fresh exact-head Client CI run.
 - No Backend, SQL, migration, Supabase, database, R/Climatol, raw observation or legacy repository changes.
 - No database schema change or production deployment.
 - CI status must be updated with the exact commit SHA after the workflow finishes.
