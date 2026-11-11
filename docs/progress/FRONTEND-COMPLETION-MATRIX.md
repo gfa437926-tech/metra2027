@@ -14,7 +14,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | reset email | مربوط | — | موجود | معلق | قيد العمل |
 | FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + حالة الحساب + حالة طلب الانضمام + خروج | `GET /api/v1/account/registration-status` | لا يعرض أدواراً/محطات دون access-context | موجود مصدرّياً | CI معلق | جزئي — ACC-02 مطلوب |
 | FLT-AUTH-05 | الصلاحيات UI / Permissions view | جيد | شاشة إدارة عضويات وصلاحيات الجهات: طلب/مراجعة/رفض/إلغاء/سجل تدقيق | Authority access APIs + server checks | لا تستنتج صلاحيات محلية | موجود مصدرّياً | CI معلق | جزئي — access-context وvalidity/user-target UI مطلوبان |
-| FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | ناقص | معالجة 401/403 محلية فقط؛ لا شاشة/بوابة موحدة | جزئي | الخادم مرجع القرار | لا | CI معلق | ناقص — ACC-04 |
+| FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | جيد | بوابة حالة الحساب + شاشة منع الوصول/فشل التحقق + إعادة محاولة/خروج | `GET /api/v1/account/registration-status` | fail-closed؛ لا تعرض مساحة العمل عند حالة غير نشطة أو تعذر التحقق | موجود مصدرّياً | CI معلق | جزئي — اختبار revoked/expired session مطلوب |
 | FLT-STN-01 | دليل المحطات / Directory | جيد | قائمة+خريطة+بحث | مربوط | خادم | موجود | معلق | قيد العمل |
 | FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل + مصدر الإحداثيات ودقتها | مربوط | لا تمنح تعديل المحطة | موجود مصدرّياً | CI معلق | مواءمة المصدر/الدقة تمت؛ تحقق CI مطلوب |
 | FLT-STN-03 | اختيار محطة العمل / Active station | جيد | الرئيسية+تنقل | محلي+API | — | جزئي | معلق | جيد |
@@ -136,3 +136,12 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - `RegistrationReviewScreen` now links to station/system registration audit.
 - No client-side permission grant or role inference; 401/403/409/503 states remain explicit.
 - CI and runtime verification remain pending.
+
+
+## Account-state gate implementation — 2026-11-11T16:41:41.703Z
+
+- Authenticated session now requires a server account-status read before opening operational screens.
+- Active accounts proceed to the home workspace; pending or unregistered accounts see the registration/status flow; suspended/disabled/rejected/unknown states are blocked.
+- A failed status lookup does not fall back to the operational home.
+- Pending registration requests cannot be resubmitted from the registration form.
+- Source tests added; Flutter CI remains pending.
