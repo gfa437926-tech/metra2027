@@ -7,6 +7,7 @@ on:
       - "backend/**"
       - "database/migrations/**"
       - "database/tests/**"
+      - "database/isolated/**"
       - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/workflows/publish-api-container.yml"
@@ -15,6 +16,7 @@ on:
       - "backend/**"
       - "database/migrations/**"
       - "database/tests/**"
+      - "database/isolated/**"
       - "docs/security/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/workflows/publish-api-container.yml"
@@ -63,3 +65,35 @@ jobs:
         run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release
       - name: Build production container image
         run: docker build --file backend/Metra.Api/Dockerfile --tag metra-api:ci .
+
+  isolated-archive-authz:
+    name: Isolated PostgreSQL archive authorization
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: metra_test
+          POSTGRES_PASSWORD: metra_test_isolated
+          POSTGRES_DB: metra_isolated
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metra_test -d metra_isolated"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Apply isolated schema and run archive isolation tests
+        env:
+          PGPASSWORD: metra_test_isolated
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          until pg_isready -h 127.0.0.1 -U metra_test -d metra_isolated; do sleep 1; done
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/00_bootstrap_minimal_schema.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/01_seed_archive_isolation_fixtures.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/02_test_archive_isolation.sql

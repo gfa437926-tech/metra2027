@@ -93,7 +93,7 @@ public sealed class ObservationAuthorizationPolicyTests
 
         Assert.True(result.IsAuthorized);
     }
-}
+
     [Fact]
     public void Archive_read_allows_explicit_station_grant_only()
     {
@@ -119,8 +119,6 @@ public sealed class ObservationAuthorizationPolicyTests
     [Fact]
     public void Archive_read_denies_other_station_even_with_archive_permission_on_actor_station()
     {
-        // Actor is assigned and granted archive on station-1 only.
-        // Request for station-2 (same authority scenario) must fail closed.
         var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
             Actor(station: "station-1", permissions: [ObservationPermission.ArchiveRead]),
             "station-2");
@@ -145,3 +143,4 @@ public sealed class ObservationAuthorizationPolicyTests
 
         Assert.Equal("inactive_station_assignment", result.ErrorCode);
     }
+}
