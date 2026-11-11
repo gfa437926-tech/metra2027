@@ -20,7 +20,7 @@ class ObservationHistoryScreen extends StatefulWidget {
 }
 
 class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
-  late Future<List<ObservationQueueItem>> _records;
+  late Future<_HistorySnapshot> _records;
   String _typeFilter = 'all';
   String _statusFilter = 'all';
   String _query = '';
@@ -39,14 +39,34 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
     super.dispose();
   }
 
-  Future<List<ObservationQueueItem>> _load() async {
-    final results = await Future.wait<List<ObservationQueueItem>>(<Future<List<ObservationQueueItem>>>[
-      widget.api.getReviewQueue(widget.stationId, limit: 100),
-      widget.api.getReturnedObservations(widget.stationId, limit: 100),
+  Future<_QueueResult> _loadQueue(
+    Future<List<ObservationQueueItem>> Function() request,
+  ) async {
+    try {
+      return _QueueResult(records: await request());
+    } on MetraApiException catch (error) {
+      if (error.statusCode == 403) {
+        return const _QueueResult(records: <ObservationQueueItem>[], forbidden: true);
+      }
+      rethrow;
+    }
+  }
+
+  Future<_HistorySnapshot> _load() async {
+    final results = await Future.wait<_QueueResult>(<Future<_QueueResult>>[
+      _loadQueue(() => widget.api.getReviewQueue(widget.stationId, limit: 100)),
+      _loadQueue(() => widget.api.getReturnedObservations(widget.stationId, limit: 100)),
     ]);
-    final records = <ObservationQueueItem>[...results[0], ...results[1]];
+    if (results.every((result) => result.forbidden)) {
+      throw const MetraApiException(403, 'history_queues_forbidden');
+    }
+    final records = <ObservationQueueItem>[...results[0].records, ...results[1].records];
     records.sort((a, b) => b.observedAt.toUtc().compareTo(a.observedAt.toUtc()));
-    return records;
+    return _HistorySnapshot(
+      records: records,
+      reviewForbidden: results[0].forbidden,
+      returnedForbidden: results[1].forbidden,
+    );
   }
 
   Future<void> _refresh() async {
@@ -147,7 +167,7 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
             ),
           ],
         ),
-        body: FutureBuilder<List<ObservationQueueItem>>(
+        body: FutureBuilder<_HistorySnapshot>(
           future: _records,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -179,7 +199,8 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
               );
             }
 
-            final all = snapshot.data ?? const <ObservationQueueItem>[];
+            final history = snapshot.data!;
+            final all = history.records;
             final filtered = all
                 .where(_matchesType)
                 .where(_matchesStatus)
@@ -196,7 +217,9 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                       leading: Icon(Icons.info_outline),
                       title: Text('نطاق السجل'),
                       subtitle: Text(
-                        'يعرض حتى 50 عنصراً من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.',
+                        'يعرض حتى 100 عنصر من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.'
+                        '${history.reviewForbidden ? '\\nتعذر تحميل طابور المراجعة بسبب نطاق الصلاحية الحالي.' : ''}'
+                        '${history.returnedForbidden ? '\\nتعذر تحميل طابور المُرجَعات بسبب نطاق الصلاحية الحالي.' : ''}',
                       ),
                     ),
                   ),
@@ -316,4 +339,26 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
       ),
     );
   }
+}
+
+class _QueueResult {
+  const _QueueResult({
+    required this.records,
+    this.forbidden = false,
+  });
+
+  final List<ObservationQueueItem> records;
+  final bool forbidden;
+}
+
+class _HistorySnapshot {
+  const _HistorySnapshot({
+    required this.records,
+    required this.reviewForbidden,
+    required this.returnedForbidden,
+  });
+
+  final List<ObservationQueueItem> records;
+  final bool reviewForbidden;
+  final bool returnedForbidden;
 }
