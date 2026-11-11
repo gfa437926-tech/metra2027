@@ -266,8 +266,9 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
               ),
               TextField(
                 controller: _type,
-                enabled: !_started,
+                enabled: !_started || (_ended && _savedId == null),
                 maxLength: 64,
+                onChanged: (_) => setState(() {}),
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'نوع الظاهرة الجوية',
@@ -276,8 +277,9 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
               ),
               TextField(
                 controller: _notes,
-                enabled: !_ended,
+                enabled: _savedId == null,
                 maxLength: 2000,
+                onChanged: (_) => setState(() {}),
                 minLines: 2,
                 maxLines: 4,
                 decoration: const InputDecoration(labelText: 'ملاحظات إضافية'),
