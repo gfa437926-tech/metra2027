@@ -196,3 +196,11 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Source commits: 88d95df775b11b29399ce535e8c732bbdc313c2f and eb92c0dc77f7a615486aae83bbdaecfdab9ab4a3.
 - Tests commits: abee1bbfb3480b8d4d250a9e2424bb8bfc29bdfb and 3431b93c4498edee6899ad7ff241e7db0032c1d4.
 - Automated verification pending a completed Client CI run on the latest source tip.
+
+
+## Flutter CI correction — 2026-11-11 UTC
+
+- Client CI #823 failed in Flutter analyze on one unused legacy parameter in the home helper after the profile page refactor.
+- Corrective source commit: a75bc36add6d7e3609eb84aa78b45f1faaabfe1f.
+- Root cause and evidence are recorded in docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md.
+- A fresh Client CI run #824 was triggered for the fix; status must be checked before marking the new screens verified.
