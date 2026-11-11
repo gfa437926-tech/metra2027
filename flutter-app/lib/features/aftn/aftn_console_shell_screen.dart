@@ -19,7 +19,7 @@ class AftnConsoleShellScreen extends StatelessWidget {
         body: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Card(
+            const Card(
               color: const Color(0xFFFFF7ED),
               child: const Padding(
                 padding: EdgeInsets.all(16),
