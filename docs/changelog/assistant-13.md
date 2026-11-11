@@ -103,3 +103,17 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - **Required evidence:** detailed Backend and Database owner test requests recorded in progress report.
 - **Safety:** GitHub source and Actions logs only; no live DB/Supabase access, SQL/migration execution, data/secrets/source edits in owner branches, merge, rebase or deployment.
 - **Progress:** 0% of 12 audit workstreams formally closed; all 12 remain open.
+
+## 2026-11-11T10:51:21.524Z — Round 7: fresh PR/Actions, decision coverage and station audit source review
+
+- Task: M13 independent final audit; status in progress.
+- Branch/PR: audit/assistant-13-independent-final-review; [PR #31](https://github.com/gfa437926-tech/metra2027/pull/31), open Draft, unmerged.
+- Fresh exact heads: #22 0d29163a4457c12f38e8a1c79b7dec49248c143d (Backend build #42925286446 success); #26 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8 (no exact-head PR run); #28 9b3ad187de7cbbf861dd7b091c193172e5a77ea9 (no exact-head PR run). No owner PR head changed.
+- Read PR #22 queue test patch: new tests cover queue 401/400/403/no-read and UTC guard; no decision endpoint integration test exists in the current observation test directory. 239/239 .NET CI tests on #22 do not prove approve/return RPC integration or transaction behavior.
+- Read migration 014 station audit projection (blob 7d317f60bb6973bfcd9de9182716b435b3b03ea7), API endpoint (blob 4e3fcffe9746d1b152188c9ea1bb133b0fd6d27d), and shell contract (blob 3500a62fc4eb5b9b0bfdff7e7b929853e4cda6d9). API applies users.station.view; service-role-only SECURITY DEFINER RPC filters by station but has no SQL-side actor authorization. Shell test is grep-only. Source table creation/immutability controls are not present in the inspected migration sequence; record as unverified, not absent in the live DB.
+- Reconfirmed main migration 20261103220500 (blob e3115f6f9830930ab38879e3ed55cdbc25678e21) retains the decision event vocabulary mismatch; PR #26 correction remains a non-active proposal. No disposable PostgreSQL tests for both branches found.
+- Observation audit trigger lacks TRUNCATE coverage; no explicit service_role TRUNCATE grant was found in inspected source. Defense-in-depth gap only.
+- Tests run by assistant 13: none. No database/Supabase connection or SQL execution.
+- Files updated: assistant-13 progress and changelog only; PR #31 body updated. No other branches/files, schema, data, secrets, merges, rebases or deployments touched.
+- Progress: 0% of 12 substantive workstreams formally closed; 12 remain open. No closure criteria met.
+- Next: request source-table baseline + PostgreSQL mutation/ACL tests; decision endpoint integration tests; and transaction tests plus owner-reviewed event-vocabulary fix.
