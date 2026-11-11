@@ -252,4 +252,39 @@ void main() {
     api.close();
   });
 
+  testWidgets('history keeps returned queue visible when review permission is absent', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'history-token',
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('/observations/returned')) {
+          return http.Response(jsonEncode(<dynamic>[
+            <String, dynamic>{
+              'id': '55555555-5555-4555-8555-555555555555',
+              'station_id': stationId,
+              'observation_type': 'daily',
+              'observed_at': '2026-11-10T12:00:00Z',
+              'payload': <String, dynamic>{'values': <String, dynamic>{'rainfall_mm': 2}},
+              'status': 'returned',
+              'review_note': 'يلزم التصحيح',
+            },
+          ]), 200);
+        }
+        return http.Response('forbidden', 403);
+      }),
+    );
+
+    useTallViewport(tester);
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationHistoryScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('سجل النشرات المتاح'), findsOneWidget);
+    expect(find.text('لا تملك صلاحية قراءة طوابير هذه المحطة.'), findsNothing);
+    expect(find.textContaining('تعذر تحميل طابور المراجعة بسبب نطاق الصلاحية الحالي.'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsOneWidget);
+    api.close();
+  });
+
 }
