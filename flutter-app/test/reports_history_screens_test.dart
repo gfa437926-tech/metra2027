@@ -222,4 +222,33 @@ void main() {
     expect(find.text('حقول الحمولة (كما أعادها الخادم)'), findsOneWidget);
     api.close();
   });
+  testWidgets('observation history fails closed on forbidden response and retries', (tester) async {
+    var calls = 0;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'history-token',
+      client: MockClient((request) async {
+        calls++;
+        if (calls <= 2) return http.Response('forbidden', 403);
+        return http.Response(jsonEncode(<dynamic>[]), 200);
+      }),
+    );
+
+    useTallViewport(tester);
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationHistoryScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('لا تملك صلاحية قراءة طوابير هذه المحطة.'), findsOneWidget);
+    expect(find.text('لا توجد سجلات مطابقة للمرشحات الحالية.'), findsNothing);
+
+    await tester.tap(find.text('إعادة المحاولة'));
+    await tester.pumpAndSettle();
+    expect(calls, 4);
+    expect(find.text('لا تملك صلاحية قراءة طوابير هذه المحطة.'), findsNothing);
+    expect(find.text('لا توجد سجلات مطابقة للمرشحات الحالية.'), findsOneWidget);
+    api.close();
+  });
+
 }
