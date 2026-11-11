@@ -163,3 +163,26 @@ This illustrates why CI evidence is stored against exact commit SHAs rather than
 ### Backend PR latest-head update — 2026-11-10T23:40:22.052Z
 
 PR #22 advanced from `efa5870e...` to current head `8134c9e4546693d717a10329436d646b08dbb94f`. A new exact-head Backend build [#42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135) is now **in progress**. The prior snapshot's "no run found" was accurate at its timestamp but is superseded by this newly created run. PR #21 Client CI #42924658140 remains pending; PR #23 Climate Analytics R #42924761774 remains successful on its current head.
+
+
+## Latest exact-head refresh — 2026-11-11T00:20:00Z (UTC)
+
+All PR metadata and workflow associations below were refreshed directly from GitHub. Each run is associated with the exact SHA shown; these are CI results, not merge/release approval.
+
+| PR | Latest head SHA | Exact-head workflow evidence | Result |
+|---|---|---|---|
+| [#21 Flutter](https://github.com/gfa437926-tech/metra2027/pull/21) | `7ee3e58181d8b6b7267319737e681955f2a6f6c7` | [Client CI #42929765964](https://github.com/gfa437926-tech/metra2027/actions/runs/42929765964) | **Success** |
+| [#22 Backend](https://github.com/gfa437926-tech/metra2027/pull/22) | `0d29163a4457c12f38e8a1c79b7dec49248c143d` | [Backend build #42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) | **Success** |
+| [#23 R / Climatol](https://github.com/gfa437926-tech/metra2027/pull/23) | `c0240707e00253a1cca9e5254f49347dba1d36d5` | [Climate Analytics R #42929191048](https://github.com/gfa437926-tech/metra2027/actions/runs/42929191048) | **Success** |
+| [#24 QA](https://github.com/gfa437926-tech/metra2027/pull/24) | `0e16cab12c1a789f04f9515cc6f0881f5976c082` | No run returned for exact SHA | **No associated run found**; no CI pass/fail claim |
+| [#27 DevOps](https://github.com/gfa437926-tech/metra2027/pull/27) | `fb2d38d4bfb7636bd76e8aca3de5ba7cd8c15eba` | [Client CI #42925414294](https://github.com/gfa437926-tech/metra2027/actions/runs/42925414294) | **Success** |
+| [#28 Integration](https://github.com/gfa437926-tech/metra2027/pull/28) | `9b3ad187de7cbbf861dd7b091c193172e5a77ea9` | No run returned for exact SHA | **No associated run found**; static audit only |
+| [#29 Assistant 10 docs](https://github.com/gfa437926-tech/metra2027/pull/29) | `39c2d919f36dccedd3920124d9dcd6862f23ed88` | No PR-triggered workflow run returned | Documentation-only branch; no CI claim |
+| [#30 Security](https://github.com/gfa437926-tech/metra2027/pull/30) | `b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2` | [Backend build #42925422751](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422751); [Client CI #42925422685](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422685) | **Both success** |
+
+### Interpretation and limits
+- PRs #21, #22, #23, #27 and #30 now have successful CI associated with their latest inspected heads. For #30 both backend and client workflows completed successfully.
+- PRs #24 and #28 have no associated run returned for their inspected heads; absence of a run is not a failure, but it is not a pass either.
+- The previously pending Flutter run #42924658140 and in-progress Backend run #42925182135 are historical snapshots for older SHAs; the newer exact-head successes above supersede their status for current branch assessment.
+- PR #30's earlier 8/234 failure remains in this register as historical evidence. Later exact-head success does not constitute penetration testing, production authorization verification, or release approval.
+- All eight PRs listed remain open Draft and unmerged at this check. No approval, merge, deployment, application-code change, SQL/migration change or database operation was performed by assistant 10.
