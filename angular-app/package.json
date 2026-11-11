@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "tsc -p tsconfig.tests.json && node --test tests/daily-submission.utils.test.cjs && node --test tests/offline-pwa-contract.test.cjs && node --test tests/shared-observation-contract.test.cjs",
+    "test": "tsc -p tsconfig.tests.json && node --test tests/daily-submission.utils.test.cjs && node --test tests/offline-pwa-contract.test.cjs && node --test tests/shared-observation-contract.test.cjs && node --test tests/specialist-ui-contract.test.cjs",
     "test:browser": "node tests/offline-browser.e2e.cjs"
   },
   "dependencies": {
