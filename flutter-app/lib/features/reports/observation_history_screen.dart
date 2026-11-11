@@ -50,7 +50,7 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
     final type = item.observationType.toLowerCase();
     return switch (_typeFilter) {
       'hourly' => type.contains('hour'),
-      'daily' => type.contains('day'),
+      'daily' => type.contains('day') || type.contains('daily'),
       'phenomenon' => type.contains('phenom'),
       _ => true,
     };
