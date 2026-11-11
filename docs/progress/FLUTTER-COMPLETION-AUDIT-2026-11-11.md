@@ -210,3 +210,9 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Corrective commit: `a75bc36add6d7e3609eb84aa78b45f1faaabfe1f` removes the obsolete parameter and its unused field/forwarding.
 - The failure was isolated to the analyzer warning; Flutter tests were skipped by the workflow because analyze is a prerequisite.
 - Client CI #824 was triggered on the correction and is the verification run to monitor. Do not treat #823 as passed.
+
+
+### FLT-QUALITY-02 — Follow-up analyzer correction
+- Client CI #824 confirmed that the first cleanup exposed the same stale optional action parameter on the underlying `_StatusCard` helper (line 175), not a new feature defect.
+- Corrective commit: `416539c774d58d545010079c7d9ab47b9c48d4b3` removes the unused optional action field and rendering branch from `_StatusCard`.
+- Client CI #824 therefore remains failed; the correction must be validated by a new CI run. Do not mark recovery/profile/station-detail tests verified until that run completes.
