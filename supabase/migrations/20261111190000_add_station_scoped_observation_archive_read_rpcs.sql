@@ -66,7 +66,7 @@ declare
     v_returned integer;
     v_has_more boolean;
 begin
-    if coalesce(auth.role(), '') <> 'service_role' then
+    if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
         raise insufficient_privilege using message = 'service_role_required';
     end if;
 
@@ -156,7 +156,7 @@ as $function$
 declare
     v_item jsonb;
 begin
-    if coalesce(auth.role(), '') <> 'service_role' then
+    if coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
         raise insufficient_privilege using message = 'service_role_required';
     end if;
 
