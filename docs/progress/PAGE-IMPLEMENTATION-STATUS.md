@@ -273,3 +273,13 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Corrected the assertion to match the current UI copy in commit `1945fb8857ef940526e8f8bfbfd6674ee6b109b9`. Product behavior was not weakened or changed.
 - CI #869 remains a failed run; exact-head verification is pending. Do not mark the forecasting center verified until the rerun passes.
 - Separate admin UI test evidence in CI run `43036091374`: Flutter analyze passed and 51 Flutter tests passed on that earlier source snapshot; Angular Chromium smoke was cancelled.
+
+
+## Flutter-first continuation — forecasting comparison API (2026-11-11 UTC)
+
+- Task: **FLT-FORECAST-API-02** — **Implemented; CI pending**.
+- Flutter comparison now calls the documented backend `POST /api/v1/forecasting/compare` contract and displays its pair results rather than calculating distances independently on-device.
+- Client validates 2–12 unique station IDs and response shape; authenticated API behavior has focused tests.
+- The endpoint currently returns catalogue/geographic comparison only. Meteorological snapshots remain unavailable and are not simulated.
+- Commits: `2b612d12fe2ec46115c146eacc72c9232c30ad9d`, `ce1f4b0cb3c3fe0600d9c938575cf7408a04dfa5`, `91c0cf202c441f5a49a4f04bb44a07c32c51bdc7`.
+- CI #871: Flutter analyze and tests succeeded; Angular npm tests/build succeeded, but Chromium installation was cancelled. Current integration commits require a fresh complete CI run.
