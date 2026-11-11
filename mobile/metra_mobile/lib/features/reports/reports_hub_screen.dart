@@ -6,9 +6,12 @@ class ReportsHubScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Directionality(
         textDirection: TextDirection.rtl,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: const [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: const [
             Card(
               elevation: 0,
               child: Padding(
@@ -73,7 +76,9 @@ class ReportsHubScreen extends StatelessWidget {
               'ملاحظة: قائمة مراجعة الرصدات وسجل تدقيق المحطة وظيفتان منفصلتان عن أرشيف الرصدات التاريخي.',
               style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.5),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       );
 }
