@@ -8,6 +8,7 @@ interface RoleDefinition {
   english: string;
   scope: string;
   requestable: boolean;
+  planned?: boolean;
 }
 
 @Component({
@@ -32,7 +33,7 @@ interface RoleDefinition {
       <section class="summary" aria-label="ملخص الأدوار">
         <article><span>إجمالي الأدوار</span><strong>{{ roles.length }}</strong></article>
         <article><span>قابلة لطلب المستخدم</span><strong>{{ requestableCount }}</strong></article>
-        <article><span>تتطلب منحاً إدارياً</span><strong>{{ roles.length - requestableCount }}</strong></article>
+        <article><span>قيد التهيئة — غير متاح</span><strong>{{ plannedCount }}</strong></article>
       </section>
 
       <section class="panel">
@@ -49,7 +50,7 @@ interface RoleDefinition {
                   <td><strong>{{ role.name }}</strong><small>{{ role.english }}</small></td>
                   <td><code>{{ role.code }}</code></td>
                   <td>{{ role.scope }}</td>
-                  <td><span class="tag" [class.self]="role.requestable">{{ role.requestable ? 'طلب ذاتي فقط' : 'منح إداري معتمد' }}</span></td>
+                  <td><span class="tag" [class.self]="role.requestable" [class.planned]="role.planned">{{ role.planned ? 'قيد التهيئة — غير متاح' : (role.requestable ? 'طلب ذاتي فقط' : 'منح إداري معتمد') }}</span></td>
                 </tr>
               }
             </tbody>
@@ -64,7 +65,7 @@ interface RoleDefinition {
     .page{max-width:1450px;margin:auto}header{margin-bottom:20px}.eyebrow{color:#287caf;font-size:13px;font-weight:800}h1{font-size:clamp(24px,3vw,32px);margin:8px 0;font-weight:800}h2{font-size:19px;margin:0 0 5px}p{margin:0;color:#778691;font-size:13px;line-height:1.8}
     .notice{background:#fff8e9;border:1px solid #f0dfb9;border-right:4px solid #d69b35;border-radius:10px;padding:15px 17px;margin-bottom:16px}.notice strong{display:block;color:#76551d;margin-bottom:5px}.notice p{color:#765f36}
     .summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:18px}.summary article,.panel{background:#fff;border-radius:12px;padding:18px;box-shadow:0 5px 18px #2233440c}.summary article{display:grid;gap:8px;border-bottom:3px solid #3498db}.summary span{font-size:12px;color:#71808b}.summary strong{font-size:25px;color:#203e53}
-    .panel{padding:22px}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.count{background:#edf5fa;color:#2876a8;padding:6px 11px;border-radius:20px;font-size:12px;font-weight:700}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;padding:13px 11px}td{padding:14px 11px;border-bottom:1px solid #edf0f2;font-size:12px;vertical-align:top;line-height:1.8}tbody tr:hover{background:#f8fbfd}td small{display:block;color:#87939b;direction:ltr;text-align:right;font-size:11px}code{background:#f1f4f6;padding:4px 7px;border-radius:5px;direction:ltr;display:inline-block}.tag{display:inline-block;background:#fff0e8;color:#9a5527;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}.tag.self{background:#e8f5ed;color:#247447}.footnote{margin-top:14px;font-size:11px;color:#85919a}
+    .panel{padding:22px}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.count{background:#edf5fa;color:#2876a8;padding:6px 11px;border-radius:20px;font-size:12px;font-weight:700}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th{text-align:right;background:#f5f7f9;color:#697781;font-size:12px;padding:13px 11px}td{padding:14px 11px;border-bottom:1px solid #edf0f2;font-size:12px;vertical-align:top;line-height:1.8}tbody tr:hover{background:#f8fbfd}td small{display:block;color:#87939b;direction:ltr;text-align:right;font-size:11px}code{background:#f1f4f6;padding:4px 7px;border-radius:5px;direction:ltr;display:inline-block}.tag{display:inline-block;background:#fff0e8;color:#9a5527;padding:5px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}.tag.self{background:#e8f5ed;color:#247447}.tag.planned{background:#fff4df;color:#8c5b12}.footnote{margin-top:14px;font-size:11px;color:#85919a}
     @media(max-width:700px){.summary{grid-template-columns:1fr}.panel{padding:14px}.panel-heading{align-items:flex-start;flex-direction:column}}
   `]
 })
@@ -78,18 +79,22 @@ export class UsersComponent {
     { code: 'statistics_director', name: 'رئيس دائرة الإحصاء', english: 'Statistics Director', scope: 'الإشراف على الإحصاء المناخي والتحليلات والتقارير.', requestable: false },
     { code: 'aftn_operator', name: 'مسؤول دائرة AFTN', english: 'AFTN Operations Officer', scope: 'إدارة رسائل AFTN والترميز والإرسال وسجل التسليم.', requestable: false },
     { code: 'system_admin', name: 'مدير النظام', english: 'System Administrator', scope: 'إدارة الإعدادات التقنية والحسابات والصلاحيات بضوابط التدقيق.', requestable: false },
-    { code: 'forecaster', name: 'متنبئ جوي', english: 'Weather Forecaster', scope: 'تحليل الحالة الجوية وإعداد التوقعات ضمن مركز التنبؤ المخوّل.', requestable: false },
-    { code: 'climatol_officer', name: 'مختص التجانس المناخي', english: 'Climatol Specialist', scope: 'إعداد وتشغيل مهام التجانس ومراجعة نتائجها بعد تفعيل العامل المعزول.', requestable: false },
-    { code: 'register_uploader', name: 'رافع السجلات الورقية والمخططات', english: 'Register Uploader', scope: 'رفع الأصول وربطها بالمحطة والفترة مع حفظ النسخة الأصلية.', requestable: false },
-    { code: 'electronic_auditor', name: 'المدقق الإلكتروني', english: 'Electronic Auditor', scope: 'مراجعة الاستخراج والفروقات والأدلة ضمن نطاق المحطات المخوّلة.', requestable: false },
-    { code: 'audit_approver', name: 'معتمد التدقيق', english: 'Audit Approver', scope: 'اعتماد القرار النهائي بعد مراجعة الأدلة والفروقات.', requestable: false },
-    { code: 'ai_analyst', name: 'محلل الذكاء الاصطناعي', english: 'AI Analyst', scope: 'تشغيل التحليلات المساعدة ومراجعة الشذوذ دون تعديل الرصدات.', requestable: false },
-    { code: 'model_manager', name: 'مدير نماذج الذكاء الاصطناعي', english: 'AI Model Manager', scope: 'إدارة مجموعات البيانات والوسوم والتدريب والتقييم في بيئة معزولة.', requestable: false },
-    { code: 'model_approver', name: 'معتمد إصدارات النماذج', english: 'AI Model Approver', scope: 'اعتماد إصدار النموذج أو التراجع عنه بعد تقييم مستقل.', requestable: false },
-    { code: 'aftn_sender', name: 'مرسل AFTN', english: 'AFTN Sender', scope: 'إنشاء الرسائل ومراجعتها وإرسالها عبر القناة المركزية المعتمدة.', requestable: false }
+    { code: 'forecaster', name: 'متنبئ جوي', english: 'Weather Forecaster', scope: 'تحليل الحالة الجوية وإعداد التوقعات ضمن مركز التنبؤ المخوّل.', requestable: false, planned: true },
+    { code: 'climatol_officer', name: 'مختص التجانس المناخي', english: 'Climatol Specialist', scope: 'إعداد وتشغيل مهام التجانس ومراجعة نتائجها بعد تفعيل العامل المعزول.', requestable: false, planned: true },
+    { code: 'register_uploader', name: 'رافع السجلات الورقية والمخططات', english: 'Register Uploader', scope: 'رفع الأصول وربطها بالمحطة والفترة مع حفظ النسخة الأصلية.', requestable: false, planned: true },
+    { code: 'electronic_auditor', name: 'المدقق الإلكتروني', english: 'Electronic Auditor', scope: 'مراجعة الاستخراج والفروقات والأدلة ضمن نطاق المحطات المخوّلة.', requestable: false, planned: true },
+    { code: 'audit_approver', name: 'معتمد التدقيق', english: 'Audit Approver', scope: 'اعتماد القرار النهائي بعد مراجعة الأدلة والفروقات.', requestable: false, planned: true },
+    { code: 'ai_analyst', name: 'محلل الذكاء الاصطناعي', english: 'AI Analyst', scope: 'تشغيل التحليلات المساعدة ومراجعة الشذوذ دون تعديل الرصدات.', requestable: false, planned: true },
+    { code: 'model_manager', name: 'مدير نماذج الذكاء الاصطناعي', english: 'AI Model Manager', scope: 'إدارة مجموعات البيانات والوسوم والتدريب والتقييم في بيئة معزولة.', requestable: false, planned: true },
+    { code: 'model_approver', name: 'معتمد إصدارات النماذج', english: 'AI Model Approver', scope: 'اعتماد إصدار النموذج أو التراجع عنه بعد تقييم مستقل.', requestable: false, planned: true },
+    { code: 'aftn_sender', name: 'مرسل AFTN', english: 'AFTN Sender', scope: 'إنشاء الرسائل ومراجعتها وإرسالها عبر القناة المركزية المعتمدة.', requestable: false, planned: true }
   ];
 
   get requestableCount(): number {
-    return this.roles.filter(role => role.requestable).length;
+    return this.roles.filter(role => role.requestable && !role.planned).length;
+  }
+
+  get plannedCount(): number {
+    return this.roles.filter(role => role.planned).length;
   }
 }
