@@ -117,3 +117,13 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - Files updated: assistant-13 progress and changelog only; PR #31 body updated. No other branches/files, schema, data, secrets, merges, rebases or deployments touched.
 - Progress: 0% of 12 substantive workstreams formally closed; 12 remain open. No closure criteria met.
 - Next: request source-table baseline + PostgreSQL mutation/ACL tests; decision endpoint integration tests; and transaction tests plus owner-reviewed event-vocabulary fix.
+
+
+## 2026-11-11T12:16:06.332Z — Round 8: PR freshness, base drift and active migration recheck
+- M13 independent final audit, status in progress; branch audit/assistant-13-independent-final-review; PR #31 remains open Draft/unmerged.
+- PR #22 head 0d29163a4457c12f38e8a1c79b7dec49248c143d; #26 head 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8; #28 head 9b3ad187de7cbbf861dd7b091c193172e5a77ea9. All unchanged, old base 87f71356083843b2abdef76baf011a82510686be. #22 Backend run #42925286446 success; #26/#28 no exact-head PR runs.
+- #30 Security head b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2 unchanged; Backend #42925422751 and Client #42925422685 succeeded. #25 Science head c9d0587e64b13b4cd26b8128fa834b38a3e08baf unchanged; no exact-head run.
+- Current main 43c72da0604e49a74d2128cc9d3d881e2c912f26 is two commits ahead of old PR base, and those commits only add/revert docs/progress/assistant-02.md. PR #31 targets current main but compare reports 16 commits ahead, 1 behind; GitHub mergeable=true. No rebase/sync performed.
+- Re-read active decision migration blob e3115f6f9830930ab38879e3ed55cdbc25678e21; p_decision remains inserted directly into event_type, retaining the CHECK vocabulary mismatch. PR #26 proposal is still not an active migration.
+- No tests run locally, no DB/Supabase/SQL/migration execution or schema/data/secrets changes; no other branch modified, no merge/rebase/deploy.
+- Progress unchanged: 0% formally closed; 12/12 audit workstreams open. Next: owner-reviewed migration fix + PostgreSQL branch/transaction tests, decision endpoint negative integration tests, station audit source baseline/ACL/immutability tests.
