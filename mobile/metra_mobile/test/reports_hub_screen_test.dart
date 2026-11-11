@@ -6,7 +6,7 @@ void main() {
   testWidgets('reports hub clearly marks unimplemented API-backed capabilities without fake data', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: ReportsHubScreen()),
+        home: Scaffold(body: ReportsHubScreen(onOpenArchive: () {})),
       ),
     );
 
