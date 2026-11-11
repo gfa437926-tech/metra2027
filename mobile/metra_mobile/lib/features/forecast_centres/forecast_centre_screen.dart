@@ -137,9 +137,9 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Icon(Icons.query_stats, size: 30, color: Color(0xFF087CF0)),
-              SizedBox(height: 10),
-              Text('مراكز التنبؤ الجوي',
+              const Icon(Icons.query_stats, size: 30, color: Color(0xFF087CF0)),
+              const SizedBox(height: 10),
+              const Text('مراكز التنبؤ الجوي',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 6),
               Text(
@@ -159,13 +159,13 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Icon(Icons.sensors_off, color: Color(0xFF9A5B00)),
-              SizedBox(width: 10),
+              const Icon(Icons.sensors_off, color: Color(0xFF9A5B00)),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('الرصدات اللحظية والنشرات غير متصلة',
+                    const Text('الرصدات اللحظية والنشرات غير متصلة',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
                     Text(
@@ -214,7 +214,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
   }
 
   Widget _referencePicker(List<StationDirectoryItem> selected) => DropdownButtonFormField<String>(
-        value: selected.any((s) => s.id == _referenceId)
+        initialValue: selected.any((s) => s.id == _referenceId)
             ? _referenceId
             : selected.first.id,
         decoration: const InputDecoration(
