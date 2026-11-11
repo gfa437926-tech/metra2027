@@ -134,6 +134,36 @@ void main() {
     api.close();
   });
 
+
+  testWidgets('pending registration status does not allow a duplicate request', (tester) async {
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/v1/stations') return http.Response('[]', 200);
+      if (request.url.path == '/api/v1/registration-roles') return http.Response('[]', 200);
+      if (request.url.path == '/api/v1/account/registration-status') {
+        return http.Response(
+          '{"account_state":"pending","request_status":"pending_station_approval","submitted_at":"2026-11-11T10:00:00Z"}',
+          200,
+        );
+      }
+      return http.Response('not_found', 404);
+    });
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'pending-registration-token',
+      client: client,
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: MetraRegistrationScreen(api: api, initiallyAuthenticated: true),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الحساب قيد مراجعة طلب الانضمام'), findsOneWidget);
+    expect(find.text('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
+    expect(find.text('إرسال طلب الانضمام'), findsNothing);
+    expect(find.text('الاسم الأول'), findsNothing);
+    api.close();
+  });
+
   testWidgets('anonymous registration explains email confirmation without claiming METRA activation',
       (tester) async {
     final api = MetraApiClient(
