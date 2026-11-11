@@ -264,3 +264,15 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Verified source tip: `39452b0ada03dffb536773dbca59c5786e3e93b4`.
 - Earlier failed runs are retained as failure history, not counted as passes: #43032212381, #43032484963, #43032957896, #43033286062, #43033776011, #43034322385. Their root causes (Arabic test fixture encoding, viewport/scroll interaction, and ambiguous scrollable selection) were corrected in subsequent test commits.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-AUTH-03 — Two-stage registration UI — 2026-11-11T14:07:16.205Z
+
+- Task status: **منجزة ومتحقق منها في Flutter**.
+- Delivered: `flutter-app/lib/features/auth/registration_screen.dart`; registration-role/status/submit API methods; login entry; signed-in shared-menu entry; widget test.
+- Flow: Supabase identity creation is separate from METRA registration. The form loads only active, approved, non-demo stations and server-returned requestable roles, records terms version `metra-terms-2026-11`, sends a secure idempotency key, and displays the server's approval state. The client never grants a role.
+- Test fixture uses UTF-8 byte responses for Arabic JSON. The form test uses a full-height test viewport to exercise consent and submit controls.
+- Verified Client CI #43034587973 on source SHA `39452b0ada03dffb536773dbca59c5786e3e93b4`: `flutter pub get` passed, `flutter analyze` passed, **48 Flutter tests passed**. Angular npm tests and build passed in the same run; Chromium PWA/IndexedDB smoke was still running at the time of this record.
+- Prior failing CI runs remain failures, not passes: #43032212381, #43032484963, #43032957896, #43033286062, #43033776011, #43034322385. Root causes were corrected in subsequent commits (Arabic fixture UTF-8 encoding; form test viewport interaction; scrollable finder ambiguity).
+- Documentation commit: `af4fc58b9e74da9affd3e4674bde76e8c6a5e770`.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.

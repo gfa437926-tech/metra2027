@@ -231,3 +231,11 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Added two-stage identity creation + institutional registration request/status flow; station and role choices are server sourced and server permissions remain authoritative.
 - Flutter Client CI #43034587973 passed: analyze success, 48 tests passed. Source SHA: `39452b0ada03dffb536773dbca59c5786e3e93b4`.
 - Evidence and failure/correction history: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
+
+
+## Flutter registration lifecycle — 2026-11-11T14:07:16.205Z
+
+- FLT-AUTH-03: **منجزة ومتحقق منها**.
+- Added identity creation + server-driven station/role request + approval-status tracking, linked from login and the shared menu.
+- Client CI #43034587973: Flutter analyze passed and **48 Flutter tests passed**. Source SHA `39452b0ada03dffb536773dbca59c5786e3e93b4`.
+- Detailed evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
