@@ -172,6 +172,69 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
     await _decide(assignmentId, decision, note: note);
   }
 
+  String _utcValue(Object? value) {
+    if (value is! String) return 'غير متوفر';
+    final parsed = DateTime.tryParse(value);
+    return parsed == null ? 'غير متوفر' : '${parsed.toUtc().toIso8601String()} UTC';
+  }
+
+  Future<void> _showAssignmentDetails(Map<String, dynamic> row) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const Text('تفاصيل التعيين',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                _assignmentDetail('معرّف التعيين', _assignmentId(row) ?? 'غير متوفر'),
+                _assignmentDetail('معرّف المستخدم',
+                    (row['user_id'] ?? row['userId'] ?? row['id'] ?? 'غير متوفر').toString()),
+                _assignmentDetail('الدور',
+                    (row['role_code'] ?? row['roleCode'] ?? 'غير متوفر').toString()),
+                _assignmentDetail('الحالة',
+                    (row['status'] ?? row['assignment_status'] ?? 'غير متوفر').toString()),
+                _assignmentDetail('بداية السريان UTC', _utcValue(row['valid_from'] ?? row['validFrom'])),
+                _assignmentDetail('نهاية السريان UTC',
+                    row['valid_to'] == null && row['validTo'] == null
+                        ? 'مفتوح'
+                        : _utcValue(row['valid_to'] ?? row['validTo'])),
+                _assignmentDetail('سبب التعيين',
+                    (row['reason'] ?? 'غير متوفر').toString()),
+                _assignmentDetail('طالب التعيين',
+                    (row['requested_by'] ?? row['requestedBy'] ?? 'غير متوفر').toString()),
+                _assignmentDetail('تاريخ الإنشاء UTC',
+                    _utcValue(row['created_at'] ?? row['createdAt'])),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('إغلاق'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _assignmentDetail(String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(width: 142, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+            Expanded(child: SelectableText(value)),
+          ],
+        ),
+      );
+
   Future<void> _revoke(String assignmentId) async {
     if (_busy) return;
     final reason = await _askReason(
@@ -345,6 +408,7 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
                     for (final row in rows)
                       Card(
                         child: ListTile(
+                          onTap: () => _showAssignmentDetails(row),
                           title: Text(
                             '${row['user_id'] ?? row['userId'] ?? row['id'] ?? '—'}',
                           ),
