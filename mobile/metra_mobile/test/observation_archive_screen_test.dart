@@ -85,6 +85,7 @@ void main() {
     const secondStationId = '22222222-2222-4222-8222-222222222222';
     final firstResponse = Completer<http.Response>();
     final requestedStations = <String>[];
+    var archiveRequestCount = 0;
 
     Map<String, dynamic> archiveResponse(String station, int temperature) => {
       'authorized': true,
@@ -106,12 +107,30 @@ void main() {
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'archive-token',
       client: MockClient((request) async {
-        final station = request.url.path.contains(secondStationId)
-            ? secondStationId
-            : stationId;
-        requestedStations.add(station);
-        if (station == stationId) return firstResponse.future;
-        return http.Response(jsonEncode(archiveResponse(station, 22)), 200);
+        if (request.url.path.endsWith('/archive')) {
+          archiveRequestCount++;
+          if (archiveRequestCount == 1) {
+            requestedStations.add(stationId);
+            return firstResponse.future;
+          }
+          requestedStations.add(secondStationId);
+          return http.Response(jsonEncode(archiveResponse(secondStationId, 22)), 200);
+        }
+        return http.Response(jsonEncode({
+          'authorized': true,
+          'found': true,
+          'item': {
+            'id': observationId,
+            'stationId': secondStationId,
+            'sourceSystem': 'fixture',
+            'sourceTable': 'hourly_records',
+            'sourceRecordId': 'source-22',
+            'observationType': 'hourly',
+            'observedAtUtc': '2026-11-10T18:00:00Z',
+            'payload': {'temperature': 22},
+            'importedAtUtc': '2026-11-11T01:00:00Z'
+          }
+        }), 200);
       }),
     );
 
@@ -148,7 +167,8 @@ void main() {
       jsonEncode(archiveResponse(stationId, 11)), 200));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('رصد ساعي'));
+    expect(find.byType(ListTile), findsOneWidget);
+    await tester.tap(find.byType(ListTile).first);
     await tester.pumpAndSettle();
     await tester.drag(find.byType(ListView), const Offset(0, -1200));
     await tester.pumpAndSettle();
