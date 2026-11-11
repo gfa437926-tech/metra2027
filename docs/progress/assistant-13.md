@@ -408,3 +408,48 @@ M13 remains **0% of 12 audit workstreams formally closed**. DB-001, DB-002 and I
 ### Safety / status
 - GitHub source and Actions logs only. No live DB/Supabase access, SQL execution, migration changes, data changes, secrets changes, merge, rebase or deployment. No owner branch/source files modified.
 - M13 progress remains 0% of 12 audit workstreams formally closed; all 12 remain open because the requested runtime/negative tests and owner evidence are not yet present.
+
+## Round 7 — fresh owner-branch, SQL projection and endpoint evidence check
+
+**Updated:** 2026-11-11T10:51:21.524Z (UTC)  
+**Task/status:** M13 independent final audit; in progress.  
+**Branch:** audit/assistant-13-independent-final-review; PR [#31](https://github.com/gfa437926-tech/metra2027/pull/31), open Draft and unmerged.
+
+### Fresh PR/head/Actions check
+
+- PR #22 Backend remains open Draft, branch work/backend-api-audit-assistant-2, exact head 0d29163a4457c12f38e8a1c79b7dec49248c143d. Its current-head Backend build [#42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) remains successful. No newer head or run was returned.
+- PR #26 Database remains open Draft, exact head 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8; exact-head PR workflow query returned no runs.
+- PR #28 Integration remains open Draft, exact head 9b3ad187de7cbbf861dd7b091c193172e5a77ea9; exact-head PR workflow query returned no runs.
+- PR #31 audit branch head before this report update was 94fd7546ee487bf3b953519a297834659619fbf2; no PR-triggered workflow run was returned for that head.
+- Changed-file inventories for #22/#26/#28 are unchanged from the previous review. #26 still contains only a review-only SQL proposal, not an active migration. #28 still contains architecture/contract documentation and no executable integration tests.
+
+### Backend review-queue vs decision coverage
+
+- Read PR #22's changed test patch. It adds HTTP integration tests for the review queue (401 unauthenticated, 400 invalid limit, 403 station denial, and no queue call on denial) plus a focused UTC request-guard unit test. These are useful additions but do not test the observation decision endpoint.
+- Current backend/Metra.Api.Tests/Features/Observations inventory contains ObservationDecisionRequestGuardTests.cs, but no ObservationDecisionEndpointTests.cs or equivalent decision endpoint integration fixture. No test proves authenticated approve/return calls the RPC, wrong-station/wrong-permission denial prevents the RPC, or actor identity cannot be overridden by the body.
+- The #22 head CI success remains valid evidence for that commit only; prior run log recorded 239/239 .NET tests. It does not close decision/RPC transaction coverage.
+
+### Station audit log — source and authorization boundary
+
+- Read database/migrations/014_station_audit_read_model.sql (blob 7d317f60bb6973bfcd9de9182716b435b3b03ea7). It creates/replaces get_station_audit_log(p_station_id,p_limit) as SECURITY DEFINER with fixed search_path = pg_catalog, public, bounds limit to 1–250, filters records by the requested station and station assignments, revokes execute from PUBLIC/anon/authenticated and grants it to service_role.
+- Read backend/Metra.Api/Features/Users/StationAuditEndpoints.cs (blob 4e3fcffe9746d1b152188c9ea1bb133b0fd6d27d). The API endpoint applies .RequireStationPermission(users.station.view) before invoking the service-role RPC. The RPC does not receive actor ID or independently evaluate actor permission; this is an API-to-service-role trust boundary. Require negative cross-station API tests and ensure service-role credentials remain server-only.
+- Read database/tests/verify_station_audit_contract.sh (blob 3500a62fc4eb5b9b0bfdff7e7b929853e4cda6d9). It is a static grep contract test for RPC name/filter/limit/EXECUTE grants and API permission mapping, not a PostgreSQL runtime or mutation test.
+- Repository migration inventory has no checked-in creation/baseline migration for the underlying station_audit_log table in the inspected database/migrations sequence (003–029); migration 014 is a read projection only. Therefore source-table RLS, grants, trigger, UPDATE/DELETE/TRUNCATE protection and ownership cannot be verified from this repository baseline. Do not infer the live table's protection or absence.
+
+### Reconfirmed active database defect and test gap
+
+- Main migration supabase/migrations/20261103220500_harden_observation_decision_null_validation.sql (blob e3115f6f9830930ab38879e3ed55cdbc25678e21) still inserts p_decision directly into event_type; the creation migration CHECK permits approved/returned, not approve/return_for_correction. The mismatch remains active in source; the PR #26 proposal is not an applied migration and has no runtime proof.
+- database/tests contains shell contract checks; the station audit check and previously inspected decision/permission checks use static source assertions. No disposable PostgreSQL integration test applying migrations and exercising both decision branches was found in the reviewed inventory.
+- Observation audit trigger still covers UPDATE/DELETE, not TRUNCATE. No explicit TRUNCATE grant to service_role was found in the inspected creation migration; retain this as defense-in-depth/privilege-drift gap, not proof of current exploitability.
+
+### Tests, changes and safety
+
+- Tests executed by assistant 13: none. GitHub Actions evidence is the exact-head status above; no new workflow result was available for #26/#28.
+- Files modified this round: only docs/progress/assistant-13.md and append-only docs/changelog/assistant-13.md on the assistant-13 branch, plus PR #31 description.
+- No live Supabase/database access, SQL execution, migration/schema/data/secrets change, owner-branch modification, merge, rebase or deployment.
+
+### Progress and remaining work
+
+**M13 completion remains 0% of 12 substantive audit workstreams formally closed; 12 remain open.** This round advances source/coverage verification but no workstream satisfies the defined closure criteria (owner evidence plus executable negative/runtime tests and accepted traceability). Assistant-specific progress percentages in other PRs are not project completion.
+
+**Next:** require the Database owner to provide an authoritative station_audit_log source/baseline definition and disposable PostgreSQL ACL/immutability tests; require Backend owner to add decision endpoint integration tests; require Database owner to add both decision-branch transaction tests and correct the event vocabulary through an owner-reviewed migration. Keep all PRs Draft/unmerged until acceptance.
