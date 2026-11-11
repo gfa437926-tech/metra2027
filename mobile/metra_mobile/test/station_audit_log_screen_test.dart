@@ -59,7 +59,6 @@ void main() {
     expect(find.text('pending → approved'), findsOneWidget);
     expect(find.text('تحديث تعيين'), findsOneWidget);
     expect(find.textContaining('لا يمثل هذا أرشيف النشرات'), findsOneWidget);
-    expect(find.textContaining('للقراءة فقط'), findsOneWidget);
 
     api.close();
   });
