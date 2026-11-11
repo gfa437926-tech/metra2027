@@ -17,7 +17,7 @@ void main() {
     await tester.tap(find.text('التحليل'));
     await tester.pumpAndSettle();
     expect(find.text('إعداد طلب التحليل'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), 300, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), 300, scrollable: find.byType(Scrollable).last);
     expect(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), findsOneWidget);
     expect(find.textContaining('لم يتم إرسال السؤال'), findsOneWidget);
     await tester.tap(find.text('حوكمة'));
@@ -59,7 +59,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('تجانس السلاسل المناخية — Climatol'), findsOneWidget);
     expect(find.text('محطة الشمال'), findsOneWidget);
-    await tester.scrollUntilVisible(find.textContaining('تشغيل التجانس غير متاح'), 400, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.textContaining('تشغيل التجانس غير متاح'), 400, scrollable: find.byType(Scrollable).last);
     expect(find.textContaining('تشغيل التجانس غير متاح'), findsOneWidget);
     await tester.tap(find.text('التشخيص'));
     await tester.pumpAndSettle();
