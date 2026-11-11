@@ -230,3 +230,25 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Current PR #11 head at this update: `381eafab46153ac1d9d84248925f478f98a20470`.
 - Fresh CI result for this exact head is not yet available; do not mark Flutter tests verified until a new Client CI run completes successfully.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-AUTH-03 — Two-stage registration request UI — 2026-11-11T13:46:39.786Z
+
+- Task status: **implemented baseline; verification pending**.
+- Added `flutter-app/lib/features/auth/registration_screen.dart`:
+  - Supabase identity creation is a separate first step; no METRA role is granted by identity creation.
+  - After authentication, loads only active, approved, non-demo stations from the current station directory and requestable roles from `GET /api/v1/registration-roles`.
+  - Loads account registration state from `GET /api/v1/account/registration-status`.
+  - Submits first/father/family name, optional phone, station, requestable role, terms version `metra-terms-2026-11`, and a cryptographically random idempotency key to `POST /api/v1/registration-requests`.
+  - Displays pending station/system approval, active/rejected/suspended/disabled state without granting client-side permissions.
+  - Uses server response as authority; no client-side role assignment, no privileged key, no SQL.
+- Added login entry point and a signed-in “more” menu entry to continue/track registration.
+- Added API client methods for requestable roles, current registration status and registration submission.
+- Added widget tests for filtering demo stations, selecting a requestable role, submitting the canonical request envelope, pending status and email-confirmation flow.
+- Source commits: `9efec07064936a7cad99dc68432ef1fe1f4c1cff`, `eb915af974b18dd08afe5ffefba4574a9178c993`, `2281fe537457d2fc4f45e70d0c8e8865e6b42b15`, `57702513ee46005ae78fbdb2091bb3ec5fc486bf`.
+- Test commit: `acdc0bdc1e774c553863346599575d564f257bb9`; follow-up picker assertion correction: `f1f33357081377341c49456407953567c393d3e7`.
+- CI found a registration-screen collection syntax error and analyzer infos in the first implementation. Corrected in `84187f1c7688292b286fbd808cdc162b9b231320`, `1031381fc520539ab2173f359e1a0040d7277aaa`, and `1219722948a82a4b48d2aac535851c410249f9ab`.
+- Client CI #833 (run `43030878129`) had `flutter analyze` pass and 45 tests pass / 1 fail; failure was the station detail footer assertion before scrolling. Test corrected in commit `23031e69c30d813be5ea8c830269d62ac8e0970c`.
+- Client CI on the registration screen initial implementation (run `43031853120`) failed at analyze due to the syntax error; Flutter tests were skipped. This is not a passing run.
+- Exact-head verification for current source tip `1219722948a82a4b48d2aac535851c410249f9ab` is pending. Do not mark this feature or the station detail footer test verified until Client CI completes successfully.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
