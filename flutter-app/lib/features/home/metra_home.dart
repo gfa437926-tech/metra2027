@@ -24,7 +24,6 @@ class _MetraHomeState extends State<MetraHome> {
   Widget build(BuildContext context) {
     final pages = [
       _HomeOverview(
-        api: widget.api,
         onOpenStations: () => setState(() => _index = 1),
         onOpenForecasting: () => setState(() => _index = 5)),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
@@ -127,8 +126,7 @@ class _MoreMenuPage extends StatelessWidget {
 }
 
 class _HomeOverview extends StatelessWidget {
-  const _HomeOverview({required this.api, required this.onOpenStations, required this.onOpenForecasting});
-  final MetraApiClient api;
+  const _HomeOverview({required this.onOpenStations, required this.onOpenForecasting});
   final VoidCallback onOpenStations;
   final VoidCallback onOpenForecasting;
   @override
