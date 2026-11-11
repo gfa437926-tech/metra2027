@@ -275,3 +275,10 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 
 ### Safety boundary reaffirmed
 No hosted Supabase migration, schema, RLS, policy, permission grant or data write was performed. The legacy database and legacy repository were not changed.
+## FLT-007 — Forecast-centre widget verification added (2026-11-12)
+
+- Added widget tests for station-directory loading, comparison display, coordinate provenance, reference station switching, and a 403/API failure state.
+- Commit: `557435c6674466c3b13866af833c976ee4a0f12b`.
+- CI verification is pending/unavailable in the current workflow-run lookup; do not count the new tests as passing until an exact-head Client CI run completes.
+- No forecast values, bulletin content, live feeds or synthetic observations were introduced.
+- No backend, database, Supabase, migration, RLS, permission grant, legacy repository or METRA OLD changes.
