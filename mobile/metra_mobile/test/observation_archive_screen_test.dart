@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 // ignore: deprecated_member_use
@@ -77,6 +78,83 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('محتوى الرصد الأصلي'), findsOneWidget);
     expect(find.textContaining('temperature'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('stale response from previous station is discarded after station switch', (tester) async {
+    const secondStationId = '22222222-2222-4222-8222-222222222222';
+    final firstResponse = Completer<http.Response>();
+    final requestedStations = <String>[];
+
+    Map<String, dynamic> archiveResponse(String station, int temperature) => {
+      'authorized': true,
+      'items': [{
+        'id': observationId,
+        'stationId': station,
+        'sourceSystem': 'fixture',
+        'sourceTable': 'hourly_records',
+        'sourceRecordId': 'source-$temperature',
+        'observationType': 'hourly',
+        'observedAtUtc': '2026-11-10T18:00:00Z',
+        'payload': {'temperature': temperature},
+        'importedAtUtc': '2026-11-11T01:00:00Z'
+      }],
+      'page': {'limit': 50, 'offset': 0, 'returned': 1, 'hasMore': false}
+    };
+
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'archive-token',
+      client: MockClient((request) async {
+        final station = request.url.path.contains(secondStationId)
+            ? secondStationId
+            : stationId;
+        requestedStations.add(station);
+        if (station == stationId) return firstResponse.future;
+        return http.Response(jsonEncode(archiveResponse(station, 22)), 200);
+      }),
+    );
+
+    var selectedStation = stationId;
+    await tester.pumpWidget(MaterialApp(
+      home: StatefulBuilder(
+        builder: (context, setState) => Scaffold(
+          body: Column(
+            children: [
+              Expanded(child: ObservationArchiveScreen(
+                api: api,
+                stationId: selectedStation,
+              )),
+              TextButton(
+                key: const Key('switch-station'),
+                onPressed: () => setState(() => selectedStation = secondStationId),
+                child: const Text('switch station'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ));
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('switch-station')));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(requestedStations, containsAll([stationId, secondStationId]));
+
+    // Complete the old station request after the new station has loaded.
+    firstResponse.complete(http.Response(
+      jsonEncode(archiveResponse(stationId, 11)), 200));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('رصد ساعي'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('"temperature": 22'), findsOneWidget);
+    expect(find.textContaining('"temperature": 11'), findsNothing);
     api.close();
   });
 
