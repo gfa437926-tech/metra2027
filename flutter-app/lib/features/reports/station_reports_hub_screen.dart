@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import 'observation_status_screen.dart';
 import '../admin/manual_archive_screen.dart';
+import '../admin/station_audit_log_screen.dart';
 
 /// Hub for station-scoped reports that exist against live APIs, plus honest unbound shells.
 class StationReportsHubScreen extends StatelessWidget {
@@ -60,6 +61,25 @@ class StationReportsHubScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => ManualArchiveScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.history),
+            title: const Text('سجل تدقيق المحطة والتعيينات'),
+            subtitle: const Text('الأحداث والصلاحيات والتغييرات المسجلة من الخادم'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => StationAuditLogScreen(
                     api: api,
                     stationId: stationId,
                   ),
