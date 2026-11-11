@@ -63,7 +63,7 @@ void main() {
     expect(find.text('مُرجَعة للتصحيح'), findsOneWidget);
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('بلاغ ظاهرة'), findsOneWidget);
-    expect(find.textContaining('2026-11-11-06'), findsNothing);
+    expect(find.textContaining('2026-11-11 06:00:00 UTC'), findsNWidgets(2));
     api.close();
   });
 
