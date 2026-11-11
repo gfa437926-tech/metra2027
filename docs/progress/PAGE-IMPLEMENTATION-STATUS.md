@@ -158,3 +158,20 @@
 | Angular UI | Scaffold `/electronic-auditor` only |
 | Flutter capture | Not implemented |
 | Production models | None |
+
+
+---
+
+## Flutter-first continuation — 2026-11-11 UTC
+
+The detailed requirements-based mobile audit supersedes older top-level Flutter status labels where they conflict:
+- docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md
+- Canonical Flutter source: flutter-app/ (confirmed by its README, mobile/metra_mobile/README.md, and Client CI working directory).
+- mobile/metra_mobile/ is a temporary reference tree, not the canonical build path.
+- Forecasting Center was added to shared five-destination mobile navigation; secondary review/operations/account actions are grouped under “المزيد”.
+- Regression test added for Forecasting navigation and the explicit no-live-snapshot state.
+- Code commit: 3250acbad7f337f8d59f736a7d80c089963d316c.
+- Client CI run #808 was observed in progress at 2026-11-11 13:22 UTC; do not mark it passed until its conclusion is successful.
+- Flutter remains incomplete: registration request, recovery, profile, station detail, hourly/daily list/detail/history, phenomena, specialist reports, agriculture, soil, complete auditor workspace and live forecasting snapshots remain open or contract-blocked.
+
+No SQL was applied, no main merge was performed, and metra-old was not modified.
