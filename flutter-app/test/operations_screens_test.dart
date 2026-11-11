@@ -83,13 +83,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byWidgetPredicate((widget) =>
-          widget is TextFormField && widget.decoration?.labelText == 'اسم المعدة'),
+      find.byType(TextFormField).at(0),
       'حساس الحرارة',
     );
     await tester.enterText(
-      find.byWidgetPredicate((widget) =>
-          widget is TextFormField && widget.decoration?.labelText == 'وصف العطل'),
+      find.byType(TextFormField).at(1),
       'قراءة الحساس متوقفة منذ بداية الوردية',
     );
     final send = find.text('إرسال إلى الخادم');
@@ -124,16 +122,12 @@ void main() {
       home: SupportIncidentScreen(api: api, stationId: stationId),
     ));
     await tester.pumpAndSettle();
-    Future<void> fill(String label, String value) async {
-      await tester.enterText(
-        find.byWidgetPredicate((widget) =>
-            widget is TextFormField && widget.decoration?.labelText == label),
-        value,
-      );
+    Future<void> fill(int index, String value) async {
+      await tester.enterText(find.byType(TextFormField).at(index), value);
     }
-    await fill('التصنيف', 'شبكة الاتصالات');
-    await fill('العنوان', 'انقطاع الاتصال بالمركز');
-    await fill('الوصف', 'تعذر إرسال بيانات المحطة إلى المركز منذ عشر دقائق');
+    await fill(0, 'شبكة الاتصالات');
+    await fill(1, 'انقطاع الاتصال بالمركز');
+    await fill(2, 'تعذر إرسال بيانات المحطة إلى المركز منذ عشر دقائق');
     final send = find.text('إرسال إلى الخادم');
     await tester.ensureVisible(send);
     await tester.tap(send);
