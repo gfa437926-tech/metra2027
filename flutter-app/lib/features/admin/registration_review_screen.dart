@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
 import 'admin_api_messages.dart';
+import 'registration_audit_screen.dart';
 
 /// Station or system stage registration queue with approve/reject against live API.
 class RegistrationReviewScreen extends StatefulWidget {
@@ -125,6 +126,20 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
           title: const Text('مراجعة طلبات التسجيل'),
           actions: [
             IconButton(
+              tooltip: 'سجل التدقيق',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => RegistrationAuditScreen(
+                    api: widget.api,
+                    stationId: widget.stationId,
+                    systemStage: _systemStage,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.history),
+            ),
+            IconButton(
+              tooltip: 'تحديث الطلبات',
               onPressed: _busy ? null : _reload,
               icon: const Icon(Icons.refresh),
             ),
