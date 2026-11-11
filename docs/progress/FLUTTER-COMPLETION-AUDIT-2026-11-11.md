@@ -351,3 +351,41 @@ Added:
 - REQ-002 RAR inventory, requirements traceability, progress/work log, roadmap pointer.
 
 Still not acceptance-complete: live snapshot forecasting, offline queue parity, full role matrix UI, production Climatol/AI backends.
+
+
+## Superseding canonical-path and account review — 2026-11-11T16:28:47.903Z
+
+This section supersedes earlier statements in this historical audit where they conflict with the current canonical tree. The active canonical source remains `flutter-app/`; the current comparison is against `mobile/metra_mobile/` on `main`.
+
+### Canonical consolidation evidence
+- The reference tree is a smaller, divergent client. The canonical `flutter-app/` already contains expanded API/auth/home, observation, specialist, auditor, station, operations, support and report features. It was not replaced wholesale.
+- The unique responsive navigation widget was ported to `flutter-app/lib/core/widgets/metra_adaptive_navigation.dart` and integrated into the canonical home shell. Compact screens use a bottom navigation bar; wide screens use a navigation rail.
+- Station coordinate provenance and accuracy were ported to the canonical station model, station detail and forecasting profile. Source tests were added for parsing and display.
+- The canonical forecasting centre already has map/search, selected stations, a station profile API and server-side comparison for 2–12 stations. This implementation was retained rather than copying the reference screen's local-only distance calculation as a duplicate.
+- Account profile now reads the existing registration-status API and displays account state, request stage, review note and UTC submitted time. It does not infer roles or assignments.
+
+### Account screen status
+- Sign-in: Supabase identity/session is implemented, but `MetraAuthGate` currently checks only session presence; it does not resolve the METRA account state/effective permissions before showing the home shell.
+- Registration: two-stage identity + station/role request exists and is covered by source tests; CI must be rerun on the consolidation branch.
+- Recovery: privacy-safe reset-email request exists; deep-link/new-password completion remains to be verified.
+- Profile: status display added in this round; actual station assignments/effective grants are not returned by the registration-status API.
+- Registration review and station assignment: server-backed station-scoped screens exist; tests remain incomplete for forbidden actor, expiry/revocation and concurrency.
+- Access denied/session expired: no global app-level state screen or clearing policy.
+- Permission administration: no actual role/permission UI. Static role workspace catalogue is not an account grant and must never be used as authorization.
+- Global user directory/account administration: not established; current user directory is station-scoped.
+
+Detailed findings and blockers: `docs/progress/ACCOUNT-SCREENS-AUDIT.md`.
+
+### Remaining screen catalogue gaps
+- Hourly/daily report list, details and history pages are not fully evidenced as separate Flutter workflows.
+- Complete electronic-auditor case list/detail, evidence upload, triple-source comparison and human decision workflow remain unbound; the current mobile screen is a scaffold.
+- Rainfall, climate, agriculture and soil-temperature remain honest shells pending approved field catalogues and API contracts.
+- AI remains a shell pending a server-side AI gateway, audit, provenance and evaluation controls.
+- Climatol remains a shell pending an isolated worker, dataset fingerprint/versioning, diagnostics and human approval.
+- Forecast live weather snapshot and bulletin details remain blocked until the API contract and source provenance are approved.
+- Full offline draft/sync/conflict design and end-to-end tests remain unverified.
+
+### Verification boundary
+- Source tests were added for responsive navigation, station coordinate provenance and account-status display/error handling.
+- Flutter SDK is unavailable in this execution environment. `flutter analyze`, `flutter test`, Android/iOS builds and visual/device tests have **not** been run here. Source tests are not reported as passing.
+- No database/schema/RLS/migration/grant/seed changes, no legacy database writes, no merge to `main`, and no deployment.
