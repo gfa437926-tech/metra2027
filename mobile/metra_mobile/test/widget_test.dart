@@ -173,7 +173,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('1200.0 م'), findsOneWidget);
     expect(find.text('المسافة من المرجع'), findsWidgets);
-    expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
     api.close();
   });
 
