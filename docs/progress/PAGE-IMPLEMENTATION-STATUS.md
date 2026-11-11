@@ -171,7 +171,7 @@ The detailed requirements-based mobile audit supersedes older top-level Flutter 
 - Forecasting Center was added to shared five-destination mobile navigation; secondary review/operations/account actions are grouped under “المزيد”.
 - Regression test added for Forecasting navigation and the explicit no-live-snapshot state.
 - Code commit: 3250acbad7f337f8d59f736a7d80c089963d316c.
-- Client CI run #808 was observed in progress at 2026-11-11 13:22 UTC; do not mark it passed until its conclusion is successful.
+- Client CI #808 was cancelled by subsequent branch updates. The latest observed Client CI run is #810 for the current Flutter code commit and was pending at 2026-11-11 13:23 UTC; do not mark it passed until its conclusion is successful.
 - Flutter remains incomplete: registration request, recovery, profile, station detail, hourly/daily list/detail/history, phenomena, specialist reports, agriculture, soil, complete auditor workspace and live forecasting snapshots remain open or contract-blocked.
 
 No SQL was applied, no main merge was performed, and metra-old was not modified.
