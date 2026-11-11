@@ -33,6 +33,8 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
 
   ObservationArchivePage? _page;
   String? _selectedType;
+  DateTime? _fromUtc;
+  DateTime? _toUtc;
   String? _error;
   bool _loading = false;
   bool _loadingMore = false;
@@ -69,6 +71,8 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
       final next = await widget.api.getObservationArchive(
         stationId,
         observationType: _selectedType,
+        fromUtc: _fromUtc,
+        toUtc: _toUtc,
         limit: _pageSize,
         offset: append ? (_page?.items.length ?? 0) : 0,
       );
@@ -133,6 +137,42 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
                   tooltip: 'تحديث',
                   onPressed: _loading || _loadingMore ? null : () => _load(),
                   icon: const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _loading ? null : _pickFromDate,
+                    icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                    label: Text(_fromUtc == null ? 'من تاريخ' : 'من ${_formatDate(_fromUtc!)}'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _loading ? null : _pickToDate,
+                    icon: const Icon(Icons.event_outlined, size: 18),
+                    label: Text(_toUtc == null ? 'حتى تاريخ' : 'حتى ${_formatDate(_toUtc!.subtract(const Duration(days: 1)))}'),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'مسح التاريخ',
+                  onPressed: _loading || (_fromUtc == null && _toUtc == null)
+                      ? null
+                      : () {
+                          setState(() {
+                            _fromUtc = null;
+                            _toUtc = null;
+                            _page = null;
+                          });
+                          _load();
+                        },
+                  icon: const Icon(Icons.clear),
                 ),
               ],
             ),
@@ -233,6 +273,53 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
         ],
       ),
     );
+  }
+
+
+  Future<void> _pickFromDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _fromUtc ?? DateTime.now().toUtc(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _fromUtc = DateTime.utc(picked.year, picked.month, picked.day);
+      if (_toUtc != null && !_fromUtc!.isBefore(_toUtc!)) {
+        _toUtc = null;
+      }
+      _page = null;
+    });
+    _load();
+  }
+
+  Future<void> _pickToDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _toUtc?.subtract(const Duration(days: 1)) ?? DateTime.now().toUtc(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (picked == null || !mounted) return;
+    final exclusiveEnd = DateTime.utc(picked.year, picked.month, picked.day)
+        .add(const Duration(days: 1));
+    if (_fromUtc != null && !_fromUtc!.isBefore(exclusiveEnd)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب أن يكون تاريخ النهاية بعد تاريخ البداية.')),
+      );
+      return;
+    }
+    setState(() {
+      _toUtc = exclusiveEnd;
+      _page = null;
+    });
+    _load();
+  }
+
+  static String _formatDate(DateTime value) {
+    final date = value.toUtc();
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   static String _formatUtc(DateTime value) {
