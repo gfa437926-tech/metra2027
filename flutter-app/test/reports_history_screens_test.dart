@@ -145,7 +145,9 @@ void main() {
               'status': 'returned',
               'review_note': 'يرجى مراجعة القيمة',
             },
-          ]), 200);
+          ]), 200, headers: <String, String>{
+            'content-type': 'application/json; charset=utf-8',
+          });
         }
         return http.Response(jsonEncode(<dynamic>[
           <String, dynamic>{
