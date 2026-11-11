@@ -8,6 +8,9 @@ import '../forecasting/forecasting_center_screen.dart';
 import '../account/account_profile_screen.dart';
 import '../auth/registration_screen.dart';
 import '../observations/phenomenon_capture_screen.dart';
+import '../specialist/specialist_unit_shell_screen.dart';
+import '../electronic_auditor/electronic_auditor_screen.dart';
+import '../observations/daily_observation_submit_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -68,6 +71,85 @@ class _MetraHomeState extends State<MetraHome> {
             builder: (_) => PhenomenonCaptureScreen(api: widget.api, stationId: stationId),
           ));
         },
+        onDailyEntry: () {
+          final stationId = _selectedStationId;
+          if (stationId == null) {
+            setState(() => _index = 1);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('اختر محطة من الدليل أولاً لإدخال النشرة اليومية.')),
+            );
+            return;
+          }
+          Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => DailyObservationSubmitScreen(api: widget.api, stationId: stationId),
+          ));
+        },
+        onElectronicAuditor: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const ElectronicAuditorScreen(),
+        )),
+        onRainfall: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'الأمطار والهطول',
+            unitCode: 'rainfall',
+            description: 'إدخال ومراجعة وتحليل الهطول وفق النماذج المرجعية بعد اعتماد العقد وAPI.',
+            requiredBeforeBinding: [
+              'عقد حقول الأمطار المعتمد',
+              'Endpoints خادمية مع عزل المحطة',
+              'اختبارات قبول بدون بيانات وهمية',
+            ],
+          ),
+        )),
+        onClimate: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'البيانات المناخية',
+            unitCode: 'climate',
+            description: 'تقارير وتجميعات مناخية من مصدر معتمد فقط — لا سلاسل مختلقة.',
+            requiredBeforeBinding: [
+              'تعريف صيغ التجميع المناخي',
+              'API تقارير مناخية معتمدة',
+            ],
+          ),
+        )),
+        onAgriculture: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'الرصد الزراعي',
+            unitCode: 'agriculture',
+            description: 'حقول الرصد الزراعي من المراجع المعتمدة بعد ربط API.',
+            requiredBeforeBinding: ['عقد الحقول الزراعية', 'مسار حفظ خادمي'],
+          ),
+        )),
+        onSoil: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'حرارة التربة',
+            unitCode: 'soil_temperature',
+            description: 'قياسات الأعماق والوحدات وفق المرجع — الهيكل فقط حالياً.',
+            requiredBeforeBinding: ['عقد حرارة التربة', 'API محطة-معزول'],
+          ),
+        )),
+        onAiWorkspace: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'مساحة الذكاء الاصطناعي',
+            unitCode: 'ai_workspace',
+            description: 'الاستفسار والتحليل عبر بوابة Backend فقط. لا تُعد مخرجات AI قياسات فعلية.',
+            requiredBeforeBinding: [
+              'AI Gateway على ASP.NET',
+              'تسجيل العمليات الحساسة',
+              'عدم وضع مفاتيح المزود في Flutter',
+            ],
+          ),
+        )),
+        onClimatol: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const SpecialistUnitShellScreen(
+            title: 'تجانس Climatol',
+            unitCode: 'climatol',
+            description: 'تشغيل التجانس على عامل معزول مع حفظ النتائج كمنتج مستقل دون تعديل السجلات الأصلية.',
+            requiredBeforeBinding: [
+              'عامل معالجة Climatol معزول',
+              'بصمة مجموعة البيانات وإصدار البرنامج',
+              'مسار اعتماد بشري للنتائج',
+            ],
+          ),
+        )),
       ),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
@@ -110,6 +192,14 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onSettings,
     required this.onRegistration,
     required this.onPhenomena,
+    required this.onDailyEntry,
+    required this.onElectronicAuditor,
+    required this.onRainfall,
+    required this.onClimate,
+    required this.onAgriculture,
+    required this.onSoil,
+    required this.onAiWorkspace,
+    required this.onClimatol,
   });
 
   final VoidCallback onReview;
@@ -117,6 +207,14 @@ class _MoreMenuPage extends StatelessWidget {
   final VoidCallback onSettings;
   final VoidCallback onRegistration;
   final VoidCallback onPhenomena;
+  final VoidCallback onDailyEntry;
+  final VoidCallback onElectronicAuditor;
+  final VoidCallback onRainfall;
+  final VoidCallback onClimate;
+  final VoidCallback onAgriculture;
+  final VoidCallback onSoil;
+  final VoidCallback onAiWorkspace;
+  final VoidCallback onClimatol;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -150,6 +248,62 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'طلب الانضمام / حالة التسجيل',
         description: 'استكمال بيانات طلب الانضمام ومتابعة الاعتماد المؤسسي.',
         onTap: onRegistration,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.calendar_month_outlined,
+        title: 'إدخال النشرة اليومية',
+        description: 'نماذج 24h / 06UTC / 18UTC عبر واجهة الخادم بعد اختيار المحطة.',
+        onTap: onDailyEntry,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.rule_folder_outlined,
+        title: 'التدقيق الإلكتروني',
+        description: 'هيكل لمنظومة تدقيق السجلات الورقية والمسجلات — بدون OCR حالياً.',
+        onTap: onElectronicAuditor,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.water_drop_outlined,
+        title: 'الأمطار والهطول',
+        description: 'وحدة متخصصة — بانتظار عقد API معتمد (بدون مجاميع وهمية).',
+        onTap: onRainfall,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.thermostat_outlined,
+        title: 'البيانات المناخية',
+        description: 'هيكل فقط حتى اعتماد عقود التجميع المناخي.',
+        onTap: onClimate,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.agriculture_outlined,
+        title: 'الرصد الزراعي',
+        description: 'هيكل فقط — لا حفظ تشغيلي دون API.',
+        onTap: onAgriculture,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.layers_outlined,
+        title: 'حرارة التربة',
+        description: 'هيكل فقط — لا قيم تجريبية.',
+        onTap: onSoil,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.psychology_outlined,
+        title: 'مساحة الذكاء الاصطناعي',
+        description: 'بوابة AI على الخادم مطلوبة — لا مفاتيح في التطبيق.',
+        onTap: onAiWorkspace,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.timeline,
+        title: 'تجانس Climatol',
+        description: 'تشغيل على عامل معزول بعد الاعتماد — الهيكل فقط.',
+        onTap: onClimatol,
       ),
       const SizedBox(height: 10),
       _ActionCard(

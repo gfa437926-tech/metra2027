@@ -336,3 +336,18 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - **Tests:** Added API contract tests for authenticated POST, response parsing, duplicate IDs and bounds. Awaiting CI on current branch tip.
 - **Previous CI:** Run `43036916096` Flutter analyze/test succeeded; Angular npm test/build succeeded but Chromium install was cancelled, so full client CI remains unverified.
 - **Remaining:** Current-tip Flutter/Angular/Chromium CI; server integration verification; live observation snapshot contract and UI; other incomplete Flutter requirement areas.
+
+---
+
+## Update 2026-11-11 (same day) — specialist shells + auditor scaffold
+
+**Canonical path remains `flutter-app/`.**
+
+Added:
+- `lib/features/electronic_auditor/electronic_auditor_screen.dart` — honest scaffold (no OCR).
+- `lib/features/specialist/specialist_unit_shell_screen.dart` — rainfall, climate, agriculture, soil, AI, Climatol entry points without fabricated data.
+- Home **More** menu: daily entry, electronic auditor, specialist units.
+- `test/specialist_and_auditor_shell_test.dart`
+- REQ-002 RAR inventory, requirements traceability, progress/work log, roadmap pointer.
+
+Still not acceptance-complete: live snapshot forecasting, offline queue parity, full role matrix UI, production Climatol/AI backends.
