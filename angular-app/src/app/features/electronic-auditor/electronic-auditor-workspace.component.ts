@@ -40,7 +40,9 @@ type AuditorView = 'dashboard' | 'paper' | 'mechanical' | 'comparison' | 'review
         <section class="panel"><h2>بيانات صفحة السجل الورقي</h2>
           <label>المحطة<select [(ngModel)]="stationId" name="paperStation"><option value="">اختر محطة</option>@for (s of stations; track s.id) { <option [value]="s.id">{{ s.name_ar }}</option> }</select></label>
           <div class="fields"><label>نوع السجل<select [(ngModel)]="registerType" name="registerType"><option value="daily">سجل يومي</option><option value="hourly">سجل ساعي</option></select></label><label>تاريخ السجل UTC<input type="date" [(ngModel)]="caseDate" name="paperDate"></label><label>رقم الصفحة<input [(ngModel)]="pageNumber" name="pageNumber" inputmode="numeric"></label></div>
-          <div class="upload"><strong>صورة أو مسح ضوئي لصفحة السجل</strong><p>اختيار الملفات غير مفعّل قبل اعتماد مخزن الصور وواجهة الرفع.</p></div>
+          <label>اختيار ملف الصفحة (معاينة محلية فقط)<input type="file" accept="image/png,image/jpeg,application/pdf" (change)="selectPaperFile($event)"></label>
+          @if (paperFileName) { <p class="file-meta">الملف المحدد: {{ paperFileName }} · {{ paperFileSize | number }} بايت — لم يُرفع.</p> }
+          <div class="upload"><strong>رفع وحفظ الأصل</strong><p>زر الرفع غير مفعّل حتى اعتماد التخزين وAPI بصمة الأصل.</p></div>
           <button type="button" disabled>رفع الصفحة — بانتظار API التخزين</button>
           <ul><li>حفظ الأصل وبصمة SHA-256.</li><li>تصنيف القالب واستخراج الخانات ومواضعها.</li><li>مراجعة بشرية لكل قيمة مستخرجة.</li></ul>
         </section>
@@ -49,7 +51,9 @@ type AuditorView = 'dashboard' | 'paper' | 'mechanical' | 'comparison' | 'review
           <label>المحطة<select [(ngModel)]="stationId" name="chartStation"><option value="">اختر محطة</option>@for (s of stations; track s.id) { <option [value]="s.id">{{ s.name_ar }}</option> }</select></label>
           <label>نوع المسجل<select [(ngModel)]="instrument" name="instrument"><option value="thermograph">Thermograph — الحرارة</option><option value="hygrograph">Hygrograph — الرطوبة</option><option value="barograph">Barograph — الضغط</option><option value="pluviograph">Pluviograph — الهطول</option></select></label>
           <label>مرجع المعايرة وملاحظات المختص<textarea [(ngModel)]="calibrationNote" name="calibration" rows="3"></textarea></label>
-          <div class="upload"><strong>صورة مخطط المسجل الميكانيكي</strong><p>لا توجد خدمة رفع أو رقمنة في هذه النسخة.</p></div>
+          <label>اختيار ملف المخطط (معاينة محلية فقط)<input type="file" accept="image/png,image/jpeg,application/pdf" (change)="selectMechanicalFile($event)"></label>
+          @if (mechanicalFileName) { <p class="file-meta">الملف المحدد: {{ mechanicalFileName }} · {{ mechanicalFileSize | number }} بايت — لم يُرفع.</p> }
+          <div class="upload"><strong>رفع المخطط ورقمنته</strong><p>لا توجد خدمة رفع أو معايرة أو استخراج في هذه النسخة.</p></div>
           <button type="button" disabled>رفع المخطط — بانتظار API التخزين</button>
           <ul><li>تعريف المحاور والوحدات والمدى.</li><li>تحديد المنحنى ونقاط المعايرة.</li><li>مراجعة بشرية قبل المقارنة.</li></ul>
         </section>
@@ -98,6 +102,22 @@ export class ElectronicAuditorWorkspaceComponent implements OnInit {
   paperSource = true;
   mechanicalSource = false;
   electronicSource = true;
+  paperFileName = '';
+  paperFileSize = 0;
+  mechanicalFileName = '';
+  mechanicalFileSize = 0;
+
+  selectPaperFile(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.item(0);
+    this.paperFileName = file?.name ?? '';
+    this.paperFileSize = file?.size ?? 0;
+  }
+
+  selectMechanicalFile(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.item(0);
+    this.mechanicalFileName = file?.name ?? '';
+    this.mechanicalFileSize = file?.size ?? 0;
+  }
 
   ngOnInit(): void {
     void this.api.getAllStations().then(rows => {
