@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
+import 'package:metra_mobile/features/forecast_centres/forecast_centre_screen.dart';
 import 'package:metra_mobile/core/widgets/metra_adaptive_navigation.dart';
 
 void main() {
@@ -109,6 +110,55 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
+  });
+
+
+  testWidgets('forecast centre compares station catalogue metadata without inventing live readings', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'test-token',
+      client: MockClient((_) async => http.Response.bytes(utf8.encode(jsonEncode([
+        {
+          'id': '11111111-1111-4111-8111-111111111111',
+          'local_station_code': 'ST-01',
+          'name_ar': 'محطة الساحل',
+          'name_en': 'Coastal station',
+          'station_type': 'synoptic',
+          'operational_status': 'active',
+          'approval_status': 'approved',
+          'is_demo': false,
+          'elevation_m': 25.0,
+          'station_coordinates': [{'latitude': 35.5, 'longitude': 35.8, 'coordinate_source': 'surveyed', 'accuracy_m': 4.0}],
+        },
+        {
+          'id': '22222222-2222-4222-8222-222222222222',
+          'local_station_code': 'ST-02',
+          'name_ar': 'محطة الجبل',
+          'name_en': 'Mountain station',
+          'station_type': 'classic',
+          'operational_status': 'active',
+          'approval_status': 'approved',
+          'is_demo': false,
+          'elevation_m': 1200.0,
+          'station_coordinates': [{'latitude': 36.0, 'longitude': 36.2, 'coordinate_source': 'surveyed', 'accuracy_m': 5.0}],
+        },
+      ])), 200)),
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ForecastCentreScreen(api: api)),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
+    expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
+    await tester.tap(find.text('محطة الساحل'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('محطة الجبل'));
+    await tester.pumpAndSettle();
+    expect(find.text('المقارنة الجغرافية'), findsOneWidget);
+    expect(find.text('1200.0 م'), findsOneWidget);
+    expect(find.text('المسافة من المرجع'), findsWidgets);
+    expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
+    api.close();
   });
 
 }
