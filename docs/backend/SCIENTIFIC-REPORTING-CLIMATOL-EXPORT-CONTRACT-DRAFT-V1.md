@@ -237,3 +237,15 @@ No tests in this draft are represented as passing.
 - No live telemetry or AI-generated scientific result is implied by this document.
 - No access was made to project `INSERT` or METRA OLD.
 - Next: extract and index the authoritative requirements archive; approve the field dictionary and time conventions with the meteorological owner; then convert each approved domain section into versioned DTOs, validation rules, fixtures and endpoint tests.
+
+
+## 13. Implementation readiness update (2026-11-11)
+
+- The archive reader is implemented as a source-preserving, station-scoped read path and its Flutter screen displays the original payload without scientific conversion.
+- A disposable PostgreSQL 17 CI service now applies the proposed archive RPC migration and runs static/integration SQL checks. This is a focused PostgreSQL fixture for the verified authorization schema surface, not a complete Supabase stack.
+- The integration fixture covers explicit individual grants, missing grant, inactive account, expired grant, revoked grant, expired station assignment, cross-station denial, demo/unlinked exclusion, pagination and UTC range filters.
+- The migration's server-role guard uses the current Supabase JWT claim helper `auth.jwt() ->> 'role'`; the deprecated `auth.role()` helper is no longer used.
+- Backend CI run #1542 is queued. These tests are not marked passed until GitHub Actions reports success.
+- Archive permission eligibility is documented separately in `docs/security/OBSERVATION-ARCHIVE-READ-PERMISSION-SCOPE.md`: station_head, station_auditor and chief_auditor are eligible, but each user still requires an explicit approved, time-valid, revocable grant. No grants or role mappings are automatically created.
+- The grant-issuance workflow and verification of the assignment role field are still blocked. Therefore no real user grant may be issued.
+- Scientific calculations remain deferred until the authoritative requirements archive is extracted and the meteorological owner approves units, missing/trace semantics, daily period, quality rules, aggregation formulas, and Climatol review policy. This document does not claim the scientific reporting implementation is complete.
