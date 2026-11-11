@@ -269,7 +269,6 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
                 enabled: !_started || (_ended && _savedId == null),
                 maxLength: 64,
                 onChanged: (_) => setState(() {}),
-                onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'نوع الظاهرة الجوية',
                   hintText: 'مثال: مطر خفيف، ضباب، عاصفة رعدية',
