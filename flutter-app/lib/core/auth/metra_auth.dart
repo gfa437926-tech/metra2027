@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/metra_api_client.dart';
 import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
+import '../../features/auth/password_recovery_screen.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
 const metraSupabasePublishableKey = String.fromEnvironment('METRA_SUPABASE_PUBLISHABLE_KEY');
@@ -175,6 +176,23 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                                   child: CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('تسجيل الدخول'),
+                        ),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton(
+                            onPressed: _busy
+                                ? null
+                                : () => Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => MetraPasswordRecoveryScreen(
+                                          sendRecovery: (email) =>
+                                              Supabase.instance.client.auth
+                                                  .resetPasswordForEmail(email),
+                                        ),
+                                      ),
+                                    ),
+                            child: const Text('نسيت كلمة المرور؟'),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         const Text(
