@@ -11,6 +11,8 @@ import '../observations/phenomenon_capture_screen.dart';
 import '../specialist/specialist_unit_shell_screen.dart';
 import '../electronic_auditor/electronic_auditor_screen.dart';
 import '../observations/daily_observation_submit_screen.dart';
+import '../reports/station_reports_hub_screen.dart';
+import '../reports/observation_status_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -55,6 +57,32 @@ class _MetraHomeState extends State<MetraHome> {
         onReview: () => setState(() => _index = 2),
         onOperations: () => setState(() => _index = 4),
         onSettings: () => setState(() => _index = 6),
+        onObservationStatus: () {
+          final stationId = _selectedStationId;
+          if (stationId == null) {
+            setState(() => _index = 1);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('اختر محطة من الدليل أولاً لعرض حالة النشرات.')),
+            );
+            return;
+          }
+          Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => ObservationStatusScreen(api: widget.api, stationId: stationId),
+          ));
+        },
+        onReportsHub: () {
+          final stationId = _selectedStationId;
+          if (stationId == null) {
+            setState(() => _index = 1);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('اختر محطة من الدليل أولاً لفتح تقارير المحطة.')),
+            );
+            return;
+          }
+          Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => StationReportsHubScreen(api: widget.api, stationId: stationId),
+          ));
+        },
         onRegistration: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => MetraRegistrationScreen(api: widget.api, initiallyAuthenticated: true),
         )),
@@ -194,6 +222,8 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onPhenomena,
     required this.onDailyEntry,
     required this.onElectronicAuditor,
+    required this.onObservationStatus,
+    required this.onReportsHub,
     required this.onRainfall,
     required this.onClimate,
     required this.onAgriculture,
@@ -209,6 +239,8 @@ class _MoreMenuPage extends StatelessWidget {
   final VoidCallback onPhenomena;
   final VoidCallback onDailyEntry;
   final VoidCallback onElectronicAuditor;
+  final VoidCallback onObservationStatus;
+  final VoidCallback onReportsHub;
   final VoidCallback onRainfall;
   final VoidCallback onClimate;
   final VoidCallback onAgriculture;
@@ -255,6 +287,20 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'إدخال النشرة اليومية',
         description: 'نماذج 24h / 06UTC / 18UTC عبر واجهة الخادم بعد اختيار المحطة.',
         onTap: onDailyEntry,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.insights_outlined,
+        title: 'حالة نشرات المحطة',
+        description: 'أعداد طابور المراجعة والإرجاع من API للمحطة المحددة (UTC).',
+        onTap: onObservationStatus,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.assessment_outlined,
+        title: 'تقارير المحطة',
+        description: 'مركز تقارير المحطة المرتبطة بالخادم بعد اختيار المحطة.',
+        onTap: onReportsHub,
       ),
       const SizedBox(height: 10),
       _ActionCard(

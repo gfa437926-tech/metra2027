@@ -17,7 +17,9 @@ class StationReportsHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Scaffold(
+      appBar: AppBar(title: const Text('تقارير المحطة')),
+      body: ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
         const Card(
@@ -77,6 +79,7 @@ class StationReportsHubScreen extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../observations/observation_review_screen.dart';
 
-/// Live review/returned observation counts for a station (UTC display).
+/// Live review/returned observation status for a station (UTC display only).
 class ObservationStatusScreen extends StatefulWidget {
   const ObservationStatusScreen({
     super.key,
@@ -14,7 +15,8 @@ class ObservationStatusScreen extends StatefulWidget {
   final String stationId;
 
   @override
-  State<ObservationStatusScreen> createState() => _ObservationStatusScreenState();
+  State<ObservationStatusScreen> createState() =>
+      _ObservationStatusScreenState();
 }
 
 class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
@@ -33,19 +35,23 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
         await widget.api.getReturnedObservations(widget.stationId);
     int hourlyReview = 0;
     int dailyReview = 0;
+    int phenomenonReview = 0;
     for (final ObservationQueueItem item in review) {
       final String type = item.observationType.toLowerCase();
       if (type.contains('hour')) {
         hourlyReview++;
       } else if (type.contains('day') || type.contains('daily')) {
         dailyReview++;
+      } else if (type.contains('phenom')) {
+        phenomenonReview++;
       }
     }
     return _StatusSnapshot(
-      reviewCount: review.length,
-      returnedCount: returned.length,
+      review: review,
+      returned: returned,
       hourlyReview: hourlyReview,
       dailyReview: dailyReview,
+      phenomenonReview: phenomenonReview,
     );
   }
 
@@ -55,25 +61,58 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
     });
   }
 
+  void _openReview() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ObservationReviewScreen(
+          api: widget.api,
+          stationId: widget.stationId,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('حالة نشرات المحطة'),
         actions: <Widget>[
-          IconButton(onPressed: _reload, icon: const Icon(Icons.refresh)),
+          IconButton(
+            tooltip: 'تحديث',
+            onPressed: _reload,
+            icon: const Icon(Icons.refresh),
+          ),
         ],
       ),
       body: FutureBuilder<_StatusSnapshot>(
         future: _future,
-        builder: (BuildContext context, AsyncSnapshot<_StatusSnapshot> snapshot) {
+        builder:
+            (BuildContext context, AsyncSnapshot<_StatusSnapshot> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('تعذر التحميل أو لا صلاحية لهذه المحطة.'),
+            final Object? err = snapshot.error;
+            final String message = err is MetraApiException && err.statusCode == 403
+                ? 'ليست لديك صلاحية قراءة نشرات هذه المحطة.'
+                : err is MetraApiException && err.statusCode == 401
+                    ? 'انتهت الجلسة. سجّل الدخول مجدداً.'
+                    : 'تعذر التحميل. تحقق من الاتصال وصلاحية المحطة.';
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(message, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _reload,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('إعادة المحاولة'),
+                  ),
+                ],
+              ),
             );
           }
           final _StatusSnapshot data = snapshot.data!;
@@ -81,13 +120,40 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               const Text(
-                'الأوقات التشغيلية UTC. المصدر: طوابير المراجعة والإرجاع فقط.',
+                'الأوقات التشغيلية بالتوقيت العالمي UTC فقط. المصدر: طوابير المراجعة والإرجاع من الخادم لهذه المحطة.',
               ),
               const SizedBox(height: 12),
-              _tile('بانتظار المراجعة', '${data.reviewCount}'),
-              _tile('مُرجَعة للتصحيح', '${data.returnedCount}'),
+              _tile('بانتظار المراجعة', '${data.review.length}'),
+              _tile('مُرجَعة للتصحيح', '${data.returned.length}'),
               _tile('ساعي في طابور المراجعة', '${data.hourlyReview}'),
               _tile('يومي في طابور المراجعة', '${data.dailyReview}'),
+              _tile('ظواهر في طابور المراجعة', '${data.phenomenonReview}'),
+              const SizedBox(height: 8),
+              FilledButton.icon(
+                onPressed: _openReview,
+                icon: const Icon(Icons.fact_check_outlined),
+                label: const Text('فتح شاشة المراجعة'),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'أحدث عناصر طابور المراجعة',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              if (data.review.isEmpty)
+                const Text('لا توجد نشرات بانتظار المراجعة.')
+              else
+                ...data.review.take(12).map(_itemCard),
+              const SizedBox(height: 16),
+              const Text(
+                'أحدث النشرات المُرجَعة',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              if (data.returned.isEmpty)
+                const Text('لا توجد نشرات مُرجَعة.')
+              else
+                ...data.returned.take(12).map(_itemCard),
             ],
           );
         },
@@ -106,18 +172,54 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
       ),
     );
   }
+
+  Widget _itemCard(ObservationQueueItem item) {
+    return Card(
+      child: ListTile(
+        title: Text(_typeLabel(item.observationType)),
+        subtitle: Text(
+          [
+            _formatUtc(item.observedAt),
+            item.status,
+            if (item.reviewNote != null && item.reviewNote!.isNotEmpty)
+              'ملاحظة: ${item.reviewNote}',
+          ].join(' • '),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  static String _typeLabel(String type) {
+    final String t = type.toLowerCase();
+    if (t.contains('hour')) return 'نشرة ساعية';
+    if (t.contains('day') || t.contains('daily')) return 'نشرة يومية';
+    if (t.contains('phenom')) return 'بلاغ ظاهرة';
+    return 'نشرة: $type';
+  }
+
+  /// Always render UTC; never convert to device local timezone.
+  static String _formatUtc(DateTime value) {
+    final DateTime utc = value.toUtc();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
+        '${two(utc.hour)}:${two(utc.minute)}:${two(utc.second)} UTC';
+  }
 }
 
 class _StatusSnapshot {
   const _StatusSnapshot({
-    required this.reviewCount,
-    required this.returnedCount,
+    required this.review,
+    required this.returned,
     required this.hourlyReview,
     required this.dailyReview,
+    required this.phenomenonReview,
   });
 
-  final int reviewCount;
-  final int returnedCount;
+  final List<ObservationQueueItem> review;
+  final List<ObservationQueueItem> returned;
   final int hourlyReview;
   final int dailyReview;
+  final int phenomenonReview;
 }

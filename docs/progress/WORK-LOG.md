@@ -32,3 +32,21 @@
 ## 2026-11-11 — FLT review type filter
 
 **Done:** Client-side FilterChip on observation review (hourly/daily/phenomenon) without changing server contracts.
+
+## 2026-11-11 — CI on work branch + reports navigation
+
+**Done:**
+1. Client CI and Backend CI now trigger on `work/legacy-ui-migration-audit` (previously main-only; explains missing runs).
+2. Chromium install step: one automatic retry (still fails the job if both attempts fail; no skip).
+3. More menu: «حالة نشرات المحطة» and «تقارير المحطة» require selected station then open live API-backed screens.
+4. ObservationStatusScreen: lists review/returned items in UTC, 403/401 messages, open review action, phenomenon counts.
+5. StationReportsHubScreen: Scaffold for standalone navigation.
+
+**Constraints:** No SQL, no main merge, no old DB.
+
+### CI workflow update blocked
+Attempted to add `work/legacy-ui-migration-audit` to Client/Backend CI `on.push.branches`.
+Push rejected: PAT lacks `workflow` scope.
+**Owner action required:** either grant the token `workflow` scope, or edit
+`.github/workflows/client-ci.yml` and `backend-ci.yml` in the GitHub UI to include:
+`branches: [main, work/legacy-ui-migration-audit]`
