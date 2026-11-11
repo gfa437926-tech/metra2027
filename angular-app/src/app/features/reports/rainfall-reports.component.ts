@@ -38,8 +38,8 @@ import { StationContextService } from '../../core/station/station-context.servic
         <div class="fields">
           <label>كمية الهطول (ملم)<input type="number" min="0" step="any" [(ngModel)]="rainfallAmount" name="rainfallAmount"></label>
           <label>نوع الهطول<select [(ngModel)]="rainfallType" name="rainfallType"><option value="">اختر النوع</option><option value="rain">مطر</option><option value="snow">ثلج</option><option value="hail">برد</option><option value="mixed">مختلط</option></select></label>
-          <label>بداية الفترة UTC<input type="datetime-local" [(ngModel)]="periodStart" name="periodStart"></label>
-          <label>نهاية الفترة UTC<input type="datetime-local" [(ngModel)]="periodEnd" name="periodEnd"></label>
+          <label>بداية الفترة UTC<input type="text" [(ngModel)]="periodStart" name="periodStart" placeholder="YYYY-MM-DDTHH:mm:ssZ" dir="ltr"></label>
+          <label>نهاية الفترة UTC<input type="text" [(ngModel)]="periodEnd" name="periodEnd" placeholder="YYYY-MM-DDTHH:mm:ssZ" dir="ltr"></label>
         </div>
         <label>ملاحظات الراصد<textarea [(ngModel)]="observerNote" name="observerNote" rows="3"></textarea></label>
         <button type="button" (click)="preview()">معاينة محلية دون حفظ</button>
@@ -79,6 +79,17 @@ export class RainfallReportsComponent implements OnInit {
   preview(): void {
     if (!this.stationId || !this.rainfallAmount || !this.rainfallType || !this.periodStart || !this.periodEnd) {
       this.previewMessage = 'أكمل المحطة وكمية الهطول والنوع والفترة لمعاينة النموذج.';
+      return;
+    }
+    if (!this.periodStart.endsWith('Z') || !this.periodEnd.endsWith('Z') ||
+        Number.isNaN(Date.parse(this.periodStart)) || Number.isNaN(Date.parse(this.periodEnd)) ||
+        Date.parse(this.periodEnd) <= Date.parse(this.periodStart)) {
+      this.previewMessage = 'أدخل فترة UTC صحيحة بصيغة ISO 8601 منتهية بالحرف Z.';
+      return;
+    }
+    const amount = Number(this.rainfallAmount);
+    if (!Number.isFinite(amount) || amount < 0) {
+      this.previewMessage = 'كمية الهطول يجب أن تكون رقماً غير سالب.';
       return;
     }
     this.previewMessage = 'معاينة محلية فقط. لم يتم حفظ كمية الهطول أو إرسالها إلى الخادم.';
