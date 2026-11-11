@@ -21,7 +21,7 @@
 | ID-06 Access denied/session expired | No dedicated global screen or auth-state route | Missing. Individual screens map some 401/403 errors, but there is no consistent app-level denied/pending/disabled/revoked-session state and protected-view clearing policy. |
 | AD-01 User directory | `features/admin/station_assignment_screen.dart` uses station users | Partial and station-scoped only. No global user directory/search or full account detail. |
 | AD-02 User details | Profile shows email and registration state | Partial. No verified personal metadata, station assignment history or effective permission detail API. |
-| AD-03 Role/permission administration | No canonical permission-administration screen | Missing. Static `role_workspace_catalog.dart` is a navigation description, not an account's actual roles and never an authorization source. |
+| AD-03 Role/permission administration | `features/admin/authority_access_screen.dart` | Partial, API-backed baseline. Lists authority-scoped membership/permission queues, allows self-request, approve/reject/revoke and reads append-only audit events. Effective permissions for the signed-in user are not yet displayed; user-targeted requests and validity-end editing are not yet in the UI. |
 | AD-04 Station assignment | `features/admin/station_assignment_screen.dart` | Partial. Server-provided assignable roles, request/decision/revoke actions and reason capture exist. Requires lifecycle/expiry/revocation, cross-station and broader role tests. |
 
 ## 2. Verified backend contract boundaries
@@ -31,7 +31,7 @@
 - Station user listing is exposed as `GET /api/v1/stations/{stationId}/users` and requires `users.station.view`.
 - Station assignment operations are station-scoped and require `users.station.manage`; the client obtains assignable roles from the server rather than inventing them.
 - Registration review uses server-side station/authority authorization. Client navigation must not be treated as permission.
-- Authority membership and permission-grant lifecycle database functions exist in migration history, but a complete corresponding account-administration API/UI workflow is not established in the reviewed route inventory.
+- Authority membership and permission-grant lifecycle API/UI are now wired in the canonical Flutter branch through `AuthorityAccessScreen`; the API enforces membership/permission scope and append-only audit. The screen is a partial workflow: it does not yet display the caller's effective access context, does not request membership on behalf of another user, and does not edit validity end dates.
 
 ## 3. Security findings
 
@@ -40,6 +40,7 @@
 3. **No effective-access projection.** The profile cannot truthfully display a user's current stations, authority memberships or permission grants with the existing registration-status endpoint.
 4. **No global access-state experience.** Pending, suspended, disabled, revoked and expired states are not consistently handled at the app shell.
 5. **Password recovery completion is incomplete.** The current screen requests an email; deep-link handling and setting a new password must be checked before release.
+6. **Authority access UI is not self-authorizing.** `AuthorityAccessScreen` is exposed in More, but every read/write operation depends on server-side permissions; 403 responses are shown as scope-denied states. Do not infer authority roles from the selected authority or tab.
 
 ## 4. Changes made in this round
 
@@ -81,3 +82,15 @@
 - No global role or station scope inferred from a display label.
 - No merge to `main`, production deployment or deletion of `mobile/metra_mobile/`.
 - Flutter analyzer, widget tests, Android/iOS builds and visual checks have **not** been executed in this environment; source tests are committed but not reported as passing.
+
+
+## ACC-03 — Authority membership and permission UI — 2026-11-11T16:37:06.421Z
+
+- Added `flutter-app/lib/features/admin/authority_access_screen.dart` and linked it from the canonical More menu.
+- Added client methods for authority catalogue, membership roles, permission options, pending/active access queues, append-only audit reads, membership request/decision/revocation and permission-grant request/decision/revocation.
+- The UI only requests a membership for the signed-in user; it only requests permission codes returned by the server for the caller's current approved membership. It does not grant locally.
+- Pending membership/grant queues expose approve/reject with mandatory reason; active/scheduled records expose revocation with mandatory reason. The server remains the authority and enforces review/revoke permissions and state conflicts.
+- The audit tab reads the server audit log and displays subject, actor, action, reason and UTC event time.
+- Added `flutter-app/test/authority_access_screen_test.dart` for authority catalogue, queue and audit reads.
+- No database changes were made. Existing migrations/RPCs are read-only references for this UI; no migration or grant was applied.
+- Remaining: caller access-context display, target-user selection for delegated membership requests, valid-to scheduling controls, broader forbidden/transition tests, and Flutter CI execution.
