@@ -93,7 +93,7 @@ This is a useful baseline, not full acceptance coverage for every required page,
 
 ## 4. Confirmed structural issues to fix before declaring completion
 
-1. `MetraHome` currently uses six bottom-navigation destinations: Home, Stations, Review, Entry, Operations and Settings. The Forecasting Center is reachable only through a card on Home, not a persistent/shared navigation destination.
+1. `MetraHome` initially exposed Forecasting only from a Home card. In commit `5f881e4`, it was added as a dedicated shared bottom-navigation destination; role-specific visibility and live snapshot functionality remain to be completed.
 2. The app shell uses a single selected station ID for several workflows. It needs a robust station-context selector/state that respects server-authorized assignments and does not treat catalogue selection as permission.
 3. The hourly and daily entry forms exist, but separate report-list/detail/history screens are not evidenced in the canonical Flutter source inventory.
 4. The maintenance report screen stores drafts locally using secure storage, while equipment faults have a separate API-backed screen. These must be clearly separated; local drafts must not be presented as submitted central records.
@@ -105,6 +105,7 @@ This is a useful baseline, not full acceptance coverage for every required page,
 
 ### F-01 — Source and navigation foundation
 - Keep `flutter-app/` as canonical source.
+- Forecasting Center now has a persistent bottom-navigation destination (commit `5f881e4`); add navigation/widget regression tests and verify role visibility.
 - Record `mobile/metra_mobile/` as retired/reference-only in docs; do not delete it in this pass.
 - Implement a consistent authenticated shell, station context and route registry.
 - Make forecasting, reports, observations, operations and account areas discoverable without duplicate navigation.
