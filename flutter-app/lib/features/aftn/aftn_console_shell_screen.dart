@@ -20,8 +20,8 @@ class AftnConsoleShellScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             const Card(
-              color: const Color(0xFFFFF7ED),
-              child: const Padding(
+              color: Color(0xFFFFF7ED),
+              child: Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'وحدة مستقبل/مرسل AFTN هيكلية. لا استقبال رسائل حية ولا إرسال من هذا التطبيق '
