@@ -300,9 +300,9 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
             return Card(child: ListTile(
               title: Text('${row['target_kind'] ?? ''} · ${row['action_code'] ?? ''}'),
               subtitle: Text(
-                'صاحب الطلب: ${_shortId(row['subject_user_id'])}\\n'
-                'المنفذ: ${_shortId(row['actor_user_id'])}\\n'
-                'الوقت: ${_utc(row['occurred_at'])}\\n'
+                'صاحب الطلب: ${_shortId(row['subject_user_id'])}\n'
+                'المنفذ: ${_shortId(row['actor_user_id'])}\n'
+                'الوقت: ${_utc(row['occurred_at'])}\n'
                 'السبب: ${row['reason'] ?? ''}',
               ),
             ));
