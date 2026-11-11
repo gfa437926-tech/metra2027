@@ -1,6 +1,6 @@
 # METRA 2027 — Flutter, ASP.NET Core and New Database Completion Roadmap
 
-Last updated: 2026-11-11T15:02:56.797Z
+Last updated: 2026-11-11T15:15:55.715Z
 Repository: gfa437926-tech/metra2027
 Default branch: main
 
@@ -189,3 +189,17 @@ Task FLT-001 remains **In progress / blocked** pending archive extraction and fu
 The Flutter login screen now exposes a password-recovery request using Supabase Auth `resetPasswordForEmail`. It validates the email before sending, displays a privacy-preserving confirmation, handles provider errors without exposing raw details, and disables the action while busy. A widget test covers the entry point and validation. Implementation commits: `ab9a94b594cf4fd2e21946d883031c0b4db74c48`, `aa5b1b36c174bae2c562ee8ccb4a6b1101299f4f`. Round report: `docs/delivery/FLUTTER-ROUND-FLT-002-PASSWORD-RECOVERY.md` (commit `0fe6d9874f619d1322675e87310ca4fb0fd7a28a`).
 
 Verification remains pending: Flutter analyzer/tests and actual Supabase email-template/redirect delivery were not run in this round. No database, RLS, migration, API permission, or secret changes were made.
+
+
+## FLT-003 — Shared adaptive navigation (2026-11-11T15:15:55.715Z)
+
+- **Task:** FLT-003.
+- **Status:** In progress — shared component and shell integration committed; runtime verification pending.
+- Added a reusable Flutter navigation component that uses a bottom navigation bar on compact widths and a labelled navigation rail on wide layouts (760 logical pixels and above).
+- Integrated the component into the existing home shell without duplicating the app shell or changing the current destination set.
+- Added widget-test source coverage for both layout modes. The test has **not** been executed; no analyzer, build or visual acceptance result is claimed.
+- Code commits: `907b1b599d346b43fd41f55c7453af100f62c181`, `d7dee25c4e751b335b8bbd5553d999569e9eb011`, `908e442a88dc022e48e562635e3d4f8884410710`.
+- Round report: `docs/delivery/FLUTTER-ROUND-FLT-003-ADAPTIVE-NAVIGATION.md` (commit `0725f184e382db43b7e7580b58d92aaedb5a03b4`).
+- API review found no consolidated current-user access-context endpoint in the reviewed route set. Role/permission-based destination visibility remains blocked; no role claims are inferred in Flutter.
+- Database changes: none. Legacy database: untouched.
+- Next: execute Flutter analyzer/widget tests, then specify and test a server-authoritative access-context contract before implementing role-aware navigation. FLT-001 requirements archive inspection remains blocked.
