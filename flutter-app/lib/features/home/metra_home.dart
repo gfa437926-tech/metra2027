@@ -140,7 +140,8 @@ class _MetraHomeState extends State<MetraHome> {
           builder: (_) => ElectronicAuditorScreen(api: widget.api),
         )),
         onRainfall: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
+          builder: (_) => SpecialistUnitShellScreen(
+            api: widget.api,
             title: 'الأمطار والهطول',
             unitCode: 'rainfall',
             description: 'إدخال ومراجعة وتحليل الهطول وفق النماذج المرجعية بعد اعتماد العقد وAPI.',
@@ -158,7 +159,8 @@ class _MetraHomeState extends State<MetraHome> {
           ),
         )),
         onClimate: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
+          builder: (_) => SpecialistUnitShellScreen(
+            api: widget.api,
             title: 'البيانات المناخية',
             unitCode: 'climate',
             description: 'تقارير وتجميعات مناخية من مصدر معتمد فقط — لا سلاسل مختلقة.',
@@ -166,10 +168,17 @@ class _MetraHomeState extends State<MetraHome> {
               'تعريف صيغ التجميع المناخي',
               'API تقارير مناخية معتمدة',
             ],
+            plannedFields: [
+              'المتغير المناخي المطلوب',
+              'بداية الفترة المرجعية UTC',
+              'نهاية الفترة المرجعية UTC',
+              'نوع الملخص المناخي',
+            ],
           ),
         )),
         onAgriculture: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
+          builder: (_) => SpecialistUnitShellScreen(
+            api: widget.api,
             title: 'الرصد الزراعي',
             unitCode: 'agriculture',
             description: 'حقول الرصد الزراعي من المراجع المعتمدة بعد ربط API.',
@@ -183,7 +192,8 @@ class _MetraHomeState extends State<MetraHome> {
           ),
         )),
         onSoil: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
+          builder: (_) => SpecialistUnitShellScreen(
+            api: widget.api,
             title: 'حرارة التربة',
             unitCode: 'soil_temperature',
             description: 'قياسات الأعماق والوحدات وفق المرجع — الهيكل فقط حالياً.',
