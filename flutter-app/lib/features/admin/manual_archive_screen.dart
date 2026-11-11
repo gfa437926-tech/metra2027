@@ -99,6 +99,16 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
     _loadSummary();
   }
 
+  String _reportKindLabel(String kind) => switch (kind.toLowerCase()) {
+        'hourly' => 'ساعي',
+        'daily' => 'يومي',
+        'monthly' => 'شهري',
+        'rainfall' => 'مطري',
+        'climate' => 'مناخي',
+        'other' => 'أخرى',
+        _ => kind,
+      };
+
   String _summaryMonthLabel() {
     const List<String> months = <String>[
       'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
@@ -236,7 +246,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
                         : 'تأكيدات الأرشفة: ${confirmationCount ?? '—'}',
                   ),
                   if (_summary != null && _summary!['reportKinds'] is List)
-                    Text('أنواع التقارير: ${(_summary!['reportKinds'] as List).join('، ')}'),
+                    Text('أنواع التقارير: ${(_summary!['reportKinds'] as List).map((kind) => _reportKindLabel(kind.toString())).join('، ')}'),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
@@ -288,7 +298,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
             children: <Widget>[
               for (final String kind in _kinds)
                 ChoiceChip(
-                  label: Text(kind),
+                  label: Text(_reportKindLabel(kind)),
                   selected: _reportKind == kind,
                   onSelected: (bool selected) {
                     if (selected) {
@@ -344,9 +354,14 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
                       title: Text(
                         '${row['reportKind'] ?? row['ReportKind']} · ${row['excelFileName'] ?? row['ExcelFileName']}',
                       ),
-                      subtitle: Text(
-                        '${row['periodStartUtc'] ?? row['PeriodStartUtc']} → ${row['periodEndUtc'] ?? row['PeriodEndUtc']} · ${row['confirmedAtUtc'] ?? row['ConfirmedAtUtc']}',
-                      ),
+                      subtitle: Text(<String>[
+                        'الفترة UTC: ${row['periodStartUtc'] ?? row['PeriodStartUtc']} → ${row['periodEndUtc'] ?? row['PeriodEndUtc']}',
+                        'وقت التأكيد UTC: ${row['confirmedAtUtc'] ?? row['ConfirmedAtUtc']}',
+                        'المسجّل: ${row['actorUserId'] ?? row['ActorUserId'] ?? '—'}',
+                        if ((row['note'] ?? row['Note']) is String &&
+                            ((row['note'] ?? row['Note']) as String).trim().isNotEmpty)
+                          'ملاحظة: ${row['note'] ?? row['Note']}',
+                      ].join('\\n')),
                     ),
                 ],
               );
