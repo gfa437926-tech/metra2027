@@ -291,3 +291,11 @@ No hosted Supabase migration, schema, RLS, policy, permission grant or data writ
 - Added `docs/delivery/FLT-008-LEGACY-OBSERVATION-FORM-SOURCE-AUDIT.md` from static inspection of hourly and daily legacy sources. The inspected daily_reports.html is a 24-hour report query/export page, not the authoritative daily-entry form.
 - The legacy hourly scripts contain overlapping client validators, localStorage identity attribution and local backup behavior. These must not be copied into the new client; server identity, station scope and persistence remain API-controlled.
 - No backend/database/Supabase changes or live grants were performed.
+
+## FLT-007 CI failure analysis and correction — 2026-11-12 UTC
+
+- Client CI #1140 (run `43103208410`) completed on merge commit `ecf159486430065cbcd421c87cbad00863e90690`, corresponding to PR head `ed998ddafabb3b6b7e133ede18ec4c6ae880eadd` at that run: Flutter analyze passed; Flutter tests reported 29 passed and 1 failed; Angular build passed.
+- The single failure was `forecast_centre_screen_test.dart`: tapping nested station-name Text finders did not select the two `CheckboxListTile` options, so the comparison section correctly remained absent. This was a test interaction issue; the separate forecast-centre widget test already used full-tile taps and asserted checked state.
+- Corrected the test to tap each complete `CheckboxListTile`, assert its selected value, then assert the comparison output. Commit: `ab013485a349e1f56c5c440db2ea704e5b631af5`.
+- Client CI run `43103656704` is in progress for exact head `ab013485a349e1f56c5c440db2ea704e5b631af5`; Flutter analyze/tests and Angular build have not completed at this update. Do not count this correction as verified until that run succeeds.
+- PR #34 remains Draft/unmerged. No backend, database, hosted Supabase, SQL/migration, RLS, archive grant, legacy repository or METRA OLD changes.
