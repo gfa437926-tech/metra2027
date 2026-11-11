@@ -19,6 +19,8 @@ void main() {
       longitude: 36.2,
       elevationM: 412,
       wmoStationId: null,
+      coordinateSource: 'surveyed',
+      coordinateAccuracyM: 3.2,
     );
 
     await tester.pumpWidget(const MaterialApp(
@@ -31,6 +33,8 @@ void main() {
     expect(find.text('فعالة'), findsOneWidget);
     expect(find.textContaining('35.50000, 36.20000'), findsOneWidget);
     expect(find.text('412.0 متر'), findsOneWidget);
+    expect(find.text('surveyed'), findsOneWidget);
+    expect(find.text('3.2 متر'), findsOneWidget);
     expect(find.text('غير متوفر'), findsOneWidget);
     final sourceNote = find.textContaining('لا تمثل قياسات جوية لحظية');
     await tester.scrollUntilVisible(sourceNote, 240,
