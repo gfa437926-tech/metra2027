@@ -20,9 +20,9 @@
 | ID-05 Account/profile | `features/account/account_profile_screen.dart` | Improved in this task. Displays identity provider, account state, registration request state, review note and UTC submission time using `GET /api/v1/account/registration-status`. It still cannot show assigned stations or effective roles/permissions. |
 | ID-06 Access denied/session expired | `features/account/account_access_state_screen.dart` + `account_state_gate.dart` | Partial, source implemented. Shows blocked state, reason, retry and sign-out; status lookup failure fails closed. A distinct revoked-token/session-expired event path and comprehensive protected-view clearing tests remain. |
 | AD-01 User directory | `features/admin/station_assignment_screen.dart` uses station users | Partial and station-scoped only. No global user directory/search or full account detail. |
-| AD-02 User details | Profile shows email and registration state | Partial. No verified personal metadata, station assignment history or effective permission detail API. |
+| AD-02 User details | Own-account profile plus station assignment detail sheet | Partial. Assignment metadata is visible; verified personal details, assignment history and effective permission detail API remain unavailable. |
 | AD-03 Role/permission administration | `features/admin/authority_access_screen.dart` | Partial, API-backed baseline. Lists authority-scoped membership/permission queues, allows self-request, approve/reject/revoke and reads append-only audit events. Effective permissions for the signed-in user are not yet displayed; user-targeted requests and validity-end editing are not yet in the UI. |
-| AD-04 Station assignment | `features/admin/station_assignment_screen.dart` | Partial. Server-provided assignable roles, request/decision/revoke actions and reason capture exist. Requires lifecycle/expiry/revocation, cross-station and broader role tests. |
+| AD-04 Station assignment | `features/admin/station_assignment_screen.dart` | Improved partial. Server-provided roles, request/decision/revoke, mandatory reasons, explicit optional UTC `valid_to`, and an assignment detail sheet now exist. Still needs a searchable authorized target-user directory and lifecycle/cross-station tests. |
 
 ## 2. Verified backend contract boundaries
 
@@ -105,3 +105,11 @@
 - Added widget tests for active, pending, disabled and API-error gate states, and for preventing a duplicate pending registration.
 - This does not replace API authorization; each protected operation remains server-enforced. The effective permission/assignment context is still not returned to the Flutter shell.
 - No database changes or migration execution.
+
+
+## ACC-05 — Station assignment validity and detail view — 2026-11-11T16:45:52.938Z
+
+- Added optional `valid_to` entry to the station assignment request form. When supplied, it must parse as an ISO-8601 timestamp with UTC marker/offset and be in the future; it is normalized to UTC before submission. Empty means open-ended.
+- Added a read-only assignment detail bottom sheet showing assignment/user IDs, role, status, UTC validity window, reason, requester and creation time.
+- Added widget coverage for submitting an expiry and opening the assignment detail sheet.
+- User selection still uses an entered user UUID because no searchable eligible-user lookup API is present. The server remains authoritative for target-account and station-scope validation.
