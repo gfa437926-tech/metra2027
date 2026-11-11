@@ -166,3 +166,19 @@ Required before code is enabled against a real data source:
 - Flutter UI: existing screens remain unchanged; binding must follow implemented, tested API contracts.
 - Database/Supabase/SQL/RLS/migrations: unchanged.
 - METRA OLD: untouched.
+
+
+## 12. Live schema review addendum (2026-11-11)
+
+A read-only inspection of the selected METRA 2027 Supabase project has now been completed and recorded in `docs/backend/REPORTING-ARCHIVE-READONLY-SCHEMA-REVIEW-2026-11-11.md`.
+
+Important correction to the initial source-only baseline:
+
+- The imported historical archive is `public.metra_observation_records`, with **58,059 rows** and source-preserving columns (`source_system`, `source_table`, `source_record_id`, nullable `station_id`, nullable `observed_at`, `observation_type`, `payload`, `is_demo`, `imported_at`).
+- It contains seven imported types: hourly, daily, climate, agricultural, fieldclimate, soil and phenomenon. There are **1,251 rows with NULL station_id** and **13 with NULL observed_at**. Station-scoped queries must not guess or expose unlinked records.
+- Operational `public.metra_observations` and `public.metra_observation_audit_events` exist but each had **0 rows** at inspection time. Their current status/event columns are now schema-verified.
+- The operational audit table stores workflow transition metadata, not prior payload snapshots; it does not establish a version-history API.
+- The dedicated `metra_api_runtime` role has SELECT access to account state, station assignment, permission grant and station catalogue tables, but no SELECT grant or RLS SELECT policy for either observation table at inspection time. The operational migration explicitly revokes runtime access and grants only service_role.
+- Observation tables have client-deny RLS policies. The backend must not solve this by exposing service-role credentials to Flutter/Angular.
+
+Consequently, archive list/detail implementation now has a concrete source table, but remains gated on an approved least-privilege runtime SELECT migration, an explicit archive-read permission, and a single-statement/transaction station authorization predicate. The UI must distinguish imported archive envelopes from live operational observations. Scientific report calculations, version history and exports remain deferred.
