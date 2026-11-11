@@ -27,14 +27,13 @@ begin
      or has_function_privilege('authenticated', page_signature, 'EXECUTE')
      or has_function_privilege('anon', detail_signature, 'EXECUTE')
      or has_function_privilege('authenticated', detail_signature, 'EXECUTE')
-     or has_function_privilege('public', page_signature, 'EXECUTE')
-     or has_function_privilege('public', detail_signature, 'EXECUTE') then
+ then
     raise exception 'Archive RPC execution must be denied to public client roles';
   end if;
 
   if has_function_privilege('anon', helper_signature, 'EXECUTE')
      or has_function_privilege('authenticated', helper_signature, 'EXECUTE')
-     or has_function_privilege('public', helper_signature, 'EXECUTE') then
+ then
     raise exception 'Private authorization helper must not be client executable';
   end if;
 
