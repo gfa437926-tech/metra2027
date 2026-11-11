@@ -80,6 +80,7 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
                 limit: next.limit,
                 offset: next.offset,
                 returned: next.returned,
+                hasMore: next.hasMore,
               )
             : next;
         _error = null;
@@ -183,10 +184,10 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
                 onRefresh: () => _load(),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(16),
-                  itemCount: _page!.items.length + 1,
+                  itemCount: _page!.items.length + (_page!.hasMore ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    if (index == _page!.items.length) {
+                    if (_page!.hasMore && index == _page!.items.length) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Center(
