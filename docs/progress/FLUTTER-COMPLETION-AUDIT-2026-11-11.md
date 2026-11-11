@@ -203,3 +203,10 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Detail fields are limited to the station catalogue contract: Arabic/English names, local code, type, operational/approval status, demo flag, coordinates, elevation and WMO ID.
 - Missing coordinates/WMO values are shown as unavailable; catalogue metadata is explicitly distinguished from live observations.
 - Tests: `flutter-app/test/station_detail_screen_test.dart` and the directory navigation regression in `flutter-app/test/widget_test.dart`.
+
+
+### FLT-QUALITY-01 — Flutter analyzer correction
+- Client CI #823 failed at `flutter analyze` due to one stale unused optional parameter (`action`) in the legacy `_InformationPage` helper after account settings moved to `MetraAccountProfileScreen`.
+- Corrective commit: `a75bc36add6d7e3609eb84aa78b45f1faaabfe1f` removes the obsolete parameter and its unused field/forwarding.
+- The failure was isolated to the analyzer warning; Flutter tests were skipped by the workflow because analyze is a prerequisite.
+- Client CI #824 was triggered on the correction and is the verification run to monitor. Do not treat #823 as passed.
