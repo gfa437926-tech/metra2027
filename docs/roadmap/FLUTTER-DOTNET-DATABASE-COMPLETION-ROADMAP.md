@@ -246,3 +246,32 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - Implementation report: `docs/delivery/FLUTTER-ROUND-FLT-006-STATION-AUDIT-HISTORY.md`.
 - Verification: Client CI #1099 passed Flutter analyze, Flutter tests and Angular build at exact code head `1635b7064843ed5c13711bc0fd47b07a565c2128`.
 - Database, Supabase, Backend, SQL/migrations and legacy repository: unchanged.
+
+## Verification update — 2026-11-12 UTC
+
+### CI evidence
+- Flutter Client CI #1133 passed on code head `f3e6e730b26cb1e874c93657ff342c79abc2aaa2`: Flutter analyze passed, 27 Flutter tests passed, Angular build passed. This includes the deterministic stale-response regression test for station switching in the observation archive.
+- Flutter Client CI #1134 passed on documentation follow-up head `2b446bdb757bf7590c73752687bcd9a9bfcd862d`.
+- Backend build #1549 passed on `cc190dbd29b3b81d4833cbf8d714080f31846346`: disposable PostgreSQL 17 migration/security integration tests, .NET dependency/advisory checks, API build, Domain/API tests and production container image build passed.
+- CI success is scoped to the exact commits above; it is not a full product completion, visual parity, production deployment or end-to-end sign-off.
+
+### Current implementation boundaries
+- Flutter now has a forecast-centre station-comparison screen, read-only station audit history, a reports hub, and a read-only observation archive. These are partial workflows; contract-blocked categories are not counted as completed.
+- Forecast-centre live observations and bulletins remain unavailable until an approved feed/API contract supplies provenance, time, quality and freshness.
+- Station audit history must not be represented as the electronic meteorological-record audit module.
+- Dedicated operational screens for hourly/daily entry, phenomena, rainfall, climate, agriculture, soil temperature, electronic audit, AI intelligence and Climatol remain incomplete or blocked on authoritative requirements/contracts.
+- The RAR requirements archive is still not decoded by the available GitHub text interface. Its internal contents remain unknown; no field-level requirements are inferred from its filename.
+
+### Security decision still open
+- PR #35's existing isolated database tests pass, but its grant model is authority-scoped and joins active station assignments. If one user has multiple active station assignments under one authority, the grant may cover all such assignments.
+- The exact-station-only policy is not yet proven. Owner/security approval of the intended scope and a negative same-authority station A/B integration test remain required.
+- PR #34 and PR #35 remain Draft and unmerged. Do not issue live archive grants.
+
+### Next executable work
+1. Obtain a binary-capable copy/extraction of the root RAR archive, index all requirements, screenshots and workflows, then finish FLT-001 traceability.
+2. Resolve the archive grant scope and add the same-authority station A/B negative integration test before approval.
+3. Build one fully specified meteorological entry workflow end-to-end (fields, scientific rules, API, domain, persistence, permissions, tests) before expanding to further modules.
+4. Continue Flutter-only implementation and CI; defer Angular parity until the Flutter completion gate is met.
+
+### Safety boundary reaffirmed
+No hosted Supabase migration, schema, RLS, policy, permission grant or data write was performed. The legacy database and legacy repository were not changed.
