@@ -17,7 +17,7 @@ void main() {
         return http.Response.bytes(
           utf8.encode(jsonEncode([
             {
-              'id': 'authority-1',
+              'id': '11111111-1111-4111-8111-111111111111',
               'authority_code': 'METRA-SY',
               'name_ar': 'الهيئة الوطنية',
               'name_en': 'National Meteorological Authority',
@@ -28,13 +28,16 @@ void main() {
         );
       }
       if (request.url.path.endsWith('/membership-roles')) {
-        return http.Response(
-          '[{"role_code":"observer","name_ar":"راصد","is_requestable":true}]',
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {'role_code': 'observer', 'name_ar': 'راصد', 'is_requestable': true},
+          ])),
           200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }
       if (request.method == 'POST' &&
-          request.url.path == '/api/v1/authorities/authority-1/memberships') {
+          request.url.path == '/api/v1/authorities/11111111-1111-4111-8111-111111111111/memberships') {
         membershipBody = jsonDecode(request.body) as Map<String, dynamic>;
         return http.Response('{"id":"membership-request-1"}', 200);
       }
@@ -78,7 +81,7 @@ void main() {
         return http.Response.bytes(
           utf8.encode(jsonEncode([
             {
-              'id': 'authority-1',
+              'id': '11111111-1111-4111-8111-111111111111',
               'authority_code': 'METRA-SY',
               'name_ar': 'الهيئة الوطنية للأرصاد',
               'name_en': 'National Meteorological Authority',
