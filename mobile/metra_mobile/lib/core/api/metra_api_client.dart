@@ -40,6 +40,93 @@ class ObservationQueueItem {
 }
 
 
+
+class ObservationArchiveItem {
+  const ObservationArchiveItem({
+    required this.id,
+    required this.stationId,
+    required this.sourceSystem,
+    required this.sourceTable,
+    required this.sourceRecordId,
+    required this.observationType,
+    required this.payload,
+    required this.importedAtUtc,
+    this.observedAtUtc,
+  });
+
+  final String id, stationId, sourceSystem, sourceTable, sourceRecordId, observationType;
+  final Map<String, dynamic> payload;
+  final DateTime importedAtUtc;
+  final DateTime? observedAtUtc;
+
+  factory ObservationArchiveItem.fromJson(Map<String, dynamic> json) {
+    String requiredString(String key) {
+      final value = json[key];
+      if (value is! String || value.isEmpty) {
+        throw const FormatException('invalid_observation_archive_item');
+      }
+      return value;
+    }
+
+    final importedAt = DateTime.tryParse('${json['importedAtUtc'] ?? ''}');
+    final observedAtRaw = json['observedAtUtc'];
+    final observedAt = observedAtRaw == null
+        ? null
+        : DateTime.tryParse('$observedAtRaw');
+    final rawPayload = json['payload'];
+    if (importedAt == null || (observedAtRaw != null && observedAt == null) ||
+        rawPayload is! Map) {
+      throw const FormatException('invalid_observation_archive_item');
+    }
+
+    return ObservationArchiveItem(
+      id: requiredString('id'),
+      stationId: requiredString('stationId'),
+      sourceSystem: requiredString('sourceSystem'),
+      sourceTable: requiredString('sourceTable'),
+      sourceRecordId: requiredString('sourceRecordId'),
+      observationType: requiredString('observationType'),
+      observedAtUtc: observedAt?.toUtc(),
+      importedAtUtc: importedAt.toUtc(),
+      payload: Map<String, dynamic>.from(rawPayload),
+    );
+  }
+}
+
+class ObservationArchivePage {
+  const ObservationArchivePage({
+    required this.items,
+    required this.limit,
+    required this.offset,
+    required this.returned,
+  });
+  final List<ObservationArchiveItem> items;
+  final int limit, offset, returned;
+
+  factory ObservationArchivePage.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'];
+    final rawPage = json['page'];
+    if (rawItems is! List || rawPage is! Map) {
+      throw const FormatException('invalid_observation_archive_page');
+    }
+    final page = Map<String, dynamic>.from(rawPage);
+    int requiredInt(String key) {
+      final value = page[key];
+      if (value is! int || value < 0) {
+        throw const FormatException('invalid_observation_archive_page');
+      }
+      return value;
+    }
+    return ObservationArchivePage(
+      items: rawItems.map((item) => ObservationArchiveItem.fromJson(
+        Map<String, dynamic>.from(item as Map))).toList(growable: false),
+      limit: requiredInt('limit'),
+      offset: requiredInt('offset'),
+      returned: requiredInt('returned'),
+    );
+  }
+}
+
 class StationAuditEvent {
   const StationAuditEvent({
     required this.id,
@@ -230,6 +317,74 @@ class MetraApiClient {
     if (decoded is! List) throw const FormatException('invalid_observation_queue');
     return decoded.map((item) => ObservationQueueItem.fromJson(
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
+  }
+
+
+  Future<ObservationArchivePage> getObservationArchive(
+    String stationId, {
+    String? observationType,
+    DateTime? fromUtc,
+    DateTime? toUtc,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    if (stationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (limit < 1 || limit > 100 || offset < 0 || offset > 100000) {
+      throw const MetraApiException(400, 'invalid_pagination');
+    }
+    const types = {
+      'daily', 'hourly', 'climate', 'soil',
+      'agricultural', 'phenomenon', 'fieldclimate'
+    };
+    if (observationType != null && !types.contains(observationType)) {
+      throw const MetraApiException(400, 'invalid_observation_type');
+    }
+    if ((fromUtc != null && !fromUtc.isUtc) ||
+        (toUtc != null && !toUtc.isUtc)) {
+      throw const MetraApiException(400, 'utc_offset_required');
+    }
+    if (fromUtc != null && toUtc != null && !fromUtc.isBefore(toUtc)) {
+      throw const MetraApiException(400, 'invalid_time_range');
+    }
+    final query = <String, String>{
+      'limit': '$limit',
+      'offset': '$offset',
+      if (observationType != null) 'type': observationType,
+      if (fromUtc != null) 'fromUtc': fromUtc.toIso8601String(),
+      if (toUtc != null) 'toUtc': toUtc.toIso8601String(),
+    };
+    final path = Uri(
+      path: '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/archive',
+      queryParameters: query,
+    ).toString();
+    final response = await _send('GET', path);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map || decoded['authorized'] != true) {
+      throw const FormatException('invalid_observation_archive_response');
+    }
+    return ObservationArchivePage.fromJson(Map<String, dynamic>.from(decoded));
+  }
+
+  Future<ObservationArchiveItem> getObservationArchiveDetail(
+    String stationId,
+    String observationId,
+  ) async {
+    if (stationId.trim().isEmpty || observationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_archive_identifier');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map || decoded['authorized'] != true ||
+        decoded['found'] != true || decoded['item'] is! Map) {
+      throw const FormatException('invalid_observation_archive_detail');
+    }
+    return ObservationArchiveItem.fromJson(
+      Map<String, dynamic>.from(decoded['item'] as Map));
   }
 
   Future<void> decideObservation({
