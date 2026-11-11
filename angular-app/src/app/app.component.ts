@@ -46,6 +46,14 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
           <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
         </nav>
 
+        <div class="section-title">الأنظمة المتخصصة</div>
+        <nav aria-label="الأنظمة المتخصصة">
+          <a class="nav-link" routerLink="/electronic-auditor" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-clipboard-check users"></i><span>التدقيق الإلكتروني</span></a>
+          <a class="nav-link" routerLink="/ai" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-brain users"></i><span>الذكاء الاصطناعي</span></a>
+          <a class="nav-link" routerLink="/climatol" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-chart-line climate"></i><span>تجانس Climatol</span></a>
+          <a class="nav-link" routerLink="/aftn" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-tower-broadcast users"></i><span>وحدة AFTN</span></a>
+        </nav>
+
         <div class="section-title">التقارير</div>
         <nav aria-label="التقارير">
           <a class="nav-link" routerLink="/reports/monthly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar-week daily"></i><span>التقارير الشهرية (إدارية)</span></a>
@@ -77,6 +85,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
             <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
             <a class="nav-link" routerLink="/register" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-plus users"></i><span>إنشاء حساب</span></a>
           } @else {
+            <a class="nav-link" routerLink="/account" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-id-card users"></i><span>الملف الشخصي</span></a>
             <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
             <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تبديل الحساب</span></a>
           }
