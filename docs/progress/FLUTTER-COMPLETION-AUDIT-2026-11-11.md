@@ -312,3 +312,14 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Client CI #43036091374 on source SHA `cdebc3f4fa31d6067bceb5e96d9023bdb13edbfb`: Flutter analyze passed; **51 Flutter tests passed**. Angular npm tests/build passed; Chromium PWA smoke was cancelled, not passed.
 - Source commits: `93f66c8ee6a18c9cde02737473cd2875ed652252`, `b3976438ce3a8185c6c4bfff8c59d96e7dd8a7c5`, `4af504672a1d1fc45839a2d33558f5960ad9b31c`, `cdebc3f4fa31d6067bceb5e96d9023bdb13edbfb`; tests: `d981aa1adae59057769a5fa2ee2162c88adb17a2`, `5de4c498ef0b9ec0b191d6091e6bed2c8b99122b`.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy DB or `metra-old` changes; no merge to main.
+
+
+## FLT-FORECAST-UI-01 — CI #869 regression correction — 2026-11-11T14:16:00Z
+
+- Client CI #869 (run `43036619447`) checked the map implementation and widget test.
+- `flutter analyze` passed. Flutter tests: **51 passed, 1 failed**.
+- The new `forecasting_center_screen_test.dart` passed, including map rendering, selection and distance/elevation comparison.
+- The only failing test was the existing home-navigation assertion in `widget_test.dart`, which still expected the old explanatory copy `قيم الرصد اللحظية غير متاحة`; the forecasting screen now uses the more explicit phrase `قيم الرصد اللحظية وتفاصيل النشرات لا تُعرض...`.
+- Corrected the assertion to match the current UI copy in commit `1945fb8857ef940526e8f8bfbfd6674ee6b109b9`. Product behavior was not weakened or changed.
+- CI #869 remains a failed run; exact-head verification is pending. Do not mark the forecasting center verified until the rerun passes.
+- Separate admin UI test evidence in CI run `43036091374`: Flutter analyze passed and 51 Flutter tests passed on that earlier source snapshot; Angular Chromium smoke was cancelled.
