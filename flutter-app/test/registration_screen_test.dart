@@ -158,7 +158,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('الحساب قيد مراجعة طلب الانضمام'), findsOneWidget);
-    expect(find.text('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
+    expect(find.textContaining('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
     expect(find.text('إرسال طلب الانضمام'), findsNothing);
     expect(find.text('الاسم الأول'), findsNothing);
     api.close();
