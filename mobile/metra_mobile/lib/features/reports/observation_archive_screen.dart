@@ -39,6 +39,7 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
   String? _error;
   bool _loading = false;
   bool _loadingMore = false;
+  int _requestGeneration = 0;
 
   @override
   void initState() {
@@ -51,15 +52,25 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
   @override
   void didUpdateWidget(covariant ObservationArchiveScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.stationId != widget.stationId && widget.stationId != null) {
+    if (oldWidget.stationId != widget.stationId) {
+      // Invalidate any in-flight response before switching the station. A
+      // previous station's response must never be rendered under the new scope.
+      _requestGeneration++;
       _page = null;
-      _load();
+      _error = null;
+      if (widget.stationId != null) {
+        _load();
+      } else {
+        _loading = false;
+        _loadingMore = false;
+      }
     }
   }
 
   Future<void> _load({bool append = false}) async {
     final stationId = widget.stationId;
-    if (stationId == null || _loading || _loadingMore) return;
+    if (stationId == null) return;
+    final requestGeneration = ++_requestGeneration;
     setState(() {
       if (append) {
         _loadingMore = true;
@@ -77,7 +88,7 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
         limit: _pageSize,
         offset: append ? (_page?.items.length ?? 0) : 0,
       );
-      if (!mounted) return;
+      if (!mounted || requestGeneration != _requestGeneration) return;
       setState(() {
         _page = append && _page != null
             ? ObservationArchivePage(
@@ -91,7 +102,7 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
         _error = null;
       });
     } on MetraApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted || requestGeneration != _requestGeneration) return;
       setState(() => _error = switch (error.statusCode) {
         401 => 'انتهت الجلسة أو يلزم تسجيل الدخول.',
         403 => 'لا يملك حسابك صلاحية قراءة أرشيف هذه المحطة.',
@@ -100,10 +111,10 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
         _ => 'تعذر تحميل الأرشيف (رمز ${error.statusCode}).',
       });
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || requestGeneration != _requestGeneration) return;
       setState(() => _error = 'تعذر قراءة بيانات الأرشيف. تحقق من الاتصال ثم أعد المحاولة.');
     } finally {
-      if (mounted) {
+      if (mounted && requestGeneration == _requestGeneration) {
         setState(() {
           _loading = false;
           _loadingMore = false;
