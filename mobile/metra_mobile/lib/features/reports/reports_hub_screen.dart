@@ -1,4 +1,5 @@
 // ignore: deprecated_member_use
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 class ReportsHubScreen extends StatelessWidget {
