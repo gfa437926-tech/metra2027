@@ -254,3 +254,11 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Current PR #11 head: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`. No workflow run was returned for this exact SHA at the time of this note.
 - Client CI #861 (`43036054744`) was pending for the prior head `4af504672a1d1fc45839a2d33558f5960ad9b31c`; it cannot verify these newer commits.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-FORECAST-UI-01 verification update — 2026-11-11T14:14:00Z
+
+- Client CI #865: Flutter analyze failed on unsupported test viewport setter methods; Flutter tests skipped. This is a failed CI run, not a pass.
+- Test corrected in `0d8bc257451d1266faef827848b355cbedba92f4` to use supported TestFlutterView properties and synchronous reset methods.
+- Exact-head verification pending; map and comparison remain unverified until Client CI succeeds.
+- Full evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
