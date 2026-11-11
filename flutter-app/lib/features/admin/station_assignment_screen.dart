@@ -30,8 +30,11 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
     final raw = _validToCtrl.text.trim();
     if (raw.isEmpty) return true;
     final parsed = DateTime.tryParse(raw);
-    final hasZone = raw.endsWith('Z') ||
-        RegExp(r'[+-]\\d{2}:\\d{2}
+    final hasZone = raw.endsWith('Z') || raw.contains('+') || raw.lastIndexOf('-') > 10;
+    return parsed != null && hasZone &&
+        parsed.toUtc().isAfter(DateTime.now().toUtc());
+  }
+
   bool _busy = false;
   String? _error;
   String? _feedback;
