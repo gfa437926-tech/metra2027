@@ -481,3 +481,51 @@ M13 remains **0% of 12 audit workstreams formally closed**. DB-001, DB-002 and I
 
 ### Progress
 **M13 remains 0% formally closed; 12 of 12 substantive audit workstreams remain open.** No workstream met closure criteria. Next: require owner-reviewed active fix and disposable PostgreSQL transaction tests for both decision branches; decision endpoint API integration/negative tests; source-table baseline plus ACL and mutation tests for station audit; and owner-coordinated base synchronization where appropriate.
+
+
+## Round 9 — scientific validation and climate-report source verification (2026-11-11T12:27:51.775Z UTC)
+
+### Task and status
+- **Task:** M13 — Independent final audit.
+- **Status:** In progress; scientific/API validation evidence expanded. No audit workstream is formally closed.
+- **Branch:** `audit/assistant-13-independent-final-review`.
+- **PR:** [#31](https://github.com/gfa437926-tech/metra2027/pull/31), open, Draft, unmerged.
+
+### Exact source evidence inspected
+- Main `backend/Metra.Api/Domain/Observations/DailyObservationValidator.cs`, blob `69c9ed02062fc11841252a45e3c90da388756884`.
+- Main `backend/Metra.Api/Features/Observations/ObservationSubmissionEndpoints.cs`, blob `2bc629f1bbe1de7625dc3c741962b306d6b2b73d`.
+- Main `backend/Metra.Api/Features/Observations/ObservationValidationEndpoints.cs`, blob `a5aa1de3e1564ee6579ed9e87b06de62339ab946`.
+- Main `backend/Metra.Api.Tests/Features/Observations/ObservationDecisionRequestGuardTests.cs`, blob `0155f0cb1c7a8a61dfd4311649ef5299af1ada13`.
+- Main `angular-app/src/app/features/reports/monthly-reports.component.ts`, blob `d3d332bde2b76efd1a923fc09bdff285b6eb45a9`.
+- Main `angular-app/src/app/features/reports/annual-reports.component.ts`, blob `2930b677f1b3b78a8690b3fbccce6c8bf651fb48`.
+- Main `docs/data-quality/station-coordinate-audit.md`, blob `2664e80a8be2c34ed76e0a015a86ff3607c0c037`.
+- Science PR #25 report and decision register on `review/meteorological-science-audit`; integration PR #28 cross-check on `assistant-12/system-integration-audit`; Backend PR #22 current source/test patch; Database PR #26 current changed-file inventory.
+
+### Findings independently confirmed
+1. **M13-SCI-API-002 — daily validator does not enforce humidity ordering:** the current .NET `DailyObservationValidator` checks individual min/max humidity field formats and numeric ranges, and checks `maxTemp >= minTemp`; it contains no equivalent cross-field rule requiring `maxHumidity >= minHumidity`. The scientific report previously identified a client/API mismatch; this source inspection independently confirms the missing backend cross-field check. This is a code-level gap, not an approval of any numerical limits.
+2. **M13-SCI-API-003 — submission endpoint bypasses domain validators:** `ObservationSubmissionEndpoints` structurally validates the request and calls `metra_submit_observation`; it does not invoke `DailyObservationValidator`, `HourlyObservationValidator`, or `WeatherPhenomenonValidator` before persistence. Separate validation endpoints expose validators, but validation routes alone do not enforce validation in the write path. Whether the database RPC independently enforces equivalent domain rules remains unproven.
+3. **M13-SCI-TEST-001 — validator regression coverage not present in observed test inventory:** the current `backend/Metra.Api.Tests/Features/Observations` directory lists decision, queue, submission-request and validation-request guard test files, but no dedicated `DailyObservationValidatorTests.cs` or equivalent domain validator test file. Existing decision guard tests cover request shape/notes, not HTTP decision integration or database transaction behavior.
+4. **M13-REPORT-001 — monthly and annual Angular pages are explicit preview-only screens:** monthly and annual components state that no data source is connected, display em-dash placeholders, and describe indicators as pending an approved aggregation method. Search/filter interactions only change local labels/messages. No evidence of live data retrieval or climate indicator calculation exists in these two components.
+5. **M13-STATION-DATA-001 — station coordinate readiness remains incomplete in repository evidence:** the station-coordinate audit records 62 catalogue rows, 50 current coordinate records and 12 classic entries without current coordinates. The document says these must not be plotted or populated from guesses; this audit did not add or infer coordinates.
+
+### Scientific governance boundary
+- WMO-No. 8 2024 remains the latest stable published reference according to the scientific branch evidence already reviewed; the 2026 edition is provisional. No operational thresholds, accumulation windows, climate-day definitions, humidity conventions or derived-indicator formulas were changed or approved in this round.
+- No R/CLIMATOL execution or climate calculation was performed. The required variable dictionary, authoritative station metadata and approved aggregation definitions remain prerequisites.
+
+### Fresh owner PR and Actions check
+- PR #22 remains open Draft at head `0d29163a4457c12f38e8a1c79b7dec49248c143d`; no new exact-head PR-triggered run was returned by the current workflow query. Previously verified Backend build #42925286446 remains historical evidence for that exact head only.
+- PR #25 remains open Draft at head `c9d0587e64b13b4cd26b8128fa834b38a3e08baf`; no exact-head PR-triggered run was returned.
+- PR #26 remains open Draft at head `6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8`; its changed-file inventory still contains a `.proposal` SQL correction, not an active migration; no exact-head PR-triggered run was returned.
+- PR #28 remains open Draft at head `9b3ad187de7cbbf861dd7b091c193172e5a77ea9`; its changed-file inventory remains audit documentation, with no new executable integration test; no exact-head PR-triggered run was returned.
+- PR #30 remains open Draft at head `b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2`; the previously verified Backend and Client CI successes #42925422751 and #42925422685 remain evidence for that exact head, not proof of scientific or database transaction coverage.
+- PR #31 currently targets main at base `43c72da0604e49a74d2128cc9d3d881e2c912f26`; owner PRs #22/#25/#26/#28/#30 still target old base `87f71356083843b2abdef76baf011a82510686be`. PR #31 remains divergent from its latest base comparison; no rebase, retarget or synchronization was performed.
+
+### Tests and safety
+- Tests run by assistant 13: **none**. No local build, API test, PostgreSQL test, R/CLIMATOL run or data calculation was executed.
+- Actions results are queried GitHub evidence only; no new exact-head CI success is claimed for #22/#25/#26/#28.
+- No Supabase/database access, SQL or migration execution, schema/data/secrets change, owner-branch edit, merge, rebase or deployment.
+- Only this assistant's progress/changelog documents and PR #31 description are updated.
+
+### Progress accounting and next evidence
+- **M13 completion remains 0% of 12 substantive audit workstreams formally closed; 12 remain open.** Static findings are important but do not satisfy closure criteria without owner-reviewed remediation, executable negative/runtime tests and integration evidence.
+- Required next evidence: add cross-field humidity tests and enforce domain validators in the authoritative write path; add API integration tests for invalid daily/hourly/phenomenon payloads; connect monthly/annual reports only after approved data/aggregation contracts; supply authoritative station coordinates for the 12 unresolved catalogue entries; preserve the independent database decision/audit transaction test requirements from prior rounds.
