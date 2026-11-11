@@ -77,6 +77,8 @@ void main() {
 
     await tester.enterText(find.byType(TextField).at(0), 'user-2');
     await tester.enterText(find.byType(TextField).at(1), 'تغطية مناوبة المحطة');
+    final validTo = DateTime.now().toUtc().add(const Duration(days: 30)).toIso8601String();
+    await tester.enterText(find.byType(TextField).at(2), validTo);
     await tester.pump();
     await tester.tap(find.text('طلب تعيين'));
     await tester.pumpAndSettle();
@@ -86,6 +88,7 @@ void main() {
     expect(assignmentBody?['roleCode'], 'station_auditor');
     expect(assignmentBody?['reason'], 'تغطية مناوبة المحطة');
     expect(DateTime.tryParse(assignmentBody?['validFrom'] as String)?.isUtc, isTrue);
+    expect(assignmentBody?['validTo'], validTo);
 
     await tester.tap(find.text('إلغاء'));
     await tester.pumpAndSettle();
