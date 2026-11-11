@@ -214,6 +214,7 @@ void main() {
 
     await tester.tap(find.text('مسح كل المرشحات'));
     await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(searchField).controller!.text, isEmpty);
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
 
