@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ReportsHubScreen extends StatelessWidget {
-  const ReportsHubScreen({super.key});
+  const ReportsHubScreen({super.key, this.onOpenArchive});
+
+  final VoidCallback? onOpenArchive;
 
   @override
   Widget build(BuildContext context) => const Directionality(
@@ -45,7 +47,9 @@ class ReportsHubScreen extends StatelessWidget {
               icon: Icons.history,
               title: 'الأرشيف التاريخي للرصدات',
               description: 'استعراض الرصدات المقدمة والمعتمدة حسب المحطة والتاريخ، مع تفاصيل السجل وحالة المراجعة.',
-              requirement: 'يتطلب عقد قائمة وتفاصيل للرصدات التاريخية مع ترقيم صفحات وتحديد نطاق المحطات.',
+              requirement: 'أرشيف مستورد للقراءة فقط، مع تصفية حسب نوع الرصد وتفاصيل السجل.',
+              action: onOpenArchive,
+              actionLabel: 'فتح الأرشيف',
             ),
             _ReportCapabilityCard(
               icon: Icons.today_outlined,
@@ -89,12 +93,16 @@ class _ReportCapabilityCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.requirement,
+    this.action,
+    this.actionLabel,
   });
 
   final IconData icon;
   final String title;
   final String description;
   final String requirement;
+  final VoidCallback? action;
+  final String? actionLabel;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -112,9 +120,9 @@ class _ReportCapabilityCard extends StatelessWidget {
                   Expanded(
                     child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
-                  const Text(
-                    'بانتظار عقد API',
-                    style: TextStyle(color: Color(0xFF9A5B00), fontSize: 11, fontWeight: FontWeight.w600),
+                  Text(
+                    action == null ? 'بانتظار عقد API' : 'متاح للأرشيف التاريخي',
+                    style: TextStyle(color: action == null ? Color(0xFF9A5B00) : Color(0xFF16834A), fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -125,6 +133,17 @@ class _ReportCapabilityCard extends StatelessWidget {
                 requirement,
                 style: const TextStyle(color: Color(0xFF64748B), fontSize: 12, height: 1.4),
               ),
+              if (action != null) ...[
+                const SizedBox(height: 10),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FilledButton.tonalIcon(
+                    onPressed: action,
+                    icon: const Icon(Icons.archive_outlined),
+                    label: Text(actionLabel ?? 'فتح'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
