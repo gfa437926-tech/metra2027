@@ -165,6 +165,8 @@ void main() {
       home: ObservationHistoryScreen(api: api, stationId: stationId),
     ));
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
 
     expect(requests, hasLength(2));
     expect(requests.every((request) =>
@@ -172,6 +174,8 @@ void main() {
     expect(requests.every((request) =>
         request.headers['authorization'] == 'Bearer history-token'), isTrue);
     expect(find.text('سجل النشرات المتاح'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('تعذر تحميل سجل النشرات من الخادم.'), findsNothing);
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
 
