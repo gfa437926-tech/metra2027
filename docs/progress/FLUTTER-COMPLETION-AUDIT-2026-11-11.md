@@ -64,8 +64,8 @@ This is a useful baseline, not full acceptance coverage for every required page,
 | Sign-in/session | Supabase auth gate, secure session storage, API token provider | Partial | Full account-state, expired/revoked session, recovery and negative tests |
 | Registration request | No dedicated Flutter page found | Missing | Build pending-registration request UI after identity contract |
 | Registration review | Admin screen exists and calls API | Partial | Permission-state, error, confirmation, system/station-stage tests |
-| Password recovery | Dedicated recovery screen calls Supabase Auth resetPasswordForEmail with privacy-safe confirmation | Implemented; CI pending | Verify Flutter analyze/test and confirm redirect/deep-link settings before release |
-| Profile/account | Settings text/sign-out only | Partial/Missing | Profile, assignments, account status and session lifecycle |
+| Password recovery | Dedicated recovery screen calls Supabase Auth resetPasswordForEmail with privacy-safe confirmation | Implemented; tests added; CI pending | Confirm redirect/deep-link settings before release |
+| Profile/account | Dedicated authenticated account profile shows email, identity provider and server-authoritative permission explanation; sign-out requires confirmation | Implemented baseline; tests added; CI pending | Account metadata, assignment display and session lifecycle states |
 | Shared home/navigation | Six bottom destinations; one home action opens forecasting | Partial | Role-aware links, route coverage, responsive navigation, forecasting always discoverable |
 | Station directory | API-backed map/list, type filters, coordinate validation | Partial | Search/pagination/detail route, missing-coordinate handling and station selection lifecycle |
 | Station detail | No standalone detail screen found | Missing | Full catalogue detail and authorized station context |
@@ -172,3 +172,25 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Added `flutter-app/test/password_recovery_screen_test.dart` covering invalid email, trimmed email submission, privacy-safe success text and provider-error redaction.
 - CI triggered by the auth integration: Client CI #812 (Flutter analyze/test + Angular build), URL: https://github.com/gfa437926-tech/metra2027/actions/runs/43029197173. At the time of this audit update it was still running; the test-file commit followed the workflow trigger, so a new run for the latest tip must be checked separately.
 - No identity schema, SQL, redirect URL or production setting was changed.
+
+
+## Further Flutter implementation — 2026-11-11 UTC
+
+### FLT-AUTH-02 — Password recovery
+- Status: implemented; automated verification pending.
+- Source: `flutter-app/lib/features/auth/password_recovery_screen.dart`.
+- Login integration: `flutter-app/lib/core/auth/metra_auth.dart`.
+- Tests: `flutter-app/test/password_recovery_screen_test.dart`.
+- Privacy: success text is identical whether or not an email maps to an eligible account; provider internals are not exposed.
+
+### FLT-ACCOUNT-01 — Account profile
+- Status: implemented baseline; automated verification pending.
+- Source: `flutter-app/lib/features/account/account_profile_screen.dart`.
+- Navigation integration: `flutter-app/lib/features/home/metra_home.dart`.
+- Tests: `flutter-app/test/account_profile_screen_test.dart`.
+- Security: the screen does not invent or locally grant roles; it explicitly states that permissions remain server-authoritative. Sign-out requires user confirmation.
+
+### CI evidence
+- Client CI #811 passed on prior source tip `8b7eaea`; it does not include the new authentication/profile changes.
+- Client CI #816 was triggered for the profile integration commit `e8bce50`; subsequent test-file commits may supersede/cancel earlier runs.
+- Latest tip at audit time: `4219b5d`. A CI run for this exact tip must be confirmed before these changes are marked verified.
