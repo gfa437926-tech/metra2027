@@ -51,11 +51,11 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen>
   }
 
   Future<void> _choosePeriod() async {
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now();
     final selected = await showDateRangePicker(
       context: context,
       firstDate: DateTime(1900),
-      lastDate: DateTime.utc(now.year, now.month, now.day),
+      lastDate: DateTime(now.year, now.month, now.day),
       initialDateRange: _period,
       helpText: 'اختر فترة السلاسل الزمنية',
       saveText: 'اعتماد الفترة',
@@ -317,5 +317,5 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen>
   );
 
   String _utcDate(DateTime value) =>
-      '${value.toUtc().year.toString().padLeft(4, '0')}-${value.toUtc().month.toString().padLeft(2, '0')}-${value.toUtc().day.toString().padLeft(2, '0')}';
+      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
 }
