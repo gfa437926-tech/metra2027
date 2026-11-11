@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/widgets/metra_adaptive_navigation.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../stations/station_selection.dart';
@@ -230,8 +231,7 @@ class _MetraHomeState extends State<MetraHome> {
         title: const Text('METRA 2027'),
         actions: [Padding(padding: const EdgeInsetsDirectional.only(end: 16),
           child: Center(child: Text('منصة الأرصاد', style: TextStyle(color: Colors.white.withValues(alpha: .78), fontSize: 12))))]),
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(
+      body: MetraAdaptiveNavigation(
         selectedIndex: switch (_index) {
           0 => 0,
           1 => 1,
@@ -248,13 +248,15 @@ class _MetraHomeState extends State<MetraHome> {
             _ => 7,
           };
         }),
+        child: IndexedStack(index: _index, children: pages),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
           NavigationDestination(icon: Icon(Icons.edit_note_outlined), selectedIcon: Icon(Icons.edit_note), label: 'إدخال'),
           NavigationDestination(icon: Icon(Icons.cloud_outlined), selectedIcon: Icon(Icons.cloud), label: 'التنبؤ'),
           NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'المزيد'),
-        ]),
+        ],
+      ),
     ));
   }
 }
