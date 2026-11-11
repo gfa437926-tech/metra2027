@@ -301,3 +301,14 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Correction commit: `0d8bc257451d1266faef827848b355cbedba92f4`.
 - Client CI #865 is a failed run; exact-head rerun is required. The map feature is implemented but **not yet verified**.
 - The Angular job had passed npm tests and build; Chromium smoke was still running when the Flutter analyzer failure was read.
+
+
+## FLT-ADMIN-02 / FLT-ADMIN-03 — Registration review and assignment controls — 2026-11-11T14:14:37.565Z
+
+- FLT-ADMIN-02: registration review resolves request IDs from `id`, `request_id`, or `requestId`; displays requester/role and UTC submission time; requires a rejection explanation; and switches between station/system review endpoints.
+- FLT-ADMIN-03: assignable roles come exclusively from the station API; hard-coded role choices were removed; request button reacts to input; request validity begins in UTC; rejection and revocation require explanations; revoke is offered only for active assignments.
+- Dialog text controllers are owned by their dialog State and disposed after route teardown. This fixes the controller lifecycle issue detected by the first widget run.
+- Added widget tests: `flutter-app/test/registration_review_screen_test.dart` and `flutter-app/test/station_assignment_screen_test.dart`.
+- Client CI #43036091374 on source SHA `cdebc3f4fa31d6067bceb5e96d9023bdb13edbfb`: Flutter analyze passed; **51 Flutter tests passed**. Angular npm tests/build passed; Chromium PWA smoke was cancelled, not passed.
+- Source commits: `93f66c8ee6a18c9cde02737473cd2875ed652252`, `b3976438ce3a8185c6c4bfff8c59d96e7dd8a7c5`, `4af504672a1d1fc45839a2d33558f5960ad9b31c`, `cdebc3f4fa31d6067bceb5e96d9023bdb13edbfb`; tests: `d981aa1adae59057769a5fa2ee2162c88adb17a2`, `5de4c498ef0b9ec0b191d6091e6bed2c8b99122b`.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy DB or `metra-old` changes; no merge to main.
