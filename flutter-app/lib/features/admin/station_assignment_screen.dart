@@ -67,41 +67,14 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
   Future<String?> _askReason({
     required String title,
     required String confirmLabel,
-  }) async {
-    final controller = TextEditingController();
-    final value = await showDialog<String>(
+  }) {
+    return showDialog<String>(
       context: context,
-      builder: (dialogContext) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(title),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(labelText: 'السبب (3 أحرف على الأقل)'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('رجوع'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final reason = controller.text.trim();
-                if (reason.length >= 3) {
-                  Navigator.of(dialogContext).pop(reason);
-                }
-              },
-              child: Text(confirmLabel),
-            ),
-          ],
-        ),
+      builder: (_) => _StationAssignmentReasonDialog(
+        title: title,
+        confirmLabel: confirmLabel,
       ),
     );
-    controller.dispose();
-    return value?.trim();
   }
 
   Future<void> _request() async {
@@ -407,4 +380,62 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
       ),
     );
   }
+}
+
+
+class _StationAssignmentReasonDialog extends StatefulWidget {
+  const _StationAssignmentReasonDialog({
+    required this.title,
+    required this.confirmLabel,
+  });
+
+  final String title;
+  final String confirmLabel;
+
+  @override
+  State<_StationAssignmentReasonDialog> createState() =>
+      _StationAssignmentReasonDialogState();
+}
+
+class _StationAssignmentReasonDialogState
+    extends State<_StationAssignmentReasonDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text(widget.title),
+          content: TextField(
+            controller: _controller,
+            autofocus: true,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'السبب (3 أحرف على الأقل)',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('رجوع'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final reason = _controller.text.trim();
+                if (reason.length >= 3) {
+                  Navigator.of(context).pop(reason);
+                }
+              },
+              child: Text(widget.confirmLabel),
+            ),
+          ],
+        ),
+      );
 }
