@@ -208,3 +208,15 @@ The earlier 54% assistant-02 task calculation is not recalculated from this docu
 - Flutter PR #34 remains Draft; latest Client CI run #1130 is queued.
 - Backend PR #22 latest CI run #1542 is queued.
 - No percentage increase is claimed until the queued CI jobs complete and the isolated database tests pass.
+
+
+## Round 10 — Rebased backend archive delivery (2026-11-11)
+
+- Compared the original backend branch with current main and found it had diverged (73 ahead / 30 behind). Rather than rewriting shared history or merging unrelated changes, created a fresh branch from current main and carried forward the exact 21-file net change set after confirming there was no overlap with the 30 newer main-branch file changes.
+- New branch: work/backend-api-audit-rebased-2026-11-11.
+- New clean draft PR: https://github.com/gfa437926-tech/metra2027/pull/35.
+- The old PR #22 is marked superseded and must not be merged.
+- New PR #35 compares 21 commits ahead / 0 behind main; GitHub reports mergeable=true, but it remains Draft.
+- Backend CI run #1545 (43098894743) is queued. The earlier run #1542 (43098429680) is also queued; no database test pass is claimed.
+- Flutter PR #34 remains based on current main (71 ahead / 0 behind); Client CI run #1130 (43098264612) remains queued.
+- No merge, hosted migration, live permission grant, paid resource, project INSERT access, or METRA OLD access/change.
