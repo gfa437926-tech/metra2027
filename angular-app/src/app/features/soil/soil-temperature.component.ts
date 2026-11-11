@@ -32,6 +32,18 @@ import { StationContextService } from '../../core/station/station-context.servic
           <option *ngFor="let s of stations" [value]="s.id">{{ s.name_ar }}</option>
         </select>
       </label>
+      <section class="form-card">
+        <h2>مسودة قياس حرارة التربة</h2>
+        <p>يجب اعتماد أعماق القياس والوحدات والحساسات وقواعد التحقق قبل الحفظ التشغيلي.</p>
+        <div class="fields">
+          <label>عمق القياس (سم)<input type="number" min="0" step="any" [(ngModel)]="depthCm" name="depthCm"></label>
+          <label>درجة الحرارة (°C)<input type="number" step="any" [(ngModel)]="temperatureC" name="temperatureC"></label>
+          <label>معرّف الحساس<input [(ngModel)]="sensorId" name="sensorId"></label>
+          <label>وقت القياس UTC<input [(ngModel)]="observedAtUtc" name="observedAtUtc" placeholder="YYYY-MM-DDTHH:mm:ssZ" dir="ltr"></label>
+        </div>
+        <button type="button" (click)="preview()">معاينة محلية دون حفظ</button>
+        <p class="preview" *ngIf="previewMessage" role="status">{{ previewMessage }}</p>
+      </section>
       <div class="links">
         <a routerLink="/reports/hourly" [queryParams]="qp">النشرات الساعية</a>
         <a routerLink="/reports/daily" [queryParams]="qp">النشرات اليومية</a>
@@ -47,7 +59,7 @@ import { StationContextService } from '../../core/station/station-context.servic
     .banner{padding:12px;border-radius:10px;margin-bottom:12px}.banner.warn{background:#fff7e8;color:#8a5a12}
     label{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;color:#4d5b64}
     select{border:1px solid #d5dee4;border-radius:10px;padding:10px 12px;font:inherit}
-    .links{display:flex;flex-wrap:wrap;gap:12px}.links a{color:#1f6f8b;font-weight:700;text-decoration:none}
+    .links{display:flex;flex-wrap:wrap;gap:12px}.links a{color:#1f6f8b;font-weight:700;text-decoration:none}\n    .form-card{margin:16px 0;padding:16px;border:1px solid #e4ebef;border-radius:12px;background:#fff;display:grid;gap:12px}.form-card h2{margin:0;font-size:17px}.form-card p{font-size:12px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}input{border:1px solid #d5dee4;border-radius:8px;padding:9px;font:inherit}button{border:0;border-radius:8px;background:#287caf;color:#fff;padding:10px;font:inherit}.preview{background:#edf7ef;padding:10px;border-radius:8px}\n    @media(max-width:650px){.fields{grid-template-columns:1fr}}
   `]
 })
 export class SoilTemperatureComponent implements OnInit {
@@ -56,6 +68,22 @@ export class SoilTemperatureComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   stations: StationDirectoryItem[] = [];
   stationId = '';
+  depthCm = '';
+  temperatureC = '';
+  sensorId = '';
+  observedAtUtc = '';
+  previewMessage = '';
+  preview(): void {
+    if (!this.stationId || !this.depthCm || !this.temperatureC || !this.observedAtUtc) {
+      this.previewMessage = 'أكمل المحطة والعمق والحرارة ووقت القياس UTC.';
+      return;
+    }
+    if (!this.observedAtUtc.endsWith('Z') || Number.isNaN(Date.parse(this.observedAtUtc))) {
+      this.previewMessage = 'يجب إدخال وقت UTC بصيغة ISO 8601 منتهية بالحرف Z.';
+      return;
+    }
+    this.previewMessage = 'معاينة محلية فقط. لم يتم اعتماد أو حفظ قياس حرارة التربة.';
+  }
   get qp(): Record<string, string> {
     return this.stationId ? { stationId: this.stationId } : {};
   }
