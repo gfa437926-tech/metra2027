@@ -45,7 +45,6 @@ class _MetraHomeState extends State<MetraHome> {
       body: MetraAdaptiveNavigation(
         selectedIndex: _index,
         onDestinationSelected: (value) => setState(() => _index = value),
-        child: IndexedStack(index: _index, children: pages),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
@@ -54,6 +53,7 @@ class _MetraHomeState extends State<MetraHome> {
           NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'التقارير'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
         ],
+        child: IndexedStack(index: _index, children: pages),
       ),
     ));
   }
