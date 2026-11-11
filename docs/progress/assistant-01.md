@@ -108,3 +108,9 @@ The 50% figure is only this task's checkpoint ratio, not the whole Angular app o
 - CI on exact head `c18133005a9d9cc1f247018e55a0a57f2f5bd1d6`: no PR workflow runs or combined status checks were returned. Local build/tests were not run. **No CI or test success is claimed.**
 - Remaining checkpoints (2/8): Angular build/tests plus successful exact-head CI; responsive desktop/mobile screenshot comparison against the approved original UI reference.
 - PR [#32](https://github.com/gfa437926-tech/metra2027/pull/32) remains Draft and unmerged. No merge, rebase, deployment, database or Supabase operation was performed.
+
+
+### Verification environment note — 2026-11-11 UTC
+- Attempted a shallow clone of `work/angular-shell-implementation-assistant-01` to run the Angular build/tests locally.
+- Clone was blocked because this execution environment could not resolve `github.com` (DNS resolution failure).
+- Consequently no npm install, Angular build, or test command was run. This is an environment blocker, not a passing or failing application test result.
