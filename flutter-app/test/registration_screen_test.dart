@@ -120,14 +120,14 @@ void main() {
     await tester.scrollUntilVisible(terms, 240,
         scrollable: find.descendant(
           of: find.byType(ListView), matching: find.byType(Scrollable),
-        ));
+        ).first);
     await tester.tap(terms);
     await tester.pumpAndSettle();
     final submitButton = find.text('إرسال طلب الانضمام');
     await tester.scrollUntilVisible(submitButton, 240,
         scrollable: find.descendant(
           of: find.byType(ListView), matching: find.byType(Scrollable),
-        ));
+        ).first);
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
