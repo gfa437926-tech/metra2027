@@ -105,9 +105,9 @@ class _SpecialistUnitShellScreenState extends State<SpecialistUnitShellScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Card(
-            color: const Color(0xFFFFF7E8),
-            child: const Padding(
+          const Card(
+            color: Color(0xFFFFF7E8),
+            child: Padding(
               padding: EdgeInsets.all(14),
               child: Text(
                 'واجهة إعداد ومعاينة فقط. لا يوجد عقد حقول نهائي أو API حفظ معتمد لهذه الوحدة. لن تُعرض قيم تجريبية على أنها بيانات حقيقية ولن يُرسل أي نموذج.',
