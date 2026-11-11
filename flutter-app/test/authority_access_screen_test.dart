@@ -58,6 +58,10 @@ void main() {
     await tester.tap(find.text('طلب عضوية لنفسي'));
     await tester.pumpAndSettle();
     expect(find.text('طلب عضوية جهة'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('راصد').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('متابعة'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'طلب انضمام للعمل في الجهة');
