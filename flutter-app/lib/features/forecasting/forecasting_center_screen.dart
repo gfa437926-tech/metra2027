@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -265,8 +263,8 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
                 runSpacing: 8,
                 children: [
                   FilledButton(
-                    onPressed: () => _compare(stations),
-                    child: const Text('مقارنة المختارة'),
+                    onPressed: _comparing ? null : () => _compare(stations),
+                    child: Text(_comparing ? 'جارٍ المقارنة...' : 'مقارنة المختارة'),
                   ),
                   OutlinedButton(
                     onPressed: _selected.isEmpty
