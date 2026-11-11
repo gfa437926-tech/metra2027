@@ -54,6 +54,11 @@ class _ReturnedObservationEditorDialogState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text(
+                'النوع: ${widget.item.observationType} · الرصد: ${_formatUtc(widget.item.observedAt)}',
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+              const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(

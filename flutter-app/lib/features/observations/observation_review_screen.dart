@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import 'observation_api_messages.dart';
 import 'returned_observation_editor.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
@@ -196,11 +197,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen>
       await _refreshReview();
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = switch (error.statusCode) {
-        403 => 'ليست لديك صلاحية تنفيذ هذا القرار',
-        409 => 'لا يمكن اعتماد نشرتك بنفسك أو تغيّرت حالة النشرة',
-        _ => 'تعذر تنفيذ القرار. حاول مجدداً',
-      };
+      final message = observationDecisionErrorMessage(error.statusCode);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
@@ -226,11 +223,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen>
       await _refreshReview();
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = switch (error.statusCode) {
-        403 => 'ليست لديك صلاحية إعادة التقديم أو لست مالك النشرة',
-        409 => 'النشرة ليست في حالة مُرجَعة',
-        _ => 'تعذر إعادة التقديم. حاول مجدداً',
-      };
+      final message = observationResubmitErrorMessage(error.statusCode);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }

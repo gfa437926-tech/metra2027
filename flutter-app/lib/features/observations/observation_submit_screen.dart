@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import 'observation_api_messages.dart';
 import 'daily_observation_submit_screen.dart';
 import 'hourly_observation_contract.dart';
 
@@ -227,14 +228,7 @@ class _ObservationSubmitScreenState extends State<ObservationSubmitScreen> {
       );
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = switch (error.statusCode) {
-        400 => 'بيانات النشرة غير صالحة؛ راجع الحقول المطلوبة',
-        401 => 'يلزم تسجيل الدخول',
-        403 => 'ليست لديك صلاحية الإرسال لهذه المحطة',
-        409 => 'تعارض مفتاح منع التكرار',
-        503 => 'خدمة الرصد غير متاحة حالياً',
-        _ => 'تعذر إرسال النشرة (${error.statusCode})',
-      };
+      final message = observationSubmitErrorMessage(error.statusCode);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } on FormatException {
       if (!mounted) return;
