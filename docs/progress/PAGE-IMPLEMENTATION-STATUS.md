@@ -4,7 +4,7 @@
 
 # METRA 2027 — Page implementation status (live repository audit)
 
-**Audited tip:** `b069f648031c33aed478e20e11e9f3055f27eed9`  
+**Historical inventory tip:** `b069f648031c33aed478e20e11e9f3055f27eed9`  
 **Spec source:** `docs/requirements/METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION.md`  
 **Method:** route/feature/API inventory in repo (not prior chat reports)  
 **Legend:** `Done` = wired to backend and usable · `Partial` = UI and/or API incomplete · `Missing` = no real route/workflow · `Scaffold` = page exists without authoritative API data
@@ -298,3 +298,40 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - **Current verification:** Client CI run `43063665760` is queued for corrected code SHA `7850c089e30ea08d83519494950b28f0d5bcaf5d`. No green result is claimed yet.
 - **Still blocked by missing API contracts:** hourly/daily author history/read models and exports; full electronic audit cases/evidence/OCR workflow; live forecasting snapshots/bulletins; rainfall/climate/agriculture/soil aggregates; AI gateway; isolated Climatol worker; effective current-user access-context and searchable eligible-user directory.
 - No database migrations/RLS/grants/seeds were applied, no legacy DB writes, no main merge and no deployment.
+
+
+# Current authoritative frontend status — 2026-11-11T17:48:59.359Z
+
+**Audited branch:** `work/flutter-canonical-consolidation`  
+**Audited tip:** `51ed88afa415072e9e41679f585610e5615b9b5d`  
+**Canonical Flutter source:** `flutter-app/`  
+**Reference-only source:** `mobile/metra_mobile/`
+
+The older table above is a historical Phase A–H snapshot. The following status supersedes it for the current Flutter-first implementation wave.
+
+| Area | Current Flutter implementation | Current state | Remaining gate |
+|---|---|---|---|
+| Identity and accounts | Login, registration, active-only account gate, profile status, password recovery, authority membership/permission lifecycle, registration and station audit, assignment details | UI/API workflows implemented; analyzer and tests pass | Effective access-context API, eligible-user search, delegated target/validity UI, Supabase redirect allow-list and device test |
+| Stations | Directory, map/search, station detail and coordinate provenance | API-backed baseline | Verify original visual design and all station-history/maintenance fields |
+| Hourly/daily/phenomena | Entry, validation, submit, review, return/edit flows | API-backed baseline | Full author history/read models, expanded domain edge-case and concurrency tests |
+| Forecasting centre | Map/search, server comparison for 2–12 stations, station profile | Partial | Live weather snapshot, time series and bulletin APIs absent |
+| Rainfall/climate/agriculture/soil | Station-scoped specialist forms and local-only previews | UI only | Approved field catalogue, scientific validation and report/write APIs |
+| Electronic audit | 8-tab workspace: dashboard, paper register, mechanical charts, comparison, review, library, training, reports | UI only | Case/evidence/file storage/OCR/digitization/comparison/decision APIs |
+| AI | 5-tab workspace: overview, analysis, anomalies, reports, governance | UI only | Secure ASP.NET AI Gateway, model registry, provenance, permissions and audit |
+| Climatol | Station/variable/period selection, processing pipeline, diagnostics and versions | UI only | Isolated worker, job/result API, immutable dataset/version evidence and approval |
+| AFTN | Inbox, outbox, local composer, channel/audit | UI only | Secure AFTN gateway, message templates, routing, delivery receipts and station/centre isolation |
+| Reports/export | Report hub and archive/observation status | Partial | Hourly/daily history read models, climate aggregates and PDF/Excel export APIs |
+| Role workspace catalogue | Includes station, forecast, AFTN, auditor, audit approver, AI analyst, model manager/approver, Climatol and upload roles | Navigation metadata only | Effective permissions must come from server access-context; labels never grant access |
+
+## CI evidence for exact current code
+
+- Workflow run `43071280050`, commit `51ed88a`: Flutter analyzer passed and **85 tests passed**.
+- Angular job: npm tests passed, production build passed, and Chromium PWA/IndexedDB smoke test passed three times.
+- CI verifies code/tests, not production identity configuration, real weather feed, physical device behavior, screenshot parity, or external AFTN/AI/Climatol integrations.
+
+## Explicit non-changes
+
+- No migrations, RLS, grants, seeds or schema modifications applied.
+- No legacy database access or writes.
+- No merge to `main`, no deployment and no deletion of reference source.
+- No fabricated weather observations, AI findings, audit totals, climatology or message traffic.
