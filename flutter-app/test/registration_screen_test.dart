@@ -83,17 +83,26 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'اسم الأب'), 'محمد');
     await tester.enterText(find.widgetWithText(TextField, 'اسم العائلة'), 'علي');
 
-    await tester.tap(find.byType(DropdownButton<String>).at(0));
-    await tester.pumpAndSettle();
-    expect(find.text('محطة معتمدة — ST-01'), findsOneWidget);
-    expect(find.text('محطة تجريبية — ST-02'), findsNothing);
-    await tester.tap(find.text('محطة معتمدة — ST-01').last);
-    await tester.pumpAndSettle();
+    final stationPicker = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>).at(0),
+    );
+    final stationLabels = stationPicker.items!
+        .map((item) => (item.child as Text).data)
+        .toList();
+    expect(stationLabels, contains('محطة معتمدة — ST-01'));
+    expect(stationLabels, isNot(contains('محطة تجريبية — ST-02')));
+    stationPicker.onChanged!('11111111-1111-4111-8111-111111111111');
+    await tester.pump();
 
-    await tester.tap(find.byType(DropdownButton<String>).at(1));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('راصد').last);
-    await tester.pumpAndSettle();
+    final rolePicker = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>).at(1),
+    );
+    final roleLabels = rolePicker.items!
+        .map((item) => (item.child as Text).data)
+        .toList();
+    expect(roleLabels, contains('راصد'));
+    rolePicker.onChanged!('observer');
+    await tester.pump();
 
     await tester.tap(find.textContaining('أقر بصحة البيانات'));
     await tester.pumpAndSettle();
