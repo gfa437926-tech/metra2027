@@ -5,6 +5,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/metra_api_client.dart';
 import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
+import '../../features/account/account_state_gate.dart';
+import '../../features/account/account_access_state_screen.dart';
 import '../../features/auth/password_recovery_screen.dart';
 import '../../features/auth/registration_screen.dart';
 
@@ -49,23 +51,71 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
   late final MetraApiClient _api;
   StreamSubscription<AuthState>? _subscription;
   bool _signedIn = false;
+  Future<Map<String, dynamic>>? _accountStatusFuture;
+
   @override
   void initState() {
     super.initState();
     _supabase = Supabase.instance.client;
     _signedIn = _supabase.auth.currentSession != null;
-    _api = MetraApiClient(accessTokenProvider: () async => _supabase.auth.currentSession?.accessToken);
+    _api = MetraApiClient(
+      accessTokenProvider: () async => _supabase.auth.currentSession?.accessToken,
+    );
+    if (_signedIn) _accountStatusFuture = _api.getMyRegistrationStatus();
     _subscription = _supabase.auth.onAuthStateChange.listen((state) {
-      if (mounted) setState(() => _signedIn = state.session != null);
+      final signedIn = state.session != null;
+      if (mounted) {
+        setState(() {
+          if (signedIn != _signedIn) {
+            _accountStatusFuture = signedIn ? _api.getMyRegistrationStatus() : null;
+          }
+          _signedIn = signedIn;
+        });
+      }
     }, onError: (Object error, StackTrace stackTrace) {});
   }
+
+  void _retryAccountStatus() {
+    if (!mounted || !_signedIn) return;
+    setState(() => _accountStatusFuture = _api.getMyRegistrationStatus());
+  }
+
+  Future<void> _signOut() => _supabase.auth.signOut();
+
   @override
-  void dispose() { _subscription?.cancel(); _api.close(); super.dispose(); }
+  void dispose() {
+    _subscription?.cancel();
+    _api.close();
+    super.dispose();
+  }
+
   @override
-  Widget build(BuildContext context) => _signedIn
-      ? MetraHome(api: _api, userEmail: _supabase.auth.currentUser?.email,
-          onSignOut: () => _supabase.auth.signOut())
-      : const MetraLoginScreen();
+  Widget build(BuildContext context) {
+    if (!_signedIn) return const MetraLoginScreen();
+    final statusFuture = _accountStatusFuture;
+    if (statusFuture == null) {
+      return MetraAccountAccessStateScreen(
+        title: 'تعذر التحقق من حالة الحساب',
+        message: 'لم تبدأ عملية التحقق من حسابك. أعد المحاولة أو سجّل الخروج.',
+        onRetry: _retryAccountStatus,
+        onSignOut: _signOut,
+      );
+    }
+    return MetraAccountStateGate(
+      statusFuture: statusFuture,
+      activeChild: MetraHome(
+        api: _api,
+        userEmail: _supabase.auth.currentUser?.email,
+        onSignOut: _signOut,
+      ),
+      pendingChild: MetraRegistrationScreen(
+        api: _api,
+        initiallyAuthenticated: true,
+      ),
+      onRetry: _retryAccountStatus,
+      onSignOut: _signOut,
+    );
+  }
 }
 
 class MetraLoginScreen extends StatefulWidget {
