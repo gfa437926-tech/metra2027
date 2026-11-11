@@ -20,11 +20,11 @@ Review type: static source/document inspection only; no Flutter or API test exec
 | Secure auth session | `lib/core/auth/metra_auth.dart` | Implemented (partial) | Complete account lifecycle, recovery, registration and approval states; verify refresh/revocation and platform storage behavior. |
 | Login | `MetraLoginScreen` in `metra_auth.dart` | Implemented (partial) | Match authoritative design and requirements; add recovery and user-facing account-state handling. |
 | Registration / approval | API and policy references exist; no corresponding Flutter workflow in reviewed auth screen | Not found in reviewed Flutter source | Build registration request, pending status, two-stage approval visibility and station assignment journey after requirement mapping. |
-| Main navigation shell | `lib/features/home/metra_home.dart` | Implemented (partial) | Replace limited five-destination shell with role-aware navigation driven by server access context; keep one shell and no duplicate sidebar. |
+| Main navigation shell | `lib/features/home/metra_home.dart`, `lib/core/widgets/metra_adaptive_navigation.dart` | Implemented (partial), CI-verified | Responsive bottom navigation/rail and one shared shell; role-aware visibility remains blocked on a server-authoritative access-context contract. |
 | Home dashboard | `_HomeOverview` in `metra_home.dart` | Implemented (partial) | Add only source-backed operational KPIs, status, alerts and role-specific actions. |
 | Station catalogue | `lib/features/stations/station_directory_screen.dart` | Implemented (partial) | Verify full catalogue metadata, search, pagination, detail, elevation, coordinate provenance/history, approvals and station-scoped actions. |
 | Station map | `StationDirectoryScreen._map` | Implemented (partial) | Verify map UX, clustering/performance, tile policy, coordinate quality and accessibility. |
-| Observation review | `lib/features/observations/observation_review_screen.dart` | Implemented (partial) | Confirm full detail/field differences, lifecycle, review permissions, decision history and immutable audit evidence. |
+| Observation review | `lib/features/observations/observation_review_screen.dart` | Implemented (partial), CI-verified | Review queue and decisions exist; complete lifecycle, field-level evidence and end-to-end permission coverage remain required. |
 | Hourly observation entry | No entry screen found in reviewed Flutter feature files | Not found in reviewed Flutter source; blocked on requirements | Extract every field, unit, precision, missing marker, UTC/local mapping, psychrometric rules, validation and submission lifecycle from authoritative sources. |
 | Daily observation entry/reports | No dedicated Flutter feature screen found | Not found in reviewed Flutter source; blocked on requirements | Extract field map, date/time rules, aggregation definitions, filters and exports. |
 | Weather phenomena | No dedicated Flutter feature screen found | Not found in reviewed Flutter source; blocked on requirements | Identify phenomenon codes, severity, timing, location, validation and approval rules. |
@@ -32,11 +32,11 @@ Review type: static source/document inspection only; no Flutter or API test exec
 | Climate hourly / climate reports | No dedicated Flutter feature screen found | Not found in reviewed Flutter source; blocked on requirements | Extract variables, period definitions, climatological calculations, quality rules and exports. |
 | Agricultural observations | No dedicated Flutter feature screen found | Not found in reviewed Flutter source; blocked on requirements | Map all agricultural variables, units, precision, validation and source workflows. |
 | Soil temperature | No dedicated Flutter feature screen found | Not found in reviewed Flutter source; blocked on requirements | Map depths, sensor/manual sources, time series, validation and reports. |
-| Forecast-centre workspace | No dedicated Flutter feature screen found | Not found in reviewed Flutter source | Design station/region comparisons by verified coordinates/elevation; show live values only with source, timestamp, quality and stale status; bulletin details/revisions. |
-| Electronic meteorological audit | No dedicated Flutter feature screen found; existing station audit is a distinct backend capability | Not found in reviewed Flutter source | Build audit work queue, record detail, field-level differences, evidence and server-authorized decisions; preserve append-only history. |
+| Forecast-centre workspace | `lib/features/forecast_centres/forecast_centre_screen.dart` | Implemented (partial), CI-verified | Compares 2–4 catalogue stations using verified coordinates/elevation and provenance; live telemetry and bulletins remain unavailable pending approved source/API contracts. |
+| Station audit history | `lib/features/stations/station_audit_log_screen.dart` | Implemented (partial), CI-verified | Read-only station/assignment audit history. This is not the electronic meteorological-record audit workspace. |
 | AI intelligence workspace | No dedicated Flutter feature screen found | Not found in reviewed Flutter source | Define approved data scope, provenance, model identity, uncertainty, redaction, human review and backend AI gateway before UI integration. |
 | Climatol homogenization | No dedicated Flutter feature screen found | Not found in reviewed Flutter source | Build job configuration/status/results/diagnostics/report UI around isolated server-side jobs; preserve raw series unchanged. |
-| Reports and analytics | Placeholder `_InformationPage` in `metra_home.dart` | Placeholder | Implement role-scoped filters, reconciled aggregations, PDF/Excel and export tests against approved data contracts. |
+| Reports and analytics | `lib/features/reports/reports_hub_screen.dart`, `lib/features/reports/observation_archive_screen.dart` | Partial / contract-blocked, CI-verified | Reports hub and read-only observation archive UI exist. Daily/monthly/annual/climate aggregation and export remain blocked on approved API/domain contracts; do not treat placeholder report categories as complete. |
 | Account settings | Basic account identity and sign-out in `metra_home.dart` | Implemented (partial) | Profile, security/session controls and approved account lifecycle features. |
 | Offline / sync experience | Not established by reviewed screen code | Blocked on requirements and architecture | Define safe draft persistence, conflict resolution, idempotent retries and device data protection before adding offline writes. |
 
@@ -74,7 +74,29 @@ The repository contains `10-5-2026 برنامج ادارة البيانات ال
 - Status: **In progress / blocked** on binary archive inspection and full legacy source indexing.
 - Review timestamp (UTC): `2026-11-11T15:02:47.370Z`.
 - Evidence reviewed: current Flutter bootstrap, auth, home shell, station directory, observation review, API client, Flutter test source, workflow inventory, role-permission matrix and API deployment guide.
-- Tests executed in this round: **none**. This was a static inspection; no `flutter analyze`, `flutter test`, .NET tests or live API checks are claimed.
+- Verification update (2026-11-12): Flutter Client CI #1133 passed on code commit `f3e6e730b26cb1e874c93657ff342c79abc2aaa2` (Flutter analyze; 27 Flutter tests; Angular build). Client CI #1134 passed on documentation follow-up head `2b446bdb757bf7590c73752687bcd9a9bfcd862d`. Backend CI #1549 passed on `cc190dbd29b3b81d4833cbf8d714080f31846346` (PostgreSQL 17 isolated integration/security tests, .NET build/tests and container build). These are CI checks for the respective commits, not full end-to-end or visual sign-off.
 - Database changes: **none**.
 - Flutter implementation changes: **none in this inventory-only round**.
 - Next: complete authoritative requirements extraction, then implement the Flutter shared navigation/access context and one complete observation workflow end-to-end with tests before expanding to the remaining modules.
+
+## Verified implementation update — 2026-11-12
+
+The current Flutter branch now contains these additional screens/components beyond the earlier static baseline:
+- Responsive shared navigation (`core/widgets/metra_adaptive_navigation.dart`).
+- Forecast-centre station comparison (`features/forecast_centres/forecast_centre_screen.dart`).
+- Read-only station audit history (`features/stations/station_audit_log_screen.dart`).
+- Reports hub and observation archive (`features/reports/reports_hub_screen.dart`, `observation_archive_screen.dart`).
+- Station directory detail metadata and station-scoped observation archive reads.
+
+Exact-head CI evidence:
+- Client CI #1133: success; Flutter analyze passed; 27 Flutter tests passed; Angular build passed.
+- Client CI #1134: success on documentation follow-up head.
+- Backend CI #1549: success; isolated PostgreSQL 17 tests, .NET build/tests and container build passed.
+
+Important limits:
+- These checks do not prove every Flutter screen is complete or visually identical to the original reference.
+- Reports hub categories remain contract-blocked where backend/domain contracts are absent.
+- Forecast-centre live measurements and bulletins remain unavailable until a verified feed/API contract exists.
+- Station audit history is not the electronic meteorological-record audit module.
+- AI intelligence and Climatol workflows are still not implemented as complete operational modules.
+- The RAR requirements archive remains uninspected; full authoritative traceability is therefore blocked.
