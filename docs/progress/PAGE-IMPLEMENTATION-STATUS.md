@@ -283,3 +283,18 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - The endpoint currently returns catalogue/geographic comparison only. Meteorological snapshots remain unavailable and are not simulated.
 - Commits: `2b612d12fe2ec46115c146eacc72c9232c30ad9d`, `ce1f4b0cb3c3fe0600d9c938575cf7408a04dfa5`, `91c0cf202c441f5a49a4f04bb44a07c32c51bdc7`.
 - CI #871: Flutter analyze and tests succeeded; Angular npm tests/build succeeded, but Chromium installation was cancelled. Current integration commits require a fresh complete CI run.
+
+
+## Canonical Flutter consolidation and account-screen completion — 2026-11-11T16:59:55.309Z
+
+- **Active branch:** `work/flutter-canonical-consolidation`; canonical destination remains `flutter-app/`. Grok's reference source `mobile/metra_mobile/` on `main` is not overwritten or deleted.
+- **Source inventory:** every relative source file has a canonical counterpart except `lib/features/forecast_centres/forecast_centre_screen.dart`; its unique geographic calculation was not copied because canonical `forecasting_center_screen.dart` already provides server-side comparison for 2–12 stations, map/search and station profile. The reference screen would be a weaker duplicate.
+- **Unique navigation:** responsive shared navigation was copied and integrated into canonical home; compact screens use NavigationBar and wide screens use NavigationRail.
+- **Station metadata:** coordinate provenance/accuracy were added to canonical station model, station detail and forecasting profile, with source tests.
+- **Account access:** active-only server account-state gate, pending registration routing, blocked/error states, profile registration-status display, authority membership/permission queue/request/review/revoke/audit, registration audit, station assignment expiry/detail/station audit, and password-recovery completion form/deep-link handling have been added.
+- **Recovery external gate:** Supabase Additional Redirect URL `metra2027://auth-callback` must be allow-listed and tested using real email links on Android/iOS. See `docs/security/SUPABASE-AUTH-REDIRECT-SETUP.md`.
+- **Account audit:** `docs/progress/ACCOUNT-SCREENS-AUDIT.md`; full source-path disposition: `docs/audit/FLUTTER-REFERENCE-PATH-CONSOLIDATION.md`; page matrix and architecture traceability were updated.
+- **CI evidence:** run `43063206728` for source SHA `18bc47d8c62148afa6e18d9170e9f3c54a4f3683`: Flutter analyzer passed; widget tests reported 78 passed / 4 failed. Failures were a prematurely completed error future in the test, two registration fixtures/assertions using the old account-state shape, and a self-membership test fixture that did not mirror the JSON catalogue response. Corrections are in `1011ace8`, `b60318c`, and `7850c08`.
+- **Current verification:** Client CI run `43063665760` is queued for corrected code SHA `7850c089e30ea08d83519494950b28f0d5bcaf5d`. No green result is claimed yet.
+- **Still blocked by missing API contracts:** hourly/daily author history/read models and exports; full electronic audit cases/evidence/OCR workflow; live forecasting snapshots/bulletins; rainfall/climate/agriculture/soil aggregates; AI gateway; isolated Climatol worker; effective current-user access-context and searchable eligible-user directory.
+- No database migrations/RLS/grants/seeds were applied, no legacy DB writes, no main merge and no deployment.
