@@ -51,12 +51,12 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
   }
 
   Future<void> _chooseDate() async {
-    final now = DateTime.now().toUtc();
+    final now = DateTime.now();
     final value = await showDatePicker(
       context: context,
       initialDate: _periodDate ?? DateTime.utc(now.year, now.month, now.day),
       firstDate: DateTime(1900),
-      lastDate: DateTime.utc(now.year, now.month, now.day),
+      lastDate: DateTime(now.year, now.month, now.day),
       helpText: 'تاريخ السجل (UTC)',
     );
     if (value != null) setState(() => _periodDate = value);
@@ -394,5 +394,5 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
   );
 
   String _utcDate(DateTime value) =>
-      '${value.toUtc().year.toString().padLeft(4, '0')}-${value.toUtc().month.toString().padLeft(2, '0')}-${value.toUtc().day.toString().padLeft(2, '0')} UTC';
+      '${value.year.toString().padLeft(4, '0')}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')} UTC';
 }
