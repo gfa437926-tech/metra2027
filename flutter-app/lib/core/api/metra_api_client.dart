@@ -477,6 +477,24 @@ class MetraApiClient {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getStationAuditLog(
+    String stationId, {
+    int limit = 100,
+  }) async {
+    if (limit < 1 || limit > 250) {
+      throw const MetraApiException(400, 'invalid_station_audit_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/audit-log?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_station_audit_log');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
   Future<List<Map<String, dynamic>>> listStationUsers(
     String stationId, {
     int limit = 50,
