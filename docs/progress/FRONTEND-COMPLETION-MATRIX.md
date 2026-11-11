@@ -33,7 +33,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-RPT-01 | حالة النشرات / Observation status | جيد | طوابير | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-RPT-02 | تقارير المحطة / Reports hub | جيد | روابط | جزئي | محطة | جزئي | معلق | جزئي |
 | FLT-RPT-03 | تقارير مناخية/مطرية/سنوية | هيكل | غير متاح | غير متاح | — | لا | معلق | محجوبة |
-| FLT-FC-01 | مركز التنبؤ / Forecasting | جيد | دليل+مقارنة | مربوط كتالوج | قراءة | موجود | معلق | جزئي |
+| FLT-FC-01 | مركز التنبؤ / Forecasting | جيد | خريطة+بحث+اختيار+مقارنة API في `flutter-app/`؛ إضافة Grok FLT-005 منفصلة في المسار المرجعي فقط | كتالوج ومقارنة خادمية | قراءة | موجود جزئياً؛ FLT-005 المرجعي غير مثبت في canonical | لا دليل أخضر | جزئي — مراجعة مسار مطلوبة |
 | FLT-FC-02 | رصد لحظي / Live snapshot | — | غير معروض | عقد غير معتمد | — | لا | — | محجوبة |
 | FLT-SPEC-01 | أمطار/مناخ/زراعي/تربة | هيكل | حالة عدم توفر | غير متاح | — | هيكل | معلق | محجوبة |
 | FLT-AUD-01 | التدقيق الإلكتروني | هيكل | تصميم فقط | غير متاح | — | هيكل | معلق | محجوبة |
@@ -52,3 +52,16 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 
 ## Constraints
 No SQL · no legacy DB · no main merge · no publish without approval · UTC only · no fake weather data.
+
+
+## Review FLT-005 — Forecast-centre path and evidence audit (2026-11-11T16:16:41.107Z)
+
+- **Status:** Review completed; canonical integration gap remains open.
+- Grok commits reviewed: `1d3286c` (screen), `bfe0282` (navigation), `6271ce5` (widget test), `a08613f` (formatting fix), `4b894b8` (round report), `6ff6f36` (roadmap).
+- The new screen, navigation change and test are committed under `mobile/metra_mobile/`, which is documented as reference-only. The CI Flutter job runs from `flutter-app/`.
+- `flutter-app/` already contains a separate `ForecastingCenterScreen` with map/search, station selection, server-side comparison via `compareForecastingStations`, and a station profile sheet. Its API client contains the corresponding comparison/profile methods. The Grok FLT-005 implementation is therefore not a new feature in the canonical source; it is a divergent implementation in the legacy/reference tree.
+- The canonical `flutter-app/test/widget_test.dart` contains a navigation smoke test for the existing forecasting centre, but the new two-station fixture/live-feed guard test is only in `mobile/metra_mobile/test/widget_test.dart`.
+- CI evidence: combined commit statuses and PR-triggered workflow runs returned empty for the reviewed FLT-005 code commits and roadmap commit. This is **no CI evidence**, not a pass. Workflow configuration currently has `push.branches: [main]` and `pull_request.branches: [main]`; work-branch pushes are not configured to trigger this workflow.
+- Scientific guard: the reference implementation explicitly states live observations/bulletins are unavailable and avoids fabricated values. Live snapshot remains blocked pending an approved API contract.
+- **Required next action:** reconcile the stronger/reference-only changes into `flutter-app/` deliberately (without copying files blindly), port the comparison test into the canonical test suite, then obtain a CI run on the work branch. Do not delete `mobile/metra_mobile/` until the full source/assets/configuration comparison is complete.
+- No Flutter source was modified during this review. No database, migration, RLS, main-branch merge, or deployment changes were made.
