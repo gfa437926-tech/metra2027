@@ -117,11 +117,13 @@ void main() {
     await tester.pump();
 
     final terms = find.textContaining('أقر بصحة البيانات');
-    await tester.ensureVisible(terms);
+    await tester.scrollUntilVisible(terms, 240,
+        scrollable: find.byType(Scrollable).first);
     await tester.tap(terms);
     await tester.pumpAndSettle();
     final submitButton = find.text('إرسال طلب الانضمام');
-    await tester.ensureVisible(submitButton);
+    await tester.scrollUntilVisible(submitButton, 240,
+        scrollable: find.byType(Scrollable).first);
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
