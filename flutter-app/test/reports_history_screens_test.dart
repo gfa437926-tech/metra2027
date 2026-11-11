@@ -71,7 +71,19 @@ void main() {
         }
         if (request.method == 'GET' &&
             request.url.path.endsWith('/archive-confirmations')) {
-          return http.Response(jsonEncode(<dynamic>[]), 200);
+          return http.Response(jsonEncode(<dynamic>[
+            <String, dynamic>{
+              'id': '66666666-6666-4666-8666-666666666666',
+              'stationId': stationId,
+              'actorUserId': '77777777-7777-4777-8777-777777777777',
+              'reportKind': 'daily',
+              'periodStartUtc': '2026-11-10',
+              'periodEndUtc': '2026-11-10',
+              'excelFileName': 'daily.xlsx',
+              'note': 'تم التحقق من النسخة الورقية',
+              'confirmedAtUtc': '2026-11-11T06:00:00Z',
+            },
+          ]), 200);
         }
         if (request.method == 'POST' &&
             request.url.path.endsWith('/archive-confirmations')) {
@@ -92,6 +104,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('فترة التقرير بالتاريخ UTC'), findsOneWidget);
+    expect(find.text('يومي'), findsOneWidget);
+    expect(find.textContaining('المسجّل: 77777777-7777-4777-8777-777777777777'), findsOneWidget);
+    expect(find.textContaining('ملاحظة: تم التحقق من النسخة الورقية'), findsOneWidget);
     expect(find.textContaining('من: '), findsOneWidget);
     expect(find.textContaining('إلى: '), findsOneWidget);
 
