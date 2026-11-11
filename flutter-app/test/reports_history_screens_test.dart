@@ -34,7 +34,7 @@ void main() {
     expect(find.text('سجل تدقيق المحطة والتعيينات'), findsOneWidget);
 
     final auditTile = find.text('سجل تدقيق المحطة والتعيينات');
-    await tester.ensureVisible(auditTile);
+    await tester.scrollUntilVisible(auditTile, 250, scrollable: find.byType(Scrollable).first);
     await tester.tap(auditTile);
     await tester.pumpAndSettle();
 
@@ -98,10 +98,10 @@ void main() {
 
     final fileNameField = find.byWidgetPredicate((widget) =>
         widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel');
-    await tester.ensureVisible(fileNameField);
+    await tester.scrollUntilVisible(fileNameField, 250, scrollable: find.byType(Scrollable).first);
     await tester.enterText(fileNameField, 'daily.xlsx');
     final confirmButton = find.text('تأكيد الأرشفة اليدوية');
-    await tester.ensureVisible(confirmButton);
+    await tester.scrollUntilVisible(confirmButton, 250, scrollable: find.byType(Scrollable).first);
     await tester.tap(confirmButton);
     await tester.pumpAndSettle();
 
@@ -161,13 +161,15 @@ void main() {
     expect(requests.every((request) =>
         request.headers['authorization'] == 'Bearer history-token'), isTrue);
     expect(find.text('سجل النشرات المتاح'), findsOneWidget);
-    expect(find.text('نشرة ساعية'), findsOneWidget);
-    expect(find.text('نشرة يومية'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('نشرة ساعية'), 250, scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(find.text('نشرة يومية'), 250, scrollable: find.byType(Scrollable).first);
     expect(find.text('السجلات المطابقة: 2 من 2 سجلاً محمّلاً'), findsOneWidget);
 
+    await tester.scrollUntilVisible(find.text('ساعي'), 250, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('ساعي'));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('نشرة ساعية'), 250, scrollable: find.byType(Scrollable).first);
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsNothing);
     expect(find.text('السجلات المطابقة: 1 من 2 سجلاً محمّلاً'), findsOneWidget);
