@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
+import 'package:metra_mobile/core/widgets/metra_adaptive_navigation.dart';
 
 void main() {
   testWidgets('configuration screen explains missing secure environment values', (tester) async {
