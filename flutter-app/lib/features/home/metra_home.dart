@@ -5,6 +5,7 @@ import '../stations/station_directory_screen.dart';
 import '../ops/station_ops_hub_screen.dart';
 import '../observations/observation_submit_screen.dart';
 import '../forecasting/forecasting_center_screen.dart';
+import '../account/account_profile_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -41,10 +42,10 @@ class _MetraHomeState extends State<MetraHome> {
             message: 'اختر محطة أولاً لتسجيل أعطال المعدات أو بلاغات الدعم على الخادم.')
         : StationOpsHubScreen(api: widget.api, stationId: _selectedStationId!),
       ForecastingCenterScreen(api: widget.api),
-      _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
-        message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
-        action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
-          onPressed: widget.onSignOut, icon: const Icon(Icons.logout), label: const Text('تسجيل الخروج'))),
+      MetraAccountProfileScreen(
+        email: widget.userEmail,
+        onSignOut: widget.onSignOut,
+      ),
       _MoreMenuPage(
         onReview: () => setState(() => _index = 2),
         onOperations: () => setState(() => _index = 4),
