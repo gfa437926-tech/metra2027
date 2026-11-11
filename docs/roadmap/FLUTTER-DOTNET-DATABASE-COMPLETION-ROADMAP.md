@@ -234,3 +234,14 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - **Not run:** Flutter analyzer/tests, app builds or visual runtime checks. No passing test or CI result is claimed.
 - Database changes: none. Legacy database: untouched.
 - Next: run Flutter CI, then define/approve telemetry and bulletin backend contracts with source/time/quality/freshness provenance before implementing live readings. FLT-001 archive inspection remains in progress.
+
+
+## FLT-006 — Station audit history and report-contract boundary (2026-11-11)
+
+- Added a read-only Flutter station audit history screen backed by the existing `GET /api/v1/stations/{stationId}/audit-log?limit=` contract.
+- The screen displays station/assignment audit events and provenance fields; it is not an observation archive.
+- Added API and widget test source and a navigation destination for the selected station.
+- The reviewed API has no daily/monthly/annual reporting or complete observation archive endpoints. The reports destination remains explicitly unavailable until the read/report contracts and aggregation definitions are approved.
+- Implementation report: `docs/delivery/FLUTTER-ROUND-FLT-006-STATION-AUDIT-HISTORY.md`.
+- Verification: pending Client CI on the implementation PR head; no passing result is claimed here.
+- Database, Supabase, Backend, SQL/migrations and legacy repository: unchanged.
