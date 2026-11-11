@@ -106,3 +106,18 @@ The earlier failure on PR #30 head `9689ab82...` is superseded by the owning ass
 ### Backend latest-head CI update
 
 PR #22's current head advanced to `8134c9e4546693d717a10329436d646b08dbb94f`; exact-head Backend build [#42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135) is in progress. Do not rely on the previous no-run snapshot for this new head. PR #21 remains pending; PR #23 latest-head R/Climatol CI is successful.
+
+
+### Latest exact-head CI refresh — 2026-11-11T00:20:00Z UTC
+
+| Requirement area / PR | Exact current head | CI evidence | Updated classification |
+|---|---|---|---|
+| Flutter UTC/client tests (#21) | `7ee3e58181d8b6b7267319737e681955f2a6f6c7` | [Client CI #42929765964](https://github.com/gfa437926-tech/metra2027/actions/runs/42929765964) — success | Branch CI verified at current head; this alone does not prove full UTC persistence round-trip or feature parity. |
+| API UTC/backend tests (#22) | `0d29163a4457c12f38e8a1c79b7dec49248c143d` | [Backend build #42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) — success | Backend branch CI verified at current head; retain API contract and integration acceptance gates. |
+| R/Climatol (#23) | `c0240707e00253a1cca9e5254f49347dba1d36d5` | [Climate Analytics R #42929191048](https://github.com/gfa437926-tech/metra2027/actions/runs/42929191048) — success | Latest branch CI verified; scientific validation against approved METRA data/parameters remains separate. |
+| QA audit (#24) | `0e16cab12c1a789f04f9515cc6f0881f5976c082` | No associated run found | Audit/matrix only; no CI execution evidence on current head. |
+| DevOps/client CI (#27) | `fb2d38d4bfb7636bd76e8aca3de5ba7cd8c15eba` | [Client CI #42925414294](https://github.com/gfa437926-tech/metra2027/actions/runs/42925414294) — success | Current branch client CI verified; does not establish deployment or production readiness. |
+| Integration inventory (#28) | `9b3ad187de7cbbf861dd7b091c193172e5a77ea9` | No associated run found | Static source inventory only; no runtime E2E evidence. |
+| Security (#30) | `b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2` | [Backend build #42925422751](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422751) and [Client CI #42925422685](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422685) — both success | Current-head backend/client CI verified; no penetration test or production security certification implied. |
+
+All listed PRs remain Draft/open/unmerged at this refresh. Keep the source-level review-queue TOCTOU finding and the client integration gaps as open acceptance items until atomic authorization, approved contracts, and authenticated runtime tests are evidenced.
