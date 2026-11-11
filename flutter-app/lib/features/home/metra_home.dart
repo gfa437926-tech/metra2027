@@ -18,6 +18,7 @@ import '../reports/observation_status_screen.dart';
 import '../roles/role_workspaces_screen.dart';
 import '../aftn/aftn_console_shell_screen.dart';
 import '../matching/record_matching_shell_screen.dart';
+import '../admin/authority_access_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -225,6 +226,9 @@ class _MetraHomeState extends State<MetraHome> {
         onRecordMatching: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => const RecordMatchingShellScreen(),
         )),
+        onAuthorityAccess: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => AuthorityAccessScreen(api: widget.api),
+        )),
       ),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
@@ -281,6 +285,7 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onRoleWorkspaces,
     required this.onAftn,
     required this.onRecordMatching,
+    required this.onAuthorityAccess,
   });
 
   final VoidCallback onReview;
@@ -301,6 +306,7 @@ class _MoreMenuPage extends StatelessWidget {
   final VoidCallback onRoleWorkspaces;
   final VoidCallback onAftn;
   final VoidCallback onRecordMatching;
+  final VoidCallback onAuthorityAccess;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -411,6 +417,13 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'مكاتب الأدوار التشغيلية',
         description: 'رئيس المحطة، الرصد، الاتصالات، الشبكات، مدير النظام، المتنبئ، AFTN، Climatol.',
         onTap: onRoleWorkspaces,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.admin_panel_settings_outlined,
+        title: 'إدارة العضويات والصلاحيات',
+        description: 'طلبات العضوية ومنح الصلاحيات ومراجعتها وإلغاؤها مع سجل تدقيق خادمي.',
+        onTap: onAuthorityAccess,
       ),
       const SizedBox(height: 10),
       _ActionCard(
