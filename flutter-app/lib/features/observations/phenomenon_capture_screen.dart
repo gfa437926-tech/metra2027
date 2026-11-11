@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import 'observation_api_messages.dart';
 
 /// Captures one phenomenon locally, then validates and submits it through the
 /// station-scoped observation API. The client never writes directly to storage.
@@ -194,14 +195,7 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
       }
     } on MetraApiException catch (e) {
       if (mounted) {
-        setState(() => _error = switch (e.statusCode) {
-          401 => 'انتهت الجلسة. سجّل الدخول مجدداً قبل الحفظ.',
-          403 => 'الخادم لا يمنح هذا الحساب صلاحية إنشاء ظاهرة لهذه المحطة.',
-          400 => 'رفض الخادم حمولة الظاهرة؛ راجع الحقول المطلوبة.',
-          409 => 'تعارض في مفتاح منع التكرار أو في حالة الإرسال.',
-          503 => 'خدمة الحفظ غير متاحة حالياً. بقيت البيانات محلياً ويمكن إعادة المحاولة.',
-          _ => 'تعذر حفظ الظاهرة (HTTP ${e.statusCode}).',
-        });
+        setState(() => _error = observationSubmitErrorMessage(e.statusCode));
       }
     } catch (_) {
       if (mounted) {
