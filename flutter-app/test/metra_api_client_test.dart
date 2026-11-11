@@ -203,4 +203,56 @@ void main() {
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
 
+
+  test('forecasting comparison uses the server contract and parses catalogue pairs', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'forecast-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode({
+          'source': 'metra_station_catalogue',
+          'stations': [
+            {'stationId': stationId, 'meteorologicalValues': null},
+            {'stationId': '22222222-2222-4222-8222-222222222222', 'meteorologicalValues': null},
+          ],
+          'pairs': [
+            {'fromStationId': stationId, 'toStationId': '22222222-2222-4222-8222-222222222222',
+             'distanceKm': 12.4, 'elevationDifferenceM': 80, 'distanceAvailable': true},
+          ],
+        }), 200);
+      }),
+    );
+
+    final result = await client.compareForecastingStations([
+      stationId, '22222222-2222-4222-8222-222222222222',
+    ]);
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/forecasting/compare');
+    expect(captured.headers['authorization'], 'Bearer forecast-token');
+    expect(jsonDecode(captured.body)['stationIds'], hasLength(2));
+    expect(result['pairs'], hasLength(1));
+    expect((result['pairs'] as List).single['distanceKm'], 12.4);
+    expect((result['stations'] as List).first['meteorologicalValues'], isNull);
+    client.close();
+  });
+
+  test('forecasting comparison rejects duplicate and out-of-range station counts', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'forecast-token',
+      client: MockClient((_) async => http.Response('{}', 200)),
+    );
+    await expectLater(
+      client.compareForecastingStations([stationId, stationId]),
+      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'duplicate_station_ids')),
+    );
+    await expectLater(
+      client.compareForecastingStations([stationId]),
+      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'compare_requires_2_to_12_stations')),
+    );
+    client.close();
+  });
+
 }
