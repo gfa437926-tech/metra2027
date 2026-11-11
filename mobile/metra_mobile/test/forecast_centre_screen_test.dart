@@ -137,4 +137,69 @@ void main() {
 
     api.close();
   });
+
+  testWidgets('forecast centre rejects stations beyond four and flags missing coordinates',
+      (tester) async {
+    final stationRows = List.generate(5, (index) {
+      final number = index + 1;
+      return {
+        'id': '0000000$number-0000-4000-8000-00000000000$number',
+        'local_station_code': 'FC00$number',
+        'name_ar': 'محطة اختبار $number',
+        'name_en': 'Test station $number',
+        'station_type': 'classic',
+        'operational_status': 'active',
+        'approval_status': 'approved',
+        'is_demo': false,
+        'elevation_m': number == 4 ? null : 100 * number,
+        'station_coordinates': number == 4
+            ? <Map<String, dynamic>>[]
+            : [
+                {
+                  'latitude': 30.0 + number,
+                  'longitude': 35.0 + number,
+                  'coordinate_source': 'fixture',
+                  'accuracy_m': 10
+                }
+              ],
+      };
+    });
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'forecast-token',
+      client: MockClient((_) async => http.Response(
+            jsonEncode(stationRows),
+            200,
+            headers: {'content-type': 'application/json'},
+          )),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ForecastCentreScreen(api: api)),
+    ));
+    await tester.pumpAndSettle();
+
+    for (var index = 1; index <= 4; index++) {
+      final choice = find.text('محطة اختبار $index');
+      await tester.ensureVisible(choice);
+      await tester.tap(choice);
+      await tester.pumpAndSettle();
+    }
+
+    final fifthChoice = find.ancestor(
+      of: find.text('محطة اختبار 5'),
+      matching: find.byType(CheckboxListTile),
+    );
+    await tester.ensureVisible(fifthChoice);
+    expect(tester.widget<CheckboxListTile>(fifthChoice).onChanged, isNull);
+
+    await tester.scrollUntilVisible(
+      find.text('غير قابلة للحساب — الإحداثيات غير صالحة'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('غير قابلة للحساب — الإحداثيات غير صالحة'), findsOneWidget);
+
+    api.close();
+  });
 }
