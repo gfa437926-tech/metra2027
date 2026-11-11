@@ -73,7 +73,7 @@ interface DashboardCard {
         <h3><i class="fa-solid fa-leaf"></i> المناخ والزراعة</h3>
         <div class="cards-grid">
           @for (card of climateCards; track card.title; let i = $index) {
-            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 3 }"></ng-container>
+            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 5 }"></ng-container>
           }
         </div>
       </section>
@@ -82,7 +82,7 @@ interface DashboardCard {
         <h3><i class="fa-solid fa-brain"></i> مراكز العمل المتخصصة</h3>
         <div class="cards-grid">
           @for (card of specialistCards; track card.title; let i = $index) {
-            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 6 }"></ng-container>
+            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 8 }"></ng-container>
           }
         </div>
       </section>
@@ -91,7 +91,7 @@ interface DashboardCard {
         <h3><i class="fa-solid fa-screwdriver-wrench"></i> الصيانة والإصلاح</h3>
         <div class="cards-grid">
           @for (card of maintenanceCards; track card.title; let i = $index) {
-            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 6 }"></ng-container>
+            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 13 }"></ng-container>
           }
         </div>
       </section>
@@ -100,7 +100,7 @@ interface DashboardCard {
         <h3><i class="fa-solid fa-circle-info"></i> حول النظام</h3>
         <div class="cards-grid">
           @for (card of aboutCards; track card.title; let i = $index) {
-            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 9 }"></ng-container>
+            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 16 }"></ng-container>
           }
         </div>
       </section>
@@ -110,7 +110,7 @@ interface DashboardCard {
           <h3><i class="fa-solid fa-user-tie"></i> لوحات الإدارة</h3>
           <div class="cards-grid">
             @for (card of managementCards; track card.title; let i = $index) {
-              <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 12 }"></ng-container>
+              <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 19 }"></ng-container>
             }
           </div>
         </section>
