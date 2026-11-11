@@ -145,3 +145,9 @@
 - Explicitly left timeout/resource values for approved deployment policy. No .NET implementation or cancellation test is claimed.
 - Updated integration architecture, worker README, progress report, this append-only changelog, and implementation status. Progress remains 55%; six major work items remain.
 - CI run #29 was still in progress at inspection; no success/failure claim.
+
+
+## 2026-11-11T00:24:32Z — CI run #29 follow-up
+
+- Confirmed [R workflow run #29](https://github.com/gfa437926-tech/metra2027/actions/runs/42930941745) completed **Success** on `f1fa5e849d2026ff668cfd2e5740dd8c81c96a2e`. It revalidated the R package after the previous documentation update; it does not run on the subsequent documentation-only contract commit.
+- Current branch head after the process-supervision documentation commit is `5bbd63f76c99b39adc44394526ea8d7d54909bcc`. PR #23 remains open and draft.

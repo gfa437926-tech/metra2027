@@ -233,3 +233,9 @@ The Climatol fixture smoke-test milestone is now verified by CI run #22 and is n
 - **Progress:** remains 55% under the established 10-workstream model: (3 complete + 5 partial × 0.5) / 10. Six major work items remain; a documented contract does not close the integration workstream.
 - **Safety:** no DB/Supabase, SQL, raw observations, Angular/Flutter, merge, or deployment changes. No `واجهات/` directory exists on this branch; none was created.
 - **Next:** implement the .NET supervisor only after the backend owner agrees on deployment isolation, process identity, termination grace period, resource limits, and idempotency semantics.
+
+
+### CI follow-up — 2026-11-11T00:24:32Z
+
+- Follow-up check confirms [R workflow run #29](https://github.com/gfa437926-tech/metra2027/actions/runs/42930941745) completed **Success** on documentation commit `f1fa5e849d2026ff668cfd2e5740dd8c81c96a2e`. This run revalidated the R package check after the previous documentation update; it does not test the latest documentation-only process-supervision contract commit.
+- Current branch HEAD is `5bbd63f76c99b39adc44394526ea8d7d54909bcc`; PR #23 remains Open / Draft / not merged.

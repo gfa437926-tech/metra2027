@@ -65,12 +65,3 @@ Climatol exposes method and quality-control parameters whose defaults and suitab
 
 - CRAN package documentation: https://cran.r-project.org/web/packages/climatol/
 - Climatol project and user guides: https://www.climatol.eu/
-
-
-## Process isolation, cancellation, and timeout contract
-
-The current worker is not safe to host as concurrent calls inside a shared long-lived R process: Climatol execution changes process-wide working-directory state, and the workspace lock only serializes calls that share the same lock root. The preferred .NET integration model is therefore one supervised R process per job (or a strictly serialized single-worker service until process supervision exists), with a unique job workspace and no shared mutable working directory.
-
-Cancellation and wall-clock timeout must be enforced by the external .NET supervisor, not by an in-process flag that cannot reliably interrupt a synchronous `climatol::homogen()` call. The supervisor contract must: record a job ID and process/container identity; stop accepting duplicate submissions for the same idempotency key; request graceful termination; after an approved grace period terminate the complete child-process tree; wait for process exit; preserve the worker's failed provenance when available; and mark supervisor-forced termination distinctly when the worker could not write its final manifest. Resource ceilings and timeout values are policy decisions and must be approved per deployment/job class rather than guessed here.
-
-A lock left after forced termination is not proof that its PID is still active: process IDs can be reused and may be scoped to a container. Recovery must correlate the recorded PID with host/container identity and process start identity, verify that the owning process is gone, preserve an audit event, and only then allow an operator-controlled removal. No automatic stale-lock deletion is implemented or specified by this document. This is an architecture contract only; no .NET supervisor or cancellation implementation is claimed.
