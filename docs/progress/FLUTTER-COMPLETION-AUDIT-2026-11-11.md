@@ -291,3 +291,13 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Current PR #11 head: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`. No workflow run was returned for this exact SHA at the time of this note.
 - Client CI #861 (`43036054744`) was pending for the prior head `4af504672a1d1fc45839a2d33558f5960ad9b31c`; it cannot verify these newer commits.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-FORECAST-UI-01 — CI finding and correction — 2026-11-11T14:14:00Z
+
+- Client CI #865 (run `43036369712`) checked the forecasting map and test change.
+- Flutter dependency resolution passed. `flutter analyze` failed only in the newly added widget test because it used unsupported `TestFlutterView.setPhysicalSize/setDevicePixelRatio` methods and awaited synchronous reset methods. The workflow therefore skipped `flutter test`.
+- Corrected the test to use the supported `tester.view.physicalSize` and `tester.view.devicePixelRatio` properties and synchronous reset methods.
+- Correction commit: `0d8bc257451d1266faef827848b355cbedba92f4`.
+- Client CI #865 is a failed run; exact-head rerun is required. The map feature is implemented but **not yet verified**.
+- The Angular job had passed npm tests and build; Chromium smoke was still running when the Flutter analyzer failure was read.
