@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
@@ -8,11 +8,11 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
   standalone: true,
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   template: `
-    <button id="mobileMenuBtn" class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" aria-label="فتح القائمة">
+    <button id="mobileMenuBtn" #mobileMenuTrigger class="mobile-menu" type="button" (click)="sidebarOpen = !sidebarOpen" [attr.aria-label]="sidebarOpen ? 'إغلاق القائمة' : 'فتح القائمة'" aria-controls="mainSidebar" [attr.aria-expanded]="sidebarOpen">
       <i class="fa-solid fa-bars"></i><span>القائمة</span>
     </button>
     <div id="mobileOverlay" class="sidebar-backdrop" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
-    <aside id="mainSidebar" class="sidebar" [class.open]="sidebarOpen" aria-label="القائمة الرئيسية">
+    <aside id="mainSidebar" class="sidebar" [class.open]="sidebarOpen" [attr.inert]="isMobileViewport && !sidebarOpen ? '' : null" aria-label="القائمة الرئيسية">
       <div class="sidebar-scroll">
         <header class="sidebar-header">
           <div class="logo-container"><i class="fa-solid fa-cloud-sun"></i></div>
@@ -92,7 +92,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
   `,
   styles: [`
     :host{display:block;min-height:100vh;font-family:'Tajawal','Segoe UI',Tahoma,Arial,sans-serif;color:#2c3e50}
-    .sidebar{position:fixed;inset:0 0 0 auto;width:300px;height:100vh;z-index:1000;background:linear-gradient(180deg,#2c3e50 0%,#34495e 100%);border-left:5px solid #3498db;box-shadow:-5px 0 25px rgba(0,0,0,.1);color:#ecf0f1}
+    .sidebar{position:fixed;inset:0 0 0 auto;width:var(--metra-sidebar-width);height:100vh;z-index:1000;background:linear-gradient(180deg,var(--metra-color-sidebar-start) 0%,var(--metra-color-sidebar-end) 100%);border-left:var(--metra-sidebar-border-width) solid var(--metra-color-accent);box-shadow:var(--metra-shadow-sidebar);color:var(--metra-color-sidebar-text)}
     .sidebar-scroll{height:100%;overflow-y:auto;padding:20px 0}
     .sidebar-header{text-align:center;padding:8px 18px 22px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:18px}
     .logo-container{width:66px;height:66px;border-radius:50%;margin:0 auto 12px;background:#fff;color:#3498db;display:grid;place-items:center;font-size:32px;box-shadow:0 4px 15px rgba(0,0,0,.2)}
@@ -102,23 +102,26 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
     .user-name{font-weight:700;font-size:12px;overflow-wrap:anywhere}.user-details{font-size:11px;opacity:.78;margin-top:4px}.signout{margin-top:10px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:6px;padding:6px 12px;font:inherit;font-size:11px;cursor:pointer}.signout:hover{background:rgba(255,255,255,.12)}
     .section-title{color:rgba(255,255,255,.62);font-size:12px;font-weight:700;padding:13px 20px 7px;margin:8px 15px 4px;border-bottom:1px solid rgba(255,255,255,.1)}
     nav{display:flex;flex-direction:column}
-    .nav-link{color:#ecf0f1;text-decoration:none;display:flex;align-items:center;gap:12px;padding:11px 16px;margin:3px 15px;border-radius:8px;font-size:13px;transition:background .2s,transform .2s}
+    .nav-link{color:var(--metra-color-sidebar-text);text-decoration:none;display:flex;align-items:center;gap:12px;padding:11px 16px;margin:3px 15px;border-radius:8px;font-size:13px;transition:background .2s,transform .2s}
     .nav-link i{width:20px;text-align:center;font-size:15px;color:#27ae60}.nav-link i.hourly{color:#bb8fce}.nav-link i.climate{color:#1abc9c}.nav-link i.daily{color:#f39c12}.nav-link i.soil{color:#af7ac5}.nav-link i.agriculture{color:#2ecc71}.nav-link i.users{color:#d7bde2}
-    .nav-link:hover{background:rgba(255,255,255,.1);transform:translateX(-3px);color:#fff}.nav-link.active{background:#2980b9;color:#fff;box-shadow:0 4px 12px rgba(41,128,185,.3)}.nav-link.active i{color:#fff}
+    .nav-link:hover{background:rgba(255,255,255,.1);transform:translateX(-3px);color:#fff}.nav-link.active{background:var(--metra-color-primary);color:#fff;box-shadow:0 4px 12px rgba(41,128,185,.3)}.nav-link.active i{color:#fff}
     .nav-footnote{margin:14px 12px 18px;font-size:11px;color:rgba(255,255,255,.55);line-height:1.6}
-    .content-area{margin-right:300px;padding:30px;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
+    .content-area{margin-right:var(--metra-sidebar-width);padding:30px;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,var(--metra-color-page-start) 0%,var(--metra-color-page-end) 100%)}
     footer{margin-top:auto;text-align:center;padding:24px 8px 0;color:#83929b;font-size:11px}
     .mobile-menu,.sidebar-backdrop{display:none}
-    @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(300px,85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:#2980b9;color:white;box-shadow:0 4px 14px rgba(41,128,185,.25)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
+    @media(max-width:992px){.sidebar{transform:translateX(105%);transition:transform .25s ease;width:min(var(--metra-sidebar-width),85vw)}.sidebar.open{transform:translateX(0)}.content-area{margin-right:0;padding:76px 18px 24px}.mobile-menu{display:flex;align-items:center;gap:9px;position:fixed;top:14px;right:14px;z-index:1002;border:0;border-radius:9px;padding:10px 15px;background:var(--metra-color-primary);color:white;box-shadow:var(--metra-shadow-primary)}.sidebar-backdrop.visible{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999}}
   `]
 })
 export class AppComponent implements OnInit {
   private readonly auth = inject(SupabaseAuthService);
   private readonly router = inject(Router);
+  @ViewChild('mobileMenuTrigger') private mobileMenuTrigger?: ElementRef<HTMLButtonElement>;
   sidebarOpen = false;
+  isMobileViewport = false;
   currentUserEmail: string | null = null;
 
   ngOnInit(): void {
+    this.updateViewportMode();
     void this.refreshSession();
     this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(() => {
       void this.refreshSession();
@@ -141,5 +144,20 @@ export class AppComponent implements OnInit {
     }
   }
 
-  closeSidebar(): void { this.sidebarOpen = false; }
+  @HostListener('window:resize')
+  updateViewportMode(): void {
+    this.isMobileViewport = window.innerWidth <= 992;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (!this.sidebarOpen) return;
+    this.closeSidebar();
+    this.mobileMenuTrigger?.nativeElement.focus();
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+    if (this.isMobileViewport) this.mobileMenuTrigger?.nativeElement.focus();
+  }
 }

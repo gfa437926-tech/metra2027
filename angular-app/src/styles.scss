@@ -3,6 +3,24 @@
   font-family: Tahoma, Arial, sans-serif;
   background: #f3f6f8;
   color: #183344;
+
+  /* Shared METRA web-shell design tokens. Values preserve the existing shell palette. */
+  --metra-color-ink: #2c3e50;
+  --metra-color-sidebar-start: #2c3e50;
+  --metra-color-sidebar-end: #34495e;
+  --metra-color-sidebar-text: #ecf0f1;
+  --metra-color-primary: #2980b9;
+  --metra-color-accent: #3498db;
+  --metra-color-page-start: #f8f9fa;
+  --metra-color-page-end: #e9ecef;
+  --metra-color-muted: #83929b;
+  --metra-sidebar-width: 300px;
+  --metra-sidebar-border-width: 5px;
+  --metra-radius-sm: 6px;
+  --metra-radius-md: 8px;
+  --metra-radius-lg: 10px;
+  --metra-shadow-sidebar: -5px 0 25px rgba(0, 0, 0, .1);
+  --metra-shadow-primary: 0 4px 14px rgba(41, 128, 185, .25);
 }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
@@ -35,4 +53,11 @@ html[dir="rtl"] body {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.6;
+}
+
+
+/* Keyboard focus visibility for the shared application shell. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #f1c40f;
+  outline-offset: 3px;
 }
