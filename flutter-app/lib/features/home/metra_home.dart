@@ -440,8 +440,7 @@ class _HomeOverview extends StatelessWidget {
               subtitle: Text(
                 selectedStationId == null
                     ? 'اختر محطة من الدليل لتفعيل الإدخال والمراجعة والصيانة والتقارير.'
-                    : 'المعرّف: $selectedStationId
-يمكنك المتابعة للإدخال أو المراجعة أو العمليات.',
+                    : 'المعرّف: $selectedStationId — يمكنك المتابعة للإدخال أو المراجعة أو العمليات.',
               ),
               trailing: TextButton(
                 onPressed: onOpenStations,
