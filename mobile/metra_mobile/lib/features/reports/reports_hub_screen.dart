@@ -4,14 +4,14 @@ class ReportsHubScreen extends StatelessWidget {
   const ReportsHubScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => Directionality(
+  Widget build(BuildContext context) => const Directionality(
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: const [
+              children: [
             Card(
               elevation: 0,
               child: Padding(
