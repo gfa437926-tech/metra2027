@@ -118,12 +118,16 @@ void main() {
 
     final terms = find.textContaining('أقر بصحة البيانات');
     await tester.scrollUntilVisible(terms, 240,
-        scrollable: find.byType(Scrollable).first);
+        scrollable: find.descendant(
+          of: find.byType(ListView), matching: find.byType(Scrollable),
+        ));
     await tester.tap(terms);
     await tester.pumpAndSettle();
     final submitButton = find.text('إرسال طلب الانضمام');
     await tester.scrollUntilVisible(submitButton, 240,
-        scrollable: find.byType(Scrollable).first);
+        scrollable: find.descendant(
+          of: find.byType(ListView), matching: find.byType(Scrollable),
+        ));
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
