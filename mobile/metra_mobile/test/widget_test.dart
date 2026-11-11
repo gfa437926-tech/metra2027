@@ -31,7 +31,8 @@ void main() {
           'operational_status': 'unverified',
           'approval_status': 'pending',
           'is_demo': false,
-          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}],
+          'elevation_m': 1150.0,
+          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7, 'coordinate_source': 'surveyed', 'accuracy_m': 3.2}],
         },
         {
           'id': '22222222-2222-4222-8222-222222222222',
@@ -60,6 +61,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('محطة كلاسيكية'), findsOneWidget);
     expect(find.text('محطة آلية'), findsOneWidget);
+    await tester.tap(find.byTooltip('تفاصيل المحطة').first);
+    await tester.pumpAndSettle();
+    expect(find.text('الارتفاع عن سطح البحر'), findsOneWidget);
+    expect(find.text('1150.0 م'), findsOneWidget);
+    expect(find.text('surveyed'), findsOneWidget);
+    expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
     await tester.tap(find.text('محطة آلية'));
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
