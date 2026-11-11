@@ -20,8 +20,8 @@ class RecordMatchingShellScreen extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           children: [
             const Card(
-              color: const Color(0xFFFFFBEB),
-              child: const Padding(
+              color: Color(0xFFFFFBEB),
+              child: Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'واجهة مطابقة السجلات الورقية والمخططات الميكانيكية مع الإرسال الإلكتروني. '
