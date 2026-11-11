@@ -168,3 +168,44 @@ The presence of new tests in Assistant 02's branch is credited to that branch, n
 
 ### QA-07 CI outcome correction — PR #22 exact latest head
 The previously in-progress Backend build for PR #22 head `8134c9e4546693d717a10329436d646b08dbb94f` has now completed successfully: [Backend build run 42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135). This confirms the workflow completed successfully on that exact SHA, including the CI test job configured in `.github/workflows/backend-ci.yml`. It does **not** close the source-confirmed TOCTOU finding or substitute for DB revocation/race integration tests. QA-06 itself still did not run tests locally.
+
+QA-08 — exact-head revalidation and test design review (2026-11-11T02:02:00Z UTC)
+
+ 
+## QA-08 — exact-head revalidation and test design review (2026-11-11T02:02:00Z UTC)
+
+### Work performed
+- Re-read PR #22 metadata. Its exact current head is `0d29163a4457c12f38e8a1c79b7dec49248c143d`; PR remains open, Draft, unmerged, base `main`.
+- Re-read `ObservationQueueEndpointTests.cs`, `ObservationQueueEndpoints.cs`, `StationAuthorizationService.cs`, and `.github/workflows/backend-ci.yml` from PR #22's actual head branch.
+- Confirmed six WebApplicationFactory endpoint tests are present: unauthenticated 401; invalid limit 400; denied station scope 403/no queue call; Station A grant vs Station B request 403/no queue call; unconfigured queue 503; queue read failure 503.
+- Confirmed the Station A/B test uses a fake authorization service. It verifies endpoint parameter wiring, not real database authorization/isolation.
+- Confirmed the endpoint still calls three possible permission checks sequentially and then invokes `GetSubmittedAsync(stationId, take)`; the queue service performs a separate PostgREST request with service-role credentials and receives no actor ID. B-013 TOCTOU remains source-confirmed and unresolved.
+- Confirmed the current Backend workflow still omits `supabase/migrations/**` from both push and pull_request path filters.
+- Queried Actions for exact PR #22 head: [Backend build #1425 / run 42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) completed success on the exact head SHA above.
+
+### Tests and verification
+- QA-06 did not execute local `dotnet test`, Angular, Flutter, R, or E2E commands in this session.
+- The successful run is Assistant 02's Backend CI evidence, not a QA-06 test execution.
+- No test was added in this round; no test result is fabricated.
+
+### Files inspected
+- `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs`
+- `backend/Metra.Api/Features/Observations/ObservationQueueEndpoints.cs`
+- `backend/Metra.Api/Security/StationAuthorizationService.cs`
+- `.github/workflows/backend-ci.yml`
+- QA progress, audit, changelog and traceability matrix on QA branch
+- PR #22 metadata and exact-head workflow association
+
+### Files changed
+- `docs/progress/assistant-06.md` — append-only round record
+- `docs/qa/QA-AUDIT-REPORT-2026-11-11.md` — append-only evidence update
+- `docs/qa/CHANGELOG.md` — append-only round record
+- No application code, tests, workflow, SQL, migration, database, or production resources changed.
+
+### Status and remaining work
+- QA-06 status: in progress.
+- Progress remains **50%**, calculated as the weighted completion estimate across QA-06 work packages; it is not test coverage and does not increase from reviewing another assistant's successful CI.
+- Remaining: 3 major work packages — execute QA-owned test suites; implement/coordinate missing integration and E2E tests; complete cross-stack authorization/station/UTC/RTL/responsive/accessibility verification.
+- P1 B-013 remains open; P2 Supabase migration path trigger gap remains open.
+- Next: obtain approved schema/atomic authorization design for B-013, then require database-backed station isolation and revoke/read race tests; coordinate backend-ci path-filter fix with its owner.
+- No merge, rebase, deployment, database write, or schema change.
