@@ -110,7 +110,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
         crossAxisCount: MediaQuery.sizeOf(context).width > 720 ? 4 : 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        childAspectRatio: 1.6,
+        childAspectRatio: 1.2,
         children: [
           _metric('واردة', '—', Icons.inbox_outlined),
           _metric('مطابقة', '—', Icons.verified_outlined),
