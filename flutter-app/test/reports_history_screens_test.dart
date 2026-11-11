@@ -176,12 +176,17 @@ void main() {
     expect(find.text('نشرة يومية'), findsOneWidget);
 
     
-    await tester.tap(find.text('ساعي'));
+    final hourlyChip = find.ancestor(
+      of: find.text('ساعي'),
+      matching: find.byType(FilterChip),
+    );
+    await tester.tap(hourlyChip);
     await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(hourlyChip).selected, isTrue);
 
-    
-    expect(find.text('نشرة ساعية'), findsOneWidget);
-    expect(find.text('نشرة يومية'), findsNothing);
+    await tester.tap(find.text('نشرة ساعية'));
+    await tester.pumpAndSettle();
+    expect(find.text('حقول الحمولة (كما أعادها الخادم)'), findsOneWidget);
     api.close();
   });
 }
