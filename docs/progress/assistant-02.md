@@ -141,3 +141,27 @@ The earlier 54% assistant-02 task calculation is not recalculated from this docu
 - Security/performance advisors were read. Relevant archive/observation tables have client-deny policies; runtime read policies/grants are missing. Advisor notices about support/equipment functions and unindexed FKs are recorded as separate follow-up findings; no index was dropped.
 - No SQL write, DDL, migration, RPC, RLS, grant, seed, record update, legacy project query, or METRA OLD change.
 - No API implementation, migration application or Flutter binding is claimed. Backend PR #22 and Flutter PR #34 remain Draft. The interface and schema review are now documented; implementation awaits explicit archive permission and least-privilege runtime access approval.
+
+
+## Round 8 — Archive API and Flutter read-only integration (2026-11-11)
+
+- Added Backend archive page/detail endpoints in `backend/Metra.Api/Features/Observations/ObservationArchiveEndpoints.cs`.
+- Added a bounded Supabase RPC adapter using the server-only service-role credential; actor ID is derived from the validated JWT `sub` claim.
+- Registered archive service and endpoints in `Program.cs`.
+- Added proposed migration `20261111190000_add_station_scoped_observation_archive_read_rpcs.sql` with a private authorization predicate and two service-role-only SECURITY DEFINER RPCs. It checks active account, explicit approved and time-valid `observation.archive.read` grant for the station's authority, active approved station assignment and approved active station before returning only exact-station imported rows. The predicate is checked inside the RPC call; clients have no direct SELECT or RPC execute rights.
+- Migration intentionally does not add a role mapping or grant the permission to any user. No one receives archive access until an authorized authority grants the new permission through the existing permission-grant workflow.
+- Added `supabase/tests/observation_archive_read_security.sql` for function existence, client-role denial and no automatic role mapping.
+- Added Backend request-guard tests for imported type allow-list, UTC-only time ranges and bounded pagination.
+- Backend CI run `43085399691` completed successfully on the archive API/test commit; run `43085435929` also passed after contract documentation updates.
+- Flutter branch now has typed archive list/detail DTOs, authenticated API methods, UTC date range and type filters, a paginated archive list with server `hasMore`, raw source-payload detail, 403/404/503/empty states, and an entry action in the existing reports hub. No reports-hub redesign.
+- Added API and widget tests for archive list/detail, filters and selection prerequisites.
+- Flutter CI initially exposed compile/analyzer issues and a Flutter 3.50 Material import deprecation. The compile issue was fixed; imports were narrowly annotated pending the upstream Flutter Material package migration. Latest Client CI run `43086553383` is pending; no pass is claimed yet.
+- No database migration applied. No user permission issued. No SQL write, RLS/grant change, seed, data update, production deploy, legacy INSERT access or METRA OLD change.
+
+### Current gates
+1. Confirm latest Flutter CI is green and fix any remaining analyzer/test failures.
+2. Obtain approval for the archive permission audience (no role auto-assignment has been made).
+3. Obtain approval for the cost of a Supabase development branch before creating an isolated database environment; the main METRA 2027 database remains unchanged.
+4. Apply the migration only to that isolated branch and run SQL security + station-isolation integration tests.
+5. Only after successful isolated tests, request approval for production migration.
+6. Daily/hourly/monthly/annual scientific report calculations, payload-version history, Climatol and export jobs remain separate contracts and are not claimed complete by the imported archive reader.
