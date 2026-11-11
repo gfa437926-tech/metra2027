@@ -6,6 +6,7 @@ import '../api/metra_api_client.dart';
 import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
 import '../../features/auth/password_recovery_screen.dart';
+import '../../features/auth/registration_screen.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
 const metraSupabasePublishableKey = String.fromEnvironment('METRA_SUPABASE_PUBLISHABLE_KEY');
@@ -194,9 +195,26 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                             child: const Text('نسيت كلمة المرور؟'),
                           ),
                         ),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton(
+                            onPressed: _busy ? null : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(builder: (_) => MetraRegistrationScreen(
+                                api: MetraApiClient(accessTokenProvider: () async =>
+                                  Supabase.instance.client.auth.currentSession?.accessToken),
+                                createIdentity: (email, password) async {
+                                  final response = await Supabase.instance.client.auth.signUp(
+                                    email: email, password: password);
+                                  return response.session != null;
+                                },
+                              )),
+                            ),
+                            child: const Text('إنشاء حساب وطلب الانضمام'),
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         const Text(
-                          'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
+                          'لا تُفعّل الصلاحيات إلا بعد مراجعة المحطة والاعتماد النظامي.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),
