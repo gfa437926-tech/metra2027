@@ -182,3 +182,28 @@ Important correction to the initial source-only baseline:
 - Observation tables have client-deny RLS policies. The backend must not solve this by exposing service-role credentials to Flutter/Angular.
 
 Consequently, archive list/detail implementation now has a concrete source table, but remains gated on an approved least-privilege runtime SELECT migration, an explicit archive-read permission, and a single-statement/transaction station authorization predicate. The UI must distinguish imported archive envelopes from live operational observations. Scientific report calculations, version history and exports remain deferred.
+
+
+## 13. Archive read implementation candidate (2026-11-11)
+
+The Backend branch now contains:
+- `GET /api/v1/stations/{stationId}/observations/archive`
+- `GET /api/v1/stations/{stationId}/observations/{observationId}`
+- `SupabaseObservationArchiveService`, which calls the database RPCs using the server-only service-role credential.
+- UTC-only range validation, verified observation-type allow-list, limit 1–100 and offset 0–100000.
+- Fail-closed 401/403/404/503 handling.
+- API guard tests.
+
+The proposed migration `20261111190000_add_station_scoped_observation_archive_read_rpcs.sql` defines a private authorization predicate and two SECURITY DEFINER RPCs. The predicate verifies active account, an approved non-expired non-revoked `observation.archive.read` user grant scoped to the station authority, an approved active station assignment, and an approved operational station. The page/detail query is executed by the same RPC after the authorization predicate and is constrained by the exact route station ID. Unlinked records and demo records are excluded. Public/anon/authenticated execution is revoked; only service_role can invoke the public RPCs. The private predicate is not directly executable by API client roles.
+
+**No role is automatically assigned this permission.** The migration intentionally does not insert into `metra_role_permissions` and does not create user grants. This avoids granting access to station_head, station_auditor or chief_auditor before the owner confirms the intended audience. A permission grant must be issued through the existing approved permission-grant workflow.
+
+The migration has been committed to the Backend PR branch but has **not** been applied to Supabase. It requires isolated-database migration execution and integration tests before approval for deployment. The connected production-like METRA 2027 database remains unchanged.
+
+The Flutter PR branch now contains typed archive list/detail models, authenticated API calls, UTC/type/pagination guards, an archive list/detail screen and an entry action in the existing Reports Hub. It does not redesign the reports hub. Flutter displays authorization, empty and service-unavailable states and renders the original imported payload without calculating meteorological statistics.
+
+### Still gated
+- Apply migration only after the owner approves who may receive `observation.archive.read`.
+- Run the SQL security test and DB integration tests against an isolated Supabase branch/database.
+- Confirm current Backend CI and Flutter CI for the newest commits.
+- Scientific hourly/daily/monthly/annual calculations, versioned payload history, Climatol and exports remain outside this archive read implementation until their domain contracts are approved.
