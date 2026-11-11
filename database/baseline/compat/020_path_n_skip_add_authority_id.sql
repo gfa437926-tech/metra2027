@@ -24,6 +24,11 @@ BEGIN
         ADD CONSTRAINT permission_grants_authority_fk
         FOREIGN KEY (authority_id) REFERENCES public.meteorological_authorities(id) ON DELETE RESTRICT;
     END IF;
+    -- Match original 020 end-state: NOT NULL when safe (empty Path N has no nulls).
+    IF EXISTS (SELECT 1 FROM public.permission_grants WHERE authority_id IS NULL) THEN
+      RAISE EXCEPTION 'permission_grants_authority_backfill_required';
+    END IF;
+    ALTER TABLE public.permission_grants ALTER COLUMN authority_id SET NOT NULL;
   ELSE
     RAISE EXCEPTION 'path_n_020_requires_baseline_authority_id';
   END IF;
