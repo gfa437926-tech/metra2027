@@ -123,3 +123,17 @@
 - Registered the custom scheme in Android manifest and iOS Info.plist.
 - Added password-update widget tests and documented the required Supabase Additional Redirect URL in `docs/security/SUPABASE-AUTH-REDIRECT-SETUP.md`.
 - **External gate:** the redirect URI has not been added to Supabase Dashboard; test with an actual email link on Android/iOS before release.
+
+
+## ACC-06 — Password recovery completion — 2026-11-11T16:56:51.541Z
+
+- Added `MetraPasswordUpdateScreen` with minimum-length and confirmation validation, loading/success states and redacted provider failures.
+- `MetraAuthGate` handles Supabase `AuthChangeEvent.passwordRecovery`, routes to the new-password form, and rechecks METRA account status after a successful update.
+- Recovery requests use `metra2027://auth-callback`; Android manifest and iOS URL scheme registration are included.
+- Added `docs/security/SUPABASE-AUTH-REDIRECT-SETUP.md`. Supabase Dashboard allow-list and real-device email-link verification remain release gates.
+
+## ACC-07 — Station assignment audit history — 2026-11-11T16:56:51.541Z
+
+- Added `getStationAuditLog` client method and `StationAuditLogScreen` using the existing station-scoped `GET /api/v1/stations/{stationId}/audit-log` endpoint.
+- Linked the audit log from station assignment management. The screen displays actor, target, role, previous/resulting status, UTC validity and reason; server permission failures remain visible without exposing provider internals.
+- Added widget test for the audit read model.
