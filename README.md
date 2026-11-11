@@ -5,10 +5,12 @@ METRA 2027 is organized as three independently runnable applications:
 | Application | Technology | Folder | Local development |
 |---|---|---|---|
 | Web | Angular 20 | `angular-app/` | http://localhost:4200 |
-| Mobile | Flutter | `mobile/metra_mobile/` | Android / iOS device or emulator |
+| Mobile | Flutter | `flutter-app/` | Android / iOS device or emulator |
 | Backend API | ASP.NET Core 10 / C# | `backend/Metra.Api/` | http://localhost:5000 |
 
 ## Architecture and current integration
+
+> **Flutter source of truth:** `flutter-app/` is the canonical app directory used by Client CI. `mobile/metra_mobile/` is a legacy/reference copy and must not be developed or released in parallel. Before retiring it, compare its screens, assets, tests, and platform configuration and migrate any unique functionality deliberately.
 
 The web, mobile, and API applications have independent build and startup lifecycles. The ASP.NET Core API is the only intended application backend and owns privileged database access.
 
@@ -40,7 +42,7 @@ Requirements: Flutter stable SDK, Android Studio / Android SDK for Android, and 
 Generate native platform runner folders once if they are not present:
 
 ```bash
-cd mobile/metra_mobile
+cd flutter-app
 flutter create --platforms=android,ios .
 flutter pub get
 flutter run
