@@ -67,3 +67,11 @@ The backend validators were inspected as read-only evidence; they are not treate
 - **Submission API:** the generic `payload` object is capped by the API contract but has no detailed hourly/daily JSON schema in the inspected documentation.
 - **Decision:** do not build speculative forms or reuse old-database station data. Request an approved UI/payload specification covering required/optional fields, labels, units, reference values, and UTC behavior before implementation.
 - No Backend, Angular, Supabase, or database files were modified.
+
+
+## Accessibility improvement (M8)
+
+- Password visibility IconButton now exposes a localized dynamic tooltip/semantics label: `إظهار كلمة المرور` while obscured and `إخفاء كلمة المرور` while visible.
+- Added a widget test asserting both tooltip states and the corresponding `TextFormField.obscureText` value before/after each toggle.
+- Scope limited to Flutter authentication UI and its widget test.
+- Local Flutter test execution was not performed in this round; CI is the verification source of truth.
