@@ -117,6 +117,7 @@ void main() {
       ),
     ));
     await tester.enterText(find.byType(TextField).at(0), 'ضباب');
+    await tester.pump();
     await tester.tap(find.text('بدء الظاهرة'));
     await tester.pump();
     await tester.tap(find.text('إنهاء والتحقق والحفظ'));
@@ -124,6 +125,7 @@ void main() {
 
     expect(submissionAttempts, 0);
     expect(find.textContaining('نوع الظاهرة مطلوب'), findsOneWidget);
+    expect(tester.widget<TextField>(find.byType(TextField).first).enabled, isTrue);
     expect(find.text('تم حفظ الظاهرة'), findsNothing);
     api.close();
   });
