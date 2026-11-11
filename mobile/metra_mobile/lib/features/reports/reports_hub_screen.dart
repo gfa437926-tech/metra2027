@@ -6,7 +6,7 @@ class ReportsHubScreen extends StatelessWidget {
   final VoidCallback? onOpenArchive;
 
   @override
-  Widget build(BuildContext context) => const Directionality(
+  Widget build(BuildContext context) => Directionality(
         textDirection: TextDirection.rtl,
         child: SingleChildScrollView(
           child: Padding(
