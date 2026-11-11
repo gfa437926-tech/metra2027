@@ -207,3 +207,8 @@ The Flutter PR branch now contains typed archive list/detail models, authenticat
 - Run the SQL security test and DB integration tests against an isolated Supabase branch/database.
 - Confirm current Backend CI and Flutter CI for the newest commits.
 - Scientific hourly/daily/monthly/annual calculations, versioned payload history, Climatol and exports remain outside this archive read implementation until their domain contracts are approved.
+
+
+### 13.1 Pagination completion metadata
+
+The archive page RPC now fetches one extra candidate row and returns `page.hasMore` while keeping the requested page size bounded. The Flutter archive screen uses this flag to hide the “load more” control when the final page has been reached. This avoids repeatedly requesting empty pages.
