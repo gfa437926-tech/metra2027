@@ -89,3 +89,22 @@ The 50% figure is only this task's checkpoint ratio, not the whole Angular app o
 - CI verification on this exact commit: no associated PR workflow runs were returned; combined status returned no checks. **No build/test/CI success is claimed.**
 - Remaining checkpoints (3/8): keyboard navigation/focus-order review; Angular build/tests plus successful exact-head CI; responsive desktop/mobile screenshot comparison against the approved original UI reference.
 - PR [#32](https://github.com/gfa437926-tech/metra2027/pull/32) remains Draft and unmerged. No merge, rebase, deployment, database or Supabase operation was performed.
+
+
+## Implementation increment — UI-IMPL-002 (keyboard navigation review, 2026-11-11 UTC)
+
+- Status: **In progress — keyboard access review and remediation implemented; build/CI and visual acceptance remain open**.
+- Task-scope progress: **75% (6 of 8 checkpoints completed)**. This is a checkpoint count for UI-IMPL-002 only.
+- Commits:
+  - `b26d17684874d3539c2ed86a71af2ed149a0ea42` — prevent focus entering the closed mobile off-canvas sidebar.
+  - `c18133005a9d9cc1f247018e55a0a57f2f5bd1d6` — add a visible `:focus-visible` outline for keyboard-operated controls.
+- Changes:
+  - The sidebar receives the `inert` attribute only while the viewport is mobile-sized and the sidebar is closed; desktop navigation remains available.
+  - Viewport mode is refreshed on resize.
+  - Closing the mobile sidebar returns focus to the menu trigger.
+  - Global focus-visible styling is applied to links, buttons, form controls and tabindex elements.
+  - Existing DOM order remains the keyboard sequence; no positive tabindex or duplicate navigation was introduced.
+- Post-commit source verification: re-fetched both changed files and confirmed the inert binding, resize handler, focus restoration and focus-visible rule.
+- CI on exact head `c18133005a9d9cc1f247018e55a0a57f2f5bd1d6`: no PR workflow runs or combined status checks were returned. Local build/tests were not run. **No CI or test success is claimed.**
+- Remaining checkpoints (2/8): Angular build/tests plus successful exact-head CI; responsive desktop/mobile screenshot comparison against the approved original UI reference.
+- PR [#32](https://github.com/gfa437926-tech/metra2027/pull/32) remains Draft and unmerged. No merge, rebase, deployment, database or Supabase operation was performed.
