@@ -24,12 +24,19 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
   String _typeFilter = 'all';
   String _statusFilter = 'all';
   String _query = '';
+  final TextEditingController _searchController = TextEditingController();
   DateTimeRange? _utcRange;
 
   @override
   void initState() {
     super.initState();
     _records = _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<List<ObservationQueueItem>> _load() async {
@@ -195,6 +202,7 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                   ),
                   const SizedBox(height: 8),
                   TextField(
+                    controller: _searchController,
                     decoration: const InputDecoration(
                       labelText: 'بحث في السجل',
                       hintText: 'نوع النشرة أو الحالة أو الملاحظة أو المعرّف',
@@ -257,12 +265,15 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                       if (_query.isNotEmpty || _typeFilter != 'all' ||
                           _statusFilter != 'all' || _utcRange != null)
                         TextButton.icon(
-                          onPressed: () => setState(() {
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
                             _query = '';
                             _typeFilter = 'all';
                             _statusFilter = 'all';
                             _utcRange = null;
-                          }),
+                            });
+                          },
                           icon: const Icon(Icons.filter_alt_off),
                           label: const Text('مسح كل المرشحات'),
                         ),
