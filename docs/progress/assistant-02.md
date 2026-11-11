@@ -220,3 +220,11 @@ The earlier 54% assistant-02 task calculation is not recalculated from this docu
 - Backend CI run #1545 (43098894743) is queued. The earlier run #1542 (43098429680) is also queued; no database test pass is claimed.
 - Flutter PR #34 remains based on current main (71 ahead / 0 behind); Client CI run #1130 (43098264612) remains queued.
 - No merge, hosted migration, live permission grant, paid resource, project INSERT access, or METRA OLD access/change.
+
+
+## CI queue refresh
+
+- Backend PR #35 latest code commit: 314e72a7eb56f3ce201de746b9a2999db3b3b25a. Backend build run #1547 (43099017358) is queued; no jobs have started, so the migration and SQL integration tests remain unverified.
+- Flutter PR #34 latest code commit: 3b99890a5882ac8e49248ad25d6ffbfac7fa7503. Client CI run #1130 (43098264612) is queued; no jobs have started, so the corrected widget test remains unverified.
+- PR #35 remains Draft, mergeable=true, 23 commits ahead / 0 behind main. PR #34 remains Draft, 71 commits ahead / 0 behind main.
+- No completion percentage increase is claimed while both required CI runs are queued.
