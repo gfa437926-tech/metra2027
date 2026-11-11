@@ -106,8 +106,8 @@ void main() {
         request.method == 'POST' &&
         request.url.path.endsWith('/archive-confirmations'));
     final payload = jsonDecode(post.body) as Map<String, dynamic>;
-    expect(payload['periodStartUtc'], matches(RegExp(r'^\d{4}-\d{2}-\d{2})));
-    expect(payload['periodEndUtc'], matches(RegExp(r'^\\d{4}-\\d{2}-\\d{2}$')));
+    expect(payload['periodStartUtc'], matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
+    expect(payload['periodEndUtc'], matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
     expect(payload['periodStartUtc'], payload['periodEndUtc']);
     expect(post.headers['authorization'], 'Bearer archive-token');
     expect(find.text('تم تسجيل تأكيد الأرشفة اليدوية.'), findsOneWidget);
@@ -172,7 +172,7 @@ void main() {
 
 }
 )));
-    expect(payload['periodEndUtc'], matches(RegExp(r'^\\d{4}-\\d{2}-\\d{2}$')));
+    expect(payload['periodEndUtc'], matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
     expect(payload['periodStartUtc'], payload['periodEndUtc']);
     expect(post.headers['authorization'], 'Bearer archive-token');
     expect(find.text('تم تسجيل تأكيد الأرشفة اليدوية.'), findsOneWidget);
