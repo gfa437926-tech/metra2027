@@ -30,7 +30,7 @@ void main() {
               'payload': {'temperature': 24},
               'importedAtUtc': '2026-11-11T01:00:00Z'
             }],
-            'page': {'limit': 50, 'offset': 0, 'returned': 1}
+            'page': {'limit': 50, 'offset': 0, 'returned': 1, 'hasMore': false}
           }), 200);
         }
         return http.Response(jsonEncode({
