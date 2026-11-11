@@ -180,6 +180,9 @@ void main() {
         request.url.path.startsWith('/api/v1/stations/$stationId/observations')), isTrue);
     expect(requests.every((request) =>
         request.headers['authorization'] == 'Bearer history-token'), isTrue);
+    final historyRequests = requests.skip(2);
+    expect(historyRequests.every((request) =>
+        request.url.queryParameters['limit'] == '100'), isTrue);
     expect(find.text('سجل النشرات المتاح'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('تعذر تحميل سجل النشرات من الخادم.'), findsNothing);
@@ -194,6 +197,25 @@ void main() {
     await tester.tap(hourlyChip);
     await tester.pumpAndSettle();
     expect(tester.widget<FilterChip>(hourlyChip).selected, isTrue);
+    expect(find.text('نشرة يومية'), findsNothing);
+
+    await tester.tap(find.text('الكل'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مُرجَعة'));
+    await tester.pumpAndSettle();
+    expect(find.text('نشرة ساعية'), findsNothing);
+    expect(find.text('نشرة يومية'), findsOneWidget);
+
+    final searchField = find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.labelText == 'بحث في السجل');
+    await tester.enterText(searchField, 'يرجى مراجعة القيمة');
+    await tester.pumpAndSettle();
+    expect(find.text('نشرة يومية'), findsOneWidget);
+
+    await tester.tap(find.text('مسح كل المرشحات'));
+    await tester.pumpAndSettle();
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsOneWidget);
 
     await tester.tap(find.text('نشرة ساعية'));
     await tester.pumpAndSettle();
