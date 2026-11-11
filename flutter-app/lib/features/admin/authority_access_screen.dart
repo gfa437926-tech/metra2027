@@ -393,6 +393,7 @@ class _AuthorityReasonDialogState extends State<_AuthorityReasonDialog> {
       autofocus: true,
       maxLength: 2000,
       maxLines: 3,
+      onChanged: (_) => setState(() {}),
       decoration: const InputDecoration(labelText: 'السبب (5 أحرف على الأقل)'),
     ),
     actions: [
