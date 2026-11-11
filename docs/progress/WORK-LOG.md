@@ -50,3 +50,10 @@ Push rejected: PAT lacks `workflow` scope.
 **Owner action required:** either grant the token `workflow` scope, or edit
 `.github/workflows/client-ci.yml` and `backend-ci.yml` in the GitHub UI to include:
 `branches: [main, work/legacy-ui-migration-audit]`
+
+## 2026-11-11 — deferred to end of workstream
+- Automatic CI path filters for work branch (needs `workflow` scope).
+- Angular Chromium install / offline browser e2e flakiness in Client CI.
+- Live forecasting meteorological snapshot (pending contract + owner approval).
+- Specialist unit APIs (rainfall/climate/agriculture/soil/AI/Climatol).
+- Supabase SQL apply, main merge, staging publish.
