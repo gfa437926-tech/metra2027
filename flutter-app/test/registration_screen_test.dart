@@ -14,35 +14,43 @@ void main() {
     var statusReads = 0;
     final client = MockClient((request) async {
       if (request.url.path == '/api/v1/stations') {
-        return http.Response(jsonEncode([
-          {
-            'id': '11111111-1111-4111-8111-111111111111',
-            'local_station_code': 'ST-01',
-            'name_ar': 'محطة معتمدة',
-            'name_en': 'Approved station',
-            'station_type': 'classic',
-            'operational_status': 'active',
-            'approval_status': 'approved',
-            'is_demo': false,
-            'station_coordinates': [],
-          },
-          {
-            'id': '22222222-2222-4222-8222-222222222222',
-            'local_station_code': 'ST-02',
-            'name_ar': 'محطة تجريبية',
-            'name_en': 'Demo station',
-            'station_type': 'classic',
-            'operational_status': 'active',
-            'approval_status': 'approved',
-            'is_demo': true,
-            'station_coordinates': [],
-          },
-        ])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {
+              'id': '11111111-1111-4111-8111-111111111111',
+              'local_station_code': 'ST-01',
+              'name_ar': 'محطة معتمدة',
+              'name_en': 'Approved station',
+              'station_type': 'classic',
+              'operational_status': 'active',
+              'approval_status': 'approved',
+              'is_demo': false,
+              'station_coordinates': [],
+            },
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'local_station_code': 'ST-02',
+              'name_ar': 'محطة تجريبية',
+              'name_en': 'Demo station',
+              'station_type': 'classic',
+              'operational_status': 'active',
+              'approval_status': 'approved',
+              'is_demo': true,
+              'station_coordinates': [],
+            },
+          ])),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }
       if (request.url.path == '/api/v1/registration-roles') {
-        return http.Response.bytes(utf8.encode(jsonEncode([
-          {'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'},
-        ])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'},
+          ])),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }
       if (request.url.path == '/api/v1/account/registration-status') {
         statusReads++;
