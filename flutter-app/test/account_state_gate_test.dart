@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/features/account/account_state_gate.dart';
@@ -57,15 +59,17 @@ void main() {
 
   testWidgets('status service failure fails closed and offers retry', (tester) async {
     var retried = false;
+    final status = Completer<Map<String, dynamic>>();
     await tester.pumpWidget(MaterialApp(
       home: MetraAccountStateGate(
-        statusFuture: Future.error(Exception('provider detail')),
+        statusFuture: status.future,
         activeChild: const Text('المساحة التشغيلية'),
         pendingChild: const Text('طلب الانضمام'),
         onRetry: () => retried = true,
         onSignOut: () async {},
       ),
     ));
+    status.completeError(Exception('provider detail'));
     await tester.pumpAndSettle();
     expect(find.text('تعذر التحقق من حالة الحساب'), findsOneWidget);
     expect(find.text('المساحة التشغيلية'), findsNothing);
