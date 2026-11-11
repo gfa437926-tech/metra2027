@@ -234,7 +234,7 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
                   (_status?['review_note'] ?? _status?['state_reason'] ?? '').toString(),
                   if (_status?['submitted_at'] is String)
                     'تاريخ الطلب UTC: ${_status!['submitted_at']}',
-                ].where((value) => value.trim().isNotEmpty).join('\\n')),
+                ].where((value) => value.trim().isNotEmpty).join('\n')),
               )),
             if (_status?['account_state'] == null) ...[
               const Text('البيانات الشخصية', style: TextStyle(fontWeight: FontWeight.bold)),
