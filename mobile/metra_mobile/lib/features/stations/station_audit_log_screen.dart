@@ -166,7 +166,7 @@ class _StationAuditLogScreenState extends State<StationAuditLogScreen> {
             if (event.targetUserId != null) _field('المستخدم المعني', event.targetUserId!),
             if (event.roleCode != null) _field('رمز الدور', event.roleCode!),
             if (previous != null || resulting != null)
-              _field('حالة الاعتماد', '${previous ?? 'غير محددة'} ← ${resulting ?? 'غير محددة'}'),
+              _field('حالة الاعتماد', '${previous ?? 'غير محددة'} → ${resulting ?? 'غير محددة'}'),
             if (event.validFrom != null) _field('صالح اعتباراً من', event.validFrom!),
             if (event.validTo != null) _field('صالح حتى', event.validTo!),
             if (event.reason != null && event.reason!.trim().isNotEmpty)
