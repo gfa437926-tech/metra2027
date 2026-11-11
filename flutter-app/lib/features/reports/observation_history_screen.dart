@@ -66,7 +66,6 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
   }
 
   Future<void> _chooseUtcRange() async {
-    final now = DateTime.now().toUtc();
     final DateTimeRange? selected = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2000),
