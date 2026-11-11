@@ -32,7 +32,10 @@ void main() {
     expect(find.text('أعطال المعدات'), findsOneWidget);
     expect(find.text('بلاغ عطل جديد'), findsOneWidget);
     expect(find.text('اسم المعدة'), findsOneWidget);
-    expect(find.text('لا توجد بلاغات أعطال مسجّلة لهذه المحطة'), findsOneWidget);
+    final emptyFaultState = find.text('لا توجد بلاغات أعطال مسجّلة لهذه المحطة');
+    await tester.ensureVisible(emptyFaultState);
+    await tester.pumpAndSettle();
+    expect(emptyFaultState, findsOneWidget);
     api.close();
   });
 
@@ -57,7 +60,10 @@ void main() {
     expect(find.text('بلاغات الدعم'), findsOneWidget);
     expect(find.text('العنوان'), findsOneWidget);
     expect(find.text('الوصف'), findsOneWidget);
-    expect(find.text('لا توجد بلاغات دعم مسجّلة'), findsOneWidget);
+    final emptySupportState = find.text('لا توجد بلاغات دعم مسجّلة');
+    await tester.ensureVisible(emptySupportState);
+    await tester.pumpAndSettle();
+    expect(emptySupportState, findsOneWidget);
     api.close();
   });
 }
