@@ -88,3 +88,18 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - Tests: none run by assistant 13; no SQL or live database touched.
 - Safety: only assistant-13 progress/changelog docs updated; no schema/data/source/secrets changes, merge, rebase or deployment.
 - Progress: 0% of 12 audit workstreams formally closed; all 12 remain open pending required executable tests, baseline recovery and owner acceptance.
+
+## 2026-11-11T09:54:11.928Z — Round 6: RPC authorization and audit immutability review
+
+- **Task/status:** M13 independent final audit; in progress.
+- **RPC positives:** effective migration-020 station and authority permission predicates are scoped to active account, active/approved geography and membership/assignment, active role mapping, and current approved grants; execution is service_role-only. Observation decision RPC rechecks station permission and locks the target row before transition.
+- **Trust boundary:** decision RPC accepts p_user_id and trusts the server to derive it from verified JWT sub; no independent end-user JWT binding inside service_role RPC. Station audit read RPC is also service_role-only and relies on API station authorization. Require negative integration tests.
+- **Observation audit immutability:** RLS+FORCE, browser deny policies, REVOKE ALL for public/browser/runtime, service_role SELECT/INSERT only, BEFORE UPDATE OR DELETE trigger. Missing TRUNCATE trigger. Current migration does not grant TRUNCATE to service_role; classify as defense-in-depth/privilege-drift gap, not proof of current exploitability.
+- **Authority audit immutability:** migration 020 has BEFORE UPDATE OR DELETE OR TRUNCATE trigger; migration 024 revokes direct INSERT/UPDATE/DELETE/TRUNCATE/etc. from service_role, leaving SELECT. Static checks do not prove effective live ACLs.
+- **Station audit log:** read-model RPC is service_role-only; source table append-only enforcement was not established from available migrations/tests. Keep open.
+- **Backend evidence:** PR #22 workflow 42925286446 passed 239/239 .NET tests; tests include decision request guard but no decision endpoint integration test or database RPC test. PR #30 workflow 42925422751 passed 236/236 .NET tests; Client CI 42925422685 passed Flutter analyze/test (13 tests) and Angular build.
+- **Database/integration evidence:** PR #26 head 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8 and PR #28 head 9b3ad187de7cbbf861dd7b091c193172e5a77ea9 each have zero PR-triggered workflow runs at exact head. No CI success claimed.
+- **Active defect persists:** latest main migration 20261103220500 adds NULL decision validation but still inserts API decision token directly into event_type; the CHECK vocabulary mismatch remains. Review proposal remains non-active.
+- **Required evidence:** detailed Backend and Database owner test requests recorded in progress report.
+- **Safety:** GitHub source and Actions logs only; no live DB/Supabase access, SQL/migration execution, data/secrets/source edits in owner branches, merge, rebase or deployment.
+- **Progress:** 0% of 12 audit workstreams formally closed; all 12 remain open.
