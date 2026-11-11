@@ -25,6 +25,8 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
   Map<String, dynamic>? _summary;
   String _reportKind = 'daily';
   String _fileName = '';
+  late DateTime _periodStartUtc;
+  late DateTime _periodEndUtc;
   bool _saving = false;
   String? _error;
   String? _feedback;
@@ -41,6 +43,9 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
   @override
   void initState() {
     super.initState();
+    final DateTime now = DateTime.now().toUtc();
+    _periodStartUtc = DateTime.utc(now.year, now.month, now.day);
+    _periodEndUtc = _periodStartUtc;
     _reload();
   }
 
@@ -74,10 +79,33 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
     });
   }
 
+  // These are date-only UTC period values. Do not convert local midnight,
+  // which could shift the calendar day on devices outside UTC.
   String _ymdUtc(DateTime value) {
-    final DateTime utc = value.toUtc();
     String two(int n) => n.toString().padLeft(2, '0');
-    return '${utc.year}-${two(utc.month)}-${two(utc.day)}';
+    return '${value.year}-${two(value.month)}-${two(value.day)}';
+  }
+
+  Future<void> _choosePeriodDate({required bool start}) async {
+    final DateTime current = start ? _periodStartUtc : _periodEndUtc;
+    final DateTime first = start ? DateTime(2000) : _periodStartUtc;
+    final DateTime last = start ? _periodEndUtc : DateTime(2100, 12, 31);
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(current.year, current.month, current.day),
+      firstDate: first,
+      lastDate: last,
+      helpText: start ? 'بداية فترة التقرير (UTC)' : 'نهاية فترة التقرير (UTC)',
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      final DateTime utcDate = DateTime.utc(picked.year, picked.month, picked.day);
+      if (start) {
+        _periodStartUtc = utcDate;
+      } else {
+        _periodEndUtc = utcDate;
+      }
+    });
   }
 
   Future<void> _confirm() async {
@@ -86,13 +114,12 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
       _feedback = null;
       _saving = true;
     });
-    final DateTime today = DateTime.now().toUtc();
     try {
       await widget.api.confirmManualArchive(
         stationId: widget.stationId,
         reportKind: _reportKind,
-        periodStartUtc: _ymdUtc(today),
-        periodEndUtc: _ymdUtc(today),
+        periodStartUtc: _ymdUtc(_periodStartUtc),
+        periodEndUtc: _ymdUtc(_periodEndUtc),
         excelFileName: _fileName,
         note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
       );
@@ -171,6 +198,24 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
                 subtitle: Text('التأكيدات: ${confirmationCount ?? '—'}'),
               ),
             ),
+          const SizedBox(height: 8),
+          const Text('فترة التقرير بالتاريخ UTC'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: _saving ? null : () => _choosePeriodDate(start: true),
+                icon: const Icon(Icons.calendar_today),
+                label: Text('من: ${_ymdUtc(_periodStartUtc)}'),
+              ),
+              OutlinedButton.icon(
+                onPressed: _saving ? null : () => _choosePeriodDate(start: false),
+                icon: const Icon(Icons.event),
+                label: Text('إلى: ${_ymdUtc(_periodEndUtc)}'),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           const Text('نوع التقرير'),
           Wrap(
