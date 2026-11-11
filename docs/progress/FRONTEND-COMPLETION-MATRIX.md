@@ -89,3 +89,41 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - Forecast-centre implementation in canonical is retained because it already has station map/search, profile API and server-side comparison endpoint (2–12 stations), which is stronger than the reference screen's local-only distance calculation. The reference screen is not copied as a duplicate.
 - Account audit: `docs/progress/ACCOUNT-SCREENS-AUDIT.md`. Effective role/assignment access context, global permissions UI and global user administration remain blocked pending API contract and owner approval.
 - No database changes, no migrations/RLS/grants, no old database access, no main merge, no deployment.
+
+
+## Master-spec page parity gaps (METRA-2027-COMPLETE-PAGE-AND-TEST-SPECIFICATION)
+
+| Master ID | Required screen/workflow | Canonical Flutter evidence | Status / next work |
+|---|---|---|---|
+| HR-02 | Hourly report list | Review/status queues only; no complete author-facing hourly history page | Missing — add station/UTC filters, pagination and status |
+| HR-03 | Hourly report details/history | Shared read-only observation detail sheet | Partial — add version/history timeline and record scope |
+| HR-04/05 | Hourly review queue/decision | Shared observation review screen | Partial — extend stage/state and concurrency tests |
+| HR-06 | Hourly correction | Returned observation editor | Baseline exists — verify all field contracts and history |
+| DY-02 | Daily report list | Reports hub links; no full daily list | Missing |
+| DY-03 | Daily report details/history | Shared observation detail sheet | Partial |
+| DY-04/05 | Daily review queue/decision | Shared observation review screen | Partial — verify daily-specific rules |
+| DY-06 | Daily correction | Returned observation editor | Baseline exists — verify daily field contract and version history |
+| AU-01/02 | Auditor workspace / station observation view | Electronic auditor scaffold and station review surfaces | Partial — no complete auditor queue/scope model |
+| AU-03 | Missing-data register | Not present | Missing — needs approved missing-data rules/API |
+| AU-04 | Review history | Detail sheet shows record payload/review note, not full event history | Missing/partial — needs immutable history API |
+| AU-05 | Monthly audit report | Manual archive confirmation screen and summary API | Partial — reconcile archive confirmations, missing data and outstanding items |
+| AD-01 | User directory | Station-scoped user list in assignment screen | Partial — global directory not available |
+| AD-02 | User details | Account profile is own-account only | Missing for authorized admin view |
+| AD-03 | Role/permission administration | No effective permission administration screen | Missing — requires approved access-context and grant-management APIs |
+| AD-04 | Station assignment | Station assignment screen | Partial — add expiry/revocation/cross-station tests |
+| AD-05 | Operational settings | No approved settings UI/API inventory | Missing/TBD |
+| AD-06 | Management files | No file management UI/API | Missing/TBD |
+| RP-01 | Hourly reports/export | Review/status queue only | Missing — report list and export contract |
+| RP-02 | Daily reports/export | Reports hub only | Missing — report list, summary and export parity |
+| RP-03 | Monthly reports | Monthly archive summary only | Partial — no approved climate aggregation |
+| RP-04 | Annual reports | Specialist shell / no aggregate API | Blocked |
+| RP-05 | Climate reports | Specialist shell | Blocked — definitions and aggregate API |
+| RP-06 | Rainfall reports | Specialist shell | Blocked — accumulation/units/source contract |
+| RP-07 | Agricultural reports | Specialist shell | Blocked — field catalogue and API |
+| RP-08 | Soil temperature | Specialist shell | Blocked — depth/units/sensor/time contract |
+| RP-09 | Weather phenomena | Capture/validation/submission screen | Partial — catalogue, history and reports not complete |
+| RP-10 | Station/operational dashboard | Operations summary and home station readiness | Partial — approved metric definitions/freshness needed |
+| ID-06 | Access denied/session expired | Local 401/403 messages only | Missing — global access/session state |
+| OFF-01 | Offline drafts/sync/conflicts | No accepted complete Flutter equivalent | Unverified/blocked pending approved offline design |
+
+**Completion rule:** every row above must be verified with an API-backed workflow and tests, or explicitly blocked by a named contract/domain decision. A shell or menu link is not completion.
