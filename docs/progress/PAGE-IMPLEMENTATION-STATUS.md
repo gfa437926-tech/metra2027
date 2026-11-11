@@ -262,3 +262,14 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Test corrected in `0d8bc257451d1266faef827848b355cbedba92f4` to use supported TestFlutterView properties and synchronous reset methods.
 - Exact-head verification pending; map and comparison remain unverified until Client CI succeeds.
 - Full evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
+
+
+## FLT-FORECAST-UI-01 — CI #869 regression correction — 2026-11-11T14:16:00Z
+
+- Client CI #869 (run `43036619447`) checked the map implementation and widget test.
+- `flutter analyze` passed. Flutter tests: **51 passed, 1 failed**.
+- The new `forecasting_center_screen_test.dart` passed, including map rendering, selection and distance/elevation comparison.
+- The only failing test was the existing home-navigation assertion in `widget_test.dart`, which still expected the old explanatory copy `قيم الرصد اللحظية غير متاحة`; the forecasting screen now uses the more explicit phrase `قيم الرصد اللحظية وتفاصيل النشرات لا تُعرض...`.
+- Corrected the assertion to match the current UI copy in commit `1945fb8857ef940526e8f8bfbfd6674ee6b109b9`. Product behavior was not weakened or changed.
+- CI #869 remains a failed run; exact-head verification is pending. Do not mark the forecasting center verified until the rerun passes.
+- Separate admin UI test evidence in CI run `43036091374`: Flutter analyze passed and 51 Flutter tests passed on that earlier source snapshot; Angular Chromium smoke was cancelled.
