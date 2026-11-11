@@ -252,3 +252,15 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Client CI on the registration screen initial implementation (run `43031853120`) failed at analyze due to the syntax error; Flutter tests were skipped. This is not a passing run.
 - Exact-head verification for current source tip `1219722948a82a4b48d2aac535851c410249f9ab` is pending. Do not mark this feature or the station detail footer test verified until Client CI completes successfully.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-AUTH-03 — Registration lifecycle verification — 2026-11-11T14:06:21.913Z
+
+- Task status: **منجزة ضمن واجهة Flutter؛ CI أخضر على مصدر هذه الجولة**.
+- Delivered files: `flutter-app/lib/features/auth/registration_screen.dart`, API client registration methods, login registration entry, shared “more” menu registration/status entry, and `flutter-app/test/registration_screen_test.dart`.
+- The flow separates Supabase identity creation from the METRA station/role approval request; it only offers server-returned requestable roles and active/approved/non-demo stations. It submits a versioned terms acknowledgement and secure idempotency key. No role is granted by the client.
+- Test fixture was corrected to use UTF-8 bytes for Arabic JSON; the registration widget test uses a full-height test viewport so consent and submit controls are interactable.
+- Exact verification: Client CI #43034587973 — `flutter pub get` success, `flutter analyze` success, **48 Flutter tests passed**. Angular npm tests and build also passed in the same workflow; Chromium PWA/IndexedDB smoke step was still running at this documentation snapshot.
+- Verified source tip: `39452b0ada03dffb536773dbca59c5786e3e93b4`.
+- Earlier failed runs are retained as failure history, not counted as passes: #43032212381, #43032484963, #43032957896, #43033286062, #43033776011, #43034322385. Their root causes (Arabic test fixture encoding, viewport/scroll interaction, and ambiguous scrollable selection) were corrected in subsequent test commits.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.

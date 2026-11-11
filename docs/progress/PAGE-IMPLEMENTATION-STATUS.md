@@ -223,3 +223,11 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Exact-head rerun is pending; Flutter verification remains open.
 - Detailed evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
 - No database changes, no legacy DB access, no PR merge.
+
+
+## Flutter registration screen — 2026-11-11T14:06:21.913Z
+
+- FLT-AUTH-03 status: **منجزة ضمن Flutter ومتحقق منها**.
+- Added two-stage identity creation + institutional registration request/status flow; station and role choices are server sourced and server permissions remain authoritative.
+- Flutter Client CI #43034587973 passed: analyze success, 48 tests passed. Source SHA: `39452b0ada03dffb536773dbca59c5786e3e93b4`.
+- Evidence and failure/correction history: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
