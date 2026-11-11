@@ -150,3 +150,19 @@ Push rejected: PAT lacks `workflow` scope.
 - **الملفات التوثيقية:** تحديث `docs/progress/FRONTEND-COMPLETION-MATRIX.md`؛ إنشاء `docs/progress/ACCOUNT-SCREENS-AUDIT.md`.
 - **التحقق:** لم يتم تشغيل `flutter analyze` أو `flutter test` أو Android/iOS build أو visual tests؛ لا يوجد Flutter SDK في بيئة التنفيذ الحالية. لا تُعتبر الاختبارات المضافة ناجحة قبل CI.
 - **القيود:** لم يتم تعديل `main`، لم يحدث نشر، لم تُمس قاعدة البيانات الجديدة أو القديمة، ولم تطبق migrations/RLS/grants/seeds. لم يُحذف `mobile/metra_mobile/`.
+
+
+## ACC-03/04/05 + REG-AUDIT-01 — استكمال واجهات الحسابات والتدقيق — 2026-11-11T16:46:17.037Z
+
+- **الحالة:** واجهات وAPI client واختبارات مصدرية أضيفت؛ تحقق Flutter CI قيد الانتظار.
+- **الفرع:** `work/flutter-canonical-consolidation`.
+- **إدارة العضويات والصلاحيات:** إضافة `AuthorityAccessScreen` إلى قائمة المزيد؛ ربط كتالوج الجهات، أدوار العضوية، خيارات الصلاحيات، طوابير العضويات/المنح المعلقة والسارية/المجدولة، قرارات الاعتماد/الرفض، الإلغاء، وسجل التدقيق. كل العمليات تمر عبر API الموجود وتبقى صلاحياتها مفروضة خادمياً.
+- **تدقيق التسجيل:** إضافة `listRegistrationAudit` و`RegistrationAuditScreen` وربط سجل تدقيق مرحلة المحطة/الجهة من شاشة مراجعة التسجيل.
+- **بوابة الحساب:** `MetraAuthGate` يتحقق من `GET /api/v1/account/registration-status` قبل فتح مساحة العمل. الحساب النشط فقط يدخل؛ pending/null يذهب إلى متابعة التسجيل؛ suspended/disabled/rejected/unknown أو فشل التحقق يمنع الدخول التشغيلي ويعرض إعادة التحقق/الخروج.
+- **منع تكرار التسجيل:** إظهار حالة الطلب وتاريخ UTC وملاحظة المراجعة، وإخفاء نموذج الإرسال أثناء انتظار اعتماد المحطة/النظام.
+- **تعيينات المحطات:** أضيف حقل اختياري `valid_to` بتنسيق ISO-8601 مع UTC marker/offset، والتحقق من المستقبل، وتحويله إلى UTC قبل الإرسال. أضيفت نافذة تفاصيل التعيين للمعرّف والمستخدم والدور والحالة وفترة السريان والسبب والمنشئ.
+- **الاختبارات المصدرية الجديدة/المحدثة:** `account_state_gate_test.dart`, `authority_access_screen_test.dart`, `registration_audit_screen_test.dart`, `registration_screen_test.dart`, `station_assignment_screen_test.dart`.
+- **التوثيق:** `docs/progress/ACCOUNT-SCREENS-AUDIT.md` و`docs/progress/FRONTEND-COMPLETION-MATRIX.md` محدثان.
+- **CI:** Client CI push workflow مفعّل على فرع الدمج. آخر run عند هذه اللحظة ينتظر/يعمل على tip سابق؛ أحدث tip سيحصل على run جديد بعد هذا التحديث. لا يُعلن النجاح قبل run مطابق تماماً للـHEAD.
+- **المتبقي:** effective access-context للمستخدم، صفحة ملف مستخدم إداري كاملة، بحث المستخدمين المؤهلين، نهاية السريان لعضويات/منح الجهات، deep-link لإكمال إعادة كلمة المرور، اختبار انتهاء/سحب الجلسة، اختبارات منع الوصول عبر المحطات والجهات.
+- **القيود:** لم يتم تطبيق أي migrations/RLS/grants/seeds ولم تُمس قواعد البيانات. لا دمج إلى `main` ولا نشر.
