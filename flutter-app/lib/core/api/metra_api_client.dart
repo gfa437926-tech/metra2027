@@ -561,6 +561,182 @@ class MetraApiClient {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getAuthorities() async {
+    final response = await _send('GET', '/api/v1/authorities');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_authority_catalogue');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getAuthorityMembershipRoles(
+    String authorityId,
+  ) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/membership-roles',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_authority_membership_roles');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getAuthorityPermissionOptions(
+    String authorityId,
+  ) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/permission-options',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_authority_permission_options');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getAuthorityAccessQueue(
+    String authorityId, {
+    required String kind,
+    int limit = 50,
+  }) async {
+    const kinds = {
+      'membership',
+      'permission_grant',
+      'membership_active',
+      'permission_grant_active',
+    };
+    if (!kinds.contains(kind) || limit < 1 || limit > 100) {
+      throw const MetraApiException(400, 'invalid_authority_access_queue');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/access-queue?kind=$kind&limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_authority_access_queue');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<List<Map<String, dynamic>>> getAuthorityAccessAudit(
+    String authorityId, {
+    int limit = 100,
+  }) async {
+    if (limit < 1 || limit > 200) {
+      throw const MetraApiException(400, 'invalid_authority_access_audit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/access-audit?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_authority_access_audit');
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<void> requestAuthorityMembership({
+    required String authorityId,
+    String? userId,
+    required String roleCode,
+    required String reason,
+    required String validFrom,
+    String? validTo,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/memberships',
+      body: {
+        'userId': userId,
+        'roleCode': roleCode,
+        'reason': reason,
+        'validFrom': validFrom,
+        'validTo': validTo,
+      },
+    );
+  }
+
+  Future<void> decideAuthorityMembership({
+    required String authorityId,
+    required String membershipId,
+    required String decision,
+    required String reason,
+  }) async {
+    if (decision != 'approve' && decision != 'reject') {
+      throw const MetraApiException(400, 'invalid_authority_access_decision');
+    }
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/memberships/${Uri.encodeComponent(membershipId)}/decision',
+      body: {'decision': decision, 'reason': reason},
+    );
+  }
+
+  Future<void> revokeAuthorityMembership({
+    required String authorityId,
+    required String membershipId,
+    required String reason,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/memberships/${Uri.encodeComponent(membershipId)}/revocation',
+      body: {'reason': reason},
+    );
+  }
+
+  Future<void> requestAuthorityPermissionGrant({
+    required String authorityId,
+    required String permissionCode,
+    required String reason,
+    required String validFrom,
+    String? validTo,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/permission-grants',
+      body: {
+        'permissionCode': permissionCode,
+        'reason': reason,
+        'validFrom': validFrom,
+        'validTo': validTo,
+      },
+    );
+  }
+
+  Future<void> decideAuthorityPermissionGrant({
+    required String authorityId,
+    required String grantId,
+    required String decision,
+    required String reason,
+  }) async {
+    if (decision != 'approve' && decision != 'reject') {
+      throw const MetraApiException(400, 'invalid_authority_access_decision');
+    }
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/permission-grants/${Uri.encodeComponent(grantId)}/decision',
+      body: {'decision': decision, 'reason': reason},
+    );
+  }
+
+  Future<void> revokeAuthorityPermissionGrant({
+    required String authorityId,
+    required String grantId,
+    required String reason,
+  }) async {
+    await _send(
+      'POST',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/permission-grants/${Uri.encodeComponent(grantId)}/revocation',
+      body: {'reason': reason},
+    );
+  }
+
   Future<List<Map<String, dynamic>>> listArchiveConfirmations(
     String stationId, {
     int limit = 50,
