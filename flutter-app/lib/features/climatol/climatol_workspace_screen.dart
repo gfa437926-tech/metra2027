@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
-import '../stations/station_directory_screen.dart';
 
 /// Climatol front-end workspace. Selection and validation are client-side;
 /// processing must run in an isolated server worker once its API is approved.
@@ -168,7 +167,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen>
           const SizedBox(height: 12),
           _heading('4. طريقة المقارنة'),
           DropdownButtonFormField<String>(
-            value: _referenceMode,
+            initialValue: _referenceMode,
             decoration: const InputDecoration(labelText: 'مجموعة المرجع', border: OutlineInputBorder()),
             items: const [
               DropdownMenuItem(value: 'regional', child: Text('محطات إقليمية متقاربة')),
@@ -179,7 +178,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen>
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _method,
+            initialValue: _method,
             decoration: const InputDecoration(labelText: 'منهج المعالجة', border: OutlineInputBorder()),
             items: const [
               DropdownMenuItem(value: 'climatol', child: Text('Climatol — توحيد وتجانس')),
@@ -255,9 +254,9 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen>
     ],
   );
 
-  Widget _warning() => Card(
-    color: const Color(0xFFFFF7E8),
-    child: const Padding(
+  Widget _warning() => const Card(
+    color: Color(0xFFFFF7E8),
+    child: Padding(
       padding: EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
