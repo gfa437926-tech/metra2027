@@ -267,7 +267,10 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                                         builder: (_) => MetraPasswordRecoveryScreen(
                                           sendRecovery: (email) =>
                                               Supabase.instance.client.auth
-                                                  .resetPasswordForEmail(email),
+                                                  .resetPasswordForEmail(
+                                                    email,
+                                                    redirectTo: 'metra2027://auth-callback',
+                                                  ),
                                         ),
                                       ),
                                     ),
