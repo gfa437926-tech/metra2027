@@ -48,10 +48,22 @@ class _StationOpsSummaryScreenState extends State<StationOpsSummaryScreen> {
         _supportCount = support.length;
         _loading = false;
       });
+    } on MetraApiException catch (e) {
+      if (!mounted) return;
+      final message = switch (e.statusCode) {
+        401 => 'انتهت الجلسة أو يلزم تسجيل الدخول.',
+        403 => 'ليست لديك صلاحية قراءة ملخص هذه المحطة.',
+        503 => 'إحدى خدمات التشغيل غير متاحة حالياً.',
+        _ => 'تعذر تحميل الملخص (${e.statusCode}).',
+      };
+      setState(() {
+        _error = message;
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = 'تعذر تحميل الملخص من الخادم.';
         _loading = false;
       });
     }

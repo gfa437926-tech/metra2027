@@ -120,4 +120,11 @@ class _ReturnedObservationEditorDialogState
       ],
     );
   }
+
+  static String _formatUtc(DateTime value) {
+    final DateTime utc = value.toUtc();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${utc.year}-${two(utc.month)}-${two(utc.day)} '
+        '${two(utc.hour)}:${two(utc.minute)}:${two(utc.second)} UTC';
+  }
 }
