@@ -68,7 +68,7 @@ void main() {
     expect(find.text('1150.0 م'), findsOneWidget);
     expect(find.text('surveyed'), findsOneWidget);
     expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
-    await tester.pageBack();
+    await tester.drag(find.byType(BottomSheet), const Offset(0, 600));
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة آلية'));
     expect(selected, '22222222-2222-4222-8222-222222222222');
@@ -150,9 +150,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
     expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
-    await tester.tap(find.text('محطة الساحل'));
+    await tester.tap(find.byType(Checkbox).at(0));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محطة الجبل'));
+    await tester.tap(find.byType(Checkbox).at(1));
     await tester.pumpAndSettle();
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
     expect(find.text('1200.0 م'), findsOneWidget);
