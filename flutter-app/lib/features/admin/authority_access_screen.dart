@@ -66,19 +66,19 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
     404 => 'الجهة أو سجل الوصول غير موجود.',
     409 => 'تغيرت حالة الطلب. حدّث القائمة قبل المتابعة.',
     503 => 'خدمة إدارة الصلاحيات غير متاحة حالياً.',
-    _ => 'تعذر إكمال الطلب (HTTP ' + code.toString() + ').',
+    _ => 'تعذر إكمال الطلب (HTTP $code).',
   };
 
   String _shortId(Object? value) {
     final id = value?.toString() ?? '';
     if (id.isEmpty) return 'غير متوفر';
-    return id.length > 14 ? id.substring(0, 10) + '…' : id;
+    return id.length > 14 ? '${id.substring(0, 10)}…' : id;
   }
 
   String _utc(Object? value) {
     if (value is! String) return 'غير متوفر';
     final parsed = DateTime.tryParse(value);
-    return parsed == null ? 'غير متوفر' : parsed.toUtc().toIso8601String() + ' UTC';
+    return parsed == null ? 'غير متوفر' : '${parsed.toUtc().toIso8601String()} UTC';
   }
 
   Future<String?> _reason(String title) async {
@@ -132,7 +132,7 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
         builder: (ctx, refresh) => AlertDialog(
           title: Text(title),
           content: DropdownButtonFormField<String>(
-            value: selected,
+            initialValue: selected,
             isExpanded: true,
             items: choices.map((row) => DropdownMenuItem<String>(
               value: row[key].toString(),
@@ -250,11 +250,11 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
               padding: const EdgeInsets.all(12),
               child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                 Text(code?.toString() ?? 'غير محدد', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('المستخدم: ' + _shortId(row['user_id'])),
-                Text('الحالة: ' + (row['status']?.toString() ?? 'غير محددة')),
-                Text('بداية السريان: ' + _utc(row['valid_from'])),
-                Text('نهاية السريان: ' + (row['valid_to'] == null ? 'مفتوح' : _utc(row['valid_to']))),
-                if (reason.isNotEmpty) Text('السبب: ' + reason),
+                Text('المستخدم: ${_shortId(row['user_id'])}'),
+                Text('الحالة: ${row['status'] ?? 'غير محددة'}'),
+                Text('بداية السريان: ${_utc(row['valid_from'])}'),
+                Text('نهاية السريان: ${row['valid_to'] == null ? 'مفتوح' : _utc(row['valid_to'])}'),
+                if (reason.isNotEmpty) Text('السبب: $reason'),
                 if (active)
                   Align(
                     alignment: AlignmentDirectional.centerStart,
@@ -298,12 +298,12 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
           itemBuilder: (context, i) {
             final row = rows[i];
             return Card(child: ListTile(
-              title: Text((row['target_kind'] ?? '').toString() + ' · ' + (row['action_code'] ?? '').toString()),
+              title: Text('${row['target_kind'] ?? ''} · ${row['action_code'] ?? ''}'),
               subtitle: Text(
-                'صاحب الطلب: ' + _shortId(row['subject_user_id']) + '\n' +
-                'المنفذ: ' + _shortId(row['actor_user_id']) + '\n' +
-                'الوقت: ' + _utc(row['occurred_at']) + '\n' +
-                'السبب: ' + (row['reason'] ?? '').toString(),
+                'صاحب الطلب: ${_shortId(row['subject_user_id'])}\\n'
+                'المنفذ: ${_shortId(row['actor_user_id'])}\\n'
+                'الوقت: ${_utc(row['occurred_at'])}\\n'
+                'السبب: ${row['reason'] ?? ''}',
               ),
             ));
           },
@@ -336,7 +336,7 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                         child: DropdownButtonFormField<String>(
-                          value: _authorityId, isExpanded: true,
+                          initialValue: _authorityId, isExpanded: true,
                           decoration: const InputDecoration(labelText: 'الجهة', border: OutlineInputBorder()),
                           items: _authorities.map((row) => DropdownMenuItem<String>(
                             value: row['id']?.toString() ?? '',
