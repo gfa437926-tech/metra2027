@@ -33,7 +33,9 @@ void main() {
     expect(find.text('التقرير الشهري الإداري'), findsOneWidget);
     expect(find.text('سجل تدقيق المحطة والتعيينات'), findsOneWidget);
 
-    await tester.tap(find.text('سجل تدقيق المحطة والتعيينات'));
+    final auditTile = find.text('سجل تدقيق المحطة والتعيينات');
+    await tester.ensureVisible(auditTile);
+    await tester.tap(auditTile);
     await tester.pumpAndSettle();
 
     expect(captured.url.path, '/api/v1/stations/$stationId/audit-log');
@@ -94,12 +96,13 @@ void main() {
     expect(summaryRequest.url.queryParameters['year'], '${previousMonth.year}');
     expect(summaryRequest.url.queryParameters['month'], '${previousMonth.month}');
 
-    await tester.enterText(
-      find.byWidgetPredicate((widget) =>
-          widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel'),
-      'daily.xlsx',
-    );
-    await tester.tap(find.text('تأكيد الأرشفة اليدوية'));
+    final fileNameField = find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel');
+    await tester.ensureVisible(fileNameField);
+    await tester.enterText(fileNameField, 'daily.xlsx');
+    final confirmButton = find.text('تأكيد الأرشفة اليدوية');
+    await tester.ensureVisible(confirmButton);
+    await tester.tap(confirmButton);
     await tester.pumpAndSettle();
 
     final post = requests.firstWhere((request) =>
