@@ -137,7 +137,7 @@ class _MetraHomeState extends State<MetraHome> {
           ));
         },
         onElectronicAuditor: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const ElectronicAuditorScreen(),
+          builder: (_) => ElectronicAuditorScreen(api: widget.api),
         )),
         onRainfall: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => const SpecialistUnitShellScreen(
