@@ -136,7 +136,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           padding: EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Icon(Icons.query_stats, size: 30, color: Color(0xFF087CF0)),
               SizedBox(height: 10),
               Text('مراكز التنبؤ الجوي',
@@ -152,13 +152,13 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
       );
 
   Widget _liveUnavailable() => const Card(
-        color: const Color(0xFFFFF7E8),
+        color: Color(0xFFFFF7E8),
         elevation: 0,
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Icon(Icons.sensors_off, color: Color(0xFF9A5B00)),
               SizedBox(width: 10),
               Expanded(
