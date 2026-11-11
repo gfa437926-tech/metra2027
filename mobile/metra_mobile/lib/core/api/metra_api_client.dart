@@ -39,6 +39,73 @@ class ObservationQueueItem {
   }
 }
 
+
+class StationAuditEvent {
+  const StationAuditEvent({
+    required this.id,
+    required this.entityType,
+    required this.entityId,
+    required this.action,
+    required this.actorId,
+    required this.occurredAt,
+    this.reason,
+    this.targetUserId,
+    this.roleCode,
+    this.previousStatus,
+    this.resultingStatus,
+    this.validFrom,
+    this.validTo,
+  });
+
+  final String id;
+  final String entityType;
+  final String entityId;
+  final String action;
+  final String actorId;
+  final DateTime occurredAt;
+  final String? reason;
+  final String? targetUserId;
+  final String? roleCode;
+  final String? previousStatus;
+  final String? resultingStatus;
+  final String? validFrom;
+  final String? validTo;
+
+  factory StationAuditEvent.fromJson(Map<String, dynamic> json) {
+    String requiredString(String key) {
+      final value = json[key];
+      if (value is! String || value.isEmpty) {
+        throw const FormatException('invalid_station_audit_event');
+      }
+      return value;
+    }
+
+    String? optionalString(String key) =>
+        json[key] is String ? json[key] as String : null;
+
+    final occurredAt = DateTime.tryParse('${json['occurred_at'] ?? ''}');
+    if (occurredAt == null) {
+      throw const FormatException('invalid_station_audit_event');
+    }
+
+    return StationAuditEvent(
+      id: requiredString('id'),
+      entityType: requiredString('entity_type'),
+      entityId: requiredString('entity_id'),
+      action: requiredString('action'),
+      actorId: requiredString('actor_id'),
+      occurredAt: occurredAt,
+      reason: optionalString('reason'),
+      targetUserId: optionalString('target_user_id'),
+      roleCode: optionalString('role_code'),
+      previousStatus: optionalString('previous_status'),
+      resultingStatus: optionalString('resulting_status'),
+      validFrom: optionalString('valid_from'),
+      validTo: optionalString('valid_to'),
+    );
+  }
+}
+
 class StationDirectoryItem {
   const StationDirectoryItem({required this.id, required this.localCode,
     required this.nameArabic, required this.nameEnglish, required this.stationType,
@@ -129,6 +196,30 @@ class MetraApiClient {
       if (page.length < pageSize) return stations;
     }
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
+  }
+
+  Future<List<StationAuditEvent>> getStationAuditLog(
+    String stationId, {int limit = 100}
+  ) async {
+    if (stationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (limit < 1 || limit > 250) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/audit-log?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) {
+      throw const FormatException('invalid_station_audit_log');
+    }
+    return decoded
+        .map((item) => StationAuditEvent.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ))
+        .toList(growable: false);
   }
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
