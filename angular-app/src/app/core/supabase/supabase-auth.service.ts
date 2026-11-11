@@ -43,6 +43,20 @@ export class SupabaseAuthService {
     return data.session?.access_token ?? null;
   }
 
+  async sendPasswordRecovery(email: string, redirectTo: string): Promise<void> {
+    if (!this.client) throw new Error('إعدادات Supabase العامة غير مكتملة.');
+    const { error } = await this.client.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    if (error) throw new Error('تعذر إرسال طلب الاستعادة حالياً. أعد المحاولة لاحقاً.');
+  }
+
+  async updatePassword(password: string): Promise<void> {
+    if (!this.client) throw new Error('إعدادات Supabase العامة غير مكتملة.');
+    const { data } = await this.client.auth.getSession();
+    if (!data.session) throw new Error('رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابطاً جديداً.');
+    const { error } = await this.client.auth.updateUser({ password });
+    if (error) throw new Error('تعذر تحديث كلمة المرور. اطلب رابط استعادة جديداً إذا انتهت صلاحيته.');
+  }
+
   async signOut(): Promise<void> {
     if (!this.client) return;
     const { error } = await this.client.auth.signOut();
