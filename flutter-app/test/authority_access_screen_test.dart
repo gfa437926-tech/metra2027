@@ -12,7 +12,7 @@ void main() {
       (tester) async {
     final requested = <String>[];
     final client = MockClient((request) async {
-      requested.add(request.url.path + (request.url.hasQuery ? '?\${request.url.query}' : ''));
+      requested.add(request.url.path + (request.url.hasQuery ? '?${request.url.query}' : ''));
       if (request.url.path == '/api/v1/authorities') {
         return http.Response.bytes(
           utf8.encode(jsonEncode([
