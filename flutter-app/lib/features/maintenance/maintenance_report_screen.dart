@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Maintenance intake is saved on-device until the approved server contract exists.
+/// مسودة محلية قديمة للواجهة — مسار الإنتاج التشغيلي هو [EquipmentFaultScreen]
+/// المرتبط بـ API المحطة. لا تُعرض هذه الشاشة من التنقل الرئيسي.
 class MaintenanceReportScreen extends StatefulWidget {
   const MaintenanceReportScreen({super.key});
   @override

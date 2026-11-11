@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import '../ops/ops_api_messages.dart';
 
 /// Station-scoped equipment fault intake and queue backed by the METRA API.
 class EquipmentFaultScreen extends StatefulWidget {
@@ -91,14 +92,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
       if (!mounted) {
         return;
       }
-      final String message = switch (error.statusCode) {
-        400 => 'بيانات البلاغ غير صالحة. راجع الحقول وأعد المحاولة.',
-        401 => 'يلزم تسجيل الدخول أولاً.',
-        403 => 'ليست لديك صلاحية تسجيل أعطال هذه المحطة.',
-        503 =>
-          'خدمة الأعطال غير متاحة حالياً (قد تكون جداول القاعدة غير مفعّلة بعد).',
-        _ => 'تعذر إرسال البلاغ. حاول مجدداً.',
-      };
+      final String message = opsSubmitErrorMessage(error.statusCode, resourceAr: 'بلاغ العطل');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -227,7 +221,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر جلب التفاصيل (${error.statusCode})')),
+        SnackBar(content: Text(opsDetailErrorMessage(error.statusCode, resourceAr: 'بلاغ العطل'))),
       );
     }
   }
@@ -300,7 +294,7 @@ class _EquipmentFaultScreenState extends State<EquipmentFaultScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر التحديث (${error.statusCode})')),
+        SnackBar(content: Text(opsTransitionErrorMessage(error.statusCode, resourceAr: 'بلاغ العطل'))),
       );
     }
   }

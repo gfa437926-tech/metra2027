@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
+import '../ops/ops_api_messages.dart';
 
 /// Station-scoped IT/telecom support incident intake backed by the METRA API.
 class SupportIncidentScreen extends StatefulWidget {
@@ -95,14 +96,7 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
       if (!mounted) {
         return;
       }
-      final String message = switch (error.statusCode) {
-        400 => 'بيانات البلاغ غير صالحة.',
-        401 => 'يلزم تسجيل الدخول أولاً.',
-        403 => 'ليست لديك صلاحية تسجيل بلاغات الدعم لهذه المحطة.',
-        503 =>
-          'خدمة الدعم غير متاحة حالياً (جداول القاعدة قد تكون غير مفعّلة).',
-        _ => 'تعذر إرسال البلاغ.',
-      };
+      final String message = opsSubmitErrorMessage(error.statusCode, resourceAr: 'بلاغ الدعم');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
@@ -239,7 +233,7 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر جلب التفاصيل (${error.statusCode})')),
+        SnackBar(content: Text(opsDetailErrorMessage(error.statusCode, resourceAr: 'بلاغ الدعم'))),
       );
     }
   }
@@ -307,7 +301,7 @@ class _SupportIncidentScreenState extends State<SupportIncidentScreen> {
         return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر التحديث (${error.statusCode})')),
+        SnackBar(content: Text(opsTransitionErrorMessage(error.statusCode, resourceAr: 'بلاغ الدعم'))),
       );
     }
   }
