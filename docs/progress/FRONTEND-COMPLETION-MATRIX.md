@@ -1,4 +1,4 @@
-# METRA 2027 — FRONTEND Completion Matrix (Flutter)
+| FLT-AFTN-01 | AFTN | 4 أقسام: وارد، صادر، إنشاء رسالة، القناة والتدقيق | معاينة محلية فقط؛ لا إرسال | لا توجد AFTN gateway أو message API | عزل المركز/المحطة مطلوب | Flutter CI أخضر واختبار composer | Partial — واجهة موجودة؛ حركة الرسائل محجوبة |\n# METRA 2027 — FRONTEND Completion Matrix (Flutter)
 
 **Updated (UTC):** 2026-11-11  
 **Branch:** `work/flutter-canonical-consolidation`  
@@ -11,10 +11,10 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 |---|---|---|---|---|---|---|---|---|
 | FLT-AUTH-01 | تسجيل الدخول / Login | جيد | بوابة Supabase | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-AUTH-02 | التسجيل / Registration | جيد | طلب انضمام | مربوط | خادم | جزئي | معلق | قيد العمل |
-| FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | طلب بريد + deep-link + شاشة كلمة مرور جديدة وتأكيد | Supabase Auth | أخطاء مزود الهوية لا تعرض التفاصيل | موجود مصدرّياً | CI + allow-list + جهاز حقيقي معلق | جزئي — تحقق end-to-end مطلوب |
+| FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | طلب بريد + deep-link + شاشة كلمة مرور جديدة وتأكيد | Supabase Auth | أخطاء مزود الهوية لا تعرض التفاصيل | موجود | Flutter CI أخضر؛ allow-list وجهاز حقيقي معلقان | جزئي — تحقق end-to-end مطلوب |
 | FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + حالة الحساب + حالة طلب الانضمام + خروج | `GET /api/v1/account/registration-status` | لا يعرض أدواراً/محطات دون access-context | موجود مصدرّياً | CI معلق | جزئي — ACC-02 مطلوب |
-| FLT-AUTH-05 | الصلاحيات UI / Permissions view | جيد | شاشة إدارة عضويات وصلاحيات الجهات: طلب/مراجعة/رفض/إلغاء/سجل تدقيق | Authority access APIs + server checks | لا تستنتج صلاحيات محلية | موجود مصدرّياً | CI معلق | جزئي — access-context وvalidity/user-target UI مطلوبان |
-| FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | جيد | بوابة حالة الحساب + شاشة منع الوصول/فشل التحقق + إعادة محاولة/خروج | `GET /api/v1/account/registration-status` | fail-closed؛ لا تعرض مساحة العمل عند حالة غير نشطة أو تعذر التحقق | موجود مصدرّياً | CI معلق | جزئي — اختبار revoked/expired session مطلوب |
+| FLT-AUTH-05 | الصلاحيات UI / Permissions view | جيد | عضويات وصلاحيات الجهات: طلب/مراجعة/رفض/إلغاء/تدقيق | Authority access APIs + server checks | لا تستنتج صلاحيات محلية | موجود | Flutter CI أخضر؛ اختبار طلب العضوية يغطي دورة الطلب | جزئي — access-context والبحث عن المستخدم المستهدف مطلوبان |
+| FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | جيد | بوابة حالة الحساب + شاشة منع الوصول/فشل التحقق + إعادة محاولة/خروج | `GET /api/v1/account/registration-status` | fail-closed؛ لا تعرض مساحة العمل عند حالة غير نشطة أو تعذر التحقق | موجود | Flutter CI أخضر | جزئي — revoked/expired session lifecycle ما زال مطلوباً |
 | FLT-STN-01 | دليل المحطات / Directory | جيد | قائمة+خريطة+بحث | مربوط | خادم | موجود | معلق | قيد العمل |
 | FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل + مصدر الإحداثيات ودقتها | مربوط | لا تمنح تعديل المحطة | موجود مصدرّياً | CI معلق | مواءمة المصدر/الدقة تمت؛ تحقق CI مطلوب |
 | FLT-STN-03 | اختيار محطة العمل / Active station | جيد | الرئيسية+تنقل | محلي+API | — | جزئي | معلق | جيد |
@@ -33,13 +33,13 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-OPS-05 | صيانة محلية قديمة / Local maintenance draft | — | مسودة محلية | غير مربوط | — | — | — | غير إنتاج |
 | FLT-RPT-01 | حالة النشرات / Observation status | جيد | طوابير | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-RPT-02 | تقارير المحطة / Reports hub | جيد | روابط | جزئي | محطة | جزئي | معلق | جزئي |
-| FLT-RPT-03 | تقارير مناخية/مطرية/سنوية | هيكل | غير متاح | غير متاح | — | لا | معلق | محجوبة |
+| FLT-RPT-03 | تقارير مناخية/مطرية/سنوية | واجهات إعداد وفلاتر أولية مع اختيار المحطة | معاينة محلية فقط؛ لا حفظ | لا توجد aggregate/report APIs معتمدة | نطاق المحطة من الدليل | Flutter CI أخضر | جزئي/محجوبة تكاملياً |
 | FLT-FC-01 | مركز التنبؤ / Forecasting | جيد | خريطة+بحث+اختيار+مقارنة خادمية 2–12+ملف محطة+مصدر/دقة الإحداثيات | كتالوج ومقارنة خادمية | قراءة | موجود؛ metadata tests أضيفت | CI معلق | جزئي — الرصد اللحظي محجوب بعقد API |
 | FLT-FC-02 | رصد لحظي / Live snapshot | — | غير معروض | عقد غير معتمد | — | لا | — | محجوبة |
-| FLT-SPEC-01 | أمطار/مناخ/زراعي/تربة | هيكل | حالة عدم توفر | غير متاح | — | هيكل | معلق | محجوبة |
-| FLT-AUD-01 | التدقيق الإلكتروني | هيكل | تصميم فقط | غير متاح | — | هيكل | معلق | محجوبة |
-| FLT-AI-01 | الذكاء الاصطناعي | هيكل | بوابة خادم مطلوبة | غير متاح | — | لا | معلق | محجوبة |
-| FLT-CLIMATOL-01 | Climatol | هيكل | عامل معزول لاحقاً | غير متاح | — | لا | معلق | محجوبة |
+| FLT-SPEC-01 | أمطار/مناخ/زراعي/تربة | نماذج متخصصة قابلة للمعاينة المحلية واختيار المحطة | إدخال محلي مؤقت فقط؛ لا حفظ أو إرسال | لا توجد عقود حقول/API معتمدة لهذه الوحدات | دليل المحطات فقط | Flutter CI أخضر | Partial — واجهة أولية مكتملة بصرياً؛ الربط العلمي/التشغيلي محجوب |
+| FLT-AUD-01 | التدقيق الإلكتروني | 8 أقسام: لوحة، ورقي، ميكانيكي، مقارنة، مراجعة، مكتبة، تدريب، تقارير | تهيئة/معاينة فقط؛ لا رفع/OCR/قرار | لا توجد case/evidence/OCR APIs | نطاق المحطة عبر الدليل | Flutter CI أخضر واختبار الشاشة | Partial — واجهة موسعة؛ عمليات التدقيق محجوبة حتى API |
+| FLT-AI-01 | الذكاء الاصطناعي | 5 أقسام: رئيسية، تحليل، شذوذ، تقارير، حوكمة | إعداد طلب محلي فقط؛ لا تنفيذ | AI Gateway غير موجود | يجب تطبيق صلاحيات الخادم | Flutter CI أخضر واختبار workspace | Partial — الواجهة موجودة؛ التحليل محجوب |
+| FLT-CLIMATOL-01 | Climatol | إعداد المحطات/المتغيرات/الفترة، pipeline، تشخيص، إصدارات | اختيار من كتالوج المحطات؛ لا تشغيل | لا يوجد Climatol worker/API | صلاحيات خادمية مطلوبة | Flutter CI أخضر واختبار workspace | Partial — واجهة إعداد مكتملة أولياً؛ المعالجة محجوبة |
 
 ## Phase order (owner plan)
 1. Foundation (nav, station, RTL, errors) — in progress  
@@ -172,3 +172,15 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - **Reports/history:** HR-02 and DY-02 lists, full detail/version history, missing-data register, complete PDF/Excel export and full observation audit timeline remain incomplete or unverified.
 - **Account administration:** effective access context/global user directory, eligible-user search, expiry/revocation lifecycle and cross-station authorization coverage remain incomplete.
 - **Completion policy:** no page is marked complete solely because a route, role card, form or test exists. Each must have the approved field rules, server API, loading/empty/error/success states, authorization boundary, tests and visual acceptance.
+
+
+## Current verified UI round — 2026-11-11T17:48:59.359Z
+
+- Canonical branch tip: `51ed88afa415072e9e41679f585610e5615b9b5d`.
+- Flutter CI run `43071280050`: `flutter analyze` passed and **85 widget/unit tests passed**.
+- The same run's Angular job passed npm tests, Angular production build, and three Chromium PWA/IndexedDB smoke repetitions.
+- Added dedicated AI, Climatol, expanded electronic-auditor and AFTN workspaces; specialist forms now load the approved station catalogue and permit local-only preview. Record matching opens the comparison tab in the auditor workspace.
+- Added role catalogue entries for register uploader, electronic auditor, audit approver, AI analyst, model manager/approver and AFTN sender. The catalogue is navigation metadata only, not a grant.
+- **Not complete operationally:** no AI gateway, Climatol worker, electronic-audit evidence/case API, AFTN gateway, or approved specialist aggregate/report APIs. Related controls remain disabled and no fabricated results are shown.
+- Password recovery still needs Supabase redirect allow-list and real-device email round-trip. Effective user access-context and searchable eligible-user directory are still missing.
+- No database changes, migrations/RLS/grants/seeds, legacy DB access, main merge or deployment.
