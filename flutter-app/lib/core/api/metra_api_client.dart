@@ -186,6 +186,31 @@ class MetraApiClient {
     );
   }
 
+  Future<Map<String, dynamic>> validateWeatherPhenomenon({
+    required String phenomenonType,
+    required String phenomenonDate,
+    required String startTime,
+    String? endTime,
+    String? generalNotes,
+  }) async {
+    final response = await _send(
+      'POST',
+      '/api/v1/observations/phenomena/validate',
+      body: {
+        'phenomenonType': phenomenonType,
+        'phenomenonDate': phenomenonDate,
+        'startTime': startTime,
+        'endTime': endTime,
+        'generalNotes': generalNotes,
+      },
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) {
+      throw const FormatException('invalid_phenomenon_validation_response');
+    }
+    return Map<String, dynamic>.from(decoded);
+  }
+
   /// Submits the canonical observation envelope and requires a persisted receipt.
   /// A 2xx response without the database observation id is not treated as success.
   Future<Map<String, dynamic>> submitObservation({required String stationId,
