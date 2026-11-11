@@ -231,3 +231,17 @@ Current PR #23 adds testthat coverage for symlink/path traversal boundaries, inp
 
 ### QA-07 CI outcome correction — PR #22 exact latest head
 The previously in-progress Backend build for PR #22 head `8134c9e4546693d717a10329436d646b08dbb94f` has now completed successfully: [Backend build run 42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135). This confirms the workflow completed successfully on that exact SHA, including the CI test job configured in `.github/workflows/backend-ci.yml`. It does **not** close the source-confirmed TOCTOU finding or substitute for DB revocation/race integration tests. QA-06 itself still did not run tests locally.
+
+QA-08 — exact-head revalidation
+
+ 
+## QA-08 — exact-head revalidation (2026-11-11T02:02:00Z UTC)
+
+- Rechecked PR #22 exact head `0d29163a4457c12f38e8a1c79b7dec49248c143d`, open Draft/unmerged.
+- Read current endpoint, six WebApplicationFactory tests, station authorization service and backend workflow.
+- Confirmed the six endpoint cases and documented their limits: the Station A/B case uses fake authorization; no real database isolation or revoke/read race is established.
+- Confirmed B-013 remains open: separate permission RPC followed by service-role queue SELECT without actor ID passed to the read.
+- Reconfirmed P2 workflow trigger gap: `supabase/migrations/**` absent from push and pull_request path filters.
+- Exact-head Backend Actions run [42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) completed success on `0d29163a4457c12f38e8a1c79b7dec49248c143d`. This is Assistant 02 CI evidence, not QA-06 local test execution.
+- QA did not run local tests; no code, workflow, SQL, migration, DB, deployment, or merge changed.
+- QA-06 remains 50% by weighted work-package estimate; 3 major work packages remain.
