@@ -12,5 +12,12 @@ void main() {
     expect(codes.contains('communications_head'), isTrue);
     expect(codes.contains('networks_head'), isTrue);
     expect(codes.contains('observation_dept_head'), isTrue);
+    expect(codes.contains('register_uploader'), isTrue);
+    expect(codes.contains('electronic_auditor'), isTrue);
+    expect(codes.contains('audit_approver'), isTrue);
+    expect(codes.contains('ai_analyst'), isTrue);
+    expect(codes.contains('model_manager'), isTrue);
+    expect(codes.contains('model_approver'), isTrue);
+    expect(codes.contains('aftn_sender'), isTrue);
   });
 }
