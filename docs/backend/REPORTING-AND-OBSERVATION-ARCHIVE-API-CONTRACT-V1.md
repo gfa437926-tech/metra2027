@@ -212,3 +212,14 @@ The Flutter PR branch now contains typed archive list/detail models, authenticat
 ### 13.1 Pagination completion metadata
 
 The archive page RPC now fetches one extra candidate row and returns `page.hasMore` while keeping the requested page size bounded. The Flutter archive screen uses this flag to hide the “load more” control when the final page has been reached. This avoids repeatedly requesting empty pages.
+
+
+## 14. Archive permission and isolated verification update (2026-11-11)
+
+- Eligible archive-read audience is documented in `docs/security/OBSERVATION-ARCHIVE-READ-PERMISSION-SCOPE.md`: station_head, station_auditor and chief_auditor only. Eligibility does not grant access; each person requires a separately approved, authority/station-scoped, time-valid and revocable individual permission grant.
+- No role mapping or user grant is inserted by the proposed migration.
+- A disposable PostgreSQL 17 CI job applies the migration only to an ephemeral test database and runs static and integration checks. It does not access a hosted Supabase database.
+- The migration now checks the signed JWT role claim with `auth.jwt() ->> 'role'` instead of deprecated `auth.role()`.
+- Backend CI run #1542 is queued; no test pass is claimed yet.
+- The Flutter detail widget test now scrolls the lazy ListView before asserting its off-screen source-payload content. Client CI run #1130 is queued; no pass is claimed yet.
+- No hosted database migration, permission grant, production deployment or legacy project access occurred.
