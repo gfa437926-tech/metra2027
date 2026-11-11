@@ -87,6 +87,17 @@ begin
     raise exception 'UTC period filter must exclude records outside the requested range';
   end if;
 
+  v_detail := public.metra_station_observation_archive_detail(
+    '33333333-3333-4333-8333-333333333333',
+    '11111111-1111-4111-8111-111111111111',
+    '99999999-9999-4999-8999-999999999991'
+  );
+  if v_detail ->> 'authorized' <> 'true'
+     or v_detail ->> 'found' <> 'true'
+     or v_detail #>> '{item,payload,temperature}' <> '21' then
+    raise exception 'authorized station member should read the exact station record detail';
+  end if;
+
   v_page := public.metra_station_observation_archive_page(
     '33333333-3333-4333-8333-333333333333',
     '22222222-2222-4222-8222-222222222222',
