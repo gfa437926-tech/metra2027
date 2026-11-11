@@ -75,6 +75,13 @@ void main() {
     expect(find.text('راصد'), findsNothing);
     expect(find.text('مدقق محطة'), findsOneWidget);
 
+    await tester.tap(find.text('user-1'));
+    await tester.pumpAndSettle();
+    expect(find.text('تفاصيل التعيين'), findsOneWidget);
+    expect(find.textContaining('station_auditor'), findsOneWidget);
+    await tester.tap(find.text('إغلاق'));
+    await tester.pumpAndSettle();
+
     await tester.enterText(find.byType(TextField).at(0), 'user-2');
     await tester.enterText(find.byType(TextField).at(1), 'تغطية مناوبة المحطة');
     final validTo = DateTime.now().toUtc().add(const Duration(days: 30)).toIso8601String();
