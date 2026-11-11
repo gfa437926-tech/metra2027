@@ -23,7 +23,7 @@ void main() {
     expect(find.text('إعداد طلب التحليل'), findsOneWidget);
     expect(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), findsOneWidget);
     expect(find.textContaining('لم يتم إرسال السؤال'), findsOneWidget);
-    await tester.tap(find.text('حوكمة'));
+    await tester.tap(find.text('الحوكمة'));
     await tester.pumpAndSettle();
     expect(find.text('حوكمة الذكاء الاصطناعي'), findsOneWidget);
   });
