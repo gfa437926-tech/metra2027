@@ -181,7 +181,7 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
         subtitle: Text(
           [
             _formatUtc(item.observedAt),
-            item.status,
+            _statusLabel(item.status),
             if (item.reviewNote != null && item.reviewNote!.isNotEmpty)
               'ملاحظة: ${item.reviewNote}',
           ].join(' • '),
@@ -193,6 +193,15 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
       ),
     );
   }
+
+  static String _statusLabel(String status) => switch (status.toLowerCase()) {
+        'submitted' => 'بانتظار المراجعة',
+        'returned' => 'مُرجَعة للتصحيح',
+        'approved' => 'معتمدة',
+        'rejected' => 'مرفوضة',
+        'draft' => 'مسودة',
+        _ => status,
+      };
 
   static String _typeLabel(String type) {
     final String t = type.toLowerCase();
