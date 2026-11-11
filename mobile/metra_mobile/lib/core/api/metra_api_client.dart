@@ -43,12 +43,12 @@ class StationDirectoryItem {
   const StationDirectoryItem({required this.id, required this.localCode,
     required this.nameArabic, required this.nameEnglish, required this.stationType,
     required this.operationalStatus, required this.approvalStatus, required this.isDemo,
-    this.latitude, this.longitude, this.wmoStationId});
+    this.latitude, this.longitude, this.wmoStationId, this.elevationM,\n    this.coordinateSource, this.coordinateAccuracyM});
   final String id, localCode, nameArabic, nameEnglish, stationType;
   final String operationalStatus, approvalStatus;
   final bool isDemo;
   final double? latitude, longitude;
-  final String? wmoStationId;
+  final String? wmoStationId;\n  final double? elevationM;\n  final String? coordinateSource;\n  final double? coordinateAccuracyM;
   bool get hasCoordinates => latitude != null && longitude != null;
   bool get hasValidCoordinates => hasCoordinates &&
       latitude! >= -90 && latitude! <= 90 &&
@@ -70,7 +70,7 @@ class StationDirectoryItem {
       stationType: json['station_type'] as String,
       operationalStatus: json['operational_status'] as String,
       approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
-      latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?);
+      latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?,\n      elevationM: number(json['elevation_m']),\n      coordinateSource: coords is List && coords.isNotEmpty && coords.first is Map\n          ? (coords.first as Map)['coordinate_source'] as String? : null,\n      coordinateAccuracyM: coords is List && coords.isNotEmpty && coords.first is Map\n          ? number((coords.first as Map)['accuracy_m']) : null);
   }
 }
 
