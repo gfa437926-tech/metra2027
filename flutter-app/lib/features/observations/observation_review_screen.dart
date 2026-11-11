@@ -23,6 +23,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen>
   late final TabController _tabs;
   late Future<List<ObservationQueueItem>> _queue;
   late Future<List<ObservationQueueItem>> _returned;
+  String? _typeFilter;
 
   @override
   void initState() {
@@ -74,25 +75,52 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen>
             ),
           ],
         ),
-        body: TabBarView(
-          controller: _tabs,
+        body: Column(
           children: [
-            _QueueBody(
-              future: _queue,
-              onRefresh: _refreshReview,
-              emptyText: 'لا توجد نشرات بانتظار المراجعة',
-              itemBuilder: (item) => _ReviewActions(
-                item: item,
-                onDecide: _decide,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: Wrap(
+                spacing: 8,
+                children: [
+                  for (final entry in <(String?, String)>[
+                    (null, 'الكل'),
+                    ('hourly', 'ساعي'),
+                    ('daily', 'يومي'),
+                    ('phenomenon', 'ظواهر'),
+                  ])
+                    FilterChip(
+                      label: Text(entry.$2),
+                      selected: _typeFilter == entry.$1,
+                      onSelected: (_) => setState(() => _typeFilter = entry.$1),
+                    ),
+                ],
               ),
             ),
-            _QueueBody(
-              future: _returned,
-              onRefresh: _refreshReturned,
-              emptyText: 'لا توجد نشرات مُرجَعة لك في هذه المحطة',
-              itemBuilder: (item) => _ReturnedActions(
-                item: item,
-                onResubmit: _resubmit,
+            Expanded(
+              child: TabBarView(
+                controller: _tabs,
+                children: [
+                  _QueueBody(
+                    future: _queue,
+                    typeFilter: _typeFilter,
+                    onRefresh: _refreshReview,
+                    emptyText: 'لا توجد نشرات بانتظار المراجعة',
+                    itemBuilder: (item) => _ReviewActions(
+                      item: item,
+                      onDecide: _decide,
+                    ),
+                  ),
+                  _QueueBody(
+                    future: _returned,
+                    typeFilter: _typeFilter,
+                    onRefresh: _refreshReturned,
+                    emptyText: 'لا توجد نشرات مُرجَعة لك في هذه المحطة',
+                    itemBuilder: (item) => _ReturnedActions(
+                      item: item,
+                      onResubmit: _resubmit,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -214,12 +242,14 @@ class _QueueBody extends StatelessWidget {
     required this.onRefresh,
     required this.emptyText,
     required this.itemBuilder,
+    this.typeFilter,
   });
 
   final Future<List<ObservationQueueItem>> future;
   final Future<void> Function() onRefresh;
   final String emptyText;
   final Widget Function(ObservationQueueItem item) itemBuilder;
+  final String? typeFilter;
 
   @override
   Widget build(BuildContext context) => FutureBuilder<List<ObservationQueueItem>>(
@@ -255,9 +285,17 @@ class _QueueBody extends StatelessWidget {
               ),
             );
           }
-          final rows = snapshot.data ?? const <ObservationQueueItem>[];
-          if (rows.isEmpty) {
+          final allRows = snapshot.data ?? const <ObservationQueueItem>[];
+          final rows = typeFilter == null
+              ? allRows
+              : allRows
+                  .where((item) => item.observationType == typeFilter)
+                  .toList();
+          if (allRows.isEmpty) {
             return Center(child: Text(emptyText));
+          }
+          if (rows.isEmpty) {
+            return const Center(child: Text('لا نتائج لنوع النشرة المحدد'));
           }
           return RefreshIndicator(
             onRefresh: onRefresh,

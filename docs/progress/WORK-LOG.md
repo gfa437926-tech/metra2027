@@ -28,3 +28,7 @@
 - Unit tests for `filterStationDirectory`.
 **CI note:** Prior Client CI on `5da9d38` — Flutter job success; Angular Chromium install failed (env), unrelated to Flutter change.
 **Constraints:** No DB apply; no main merge.
+
+## 2026-11-11 — FLT review type filter
+
+**Done:** Client-side FilterChip on observation review (hourly/daily/phenomenon) without changing server contracts.
