@@ -4,7 +4,7 @@
 - **Repository:** `gfa437926-tech/metra2027`
 - **Branch:** `fix/flutter-client-ci-mainline-2026-11-11`
 - **PR:** [#34](https://github.com/gfa437926-tech/metra2027/pull/34)
-- **Status:** Implementation committed; Client CI verification pending at the time of this report.
+- **Status:** Implementation committed; Client CI #1133 passed on the updated branch head after the station-switch regression test was corrected.
 
 ## Implemented
 
@@ -31,3 +31,17 @@ The current reviewed ASP.NET Core route inventory contains no daily/monthly/annu
 - No Backend, SQL, migration, Supabase, database, R/Climatol, raw observation or legacy repository changes.
 - No database schema change or production deployment.
 - CI status must be updated with the exact commit SHA after the workflow finishes.
+
+
+## Follow-up verification — 2026-11-11T21:19Z
+
+- Fixed a stale-response race in the observation archive screen: a response started for a previously selected station is discarded after the station selection changes or is cleared.
+- Added a widget regression test that holds the first station response, loads the second station, then completes the stale first response and verifies the second station's payload remains the only payload shown.
+- The initial CI attempt #1132 exposed a test-harness issue (26 passed, 1 failed: the test tried to drag a ListView before one existed). The test harness was corrected; the application analyzer had already passed on that attempt.
+- Client CI #1133: **SUCCESS** on commit `f3e6e730b26cb1e874c93657ff342c79abc2aaa2`.
+  - Flutter analyze: passed.
+  - Flutter tests: **27 passed**.
+  - Angular build: passed.
+- CI run: https://github.com/gfa437926-tech/metra2027/actions/runs/43101799253
+- This verifies the current PR head only; it does not certify the entire Flutter app as complete.
+- PR remains Draft and unmerged. No hosted database, Supabase schema, migration, RLS, grant, legacy database or legacy repository was changed.
