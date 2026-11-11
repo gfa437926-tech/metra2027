@@ -64,6 +64,7 @@ as $function$
 declare
     v_items jsonb;
     v_returned integer;
+    v_has_more boolean;
 begin
     if coalesce(auth.role(), '') <> 'service_role' then
         raise insufficient_privilege using message = 'service_role_required';
@@ -82,6 +83,26 @@ begin
         return jsonb_build_object('authorized', false);
     end if;
 
+    with candidates as (
+        select r.id, r.station_id, r.source_system, r.source_table,
+               r.source_record_id, r.observation_type, r.observed_at,
+               r.payload, r.imported_at
+        from public.metra_observation_records r
+        where r.station_id = p_station_id
+          and not r.is_demo
+          and (p_observation_type is null or r.observation_type = p_observation_type)
+          and (p_from_utc is null or
+               (r.observed_at is not null and r.observed_at >= p_from_utc))
+          and (p_to_utc is null or
+               (r.observed_at is not null and r.observed_at < p_to_utc))
+        order by r.observed_at desc nulls last, r.id desc
+        limit p_limit + 1 offset p_offset
+    ),
+    page_rows as (
+        select * from candidates
+        order by observed_at desc nulls last, id desc
+        limit p_limit
+    )
     select
         coalesce(jsonb_agg(
             jsonb_build_object(
@@ -96,23 +117,10 @@ begin
                 'importedAtUtc', q.imported_at
             ) order by q.observed_at desc nulls last, q.id desc
         ), '[]'::jsonb),
-        count(*)::integer
-    into v_items, v_returned
-    from (
-        select r.id, r.station_id, r.source_system, r.source_table,
-               r.source_record_id, r.observation_type, r.observed_at,
-               r.payload, r.imported_at
-        from public.metra_observation_records r
-        where r.station_id = p_station_id
-          and not r.is_demo
-          and (p_observation_type is null or r.observation_type = p_observation_type)
-          and (p_from_utc is null or
-               (r.observed_at is not null and r.observed_at >= p_from_utc))
-          and (p_to_utc is null or
-               (r.observed_at is not null and r.observed_at < p_to_utc))
-        order by r.observed_at desc nulls last, r.id desc
-        limit p_limit offset p_offset
-    ) q;
+        count(*)::integer,
+        (select count(*) > p_limit from candidates)
+    into v_items, v_returned, v_has_more
+    from page_rows q;
 
     return jsonb_build_object(
         'authorized', true,
@@ -120,7 +128,8 @@ begin
         'page', jsonb_build_object(
             'limit', p_limit,
             'offset', p_offset,
-            'returned', v_returned
+            'returned', v_returned,
+            'hasMore', v_has_more
         )
     );
 end;
