@@ -24,6 +24,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationSe
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationArchiveService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationReviewService));
@@ -37,6 +38,7 @@ builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthoriz
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
+builder.Services.AddScoped<IObservationArchiveService, SupabaseObservationArchiveService>();
 builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
@@ -105,6 +107,7 @@ app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
 app.MapObservationQueueEndpoints();
+app.MapObservationArchiveEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();

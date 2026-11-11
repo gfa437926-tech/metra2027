@@ -165,6 +165,11 @@ public static class ObservationSubmissionRequestGuard
             request.Payload.Value.GetRawText().Length > 65536)
             return "invalid_observation_payload";
 
+        // METRA report timestamps are UTC-only; reject offset-bearing local times
+        // rather than silently interpreting them as UTC or changing their instant.
+        if (request.ObservedAt.Value.Offset != TimeSpan.Zero)
+            return "observation_time_must_be_utc";
+
         return null;
     }
 }
