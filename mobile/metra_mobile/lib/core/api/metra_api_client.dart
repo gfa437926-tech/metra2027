@@ -99,9 +99,11 @@ class ObservationArchivePage {
     required this.limit,
     required this.offset,
     required this.returned,
+    required this.hasMore,
   });
   final List<ObservationArchiveItem> items;
   final int limit, offset, returned;
+  final bool hasMore;
 
   factory ObservationArchivePage.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
@@ -117,12 +119,16 @@ class ObservationArchivePage {
       }
       return value;
     }
+    if (page['hasMore'] is! bool) {
+      throw const FormatException('invalid_observation_archive_page');
+    }
     return ObservationArchivePage(
       items: rawItems.map((item) => ObservationArchiveItem.fromJson(
         Map<String, dynamic>.from(item as Map))).toList(growable: false),
       limit: requiredInt('limit'),
       offset: requiredInt('offset'),
       returned: requiredInt('returned'),
+      hasMore: page['hasMore'] as bool,
     );
   }
 }
