@@ -341,3 +341,34 @@ M13 remains **0% of 12 audit workstreams formally closed**. DB-001, DB-002 and I
 
 **Remaining:** 12 audit workstreams remain open.  
 **Next:** obtain a trusted baseline schema from the project owner; ask database owner to prepare and test the DB-001 correction in an isolated disposable PostgreSQL environment; require backend/client owners to add server-side domain-validation evidence and negative tests. Do not apply any changes to the new or old Supabase project. PR #31 remains Draft and unmerged.
+
+
+## Round 5 — deeper DB-test and migration dependency review (2026-11-11T09:51:01.457Z UTC)
+
+### Evidence rechecked
+- Read the exact PR #26 branch sources: DATABASE-ENGINEERING-AUDIT.md, MIGRATION-REVIEW-REGISTER.md, and the review-only audit-event proposal. PR #26 head remains 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8; PR #28 head remains 9b3ad187de7cbbf861dd7b091c193172e5a77ea9.
+- Re-read the active main observation creation and review-decision migrations (blobs 9bbe23891aaecbedbea7537f7875ef7895442760 and bc62268432c94d481e5e274625c5d59eea8ce528). The event-type mismatch is present in the exact source.
+- Read the proposed correction blob 8b66ba679f16436e61b72e86e3d1f1ea73d3630f. It maps decisions to approved/returned and adds an explicit NULL decision check. It remains a non-executable .proposal outside migration directories; it is not approved, tested or applied.
+- Inspected the repository's current database/tests inventory and three shell contract tests. These use static grep assertions against SQL/API text; they are not PostgreSQL integration tests and do not execute migrations or RPC transactions. No test file currently listed in that directory exercises metra_decide_observation with both decision branches.
+- Re-read migration 020 (blob f82cca1d793b7806b27522900be834018ec285ac). It adds nullable authority_id, immediately aborts if any row remains NULL, then applies NOT NULL/FK; it contains no backfill. This confirms a migration precondition requiring an owner-approved data mapping or a proven empty/new-table precondition. No live database state was checked.
+- Migration 020's authority-access audit trigger explicitly includes TRUNCATE. This does not remediate the separate observation-audit trigger gap recorded as DB-013.
+- Re-read PR #28 API cross-check (blob 1e138fa5dcab2c8e5a53ddc861e31b14bde0f569): no client invocation of daily/hourly validation endpoints was found in inspected flows; persistence-path domain validation remains unproven. Static only.
+
+### CI and tests
+- Requeried PR-triggered workflow runs for PR #26 head 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8 and PR #28 head 9b3ad187de7cbbf861dd7b091c193172e5a77ea9: both returned zero runs. No CI success is claimed.
+- Assistant 13 ran no tests. No SQL, PostgreSQL, API, build or device tests were executed.
+
+### Findings and required proof
+- M13-DB-001 remains release-blocking until isolated PostgreSQL tests prove approve and return_for_correction both commit the intended status and audit event, while unauthorized/null/invalid/stale-state cases leave both tables unchanged.
+- M13-DB-002 remains open: obtain an owner-approved baseline/schema snapshot; do not reconstruct missing 001/002 migrations by guesswork.
+- M13-DB-011 remains a migration-order/data-precondition blocker until a documented safe backfill or verified empty-table prerequisite is supplied and tested on disposable data.
+- M13-INT-001 remains open until server-side domain validation is proven in the authoritative write path and negative tests cover requiredness, physical ranges, cross-field consistency, units and time semantics for every observation type.
+- DB-013 observation-audit TRUNCATE protection and DB-015 SQL-side actor authorization still require direct source/isolated database verification; authority audit trigger coverage in migration 020 is not evidence for the observation audit table.
+
+### Safety and scope
+- Read-only GitHub source and Actions metadata inspection only. No live Supabase/database access; no SQL/migration execution; no DB/schema/data/secrets/source changes; no merge, rebase or deployment.
+- Only assistant-13 progress and changelog documents are updated in this round.
+
+### Progress accounting
+- M13 remains 0% of 12 audit workstreams formally closed. Evidence depth increased, but no workstream meets its closure criteria because required executable regression tests, baseline approval, or owner acceptance are still absent.
+- Remaining: 12 audit workstreams open. PR #31 remains open, Draft and unmerged.
