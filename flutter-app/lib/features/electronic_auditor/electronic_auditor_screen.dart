@@ -5,9 +5,10 @@ import '../../core/api/metra_api_client.dart';
 /// Electronic audit UI. It intentionally does not claim OCR, chart digitization,
 /// image storage, or comparison until the server-side audit API is available.
 class ElectronicAuditorScreen extends StatefulWidget {
-  const ElectronicAuditorScreen({super.key, this.api});
+  const ElectronicAuditorScreen({super.key, this.api, this.initialTabIndex = 0});
 
   final MetraApiClient? api;
+  final int initialTabIndex;
 
   @override
   State<ElectronicAuditorScreen> createState() => _ElectronicAuditorScreenState();
@@ -36,7 +37,7 @@ class _ElectronicAuditorScreenState extends State<ElectronicAuditorScreen>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 8, vsync: this);
+    _tabs = TabController(length: 8, initialIndex: widget.initialTabIndex.clamp(0, 7).toInt(), vsync: this);
     _stations = widget.api?.getAllStationDirectory();
   }
 
