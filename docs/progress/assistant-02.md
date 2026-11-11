@@ -102,3 +102,26 @@ A subsequent check confirmed the report is absent from the current main tree and
 
 ## Round 5 CI result
 Actions run `42925098754` completed successfully on commit `efa5870e555d4f74584e44bd439002daf784afa3`: dependency restore/advisory checks, authorization contract checks, API build, Domain/API tests, and production container image build all passed. No local `dotnet test` run is claimed. The passing suite does not establish DB-backed revocation/race guarantees and does not close B-013.
+
+
+## Round 6 — Reporting and observation archive API contract baseline (2026-11-11)
+
+- Owner instruction received: proceed with reporting/archive Backend contracts, then bind the existing Flutter screens without redesign.
+- Re-inspected the current ASP.NET Core 10 route composition, observation submission and queue source, Flutter API client and reports hub.
+- Confirmed the existing GET `/api/v1/stations/{stationId}/observations` is a submitted review queue only; it is not a general historical archive.
+- Confirmed the source-derived persisted observation fields available in the current queue projection: id, station_id, created_by, observation_type, observed_at, payload, status, submitted_at and created_at.
+- Added `docs/backend/REPORTING-AND-OBSERVATION-ARCHIVE-API-CONTRACT-V1.md` (commit `d2c86150f8b81c20b190246d4e5e97d77b517af4`). It establishes the proposed archive list/detail route family, UTC filtering, bounded pagination, response envelope, authorization invariants, error mapping, and explicit deferment of history/corrections and scientific aggregation where schema or owner-approved rules are absent.
+- The API interface baseline does not infer version/history storage, permissions, status enums, observation field catalogues, daily period boundaries, monthly/annual statistics, or export persistence.
+- No API endpoint implementation or Flutter API binding is claimed in this round. The known B-013 authorization/read TOCTOU remains open; no new archive read endpoint will bypass it.
+- No SQL, migration, RPC deployment, RLS, seed, database/Supabase write, production access, or METRA OLD change.
+- Verification: documentation-only commit; no CI run claimed for this commit.
+
+### Remaining implementation gates
+1. Read-only schema review for observation, grant/assignment, audit/version and runtime-role objects.
+2. Approve explicit archive-read permission and atomic read/revocation semantics.
+3. Implement and DB-integration-test archive list/detail against the approved store/RPC.
+4. Decide version/event storage before implementing history/correction.
+5. Approve meteorological field units, daily period, completeness and monthly/annual aggregation rules before report calculations.
+6. Bind the existing Flutter reports/archive UI to the verified API DTOs and test 401/403/404/409/503 plus station-scope behavior.
+
+The earlier 54% assistant-02 task calculation is not recalculated from this documentation-only increment; implementation tasks remain open.
