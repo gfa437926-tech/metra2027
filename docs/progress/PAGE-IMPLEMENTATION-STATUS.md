@@ -204,3 +204,11 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Corrective source commit: a75bc36add6d7e3609eb84aa78b45f1faaabfe1f.
 - Root cause and evidence are recorded in docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md.
 - A fresh Client CI run #824 was triggered for the fix; status must be checked before marking the new screens verified.
+
+
+## Flutter analyzer follow-up — 2026-11-11 UTC
+
+- Client CI #824 failed again because the underlying _StatusCard retained an unused optional action parameter after the first correction.
+- Second corrective commit: 416539c774d58d545010079c7d9ab47b9c48d4b3 removes that stale parameter and branch.
+- Both analyzer findings and correction history are documented in docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md.
+- New Client CI verification for this correction is required; the earlier #823 and #824 runs are failures, not passes.
