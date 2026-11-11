@@ -67,6 +67,11 @@ class StationDetailScreen extends StatelessWidget {
               _detail('الارتفاع', station.elevationM == null
                   ? 'غير متوفر'
                   : '${station.elevationM!.toStringAsFixed(1)} متر'),
+              _detail('مصدر الإحداثيات',
+                  station.coordinateSource ?? 'غير موثق'),
+              _detail('دقة الإحداثيات', station.coordinateAccuracyM == null
+                  ? 'غير متوفرة'
+                  : '${station.coordinateAccuracyM!.toStringAsFixed(1)} متر'),
               _detail('معرّف WMO', station.wmoStationId ?? 'غير متوفر'),
             ]),
             const SizedBox(height: 12),
