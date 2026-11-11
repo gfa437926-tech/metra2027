@@ -82,6 +82,12 @@ void main() {
 
   testWidgets('invalid phenomenon is not submitted to observation storage',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    var submissionAttempts = 0;
     final client = MockClient((request) async {
       if (request.url.path == '/api/v1/observations/phenomena/validate') {
         return http.Response.bytes(
@@ -95,7 +101,8 @@ void main() {
           headers: {'content-type': 'application/json; charset=utf-8'},
         );
       }
-      fail('Observation submission must not run after failed validation.');
+      submissionAttempts++;
+      return http.Response('unexpected_submission', 500);
     });
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -115,6 +122,7 @@ void main() {
     await tester.tap(find.text('إنهاء والتحقق والحفظ'));
     await tester.pumpAndSettle();
 
+    expect(submissionAttempts, 0);
     expect(find.textContaining('نوع الظاهرة مطلوب'), findsOneWidget);
     expect(find.text('تم حفظ الظاهرة'), findsNothing);
     api.close();
