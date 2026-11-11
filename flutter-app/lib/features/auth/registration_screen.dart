@@ -114,7 +114,8 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
         403 => 'لا يمكن تحميل بيانات التسجيل لهذا الحساب.',
         503 => 'خدمة التسجيل غير متاحة حالياً؛ لم يتم إرسال أي طلب.',
         _ => 'تعذر تحميل بيانات التسجيل (HTTP ${e.statusCode}).',
-      });
+        });
+      }
     } catch (_) {
       if (mounted) {
         setState(() => _error = 'تعذر تحميل المحطات والأدوار وحالة الحساب.');
@@ -152,10 +153,12 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
         idempotencyKey: _idempotencyKey(),
       );
       final status = await widget.api.getMyRegistrationStatus();
-      if (mounted) setState(() {
-        _status = status;
-        _notice = 'استلم الخادم طلب الانضمام. لن تُفعّل الصلاحيات قبل اكتمال مرحلتي الاعتماد.';
-      });
+      if (mounted) {
+        setState(() {
+          _status = status;
+          _notice = 'استلم الخادم طلب الانضمام. لن تُفعّل الصلاحيات قبل اكتمال مرحلتي الاعتماد.';
+        });
+      }
     } on MetraApiException catch (e) {
       if (mounted) {
         setState(() => _error = switch (e.statusCode) {
@@ -167,7 +170,9 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر إرسال الطلب أو التحقق من إيصال الاستلام.');
+      if (mounted) {
+        setState(() => _error = 'تعذر إرسال الطلب أو التحقق من إيصال الاستلام.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
