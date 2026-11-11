@@ -45,8 +45,6 @@ $function$;
 
 revoke all on function private.metra_actor_can_read_station_archive(uuid, uuid)
     from public, anon, authenticated;
-grant execute on function private.metra_actor_can_read_station_archive(uuid, uuid)
-    to service_role;
 
 create or replace function public.metra_station_observation_archive_page(
     p_actor_user_id uuid,
