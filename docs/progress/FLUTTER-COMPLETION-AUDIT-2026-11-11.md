@@ -276,3 +276,18 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Prior failing CI runs remain failures, not passes: #43032212381, #43032484963, #43032957896, #43033286062, #43033776011, #43034322385. Root causes were corrected in subsequent commits (Arabic fixture UTF-8 encoding; form test viewport interaction; scrollable finder ambiguity).
 - Documentation commit: `af4fc58b9e74da9affd3e4674bde76e8c6a5e770`.
 - No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
+
+
+## FLT-FORECAST-UI-01 — Forecasting centre station map — 2026-11-11T14:11:00Z
+
+- Task status: **implemented baseline; exact-head CI verification pending**.
+- Added an interactive catalogue map to `flutter-app/lib/features/forecasting/forecasting_center_screen.dart` using the existing `flutter_map` / `latlong2` dependencies.
+- Only validated coordinates from the current approved station-directory API are plotted. Stations with missing/invalid coordinates remain visible in the station list and are explicitly counted; no coordinates or weather readings are fabricated.
+- Map markers toggle station selection; selected stations can be compared by great-circle distance and elevation difference. The comparison is geographic metadata only and is not described as a meteorological correlation.
+- Kept the live-observation boundary explicit: temperature, wind, rainfall and bulletin details remain unavailable until an approved live snapshot/bulletin API contract exists.
+- Added `flutter-app/test/forecasting_center_screen_test.dart` covering catalogue map availability, station selection, geographic comparison and elevation delta.
+- Source commit: `59cec32c4a37bbb921e87ba6e83f59d6549a91f1`.
+- Widget test commit: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`.
+- Current PR #11 head: `e59d272a0448b3d97cbabd218be1d09c46a7b8a7`. No workflow run was returned for this exact SHA at the time of this note.
+- Client CI #861 (`43036054744`) was pending for the prior head `4af504672a1d1fc45839a2d33558f5960ad9b31c`; it cannot verify these newer commits.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
