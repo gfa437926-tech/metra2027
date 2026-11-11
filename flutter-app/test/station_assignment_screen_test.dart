@@ -78,7 +78,7 @@ void main() {
     await tester.tap(find.text('user-1'));
     await tester.pumpAndSettle();
     expect(find.text('تفاصيل التعيين'), findsOneWidget);
-    expect(find.textContaining('station_auditor'), findsOneWidget);
+    expect(find.text('station_auditor'), findsOneWidget);
     await tester.tap(find.text('إغلاق'));
     await tester.pumpAndSettle();
 
