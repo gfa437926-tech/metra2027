@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../admin/admin_api_messages.dart';
 
 const _registrationTermsVersion = 'metra-terms-2026-11';
 
@@ -111,12 +112,7 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
       });
     } on MetraApiException catch (e) {
       if (mounted) {
-        setState(() => _error = switch (e.statusCode) {
-        401 => 'انتهت الجلسة. سجّل الدخول مجدداً.',
-        403 => 'لا يمكن تحميل بيانات التسجيل لهذا الحساب.',
-        503 => 'خدمة التسجيل غير متاحة حالياً؛ لم يتم إرسال أي طلب.',
-        _ => 'تعذر تحميل بيانات التسجيل (HTTP ${e.statusCode}).',
-        });
+        setState(() => _error = adminRegistrationLoadError(e.statusCode));
       }
     } catch (_) {
       if (mounted) {
@@ -163,13 +159,7 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
       }
     } on MetraApiException catch (e) {
       if (mounted) {
-        setState(() => _error = switch (e.statusCode) {
-        400 => 'البيانات أو المحطة أو الدور أو إصدار الشروط غير صالح.',
-        401 => 'يلزم تأكيد البريد وتسجيل الدخول قبل إرسال الطلب.',
-        409 => 'يوجد طلب سابق أو تعارض في حالة الحساب. راجع حالة الطلب أدناه.',
-        503 => 'خدمة التسجيل غير متاحة؛ لم يتم تأكيد حفظ الطلب.',
-        _ => 'تعذر إرسال طلب الانضمام (HTTP ${e.statusCode}).',
-        });
+        setState(() => _error = adminRegistrationSubmitError(e.statusCode));
       }
     } catch (_) {
       if (mounted) {

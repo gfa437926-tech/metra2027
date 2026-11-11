@@ -6,5 +6,6 @@ void main() {
     expect(adminRegistrationDecisionError(403), contains('صلاحية'));
     expect(adminAssignmentRequestError(409), contains('تعارض'));
     expect(adminArchiveError(403), contains('أرشفة'));
+    expect(adminRegistrationSubmitError(409), contains('تعارض'));
   });
 }
