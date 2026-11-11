@@ -45,6 +45,7 @@ builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
+builder.Services.AddScoped<IObservationArchiveService, UnconfiguredObservationArchiveService>();
 builder.Services.AddOpenApi();
 
 builder.Services
@@ -105,6 +106,7 @@ app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
 app.MapObservationQueueEndpoints();
+app.MapObservationArchiveEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();

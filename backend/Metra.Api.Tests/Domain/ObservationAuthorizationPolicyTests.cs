@@ -94,3 +94,54 @@ public sealed class ObservationAuthorizationPolicyTests
         Assert.True(result.IsAuthorized);
     }
 }
+    [Fact]
+    public void Archive_read_allows_explicit_station_grant_only()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(station: "station-1", permissions: [ObservationPermission.ArchiveRead]),
+            "station-1");
+
+        Assert.True(result.IsAuthorized);
+        Assert.Null(result.ErrorCode);
+    }
+
+    [Fact]
+    public void Archive_read_denies_when_role_has_review_but_no_archive_grant()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(station: "station-1", permissions: [ObservationPermission.Review, ObservationPermission.Approve]),
+            "station-1");
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("archive_permission_denied", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Archive_read_denies_other_station_even_with_archive_permission_on_actor_station()
+    {
+        // Actor is assigned and granted archive on station-1 only.
+        // Request for station-2 (same authority scenario) must fail closed.
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(station: "station-1", permissions: [ObservationPermission.ArchiveRead]),
+            "station-2");
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("station_scope_violation", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Archive_read_denies_unauthenticated()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(null, "station-1");
+        Assert.Equal("unauthenticated", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Archive_read_denies_inactive_assignment()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(active: false, permissions: [ObservationPermission.ArchiveRead]),
+            "station-1");
+
+        Assert.Equal("inactive_station_assignment", result.ErrorCode);
+    }
