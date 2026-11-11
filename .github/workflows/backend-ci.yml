@@ -97,3 +97,29 @@ jobs:
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/00_bootstrap_minimal_schema.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/01_seed_archive_isolation_fixtures.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/02_test_archive_isolation.sql
+
+  path-n-empty-db:
+    name: Path N empty PostgreSQL schema build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: metra_test
+          POSTGRES_PASSWORD: metra_test_isolated
+          POSTGRES_DB: metra_path_n
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metra_test -d metra_path_n"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install psql client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Apply Path N
+        env:
+          PATH_N_DATABASE_URL: postgres://metra_test:metra_test_isolated@127.0.0.1:5432/metra_path_n
+        run: bash database/baseline/path_n_apply.sh
