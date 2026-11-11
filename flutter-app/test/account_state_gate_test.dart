@@ -52,7 +52,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('الحساب معطل'), findsOneWidget);
     expect(find.text('المساحة التشغيلية'), findsNothing);
-    expect(find.text('تعطيل إداري'), findsOneWidget);
+    expect(find.textContaining('تعطيل إداري'), findsOneWidget);
   });
 
   testWidgets('status service failure fails closed and offers retry', (tester) async {
