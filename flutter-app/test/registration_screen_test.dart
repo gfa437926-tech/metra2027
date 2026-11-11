@@ -74,6 +74,10 @@ void main() {
       client: client,
     );
 
+    final directory = await api.getAllStationDirectory();
+    expect(directory, hasLength(2));
+    expect(directory.where((station) => station.isDemo), hasLength(1));
+
     await tester.pumpWidget(MaterialApp(
       home: MetraRegistrationScreen(api: api, initiallyAuthenticated: true),
     ));
