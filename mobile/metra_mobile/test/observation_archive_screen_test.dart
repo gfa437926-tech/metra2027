@@ -13,10 +13,12 @@ void main() {
   const observationId = '66666666-6666-4666-8666-666666666666';
 
   testWidgets('archive screen loads station records and opens source payload detail', (tester) async {
+    final requestedPaths = <String>[];
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'archive-token',
       client: MockClient((request) async {
+        requestedPaths.add(request.url.path);
         if (request.url.path.endsWith('/archive')) {
           return http.Response(jsonEncode({
             'authorized': true,
@@ -64,9 +66,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('تفاصيل الرصد التاريخي'), findsOneWidget);
-    await tester.ensureVisible(find.text('محتوى الرصد الأصلي'));
+    expect(requestedPaths, contains(
+      '/api/v1/stations/$stationId/observations/$observationId',
+    ));
+
+    final sourcePayloadTitle = find.text('محتوى الرصد الأصلي');
+    for (var attempt = 0; attempt < 10 && sourcePayloadTitle.evaluate().isEmpty; attempt++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(sourcePayloadTitle, findsOneWidget);
+    await tester.ensureVisible(sourcePayloadTitle);
     await tester.pumpAndSettle();
-    expect(find.text('محتوى الرصد الأصلي'), findsOneWidget);
     expect(find.textContaining('temperature'), findsOneWidget);
     api.close();
   });
