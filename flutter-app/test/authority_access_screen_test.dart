@@ -63,6 +63,7 @@ void main() {
     await tester.tap(find.text('متابعة'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'طلب انضمام للعمل في الجهة');
+    await tester.pumpAndSettle();
     await tester.tap(find.text('تأكيد'));
     await tester.pumpAndSettle();
 
