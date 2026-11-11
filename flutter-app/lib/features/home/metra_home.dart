@@ -72,6 +72,7 @@ class _MetraHomeState extends State<MetraHome> {
       MetraAccountProfileScreen(
         email: widget.userEmail,
         onSignOut: widget.onSignOut,
+        loadAccountStatus: widget.api.getMyRegistrationStatus,
       ),
       _MoreMenuPage(
         onReview: () => setState(() => _index = 2),
