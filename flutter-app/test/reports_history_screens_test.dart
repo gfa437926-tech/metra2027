@@ -91,8 +91,8 @@ void main() {
     final summaryRequest = requests.lastWhere((request) =>
         request.method == 'GET' &&
         request.url.path.endsWith('/archive-confirmations/monthly-summary'));
-    expect(summaryRequest.url.queryParameters['year'], '\${previousMonth.year}');
-    expect(summaryRequest.url.queryParameters['month'], '\${previousMonth.month}');
+    expect(summaryRequest.url.queryParameters['year'], '${previousMonth.year}');
+    expect(summaryRequest.url.queryParameters['month'], '${previousMonth.month}');
 
     await tester.enterText(
       find.byWidgetPredicate((widget) =>
