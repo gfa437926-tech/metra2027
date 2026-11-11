@@ -38,7 +38,13 @@ void main() {
           'name_ar': 'محطة اختبار', 'name_en': 'Test station',
           'station_type': 'classic', 'operational_status': 'unverified',
           'approval_status': 'pending', 'is_demo': false,
-          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}]
+          'elevation_m': 412.0,
+          'station_coordinates': [{
+            'latitude': 24.7,
+            'longitude': 46.7,
+            'coordinate_source': 'surveyed',
+            'accuracy_m': 3.2,
+          }]
         }])), 200);
       }));
     final rows = await client.getStationDirectory(stationType: 'classic');
@@ -48,6 +54,9 @@ void main() {
     expect(rows.single.nameArabic, 'محطة اختبار');
     expect(rows.single.hasCoordinates, isTrue);
     expect(rows.single.approvalStatus, 'pending');
+    expect(rows.single.elevationM, 412.0);
+    expect(rows.single.coordinateSource, 'surveyed');
+    expect(rows.single.coordinateAccuracyM, 3.2);
     client.close();
   });
 
