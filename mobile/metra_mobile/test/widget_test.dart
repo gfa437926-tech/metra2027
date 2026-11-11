@@ -77,8 +77,8 @@ void main() {
     final marker = find.bySemanticsLabel('محطة اختبار الوصول • ST-03');
     expect(marker, findsOneWidget);
     final data = tester.getSemantics(marker).getSemanticsData();
-    expect(data.hasFlag(ui.SemanticsFlag.isButton), isTrue);
-    expect(data.hasAction(ui.SemanticsAction.tap), isTrue);
+    expect(data.flagsCollection.isButton, isTrue);
+    expect(data.actionsCollection.tap, isTrue);
 
     semantics.dispose();
     api.close();
