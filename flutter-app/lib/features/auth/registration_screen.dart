@@ -236,7 +236,9 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
                     'تاريخ الطلب UTC: ${_status!['submitted_at']}',
                 ].where((value) => value.trim().isNotEmpty).join('\n')),
               )),
-            if (_status?['account_state'] == null) ...[
+            if (_status?['account_state'] == null &&
+                _status?['request_status'] != 'pending_station_approval' &&
+                _status?['request_status'] != 'pending_system_approval') ...[
               const Text('البيانات الشخصية', style: TextStyle(fontWeight: FontWeight.bold)),
               TextField(controller: _first, decoration: const InputDecoration(labelText: 'الاسم الأول'), onChanged: (_) => setState(() {})),
               TextField(controller: _father, decoration: const InputDecoration(labelText: 'اسم الأب'), onChanged: (_) => setState(() {})),
