@@ -17,7 +17,7 @@ METRA 2027 consists of three independently runnable applications:
 | Application | Technology | Repository folder |
 |---|---|---|
 | Web client | Angular | `angular-app/` |
-| Mobile client | Flutter | `mobile/metra_mobile/` |
+| Mobile client | Flutter | `flutter-app/` |
 | Backend | ASP.NET Core / .NET | `backend/Metra.Api/` |
 
 The backend is the authoritative boundary for authentication context, authorization, validation, workflow transitions and privileged data access. Clients must not connect directly to the operational database for authoritative business operations.
@@ -421,7 +421,7 @@ The sequence below is a planning baseline, not a promise that each round will ta
 - `docs/api/` — API contracts and endpoint documentation.
 - `docs/data-quality/` — station catalogue/data-quality evidence.
 - `angular-app/src/app/app.routes.ts` — web route source of truth.
-- `mobile/metra_mobile/lib/` — mobile page/navigation source.
+- `flutter-app/lib/` — mobile page/navigation source.
 - `backend/` and `supabase/` — API, tests and proposed database artifacts.
 
 Update this document whenever a page is added, removed, renamed or changes access/workflow behavior. Every change must include its test IDs and evidence. Do not mark an item verified merely because a source file exists.
@@ -438,3 +438,7 @@ Update this document whenever a page is added, removed, renamed or changes acces
 - Review and approve the new database schema and migration plan before any database change.
 
 **Completion definition:** METRA 2027 is complete only when every approved page and workflow in this register is implemented in the required clients, all corresponding automated and manual acceptance tests pass, security scope is verified server-side, and the owner approves the release.
+
+## Flutter source path clarification — 2026-11-11 UTC
+
+The canonical Flutter client source is `flutter-app/`. The former `mobile/metra_mobile/` tree is retained as a temporary read-only reference; see `mobile/metra_mobile/README.md`, `flutter-app/README.md`, `.github/workflows/client-ci.yml`, and `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`. Do not merge or delete the reference tree without a separate diff/history review.
