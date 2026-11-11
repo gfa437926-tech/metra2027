@@ -110,3 +110,17 @@ Push rejected: PAT lacks `workflow` scope.
 - AFTN console shell; record matching shell; expanded electronic auditor case/decision tiles.
 - Specialist planned disabled fields for rainfall, agriculture, soil temperature.
 **Explicit:** no OCR, no AFTN traffic, no live forecast snapshot, no fake soil/rain values, server remains authz source.
+
+
+## FLT-REVIEW-005 — مراجعة إضافة مراكز التنبؤ ومسار Flutter — 2026-11-11T16:16:41.107Z
+
+- **الحالة:** المراجعة منجزة؛ نقل/مواءمة الميزة إلى المسار المعتمد والتحقق الآلي ما زالا مفتوحين.
+- **الفرع:** `work/legacy-ui-migration-audit`.
+- **Commits Grok التي تمت مراجعتها:** `1d3286c`, `bfe0282`, `6271ce5`, `a08613f`, `4b894b8`, `6ff6f36`.
+- **النتيجة الأساسية:** شاشة المقارنة الجديدة، ربط التنقل، واختبارها أُضيفت إلى `mobile/metra_mobile/`، وهو مسار مرجعي فقط. أما CI فيبني ويختبر `flutter-app/`.
+- **الوضع في المسار المعتمد:** `flutter-app/lib/features/forecasting/forecasting_center_screen.dart` يحتوي بالفعل خريطة وبحثاً واختيار محطات ومقارنة عبر API خادمي ونافذة ملف المحطة؛ كما يحتوي API client على `compareForecastingStations` و`getForecastingStationProfile`. لذا فإن FLT-005 ليس ميزة جديدة مثبتة في المسار المعتمد، بل تنفيذ موازٍ في المسار المرجعي.
+- **الاختبارات:** اختبار المقارنة بمحطتين وحاجز منع الرصدات الوهمية موجود في اختبار المسار المرجعي فقط. اختبار المسار المعتمد الحالي يغطي فتح شاشة التنبؤ والتنقل، وليس fixture المقارنة الجديد.
+- **CI:** combined statuses وPR workflow runs كانت فارغة للـcommits التي تمت مراجعتها؛ لا يوجد دليل نجاح. كما أن workflow يحدد فروع `main` فقط في push وpull_request، ولا يشمل فرع العمل.
+- **قرار المراجعة:** لا دمج تلقائي ولا تعديل لملفات Flutter أثناء عمل Grok. يلزم مواءمة واعية للوظائف بين المسارين، نقل اختبار المقارنة إلى `flutter-app/`، ثم تشغيل CI على الفرع.
+- **القيود:** لم يتم تعديل أي مصدر Flutter، ولم تُمس قاعدة البيانات أو migrations أو RLS، ولم يحدث دمج إلى `main` أو نشر.
+- **المرجع:** `docs/progress/FRONTEND-COMPLETION-MATRIX.md` تم تحديثه في commit المراجعة.
