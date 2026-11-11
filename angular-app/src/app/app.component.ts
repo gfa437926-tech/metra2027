@@ -12,7 +12,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
       <i class="fa-solid fa-bars"></i><span>القائمة</span>
     </button>
     <div id="mobileOverlay" class="sidebar-backdrop" [class.visible]="sidebarOpen" (click)="closeSidebar()"></div>
-    <aside id="mainSidebar" class="sidebar" [class.open]="sidebarOpen" aria-label="القائمة الرئيسية">
+    <aside id="mainSidebar" class="sidebar" [class.open]="sidebarOpen" [attr.inert]="isMobileViewport && !sidebarOpen ? '' : null" aria-label="القائمة الرئيسية">
       <div class="sidebar-scroll">
         <header class="sidebar-header">
           <div class="logo-container"><i class="fa-solid fa-cloud-sun"></i></div>
@@ -117,9 +117,11 @@ export class AppComponent implements OnInit {
   private readonly router = inject(Router);
   @ViewChild('mobileMenuTrigger') private mobileMenuTrigger?: ElementRef<HTMLButtonElement>;
   sidebarOpen = false;
+  isMobileViewport = false;
   currentUserEmail: string | null = null;
 
   ngOnInit(): void {
+    this.updateViewportMode();
     void this.refreshSession();
     this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(() => {
       void this.refreshSession();
@@ -142,6 +144,11 @@ export class AppComponent implements OnInit {
     }
   }
 
+  @HostListener('window:resize')
+  updateViewportMode(): void {
+    this.isMobileViewport = window.innerWidth <= 992;
+  }
+
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
     if (!this.sidebarOpen) return;
@@ -149,5 +156,8 @@ export class AppComponent implements OnInit {
     this.mobileMenuTrigger?.nativeElement.focus();
   }
 
-  closeSidebar(): void { this.sidebarOpen = false; }
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+    if (this.isMobileViewport) this.mobileMenuTrigger?.nativeElement.focus();
+  }
 }
