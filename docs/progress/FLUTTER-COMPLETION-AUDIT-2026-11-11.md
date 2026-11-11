@@ -64,7 +64,7 @@ This is a useful baseline, not full acceptance coverage for every required page,
 | Sign-in/session | Supabase auth gate, secure session storage, API token provider | Partial | Full account-state, expired/revoked session, recovery and negative tests |
 | Registration request | No dedicated Flutter page found | Missing | Build pending-registration request UI after identity contract |
 | Registration review | Admin screen exists and calls API | Partial | Permission-state, error, confirmation, system/station-stage tests |
-| Password recovery | No page found | Missing | Identity-provider flow and privacy-safe feedback |
+| Password recovery | Dedicated recovery screen calls Supabase Auth resetPasswordForEmail with privacy-safe confirmation | Implemented; CI pending | Verify Flutter analyze/test and confirm redirect/deep-link settings before release |
 | Profile/account | Settings text/sign-out only | Partial/Missing | Profile, assignments, account status and session lifecycle |
 | Shared home/navigation | Six bottom destinations; one home action opens forecasting | Partial | Role-aware links, route coverage, responsive navigation, forecasting always discoverable |
 | Station directory | API-backed map/list, type filters, coordinate validation | Partial | Search/pagination/detail route, missing-coordinate handling and station selection lifecycle |
@@ -111,7 +111,8 @@ This is a useful baseline, not full acceptance coverage for every required page,
 - Make forecasting, reports, observations, operations and account areas discoverable without duplicate navigation.
 
 ### F-02 — Identity and account pages
-- Sign-in hardening, registration request, recovery, profile, access denied/session expired.
+- Password recovery screen and login entry point added in commits 70b4a58 and 8733b4e; widget tests for validation, generic confirmation and safe provider errors added in d225bc8.
+- Remaining: registration request, profile, access denied/session expired, and account lifecycle tests.
 - Registration review and assignment parity.
 
 ### F-03 — Station and observation workflows
@@ -161,3 +162,13 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - No merge to `main` or deployment without approval.
 - Do not invent meteorological values, station coordinates, role grants or domain formulas.
 - Keep source code readable; do not replace source with obfuscated artifacts.
+
+
+## Implementation update — 2026-11-11 UTC
+
+- Task FLT-AUTH-02 — Password recovery: **implemented, verification pending**.
+- Added `flutter-app/lib/features/auth/password_recovery_screen.dart`.
+- Connected the login screen to Supabase Auth `resetPasswordForEmail`.
+- Added `flutter-app/test/password_recovery_screen_test.dart` covering invalid email, trimmed email submission, privacy-safe success text and provider-error redaction.
+- CI triggered by the auth integration: Client CI #812 (Flutter analyze/test + Angular build), URL: https://github.com/gfa437926-tech/metra2027/actions/runs/43029197173. At the time of this audit update it was still running; the test-file commit followed the workflow trigger, so a new run for the latest tip must be checked separately.
+- No identity schema, SQL, redirect URL or production setting was changed.
