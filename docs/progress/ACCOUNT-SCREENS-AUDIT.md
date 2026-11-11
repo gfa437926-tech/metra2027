@@ -6,7 +6,7 @@
 - **Branch:** `work/flutter-canonical-consolidation`
 - **Canonical Flutter:** `flutter-app/`
 - **Reference source:** `mobile/metra_mobile/` on `main`
-- **Status:** Source audit complete; account-state display enhancement committed; access-context and role administration remain blocked by missing API contract.
+- **Status:** Account source audit and primary UI workflows implemented; Flutter CI verified (85 tests). Effective-access context, eligible-user search and real-device password recovery remain open.
 - **Scope:** Master specification IDs ID-01 through ID-06 and administration IDs AD-01 through AD-04.
 
 ## 1. Current screen inventory
@@ -81,7 +81,7 @@
 - No service-role key in Flutter.
 - No global role or station scope inferred from a display label.
 - No merge to `main`, production deployment or deletion of `mobile/metra_mobile/`.
-- Flutter analyzer, widget tests, Android/iOS builds and visual checks have **not** been executed in this environment; source tests are committed but not reported as passing.
+- **CI evidence:** run `43071280050` on commit `51ed88a`: Flutter analyzer passed and 85 tests passed. This does not substitute for Android/iOS release builds, visual comparison against the original screenshots, Supabase redirect allow-list, or real-device recovery email round-trip.
 
 
 ## ACC-03 — Authority membership and permission UI — 2026-11-11T16:37:06.421Z
@@ -137,3 +137,11 @@
 - Added `getStationAuditLog` client method and `StationAuditLogScreen` using the existing station-scoped `GET /api/v1/stations/{stationId}/audit-log` endpoint.
 - Linked the audit log from station assignment management. The screen displays actor, target, role, previous/resulting status, UTC validity and reason; server permission failures remain visible without exposing provider internals.
 - Added widget test for the audit read model.
+
+
+## ACC-08 — Account workflow verification and dialog lifecycle fix — 2026-11-11T17:48:59.359Z
+
+- Fixed a real lifecycle bug in the authority membership reason dialog: the text controller is now owned and disposed by the dialog widget after its route is removed, not immediately after `showDialog` returns.
+- Confirmation button state rebuilds as the reason is typed; the membership request flow now has a regression test that verifies the server request payload and no local grant.
+- **Verification:** Flutter CI run `43071280050` passed analyzer and all 85 tests. Angular tests/build and browser smoke tests also passed in the same run.
+- Remaining account gates: effective current-user access-context API, searchable eligible target-user directory, delegated membership/validity UI, Supabase redirect allow-list and real Android/iOS email-link recovery verification.
