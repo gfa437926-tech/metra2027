@@ -63,10 +63,12 @@ class StationDirectoryItem {
     }
     double? number(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
     double? lat, lon;
+    Map<String, dynamic>? point;
     final coords = json['station_coordinates'];
     if (coords is List && coords.isNotEmpty && coords.first is Map) {
-      final point = Map<String, dynamic>.from(coords.first as Map);
-      lat = number(point['latitude']); lon = number(point['longitude']);
+      point = Map<String, dynamic>.from(coords.first as Map);
+      lat = number(point['latitude']);
+      lon = number(point['longitude']);
     }
     return StationDirectoryItem(id: json['id'] as String,
       localCode: json['local_station_code'] as String,
@@ -76,10 +78,9 @@ class StationDirectoryItem {
       approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
       latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?,
       elevationM: number(json['elevation_m']),
-      coordinateSource: coords is List && coords.isNotEmpty && coords.first is Map
-          ? ((coords.first as Map)['coordinate_source'] is String ? (coords.first as Map)['coordinate_source'] as String : null) : null,
-      coordinateAccuracyM: coords is List && coords.isNotEmpty && coords.first is Map
-          ? number((coords.first as Map)['accuracy_m']) : null);
+      coordinateSource: point?['coordinate_source'] is String
+          ? point!['coordinate_source'] as String : null,
+      coordinateAccuracyM: point == null ? null : number(point['accuracy_m']));
   }
 }
 
