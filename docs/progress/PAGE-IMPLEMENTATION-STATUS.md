@@ -185,3 +185,14 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Detailed evidence and remaining gaps: docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md
 - Current source tip before this status update: 4219b5d5492de6325dccc50f0ad24184abd48041.
 - Verification: pending a completed Client CI run for the latest tip; Client CI #811 success applies only to the earlier baseline.
+
+
+## Flutter station-detail continuation — 2026-11-11 UTC
+
+- FLT-STATION-DETAIL-01: catalogue detail screen implemented and reachable from station map markers and directory list cards.
+- Displays only fields present in the approved station-directory response; unavailable coordinates/WMO IDs are not invented, and catalogue metadata is clearly not live weather.
+- Added station-detail widget test and directory navigation assertions.
+- Evidence: docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md
+- Source commits: 88d95df775b11b29399ce535e8c732bbdc313c2f and eb92c0dc77f7a615486aae83bbdaecfdab9ab4a3.
+- Tests commits: abee1bbfb3480b8d4d250a9e2424bb8bfc29bdfb and 3431b93c4498edee6899ad7ff241e7db0032c1d4.
+- Automated verification pending a completed Client CI run on the latest source tip.
