@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import 'admin_api_messages.dart';
 
 /// Station or system stage registration queue with approve/reject against live API.
 class RegistrationReviewScreen extends StatefulWidget {
@@ -95,12 +96,7 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
     } on MetraApiException catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = switch (e.statusCode) {
-          403 => 'رفض الخادم القرار: لا صلاحية أو محاولة مراجعة ذاتية.',
-          404 => 'الطلب غير موجود لهذه المحطة.',
-          409 => 'تعارض حالة الطلب.',
-          _ => 'فشل القرار (HTTP ${e.statusCode}).',
-        };
+        _error = adminRegistrationDecisionError(e.statusCode);
       });
     } catch (_) {
       if (mounted) setState(() => _error = 'فشل الاتصال أثناء اتخاذ القرار.');

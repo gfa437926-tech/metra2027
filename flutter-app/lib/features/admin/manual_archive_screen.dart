@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import 'admin_api_messages.dart';
 
 /// Station-scoped manual Excel archive confirmation (administrative only).
 class ManualArchiveScreen extends StatefulWidget {
@@ -109,12 +110,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
         return;
       }
       setState(() {
-        _error = switch (e.statusCode) {
-          403 => 'ليست لديك صلاحية تأكيد الأرشفة لهذه المحطة.',
-          409 => 'تأكيد مكرر لنفس الملف والفترة والنوع.',
-          503 => 'دفتر الأرشفة غير مهيأ بعد على الخادم.',
-          _ => 'تعذر تسجيل التأكيد (HTTP ${e.statusCode}).',
-        };
+        _error = adminArchiveError(e.statusCode);
       });
     } catch (_) {
       if (mounted) {

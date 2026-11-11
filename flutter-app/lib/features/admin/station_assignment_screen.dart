@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import 'admin_api_messages.dart';
 
 /// Requests and decisions are submitted to the station-scoped API.
 class StationAssignmentScreen extends StatefulWidget {
@@ -104,12 +105,7 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
     } on MetraApiException catch (e) {
       if (mounted) {
         setState(() {
-          _error = switch (e.statusCode) {
-            400 => 'بيانات طلب التعيين غير صالحة.',
-            403 => 'لا صلاحية لإدارة تعيينات هذه المحطة.',
-            409 => 'تعارض في طلب التعيين أو يوجد تعيين متداخل.',
-            _ => 'فشل الطلب (HTTP ${e.statusCode}).',
-          };
+          _error = adminAssignmentRequestError(e.statusCode);
         });
       }
     } catch (_) {
@@ -138,12 +134,7 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
       if (mounted) _reload();
     } on MetraApiException catch (e) {
       if (mounted) {
-        setState(() => _error = switch (e.statusCode) {
-          403 => 'لا صلاحية لاتخاذ قرار التعيين.',
-          404 => 'طلب التعيين غير موجود لهذه المحطة.',
-          409 => 'تعارض في حالة طلب التعيين.',
-          _ => 'فشل القرار (HTTP ${e.statusCode}).',
-        });
+        setState(() => _error = adminAssignmentDecisionError(e.statusCode));
       }
     } catch (_) {
       if (mounted) setState(() => _error = 'فشل قرار التعيين.');
@@ -189,12 +180,7 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
       }
     } on MetraApiException catch (e) {
       if (mounted) {
-        setState(() => _error = switch (e.statusCode) {
-          403 => 'لا صلاحية لإلغاء هذا التعيين.',
-          404 => 'التعيين غير موجود لهذه المحطة.',
-          409 => 'لا يمكن إلغاء التعيين في حالته الحالية.',
-          _ => 'فشل الإلغاء (HTTP ${e.statusCode}).',
-        });
+        setState(() => _error = adminAssignmentRevokeError(e.statusCode));
       }
     } catch (_) {
       if (mounted) setState(() => _error = 'فشل إلغاء التعيين.');
