@@ -218,7 +218,7 @@ class _MetraHomeState extends State<MetraHome> {
           builder: (_) => const AftnConsoleShellScreen(),
         )),
         onRecordMatching: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const RecordMatchingShellScreen(),
+          builder: (_) => ElectronicAuditorScreen(api: widget.api, initialTabIndex: 3),
         )),
         onAuthorityAccess: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => AuthorityAccessScreen(api: widget.api),
