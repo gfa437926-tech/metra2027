@@ -127,3 +127,11 @@
 - Changed: worker tests, assistant progress report, this append-only changelog, and implementation status.
 - New tests require fresh CI; no local R execution is claimed.
 - Progress remains 55%; six major work items remain. No production observations, database/Supabase, .NET, Angular/Flutter, merge, or deployment changes.
+
+
+## 2026-11-11T00:22:24Z — CI verification for lock metadata and source integrity
+
+- Verified [R CI run #28](https://github.com/gfa437926-tech/metra2027/actions/runs/42930660285): completed **Success** on `64f8334b2b607f2cfd9daff898a33d99e1503d19`. All job steps passed, including Climatol 4.5-0 verification and R package check.
+- This confirms the lock-owner PID/UTC metadata test and the isolated fixture source-mutation test, including failed provenance and lock release.
+- Updated the assistant report and implementation status. This changelog entry is appended; prior entries are retained.
+- Progress remains 55%; six major work items remain. No local R run, METRA production data, database/Supabase, .NET adapter, UI, scientific validation/sign-off, merge, or deployment.

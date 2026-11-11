@@ -205,3 +205,18 @@ The Climatol fixture smoke-test milestone is now verified by CI run #22 and is n
 - **Not done:** .NET adapter, database/Supabase changes, production observation processing, durable artifact storage, review UI, independent reference validation, cancellation/timeouts, or scientific approval. No local R execution is claimed.
 - **Progress:** remains 55% under the established 10-workstream model; six major work items remain. Additional tests strengthen a partial workstream but do not close it.
 - **Safety:** no merge, deployment, DB, raw-data write by the worker (the mutation exists only in the deliberate isolated test fixture), Angular, or Flutter changes.
+
+
+## Assistant 04 CI verification — 2026-11-11T00:22:24Z
+
+- **Task status:** In progress; the latest worker-integrity regression tests are now verified by CI.
+- **Verified commit:** `64f8334b2b607f2cfd9daff898a33d99e1503d19`.
+- **CI:** [Climate Analytics R run #28](https://github.com/gfa437926-tech/metra2027/actions/runs/42930660285) completed with **Success**. The job completed setup, dependency installation, pinned Climatol 4.5-0 verification, and R package check. This verifies the tests for lock owner PID/UTC metadata and detection of source mutation in a temporary test fixture, including failed provenance and lock release.
+- **Branch:** [work/climate-analytics-r-hardening](https://github.com/gfa437926-tech/metra2027/tree/work/climate-analytics-r-hardening).
+- **PR #23:** [Open / Draft / not merged](https://github.com/gfa437926-tech/metra2027/pull/23). **PR #18:** [Open / Draft / not merged; untouched](https://github.com/gfa437926-tech/metra2027/pull/18).
+- **Files inspected:** branch ref and head, PR #23 and PR #18 metadata, run #28 metadata and job steps, progress report/changelog/status, and recursive repository tree. Requested `واجهات/` coordination paths remain absent; none were created.
+- **Files changed this round:** progress report, append-only changelog, and implementation status only. No application code changed in this verification-only round.
+- **Not done:** local R execution, real METRA data processing, .NET orchestration, cancellation/timeouts, persistent artifact storage, review UI, independent climate-reference validation, or scientific sign-off.
+- **Progress:** remains **55%**, calculated as (3 complete + 5 partial × 0.5) / 10 equal workstreams. Six major work items remain. CI success strengthens the partial security/reproducibility stream but does not close it.
+- **Safety:** no database/Supabase/SQL, raw observations, Angular/Flutter, merge, or deployment changes.
+- **Next:** continue bounded cancellation/timeout and stale-lock recovery design/tests without automatically deleting locks or inventing file-size limits; then address the secure .NET job boundary.
