@@ -1,6 +1,6 @@
 # METRA 2027 — Flutter, ASP.NET Core and New Database Completion Roadmap
 
-Last updated: 2026-11-11T14:29:51Z
+Last updated: 2026-11-11T15:02:56.797Z
 Repository: gfa437926-tech/metra2027
 Default branch: main
 
@@ -175,3 +175,11 @@ A root-level archive exists: `10-5-2026 برنامج ادارة البيانات
 - Repository: `gfa437926-tech/metra2027`, branch `main`.
 - Database changes: none.
 - Flutter implementation claim: none added by this scope amendment.
+
+## Verified Flutter baseline update (2026-11-11T15:02:56.797Z)
+
+A static source review was recorded in `docs/delivery/FLUTTER-SCREEN-TRACEABILITY-BASELINE.md` (commit `44de11640b6b384e6deaba1df75965437806329e`). The review confirms the current Flutter app has partial foundations for bootstrap/configuration, secure sign-in, the main shell, station catalogue/map and observation review. The reports destination is a placeholder. Dedicated Flutter workflows for hourly/daily entry, phenomena, rainfall, climate, agriculture, soil temperature, forecast centres, electronic meteorological audit, AI intelligence and Climatol were not found in the reviewed feature files.
+
+This is a static inventory only. No Flutter, .NET, database or live API tests were run in this round. No Flutter implementation or database changes were made. The inventory remains provisional because the root RAR requirements archive is still binary-inspection blocked.
+
+Task FLT-001 remains **In progress / blocked** pending archive extraction and full requirements indexing. Next implementation gate: complete the authoritative field/rule traceability, then build and test a complete Flutter workflow end-to-end before broad module expansion.
