@@ -8,6 +8,13 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/features/maintenance/equipment_fault_screen.dart';
 import 'package:metra_mobile/features/support/support_incident_screen.dart';
 
+void useTallViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 2000);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+}
+
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
 
@@ -22,6 +29,7 @@ void main() {
       }),
     );
 
+    useTallViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: EquipmentFaultScreen(api: api, stationId: stationId),
     ));
@@ -33,7 +41,7 @@ void main() {
     expect(find.text('بلاغ عطل جديد'), findsOneWidget);
     expect(find.text('اسم المعدة'), findsOneWidget);
     final emptyFaultState = find.text('لا توجد بلاغات أعطال مسجّلة لهذه المحطة');
-    await tester.scrollUntilVisible(emptyFaultState, 250, scrollable: find.byType(Scrollable).first);
+    
     await tester.pumpAndSettle();
     expect(emptyFaultState, findsOneWidget);
     api.close();
@@ -50,6 +58,7 @@ void main() {
       }),
     );
 
+    useTallViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: SupportIncidentScreen(api: api, stationId: stationId),
     ));
@@ -61,7 +70,7 @@ void main() {
     expect(find.text('العنوان'), findsOneWidget);
     expect(find.text('الوصف'), findsOneWidget);
     final emptySupportState = find.text('لا توجد بلاغات دعم مسجّلة');
-    await tester.scrollUntilVisible(emptySupportState, 250, scrollable: find.byType(Scrollable).first);
+    
     await tester.pumpAndSettle();
     expect(emptySupportState, findsOneWidget);
     api.close();
@@ -78,6 +87,7 @@ void main() {
       }),
     );
 
+    useTallViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: EquipmentFaultScreen(api: api, stationId: stationId),
     ));
@@ -91,7 +101,7 @@ void main() {
       'قراءة الحساس متوقفة منذ بداية الوردية',
     );
     final send = find.text('إرسال إلى الخادم');
-    await tester.scrollUntilVisible(send, 250, scrollable: find.byType(Scrollable).first);
+    
     await tester.tap(send);
     await tester.pumpAndSettle();
 
@@ -118,6 +128,7 @@ void main() {
       }),
     );
 
+    useTallViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: SupportIncidentScreen(api: api, stationId: stationId),
     ));
@@ -129,7 +140,7 @@ void main() {
     await fill(1, 'انقطاع الاتصال بالمركز');
     await fill(2, 'تعذر إرسال بيانات المحطة إلى المركز منذ عشر دقائق');
     final send = find.text('إرسال إلى الخادم');
-    await tester.scrollUntilVisible(send, 250, scrollable: find.byType(Scrollable).first);
+    
     await tester.tap(send);
     await tester.pumpAndSettle();
 
