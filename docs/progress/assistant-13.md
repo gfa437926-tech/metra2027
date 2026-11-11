@@ -285,3 +285,59 @@ The previously confirmed divergence remains unresolved: multiple PR branches car
 
 **Remaining:** 12 audit workstreams remain open.  
 **Next:** request/verify remediation of the Flutter analyzer errors, trace the Backend endpoint through its domain validators and tests, and obtain an explicit anonymous-route rate-limit decision. Then continue the full database-contract, immutable-record, scientific and release-evidence review. PR #31 remains Draft and unmerged.
+
+
+## Round 4 — database/RPC and client-contract cross-check (read-only source audit)
+
+**Updated:** 2026-11-11T09:48:14Z (UTC)  
+**Task:** M13 — Independent final audit.  
+**Status:** In progress; one critical database contract defect and two release-blocking baseline/integration gaps independently confirmed from Git source.  
+**Branch:** `audit/assistant-13-independent-final-review`  
+**PR:** [#31](https://github.com/gfa437926-tech/metra2027/pull/31), open / Draft / unmerged.
+
+### Evidence examined
+
+- PR #26, head `6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8`, branch `work/database-engineering-audit`, base SHA `87f71356083843b2abdef76baf011a82510686be`; current-head PR workflow query returned no runs.
+- PR #28, head `9b3ad187de7cbbf861dd7b091c193172e5a77ea9`; current-head PR workflow query returned no runs.
+- Read-only source files on `main`: `supabase/migrations/20261103164003_create_operational_observation_submission.sql` (blob `9bbe23891aaecbedbea7537f7875ef7895442760`) and `supabase/migrations/20261103215400_observation_review_decision.sql` (blob `bc62268432c94d481e5e274625c5d59eea8ce528`).
+- Read-only proposal on PR #26: `docs/database/proposed-migrations/20261111_01_fix_observation_audit_event_type.sql.proposal` (blob `8b66ba679f16436e61b72e86e3d1f1ea73d3630f`).
+- PR #28 source-level cross-check: `docs/architecture/API-CONTRACT-CROSSCHECK.md` (blob `1e138fa5dcab2c8e5a53ddc861e31b14bde0f569`).
+- PR #26 database audit and migration register, including DB-001 through DB-016 and the explicit warning that static shell grep contracts are not PostgreSQL integration tests.
+
+### Confirmed critical finding — decision RPC event constraint mismatch (M13-DB-001)
+
+The migration on `main` creates `metra_observation_audit_events.event_type` with an allow-list containing `returned` and `approved`. The separate `metra_decide_observation` RPC writes `p_decision` directly, whose allowed API values are `approve` and `return_for_correction`. These values violate the audit table check constraint. Because the insert occurs in the same function transaction after the observation status update, the audit insert is expected to fail and roll back the decision transaction for both approve and return-for-correction.
+
+The assistant-08 proposal maps decisions to event values `approved` / `returned` and includes null decision validation. It is correctly stored under a `.proposal` path outside active migration folders. It is **not applied, not approved, and not tested**. This independent static confirmation elevates DB-001 to a release-blocking defect pending an isolated PostgreSQL regression test proving both decisions commit and append their audit events.
+
+### Confirmed release blocker — missing baseline schema (M13-DB-002)
+
+PR #26's static inventory reports 27 `database/migrations` files beginning at 003 and five `supabase/migrations` files, with baseline migrations 001/002 absent from the inspected `main` tree. This prevents a reliable clean-room reconstruction of the intended schema from the repository alone. It does **not** prove that tables are absent from any live database. The correct next action is to locate an owner-approved baseline/schema snapshot and reconcile its provenance; do not invent a replacement baseline.
+
+### Confirmed integration gap — validation endpoints are not invoked by clients (M13-INT-001)
+
+PR #28's source-level cross-check shows daily/hourly validation endpoints exist in ASP.NET Core, but the inspected Angular and Flutter flows do not call them. It also records that the submission endpoint path checked in source applies structural guards and forwards to the RPC; the current evidence does not establish that the domain validators are called from the authoritative persistence path. This is a bypassable-client-validation risk until server-side enforcement is proven. Required evidence: negative API/RPC tests for required fields, physical range limits, cross-field consistency, units and timestamp semantics for each observation type.
+
+### Other schema and data-integrity risks carried forward
+
+PR #26's source review additionally records:
+- DB-011: migration 020 expects `permission_grants.authority_id` to be populated before setting NOT NULL, but its migration body does not perform the required backfill.
+- DB-013: observation audit immutability trigger covers UPDATE/DELETE but not TRUNCATE, unlike the authority audit pattern.
+- DB-014: idempotency uniqueness is scoped to station/user/key and does not define the business duplicate policy for station/type/observed_at with different keys.
+- DB-015: some read-model RPC authorization relies on API-level actor scoping; internal SQL actor authorization needs verification.
+These remain static findings from the database assistant's review; no live database state or PostgreSQL behavior was tested in this round.
+
+### PR / CI and safety
+
+- PR #26 and #28 remain open Drafts; no PR-triggered workflow runs were returned for their current heads.
+- Assistant 13 ran no tests. No SQL was executed and no Supabase project was accessed.
+- Migration source files were read from Git only. No active migration was edited, copied into an executable migration folder, or applied.
+- No live schema, old database, station data, observation data, secrets, deployment or production service was accessed.
+- Only this assistant-13 progress report and append-only changelog are updated in this round.
+
+### Progress accounting
+
+M13 remains **0% of 12 audit workstreams formally closed**. DB-001, DB-002 and INT-001 are now backed by direct source-level evidence, but their closure requires owner-approved baseline recovery and PostgreSQL/API regression tests; discovery alone does not satisfy closure criteria.
+
+**Remaining:** 12 audit workstreams remain open.  
+**Next:** obtain a trusted baseline schema from the project owner; ask database owner to prepare and test the DB-001 correction in an isolated disposable PostgreSQL environment; require backend/client owners to add server-side domain-validation evidence and negative tests. Do not apply any changes to the new or old Supabase project. PR #31 remains Draft and unmerged.
