@@ -108,14 +108,17 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
         _roleCode = null;
       });
     } on MetraApiException catch (e) {
-      if (mounted) setState(() => _error = switch (e.statusCode) {
+      if (mounted) {
+        setState(() => _error = switch (e.statusCode) {
         401 => 'انتهت الجلسة. سجّل الدخول مجدداً.',
         403 => 'لا يمكن تحميل بيانات التسجيل لهذا الحساب.',
         503 => 'خدمة التسجيل غير متاحة حالياً؛ لم يتم إرسال أي طلب.',
         _ => 'تعذر تحميل بيانات التسجيل (HTTP ${e.statusCode}).',
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر تحميل المحطات والأدوار وحالة الحساب.');
+      if (mounted) {
+        setState(() => _error = 'تعذر تحميل المحطات والأدوار وحالة الحساب.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -154,13 +157,15 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
         _notice = 'استلم الخادم طلب الانضمام. لن تُفعّل الصلاحيات قبل اكتمال مرحلتي الاعتماد.';
       });
     } on MetraApiException catch (e) {
-      if (mounted) setState(() => _error = switch (e.statusCode) {
+      if (mounted) {
+        setState(() => _error = switch (e.statusCode) {
         400 => 'البيانات أو المحطة أو الدور أو إصدار الشروط غير صالح.',
         401 => 'يلزم تأكيد البريد وتسجيل الدخول قبل إرسال الطلب.',
         409 => 'يوجد طلب سابق أو تعارض في حالة الحساب. راجع حالة الطلب أدناه.',
         503 => 'خدمة التسجيل غير متاحة؛ لم يتم تأكيد حفظ الطلب.',
         _ => 'تعذر إرسال طلب الانضمام (HTTP ${e.statusCode}).',
-      });
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _error = 'تعذر إرسال الطلب أو التحقق من إيصال الاستلام.');
     } finally {
@@ -226,7 +231,7 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
               TextField(controller: _phone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'رقم الهاتف (اختياري)')),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _stationId,
+                initialValue: _stationId,
                 decoration: const InputDecoration(labelText: 'المحطة المطلوبة'),
                 items: _stations.map((s) => DropdownMenuItem(value: s.id,
                   child: Text('${s.nameArabic} — ${s.localCode}', overflow: TextOverflow.ellipsis))).toList(),
@@ -234,7 +239,7 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: _roleCode,
+                initialValue: _roleCode,
                 decoration: const InputDecoration(labelText: 'الدور المطلوب'),
                 items: _roles.map((r) {
                   final code = (r['role_code'] ?? r['roleCode'] ?? '').toString();
@@ -256,7 +261,6 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
               FilledButton(onPressed: _busy || !_canSubmit ? null : _submit,
                 child: Text(_busy ? 'جارٍ إرسال الطلب...' : 'إرسال طلب الانضمام')),
             ]],
-          ],
           if (_busy) const LinearProgressIndicator(),
         ],
       ),
