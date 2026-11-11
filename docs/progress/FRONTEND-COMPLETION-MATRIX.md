@@ -160,3 +160,15 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - Password recovery completion screen, Supabase passwordRecovery event route, and Android/iOS custom scheme registration are in the canonical source. Supabase Dashboard allow-list and actual email round-trip are external verification gates.
 - Station assignment now links to the station-scoped audit log endpoint and displays immutable audit fields with UTC timestamps.
 - Added source tests; CI run for exact code tip is being checked.
+
+
+## Flutter exact-head verification and specialist screen audit — 2026-11-11T17:47:26.374Z
+
+- **Verified source:** `flutter-app/`, branch `work/flutter-canonical-consolidation`, HEAD `51ed88afa415072e9e41679f585610e5615b9b5d`.
+- **CI run 43071280050:** success on exact HEAD. Flutter analyze and tests passed; Angular tests/build and Chromium PWA/IndexedDB smoke passed. This does not establish device visual acceptance or external Supabase recovery verification.
+- **Newer inventory:** role workspace catalogue and specialist/auditor/AI/Climatol/AFTN source files now exist in canonical Flutter. The role catalogue is navigation/description only and does not grant access.
+- **Still partial/blocked:** `ElectronicAuditorScreen` is a scaffold with disabled case creation and no upload/OCR/curve extraction/compare/decision API; `AiWorkspaceScreen` is a structured workspace with execution disabled until AI Gateway; `ClimatolWorkspaceScreen` has configuration/pipeline/diagnostics/version UI but execution depends on isolated worker, approved dataset fingerprint and human approval; rainfall/climate/agriculture/soil units are local-preview shells without final field contracts or persistence API; AFTN remains a shell pending central channel, message contracts and delivery audit.
+- **Forecasting:** catalogue, map, station profile and server-side geographic comparison are present; live observation snapshot, temporal charts and bulletin detail are blocked pending approved source/API contract.
+- **Reports/history:** HR-02 and DY-02 lists, full detail/version history, missing-data register, complete PDF/Excel export and full observation audit timeline remain incomplete or unverified.
+- **Account administration:** effective access context/global user directory, eligible-user search, expiry/revocation lifecycle and cross-station authorization coverage remain incomplete.
+- **Completion policy:** no page is marked complete solely because a route, role card, form or test exists. Each must have the approved field rules, server API, loading/empty/error/success states, authorization boundary, tests and visual acceptance.
