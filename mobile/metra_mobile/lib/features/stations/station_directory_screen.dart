@@ -73,13 +73,31 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         MarkerLayer(markers: located.map((station) => Marker(
           point: LatLng(station.latitude!, station.longitude!), width: 48, height: 58,
           alignment: Alignment.topCenter,
-          child: Tooltip(message: '${station.nameArabic} • ${station.localCode}',
-            child: GestureDetector(
-              onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
-              child: Icon(station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
-                size: 38, color: station.stationType == 'classic'
-                  ? const Color(0xFF2463B5) : const Color(0xFF16835D)),
-            )),
+          child: Builder(builder: (context) {
+            final label = '${station.nameArabic} • ${station.localCode}';
+            final onTap = widget.onStationSelected == null
+                ? null
+                : () => widget.onStationSelected!(station.id);
+            return Tooltip(
+              message: label,
+              child: Semantics(
+                button: onTap != null,
+                enabled: onTap != null,
+                label: label,
+                onTap: onTap,
+                child: GestureDetector(
+                  onTap: onTap,
+                  child: Icon(
+                    station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
+                    size: 38,
+                    color: station.stationType == 'classic'
+                        ? const Color(0xFF2463B5)
+                        : const Color(0xFF16835D),
+                  ),
+                ),
+              ),
+            );
+          }),
         )).toList()),
         const RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
       ]),
