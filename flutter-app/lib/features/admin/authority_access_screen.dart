@@ -177,8 +177,8 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
           authorityId: authorityId, permissionCode: code, reason: reason, validFrom: from,
         );
       }
-      if (mounted) setState(() => _feedback = 'أُرسل الطلب إلى الخادم للمراجعة.');
       _refreshQueues();
+      if (mounted) setState(() => _feedback = 'أُرسل الطلب إلى الخادم للمراجعة.');
     } on MetraApiException catch (e) {
       if (mounted) setState(() => _error = _apiError(e.statusCode));
     } catch (_) {
@@ -212,8 +212,8 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
       } else {
         await widget.api.decideAuthorityPermissionGrant(authorityId: authorityId, grantId: id, decision: decision, reason: reason);
       }
-      if (mounted) setState(() => _feedback = active ? 'تم إلغاء الوصول عبر الخادم.' : 'تم تسجيل قرار المراجعة عبر الخادم.');
       _refreshQueues();
+      if (mounted) setState(() => _feedback = active ? 'تم إلغاء الوصول عبر الخادم.' : 'تم تسجيل قرار المراجعة عبر الخادم.');
     } on MetraApiException catch (e) {
       if (mounted) setState(() => _error = _apiError(e.statusCode));
     } catch (_) {
