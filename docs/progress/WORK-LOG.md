@@ -222,3 +222,16 @@ Push rejected: PAT lacks `workflow` scope.
 - **Angular:** npm tests وproduction build ناجحان في التشغيل نفسه؛ فحص Chromium ما زال قيد التنفيذ عند تسجيل المراجعة.
 - لم يتم تعديل ملفات Flutter أو قاعدة البيانات في هذه المراجعة. لا main merge ولا نشر.
 - التفاصيل الفنية في docs/reviews/FLUTTER-REPORTS-OPERATIONS-CI-REVIEW.md.
+
+
+## FLT-REPORT-HISTORY-04 — توسيع التقارير والتاريخ والاختبارات — 2026-11-11T18:32:18.872Z
+
+- **الحالة:** تنفيذ واجهات العميل المرتبطة بالعقود الحالية مكتمل مصدرّياً؛ CI على HEAD النهائي بانتظار النتيجة عند التوثيق.
+- **الفرع/HEAD:** `work/flutter-canonical-consolidation` / `20c7d9e2d6caacc6debca73eb8e35c8752ad5c1d`.
+- **التحقق السابق:** CI `43077020830` ناجح على HEAD `2b59e7a`: Flutter analyze ناجح و92 اختباراً ناجحاً، وAngular tests/build وChromium PWA/IndexedDB smoke ناجحة. تشغيل `43071781573` فشل في اختبارين للحالة الفارغة بواجهتي الأعطال والدعم؛ أظهرت مراجعة logs أن الاختبارين أُصلحا لاحقاً.
+- **سجل النشرات:** حد 100 لكل طابور؛ بحث ومرشحات النوع والحالة والتاريخ UTC؛ تفاصيل الحمولة؛ partial 403؛ إعادة المحاولة ومسح المرشحات.
+- **حالة النشرات:** حد 100 لكل طابور؛ العدادات والحالات بالعربية وتوقيت UTC؛ اختبارات authorization.
+- **الأرشفة اليدوية:** أنواع التقارير بالعربية؛ عرض actor/note/period/confirmedAtUtc؛ ملخص شهري؛ توضيح عدم رفع Excel وعدم ترحيل البيانات والتنبيه إلى أن fallback in-memory ليس تخزيناً دائماً.
+- **الاختبارات:** تحديث `reports_history_screens_test.dart` وإضافة `observation_status_screen_test.dart`.
+- **غير قابل للإغلاق من Flutter وحده:** تاريخ approved/rejected/versioning، missing-data register، aggregate reports، exports؛ تتطلب API contracts معتمدة.
+- **القيود:** لا DB/schema/migration/RLS/grant/seed changes، لا DB قديمة، لا archive DB، لا main merge ولا deployment.
