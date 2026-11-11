@@ -14,7 +14,18 @@ void main() {
     Map<String, dynamic>? membershipBody;
     final client = MockClient((request) async {
       if (request.url.path == '/api/v1/authorities') {
-        return http.Response('[{"id":"authority-1","name_ar":"الهيئة الوطنية"}]', 200);
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {
+              'id': 'authority-1',
+              'authority_code': 'METRA-SY',
+              'name_ar': 'الهيئة الوطنية',
+              'name_en': 'National Meteorological Authority',
+            },
+          ])),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }
       if (request.url.path.endsWith('/membership-roles')) {
         return http.Response(
