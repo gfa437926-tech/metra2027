@@ -224,3 +224,64 @@ No other assistant's report, shared coordination file, application source, datab
 **Remaining:** 12 audit workstreams remain open; 3 have preliminary evidence collected. No final readiness recommendation is possible.
 
 **Next:** complete a patch-level review of the high-risk security, backend validation, Flutter DTO, R workflow and database contract changes; verify the disputed findings against endpoint projections, SQL/RPC and tests; then reconcile the shared-file collision and PR ancestry with the integration owner. Keep all PRs unmerged pending owner review.
+
+
+## Round 3 — patch-level cross-stack verification and current-head CI inspection
+
+**Updated:** 2026-11-11T09:29:41Z (UTC)  
+**Task:** M13 — Independent final audit.  
+**Status:** In progress; one current-head CI failure and two implementation/coverage gaps were confirmed at source/Actions level.  
+**Branch:** `audit/assistant-13-independent-final-review`  
+**PR:** [#31](https://github.com/gfa437926-tech/metra2027/pull/31), open / Draft / unmerged.
+
+### Evidence checked in this round
+
+| PR | Exact head SHA | Current-head Actions result | Independent observation |
+|---|---|---|---|
+| #21 Flutter | `5c55304719c9161849518f5285337a0fa4c5fbca` | [Client CI #42931168114](https://github.com/gfa437926-tech/metra2027/actions/runs/42931168114) — **failure** | Angular build passed; Flutter analyze failed; Flutter tests were skipped. |
+| #22 Backend | `0d29163a4457c12f38e8a1c79b7dec49248c143d` | [Backend build #42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) — **success** | All listed build, SQL-contract, API-test and container-build steps completed successfully. |
+| #23 R/Climatol | `c139d03a9b3b321c92f33b736eccf95fbd45c5b9` | [Climate Analytics R #42931277732](https://github.com/gfa437926-tech/metra2027/actions/runs/42931277732) — **success** | Current PR head's R workflow completed successfully. |
+| #30 Security | `b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2` | [Backend #42925422751](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422751) and [Client CI #42925422685](https://github.com/gfa437926-tech/metra2027/actions/runs/42925422685) — **both success** | Both current-head workflows passed; this does not itself close the security review. |
+| #31 Independent audit | `3297f54c8ecd6366f85527b9b8440585e90a9419` | No PR-triggered run returned for this head | No CI result is claimed for the audit documentation PR. |
+
+### Confirmed finding — Flutter analyzer blocks tests (M13-FLT-001)
+
+The current #21 workflow log shows `flutter analyze` failed with eight analyzer issues in `mobile/metra_mobile/test/widget_test.dart`:
+- Three invalid reads of `TextFormField.obscureText`.
+- One unavailable `http.Response.json` method.
+- Undefined `SemanticsFlag` and `SemanticsAction`.
+- Unavailable `SemanticsNode.hasAction`.
+- A deprecated `hasFlag` use is also reported as an informational issue.
+
+Because the workflow stops after analyzer failure, `flutter test` was skipped. The added widget tests therefore have not been validated by this run. This is a confirmed CI blocker for PR #21, not merely missing evidence. The Angular build job in the same workflow passed.
+
+### Backend UTC scope — partial validation remains (M13-API-001)
+
+The #22 patch adds a guard rejecting non-zero `DateTimeOffset.Offset` values and a focused unit test. The changed endpoint guard still returns after structural payload checks and UTC offset validation; the patch does not demonstrate invocation of the hourly/daily/phenomenon domain validators. The current-head Backend workflow passed, but that pass must not be interpreted as proof of full meteorological payload validation. Keep the finding open pending an endpoint-to-domain-validator trace and tests for invalid domain values.
+
+### Security rate-limit scope — coverage gap requiring owner decision (M13-SEC-001)
+
+The #30 `Program.cs` configures the global limiter to return `GetNoLimiter("anonymous")` when no JWT subject is present. It adds a separate fixed-window `readiness` policy, and the new test verifies the readiness limit only. Thus the implementation does not impose a general anonymous global bucket. This is recorded as a coverage/design gap, not a proven exploit: the owner must confirm which anonymous routes are intentionally exposed and add a negative/positive test for unauthenticated requests to protected endpoints plus any public route requiring throttling. Do not infer that authenticated authorization is bypassed.
+
+### R workflow trigger note (M13-R-001)
+
+The current #23 workflow patch pins Climatol 4.5-0 and verifies the installed version; current-head R CI passed. The workflow's push trigger remains scoped to the climate bootstrap branch rather than `main`. This is acceptable for the present stacked-PR base only if a separate post-integration workflow policy is defined. Confirm main-branch CI coverage before integration; do not treat current PR success as proof that pushes to main will run the climate workflow.
+
+### Shared-file and integration status
+
+The previously confirmed divergence remains unresolved: multiple PR branches carry different versions of `واجهات/مهما.md`, and overlapping coordination paths occur in several PRs. PR #19/#32 and #23 also have non-main target branches. No merge, rebase, or shared-file rewrite was attempted.
+
+### Files and safety
+
+- **Files inspected:** exact PR patches for #21, #22, #23 and #30; current-head workflow records; PR #21 Flutter analyzer job log; changed-file lists; assistant-13 current progress/changelog.
+- **Files changed in this round:** only this assistant-13 progress report and append-only changelog (documentation updates).
+- **Tests run by assistant 13:** none. CI evidence above was retrieved from GitHub Actions.
+- **Database/Supabase/migrations/raw observations:** not accessed or modified.
+- **Merge/rebase/deployment/secrets:** none.
+
+### Progress accounting
+
+**M13 completion remains 0% of 12 workstreams formally closed.** This round materially advanced evidence collection and confirmed one CI blocker, but no full audit workstream meets its closure criteria yet. Three previously opened workstreams now have more precise findings; the remaining workstreams are still open.
+
+**Remaining:** 12 audit workstreams remain open.  
+**Next:** request/verify remediation of the Flutter analyzer errors, trace the Backend endpoint through its domain validators and tests, and obtain an explicit anonymous-route rate-limit decision. Then continue the full database-contract, immutable-record, scientific and release-evidence review. PR #31 remains Draft and unmerged.
