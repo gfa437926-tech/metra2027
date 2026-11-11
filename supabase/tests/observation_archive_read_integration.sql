@@ -38,7 +38,8 @@ values
   ('99999999-9999-4999-8999-999999999991', '11111111-1111-4111-8111-111111111111', 'fixture', 'hourly', 's1', 'hourly', now() - interval '2 hours', '{"temperature": 21}', now(), false),
   ('99999999-9999-4999-8999-999999999992', '22222222-2222-4222-8222-222222222222', 'fixture', 'hourly', 's2', 'hourly', now() - interval '2 hours', '{"temperature": 99}', now(), false),
   ('99999999-9999-4999-8999-999999999993', null, 'fixture', 'hourly', 'unlinked', 'hourly', now() - interval '2 hours', '{"temperature": 88}', now(), false),
-  ('99999999-9999-4999-8999-999999999994', '11111111-1111-4111-8111-111111111111', 'fixture', 'hourly', 'demo', 'hourly', now() - interval '2 hours', '{"temperature": 77}', now(), true);
+  ('99999999-9999-4999-8999-999999999994', '11111111-1111-4111-8111-111111111111', 'fixture', 'hourly', 'demo', 'hourly', now() - interval '2 hours', '{"temperature": 77}', now(), true),
+  ('99999999-9999-4999-8999-999999999995', '11111111-1111-4111-8111-111111111111', 'fixture', 'hourly', 's1-older', 'hourly', now() - interval '3 hours', '{"temperature": 19}', now(), false);
 
 set "request.jwt.claims" = '{"role":"service_role"}';
 set role service_role;
@@ -56,14 +57,34 @@ begin
   if v_page ->> 'authorized' <> 'true' then
     raise exception 'active explicitly-granted station member should be authorized';
   end if;
-  if jsonb_array_length(v_page -> 'items') <> 1 then
-    raise exception 'station archive must return exactly one non-demo linked record';
+  if jsonb_array_length(v_page -> 'items') <> 2 then
+    raise exception 'station archive must return exactly two non-demo linked records';
   end if;
   if v_page #>> '{items,0,payload,temperature}' <> '21' then
     raise exception 'station archive returned a foreign, unlinked or demo record';
   end if;
   if v_page #>> '{page,hasMore}' <> 'false' then
-    raise exception 'hasMore must be false for a one-row fixture page';
+    raise exception 'hasMore must be false for a complete two-row fixture page';
+  end if;
+
+  v_page := public.metra_station_observation_archive_page(
+    '33333333-3333-4333-8333-333333333333',
+    '11111111-1111-4111-8111-111111111111',
+    'hourly', null, null, 1, 0
+  );
+  if jsonb_array_length(v_page -> 'items') <> 1
+     or v_page #>> '{page,hasMore}' <> 'true' then
+    raise exception 'bounded pagination must return one item and hasMore=true';
+  end if;
+
+  v_page := public.metra_station_observation_archive_page(
+    '33333333-3333-4333-8333-333333333333',
+    '11111111-1111-4111-8111-111111111111',
+    null, now() - interval '1 hour', now(), 50, 0
+  );
+  if jsonb_array_length(v_page -> 'items') <> 0
+     or v_page #>> '{page,hasMore}' <> 'false' then
+    raise exception 'UTC period filter must exclude records outside the requested range';
   end if;
 
   v_page := public.metra_station_observation_archive_page(
@@ -133,9 +154,11 @@ $tests$;
 
 reset role;
 
-do $client_denial$
+reset role;
+
+set role anon;
+do $anon_denial$
 begin
-  execute 'set local role anon';
   begin
     perform public.metra_station_observation_archive_page(
       '33333333-3333-4333-8333-333333333333',
@@ -146,9 +169,13 @@ begin
   exception when insufficient_privilege then
     null;
   end;
-  execute 'reset role';
+end
+$anon_denial$;
+reset role;
 
-  execute 'set local role authenticated';
+set role authenticated;
+do $authenticated_denial$
+begin
   begin
     perform public.metra_station_observation_archive_detail(
       '33333333-3333-4333-8333-333333333333',
@@ -159,9 +186,9 @@ begin
   exception when insufficient_privilege then
     null;
   end;
-  execute 'reset role';
 end
-$client_denial$;
+$authenticated_denial$;
+reset role;
 
 do $no_auto_grant$
 begin
