@@ -216,3 +216,17 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Client CI #824 confirmed that the first cleanup exposed the same stale optional action parameter on the underlying `_StatusCard` helper (line 175), not a new feature defect.
 - Corrective commit: `416539c774d58d545010079c7d9ab47b9c48d4b3` removes the unused optional action field and rendering branch from `_StatusCard`.
 - Client CI #824 therefore remains failed; the correction must be validated by a new CI run. Do not mark recovery/profile/station-detail tests verified until that run completes.
+
+
+## FLT-QUALITY-03 — Client CI #829 test corrections — 2026-11-11T13:37:38.156Z
+
+- Task status: **in progress; source assertions corrected, rerun verification pending**.
+- PR #11 head before correction: 6120fb6c0c6c84b77b787f0dc09c91972e124bf9.
+- Client CI #829: Angular job **passed** (npm tests, Angular build, and three Chromium PWA/IndexedDB smoke runs).
+- Flutter job: `flutter analyze` **passed**; `flutter test` **failed** with 44 passing and 2 failing tests.
+- Root cause: two widget tests expected a bare station code, while the actual UI intentionally renders a labeled selectable value (`رمز المحطة: <code>`). This was an assertion/UI-contract mismatch, not a runtime analyzer failure.
+- Corrected `flutter-app/test/station_detail_screen_test.dart` to assert the visible labeled code: commit `c8213830edba2e0fafa6cacfa1e89313bb08ef3c`.
+- Corrected `flutter-app/test/widget_test.dart` to assert the visible labeled code after directory navigation: commit `381eafab46153ac1d9d84248925f478f98a20470`.
+- Current PR #11 head at this update: `381eafab46153ac1d9d84248925f478f98a20470`.
+- Fresh CI result for this exact head is not yet available; do not mark Flutter tests verified until a new Client CI run completes successfully.
+- No SQL/migrations/RLS/grants/seeds were applied; no legacy database or `metra-old` changes; no merge to main.
