@@ -172,8 +172,10 @@ class _InformationPage extends StatelessWidget {
   );
 }
 class _StatusCard extends StatelessWidget {
-  const _StatusCard({required this.icon, required this.title, required this.description, this.action});
-  final IconData icon; final String title; final String description; final Widget? action;
+  const _StatusCard({required this.icon, required this.title, required this.description});
+  final IconData icon;
+  final String title;
+  final String description;
   @override
   Widget build(BuildContext context) => Card(elevation: 0, color: Colors.white,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -181,7 +183,6 @@ class _StatusCard extends StatelessWidget {
       Icon(icon, color: _blue, size: 30), const SizedBox(height: 12),
       Text(title, style: const TextStyle(color: _navy, fontSize: 17, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8), Text(description, style: const TextStyle(color: Color(0xFF64748B), height: 1.6)),
-      if (action != null) ...[const SizedBox(height: 16), action!],
     ])));
 }
 class _ActionCard extends StatelessWidget {
