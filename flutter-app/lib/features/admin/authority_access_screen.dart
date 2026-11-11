@@ -81,35 +81,10 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
     return parsed == null ? 'غير متوفر' : '${parsed.toUtc().toIso8601String()} UTC';
   }
 
-  Future<String?> _reason(String title) async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, refresh) => AlertDialog(
-          title: Text(title),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLength: 2000,
-            maxLines: 3,
-            onChanged: (_) => refresh(() {}),
-            decoration: const InputDecoration(labelText: 'السبب (5 أحرف على الأقل)'),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
-            FilledButton(
-              onPressed: controller.text.trim().length < 5
-                  ? null : () => Navigator.pop(ctx, controller.text.trim()),
-              child: const Text('تأكيد'),
-            ),
-          ],
-        ),
-      ),
-    );
-    controller.dispose();
-    return result;
-  }
+  Future<String?> _reason(String title) => showDialog<String>(
+    context: context,
+    builder: (_) => _AuthorityReasonDialog(title: title),
+  );
 
   Future<String?> _selectCode({
     required String title,
@@ -389,4 +364,48 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
       ),
     );
   }
+}
+
+
+class _AuthorityReasonDialog extends StatefulWidget {
+  const _AuthorityReasonDialog({required this.title});
+
+  final String title;
+
+  @override
+  State<_AuthorityReasonDialog> createState() => _AuthorityReasonDialogState();
+}
+
+class _AuthorityReasonDialogState extends State<_AuthorityReasonDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      controller: _controller,
+      autofocus: true,
+      maxLength: 2000,
+      maxLines: 3,
+      decoration: const InputDecoration(labelText: 'السبب (5 أحرف على الأقل)'),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('إلغاء'),
+      ),
+      FilledButton(
+        onPressed: _controller.text.trim().length < 5
+            ? null
+            : () => Navigator.of(context).pop(_controller.text.trim()),
+        child: const Text('تأكيد'),
+      ),
+    ],
+  );
 }
