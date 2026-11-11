@@ -171,13 +171,21 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
   }
 
   String _stateLabel(String state) => switch (state) {
-    'pending_station_approval' => 'بانتظار اعتماد رئيس المحطة',
-    'pending_system_approval' => 'بانتظار الاعتماد النظامي النهائي',
+    'pending' => 'الحساب قيد مراجعة طلب الانضمام',
     'active' => 'الحساب معتمد وفعال',
     'rejected' => 'تم رفض طلب التسجيل',
     'suspended' => 'الحساب موقوف',
     'disabled' => 'الحساب معطل',
-    _ => state.isEmpty ? 'لا يوجد طلب مسجل' : state,
+    _ => state.isEmpty ? 'لا توجد حالة حساب مسجلة' : state,
+  };
+
+  String _requestStateLabel(String state) => switch (state) {
+    'pending_station_approval' => 'بانتظار اعتماد رئيس المحطة',
+    'pending_system_approval' => 'بانتظار الاعتماد النظامي النهائي',
+    'approved' => 'تم اعتماد الطلب',
+    'rejected' => 'تم رفض الطلب',
+    'returned' => 'أعيد الطلب للمراجعة',
+    _ => state,
   };
 
   @override
@@ -215,10 +223,18 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
                 child: Text(_busy ? 'جارٍ إنشاء الحساب...' : 'إنشاء حساب الدخول')),
             ])),
           ] else ...[
-            if (_status?['account_state'] is String)
+            if (_status != null)
               Card(child: ListTile(
-                title: Text(_stateLabel(_status!['account_state'] as String)),
-                subtitle: Text((_status?['review_note'] ?? _status?['state_reason'] ?? '').toString()),
+                title: Text(_status?['account_state'] is String
+                    ? _stateLabel(_status!['account_state'] as String)
+                    : 'لا يوجد حساب تشغيلي مرتبط بعد'),
+                subtitle: Text([
+                  if (_status?['request_status'] is String)
+                    _requestStateLabel(_status!['request_status'] as String),
+                  (_status?['review_note'] ?? _status?['state_reason'] ?? '').toString(),
+                  if (_status?['submitted_at'] is String)
+                    'تاريخ الطلب UTC: ${_status!['submitted_at']}',
+                ].where((value) => value.trim().isNotEmpty).join('\\n')),
               )),
             if (_status?['account_state'] == null) ...[
               const Text('البيانات الشخصية', style: TextStyle(fontWeight: FontWeight.bold)),
