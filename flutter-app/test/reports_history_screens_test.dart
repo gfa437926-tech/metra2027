@@ -106,7 +106,72 @@ void main() {
         request.method == 'POST' &&
         request.url.path.endsWith('/archive-confirmations'));
     final payload = jsonDecode(post.body) as Map<String, dynamic>;
-    expect(payload['periodStartUtc'], matches(RegExp(r'^\\d{4}-\\d{2}-\\d{2}$')));
+    expect(payload['periodStartUtc'], matches(RegExp(r'^\d{4}-\d{2}-\d{2})));
+    expect(payload['periodEndUtc'], matches(RegExp(r'^\\d{4}-\\d{2}-\\d{2}$')));
+    expect(payload['periodStartUtc'], payload['periodEndUtc']);
+    expect(post.headers['authorization'], 'Bearer archive-token');
+    expect(find.text('تم تسجيل تأكيد الأرشفة اليدوية.'), findsOneWidget);
+    api.close();
+  });
+  testWidgets('observation history loads scoped queues and filters by type', (tester) async {
+    final List<http.Request> requests = <http.Request>[];
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'history-token',
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.url.path.endsWith('/observations/returned')) {
+          return http.Response(jsonEncode(<dynamic>[
+            <String, dynamic>{
+              'id': '33333333-3333-4333-8333-333333333333',
+              'station_id': stationId,
+              'observation_type': 'daily',
+              'observed_at': '2026-11-10T12:00:00Z',
+              'payload': <String, dynamic>{'values': <String, dynamic>{'rainfall_mm': 2}},
+              'status': 'returned',
+              'review_note': 'يرجى مراجعة القيمة',
+            },
+          ]), 200);
+        }
+        return http.Response(jsonEncode(<dynamic>[
+          <String, dynamic>{
+            'id': '44444444-4444-4444-8444-444444444444',
+            'station_id': stationId,
+            'observation_type': 'hourly',
+            'observed_at': '2026-11-11T06:00:00Z',
+            'payload': <String, dynamic>{'values': <String, dynamic>{'temperature_c': 18}},
+            'status': 'submitted',
+          },
+        ]), 200);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationHistoryScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(requests, hasLength(2));
+    expect(requests.every((request) =>
+        request.url.path.startsWith('/api/v1/stations/$stationId/observations')), isTrue);
+    expect(requests.every((request) =>
+        request.headers['authorization'] == 'Bearer history-token'), isTrue);
+    expect(find.text('سجل النشرات المتاح'), findsOneWidget);
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.text('السجلات المطابقة: 2 من 2 سجلاً محمّلاً'), findsOneWidget);
+
+    await tester.tap(find.text('ساعي'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsNothing);
+    expect(find.text('السجلات المطابقة: 1 من 2 سجلاً محمّلاً'), findsOneWidget);
+    api.close();
+  });
+
+}
+)));
     expect(payload['periodEndUtc'], matches(RegExp(r'^\\d{4}-\\d{2}-\\d{2}$')));
     expect(payload['periodStartUtc'], payload['periodEndUtc']);
     expect(post.headers['authorization'], 'Bearer archive-token');
