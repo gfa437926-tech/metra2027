@@ -165,3 +165,46 @@ The earlier 54% assistant-02 task calculation is not recalculated from this docu
 4. Apply the migration only to that isolated branch and run SQL security + station-isolation integration tests.
 5. Only after successful isolated tests, request approval for production migration.
 6. Daily/hourly/monthly/annual scientific report calculations, payload-version history, Climatol and export jobs remain separate contracts and are not claimed complete by the imported archive reader.
+
+
+## Round 9 — Flutter CI correction, archive permission scope and isolated DB test harness (2026-11-11)
+
+### Flutter CI
+- Re-inspected the failing archive detail widget test and the actual screen implementation.
+- Identified the test defect: the detail screen renders its payload title below the initial viewport in a lazily built ListView; the previous test searched for that off-screen child before scrolling, so waiting/pumping could never make it appear.
+- Updated mobile/metra_mobile/test/observation_archive_screen_test.dart to scroll the detail ListView before asserting the payload title and JSON content.
+- Latest Flutter commit: 3b99890a5882ac8e49248ad25d6ffbfac7fa7503.
+- Client CI run #1130 (43098264612) is queued; no passing result is claimed. Flutter SDK is not installed in the current execution container, so local Flutter tests were not run.
+- PR #34 branch currently compares cleanly with main (71 commits ahead, 0 behind); it remains Draft pending green CI and review.
+
+### Archive permission scope
+- Added docs/security/OBSERVATION-ARCHIVE-READ-PERMISSION-SCOPE.md.
+- The phase policy documents eligibility for station_head, station_auditor and chief_auditor only.
+- Eligibility is explicitly not a grant. No role mapping, user grant, registration-time assignment or implicit inheritance is created.
+- Each future grant must be individual, approved, authority/station-scoped, time-bounded, revocable and audited. The grant-issuance workflow must enforce the eligible role set and two-person approval before any real grant is issued.
+- The assignment role column and grant-issuance RPC contract are not yet certified; therefore zero live grants are authorized. This remains a security acceptance gate.
+
+### Isolated database test environment
+- The local container has no Docker, Supabase CLI or PostgreSQL server; no local DB test is claimed.
+- Added a disposable PostgreSQL 17 service job to the existing .github/workflows/backend-ci.yml workflow. It uses GitHub Actions ephemeral service containers and does not provision a hosted Supabase project or consume a paid Supabase branch.
+- Added supabase/tests/fixtures/archive_schema_bootstrap.sql to model only the verified schema surface required by the archive RPC migration and the Supabase JWT role claim helper.
+- Added supabase/tests/observation_archive_read_integration.sql for explicit grant, missing grant, inactive account, expired grant, revoked grant, expired station assignment, cross-station denial, unlinked/demo exclusion, pagination and UTC range behavior.
+- Existing static SQL security test checks RPC existence, service-role execute access, client-role denial and absence of role auto-grants.
+- Updated the proposed RPC guard from deprecated auth.role() to auth.jwt() ->> 'role', matching current Supabase Auth guidance.
+- Backend CI run #1542 (43098429680) is queued; no migration or integration test pass is claimed yet.
+- The disposable PostgreSQL fixture is a focused migration/authorization test harness, not a complete Supabase stack. A full local Supabase CLI run still requires Docker and a complete, reviewed migration baseline.
+
+### Scientific report contracts
+- Added docs/backend/SCIENTIFIC-REPORTING-CLIMATOL-EXPORT-CONTRACT-DRAFT-V1.md covering hourly, daily, monthly, annual, specialist domains, Climatol and exports.
+- The existing archive reader returns raw source-preserving payloads for the seven verified imported types; it does not calculate scientific aggregates.
+- Scientific implementation remains blocked on extracting the authoritative requirements archive and owner approval of field units, timestamp conventions, daily period, missing/trace semantics, quality rules, aggregation operators and Climatol review authority. No formulas, units or fake values have been invented.
+- No scientific calculations, Climatol jobs or export jobs are represented as implemented by this round.
+
+### Safety and remaining blockers
+- No live database writes, DDL, migration application, RLS/grant changes, seed or production deployment.
+- No access to project INSERT and no METRA OLD access or changes.
+- No service or resource with a non-zero cost was created.
+- Backend PR #22 remains Draft and is still 72 commits ahead / 30 behind main at last comparison; safe rebase/reconciliation is still required before merge.
+- Flutter PR #34 remains Draft; latest Client CI run #1130 is queued.
+- Backend PR #22 latest CI run #1542 is queued.
+- No percentage increase is claimed until the queued CI jobs complete and the isolated database tests pass.
