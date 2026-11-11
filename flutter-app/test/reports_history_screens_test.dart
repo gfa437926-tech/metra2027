@@ -83,7 +83,11 @@ void main() {
     expect(find.textContaining('من: '), findsOneWidget);
     expect(find.textContaining('إلى: '), findsOneWidget);
 
-    await tester.enterText(find.widgetWithText(TextField, 'اسم ملف Excel'), 'daily.xlsx');
+    await tester.enterText(
+      find.byWidgetPredicate((widget) =>
+          widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel'),
+      'daily.xlsx',
+    );
     await tester.tap(find.text('تأكيد الأرشفة اليدوية'));
     await tester.pumpAndSettle();
 
