@@ -32,8 +32,13 @@ class _MetraHomeState extends State<MetraHome> {
   Widget build(BuildContext context) {
     final pages = [
       _HomeOverview(
+        selectedStationId: _selectedStationId,
         onOpenStations: () => setState(() => _index = 1),
-        onOpenForecasting: () => setState(() => _index = 5)),
+        onOpenForecasting: () => setState(() => _index = 5),
+        onOpenEntry: () => setState(() => _index = 3),
+        onOpenReview: () => setState(() => _index = 2),
+        onOpenOps: () => setState(() => _index = 4),
+      ),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
         onStationSelected: (id) => setState(() => _selectedStationId = id)),
       _selectedStationId == null
@@ -363,33 +368,147 @@ class _MoreMenuPage extends StatelessWidget {
 }
 
 class _HomeOverview extends StatelessWidget {
-  const _HomeOverview({required this.onOpenStations, required this.onOpenForecasting});
+  const _HomeOverview({
+    required this.onOpenStations,
+    required this.onOpenForecasting,
+    required this.onOpenEntry,
+    required this.onOpenReview,
+    required this.onOpenOps,
+    this.selectedStationId,
+  });
   final VoidCallback onOpenStations;
   final VoidCallback onOpenForecasting;
+  final VoidCallback onOpenEntry;
+  final VoidCallback onOpenReview;
+  final VoidCallback onOpenOps;
+  final String? selectedStationId;
+
   @override
-  Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(20), children: [
-    Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(borderRadius: BorderRadius.circular(24),
-      gradient: const LinearGradient(begin: Alignment.topRight, end: Alignment.bottomLeft, colors: [Color(0xFF061746), Color(0xFF0754B5)])),
-      child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Icon(Icons.cloud_outlined, color: Colors.white, size: 38), SizedBox(height: 16),
-        Text('ذكاء الأرصاد يبدأ من بيانات موثوقة', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8), Text('واجهة METRA 2027', style: TextStyle(color: Color(0xFFD6E8FF))),
-      ])),
-    const SizedBox(height: 18),
-    const _StatusCard(icon: Icons.cloud_off_outlined, title: 'الطقس المباشر غير متصل',
-      description: 'لن تُعرض درجات حرارة أو رياح تجريبية على أنها قياسات فعلية. ستظهر البيانات عند ربط مصدر الرصد المعتمد.'),
-    const SizedBox(height: 12),
-    _ActionCard(icon: Icons.map_outlined, title: 'استعراض المحطات',
-      description: 'عرض المحطات الكلاسيكية والآلية من الدليل المعتمد.', onTap: onOpenStations),
-    const SizedBox(height: 12),
-    _ActionCard(
-      icon: Icons.cloud_outlined,
-      title: 'مركز التنبؤ الجوي',
-      description: 'مقارنة جغرافية وتفاصيل الكتالوج — اطلاع فقط بدون تعديل السجلات.',
-      onTap: onOpenForecasting,
-    ),
-  ]);
+  Widget build(BuildContext context) => ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [Color(0xFF061746), Color(0xFF0754B5)],
+              ),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.cloud_outlined, color: Colors.white, size: 38),
+                SizedBox(height: 16),
+                Text(
+                  'ذكاء الأرصاد يبدأ من بيانات موثوقة',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'إدخال ومراجعة واعتماد النشرات عبر الخادم مع عزل المحطات وصلاحيات الدور.',
+                  style: TextStyle(color: Colors.white70, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            color: selectedStationId == null
+                ? const Color(0xFFFFF4E5)
+                : const Color(0xFFE8F7EE),
+            child: ListTile(
+              leading: Icon(
+                selectedStationId == null
+                    ? Icons.warning_amber_outlined
+                    : Icons.check_circle_outline,
+                color: selectedStationId == null
+                    ? Colors.orange.shade800
+                    : Colors.green.shade800,
+              ),
+              title: Text(
+                selectedStationId == null
+                    ? 'لم تُحدد محطة العمل'
+                    : 'محطة العمل محددة',
+              ),
+              subtitle: Text(
+                selectedStationId == null
+                    ? 'اختر محطة من الدليل لتفعيل الإدخال والمراجعة والصيانة والتقارير.'
+                    : 'المعرّف: $selectedStationId
+يمكنك المتابعة للإدخال أو المراجعة أو العمليات.',
+              ),
+              trailing: TextButton(
+                onPressed: onOpenStations,
+                child: Text(selectedStationId == null ? 'اختيار' : 'تغيير'),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _QuickNavCard(
+            icon: Icons.edit_note_outlined,
+            title: 'إدخال نشرة ساعية',
+            enabled: selectedStationId != null,
+            onTap: selectedStationId == null ? onOpenStations : onOpenEntry,
+          ),
+          _QuickNavCard(
+            icon: Icons.fact_check_outlined,
+            title: 'مراجعة النشرات',
+            enabled: selectedStationId != null,
+            onTap: selectedStationId == null ? onOpenStations : onOpenReview,
+          ),
+          _QuickNavCard(
+            icon: Icons.build_outlined,
+            title: 'الصيانة والدعم',
+            enabled: selectedStationId != null,
+            onTap: selectedStationId == null ? onOpenStations : onOpenOps,
+          ),
+          _QuickNavCard(
+            icon: Icons.public,
+            title: 'مركز التنبؤ الجوي',
+            enabled: true,
+            onTap: onOpenForecasting,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'التوقيت التشغيلي UTC فقط. لا تُعرض بيانات وهمية عند غياب الاستجابة.',
+            style: TextStyle(color: Colors.blueGrey, fontSize: 12),
+          ),
+        ],
+      );
 }
+
+class _QuickNavCard extends StatelessWidget {
+  const _QuickNavCard({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    required this.enabled,
+  });
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        child: ListTile(
+          leading: Icon(icon, color: enabled ? _blue : Colors.grey),
+          title: Text(title),
+          subtitle: Text(
+            enabled ? 'متاح للمحطة المحددة' : 'يتطلب اختيار محطة أولاً',
+          ),
+          trailing: const Icon(Icons.chevron_left),
+          onTap: onTap,
+        ),
+      );
+}
+
 class _InformationPage extends StatelessWidget {
   const _InformationPage({required this.icon, required this.title, required this.message});
   final IconData icon;
