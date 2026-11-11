@@ -117,4 +117,80 @@ const List<RoleWorkspaceDefinition> kRoleWorkspaces = [
       'مسار اعتماد بشري للنتائج',
     ],
   ),
+  RoleWorkspaceDefinition(
+    code: 'register_uploader',
+    titleAr: 'رافع السجلات الورقية والمخططات',
+    summaryAr: 'رفع أصول السجلات والمخططات وربطها بالمحطة والفترة مع الحفاظ على النسخة الأصلية.',
+    availableNow: [],
+    blockedUntilContract: [
+      'API رفع وتخزين خاص وآمن مع بصمة SHA-256',
+      'صلاحية رفع ضمن المحطة المعيّنة فقط',
+      'سياسة الاحتفاظ بالأصول ومشتقاتها',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'electronic_auditor',
+    titleAr: 'المدقق الإلكتروني',
+    summaryAr: 'مراجعة الاستخراج والفروقات والأدلة ضمن نطاق المحطات المخوّلة.',
+    availableNow: [],
+    blockedUntilContract: [
+      'API حالات التدقيق والاستخراج والمقارنة',
+      'صلاحيات قراءة وتصحيح منفصلة عن قرار الاعتماد',
+      'سجل أحداث append-only',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'audit_approver',
+    titleAr: 'معتمد التدقيق',
+    summaryAr: 'اتخاذ القرار النهائي بعد مراجعة الأدلة والاختلافات مع توثيق السبب.',
+    availableNow: [],
+    blockedUntilContract: [
+      'صلاحية audit.decide مستقلة ومحددة النطاق',
+      'دورة قرارات مع أسباب وسجل غير قابل للتعديل',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'ai_analyst',
+    titleAr: 'محلل الذكاء الاصطناعي',
+    summaryAr: 'طلب التحليل والتفسير واكتشاف الشذوذ دون اعتبار النتائج رصدات أو قرارات معتمدة.',
+    availableNow: [],
+    blockedUntilContract: [
+      'AI Gateway خادمي مع صلاحيات المحطة',
+      'تسجيل المصدر والفترة وإصدار النموذج وعدم اليقين',
+      'مراجعة بشرية ومنع التعديل التلقائي على الرصدات',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'model_manager',
+    titleAr: 'مدير نماذج الذكاء الاصطناعي',
+    summaryAr: 'إدارة مجموعات البيانات والوسوم والتدريب والتقييم في بيئة معزولة.',
+    availableNow: [],
+    blockedUntilContract: [
+      'بيئة تدريب منفصلة عن API الإنتاج',
+      'مجموعات اختبار مستقلة ومنع تسرب البيانات',
+      'حوكمة الوسوم المرجعية البشرية',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'model_approver',
+    titleAr: 'معتمد إصدارات النماذج',
+    summaryAr: 'اعتماد إصدار النموذج أو التراجع عنه بعد مراجعة المقاييس والسلامة.',
+    availableNow: [],
+    blockedUntilContract: [
+      'صلاحية ترقية/تراجع مستقلة',
+      'سجل إصدار ومقاييس وبصمة مجموعة البيانات',
+      'اعتماد بشري وخطة تراجع',
+    ],
+  ),
+  RoleWorkspaceDefinition(
+    code: 'aftn_sender',
+    titleAr: 'مرسل AFTN',
+    summaryAr: 'إنشاء الرسائل ومراجعتها وإرسالها عبر القناة المركزية المعتمدة فقط.',
+    availableNow: [],
+    blockedUntilContract: [
+      'بوابة إرسال خادمية معتمدة',
+      'قوالب وترميز وتحقق للرسائل',
+      'تأكيد التسليم وسجل التدقيق',
+    ],
+  ),
 ];
