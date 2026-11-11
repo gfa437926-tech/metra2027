@@ -12,7 +12,9 @@ void main() {
   testWidgets('authority access submits a self-membership request without granting locally',
       (tester) async {
     Map<String, dynamic>? membershipBody;
+    final requests = <String>[];
     final client = MockClient((request) async {
+      requests.add('${request.method} ${request.url.path} ${request.body}');
       if (request.url.path == '/api/v1/authorities') {
         return http.Response.bytes(
           utf8.encode(jsonEncode([
@@ -64,7 +66,8 @@ void main() {
     await tester.tap(find.text('تأكيد'));
     await tester.pumpAndSettle();
 
-    expect(membershipBody, isNotNull, reason: 'membership request was not captured');
+    expect(requests.any((value) => value.contains('/memberships ')), isTrue, reason: requests.join('\n'));
+    expect(membershipBody, isNotNull, reason: requests.join('\n'));
     expect(membershipBody, containsPair('userId', null));
     expect(membershipBody, containsPair('roleCode', 'observer'), reason: 'captured request: $membershipBody');
     expect(membershipBody?['reason'], 'طلب انضمام للعمل في الجهة');
