@@ -82,6 +82,11 @@ void main() {
       client: client,
     );
 
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final directory = await api.getAllStationDirectory();
     expect(directory, hasLength(2));
     expect(directory.where((station) => station.isDemo), hasLength(1));
@@ -117,17 +122,9 @@ void main() {
     await tester.pump();
 
     final terms = find.textContaining('أقر بصحة البيانات');
-    await tester.scrollUntilVisible(terms, 240,
-        scrollable: find.descendant(
-          of: find.byType(ListView), matching: find.byType(Scrollable),
-        ).first);
     await tester.tap(terms);
     await tester.pumpAndSettle();
     final submitButton = find.text('إرسال طلب الانضمام');
-    await tester.scrollUntilVisible(submitButton, 240,
-        scrollable: find.descendant(
-          of: find.byType(ListView), matching: find.byType(Scrollable),
-        ).first);
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
