@@ -147,7 +147,7 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
                 ...data.review.map(_itemCard),
               const SizedBox(height: 16),
               const Text(
-                'النشرات المُرجَعة المحمّلة (حتى 50 من الخادم، للمستخدم الحالي)',
+                'النشرات المُرجَعة المحمّلة (حتى 100 من الخادم، للمستخدم الحالي)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
