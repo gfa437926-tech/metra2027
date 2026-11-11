@@ -11,13 +11,16 @@ import 'package:metra_mobile/features/climatol/climatol_workspace_screen.dart';
 void main() {
   testWidgets('AI workspace exposes governed analysis areas without fabricated results',
       (tester) async {
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: AiWorkspaceScreen()));
     expect(find.text('مساحة الذكاء الاصطناعي'), findsOneWidget);
     expect(find.text('مسارات العمل'), findsOneWidget);
     await tester.tap(find.text('التحليل'));
     await tester.pumpAndSettle();
     expect(find.text('إعداد طلب التحليل'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), 300, scrollable: find.byType(Scrollable).last);
     expect(find.text('تنفيذ التحليل غير متاح حتى ربط AI Gateway'), findsOneWidget);
     expect(find.textContaining('لم يتم إرسال السؤال'), findsOneWidget);
     await tester.tap(find.text('حوكمة'));
@@ -55,11 +58,14 @@ void main() {
       accessTokenProvider: () async => 'climatol-test-token',
       client: client,
     );
+    tester.view.physicalSize = const Size(1200, 3000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(MaterialApp(home: ClimatolWorkspaceScreen(api: api)));
     await tester.pumpAndSettle();
     expect(find.text('تجانس السلاسل المناخية — Climatol'), findsOneWidget);
     expect(find.text('محطة الشمال'), findsOneWidget);
-    await tester.scrollUntilVisible(find.textContaining('تشغيل التجانس غير متاح'), 400, scrollable: find.byType(Scrollable).last);
     expect(find.textContaining('تشغيل التجانس غير متاح'), findsOneWidget);
     await tester.tap(find.text('التشخيص'));
     await tester.pumpAndSettle();
