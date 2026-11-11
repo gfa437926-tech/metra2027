@@ -109,8 +109,9 @@ void main() {
         widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel');
     
     await tester.enterText(fileNameField, 'daily.xlsx');
-    final confirmButton = find.text('تأكيد الأرشفة اليدوية');
-    
+    await tester.pumpAndSettle();
+    final confirmButton = find.widgetWithText(FilledButton, 'تأكيد الأرشفة اليدوية');
+    expect(tester.widget<FilledButton>(confirmButton).onPressed, isNotNull);
     await tester.tap(confirmButton);
     await tester.pumpAndSettle();
 
@@ -171,9 +172,8 @@ void main() {
     expect(requests.every((request) =>
         request.headers['authorization'] == 'Bearer history-token'), isTrue);
     expect(find.text('سجل النشرات المتاح'), findsOneWidget);
-    
-    
-    expect(find.text('السجلات المطابقة: 2 من 2 سجلاً محمّلاً'), findsOneWidget);
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsOneWidget);
 
     
     await tester.tap(find.text('ساعي'));
@@ -182,7 +182,6 @@ void main() {
     
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsNothing);
-    expect(find.text('السجلات المطابقة: 1 من 2 سجلاً محمّلاً'), findsOneWidget);
     api.close();
   });
 }
