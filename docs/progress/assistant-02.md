@@ -125,3 +125,19 @@ Actions run `42925098754` completed successfully on commit `efa5870e555d4f74584e
 6. Bind the existing Flutter reports/archive UI to the verified API DTOs and test 401/403/404/409/503 plus station-scope behavior.
 
 The earlier 54% assistant-02 task calculation is not recalculated from this documentation-only increment; implementation tasks remain open.
+
+
+## Round 7 — Live read-only schema review for reporting/archive (2026-11-11)
+
+- Confirmed the target project in the connected Supabase project list: `metra2027-angular`, ref `tbdnklyxjvbrilvnwgmq`, PostgreSQL 17.11, ACTIVE_HEALTHY. The legacy INSERT project was not queried.
+- Ran read-only table metadata, migration inventory, RLS policy/grant inspection, function catalogue inspection, role-permission lookup and aggregate-only archive quality counts. No database mutation was issued.
+- Confirmed `public.metra_observation_records`: 58,059 imported archive rows; 7 source types; 1,251 rows have NULL station_id and 13 have NULL observed_at. No fuzzy station linking is allowed.
+- Confirmed `public.metra_observations` and `public.metra_observation_audit_events` each have 0 rows. The operational audit relation stores workflow event metadata, not prior payload snapshots.
+- Confirmed `metra_api_runtime` has SELECT on account-state, assignment, permission-grant and station-catalogue relations, but no SELECT grant/policy on the imported archive or operational observation/audit relations. The operational observation migration explicitly revokes runtime privileges and grants service_role.
+- Confirmed the current role-permission mapping has no `observation.archive.read` permission. Archive-read access cannot be inferred from `observation.review` or `observation.approve`.
+- Added `docs/backend/REPORTING-ARCHIVE-READONLY-SCHEMA-REVIEW-2026-11-11.md` (commit `1d4cbe0955eda6810e6bc301ca24bf171f143335`).
+- Updated `docs/backend/REPORTING-AND-OBSERVATION-ARCHIVE-API-CONTRACT-V1.md` with live schema facts (commit `be5915fbc506ce1935da8f8e0c14f46de380d255`).
+- Safe architecture recommendation: read-only `metra_api_runtime` access with exact SELECT grants/RLS and a single parameterized SQL statement that checks active account, explicit archive-read permission and exact station assignment while reading the same station's archive rows. No service-role key in clients.
+- Security/performance advisors were read. Relevant archive/observation tables have client-deny policies; runtime read policies/grants are missing. Advisor notices about support/equipment functions and unindexed FKs are recorded as separate follow-up findings; no index was dropped.
+- No SQL write, DDL, migration, RPC, RLS, grant, seed, record update, legacy project query, or METRA OLD change.
+- No API implementation, migration application or Flutter binding is claimed. Backend PR #22 and Flutter PR #34 remain Draft. The interface and schema review are now documented; implementation awaits explicit archive permission and least-privilege runtime access approval.
