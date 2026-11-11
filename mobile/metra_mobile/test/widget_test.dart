@@ -165,6 +165,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile).at(1)).value, isTrue);
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('1200.0 م'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('1200.0 م'), findsOneWidget);
     expect(find.text('المسافة من المرجع'), findsWidgets);
     expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
