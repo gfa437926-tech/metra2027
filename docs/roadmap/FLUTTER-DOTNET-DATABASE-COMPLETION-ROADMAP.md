@@ -183,3 +183,9 @@ A static source review was recorded in `docs/delivery/FLUTTER-SCREEN-TRACEABILIT
 This is a static inventory only. No Flutter, .NET, database or live API tests were run in this round. No Flutter implementation or database changes were made. The inventory remains provisional because the root RAR requirements archive is still binary-inspection blocked.
 
 Task FLT-001 remains **In progress / blocked** pending archive extraction and full requirements indexing. Next implementation gate: complete the authoritative field/rule traceability, then build and test a complete Flutter workflow end-to-end before broad module expansion.
+
+## FLT-002 — Password recovery request (2026-11-11T15:06:37.311Z)
+
+The Flutter login screen now exposes a password-recovery request using Supabase Auth `resetPasswordForEmail`. It validates the email before sending, displays a privacy-preserving confirmation, handles provider errors without exposing raw details, and disables the action while busy. A widget test covers the entry point and validation. Implementation commits: `ab9a94b594cf4fd2e21946d883031c0b4db74c48`, `aa5b1b36c174bae2c562ee8ccb4a6b1101299f4f`. Round report: `docs/delivery/FLUTTER-ROUND-FLT-002-PASSWORD-RECOVERY.md` (commit `0fe6d9874f619d1322675e87310ca4fb0fd7a28a`).
+
+Verification remains pending: Flutter analyzer/tests and actual Supabase email-template/redirect delivery were not run in this round. No database, RLS, migration, API permission, or secret changes were made.
