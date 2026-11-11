@@ -15,8 +15,8 @@ void main() {
       accessTokenProvider: () async => 'audit-token',
       client: MockClient((request) async {
         expect(request.url.path, '/api/v1/stations/$stationId/audit-log');
-        return http.Response(
-          jsonEncode([
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
             {
               'id': '33333333-3333-4333-8333-333333333333',
               'entity_type': 'station_assignment',
@@ -32,8 +32,9 @@ void main() {
               'valid_from': '2026-11-11T00:00:00Z',
               'valid_to': null,
             },
-          ]),
+          ])),
           200,
+          headers: {'content-type': 'application/json'},
         );
       }),
     );
@@ -55,7 +56,7 @@ void main() {
     expect(find.text('محطة الاختبار'), findsOneWidget);
     expect(find.text('تحديث سجل'), findsOneWidget);
     expect(find.text('تعيين محطة'), findsOneWidget);
-    expect(find.text('pending ← approved'), findsOneWidget);
+    expect(find.text('pending → approved'), findsOneWidget);
     expect(find.text('تحديث تعيين'), findsOneWidget);
     expect(find.textContaining('لا يمثل هذا أرشيف النشرات'), findsOneWidget);
     expect(find.textContaining('للقراءة فقط'), findsOneWidget);
