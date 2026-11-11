@@ -28,11 +28,13 @@ class MetraHome extends StatefulWidget {
 class _MetraHomeState extends State<MetraHome> {
   int _index = 0;
   String? _selectedStationId;
+  String? _selectedStationLabel;
   @override
   Widget build(BuildContext context) {
     final pages = [
       _HomeOverview(
         selectedStationId: _selectedStationId,
+        selectedStationLabel: _selectedStationLabel,
         onOpenStations: () => setState(() => _index = 1),
         onOpenForecasting: () => setState(() => _index = 5),
         onOpenEntry: () => setState(() => _index = 3),
@@ -40,7 +42,13 @@ class _MetraHomeState extends State<MetraHome> {
         onOpenOps: () => setState(() => _index = 4),
       ),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
-        onStationSelected: (id) => setState(() => _selectedStationId = id)),
+        selectedStationLabel: _selectedStationLabel,
+        onStationSelected: (id) => setState(() => _selectedStationId = id),
+        onStationItemSelected: (station) => setState(() {
+          _selectedStationId = station.id;
+          _selectedStationLabel = '${station.nameArabic} (${station.localCode})';
+        })),
+
       _selectedStationId == null
         ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
             message: 'اختر محطة أولاً من دليل المحطات. سيطبّق الخادم صلاحيات حسابك على المحطة والعمليات المتاحة.')
@@ -375,6 +383,7 @@ class _HomeOverview extends StatelessWidget {
     required this.onOpenReview,
     required this.onOpenOps,
     this.selectedStationId,
+    this.selectedStationLabel,
   });
   final VoidCallback onOpenStations;
   final VoidCallback onOpenForecasting;
@@ -382,6 +391,7 @@ class _HomeOverview extends StatelessWidget {
   final VoidCallback onOpenReview;
   final VoidCallback onOpenOps;
   final String? selectedStationId;
+  final String? selectedStationLabel;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -440,7 +450,7 @@ class _HomeOverview extends StatelessWidget {
               subtitle: Text(
                 selectedStationId == null
                     ? 'اختر محطة من الدليل لتفعيل الإدخال والمراجعة والصيانة والتقارير.'
-                    : 'المعرّف: $selectedStationId — يمكنك المتابعة للإدخال أو المراجعة أو العمليات.',
+                    : '${selectedStationLabel ?? selectedStationId} — يمكنك المتابعة للإدخال أو المراجعة أو العمليات.',
               ),
               trailing: TextButton(
                 onPressed: onOpenStations,

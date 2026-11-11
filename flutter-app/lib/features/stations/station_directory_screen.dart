@@ -27,10 +27,11 @@ List<StationDirectoryItem> filterStationDirectory(
 
 
 class StationDirectoryScreen extends StatefulWidget {
-  const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
+  const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected, this.onStationItemSelected});
   final MetraApiClient api;
   final String? selectedStationId;
   final ValueChanged<String>? onStationSelected;
+  final ValueChanged<StationDirectoryItem>? onStationItemSelected;
   @override
   State<StationDirectoryScreen> createState() => _StationDirectoryScreenState();
 }
@@ -44,6 +45,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   void _load() { _stations = widget.api.getAllStationDirectory(stationType: _type); }
   void _openStation(StationDirectoryItem station) {
     widget.onStationSelected?.call(station.id);
+    widget.onStationItemSelected?.call(station);
     Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => StationDetailScreen(station: station),
     ));
