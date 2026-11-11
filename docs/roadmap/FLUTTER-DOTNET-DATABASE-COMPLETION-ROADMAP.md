@@ -1,6 +1,6 @@
 # METRA 2027 — Flutter, ASP.NET Core and New Database Completion Roadmap
 
-Last updated: 2026-11-11T15:15:55.715Z
+Last updated: 2026-11-11T15:34:26.685Z
 Repository: gfa437926-tech/metra2027
 Default branch: main
 
@@ -203,3 +203,18 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - API review found no consolidated current-user access-context endpoint in the reviewed route set. Role/permission-based destination visibility remains blocked; no role claims are inferred in Flutter.
 - Database changes: none. Legacy database: untouched.
 - Next: execute Flutter analyzer/widget tests, then specify and test a server-authoritative access-context contract before implementing role-aware navigation. FLT-001 requirements archive inspection remains blocked.
+
+
+## FLT-004 — Station catalogue metadata details (2026-11-11T15:34:26.685Z)
+
+- **Task:** FLT-004.
+- **Status:** In progress — Flutter source and widget-test changes committed; execution/visual verification pending.
+- The Flutter station model now reads the API's existing `elevation_m`, `coordinate_source` and `accuracy_m` projection fields.
+- The station directory now offers a details sheet for station identifiers, type, elevation, coordinate provenance/accuracy and catalogue states.
+- The sheet explicitly distinguishes station catalogue metadata from live observations and device connectivity.
+- Code commits: `0f6dd687dc2760b60601185518063772a72c5259`, `e399ea2e6f21fae3f2623ad34a0fa29dade2c13a`, `5de8d7815baa0d5dd6f5ed3691947aee1ee7f7ce`, `549b14780f5223fa44b8eecae641056eb6cdbf30`, `8e136e3f3df9c86b63fdccc98f2bd496d1e8f99a`.
+- Round report: `docs/delivery/FLUTTER-ROUND-FLT-004-STATION-METADATA-DETAILS.md` (commit `eeb82bd47134163209d796655c5df23758125f1a`).
+- Source inspection confirms the API already returns these fields; no backend or database contract was changed.
+- **Not run:** Flutter analyzer/tests, app builds or runtime visual checks. The current environment has no Flutter/Dart executable; test source is not represented as passing.
+- Database changes: none. Legacy database: untouched.
+- Next: execute the tests in Flutter CI, then continue the forecast-centre UI using approved station metadata and an explicitly separate live-telemetry contract. Role-based navigation remains gated on server-authoritative access context; FLT-001 archive inspection remains in progress.
