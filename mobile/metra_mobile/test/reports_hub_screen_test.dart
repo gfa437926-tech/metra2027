@@ -16,7 +16,9 @@ void main() {
     expect(find.text('التقارير الشهرية والسنوية'), findsOneWidget);
     expect(find.text('التحليل المناخي والتجانس'), findsOneWidget);
     expect(find.text('التصدير والطباعة'), findsOneWidget);
-    expect(find.text('بانتظار عقد API'), findsNWidgets(5));
+    expect(find.text('بانتظار عقد API'), findsNWidgets(4));
+    expect(find.text('فتح الأرشيف'), findsOneWidget);
+    expect(find.text('متاح للأرشيف التاريخي'), findsOneWidget);
     expect(find.textContaining('لن تظهر أرقام أو رسوم'), findsOneWidget);
     expect(find.textContaining('قائمة مراجعة الرصدات وسجل تدقيق المحطة وظيفتان منفصلتان'), findsOneWidget);
   });
