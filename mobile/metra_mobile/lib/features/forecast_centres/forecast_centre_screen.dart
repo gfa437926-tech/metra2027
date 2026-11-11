@@ -130,16 +130,16 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
     );
   }
 
-  Widget _intro() => Card(
+  Widget _intro() => const Card(
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              const Icon(Icons.query_stats, size: 30, color: Color(0xFF087CF0)),
-              const SizedBox(height: 10),
-              const Text('مراكز التنبؤ الجوي',
+              Icon(Icons.query_stats, size: 30, color: Color(0xFF087CF0)),
+              SizedBox(height: 10),
+              Text('مراكز التنبؤ الجوي',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
               SizedBox(height: 6),
               Text(
@@ -151,21 +151,21 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
         ),
       );
 
-  Widget _liveUnavailable() => Card(
+  Widget _liveUnavailable() => const Card(
         color: const Color(0xFFFFF7E8),
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              const Icon(Icons.sensors_off, color: Color(0xFF9A5B00)),
-              const SizedBox(width: 10),
+              Icon(Icons.sensors_off, color: Color(0xFF9A5B00)),
+              SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('الرصدات اللحظية والنشرات غير متصلة',
+                    Text('الرصدات اللحظية والنشرات غير متصلة',
                         style: TextStyle(fontWeight: FontWeight.bold)),
                     SizedBox(height: 5),
                     Text(
