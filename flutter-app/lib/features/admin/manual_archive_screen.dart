@@ -361,7 +361,7 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
                         if ((row['note'] ?? row['Note']) is String &&
                             ((row['note'] ?? row['Note']) as String).trim().isNotEmpty)
                           'ملاحظة: ${row['note'] ?? row['Note']}',
-                      ].join('\\n')),
+                      ].join('\n')),
                     ),
                 ],
               );
