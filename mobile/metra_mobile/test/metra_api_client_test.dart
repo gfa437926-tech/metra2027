@@ -96,6 +96,64 @@ void main() {
     client.close();
   });
 
+  test('station audit log uses the read-only station-scoped API contract', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'audit-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(jsonEncode([
+          {
+            'id': '33333333-3333-4333-8333-333333333333',
+            'entity_type': 'station_assignment',
+            'entity_id': stationId,
+            'action': 'update',
+            'actor_id': '44444444-4444-4444-8444-444444444444',
+            'reason': 'تحديث تعيين',
+            'occurred_at': '2026-11-11T12:00:00Z',
+            'target_user_id': '55555555-5555-4555-8555-555555555555',
+            'role_code': 'station_observer',
+            'previous_status': 'pending',
+            'resulting_status': 'approved',
+            'valid_from': '2026-11-11T00:00:00Z',
+            'valid_to': null
+          }
+        ]), 200);
+      }),
+    );
+
+    final events = await client.getStationAuditLog(stationId, limit: 25);
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/v1/stations/$stationId/audit-log');
+    expect(captured.url.queryParameters['limit'], '25');
+    expect(captured.headers['authorization'], 'Bearer audit-token');
+    expect(events, hasLength(1));
+    expect(events.single.entityType, 'station_assignment');
+    expect(events.single.action, 'update');
+    expect(events.single.previousStatus, 'pending');
+    expect(events.single.resultingStatus, 'approved');
+    client.close();
+  });
+
+  test('station audit log rejects invalid limits before network access', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'audit-token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getStationAuditLog(stationId, limit: 251),
+      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
