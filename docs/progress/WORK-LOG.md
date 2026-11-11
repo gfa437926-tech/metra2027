@@ -210,3 +210,15 @@ Push rejected: PAT lacks `workflow` scope.
 - **CI exact tip:** run `43071280050` على `51ed88a`: Flutter analyze ناجح و85 اختباراً ناجحاً؛ Angular npm tests/build وChromium PWA/IndexedDB smoke test ثلاث مرات ناجحة.
 - **ما بقي محجوباً:** live forecast snapshots/bulletins؛ specialist aggregate/report APIs؛ electronic audit case/evidence/OCR; AI Gateway; Climatol worker; AFTN gateway; hourly/daily history and export read models; effective account access-context; Supabase recovery redirect allow-list/device round-trip.
 - **قيود:** لا DB migrations/RLS/grants/seeds، لا وصول إلى قاعدة البيانات القديمة، لا main merge ولا deployment.
+
+
+## FE-REVIEW-REPORTS-OPS-01 — مراجعة فشل اختبارات التقارير والعمليات — 2026-11-11T18:11:13.334Z
+
+- **الحالة:** مراجعة مكتملة؛ إصلاحات مصدر Flutter متروكة للمساهم الذي يعمل على flutter-app/.
+- **الدليل:** CI 43074926822: Flutter analyze ناجح؛ 90 اختباراً ناجحاً واختباران فاشلان في reports_history_screens_test.dart.
+- **الفشل الأول:** لا يوجد طلب monthly-summary مطابق في قائمة الطلبات بعد النقر على الشهر السابق؛ يلزم فحص الطلبات الفعلية وانتظار Future الملخص.
+- **الفشل الثاني:** لا يظهر عدد السجلات 2/2 في شاشة تاريخ النشرات؛ يلزم التحقق من FutureBuilder/error state وتحليل عناصر طابور المراجعة والعناصر المُرجعة قبل تطبيق المرشحات.
+- **تحسن الاختبارات:** فشلتا empty-state والـsubmit في شاشات أعطال المعدات والدعم لم تعودا ضمن الفشل في هذا التشغيل؛ أصبحت الحزمة 90/2 بدلاً من 88/4.
+- **Angular:** npm tests وproduction build ناجحان في التشغيل نفسه؛ فحص Chromium ما زال قيد التنفيذ عند تسجيل المراجعة.
+- لم يتم تعديل ملفات Flutter أو قاعدة البيانات في هذه المراجعة. لا main merge ولا نشر.
+- التفاصيل الفنية في docs/reviews/FLUTTER-REPORTS-OPERATIONS-CI-REVIEW.md.
