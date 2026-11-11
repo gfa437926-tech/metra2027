@@ -155,12 +155,21 @@ class _HomeOverview extends StatelessWidget {
   ]);
 }
 class _InformationPage extends StatelessWidget {
-  const _InformationPage({required this.icon, required this.title, required this.message, this.action});
-  final IconData icon; final String title; final String message; final Widget? action;
+  const _InformationPage({required this.icon, required this.title, required this.message});
+  final IconData icon;
+  final String title;
+  final String message;
+
   @override
-  Widget build(BuildContext context) => Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
-    child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 520),
-      child: _StatusCard(icon: icon, title: title, description: message, action: action))));
+  Widget build(BuildContext context) => Center(
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: _StatusCard(icon: icon, title: title, description: message),
+      ),
+    ),
+  );
 }
 class _StatusCard extends StatelessWidget {
   const _StatusCard({required this.icon, required this.title, required this.description, this.action});
