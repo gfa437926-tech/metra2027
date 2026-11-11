@@ -21,6 +21,11 @@ void main() {
     ));
 
     expect(find.text('أعطال المعدات'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('بلاغات الدعم'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('بلاغات الدعم'), findsOneWidget);
     api.close();
   });
