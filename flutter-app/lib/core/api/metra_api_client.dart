@@ -129,6 +129,19 @@ class MetraApiClient {
 
   /// Uses the authoritative forecasting comparison endpoint. This reports
   /// catalogue geography/elevation only; it never fabricates live observations.
+  /// Catalogue profile for forecasting centre. Values are not live observations.
+  Future<Map<String, dynamic>> getForecastingStationProfile(String stationId) async {
+    final response = await _send(
+      'GET',
+      '/api/v1/forecasting/stations/${Uri.encodeComponent(stationId)}',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) {
+      throw const FormatException('invalid_forecasting_station_profile');
+    }
+    return Map<String, dynamic>.from(decoded);
+  }
+
   Future<Map<String, dynamic>> compareForecastingStations(
     List<String> stationIds,
   ) async {

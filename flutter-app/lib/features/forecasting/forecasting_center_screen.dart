@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../stations/station_directory_screen.dart';
 
 /// Read-only forecasting centre using the approved station catalogue only.
 class ForecastingCenterScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
   late Future<List<StationDirectoryItem>> _stations;
   final Set<String> _selected = <String>{};
   String? _error;
+  String _searchQuery = '';
   List<_PairResult> _pairs = const <_PairResult>[];
 
   @override
@@ -43,6 +45,17 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
       }
       _pairs = const <_PairResult>[];
     });
+  }
+
+  Future<void> _openProfile(StationDirectoryItem station) async {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _ForecastingStationProfileSheet(
+        api: widget.api,
+        fallback: station,
+      ),
+    );
   }
 
   bool _comparing = false;
@@ -82,11 +95,25 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
         _pairs = parsed;
         _comparing = false;
       });
+    } on MetraApiException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.statusCode) {
+        400 => 'طلب مقارنة غير صالح (محطتان إلى 12 بدون تكرار).',
+        401 => 'انتهت الجلسة. سجّل الدخول مجدداً.',
+        403 => 'ليست لديك صلاحية مقارنة هذه المحطات.',
+        404 => 'محطة غير موجودة في الدليل المعتمد.',
+        503 => 'دليل المحطات غير متاح حالياً.',
+        _ => 'تعذر تنفيذ المقارنة (${error.statusCode}).',
+      };
+      setState(() {
+        _comparing = false;
+        _error = message;
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
         _comparing = false;
-        _error = error.toString();
+        _error = 'تعذر تنفيذ المقارنة.';
       });
     }
   }
@@ -236,7 +263,10 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
             );
           }
           final List<StationDirectoryItem> stations =
-              snapshot.data ?? const <StationDirectoryItem>[];
+              filterStationDirectory(
+                snapshot.data ?? const <StationDirectoryItem>[],
+                query: _searchQuery,
+              );
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
@@ -250,6 +280,18 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
                     'قيم الرصد اللحظية وتفاصيل النشرات لا تُعرض قبل اعتماد واجهة اللقطة الحية.',
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const ValueKey('forecasting-station-search'),
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  hintText: 'بحث بالاسم أو الرمز أو WMO',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  isDense: true,
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value),
               ),
               const SizedBox(height: 12),
               _stationMap(stations),
@@ -306,9 +348,14 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
                   value: _selected.contains(s.id),
                   onChanged: (bool? value) =>
                       _toggleStation(s, value == true),
+                  secondary: IconButton(
+                    tooltip: 'ملف المحطة من الدليل',
+                    icon: const Icon(Icons.info_outline),
+                    onPressed: () => _openProfile(s),
+                  ),
                   title: Text(s.nameArabic),
                   subtitle: Text(
-                    'الارتفاع: ${s.elevationM?.toStringAsFixed(1) ?? 'غير متاح'} م · '
+                    '${s.localCode} · الارتفاع: ${s.elevationM?.toStringAsFixed(1) ?? 'غير متاح'} م · '
                     'الإحداثيات: ${s.hasValidCoordinates ? '${s.latitude!.toStringAsFixed(3)}, ${s.longitude!.toStringAsFixed(3)}' : 'غير متاح'} · '
                     'الرصد اللحظي: غير متاح',
                   ),
@@ -339,4 +386,106 @@ class _PairResult {
   final String to;
   final double? distanceKm;
   final double? elevDiff;
+}
+
+class _ForecastingStationProfileSheet extends StatefulWidget {
+  const _ForecastingStationProfileSheet({
+    required this.api,
+    required this.fallback,
+  });
+
+  final MetraApiClient api;
+  final StationDirectoryItem fallback;
+
+  @override
+  State<_ForecastingStationProfileSheet> createState() =>
+      _ForecastingStationProfileSheetState();
+}
+
+class _ForecastingStationProfileSheetState
+    extends State<_ForecastingStationProfileSheet> {
+  late final Future<Map<String, dynamic>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = widget.api.getForecastingStationProfile(widget.fallback.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: FutureBuilder<Map<String, dynamic>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 160,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (snapshot.hasError) {
+              final err = snapshot.error;
+              final msg = err is MetraApiException && err.statusCode == 404
+                  ? 'المحطة غير موجودة في دليل التنبؤ.'
+                  : err is MetraApiException && err.statusCode == 503
+                      ? 'دليل المحطات غير متاح حالياً.'
+                      : 'تعذر تحميل ملف المحطة.';
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(widget.fallback.nameArabic,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 8),
+                  Text(msg),
+                ],
+              );
+            }
+            final data = snapshot.data ?? const <String, dynamic>{};
+            final note = data['noteAr']?.toString() ??
+                'ملف من دليل المحطات فقط — بدون قيم رصد لحظية مختلقة.';
+            final lat = data['latitude'];
+            final lon = data['longitude'];
+            final elev = data['elevationM'];
+            final freshness = data['dataFreshness']?.toString() ?? 'catalogue_only';
+            final retrieved = data['retrievedAtUtc']?.toString() ?? '';
+            return SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(widget.fallback.nameArabic,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(widget.fallback.localCode,
+                      style: const TextStyle(color: Color(0xFF64748B))),
+                  const SizedBox(height: 12),
+                  _row('خط العرض', lat?.toString() ?? 'غير متاح'),
+                  _row('خط الطول', lon?.toString() ?? 'غير متاح'),
+                  _row('الارتفاع (م)', elev?.toString() ?? 'غير متاح'),
+                  _row('مصدر البيانات', freshness),
+                  _row('وقت الاسترجاع UTC', retrieved),
+                  _row('قيم الرصد اللحظية', 'غير متاحة قبل اعتماد عقد اللقطة'),
+                  const SizedBox(height: 12),
+                  Text(note, style: const TextStyle(color: Color(0xFF334155))),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _row(String label, String value) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: const TextStyle(color: Color(0xFF64748B)))),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
 }
