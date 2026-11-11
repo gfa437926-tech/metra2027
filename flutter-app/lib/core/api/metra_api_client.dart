@@ -46,13 +46,16 @@ class StationDirectoryItem {
   const StationDirectoryItem({required this.id, required this.localCode,
     required this.nameArabic, required this.nameEnglish, required this.stationType,
     required this.operationalStatus, required this.approvalStatus, required this.isDemo,
-    this.latitude, this.longitude, this.wmoStationId, this.elevationM});
+    this.latitude, this.longitude, this.wmoStationId, this.elevationM,
+    this.coordinateSource, this.coordinateAccuracyM});
   final String id, localCode, nameArabic, nameEnglish, stationType;
   final String operationalStatus, approvalStatus;
   final bool isDemo;
   final double? latitude, longitude;
   final String? wmoStationId;
   final double? elevationM;
+  final String? coordinateSource;
+  final double? coordinateAccuracyM;
   bool get hasCoordinates => latitude != null && longitude != null;
   bool get hasValidCoordinates => hasCoordinates &&
       latitude! >= -90 && latitude! <= 90 &&
@@ -63,10 +66,12 @@ class StationDirectoryItem {
     }
     double? number(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
     double? lat, lon;
+    Map<String, dynamic>? point;
     final coords = json['station_coordinates'];
     if (coords is List && coords.isNotEmpty && coords.first is Map) {
-      final point = Map<String, dynamic>.from(coords.first as Map);
-      lat = number(point['latitude']); lon = number(point['longitude']);
+      point = Map<String, dynamic>.from(coords.first as Map);
+      lat = number(point['latitude']);
+      lon = number(point['longitude']);
     }
     return StationDirectoryItem(id: json['id'] as String,
       localCode: json['local_station_code'] as String,
@@ -75,7 +80,11 @@ class StationDirectoryItem {
       operationalStatus: json['operational_status'] as String,
       approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
       latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?,
-      elevationM: number(json['elevation_m']));
+      elevationM: number(json['elevation_m']),
+      coordinateSource: point?['coordinate_source'] is String
+          ? point!['coordinate_source'] as String
+          : null,
+      coordinateAccuracyM: point == null ? null : number(point['accuracy_m']));
   }
 }
 
