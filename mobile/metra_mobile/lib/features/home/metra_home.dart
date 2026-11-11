@@ -4,6 +4,7 @@ import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
 import '../stations/station_audit_log_screen.dart';
+import '../reports/reports_hub_screen.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 
 const _navy = Color(0xFF061B4A);
@@ -35,8 +36,7 @@ class _MetraHomeState extends State<MetraHome> {
         ? const _InformationPage(icon: Icons.history, title: 'سجل تدقيق المحطة',
             message: 'اختر محطة أولاً من دليل المحطات. يعرض هذا السجل تغييرات بيانات المحطة وتعييناتها فقط، ولا يمثل أرشيف الرصدات الجوية.')
         : StationAuditLogScreen(api: widget.api, stationId: _selectedStationId!),
-      const _InformationPage(icon: Icons.analytics_outlined, title: 'التقارير والتحليلات',
-        message: 'لا توجد حالياً عقود API للتقارير الشهرية والسنوية أو تجميع الرصدات المعتمدة. ستبقى التقارير غير متاحة حتى اعتماد واجهات القراءة وقواعد التجميع.'),
+      const ReportsHubScreen(),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
