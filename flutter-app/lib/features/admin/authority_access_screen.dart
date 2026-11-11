@@ -46,6 +46,7 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
   }
 
   void _refreshQueues() {
+    if (!mounted) return;
     final id = _authorityId;
     if (id == null) return;
     setState(() {
@@ -198,7 +199,7 @@ class _AuthorityAccessScreenState extends State<AuthorityAccessScreen> {
     if (_busy || authorityId == null || id.isEmpty) return;
     final reason = await _reason(active ? 'سبب إلغاء الوصول' :
       decision == 'approve' ? 'سبب اعتماد الطلب' : 'سبب رفض الطلب');
-    if (reason == null) return;
+    if (reason == null || !mounted) return;
     setState(() { _busy = true; _error = null; _feedback = null; });
     try {
       if (active) {
