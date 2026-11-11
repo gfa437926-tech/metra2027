@@ -51,7 +51,9 @@ class _AftnConsoleShellScreenState extends State<AftnConsoleShellScreen>
     _preview();
     if (_origin.text.trim().isEmpty ||
         _addressees.text.trim().isEmpty ||
-        _body.text.trim().isEmpty) return;
+        _body.text.trim().isEmpty) {
+      return;
+    }
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
