@@ -86,7 +86,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('مركز التنبؤ الجوي'), findsOneWidget);
-    expect(find.textContaining('قيم الرصد اللحظية غير متاحة'), findsOneWidget);
+    expect(find.textContaining('قيم الرصد اللحظية وتفاصيل النشرات'), findsOneWidget);
     expect(find.byType(NavigationDestination), findsNWidgets(5));
     api.close();
   });
