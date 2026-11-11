@@ -63,7 +63,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           );
         }
         final selected = stations.where((s) => _selectedIds.contains(s.id)).toList();
-        final reference = stations.where((s) => s.id == _referenceId).firstOrNull;
+        StationDirectoryItem? reference;\n        for (final station in stations) {\n          if (station.id == _referenceId) { reference = station; break; }\n        }
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
@@ -194,7 +194,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
                   } else {
                     _selectedIds.remove(station.id);
                     if (_referenceId == station.id) {
-                      _referenceId = _selectedIds.firstOrNull;
+                      _referenceId = _selectedIds.isEmpty ? null : _selectedIds.first;
                     }
                   }
                 });
