@@ -13,8 +13,34 @@ void main() {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'forecast-test-token',
-      client: MockClient((_) async => http.Response.bytes(
-        utf8.encode(jsonEncode([
+      client: MockClient((request) async {
+        if (request.url.path == '/api/v1/forecasting/compare') {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body['stationIds'], [
+            '11111111-1111-4111-8111-111111111111',
+            '22222222-2222-4222-8222-222222222222',
+          ]);
+          return http.Response.bytes(
+            utf8.encode(jsonEncode({
+              'stations': [
+                {'stationId': '11111111-1111-4111-8111-111111111111'},
+                {'stationId': '22222222-2222-4222-8222-222222222222'},
+              ],
+              'pairs': [
+                {
+                  'fromStationId': '11111111-1111-4111-8111-111111111111',
+                  'toStationId': '22222222-2222-4222-8222-222222222222',
+                  'distanceKm': 111.2,
+                  'elevationDifferenceM': 300,
+                },
+              ],
+            })),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
           {
             'id': '11111111-1111-4111-8111-111111111111',
             'local_station_code': 'FC-01',
@@ -46,7 +72,9 @@ void main() {
         ])),
         200,
         headers: {'content-type': 'application/json; charset=utf-8'},
-      )),
+        )),
+      );
+    }),
     );
 
     tester.view.physicalSize = const Size(1200, 1800);
