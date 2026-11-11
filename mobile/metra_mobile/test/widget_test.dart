@@ -16,6 +16,25 @@ void main() {
     expect(find.textContaining('service_role'), findsOneWidget);
   });
 
+  testWidgets('password visibility control exposes an Arabic tooltip and toggles obscuring', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MetraLoginScreen()));
+
+    expect(find.byTooltip('إظهار كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('إظهار كلمة المرور'));
+    await tester.pump();
+
+    expect(find.byTooltip('إخفاء كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isFalse);
+
+    await tester.tap(find.byTooltip('إخفاء كلمة المرور'));
+    await tester.pump();
+
+    expect(find.byTooltip('إظهار كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isTrue);
+  });
+
   testWidgets('station directory displays classic and automatic records together', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
