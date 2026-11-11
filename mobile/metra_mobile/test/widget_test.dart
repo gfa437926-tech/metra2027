@@ -63,4 +63,12 @@ void main() {
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
   });
+  testWidgets('login exposes password recovery and validates email before request', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MetraLoginScreen()));
+    expect(find.text('نسيت كلمة المرور؟'), findsOneWidget);
+    await tester.tap(find.text('نسيت كلمة المرور؟'));
+    await tester.pump();
+    expect(find.text('أدخل البريد الإلكتروني أولاً لاستلام رابط الاستعادة.'), findsOneWidget);
+  });
+
 }
