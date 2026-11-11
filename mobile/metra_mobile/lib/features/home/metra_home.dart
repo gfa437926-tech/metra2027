@@ -3,6 +3,7 @@ import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
+import '../stations/station_audit_log_screen.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 
 const _navy = Color(0xFF061B4A);
@@ -30,8 +31,12 @@ class _MetraHomeState extends State<MetraHome> {
         ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
             message: 'اختر محطة أولاً من دليل المحطات. سيطبّق الخادم صلاحيات حسابك على المحطة والعمليات المتاحة.')
         : ObservationReviewScreen(api: widget.api, stationId: _selectedStationId!),
+      _selectedStationId == null
+        ? const _InformationPage(icon: Icons.history, title: 'سجل تدقيق المحطة',
+            message: 'اختر محطة أولاً من دليل المحطات. يعرض هذا السجل تغييرات بيانات المحطة وتعييناتها فقط، ولا يمثل أرشيف الرصدات الجوية.')
+        : StationAuditLogScreen(api: widget.api, stationId: _selectedStationId!),
       const _InformationPage(icon: Icons.analytics_outlined, title: 'التقارير والتحليلات',
-        message: 'التقارير التشغيلية غير مفعلة حتى ربط مصدر موثق للرصدات المعتمدة.'),
+        message: 'لا توجد حالياً عقود API للتقارير الشهرية والسنوية أو تجميع الرصدات المعتمدة. ستبقى التقارير غير متاحة حتى اعتماد واجهات القراءة وقواعد التجميع.'),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
@@ -50,6 +55,7 @@ class _MetraHomeState extends State<MetraHome> {
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
           NavigationDestination(icon: Icon(Icons.query_stats_outlined), selectedIcon: Icon(Icons.query_stats), label: 'مراكز التنبؤ'),
           NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'الرصد'),
+          NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history), label: 'سجل التدقيق'),
           NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'التقارير'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
         ],
