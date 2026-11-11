@@ -5,7 +5,7 @@ import 'package:metra_mobile/features/reports/reports_hub_screen.dart';
 void main() {
   testWidgets('reports hub clearly marks unimplemented API-backed capabilities without fake data', (tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
         home: Scaffold(body: ReportsHubScreen(onOpenArchive: () {})),
       ),
     );
