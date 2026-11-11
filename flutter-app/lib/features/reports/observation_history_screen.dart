@@ -216,11 +216,13 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                     child: ListTile(
                       leading: const Icon(Icons.info_outline),
                       title: Text('نطاق السجل'),
-                      subtitle: Text(
-                        'يعرض حتى 100 عنصر من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.'
-                        '${history.reviewForbidden ? ' • تعذر تحميل طابور المراجعة بسبب نطاق الصلاحية الحالي.' : ''}'
-                        '${history.returnedForbidden ? ' • تعذر تحميل طابور المُرجَعات بسبب نطاق الصلاحية الحالي.' : ''}',
-                      ),
+                      subtitle: Text(<String>[
+                        'يعرض حتى 100 عنصر من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.',
+                        if (history.reviewForbidden)
+                          'تعذر تحميل طابور المراجعة بسبب نطاق الصلاحية الحالي.',
+                        if (history.returnedForbidden)
+                          'تعذر تحميل طابور المُرجَعات بسبب نطاق الصلاحية الحالي.',
+                      ].join(' • ')),
                     ),
                   ),
                   const SizedBox(height: 8),
