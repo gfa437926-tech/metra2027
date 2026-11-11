@@ -47,49 +47,50 @@ class _ForecastingCenterScreenState extends State<ForecastingCenterScreen> {
     });
   }
 
-  double _haversine(double lat1, double lon1, double lat2, double lon2) {
-    const double r = 6371;
-    double toRad(double d) => d * math.pi / 180;
-    final double dLat = toRad(lat2 - lat1);
-    final double dLon = toRad(lon2 - lon1);
-    final double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(toRad(lat1)) *
-            math.cos(toRad(lat2)) *
-            math.sin(dLon / 2) *
-            math.sin(dLon / 2);
-    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-  }
+  bool _comparing = false;
 
-  void _compare(List<StationDirectoryItem> stations) {
-    final List<StationDirectoryItem> selected =
-        stations.where((StationDirectoryItem s) => _selected.contains(s.id)).toList();
+  Future<void> _compare(List<StationDirectoryItem> stations) async {
+    final selected = stations
+        .where((StationDirectoryItem s) => _selected.contains(s.id))
+        .toList(growable: false);
     if (selected.length < 2) {
       setState(() => _error = 'اختر محطتين على الأقل.');
       return;
     }
-    final List<_PairResult> pairs = <_PairResult>[];
-    for (int i = 0; i < selected.length; i++) {
-      for (int j = i + 1; j < selected.length; j++) {
-        final StationDirectoryItem a = selected[i];
-        final StationDirectoryItem b = selected[j];
-        pairs.add(
-          _PairResult(
-            from: a.nameArabic,
-            to: b.nameArabic,
-            distanceKm: a.hasValidCoordinates && b.hasValidCoordinates
-                ? _haversine(a.latitude!, a.longitude!, b.latitude!, b.longitude!)
-                : null,
-            elevDiff: a.elevationM != null && b.elevationM != null
-                ? b.elevationM! - a.elevationM!
-                : null,
-          ),
-        );
-      }
-    }
     setState(() {
+      _comparing = true;
       _error = null;
-      _pairs = pairs;
+      _pairs = const <_PairResult>[];
     });
+    try {
+      final response = await widget.api.compareForecastingStations(
+        selected.map((s) => s.id).toList(growable: false),
+      );
+      final names = <String, String>{for (final s in selected) s.id: s.nameArabic};
+      final rawPairs = response['pairs'] as List<dynamic>;
+      final parsed = rawPairs.map((raw) {
+        final pair = Map<String, dynamic>.from(raw as Map);
+        final fromId = pair['fromStationId'] as String?;
+        final toId = pair['toStationId'] as String?;
+        return _PairResult(
+          from: names[fromId] ?? fromId ?? 'محطة غير معروفة',
+          to: names[toId] ?? toId ?? 'محطة غير معروفة',
+          distanceKm: (pair['distanceKm'] as num?)?.toDouble(),
+          elevDiff: (pair['elevationDifferenceM'] as num?)?.toDouble(),
+        );
+      }).toList(growable: false);
+      if (!mounted) return;
+      setState(() {
+        _pairs = parsed;
+        _comparing = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _comparing = false;
+        _error = error.toString();
+      });
+    }
   }
 
   Widget _stationMap(List<StationDirectoryItem> stations) {
