@@ -37,12 +37,12 @@ void main() {
             'is_demo': true,
             'station_coordinates': [],
           },
-        ]), 200);
+        ])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
       }
       if (request.url.path == '/api/v1/registration-roles') {
-        return http.Response(jsonEncode([
+        return http.Response.bytes(utf8.encode(jsonEncode([
           {'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'},
-        ]), 200);
+        ])), 200, headers: {'content-type': 'application/json; charset=utf-8'});
       }
       if (request.url.path == '/api/v1/account/registration-status') {
         statusReads++;
