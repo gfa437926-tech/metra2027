@@ -323,3 +323,16 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Corrected the assertion to match the current UI copy in commit `1945fb8857ef940526e8f8bfbfd6674ee6b109b9`. Product behavior was not weakened or changed.
 - CI #869 remains a failed run; exact-head verification is pending. Do not mark the forecasting center verified until the rerun passes.
 - Separate admin UI test evidence in CI run `43036091374`: Flutter analyze passed and 51 Flutter tests passed on that earlier source snapshot; Angular Chromium smoke was cancelled.
+
+
+## FLT-FORECAST-API-02 — Backend geographic comparison integration
+
+- **Updated:** 2026-11-11T14:25:24.610Z
+- **Status:** Implemented; CI verification pending.
+- **Scope:** Flutter now posts selected station UUIDs to `POST /api/v1/forecasting/compare` and renders server-returned distance/elevation pairs. The API client rejects fewer than 2, more than 12, and duplicate station IDs, validates the response envelope, and keeps authenticated requests.
+- **Evidence:** Endpoint contract re-read from `backend/Metra.Api/Features/Forecasting/ForecastingEndpoints.cs`; no live meteorological values are fabricated or displayed. Snapshot values remain unavailable until a separately approved backend contract exists.
+- **Files:** `flutter-app/lib/core/api/metra_api_client.dart`, `flutter-app/lib/features/forecasting/forecasting_center_screen.dart`, `flutter-app/test/metra_api_client_test.dart`.
+- **Commits:** `2b612d12fe2ec46115c146eacc72c9232c30ad9d`, `ce1f4b0cb3c3fe0600d9c938575cf7408a04dfa5`, `91c0cf202c441f5a49a4f04bb44a07c32c51bdc7`.
+- **Tests:** Added API contract tests for authenticated POST, response parsing, duplicate IDs and bounds. Awaiting CI on current branch tip.
+- **Previous CI:** Run `43036916096` Flutter analyze/test succeeded; Angular npm test/build succeeded but Chromium install was cancelled, so full client CI remains unverified.
+- **Remaining:** Current-tip Flutter/Angular/Chromium CI; server integration verification; live observation snapshot contract and UI; other incomplete Flutter requirement areas.
