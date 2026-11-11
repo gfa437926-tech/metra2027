@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import 'observation_api_messages.dart';
 import 'returned_observation_editor.dart';
+import 'observation_detail_sheet.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 class ObservationReviewScreen extends StatefulWidget {
@@ -318,6 +319,11 @@ class _QueueBody extends StatelessWidget {
                             ].join(' • '),
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: const Icon(Icons.info_outline),
+                          onTap: () => showObservationDetailSheet(
+                            context: context,
+                            item: item,
                           ),
                         ),
                         itemBuilder(item),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../observations/observation_detail_sheet.dart';
 import '../observations/observation_review_screen.dart';
 
 /// Live review/returned observation status for a station (UTC display only).
@@ -187,6 +188,8 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
+        trailing: const Icon(Icons.info_outline),
+        onTap: () => showObservationDetailSheet(context: context, item: item),
       ),
     );
   }

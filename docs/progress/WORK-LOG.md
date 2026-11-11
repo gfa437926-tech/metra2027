@@ -94,3 +94,11 @@ Push rejected: PAT lacks `workflow` scope.
 - **حماية من فقدان وظائف:** توثيق `mobile/metra_mobile/` كنسخة مرجعية قديمة لا تُحذف قبل مقارنة الشاشات والأصول والاختبارات والإعدادات ونقل أي وظيفة فريدة عمداً.
 - **الاختبارات:** تغيير توثيقي فقط؛ لم تُنفذ اختبارات تطبيق بسبب عدم تغيير كود Flutter.
 - **القيود:** لا تغييرات DB أو migrations أو RLS، لا قاعدة قديمة، لا دمج إلى `main`، ولا نشر.
+
+## 2026-11-11T16:10Z — Frontend closure plan start
+
+**Canonical:** `flutter-app/` only; `mobile/metra_mobile/` reference.
+**Done:**
+- Updated `FRONTEND-COMPLETION-MATRIX.md` with screen IDs and honest API status.
+- Added observation detail bottom sheet from server payload (review + status).
+**Not done:** CI green proof deferred until foundation stabilizes; live snapshot blocked.
