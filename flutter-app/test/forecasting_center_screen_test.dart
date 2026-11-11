@@ -49,8 +49,8 @@ void main() {
       )),
     );
 
-    await tester.view.setPhysicalSize(const Size(1200, 1800));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1200, 1800);
+    tester.view.devicePixelRatio = 1;
     await tester.pumpWidget(MaterialApp(
       home: ForecastingCenterScreen(api: api),
     ));
@@ -72,8 +72,8 @@ void main() {
     expect(find.text('محطة الشمال ↔ محطة الجنوب'), findsOneWidget);
     expect(find.textContaining('فرق الارتفاع: 300 م'), findsOneWidget);
 
-    await tester.view.resetPhysicalSize();
-    await tester.view.resetDevicePixelRatio();
+    tester.view.resetPhysicalSize();
+    tester.view.resetDevicePixelRatio();
     api.close();
   });
 }
