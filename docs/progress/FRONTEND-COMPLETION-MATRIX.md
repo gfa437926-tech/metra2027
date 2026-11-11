@@ -15,7 +15,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + خروج | مربوط | شرح صلاحيات | موجود | معلق | قيد العمل |
 | FLT-AUTH-05 | الصلاحيات UI / Permissions view | ناقص | لا شاشة مستقلة | جزئي عبر الملف | — | لا | معلق | ناقص |
 | FLT-STN-01 | دليل المحطات / Directory | جيد | قائمة+خريطة+بحث | مربوط | خادم | موجود | معلق | قيد العمل |
-| FLT-STN-02 | تفاصيل المحطة / Detail | جيد | كتالوج | مربوط | — | جزئي | معلق | قيد العمل |
+| FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل؛ تفاصيل المصدر/الدقة غير مثبتة في canonical | مربوط | — | جزئي | معلق | قيد العمل — FLT-004 provenance enhancement في المسار المرجعي فقط |
 | FLT-STN-03 | اختيار محطة العمل / Active station | جيد | الرئيسية+تنقل | محلي+API | — | جزئي | معلق | جيد |
 | FLT-STN-04 | الإسناد / Assignment | جيد | طلب/قرار/إلغاء | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-OBS-01 | إدخال ساعي / Hourly entry | جيد | عقد+إرسال | مربوط | خادم | موجود | معلق | قيد العمل |
@@ -65,3 +65,12 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - Scientific guard: the reference implementation explicitly states live observations/bulletins are unavailable and avoids fabricated values. Live snapshot remains blocked pending an approved API contract.
 - **Required next action:** reconcile the stronger/reference-only changes into `flutter-app/` deliberately (without copying files blindly), port the comparison test into the canonical test suite, then obtain a CI run on the work branch. Do not delete `mobile/metra_mobile/` until the full source/assets/configuration comparison is complete.
 - No Flutter source was modified during this review. No database, migration, RLS, main-branch merge, or deployment changes were made.
+
+
+## Review FLT-004 — Station metadata path audit (2026-11-11T16:17:13.811Z)
+
+- FLT-004 commits reviewed: `0f6dd68`, `e399ea2`, `5de8d78`, `549b147`, `8e136e3`; delivery report commit `eeb82bd`.
+- The metadata parsing enhancement (elevation plus coordinate source/accuracy) and station-details UI/test changes were committed under `mobile/metra_mobile/`, not the canonical `flutter-app/`.
+- The canonical station model currently parses `elevation_m` but does not expose `coordinateSource` or `coordinateAccuracyM`; therefore provenance/accuracy parity from FLT-004 is not established in the canonical Flutter app.
+- FLT-004 report states implementation and test execution/visual acceptance are pending; no analyzer/test pass is claimed.
+- Required action: port only the missing verified provenance/accuracy fields and corresponding details UI/test to canonical Flutter after a source-level reconciliation. Preserve the canonical implementation and do not delete the reference tree prematurely.
