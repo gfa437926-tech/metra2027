@@ -21,10 +21,24 @@ class StationOpsHubScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('عمليات المحطة'),
+        automaticallyImplyLeading: false,
+      ),
+      body: ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[
-        
+        const Card(
+          color: Color(0xFFEEF6FA),
+          child: ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('نطاق المحطة المحددة فقط'),
+            subtitle: Text(
+              'كل البلاغات والتقارير أدناه تُطلب من الخادم بمعرّف المحطة. لا وصول عبر الواجهة إلى محطة أخرى.',
+            ),
+          ),
+        ),
         const SizedBox(height: 12),
         Card(
           child: ListTile(
@@ -159,6 +173,7 @@ const SizedBox(height: 12),
           ),
         ),
       ],
+    ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
+import '../stations/station_selection.dart';
 import '../ops/station_ops_hub_screen.dart';
 import '../observations/observation_submit_screen.dart';
 import '../forecasting/forecasting_center_screen.dart';
@@ -41,13 +42,15 @@ class _MetraHomeState extends State<MetraHome> {
         onOpenReview: () => setState(() => _index = 2),
         onOpenOps: () => setState(() => _index = 4),
       ),
-      StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
-        selectedStationLabel: _selectedStationLabel,
+      StationDirectoryScreen(
+        api: widget.api,
+        selectedStationId: _selectedStationId,
         onStationSelected: (id) => setState(() => _selectedStationId = id),
         onStationItemSelected: (station) => setState(() {
           _selectedStationId = station.id;
-          _selectedStationLabel = '${station.nameArabic} (${station.localCode})';
-        })),
+          _selectedStationLabel = formatSelectedStationLabel(station);
+        }),
+      ),
 
       _selectedStationId == null
         ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
