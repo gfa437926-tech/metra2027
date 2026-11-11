@@ -64,6 +64,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('تفاصيل الرصد التاريخي'), findsOneWidget);
+    await tester.ensureVisible(find.text('محتوى الرصد الأصلي'));
+    await tester.pumpAndSettle();
     expect(find.text('محتوى الرصد الأصلي'), findsOneWidget);
     expect(find.textContaining('temperature'), findsOneWidget);
     api.close();
