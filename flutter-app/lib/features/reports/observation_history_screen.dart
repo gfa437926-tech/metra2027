@@ -22,6 +22,8 @@ class ObservationHistoryScreen extends StatefulWidget {
 class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
   late Future<List<ObservationQueueItem>> _records;
   String _typeFilter = 'all';
+  String _statusFilter = 'all';
+  String _query = '';
   DateTimeRange? _utcRange;
 
   @override
@@ -32,8 +34,8 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
 
   Future<List<ObservationQueueItem>> _load() async {
     final results = await Future.wait<List<ObservationQueueItem>>(<Future<List<ObservationQueueItem>>>[
-      widget.api.getReviewQueue(widget.stationId, limit: 50),
-      widget.api.getReturnedObservations(widget.stationId, limit: 50),
+      widget.api.getReviewQueue(widget.stationId, limit: 100),
+      widget.api.getReturnedObservations(widget.stationId, limit: 100),
     ]);
     final records = <ObservationQueueItem>[...results[0], ...results[1]];
     records.sort((a, b) => b.observedAt.toUtc().compareTo(a.observedAt.toUtc()));
@@ -54,6 +56,21 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
       'phenomenon' => type.contains('phenom'),
       _ => true,
     };
+  }
+
+  bool _matchesStatus(ObservationQueueItem item) {
+    if (_statusFilter == 'all') return true;
+    return item.status.toLowerCase() == _statusFilter;
+  }
+
+  bool _matchesQuery(ObservationQueueItem item) {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    return item.id.toLowerCase().contains(query) ||
+        item.observationType.toLowerCase().contains(query) ||
+        item.status.toLowerCase().contains(query) ||
+        (item.reviewNote?.toLowerCase().contains(query) ?? false) ||
+        item.payload.toString().toLowerCase().contains(query);
   }
 
   bool _matchesUtcRange(ObservationQueueItem item) {
@@ -156,7 +173,12 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
             }
 
             final all = snapshot.data ?? const <ObservationQueueItem>[];
-            final filtered = all.where(_matchesType).where(_matchesUtcRange).toList();
+            final filtered = all
+                .where(_matchesType)
+                .where(_matchesStatus)
+                .where(_matchesUtcRange)
+                .where(_matchesQuery)
+                .toList();
             return RefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
@@ -167,9 +189,19 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                       leading: Icon(Icons.info_outline),
                       title: Text('نطاق السجل'),
                       subtitle: Text(
-                        'يعرض حتى 50 عنصراً من طابور المراجعة المصرح للمحطة، وحتى 50 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.',
+                        'يعرض حتى 50 عنصراً من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.',
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'بحث في السجل',
+                      hintText: 'نوع النشرة أو الحالة أو الملاحظة أو المعرّف',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (value) => setState(() => _query = value),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -192,6 +224,23 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
+                    runSpacing: 8,
+                    children: <Widget>[
+                      for (final entry in <(String, String)>[
+                        ('all', 'كل الحالات'),
+                        ('submitted', 'بانتظار المراجعة'),
+                        ('returned', 'مُرجَعة'),
+                      ])
+                        FilterChip(
+                          label: Text(entry.$2),
+                          selected: _statusFilter == entry.$1,
+                          onSelected: (_) => setState(() => _statusFilter = entry.$1),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
                     children: <Widget>[
                       OutlinedButton.icon(
                         onPressed: _chooseUtcRange,
@@ -204,6 +253,18 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                         TextButton(
                           onPressed: () => setState(() => _utcRange = null),
                           child: const Text('مسح الفترة'),
+                        ),
+                      if (_query.isNotEmpty || _typeFilter != 'all' ||
+                          _statusFilter != 'all' || _utcRange != null)
+                        TextButton.icon(
+                          onPressed: () => setState(() {
+                            _query = '';
+                            _typeFilter = 'all';
+                            _statusFilter = 'all';
+                            _utcRange = null;
+                          }),
+                          icon: const Icon(Icons.filter_alt_off),
+                          label: const Text('مسح كل المرشحات'),
                         ),
                     ],
                   ),
