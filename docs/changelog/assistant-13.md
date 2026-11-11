@@ -75,3 +75,16 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - **Safety:** no database/schema/data/migration changes; no merge, rebase or deployment.
 - **Progress:** remains 0% of 12 substantive audit workstreams formally closed; all 12 remain open.
 - **Next:** recover owner-approved baseline; require isolated PostgreSQL tests for both review decisions; verify authoritative server-side meteorological validation with negative tests. No changes to either Supabase project without explicit approval.
+
+
+## 2026-11-11T09:51:01.457Z — Round 5: database migration preconditions and test-evidence review
+
+- Task/status: M13 independent final audit; in progress.
+- Branch/PR: audit/assistant-13-independent-final-review; https://github.com/gfa437926-tech/metra2027/pull/31, open Draft, unmerged.
+- Source evidence: PR #26 database audit/register and review-only correction proposal; PR #28 API contract cross-check; main observation migrations and migration 020. Full blob SHAs and conclusions are in the progress report.
+- New verification: inspected the current database/tests shell scripts. They are static grep contract checks, not PostgreSQL/RPC transaction tests. No listed test covers both decision branches of metra_decide_observation.
+- Migration 020: confirmed it adds permission_grants.authority_id, aborts if any row is NULL, then sets NOT NULL/FK without a backfill. This is a migration precondition, not proof of live data contents. The authority-access audit trigger includes TRUNCATE; this does not resolve the observation-audit trigger issue.
+- CI: PR #26 and #28 exact-head workflow queries each returned zero PR-triggered runs. No CI success claimed.
+- Tests: none run by assistant 13; no SQL or live database touched.
+- Safety: only assistant-13 progress/changelog docs updated; no schema/data/source/secrets changes, merge, rebase or deployment.
+- Progress: 0% of 12 audit workstreams formally closed; all 12 remain open pending required executable tests, baseline recovery and owner acceptance.
