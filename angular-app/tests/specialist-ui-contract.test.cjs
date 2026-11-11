@@ -32,7 +32,7 @@ test('specialist workspaces do not claim live AI, Climatol or AFTN results', () 
   const climatol = read('features/climatol/climatol-workspace.component.ts');
   const aftn = read('features/aftn/aftn-console.component.ts');
   assert.match(ai, /AI Gateway/);
-  assert.match(ai, /لم يتم إرسال السؤال/);
+  assert.match(ai, /لن تُعرض نتائج مصطنعة/);
   assert.match(climatol, /getAllStations/);
   assert.match(climatol, /Climatol worker/);
   assert.match(aftn, /معاينة محلية/);
