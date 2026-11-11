@@ -26,7 +26,7 @@ void main() {
     ));
 
     expect(find.text('محطة اختبار'), findsOneWidget);
-    expect(find.text('SY-001'), findsOneWidget);
+    expect(find.textContaining('رمز المحطة: SY-001'), findsOneWidget);
     expect(find.text('كلاسيكية'), findsOneWidget);
     expect(find.text('فعالة'), findsOneWidget);
     expect(find.textContaining('35.50000, 36.20000'), findsOneWidget);
