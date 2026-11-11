@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 
 /// One shared navigation surface that adapts to compact and wide layouts.
