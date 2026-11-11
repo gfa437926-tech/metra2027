@@ -79,6 +79,33 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
   String? _error;
   @override
   void dispose() { _email.dispose(); _password.dispose(); super.dispose(); }
+  Future<void> _requestPasswordReset() async {
+    if (_busy) return;
+    final email = _email.text.trim();
+    if (!email.contains('@') || email.length > 254) {
+      setState(() => _error = 'أدخل البريد الإلكتروني أولاً لاستلام رابط الاستعادة.');
+      return;
+    }
+    setState(() { _busy = true; _error = null; });
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('إذا كان البريد مسجلاً، فسيصلك رابط استعادة كلمة المرور. تحقق من صندوق الوارد والبريد غير المرغوب فيه.'),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      }
+    } on AuthException {
+      if (mounted) setState(() => _error = 'تعذر إرسال طلب الاستعادة حالياً. تحقق من البريد وحاول لاحقاً.');
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة استعادة كلمة المرور.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate() || _busy) return;
     setState(() { _busy = true; _error = null; });
@@ -176,7 +203,14 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                                 )
                               : const Text('تسجيل الدخول'),
                         ),
-                        const SizedBox(height: 12),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton(
+                            onPressed: _busy ? null : _requestPasswordReset,
+                            child: const Text('نسيت كلمة المرور؟'),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
                         const Text(
                           'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
                           textAlign: TextAlign.center,
