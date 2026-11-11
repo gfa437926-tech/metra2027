@@ -19,6 +19,8 @@ import '../roles/role_workspaces_screen.dart';
 import '../aftn/aftn_console_shell_screen.dart';
 import '../matching/record_matching_shell_screen.dart';
 import '../admin/authority_access_screen.dart';
+import '../ai/ai_workspace_screen.dart';
+import '../climatol/climatol_workspace_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -194,28 +196,10 @@ class _MetraHomeState extends State<MetraHome> {
           ),
         )),
         onAiWorkspace: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
-            title: 'مساحة الذكاء الاصطناعي',
-            unitCode: 'ai_workspace',
-            description: 'الاستفسار والتحليل عبر بوابة Backend فقط. لا تُعد مخرجات AI قياسات فعلية.',
-            requiredBeforeBinding: [
-              'AI Gateway على ASP.NET',
-              'تسجيل العمليات الحساسة',
-              'عدم وضع مفاتيح المزود في Flutter',
-            ],
-          ),
+          builder: (_) => const AiWorkspaceScreen(),
         )),
         onClimatol: () => Navigator.of(context).push(MaterialPageRoute<void>(
-          builder: (_) => const SpecialistUnitShellScreen(
-            title: 'تجانس Climatol',
-            unitCode: 'climatol',
-            description: 'تشغيل التجانس على عامل معزول مع حفظ النتائج كمنتج مستقل دون تعديل السجلات الأصلية.',
-            requiredBeforeBinding: [
-              'عامل معالجة Climatol معزول',
-              'بصمة مجموعة البيانات وإصدار البرنامج',
-              'مسار اعتماد بشري للنتائج',
-            ],
-          ),
+          builder: (_) => ClimatolWorkspaceScreen(api: widget.api),
         )),
         onRoleWorkspaces: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => const RoleWorkspacesScreen(),
