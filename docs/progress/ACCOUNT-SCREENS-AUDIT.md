@@ -16,7 +16,7 @@
 | ID-01 Sign in | `core/auth/metra_auth.dart` + `features/account/account_state_gate.dart` | Improved. Supabase session is followed by `GET /api/v1/account/registration-status`; only `account_state=active` opens the operational shell. Pending/null routes to registration/status; suspended/disabled/rejected/unknown and status-service errors fail closed. Effective permissions are still not projected to the shell. |
 | ID-02 Registration request | `features/auth/registration_screen.dart` | Implemented baseline. Identity creation is separate from the METRA request; stations are filtered to approved/active/non-demo; roles come from the requestable-roles API; terms and an idempotency key are sent; client does not grant permissions. Email-confirmation path requires the user to sign in again before submitting the METRA request. |
 | ID-03 Registration review | `features/admin/registration_review_screen.dart` | Partial. Station and system-stage queues and decision calls exist; rejection reason and stage switching are tested. Needs broader authorization, stale/concurrent decision, empty/error and audit-history coverage. |
-| ID-04 Password recovery | `features/auth/password_recovery_screen.dart` | Partial. Reset-email request and privacy-safe response exist with tests. Password-reset deep-link completion / new-password confirmation route and release redirect configuration are not evidenced in this Flutter client. |
+| ID-04 Password recovery | `password_recovery_screen.dart` + `password_update_screen.dart` + auth recovery event | Partial, source implemented. Reset email uses `metra2027://auth-callback`; Android/iOS schemes and passwordRecovery event/new-password update flow are added. Supabase redirect allow-list and real-device email round-trip remain unverified. |
 | ID-05 Account/profile | `features/account/account_profile_screen.dart` | Improved in this task. Displays identity provider, account state, registration request state, review note and UTC submission time using `GET /api/v1/account/registration-status`. It still cannot show assigned stations or effective roles/permissions. |
 | ID-06 Access denied/session expired | `features/account/account_access_state_screen.dart` + `account_state_gate.dart` | Partial, source implemented. Shows blocked state, reason, retry and sign-out; status lookup failure fails closed. A distinct revoked-token/session-expired event path and comprehensive protected-view clearing tests remain. |
 | AD-01 User directory | `features/admin/station_assignment_screen.dart` uses station users | Partial and station-scoped only. No global user directory/search or full account detail. |
@@ -39,7 +39,7 @@
 2. **Navigation is not role-aware.** The home “More” menu and static role-workspace catalogue expose navigation labels without a current-user permission projection. This is not authorization, but it can confuse users and is not accepted as a completed role experience.
 3. **No effective-access projection.** The profile cannot truthfully display a user's current stations, authority memberships or permission grants with the existing registration-status endpoint.
 4. **No global access-state experience.** Pending, suspended, disabled, revoked and expired states are not consistently handled at the app shell.
-5. **Password recovery completion is incomplete.** The current screen requests an email; deep-link handling and setting a new password must be checked before release.
+5. **Password recovery release verification remains open.** The deep-link and new-password form are now implemented; Supabase Dashboard allow-list and real-device recovery round-trip must pass before release.
 6. **Authority access UI is not self-authorizing.** `AuthorityAccessScreen` is exposed in More, but every read/write operation depends on server-side permissions; 403 responses are shown as scope-denied states. Do not infer authority roles from the selected authority or tab.
 
 ## 4. Changes made in this round
@@ -113,3 +113,13 @@
 - Added a read-only assignment detail bottom sheet showing assignment/user IDs, role, status, UTC validity window, reason, requester and creation time.
 - Added widget coverage for submitting an expiry and opening the assignment detail sheet.
 - User selection still uses an entered user UUID because no searchable eligible-user lookup API is present. The server remains authoritative for target-account and station-scope validation.
+
+
+## ACC-06 — Password recovery completion — 2026-11-11T16:51:58.537Z
+
+- Added `MetraPasswordUpdateScreen` with minimum length, confirmation matching, loading/success and redacted failure states.
+- `MetraAuthGate` now listens for Supabase `AuthChangeEvent.passwordRecovery` and routes to the password update screen; success rechecks the METRA account status before any operational page.
+- Password recovery email requests now use `metra2027://auth-callback`.
+- Registered the custom scheme in Android manifest and iOS Info.plist.
+- Added password-update widget tests and documented the required Supabase Additional Redirect URL in `docs/security/SUPABASE-AUTH-REDIRECT-SETUP.md`.
+- **External gate:** the redirect URI has not been added to Supabase Dashboard; test with an actual email link on Android/iOS before release.
