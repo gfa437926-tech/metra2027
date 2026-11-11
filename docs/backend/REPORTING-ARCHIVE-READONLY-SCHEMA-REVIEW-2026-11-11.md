@@ -135,3 +135,25 @@ For operational observations, keep the existing submission/decision RPCs unchang
 - No service-role secret retrieved or exposed.
 - No INSERT/legacy project access.
 - No METRA OLD repository/database access.
+
+
+## 8. Imported payload field inventory (read-only key-count scan)
+
+A second aggregate-only scan enumerated top-level JSON keys by observation type. This is a structural inventory, not a semantic/unit validation.
+
+| Type | Rows | Representative payload keys |
+|---|---:|---|
+| hourly | 32,084 | `dry_temp`, `wet_temp`, `relative_humidity`, `dew_point`, `station_pressure`, `sea_level_pressure`, `wind_direction`, `wind_speed`, `visibility`, `precipitation_amount`, cloud-layer fields, `raw_data` |
+| daily | 3,760 | `max_temperature`, `min_temperature`, `max_humidity`, `min_humidity`, `precipitation`, `snow_thickness`, `sunshine_duration`, `evaporation`, weather-phenomenon flags |
+| climate | 1,420 | `dry_temperature`, `wet_temperature`, `relative_humidity`, `dew_point`, `vapor_pressure`, `wind_speed`, `wind_direction`, `total_cloud_cover` |
+| fieldclimate | 19,764 | `measurements`, `recorded_at`, `fetched_at`, coordinates, altitude and station labels |
+| soil | 801 | `soil_temp_5cm`, `soil_temp_10cm`, `soil_temp_20cm`, `soil_temp_50cm`, `observation_date` |
+| agricultural | 176 | air/soil temperature, humidity, wind, evaporation, precipitation, sunshine and weather phenomena |
+| phenomenon | 54 | `phenomenon_type`, `phenomenon_date`, `start_time`, `end_time`, `phenomenon_duration`, `phenomenon_status` |
+
+All listed keys were present in every row of the corresponding type in this scan, except the hourly `raw_data` key which was present in 32,069 of 32,084 hourly records. The climate `user_station` and soil `user_station` keys appeared in one record each and require separate data-quality review.
+
+Important semantic boundaries:
+- Payload keys named `status`, `validation_status`, `phenomenon_status`, `is_draft` or `data_validated` are source payload fields; they are not authoritative current workflow status in the archive envelope.
+- The scan does not establish units, sign conventions, code lists, null semantics, daily UTC boundary, duplicate resolution, completeness rules or scientific formulas.
+- The report implementation must preserve the raw source payload and only calculate derived statistics after a meteorological field/unit/quality contract is approved.
