@@ -75,3 +75,11 @@ The backend validators were inspected as read-only evidence; they are not treate
 - Added a widget test asserting both tooltip states and the corresponding `TextFormField.obscureText` value before/after each toggle.
 - Scope limited to Flutter authentication UI and its widget test.
 - Local Flutter test execution was not performed in this round; CI is the verification source of truth.
+
+
+## Station map accessibility (M9)
+
+- Station map markers now expose an Arabic semantic label combining station name and local code, button/enabled semantics when selection is available, and a semantic tap action. The existing tooltip remains.
+- Added a widget test verifying the marker label, button flag, and tap action in the semantics tree.
+- Modified Flutter files: `mobile/metra_mobile/lib/features/stations/station_directory_screen.dart` and `mobile/metra_mobile/test/widget_test.dart`.
+- No backend/API/DB changes. Flutter test execution awaits CI.
