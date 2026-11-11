@@ -157,3 +157,13 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - Added tests for lock release after runner failure and rejection/preservation of a pre-existing lock. Fresh CI is required before these two tests are considered passed.
 - Current task estimate remains 55%; six major work items remain. The security/reproducibility workstream is still partial.
 - No local R run, METRA data processing, .NET adapter, database/Supabase modification, review UI, scientific validation, or scientific approval is claimed.
+
+
+---
+
+## Assistant 04 source-integrity regression coverage — 2026-11-11T00:20:51Z
+
+- [R CI run #27](https://github.com/gfa437926-tech/metra2027/actions/runs/42929191048) passed for commit `c0240707e00253a1cca9e5254f49347dba1d36d5`, validating lock release after runner failure and preservation/rejection of a pre-existing lock.
+- Added tests for lock owner PID/UTC metadata and for detecting source-file mutation by a deliberately injected test runner. The latter asserts failed provenance and lock release.
+- Fresh CI is required for the new tests; no local R execution is claimed.
+- Task estimate remains 55%; six major work items remain. No METRA production observations or database changes.

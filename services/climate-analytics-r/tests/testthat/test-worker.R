@@ -243,3 +243,63 @@ test_that("worker refuses a pre-existing lock without deleting it", {
   expect_true(file.exists(file.path(lock, "owner.txt")))
   expect_length(list.files(output, all.files = TRUE, no.. = TRUE), 0L)
 })
+
+
+test_that("worker records lock ownership metadata while the runner is active", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  lock <- file.path(root, ".metra-climatol-worker.lock")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+
+  result <- metra_run_homogenization(request, workspace_root = root,
+    runner = function(...) {
+      owner <- readLines(file.path(lock, "owner.txt"))
+      expect_true(any(owner == paste0("pid=", Sys.getpid())))
+      expect_true(any(grepl("^started_at_utc=.*UTC$", owner)))
+      writeLines("ok", "metadata-check.txt")
+    })
+
+  expect_equal(result$status, "completed")
+  expect_false(dir.exists(lock))
+})
+
+test_that("source mutation marks provenance failed and releases the workspace lock", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  data_path <- file.path(input, "TX_1991-1991.dat")
+  lock <- file.path(root, ".metra-climatol-worker.lock")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", data_path)
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+
+  expect_error(
+    metra_run_homogenization(request, workspace_root = root,
+      runner = function(...) {
+        writeLines("tampered", data_path)
+        writeLines("diagnostic", "runner-output.txt")
+      }),
+    "Source input integrity check failed"
+  )
+
+  job_dirs <- list.dirs(output, recursive = FALSE, full.names = TRUE)
+  expect_length(job_dirs, 1L)
+  manifest <- jsonlite::fromJSON(
+    file.path(job_dirs[[1]], "metra-provenance.json"),
+    simplifyVector = FALSE
+  )
+  expect_equal(manifest$status, "failed")
+  expect_false(manifest$source_unchanged)
+  expect_false(dir.exists(lock))
+})

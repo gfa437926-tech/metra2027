@@ -193,3 +193,15 @@ The Climatol fixture smoke-test milestone is now verified by CI run #22 and is n
 - **Progress:** remains 55% using (3 completed + 5 partial × 0.5) / 10 workstreams. Six major work items remain.
 - **Branch / PR:** `work/climate-analytics-r-hardening`; [PR #23](https://github.com/gfa437926-tech/metra2027/pull/23) remains Open / Draft / not merged. [PR #18](https://github.com/gfa437926-tech/metra2027/pull/18) remains untouched and unmerged.
 - **Safety:** no main merge, deployment, database, raw data, Angular, or Flutter changes.
+
+
+## Assistant 04 raw-input integrity and lock ownership — 2026-11-11T00:20:51Z
+
+- **Status:** In progress; CI run #27 verified the previous lock-lifecycle tests. This round adds two further tests, awaiting fresh CI.
+- **Verified CI:** [Run #27](https://github.com/gfa437926-tech/metra2027/actions/runs/42929191048) — Success on commit `c0240707e00253a1cca9e5254f49347dba1d36d5`.
+- **New tests:** assert the lock owner file records the current R process PID and UTC start timestamp; simulate source-input mutation during runner execution and assert the job is marked failed in provenance and the lock is released.
+- **Files inspected:** worker implementation, complete worker tests, README concurrency/recovery guidance, assistant progress/changelog, implementation status, PR #23 and PR #18, and CI run #27.
+- **Files changed this round:** `services/climate-analytics-r/tests/testthat/test-worker.R`, `docs/progress/assistant-04.md`, `docs/progress/assistant-04-changelog.md`, and `docs/progress/CLIMATE-ANALYTICS-IMPLEMENTATION-STATUS.md`.
+- **Not done:** .NET adapter, database/Supabase changes, production observation processing, durable artifact storage, review UI, independent reference validation, cancellation/timeouts, or scientific approval. No local R execution is claimed.
+- **Progress:** remains 55% under the established 10-workstream model; six major work items remain. Additional tests strengthen a partial workstream but do not close it.
+- **Safety:** no merge, deployment, DB, raw-data write by the worker (the mutation exists only in the deliberate isolated test fixture), Angular, or Flutter changes.

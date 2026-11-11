@@ -117,3 +117,13 @@
 - New tests are committed in this round but require a fresh CI run. No local R execution is claimed.
 - PR #23 remains Open / Draft / not merged; PR #18 remains Open / Draft / not merged and untouched.
 - Progress remains 55%; six major work items remain. No database/Supabase, production observations, .NET adapter, Angular/Flutter, merge, or deployment changes.
+
+
+## 2026-11-11T00:20:51Z — Raw-input integrity and lock ownership regression tests
+
+- Verified [R CI run #27](https://github.com/gfa437926-tech/metra2027/actions/runs/42929191048): success on `c0240707e00253a1cca9e5254f49347dba1d36d5`; this confirms lock release after runner failure and safe rejection/preservation of a pre-existing lock.
+- Added a test asserting the worker lock records its owning PID and UTC start timestamp while the runner is active.
+- Added a source-tampering regression: a deliberately injected test runner modifies only a temporary fixture source file; the worker must record `status=failed`, `source_unchanged=false`, preserve failure provenance, and release the workspace lock.
+- Changed: worker tests, assistant progress report, this append-only changelog, and implementation status.
+- New tests require fresh CI; no local R execution is claimed.
+- Progress remains 55%; six major work items remain. No production observations, database/Supabase, .NET, Angular/Flutter, merge, or deployment changes.
