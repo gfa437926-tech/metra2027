@@ -103,7 +103,7 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
   String _typeLabel(String type) {
     final value = type.toLowerCase();
     if (value.contains('hour')) return 'نشرة ساعية';
-    if (value.contains('day')) return 'نشرة يومية';
+    if (value.contains('day') || value.contains('daily')) return 'نشرة يومية';
     if (value.contains('phenom')) return 'بلاغ ظاهرة جوية';
     return 'نشرة: $type';
   }
