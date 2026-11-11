@@ -108,9 +108,9 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 | AU-04 | Review history | Registration review now links to station/system registration audit API and read-only audit screen | Partial — full observation event history remains separate |
 | AU-05 | Monthly audit report | Manual archive confirmation screen and summary API | Partial — reconcile archive confirmations, missing data and outstanding items |
 | AD-01 | User directory | Station-scoped user list in assignment screen | Partial — global directory not available |
-| AD-02 | User details | Account profile is own-account only | Missing for authorized admin view |
+| AD-02 | User details | Own-account profile + read-only station assignment detail sheet | Partial — authorized personal account detail/history API is missing |
 | AD-03 | Role/permission administration | `AuthorityAccessScreen`: authority membership/grant queues, self-request, approve/reject/revoke and audit | Partial — effective caller access-context, delegated target user and validity-end controls remain |
-| AD-04 | Station assignment | Station assignment screen | Partial — add expiry/revocation/cross-station tests |
+| AD-04 | Station assignment | Station assignment screen: server roles, reasoned request/decision/revoke, optional UTC valid-to, assignment detail sheet | Partial — eligible-user search and cross-station/lifecycle tests remain |
 | AD-05 | Operational settings | No approved settings UI/API inventory | Missing/TBD |
 | AD-06 | Management files | No file management UI/API | Missing/TBD |
 | RP-01 | Hourly reports/export | Review/status queue only | Missing — report list and export contract |
@@ -145,3 +145,11 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - A failed status lookup does not fall back to the operational home.
 - Pending registration requests cannot be resubmitted from the registration form.
 - Source tests added; Flutter CI remains pending.
+
+
+## Account/assignment workflow extension — 2026-11-11T16:46:02.479Z
+
+- Added authority membership/permission management UI and registration audit history.
+- Added server-state gate before operational home; non-active or unverified account states do not enter the operational shell.
+- Added station assignment validity-end UTC field and read-only detail sheet.
+- New source tests cover account gate states, registration duplicate guard, authority access reads/self-request and assignment validity/detail. All await Flutter CI execution.
