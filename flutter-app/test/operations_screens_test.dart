@@ -33,7 +33,7 @@ void main() {
     expect(find.text('بلاغ عطل جديد'), findsOneWidget);
     expect(find.text('اسم المعدة'), findsOneWidget);
     final emptyFaultState = find.text('لا توجد بلاغات أعطال مسجّلة لهذه المحطة');
-    await tester.ensureVisible(emptyFaultState);
+    await tester.scrollUntilVisible(emptyFaultState, 250, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     expect(emptyFaultState, findsOneWidget);
     api.close();
@@ -61,7 +61,7 @@ void main() {
     expect(find.text('العنوان'), findsOneWidget);
     expect(find.text('الوصف'), findsOneWidget);
     final emptySupportState = find.text('لا توجد بلاغات دعم مسجّلة');
-    await tester.ensureVisible(emptySupportState);
+    await tester.scrollUntilVisible(emptySupportState, 250, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
     expect(emptySupportState, findsOneWidget);
     api.close();
@@ -91,7 +91,7 @@ void main() {
       'قراءة الحساس متوقفة منذ بداية الوردية',
     );
     final send = find.text('إرسال إلى الخادم');
-    await tester.ensureVisible(send);
+    await tester.scrollUntilVisible(send, 250, scrollable: find.byType(Scrollable).first);
     await tester.tap(send);
     await tester.pumpAndSettle();
 
@@ -129,7 +129,7 @@ void main() {
     await fill(1, 'انقطاع الاتصال بالمركز');
     await fill(2, 'تعذر إرسال بيانات المحطة إلى المركز منذ عشر دقائق');
     final send = find.text('إرسال إلى الخادم');
-    await tester.ensureVisible(send);
+    await tester.scrollUntilVisible(send, 250, scrollable: find.byType(Scrollable).first);
     await tester.tap(send);
     await tester.pumpAndSettle();
 
