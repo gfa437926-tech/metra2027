@@ -453,3 +453,31 @@ M13 remains **0% of 12 audit workstreams formally closed**. DB-001, DB-002 and I
 **M13 completion remains 0% of 12 substantive audit workstreams formally closed; 12 remain open.** This round advances source/coverage verification but no workstream satisfies the defined closure criteria (owner evidence plus executable negative/runtime tests and accepted traceability). Assistant-specific progress percentages in other PRs are not project completion.
 
 **Next:** require the Database owner to provide an authoritative station_audit_log source/baseline definition and disposable PostgreSQL ACL/immutability tests; require Backend owner to add decision endpoint integration tests; require Database owner to add both decision-branch transaction tests and correct the event vocabulary through an owner-reviewed migration. Keep all PRs Draft/unmerged until acceptance.
+
+
+## Round 8 — PR freshness, base drift and active migration recheck
+
+**Updated:** 2026-11-11T12:16:06.332Z UTC. **Task/status:** M13 independent final audit; in progress.
+
+### Owner PR freshness
+- PR #22 remains open Draft at head 0d29163a4457c12f38e8a1c79b7dec49248c143d (base 87f71356083843b2abdef76baf011a82510686be). Changed-file inventory remains the queue endpoint/request-guard tests and related docs. Exact-head Backend build #42925286446 is successful; no newer head/run was returned.
+- PR #26 remains open Draft at head 6e11eceb02b2d1567ffa5e436e1e6dd59028dbc8 (same old base). Its changed files remain documentation and a .proposal SQL file; no active migration/test code was added. Exact-head PR Actions query returned no runs.
+- PR #28 remains open Draft at head 9b3ad187de7cbbf861dd7b091c193172e5a77ea9 (same old base). Its changes remain architecture/integration audit documents; no executable API/database integration test was added. Exact-head PR Actions query returned no runs.
+- PR #30 Security remains open Draft at head b4ab7e5cb60690ccd06bb3d7b7f3690f46b30bb2. Existing exact-head Backend and Client CI runs #42925422751 and #42925422685 both completed successfully; no new head/run appeared. These successes do not cover the DB decision/audit gaps.
+- PR #25 Science remains open Draft at head c9d0587e64b13b4cd26b8128fa834b38a3e08baf; no exact-head PR-triggered workflow run was returned. Its documented progress is not an approval of the proposed database field profiles or event vocabulary.
+
+### Main/base drift
+- Current main is 43c72da0604e49a74d2128cc9d3d881e2c912f26. It is two commits ahead of the old base used by PRs #22/#25/#26/#28/#30: be224a3... adds then 43c72da... reverts docs/progress/assistant-02.md. Neither commit changes application code, migrations or tests.
+- PR #31 targets current main at base 43c72da0604e49a74d2128cc9d3d881e2c912f26; compare shows its branch is 16 commits ahead and 1 behind (diverged), while GitHub reports mergeable=true. No rebase or retarget was performed; retain owner/user control over synchronization.
+
+### Active migration recheck
+- Re-read main migration supabase/migrations/20261103220500_harden_observation_decision_null_validation.sql, blob e3115f6f9830930ab38879e3ed55cdbc25678e21. It still inserts p_decision directly into event_type after validating approve/return_for_correction, while the event CHECK vocabulary in the table-creation migration is approved/returned. The mismatch is still present in current main source.
+- PR #26's event-vocabulary correction remains a .proposal file, not an active migration. No owner change or runtime evidence closes this issue.
+
+### Evidence limits and safety
+- No tests executed by assistant 13; Actions statuses above are exact-head CI evidence only. #26/#28 have no exact-head PR workflow runs.
+- No Supabase/database connection, SQL or migration execution, schema/data/secrets modification, owner-branch changes, merge, rebase or deployment.
+- Only assistant-13 progress/changelog documentation and PR #31 body are updated in this round.
+
+### Progress
+**M13 remains 0% formally closed; 12 of 12 substantive audit workstreams remain open.** No workstream met closure criteria. Next: require owner-reviewed active fix and disposable PostgreSQL transaction tests for both decision branches; decision endpoint API integration/negative tests; source-table baseline plus ACL and mutation tests for station audit; and owner-coordinated base synchronization where appropriate.
