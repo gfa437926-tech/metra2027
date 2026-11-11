@@ -253,7 +253,6 @@ class _MetraHomeState extends State<MetraHome> {
             _ => 7,
           };
         }),
-        child: IndexedStack(index: _index, children: pages),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
@@ -261,6 +260,7 @@ class _MetraHomeState extends State<MetraHome> {
           NavigationDestination(icon: Icon(Icons.cloud_outlined), selectedIcon: Icon(Icons.cloud), label: 'التنبؤ'),
           NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'المزيد'),
         ],
+        child: IndexedStack(index: _index, children: pages),
       ),
     ));
   }
