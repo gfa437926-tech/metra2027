@@ -31,9 +31,9 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
 
   Future<_StatusSnapshot> _load() async {
     final List<ObservationQueueItem> review =
-        await widget.api.getReviewQueue(widget.stationId);
+        await widget.api.getReviewQueue(widget.stationId, limit: 100);
     final List<ObservationQueueItem> returned =
-        await widget.api.getReturnedObservations(widget.stationId);
+        await widget.api.getReturnedObservations(widget.stationId, limit: 100);
     int hourlyReview = 0;
     int dailyReview = 0;
     int phenomenonReview = 0;
@@ -137,7 +137,7 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'عناصر طابور المراجعة المحمّلة (حتى 50 من الخادم)',
+                'عناصر طابور المراجعة المحمّلة (حتى 100 من الخادم)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
