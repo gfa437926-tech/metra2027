@@ -18,3 +18,13 @@
 
 ### Constraints honored
 - No legacy DB touch; no Supabase migration apply; no main merge.
+
+## 2026-11-11 — FLT-006 station directory search
+
+**Tasks:** FLT-006  
+**Done:**
+- Client-side search on station directory (name, code, WMO, type/status text).
+- Empty search-result state; selected-station hint.
+- Unit tests for `filterStationDirectory`.
+**CI note:** Prior Client CI on `5da9d38` — Flutter job success; Angular Chromium install failed (env), unrelated to Flutter change.
+**Constraints:** No DB apply; no main merge.

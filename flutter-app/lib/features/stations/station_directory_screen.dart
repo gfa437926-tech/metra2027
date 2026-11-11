@@ -4,6 +4,28 @@ import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
 import 'station_detail_screen.dart';
 
+/// Client-side filter for station directory (does not invent stations).
+List<StationDirectoryItem> filterStationDirectory(
+  List<StationDirectoryItem> rows, {
+  String query = '',
+}) {
+  final q = query.trim().toLowerCase();
+  if (q.isEmpty) return List<StationDirectoryItem>.from(rows);
+  return rows.where((s) {
+    final hay = [
+      s.localCode,
+      s.nameArabic,
+      s.nameEnglish,
+      s.wmoStationId ?? '',
+      s.stationType,
+      s.operationalStatus,
+      s.approvalStatus,
+    ].join(' ').toLowerCase();
+    return hay.contains(q);
+  }).toList();
+}
+
+
 class StationDirectoryScreen extends StatefulWidget {
   const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
   final MetraApiClient api;
@@ -15,6 +37,7 @@ class StationDirectoryScreen extends StatefulWidget {
 class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   String? _type;
   bool _showMap = true;
+  String _searchQuery = '';
   late Future<List<StationDirectoryItem>> _stations;
   @override
   void initState() { super.initState(); _load(); }
@@ -37,6 +60,29 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         ButtonSegment(value: true, icon: Icon(Icons.map_outlined), label: Text('الخريطة')),
         ButtonSegment(value: false, icon: Icon(Icons.list_alt), label: Text('القائمة')),
       ], selected: {_showMap}, onSelectionChanged: (v) => setState(() => _showMap = v.first)),
+      const SizedBox(height: 8),
+      TextField(
+        key: const ValueKey('station-directory-search'),
+        textDirection: TextDirection.rtl,
+        decoration: InputDecoration(
+          hintText: 'بحث بالاسم أو الرمز أو WMO',
+          prefixIcon: const Icon(Icons.search),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          isDense: true,
+        ),
+        onChanged: (value) => setState(() => _searchQuery = value),
+      ),
+      if (widget.selectedStationId != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              'محطة العمل محددة — يمكن المتابعة للإدخال أو المراجعة من الشريط السفلي.',
+              style: TextStyle(color: Colors.blueGrey.shade700, fontSize: 12),
+            ),
+          ),
+        ),
     ])),
     Expanded(child: FutureBuilder<List<StationDirectoryItem>>(future: _stations, builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
@@ -45,8 +91,16 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
           'تحقق من تسجيل الدخول والاتصال بواجهة API.',
           TextButton(onPressed: () => setState(_load), child: const Text('إعادة المحاولة')));
       }
-      final rows = snapshot.data ?? const <StationDirectoryItem>[];
-      if (rows.isEmpty) return _empty(Icons.location_off, 'لا توجد محطات', 'لا توجد سجلات مطابقة.');
+      final allRows = snapshot.data ?? const <StationDirectoryItem>[];
+      final rows = filterStationDirectory(allRows, query: _searchQuery);
+      if (allRows.isEmpty) return _empty(Icons.location_off, 'لا توجد محطات', 'لا توجد سجلات مطابقة.');
+      if (rows.isEmpty) {
+        return _empty(
+          Icons.search_off,
+          'لا نتائج للبحث',
+          'لا توجد محطات مطابقة لنص البحث ضمن النوع المحدد.',
+        );
+      }
       final located = rows.where((s) => s.hasValidCoordinates).toList();
       if (_showMap) return _map(rows, located);
       return RefreshIndicator(onRefresh: () async => setState(_load),
