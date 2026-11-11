@@ -13,7 +13,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-AUTH-02 | التسجيل / Registration | جيد | طلب انضمام | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | reset email | مربوط | — | موجود | معلق | قيد العمل |
 | FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + حالة الحساب + حالة طلب الانضمام + خروج | `GET /api/v1/account/registration-status` | لا يعرض أدواراً/محطات دون access-context | موجود مصدرّياً | CI معلق | جزئي — ACC-02 مطلوب |
-| FLT-AUTH-05 | الصلاحيات UI / Permissions view | ناقص | لا شاشة فعلية؛ كتالوج الأدوار ثابت | لا يوجد access-context API | لا يجوز استنتاج الصلاحية من اسم الدور | لا | CI معلق | ناقص — ACC-02/03 |
+| FLT-AUTH-05 | الصلاحيات UI / Permissions view | جيد | شاشة إدارة عضويات وصلاحيات الجهات: طلب/مراجعة/رفض/إلغاء/سجل تدقيق | Authority access APIs + server checks | لا تستنتج صلاحيات محلية | موجود مصدرّياً | CI معلق | جزئي — access-context وvalidity/user-target UI مطلوبان |
 | FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | ناقص | معالجة 401/403 محلية فقط؛ لا شاشة/بوابة موحدة | جزئي | الخادم مرجع القرار | لا | CI معلق | ناقص — ACC-04 |
 | FLT-STN-01 | دليل المحطات / Directory | جيد | قائمة+خريطة+بحث | مربوط | خادم | موجود | معلق | قيد العمل |
 | FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل + مصدر الإحداثيات ودقتها | مربوط | لا تمنح تعديل المحطة | موجود مصدرّياً | CI معلق | مواءمة المصدر/الدقة تمت؛ تحقق CI مطلوب |
@@ -105,11 +105,11 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 | DY-06 | Daily correction | Returned observation editor | Baseline exists — verify daily field contract and version history |
 | AU-01/02 | Auditor workspace / station observation view | Electronic auditor scaffold and station review surfaces | Partial — no complete auditor queue/scope model |
 | AU-03 | Missing-data register | Not present | Missing — needs approved missing-data rules/API |
-| AU-04 | Review history | Detail sheet shows record payload/review note, not full event history | Missing/partial — needs immutable history API |
+| AU-04 | Review history | Registration review now links to station/system registration audit API and read-only audit screen | Partial — full observation event history remains separate |
 | AU-05 | Monthly audit report | Manual archive confirmation screen and summary API | Partial — reconcile archive confirmations, missing data and outstanding items |
 | AD-01 | User directory | Station-scoped user list in assignment screen | Partial — global directory not available |
 | AD-02 | User details | Account profile is own-account only | Missing for authorized admin view |
-| AD-03 | Role/permission administration | No effective permission administration screen | Missing — requires approved access-context and grant-management APIs |
+| AD-03 | Role/permission administration | `AuthorityAccessScreen`: authority membership/grant queues, self-request, approve/reject/revoke and audit | Partial — effective caller access-context, delegated target user and validity-end controls remain |
 | AD-04 | Station assignment | Station assignment screen | Partial — add expiry/revocation/cross-station tests |
 | AD-05 | Operational settings | No approved settings UI/API inventory | Missing/TBD |
 | AD-06 | Management files | No file management UI/API | Missing/TBD |
@@ -127,3 +127,12 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 | OFF-01 | Offline drafts/sync/conflicts | No accepted complete Flutter equivalent | Unverified/blocked pending approved offline design |
 
 **Completion rule:** every row above must be verified with an API-backed workflow and tests, or explicitly blocked by a named contract/domain decision. A shell or menu link is not completion.
+
+
+## Account-access screen follow-up — 2026-11-11T16:37:19.043Z
+
+- `AuthorityAccessScreen` is now integrated in the canonical More menu and uses existing authority membership/permission APIs.
+- It supports authority selection, self-membership requests, current-member permission requests, pending queues with reasoned approve/reject, active/scheduled queues with reasoned revocation, and read-only authority audit.
+- `RegistrationReviewScreen` now links to station/system registration audit.
+- No client-side permission grant or role inference; 401/403/409/503 states remain explicit.
+- CI and runtime verification remain pending.
