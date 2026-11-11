@@ -144,6 +144,15 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
     return '${_date(utc)} ${two(utc.hour)}:${two(utc.minute)}:${two(utc.second)} UTC';
   }
 
+  String _statusLabel(String status) => switch (status.toLowerCase()) {
+        'submitted' => 'بانتظار المراجعة',
+        'returned' => 'مُرجَعة للتصحيح',
+        'approved' => 'معتمدة',
+        'rejected' => 'مرفوضة',
+        'draft' => 'مسودة',
+        _ => status,
+      };
+
   String _typeLabel(String type) {
     final value = type.toLowerCase();
     if (value.contains('hour')) return 'نشرة ساعية';
@@ -321,7 +330,7 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
                             leading: const Icon(Icons.description_outlined),
                             title: Text(_typeLabel(item.observationType)),
                             subtitle: Text(
-                              '${_formatUtc(item.observedAt)} · ${item.status}'
+                              '${_formatUtc(item.observedAt)} · ${_statusLabel(item.status)}'
                               '${item.reviewNote == null || item.reviewNote!.isEmpty ? '' : '\nملاحظة: ${item.reviewNote}'}',
                               maxLines: 4,
                               overflow: TextOverflow.ellipsis,
