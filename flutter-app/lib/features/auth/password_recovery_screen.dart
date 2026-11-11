@@ -71,7 +71,7 @@ class _MetraPasswordRecoveryScreenState
                           const SizedBox(height: 16),
                           const Text(
                             'أدخل البريد الإلكتروني المرتبط بحسابك. '
-                            'إذا كان الحساب مؤهلاً للاستعادة فستصلك تعليمات عبر البريد.',
+                            'إذا كان الحساب مؤهلاً للاستعادة فستصلك رسالة. افتح رابط الرسالة على هذا الجهاز لإكمال تعيين كلمة المرور داخل تطبيق METRA.',
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 20),
