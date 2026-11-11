@@ -71,44 +71,11 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
         : parsed.toUtc().toIso8601String();
   }
 
-  Future<String?> _rejectionNote() async {
-    final controller = TextEditingController();
-    final note = await showDialog<String>(
+  Future<String?> _rejectionNote() {
+    return showDialog<String>(
       context: context,
-      builder: (dialogContext) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('سبب رفض طلب التسجيل'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            minLines: 2,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              labelText: 'سبب واضح للرفض',
-              hintText: 'سيظهر السبب لصاحب الطلب وفق صلاحيات النظام',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final value = controller.text.trim();
-                if (value.length >= 3) {
-                  Navigator.of(dialogContext).pop(value);
-                }
-              },
-              child: const Text('تأكيد الرفض'),
-            ),
-          ],
-        ),
-      ),
+      builder: (_) => const _RegistrationRejectionDialog(),
     );
-    controller.dispose();
-    return note?.trim();
   }
 
   Future<void> _decide(String requestId, String decision, {String? note}) async {
@@ -255,4 +222,57 @@ class _RegistrationReviewScreenState extends State<RegistrationReviewScreen> {
       ),
     );
   }
+}
+
+
+class _RegistrationRejectionDialog extends StatefulWidget {
+  const _RegistrationRejectionDialog();
+
+  @override
+  State<_RegistrationRejectionDialog> createState() =>
+      _RegistrationRejectionDialogState();
+}
+
+class _RegistrationRejectionDialogState
+    extends State<_RegistrationRejectionDialog> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('سبب رفض طلب التسجيل'),
+          content: TextField(
+            controller: _controller,
+            autofocus: true,
+            minLines: 2,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              labelText: 'سبب واضح للرفض',
+              hintText: 'سيظهر السبب لصاحب الطلب وفق صلاحيات النظام',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = _controller.text.trim();
+                if (value.length >= 3) {
+                  Navigator.of(context).pop(value);
+                }
+              },
+              child: const Text('تأكيد الرفض'),
+            ),
+          ],
+        ),
+      );
 }
