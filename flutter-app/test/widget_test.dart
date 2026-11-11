@@ -64,7 +64,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(selected, '22222222-2222-4222-8222-222222222222');
     expect(find.text('تفاصيل المحطة'), findsOneWidget);
-    expect(find.text('AU-01'), findsOneWidget);
+    expect(find.textContaining('رمز المحطة: AU-01'), findsOneWidget);
     api.close();
   });
 
@@ -90,5 +90,4 @@ void main() {
     expect(find.byType(NavigationDestination), findsNWidgets(5));
     api.close();
   });
-
 }
