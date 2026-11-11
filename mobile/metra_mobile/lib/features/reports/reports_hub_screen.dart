@@ -46,7 +46,7 @@ class ReportsHubScreen extends StatelessWidget {
             _ReportCapabilityCard(
               icon: Icons.history,
               title: 'الأرشيف التاريخي للرصدات',
-              description: 'استعراض الرصدات المقدمة والمعتمدة حسب المحطة والتاريخ، مع تفاصيل السجل وحالة المراجعة.',
+              description: 'استعراض الرصدات التاريخية المستوردة والمرتبطة بالمحطة حسب النوع، مع فتح محتوى السجل الأصلي.',
               requirement: 'أرشيف مستورد للقراءة فقط، مع تصفية حسب نوع الرصد وتفاصيل السجل.',
               action: onOpenArchive,
               actionLabel: 'فتح الأرشيف',
