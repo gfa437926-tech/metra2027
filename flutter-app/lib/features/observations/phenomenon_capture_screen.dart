@@ -311,7 +311,7 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
                       if (_endedAtUtc != null)
                         _timeRow('وقت الانتهاء UTC', _endedAtUtc!),
                       if (_startedAtUtc != null)
-                        _timeRow('وقت الجهاز عند البدء', _startedAtUtc!.toLocal()),
+                        _timeRow('وقت الجهاز عند البدء', _startedAtUtc!, local: true),
                       const SizedBox(height: 16),
                       Wrap(
                         alignment: WrapAlignment.center,
@@ -348,6 +348,12 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
                               icon: const Icon(Icons.add),
                               label: const Text('تسجيل ظاهرة جديدة'),
                             ),
+                          if (_ended && _savedId == null && !_saving)
+                            TextButton.icon(
+                              onPressed: _reset,
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('إلغاء المعاينة المحلية'),
+                            ),
                         ],
                       ),
                       if (_saving) const Padding(
@@ -379,12 +385,12 @@ class _PhenomenonCaptureScreenState extends State<PhenomenonCaptureScreen> {
         ),
       );
 
-  Widget _timeRow(String label, DateTime value) => Padding(
+  Widget _timeRow(String label, DateTime value, {bool local = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
           children: [
             Expanded(child: Text(label)),
-            Text(value.toUtc().toIso8601String()),
+            Text(local ? value.toLocal().toString() : value.toUtc().toIso8601String()),
           ],
         ),
       );
