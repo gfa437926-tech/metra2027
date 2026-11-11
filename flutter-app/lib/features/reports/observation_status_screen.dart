@@ -121,7 +121,7 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
             padding: const EdgeInsets.all(16),
             children: <Widget>[
               const Text(
-                'الأوقات التشغيلية بالتوقيت العالمي UTC فقط. المصدر: طوابير المراجعة والإرجاع من الخادم لهذه المحطة.',
+                'الأوقات بالتوقيت العالمي UTC فقط. تعرض هذه الشاشة طوابير العمل الحالية من الخادم، لا أرشيفاً تاريخياً شاملاً: طابور المراجعة حسب صلاحية المحطة، والمُرجَعات الخاصة بالمستخدم الحالي.',
               ),
               const SizedBox(height: 12),
               _tile('بانتظار المراجعة', '${data.review.length}'),
@@ -137,24 +137,24 @@ class _ObservationStatusScreenState extends State<ObservationStatusScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'أحدث عناصر طابور المراجعة',
+                'عناصر طابور المراجعة المحمّلة (حتى 50 من الخادم)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               if (data.review.isEmpty)
                 const Text('لا توجد نشرات بانتظار المراجعة.')
               else
-                ...data.review.take(12).map(_itemCard),
+                ...data.review.map(_itemCard),
               const SizedBox(height: 16),
               const Text(
-                'أحدث النشرات المُرجَعة',
+                'النشرات المُرجَعة المحمّلة (حتى 50 من الخادم، للمستخدم الحالي)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               if (data.returned.isEmpty)
                 const Text('لا توجد نشرات مُرجَعة.')
               else
-                ...data.returned.take(12).map(_itemCard),
+                ...data.returned.map(_itemCard),
             ],
           );
         },
