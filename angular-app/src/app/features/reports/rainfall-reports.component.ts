@@ -32,6 +32,19 @@ import { StationContextService } from '../../core/station/station-context.servic
           <option *ngFor="let s of stations" [value]="s.id">{{ s.name_ar }}</option>
         </select>
       </label>
+      <section class="form-card">
+        <h2>إعداد نشرة مطرية — معاينة محلية</h2>
+        <p>الحقول التالية لا تُرسل ولا تُحفظ؛ اعتماد وحدة القياس وفترة التجميع وعقد API ما زال مطلوباً.</p>
+        <div class="fields">
+          <label>كمية الهطول (ملم)<input type="number" min="0" step="any" [(ngModel)]="rainfallAmount" name="rainfallAmount"></label>
+          <label>نوع الهطول<select [(ngModel)]="rainfallType" name="rainfallType"><option value="">اختر النوع</option><option value="rain">مطر</option><option value="snow">ثلج</option><option value="hail">برد</option><option value="mixed">مختلط</option></select></label>
+          <label>بداية الفترة UTC<input type="datetime-local" [(ngModel)]="periodStart" name="periodStart"></label>
+          <label>نهاية الفترة UTC<input type="datetime-local" [(ngModel)]="periodEnd" name="periodEnd"></label>
+        </div>
+        <label>ملاحظات الراصد<textarea [(ngModel)]="observerNote" name="observerNote" rows="3"></textarea></label>
+        <button type="button" (click)="preview()">معاينة محلية دون حفظ</button>
+        @if (previewMessage) { <p class="preview" role="status">{{ previewMessage }}</p> }
+      </section>
       <div class="links">
         <a routerLink="/reports/hourly" [queryParams]="qp">النشرات الساعية</a>
         <a routerLink="/reports/daily" [queryParams]="qp">النشرات اليومية</a>
@@ -48,7 +61,7 @@ import { StationContextService } from '../../core/station/station-context.servic
     .banner{padding:12px;border-radius:10px;margin-bottom:12px}.banner.warn{background:#fff7e8;color:#8a5a12}
     label{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:12px;color:#4d5b64}
     select{border:1px solid #d5dee4;border-radius:10px;padding:10px 12px;font:inherit}
-    .links{display:flex;flex-wrap:wrap;gap:12px}.links a{color:#1f6f8b;font-weight:700;text-decoration:none}
+    .links{display:flex;flex-wrap:wrap;gap:12px}.links a{color:#1f6f8b;font-weight:700;text-decoration:none}\n    .form-card{margin:16px 0;padding:16px;border:1px solid #e4ebef;border-radius:12px;background:#fff;display:grid;gap:12px}.form-card h2{margin:0;font-size:17px}.form-card p{font-size:12px}.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}textarea,input,select{border:1px solid #d5dee4;border-radius:8px;padding:9px;font:inherit}button{border:0;border-radius:8px;background:#287caf;color:#fff;padding:10px;font:inherit}.preview{background:#edf7ef;padding:10px;border-radius:8px}\n    @media(max-width:650px){.fields{grid-template-columns:1fr}}
   `]
 })
 export class RainfallReportsComponent implements OnInit {
@@ -57,6 +70,19 @@ export class RainfallReportsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   stations: StationDirectoryItem[] = [];
   stationId = '';
+  rainfallAmount = '';
+  rainfallType = '';
+  periodStart = '';
+  periodEnd = '';
+  observerNote = '';
+  previewMessage = '';
+  preview(): void {
+    if (!this.stationId || !this.rainfallAmount || !this.rainfallType || !this.periodStart || !this.periodEnd) {
+      this.previewMessage = 'أكمل المحطة وكمية الهطول والنوع والفترة لمعاينة النموذج.';
+      return;
+    }
+    this.previewMessage = 'معاينة محلية فقط. لم يتم حفظ كمية الهطول أو إرسالها إلى الخادم.';
+  }
   get qp(): Record<string, string> {
     return this.stationId ? { stationId: this.stationId } : {};
   }
