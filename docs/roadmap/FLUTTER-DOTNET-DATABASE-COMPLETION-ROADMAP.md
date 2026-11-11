@@ -244,5 +244,5 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - Added a dedicated reports hub for the historical archive, hourly/daily, monthly/annual, climate/homogeneity and export modules. Each capability is explicitly marked as waiting for an API contract; no synthetic values or charts are shown.
 - The reviewed API has no daily/monthly/annual reporting or complete observation archive endpoints. The reports hub is a transparent blocked-state UI, not a claim that report functions are implemented.
 - Implementation report: `docs/delivery/FLUTTER-ROUND-FLT-006-STATION-AUDIT-HISTORY.md`.
-- Verification checkpoint: Client CI #1093 passed for Flutter analyze, Flutter tests and Angular build at `06b24d64eb76170fae9bc020209e28a92945202f`; the subsequent reports-hub addition awaits exact-head CI.
+- Verification: Client CI #1099 passed Flutter analyze, Flutter tests and Angular build at exact code head `1635b7064843ed5c13711bc0fd47b07a565c2128`.
 - Database, Supabase, Backend, SQL/migrations and legacy repository: unchanged.
