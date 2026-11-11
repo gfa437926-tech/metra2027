@@ -212,3 +212,14 @@ No SQL was applied, no main merge was performed, and metra-old was not modified.
 - Second corrective commit: 416539c774d58d545010079c7d9ab47b9c48d4b3 removes that stale parameter and branch.
 - Both analyzer findings and correction history are documented in docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md.
 - New Client CI verification for this correction is required; the earlier #823 and #824 runs are failures, not passes.
+
+
+## Flutter Client CI #829 correction — 2026-11-11T13:37:38.156Z
+
+- Task FLT-QUALITY-03: **قيد التنفيذ** — Flutter analyzer passed; Flutter widget tests reported 44 passed / 2 failed.
+- Both failures were stale expectations for a bare station code; the UI renders the code with its visible label. Test assertions were corrected without weakening product behavior.
+- Test commits: `c8213830edba2e0fafa6cacfa1e89313bb08ef3c`, `381eafab46153ac1d9d84248925f478f98a20470`.
+- Client CI #829 Angular job passed including 3 Chromium PWA smoke runs; Flutter job failed only at `flutter test` after `flutter analyze` passed.
+- Exact-head rerun is pending; Flutter verification remains open.
+- Detailed evidence: `docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md`.
+- No database changes, no legacy DB access, no PR merge.
