@@ -127,6 +127,32 @@ class MetraApiClient {
   }
 
 
+  /// Uses the authoritative forecasting comparison endpoint. This reports
+  /// catalogue geography/elevation only; it never fabricates live observations.
+  Future<Map<String, dynamic>> compareForecastingStations(
+    List<String> stationIds,
+  ) async {
+    if (stationIds.length < 2 || stationIds.length > 12) {
+      throw const MetraApiException(400, 'compare_requires_2_to_12_stations');
+    }
+    if (stationIds.toSet().length != stationIds.length) {
+      throw const MetraApiException(400, 'duplicate_station_ids');
+    }
+    final response = await _send(
+      'POST',
+      '/api/v1/forecasting/compare',
+      body: {'stationIds': stationIds},
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map ||
+        decoded['stations'] is! List ||
+        decoded['pairs'] is! List) {
+      throw const FormatException('invalid_forecasting_comparison_response');
+    }
+    return Map<String, dynamic>.from(decoded);
+  }
+
+
   Future<List<ObservationQueueItem>> getReturnedObservations(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send(
