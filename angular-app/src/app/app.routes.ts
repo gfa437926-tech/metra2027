@@ -10,6 +10,12 @@ export const routes: Routes = [
   { path: 'stations', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/stations/station-directory.component').then(m => m.StationDirectoryComponent) },
   { path: 'equipment-faults', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/maintenance/equipment-fault-workflow.component').then(m => m.EquipmentFaultWorkflowComponent) },
   { path: 'support-incidents', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/support/support-incident-workflow.component').then(m => m.SupportIncidentWorkflowComponent) },
+  { path: 'ai', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/ai/ai-workspace.component').then(m => m.AiWorkspaceComponent) },
+  { path: 'climatol', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/climatol/climatol-workspace.component').then(m => m.ClimatolWorkspaceComponent) },
+  { path: 'aftn', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/aftn/aftn-console.component').then(m => m.AftnConsoleComponent) },
+  { path: 'account', canActivate: [requireAuthenticatedUser], loadComponent: () => import('./features/account/account-profile.component').then(m => m.AccountProfileComponent) },
+  { path: 'forgot-password', loadComponent: () => import('./features/auth/forgot-password.component').then(m => m.ForgotPasswordComponent) },
+  { path: 'auth/reset-password', loadComponent: () => import('./features/auth/reset-password.component').then(m => m.ResetPasswordComponent) },
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent)
