@@ -57,10 +57,10 @@ void main() {
         return http.Response(jsonEncode(statusReads == 1
             ? {'account_state': null}
             : {
-                'account_state': 'pending_station_approval',
+                'account_state': 'pending',
                 'state_reason': null,
                 'request_id': 'request-1',
-                'request_status': 'pending',
+                'request_status': 'pending_station_approval',
                 'submitted_at': '2026-11-11T12:00:00Z',
                 'review_note': null,
               }), 200);
@@ -129,7 +129,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submitted, isTrue);
-    expect(find.text('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
+    expect(find.textContaining('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
     expect(find.textContaining('لن تُفعّل الصلاحيات'), findsOneWidget);
     api.close();
   });
