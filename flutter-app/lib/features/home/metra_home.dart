@@ -6,6 +6,7 @@ import '../ops/station_ops_hub_screen.dart';
 import '../observations/observation_submit_screen.dart';
 import '../forecasting/forecasting_center_screen.dart';
 import '../account/account_profile_screen.dart';
+import '../auth/registration_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -50,6 +51,9 @@ class _MetraHomeState extends State<MetraHome> {
         onReview: () => setState(() => _index = 2),
         onOperations: () => setState(() => _index = 4),
         onSettings: () => setState(() => _index = 6),
+        onRegistration: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => MetraRegistrationScreen(api: widget.api, initiallyAuthenticated: true),
+        )),
       ),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
@@ -90,11 +94,13 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onReview,
     required this.onOperations,
     required this.onSettings,
+    required this.onRegistration,
   });
 
   final VoidCallback onReview;
   final VoidCallback onOperations;
   final VoidCallback onSettings;
+  final VoidCallback onRegistration;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -114,6 +120,13 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'العمليات والصيانة',
         description: 'الأعطال والدعم والتقارير وتعيينات المحطة.',
         onTap: onOperations,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.person_add_alt_1_outlined,
+        title: 'طلب الانضمام / حالة التسجيل',
+        description: 'استكمال بيانات طلب الانضمام ومتابعة الاعتماد المؤسسي.',
+        onTap: onRegistration,
       ),
       const SizedBox(height: 10),
       _ActionCard(
