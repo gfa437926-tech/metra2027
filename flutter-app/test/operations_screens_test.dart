@@ -66,4 +66,88 @@ void main() {
     expect(emptySupportState, findsOneWidget);
     api.close();
   });
+  testWidgets('equipment fault form submits validated station-scoped UTC payload', (tester) async {
+    final List<http.Request> requests = <http.Request>[];
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'operations-token',
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET') return http.Response(jsonEncode(<dynamic>[]), 200);
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: EquipmentFaultScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byWidgetPredicate((widget) =>
+          widget is TextFormField && widget.decoration?.labelText == 'اسم المعدة'),
+      'حساس الحرارة',
+    );
+    await tester.enterText(
+      find.byWidgetPredicate((widget) =>
+          widget is TextFormField && widget.decoration?.labelText == 'وصف العطل'),
+      'قراءة الحساس متوقفة منذ بداية الوردية',
+    );
+    final send = find.text('إرسال إلى الخادم');
+    await tester.ensureVisible(send);
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+
+    final post = requests.firstWhere((request) => request.method == 'POST');
+    final payload = jsonDecode(post.body) as Map<String, dynamic>;
+    expect(post.url.path, '/api/v1/stations/$stationId/equipment-faults');
+    expect(post.headers['authorization'], 'Bearer operations-token');
+    expect(payload['equipmentName'], 'حساس الحرارة');
+    expect(payload['description'], 'قراءة الحساس متوقفة منذ بداية الوردية');
+    expect(payload['occurredAt'], endsWith('Z'));
+    expect(find.text('تم إرسال بلاغ العطل إلى الخادم'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('support form submits station-scoped UTC incident payload', (tester) async {
+    final List<http.Request> requests = <http.Request>[];
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'support-token',
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'GET') return http.Response(jsonEncode(<dynamic>[]), 200);
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: SupportIncidentScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    Future<void> fill(String label, String value) async {
+      await tester.enterText(
+        find.byWidgetPredicate((widget) =>
+            widget is TextFormField && widget.decoration?.labelText == label),
+        value,
+      );
+    }
+    await fill('التصنيف', 'شبكة الاتصالات');
+    await fill('العنوان', 'انقطاع الاتصال بالمركز');
+    await fill('الوصف', 'تعذر إرسال بيانات المحطة إلى المركز منذ عشر دقائق');
+    final send = find.text('إرسال إلى الخادم');
+    await tester.ensureVisible(send);
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+
+    final post = requests.firstWhere((request) => request.method == 'POST');
+    final payload = jsonDecode(post.body) as Map<String, dynamic>;
+    expect(post.url.path, '/api/v1/stations/$stationId/support-incidents');
+    expect(post.headers['authorization'], 'Bearer support-token');
+    expect(payload['category'], 'شبكة الاتصالات');
+    expect(payload['title'], 'انقطاع الاتصال بالمركز');
+    expect(payload['occurredAt'], endsWith('Z'));
+    expect(find.text('تم إرسال بلاغ الدعم إلى الخادم'), findsOneWidget);
+    api.close();
+  });
+
 }
