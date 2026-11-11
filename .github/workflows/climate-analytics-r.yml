@@ -31,7 +31,9 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: services/climate-analytics-r
-          extra-packages: any::rcmdcheck
+          extra-packages: any::rcmdcheck, any::climatol@4.5-0
           needs: check
+      - name: Verify pinned Climatol fixture version
+        run: Rscript -e 'stopifnot(as.character(packageVersion("climatol")) == "4.5.0")'
       - name: Check R package
         run: Rscript -e 'rcmdcheck::rcmdcheck(args = c("--no-manual"), error_on = "error")'
