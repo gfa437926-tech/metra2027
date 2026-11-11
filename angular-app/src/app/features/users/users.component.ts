@@ -77,7 +77,16 @@ export class UsersComponent {
     { code: 'network_director', name: 'رئيس دائرة الشبكات', english: 'Network Director', scope: 'الإشراف على شبكة المحطات وبياناتها وتكليفاتها.', requestable: false },
     { code: 'statistics_director', name: 'رئيس دائرة الإحصاء', english: 'Statistics Director', scope: 'الإشراف على الإحصاء المناخي والتحليلات والتقارير.', requestable: false },
     { code: 'aftn_operator', name: 'مسؤول دائرة AFTN', english: 'AFTN Operations Officer', scope: 'إدارة رسائل AFTN والترميز والإرسال وسجل التسليم.', requestable: false },
-    { code: 'system_admin', name: 'مدير النظام', english: 'System Administrator', scope: 'إدارة الإعدادات التقنية والحسابات والصلاحيات بضوابط التدقيق.', requestable: false }
+    { code: 'system_admin', name: 'مدير النظام', english: 'System Administrator', scope: 'إدارة الإعدادات التقنية والحسابات والصلاحيات بضوابط التدقيق.', requestable: false },
+    { code: 'forecaster', name: 'متنبئ جوي', english: 'Weather Forecaster', scope: 'تحليل الحالة الجوية وإعداد التوقعات ضمن مركز التنبؤ المخوّل.', requestable: false },
+    { code: 'climatol_officer', name: 'مختص التجانس المناخي', english: 'Climatol Specialist', scope: 'إعداد وتشغيل مهام التجانس ومراجعة نتائجها بعد تفعيل العامل المعزول.', requestable: false },
+    { code: 'register_uploader', name: 'رافع السجلات الورقية والمخططات', english: 'Register Uploader', scope: 'رفع الأصول وربطها بالمحطة والفترة مع حفظ النسخة الأصلية.', requestable: false },
+    { code: 'electronic_auditor', name: 'المدقق الإلكتروني', english: 'Electronic Auditor', scope: 'مراجعة الاستخراج والفروقات والأدلة ضمن نطاق المحطات المخوّلة.', requestable: false },
+    { code: 'audit_approver', name: 'معتمد التدقيق', english: 'Audit Approver', scope: 'اعتماد القرار النهائي بعد مراجعة الأدلة والفروقات.', requestable: false },
+    { code: 'ai_analyst', name: 'محلل الذكاء الاصطناعي', english: 'AI Analyst', scope: 'تشغيل التحليلات المساعدة ومراجعة الشذوذ دون تعديل الرصدات.', requestable: false },
+    { code: 'model_manager', name: 'مدير نماذج الذكاء الاصطناعي', english: 'AI Model Manager', scope: 'إدارة مجموعات البيانات والوسوم والتدريب والتقييم في بيئة معزولة.', requestable: false },
+    { code: 'model_approver', name: 'معتمد إصدارات النماذج', english: 'AI Model Approver', scope: 'اعتماد إصدار النموذج أو التراجع عنه بعد تقييم مستقل.', requestable: false },
+    { code: 'aftn_sender', name: 'مرسل AFTN', english: 'AFTN Sender', scope: 'إنشاء الرسائل ومراجعتها وإرسالها عبر القناة المركزية المعتمدة.', requestable: false }
   ];
 
   get requestableCount(): number {
