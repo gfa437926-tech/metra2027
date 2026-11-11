@@ -176,3 +176,14 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - This is software test evidence only; it is not scientific validation on METRA observations or proof of .NET integration.
 - Task estimate remains 55%; six major work items remain. No local R execution, production data, database/Supabase changes, merge, or deployment.
 - Recursive tree inspection found no `واجهات/` directory on this branch; no shared coordination files were created or modified.
+
+
+---
+
+## Assistant 04 process-supervision contract — 2026-11-11T00:24:32Z
+
+- Documented the cancellation/timeout boundary for synchronous Climatol execution: external .NET supervision of a dedicated R process per job or serialized single worker; process-tree termination; explicit process/container identity; and separate recording of supervisor-forced termination when worker provenance cannot be finalized.
+- Documented stale-lock recovery risks from PID reuse and container PID namespaces. Automatic stale-lock deletion remains prohibited; recovery is operator-controlled after identity verification.
+- Timeout/grace/resource limits remain approval-dependent. This is design documentation, not an implemented .NET adapter or cancellation mechanism.
+- CI run #29 for documentation commit `f1fa5e849d2026ff668cfd2e5740dd8c81c96a2e` was in progress at the time of inspection.
+- Progress remains 55%; six major work items remain. No production data, database changes, merge, or deployment.

@@ -54,3 +54,8 @@ R -e 'testthat::test_dir("tests/testthat")'
 
 - https://cran.r-project.org/web/packages/climatol/
 - https://www.climatol.eu/
+
+
+## Cancellation and timeout boundary
+
+The R worker currently runs Climatol synchronously in the R process. Do not promise in-process cancellation for a running `climatol::homogen()` call. Before production integration, .NET must supervise a dedicated R process per job (or serialize a single worker), apply approved wall-clock and resource limits, and terminate the complete process tree on cancellation/timeout. Record job and process/container identity so stale-lock recovery can account for PID reuse and container PID namespaces. Preserve available worker provenance and separately record supervisor-forced termination if the worker cannot finish its manifest. Timeout values, grace periods, CPU/memory/disk ceilings, and retention are deployment policy decisions requiring approval; this repository does not invent them. Stale locks remain manual-review only; no automatic deletion is implemented.

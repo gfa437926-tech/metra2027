@@ -220,3 +220,16 @@ The Climatol fixture smoke-test milestone is now verified by CI run #22 and is n
 - **Progress:** remains **55%**, calculated as (3 complete + 5 partial × 0.5) / 10 equal workstreams. Six major work items remain. CI success strengthens the partial security/reproducibility stream but does not close it.
 - **Safety:** no database/Supabase/SQL, raw observations, Angular/Flutter, merge, or deployment changes.
 - **Next:** continue bounded cancellation/timeout and stale-lock recovery design/tests without automatically deleting locks or inventing file-size limits; then address the secure .NET job boundary.
+
+
+## Assistant 04 process-supervision contract review — 2026-11-11T00:24:32Z
+
+- **Status:** In progress; this round documents the required .NET process boundary for cancellation/timeouts and safe stale-lock recovery. No supervisor code was implemented.
+- **CI context:** R workflow run #29 for documentation commit `f1fa5e849d2026ff668cfd2e5740dd8c81c96a2e` was still in progress when inspected; dependency installation was running. No result is claimed for that run.
+- **Files inspected:** R worker, request validation, worker tests, package README, integration architecture, CI workflow, progress report/changelog/status, branch and PR metadata.
+- **Files changed this round:** integration architecture, R worker README, assistant progress report, append-only changelog, implementation status.
+- **Decision documented:** synchronous Climatol execution should be supervised as a dedicated R process per job (or serialized single worker); .NET owns wall-clock timeout and process-tree termination. In-process cancellation is not claimed. Stale-lock recovery must account for PID reuse and container identity; no automatic lock deletion.
+- **Not done:** .NET supervisor implementation, actual cancellation/timeout tests, process-tree termination tests, approved timeout/resource limits, production input export, storage/UI, reference-data validation, scientific approval.
+- **Progress:** remains 55% under the established 10-workstream model: (3 complete + 5 partial × 0.5) / 10. Six major work items remain; a documented contract does not close the integration workstream.
+- **Safety:** no DB/Supabase, SQL, raw observations, Angular/Flutter, merge, or deployment changes. No `واجهات/` directory exists on this branch; none was created.
+- **Next:** implement the .NET supervisor only after the backend owner agrees on deployment isolation, process identity, termination grace period, resource limits, and idempotency semantics.

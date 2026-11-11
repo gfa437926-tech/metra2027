@@ -135,3 +135,13 @@
 - This confirms the lock-owner PID/UTC metadata test and the isolated fixture source-mutation test, including failed provenance and lock release.
 - Updated the assistant report and implementation status. This changelog entry is appended; prior entries are retained.
 - Progress remains 55%; six major work items remain. No local R run, METRA production data, database/Supabase, .NET adapter, UI, scientific validation/sign-off, merge, or deployment.
+
+
+## 2026-11-11T00:24:32Z — Document process supervision and cancellation boundary
+
+- Inspected the worker's synchronous Climatol call, process-wide `setwd()` behavior, current workspace lock, tests, README, integration architecture, and CI workflow.
+- Documented a production integration contract: dedicated supervised R process per job (or serialized single worker); .NET-owned wall-clock timeout and process-tree termination; explicit job/process/container identity; preserve worker provenance and distinguish supervisor-forced termination.
+- Documented stale-lock recovery considerations for PID reuse/container namespaces and retained manual-review-only recovery. No automatic stale-lock cleanup.
+- Explicitly left timeout/resource values for approved deployment policy. No .NET implementation or cancellation test is claimed.
+- Updated integration architecture, worker README, progress report, this append-only changelog, and implementation status. Progress remains 55%; six major work items remain.
+- CI run #29 was still in progress at inspection; no success/failure claim.
