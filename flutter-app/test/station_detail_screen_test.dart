@@ -32,6 +32,9 @@ void main() {
     expect(find.textContaining('35.50000, 36.20000'), findsOneWidget);
     expect(find.text('412.0 متر'), findsOneWidget);
     expect(find.text('غير متوفر'), findsOneWidget);
-    expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
+    final sourceNote = find.textContaining('لا تمثل قياسات جوية لحظية');
+    await tester.scrollUntilVisible(sourceNote, 240,
+        scrollable: find.byType(Scrollable).first);
+    expect(sourceNote, findsOneWidget);
   });
 }
