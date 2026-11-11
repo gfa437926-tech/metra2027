@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
 import 'admin_api_messages.dart';
+import 'station_audit_log_screen.dart';
 
 /// Requests and decisions are submitted to the station-scoped API.
 class StationAssignmentScreen extends StatefulWidget {
@@ -296,6 +297,19 @@ class _StationAssignmentScreenState extends State<StationAssignmentScreen> {
           title: const Text('تعيينات المحطة'),
           actions: [
             IconButton(
+              tooltip: 'سجل تدقيق المحطة',
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => StationAuditLogScreen(
+                    api: widget.api,
+                    stationId: widget.stationId,
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.history),
+            ),
+            IconButton(
+              tooltip: 'تحديث التعيينات',
               onPressed: _busy ? null : _reload,
               icon: const Icon(Icons.refresh),
             ),
