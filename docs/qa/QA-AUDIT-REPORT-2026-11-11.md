@@ -198,3 +198,22 @@ Cross-assistant CI results are not QA-06 test execution. QA-06 did not run tests
 
 ### QA-07 CI outcome correction — PR #22 exact latest head
 The previously in-progress Backend build for PR #22 head `8134c9e4546693d717a10329436d646b08dbb94f` has now completed successfully: [Backend build run 42925182135](https://github.com/gfa437926-tech/metra2027/actions/runs/42925182135). This confirms the workflow completed successfully on that exact SHA, including the CI test job configured in `.github/workflows/backend-ci.yml`. It does **not** close the source-confirmed TOCTOU finding or substitute for DB revocation/race integration tests. QA-06 itself still did not run tests locally.
+
+QA-08 exact-head evidence
+
+ 
+## QA-08 — Exact-head revalidation (2026-11-11T02:02:00Z UTC)
+
+### PR #22 current source and CI
+- PR #22 is open Draft and unmerged. Exact head: `0d29163a4457c12f38e8a1c79b7dec49248c143d`.
+- Exact-head Actions: [Backend build #1425 / run 42925286446](https://github.com/gfa437926-tech/metra2027/actions/runs/42925286446) completed successfully on this SHA.
+- Re-read `backend/Metra.Api.Tests/Features/Observations/ObservationQueueEndpointTests.cs`: six endpoint cases exist (401, invalid limit 400, denied scope 403/no queue call, fake Station A grant vs Station B request 403, dependency unavailable 503, read failure 503).
+- Limitation: the cross-station case replaces `IStationAuthorizationService` with a fake; it proves route-to-authorization-service wiring and no queue call on denial, not actual Postgres/Supabase station isolation.
+- Re-read `ObservationQueueEndpoints.cs` and `StationAuthorizationService.cs`: authorization RPC is separate from the subsequent service-role PostgREST queue SELECT. The queue read accepts station ID/limit only, not actor ID. B-013 TOCTOU remains open; this is source-level evidence, not a live exploit reproduction.
+- Required before closure: approved atomic actor+station+permission+queue-read design; DB-backed A/B isolation; grant revocation/read race and concurrency tests; decision transition atomicity tests.
+
+### P2 — CI path trigger
+The exact PR #22 head's `.github/workflows/backend-ci.yml` still lists `database/migrations/**` and `database/tests/**` but omits `supabase/migrations/**` in both push and pull_request path filters. Coordinate the fix with the Backend/DevOps owner; QA did not modify the workflow.
+
+### QA execution boundary
+QA-06 did not run local .NET/Angular/Flutter/R/E2E tests in this round. The Backend Actions success belongs to Assistant 02's PR and is not counted as QA-06 execution. No application/workflow/SQL/database changes were made.
