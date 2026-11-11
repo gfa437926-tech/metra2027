@@ -43,5 +43,16 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 	</dict>
+  <key>CFBundleURLTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleURLName</key>
+      <string>org.metra2027.auth</string>
+      <key>CFBundleURLSchemes</key>
+      <array>
+        <string>metra2027</string>
+      </array>
+    </dict>
+  </array>
 </dict>
 </plist>
