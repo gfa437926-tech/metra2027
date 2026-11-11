@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api/metra_api_client.dart';
 import 'observation_status_screen.dart';
+import 'observation_history_screen.dart';
 import '../admin/manual_archive_screen.dart';
 import '../admin/station_audit_log_screen.dart';
 
@@ -42,6 +43,25 @@ class StationReportsHubScreen extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
                   builder: (_) => ObservationStatusScreen(
+                    api: api,
+                    stationId: stationId,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.history_edu_outlined),
+            title: const Text('سجل النشرات المتاح'),
+            subtitle: const Text('مرشحات النوع والفترة UTC وتفاصيل السجلات من الطوابير الحالية'),
+            trailing: const Icon(Icons.chevron_left),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ObservationHistoryScreen(
                     api: api,
                     stationId: stationId,
                   ),
