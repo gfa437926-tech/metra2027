@@ -68,7 +68,7 @@ This is a useful baseline, not full acceptance coverage for every required page,
 | Profile/account | Dedicated authenticated account profile shows email, identity provider and server-authoritative permission explanation; sign-out requires confirmation | Implemented baseline; tests added; CI pending | Account metadata, assignment display and session lifecycle states |
 | Shared home/navigation | Six bottom destinations; one home action opens forecasting | Partial | Role-aware links, route coverage, responsive navigation, forecasting always discoverable |
 | Station directory | API-backed map/list, type filters, coordinate validation | Partial | Search/pagination/detail route, missing-coordinate handling and station selection lifecycle |
-| Station detail | No standalone detail screen found | Missing | Full catalogue detail and authorized station context |
+| Station detail | Dedicated catalogue detail screen opens from map markers and directory cards; shows code, type, operational/approval status, coordinates, elevation and WMO ID | Implemented baseline; tests added; CI pending | Add API-backed full detail/history when an approved endpoint exists |
 | Station assignment | Admin screen exists and calls API | Partial | Role-grant visibility, lifecycle, revoked/expired assignments and tests |
 | Hourly entry | Screen + contract + tests | Implemented baseline | Full source-field parity, accessibility and integration coverage |
 | Hourly list/details | No dedicated history/detail screens found | Missing/Partial | API-backed list, filters, detail and history |
@@ -116,7 +116,7 @@ This is a useful baseline, not full acceptance coverage for every required page,
 - Registration review and assignment parity.
 
 ### F-03 — Station and observation workflows
-- Station detail, selection and authorized context.
+- Station detail, selection and authorized context. Station detail baseline is now implemented in commits 88d95df and eb92c0d; widget coverage is in abee1bb and 3431b93.
 - Hourly/daily lists, details and history.
 - Complete review/return/resubmit states.
 - Weather phenomena only after approved API contract.
@@ -194,3 +194,12 @@ A file existing, a card linking to a page, or CI compiling the app does not coun
 - Client CI #811 passed on prior source tip `8b7eaea`; it does not include the new authentication/profile changes.
 - Client CI #816 was triggered for the profile integration commit `e8bce50`; subsequent test-file commits may supersede/cancel earlier runs.
 - Latest tip at audit time: `4219b5d`. A CI run for this exact tip must be confirmed before these changes are marked verified.
+
+
+### FLT-STATION-DETAIL-01 — Station catalogue detail
+- Status: implemented baseline; automated verification pending.
+- Added `flutter-app/lib/features/stations/station_detail_screen.dart`.
+- Directory cards and map markers open the detail route while preserving the selected station callback.
+- Detail fields are limited to the station catalogue contract: Arabic/English names, local code, type, operational/approval status, demo flag, coordinates, elevation and WMO ID.
+- Missing coordinates/WMO values are shown as unavailable; catalogue metadata is explicitly distinguished from live observations.
+- Tests: `flutter-app/test/station_detail_screen_test.dart` and the directory navigation regression in `flutter-app/test/widget_test.dart`.
