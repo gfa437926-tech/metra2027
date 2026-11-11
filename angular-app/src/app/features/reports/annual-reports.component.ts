@@ -1,37 +1,115 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  ObservationApiService,
+  StationDirectoryItem
+} from '../../core/api/observation-api.service';
+import { StationContextService } from '../../core/station/station-context.service';
 
+/** Annual climate summary is blocked until aggregation contracts are approved. */
 @Component({
- standalone:true,imports:[CommonModule],
- template:`
- <div class="page" dir="rtl">
-  <header><div class="icon"><i class="fa-solid fa-calendar"></i></div><div><h1>التقارير السنوية</h1><p>الملخصات المناخية السنوية ومقارنة أداء المحطات والسنوات</p></div><span class="mode">معاينة</span></header>
-  <div class="notice"><i class="fa-solid fa-circle-info"></i><span>لا توجد حالياً خدمة قراءة مرتبطة بمصدر البيانات؛ لذلك لا يتم احتساب أو اختلاق أي قيم مناخية.</span></div>
-  <section class="panel"><h2><i class="fa-solid fa-sliders"></i> إعداد التقرير</h2>
-   <div class="filters">
-    <label>المحطة<select (change)="station=$any($event.target).value"><option value="">جميع المحطات</option>@for(s of stations;track s){<option [value]="s">{{s}}</option>}</select></label>
-    <label>السنة الأساسية<select (change)="year=$any($event.target).value"><option value="">اختر السنة</option>@for(y of years;track y){<option [value]="y">{{y}}</option>}</select></label>
-    <label>نوع التقرير<select (change)="type=$any($event.target).value"><option value="summary">ملخص سنوي</option><option value="comparison">مقارنة سنوات</option><option value="extremes">القيم القصوى والدنيا</option><option value="completeness">اكتمال السجلات</option></select></label>
-    <label *ngIf="type==='comparison'">سنة المقارنة<select (change)="compareYear=$any($event.target).value"><option value="">اختر سنة المقارنة</option>@for(y of years;track y){<option [value]="y">{{y}}</option>}</select></label>
-   </div>
-   <div class="actions"><button class="primary" (click)="generate()"><i class="fa-solid fa-chart-line"></i> إعداد التقرير</button><button class="secondary" (click)="reset()">إعادة تعيين</button></div>
-  </section>
-  <section class="stats"><article><i class="fa-solid fa-location-dot"></i><span>المحطة</span><strong>{{station||'جميع المحطات'}}</strong></article><article><i class="fa-regular fa-calendar"></i><span>السنة</span><strong>{{year||'—'}}</strong></article><article><i class="fa-solid fa-file-circle-check"></i><span>نوع التقرير</span><strong>{{typeLabel}}</strong></article><article><i class="fa-solid fa-database"></i><span>حالة البيانات</span><strong class="pending">غير مربوط</strong></article></section>
-  <section class="panel"><h2><i class="fa-solid fa-chart-column"></i> مؤشرات السنة</h2><div class="metrics">@for(m of metrics;track m){<div><span>{{m}}</span><b>—</b><small>{{unitFor(m)}}</small></div>}</div><div class="empty"><i class="fa-regular fa-folder-open"></i><strong>{{message}}</strong><small>ستظهر النتائج بعد ربط API واعتماد طريقة حساب المؤشرات.</small></div></section>
-  <section class="panel"><h2><i class="fa-solid fa-table"></i> الملخص حسب الشهر</h2><div class="table-wrap"><table><thead><tr><th>الشهر</th><th>متوسط الحرارة</th><th>أعلى حرارة</th><th>أدنى حرارة</th><th>الأمطار</th><th>أيام المطر</th><th>اكتمال البيانات</th></tr></thead><tbody>@for(m of months;track m){<tr><td>{{m}}</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>}</tbody></table></div></section>
- </div>`,
- styles:[`
- :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}header{display:flex;align-items:center;gap:16px;padding:23px 26px;background:linear-gradient(135deg,#8e44ad,#6c3483);color:#fff;border-radius:14px;margin-bottom:17px}.icon{width:56px;height:56px;display:grid;place-items:center;background:#ffffff25;border-radius:13px;font-size:26px}h1{font-size:25px;margin:0 0 5px}header p{margin:0;opacity:.9;font-size:13px}.mode{margin-right:auto;background:#fff3cd;color:#856404;padding:7px 12px;border-radius:7px;font-size:12px;font-weight:700}.notice{display:flex;gap:10px;align-items:center;padding:12px 15px;margin-bottom:17px;border-radius:8px;background:#f5eef8;color:#69427b;font-size:13px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:12px;padding:21px;margin-bottom:17px}.panel h2{font-size:17px;margin:0 0 17px}.panel h2 i{color:#7d3c98;margin-left:8px}.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.filters label{display:grid;gap:7px;font-size:13px;font-weight:700}.filters input,.filters select{min-width:0;width:100%;box-sizing:border-box;padding:11px;border:1px solid #d9e1e7;border-radius:8px;font:inherit;background:#fbfcfd}.actions{display:flex;gap:9px;margin-top:17px}.actions button{border:0;border-radius:8px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer}.primary{background:#7d3c98;color:#fff}.secondary{background:#edf1f3;color:#34495e}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:17px}.stats article{display:grid;grid-template-columns:30px 1fr;gap:4px 8px;align-items:center;background:#fff;border:1px solid #e5eaee;border-radius:10px;padding:14px}.stats i{grid-row:span 2;color:#7d3c98;font-size:19px}.stats span{font-size:11px;color:#82909a}.stats strong{font-size:13px}.pending{color:#b7791f}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metrics div{display:grid;gap:8px;padding:13px;background:#faf6fc;border-radius:8px;font-size:12px}.metrics b{color:#7d3c98;font-size:20px}.metrics small{color:#8a969e}.empty{text-align:center;padding:24px;color:#65737d}.empty i,.empty strong,.empty small{display:block;margin:7px auto}.empty i{font-size:26px;color:#aab5bd}.empty small{font-size:11px;color:#96a1a9}.table-wrap{overflow:auto}table{width:100%;min-width:850px;border-collapse:collapse}th{background:#4a235a;color:#fff;padding:12px;font-size:12px}td{text-align:center;padding:11px;border-bottom:1px solid #edf0f2;font-size:12px}tr:nth-child(even){background:#faf8fb}@media(max-width:850px){.filters,.stats,.metrics{grid-template-columns:repeat(2,1fr)}}@media(max-width:550px){header{padding:17px;flex-wrap:wrap}h1{font-size:21px}.filters,.stats,.metrics{grid-template-columns:1fr}.panel{padding:15px}.actions{flex-direction:column}}
- `]
+  standalone: true,
+  selector: 'metra-annual-reports',
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
+    <section class="page" dir="rtl">
+      <header>
+        <div>
+          <h1>التقارير السنوية</h1>
+          <p>الملخصات السنوية والمقارنات غير مربوطة بمصدر أرصاد معتمد بعد.</p>
+        </div>
+        <span class="badge">غير مربوط</span>
+      </header>
+
+      <div class="banner warn">
+        لا تُحتسب قيم مناخية سنوية في هذه الشاشة. أي «مؤشر» يظهر كغير متاح وليس صفراً.
+      </div>
+
+      <div class="toolbar">
+        <label>
+          المحطة
+          <select [(ngModel)]="stationId" (ngModelChange)="remember($event)">
+            <option value="">— اختر محطة —</option>
+            <option *ngFor="let s of stations" [value]="s.id">{{ s.name_ar }}</option>
+          </select>
+        </label>
+        <label>
+          السنة (UTC)
+          <select [(ngModel)]="year">
+            <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+          </select>
+        </label>
+      </div>
+
+      <section class="stats">
+        <article><span>المحطة</span><strong>{{ stationLabel }}</strong></article>
+        <article><span>السنة</span><strong>{{ year }}</strong></article>
+        <article><span>معدل الحرارة</span><strong class="muted">غير متاح</strong></article>
+        <article><span>مجموع الهطل</span><strong class="muted">غير متاح</strong></article>
+      </section>
+
+      <div class="links">
+        <a routerLink="/reports/monthly" [queryParams]="qp">التقرير الشهري الإداري</a>
+        <a routerLink="/reports/observation-status" [queryParams]="qp">حالة النشرات</a>
+        <a routerLink="/admin/manual-archive" [queryParams]="qp">تأكيد أرشفة Excel</a>
+      </div>
+    </section>
+  `,
+  styles: [`
+    .page{padding:18px;max-width:960px;margin:0 auto}
+    header{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+    h1{margin:0 0 6px;font-size:1.4rem}
+    p{margin:0;color:#5c6b75;line-height:1.7}
+    .badge{background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-weight:700;height:fit-content}
+    .banner{padding:12px;border-radius:10px;margin-bottom:12px}
+    .banner.warn{background:#fff7e8;color:#8a5a12}
+    .toolbar{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px}
+    label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#4d5b64}
+    select{border:1px solid #d5dee4;border-radius:10px;padding:10px 12px;font:inherit}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .stats article{background:#fff;border:1px solid #e4ebf0;border-radius:12px;padding:12px;display:grid;gap:6px}
+    .stats span{font-size:12px;color:#6a7882}
+    .muted{color:#9aa6af}
+    .links{display:flex;flex-wrap:wrap;gap:12px}
+    .links a{color:#1f6f8b;font-weight:700;text-decoration:none}
+    @media(max-width:800px){.stats,.toolbar{grid-template-columns:1fr}}
+  `]
 })
-export class AnnualReportsComponent {
- station='';year='';compareYear='';type='summary';message='اختر معايير التقرير ثم اضغط إعداد التقرير.';
- readonly stations:string[]=[];
- readonly years=Array.from({length:30},(_,i)=>String(new Date().getFullYear()-i));
- readonly months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
- readonly metrics=['متوسط الحرارة السنوي','أعلى درجة حرارة','أدنى درجة حرارة','إجمالي الأمطار','أكثر الشهور مطراً','عدد أيام المطر','عدد أيام الصقيع','اكتمال النشرات'];
- get typeLabel(){return ({summary:'ملخص سنوي',comparison:'مقارنة سنوات',extremes:'القيم القصوى والدنيا',completeness:'اكتمال السجلات'} as Record<string,string>)[this.type];}
- unitFor(metric:string){return metric.includes('حرارة')?'°م':metric.includes('أمطار')?'ملم':metric.includes('اكتمال')?'%':'—';}
- generate(){if(!this.year){this.message='يرجى اختيار السنة أولاً.';return;}if(this.type==='comparison'&&(!this.compareYear||this.compareYear===this.year)){this.message='اختر سنة مقارنة مختلفة عن السنة الأساسية.';return;}this.message='تم تجهيز معايير التقرير محلياً؛ لا يمكن حساب النتائج قبل توصيل مصدر البيانات.';}
- reset(){this.station='';this.year='';this.compareYear='';this.type='summary';this.message='اختر معايير التقرير ثم اضغط إعداد التقرير.';}
+export class AnnualReportsComponent implements OnInit {
+  private readonly stationsApi = inject(ObservationApiService);
+  private readonly stationContext = inject(StationContextService);
+  private readonly route = inject(ActivatedRoute);
+
+  stations: StationDirectoryItem[] = [];
+  stationId = '';
+  year = new Date().getUTCFullYear();
+  years = Array.from({ length: 8 }, (_, i) => this.year - i);
+
+  get qp(): Record<string, string> {
+    return this.stationId ? { stationId: this.stationId } : {};
+  }
+
+  get stationLabel(): string {
+    const s = this.stations.find(x => x.id === this.stationId);
+    return s?.name_ar || (this.stationId ? this.stationId : '—');
+  }
+
+  ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId(this.route);
+    void this.loadStations();
+  }
+
+  remember(id: string): void {
+    if (this.stationContext.isUuid(id)) this.stationContext.remember(id);
+  }
+
+  async loadStations(): Promise<void> {
+    try {
+      if (this.stationsApi.isConfigured) this.stations = await this.stationsApi.getAllStations();
+    } catch {
+      this.stations = [];
+    }
+  }
 }

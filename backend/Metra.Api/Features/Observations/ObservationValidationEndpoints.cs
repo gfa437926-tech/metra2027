@@ -13,7 +13,12 @@ public static class ObservationValidationEndpoints
         {
             var error = ObservationValidationRequestGuard.GetError(request?.Values);
             if (error is not null) return Results.BadRequest(new { error });
-            var issues = DailyObservationValidator.Validate(request!.Values!);
+            if (!ObservationFieldContract.IsDailyReportType(request!.ReportType))
+                return Results.BadRequest(new { error = "invalid_daily_report_type" });
+            if (!request.ResponsibilityAgreement)
+                return Results.BadRequest(new { error = "responsibility_agreement_required" });
+            var issues = DailyObservationValidator.Validate(
+                request.Values!, ObservationFieldContract.GetDailyRequiredFields(request.ReportType));
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
         }).WithName("ValidateDailyObservation");
 
@@ -35,5 +40,8 @@ public static class ObservationValidationEndpoints
     }
 }
 
-public sealed record ObservationValidationRequest(Dictionary<string, string?>? Values);
+public sealed record ObservationValidationRequest(
+    Dictionary<string, string?>? Values,
+    string? ReportType = null,
+    bool ResponsibilityAgreement = false);
 public sealed record ValidationResponse(bool IsValid, IReadOnlyList<ValidationIssue> Issues);

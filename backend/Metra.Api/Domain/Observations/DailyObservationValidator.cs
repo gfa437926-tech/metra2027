@@ -81,6 +81,17 @@ public static class DailyObservationValidator
             }
         }
 
+        var maximumHumidity = GetValue(values, "maxHumidity");
+        var minimumHumidity = GetValue(values, "minHumidity");
+        if (maximumHumidity is not null && minimumHumidity is not null &&
+            maximumHumidity != "#" && minimumHumidity != "#" &&
+            decimal.TryParse(maximumHumidity, NumberStyles.None, CultureInfo.InvariantCulture, out var maximumHumidityValue) &&
+            decimal.TryParse(minimumHumidity, NumberStyles.None, CultureInfo.InvariantCulture, out var minimumHumidityValue) &&
+            minimumHumidityValue > maximumHumidityValue)
+        {
+            issues.Add(new("minHumidity", "الرطوبة الصغرى لا يمكن أن تتجاوز الرطوبة العظمى."));
+        }
+
         var min = GetValue(values, "minTemp");
         var max = GetValue(values, "maxTemp");
         if (min is not null && max is not null && min != "#" && max != "#" &&

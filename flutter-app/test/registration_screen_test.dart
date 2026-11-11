@@ -1,0 +1,159 @@
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:metra_mobile/core/api/metra_api_client.dart';
+import 'package:metra_mobile/features/auth/registration_screen.dart';
+
+void main() {
+  testWidgets('registration loads approved stations and requestable roles, then submits a pending request',
+      (tester) async {
+    var submitted = false;
+    var statusReads = 0;
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/v1/stations') {
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {
+              'id': '11111111-1111-4111-8111-111111111111',
+              'local_station_code': 'ST-01',
+              'name_ar': 'محطة معتمدة',
+              'name_en': 'Approved station',
+              'station_type': 'classic',
+              'operational_status': 'active',
+              'approval_status': 'approved',
+              'is_demo': false,
+              'station_coordinates': [],
+            },
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'local_station_code': 'ST-02',
+              'name_ar': 'محطة تجريبية',
+              'name_en': 'Demo station',
+              'station_type': 'classic',
+              'operational_status': 'active',
+              'approval_status': 'approved',
+              'is_demo': true,
+              'station_coordinates': [],
+            },
+          ])),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (request.url.path == '/api/v1/registration-roles') {
+        return http.Response.bytes(
+          utf8.encode(jsonEncode([
+            {'role_code': 'observer', 'name_ar': 'راصد', 'name_en': 'Observer'},
+          ])),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      }
+      if (request.url.path == '/api/v1/account/registration-status') {
+        statusReads++;
+        return http.Response(jsonEncode(statusReads == 1
+            ? {'account_state': null}
+            : {
+                'account_state': 'pending_station_approval',
+                'state_reason': null,
+                'request_id': 'request-1',
+                'request_status': 'pending',
+                'submitted_at': '2026-11-11T12:00:00Z',
+                'review_note': null,
+              }), 200);
+      }
+      if (request.url.path == '/api/v1/registration-requests' && request.method == 'POST') {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(body['stationId'], '11111111-1111-4111-8111-111111111111');
+        expect(body['roleCode'], 'observer');
+        expect(body['termsVersion'], 'metra-terms-2026-11');
+        expect((body['idempotencyKey'] as String).length, greaterThan(20));
+        submitted = true;
+        return http.Response(jsonEncode({'result_status': 'created'}), 201);
+      }
+      return http.Response('not_found', 404);
+    });
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'registration-test-token',
+      client: client,
+    );
+
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final directory = await api.getAllStationDirectory();
+    expect(directory, hasLength(2));
+    expect(directory.where((station) => station.isDemo), hasLength(1));
+
+    await tester.pumpWidget(MaterialApp(
+      home: MetraRegistrationScreen(api: api, initiallyAuthenticated: true),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.widgetWithText(TextField, 'الاسم الأول'), 'أحمد');
+    await tester.enterText(find.widgetWithText(TextField, 'اسم الأب'), 'محمد');
+    await tester.enterText(find.widgetWithText(TextField, 'اسم العائلة'), 'علي');
+
+    final stationPicker = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>).at(0),
+    );
+    final stationLabels = stationPicker.items!
+        .map((item) => (item.child as Text).data)
+        .toList();
+    expect(stationLabels, contains('محطة معتمدة — ST-01'));
+    expect(stationLabels, isNot(contains('محطة تجريبية — ST-02')));
+    stationPicker.onChanged!('11111111-1111-4111-8111-111111111111');
+    await tester.pump();
+
+    final rolePicker = tester.widget<DropdownButton<String>>(
+      find.byType(DropdownButton<String>).at(1),
+    );
+    final roleLabels = rolePicker.items!
+        .map((item) => (item.child as Text).data)
+        .toList();
+    expect(roleLabels, contains('راصد'));
+    rolePicker.onChanged!('observer');
+    await tester.pump();
+
+    final terms = find.textContaining('أقر بصحة البيانات');
+    await tester.tap(terms);
+    await tester.pumpAndSettle();
+    final submitButton = find.text('إرسال طلب الانضمام');
+    await tester.tap(submitButton);
+    await tester.pumpAndSettle();
+
+    expect(submitted, isTrue);
+    expect(find.text('بانتظار اعتماد رئيس المحطة'), findsOneWidget);
+    expect(find.textContaining('لن تُفعّل الصلاحيات'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('anonymous registration explains email confirmation without claiming METRA activation',
+      (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => null,
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+    await tester.pumpWidget(MaterialApp(
+      home: MetraRegistrationScreen(
+        api: api,
+        createIdentity: (_, __) async => false,
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField).at(0), 'new@example.test');
+    await tester.enterText(find.byType(TextFormField).at(1), 'StrongPassword123');
+    await tester.tap(find.text('إنشاء حساب الدخول'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('أكّد بريدك الإلكتروني'), findsOneWidget);
+    expect(find.textContaining('صلاحيات تشغيلية'), findsOneWidget);
+    api.close();
+  });
+}

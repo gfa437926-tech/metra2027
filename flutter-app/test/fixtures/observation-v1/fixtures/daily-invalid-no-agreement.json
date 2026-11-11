@@ -1,0 +1,16 @@
+{
+  "id": "daily-invalid-no-agreement",
+  "observationType": "daily",
+  "reportType": "06utc",
+  "responsibilityAgreement": false,
+  "values": {
+    "minTemp": "08.0",
+    "maxTemp": "19.5",
+    "precipitation": "000.0",
+    "snowThickness": "000"
+  },
+  "expectValid": false,
+  "expectErrorFields": [
+    "responsibilityAgreement"
+  ]
+}

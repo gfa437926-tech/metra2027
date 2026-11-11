@@ -1,6 +1,10 @@
+import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { ObservationApiService, StationDirectoryItem } from '../../core/api/observation-api.service';
+import { dailyObservedAtForReport, getConfirmedDailySubmission, getOrCreateDailySubmissionKey, getSubmissionErrorMessage } from './daily-submission.utils';
+import { DailyOfflineQueue, DailyOfflineSubmission } from '../../core/offline/daily-offline-queue';
+import { validateDailyObservation } from '../observations/daily-observation-contract.cjs';
 
 type DailyStatus = 'draft' | 'submitted';
 interface DailyPreview { reference: string; date: string; reportType: string; station: string; status: DailyStatus; values: Record<string,string>; }
@@ -8,22 +12,30 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
 @Component({
   standalone: true,
   selector: 'metra-daily-reports',
-  imports: [CommonModule],
+  imports: [RouterLink, CommonModule],
   template: `
     <div class="page" dir="rtl">
-      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
-      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>الإرسال الفعلي متاح عند اكتمال إعداد API وSupabase واختيار محطة مخوّلة؛ لا تُعرض رسالة نجاح قبل تأكيد الخادم.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <header class="page-head"><div class="head-icon"><i class="fa-regular fa-calendar-days"></i></div><div><h1>النشرات اليومية</h1>
+        <p class="workflow-jump"><a routerLink="/observations/workflow" [queryParams]="selectedStationId ? { stationId: selectedStationId } : {}">مراجعة النشرات اليومية</a></p><p>تسجيل ملخص الحالة الجوية وعناصر الرصد اليومية</p></div><span class="preview-tag"><i class="fa-solid fa-cloud-arrow-up"></i> إرسال محمي عبر API</span></header>
+      <div class="demo-warning"><i class="fa-solid fa-circle-info"></i><div><strong>المسودات المحلية للمعاينة فقط.</strong><span>زر «حفظ مسودة محلية» لا يحفظ على الخادم. أما «إرسال النشرة للمراجعة» فيستخدم API ويتطلب تأكيد الخادم ومعرّفاً فعلياً للنشرة.</span><span *ngIf="stationsError">{{ stationsError }}</span></div></div>
+      <div class="validation-box" role="status" aria-live="polite"><strong>{{ isOnline ? 'متصل بالشبكة' : 'غير متصل بالشبكة' }}</strong><span> · {{ pendingOfflineCount }} نشرة بانتظار المزامنة</span><span *ngIf="blockedOfflineCount"> · {{ blockedOfflineCount }} نشرة متوقفة بسبب رفض الخادم</span><button *ngIf="blockedOfflineCount" type="button" (click)="retryBlockedOffline()">إعادة محاولة النشرات المتوقفة</button><ul *ngIf="blockedOfflineItems.length" class="offline-blocked-list"><li *ngFor="let item of blockedOfflineItems"><strong>{{ item.stationName }} — {{ item.reportDate }} ({{ item.reportType }})</strong><span>{{ item.lastError || 'رفض الخادم النشرة دون تفاصيل إضافية.' }}</span></li></ul><span *ngIf="syncing"> · جارٍ الإرسال تلقائياً...</span><span *ngIf="syncMessage"> · {{ syncMessage }}</span></div>
+      <section class="panel preview-panel" *ngIf="pendingOfflineItems.length">
+        <h2><i class="fa-solid fa-cloud-arrow-down"></i> نشرات محفوظة على هذا الجهاز</h2>
+        <p>يمكنك إعادة فتح أي نشرة معلّقة ومراجعة حقولها قبل المزامنة. إعادة الفتح لا ترسل النشرة ولا تحذفها من قائمة الانتظار.</p>
+        <article class="preview-row" *ngFor="let item of pendingOfflineItems">
+          <div><strong>{{ item.stationName }} — {{ item.reportDate }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.state === 'blocked' ? 'تحتاج إلى مراجعة' : 'بانتظار المزامنة' }}</p></div>
+          <button type="button" class="secondary" (click)="restoreOfflineSubmission(item, dailyForm)">إعادة فتح النشرة</button>
+        </article>
+      </section>
       <section class="type-panel">
         <strong>نوع التقرير</strong>
         <div class="type-options">
-          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص يومي بتاريخ اليوم السابق</label>
-          <label><input type="radio" name="reportType" value="06utc" [checked]="reportType === '06utc'" (change)="setType('06utc')"> 06 UTC</label>
-          <label><input type="radio" name="reportType" value="18utc" [checked]="reportType === '18utc'" (change)="setType('18utc')"> 18 UTC</label>
+          <label><input type="radio" name="reportType" value="24h" [checked]="reportType === '24h'" (change)="setType('24h')"> ملخص يومي لمدة 24 ساعة</label>
         </div>
         <p>{{ typeDescription }}</p>
       </section>
 
-      <form #dailyForm (submit)="submit($event, dailyForm)">
+      <form #dailyForm (submit)="submitToServer($event, dailyForm)">
         <section class="panel"><h2><i class="fa-solid fa-calendar-check"></i> معلومات النشرة</h2><div class="grid">
           <label>التاريخ<input type="date" name="currentDate" [value]="today" required></label>
           <label>المحطة<select name="stationId" required [value]="selectedStationId" (change)="setStation($any($event.target).value)"><option value="">اختر المحطة</option><option *ngFor="let station of stations" [value]="station.id">{{ station.name_ar }} — {{ station.local_station_code || station.wmo_station_id || station.station_type }}</option></select><input type="hidden" name="station" [value]="selectedStationName"><small *ngIf="stationsLoading">جارٍ تحميل المحطات...</small></label>
@@ -34,7 +46,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <div class="daily-field"><label>القيمة الصغرى في النهايات (سْ)<input #minTempField name="minTemp" maxlength="6" placeholder="-05.3" required (blur)="formatField($event)"><small>الصيغة -dd.d أو dd.d، أو # عند عدم توفر البيانات</small></label><div class="field-actions"><button type="button" class="sign-toggle" (click)="toggleTemperatureSign(minTempField)" [disabled]="minTempField.value === '#'">{{ minTempField.value.startsWith('-') ? '+' : '−' }}</button><button type="button" class="no-data-btn" [class.active]="isNoData('minTemp')" (click)="toggleNoData(minTempField, 'minTemp')">{{ isNoData('minTemp') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>القيمة العظمى في النهايات (سْ)<input #maxTempField name="maxTemp" maxlength="6" placeholder="25.7" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="sign-toggle" (click)="toggleTemperatureSign(maxTempField)" [disabled]="maxTempField.value === '#'">{{ maxTempField.value.startsWith('-') ? '+' : '−' }}</button><button type="button" class="no-data-btn" [class.active]="isNoData('maxTemp')" (click)="toggleNoData(maxTempField, 'maxTemp')">{{ isNoData('maxTemp') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>كمية الهطول لأقرب مم<input #precipitationField name="precipitation" maxlength="5" placeholder="012.5" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('precipitation')" (click)="toggleNoData(precipitationField, 'precipitation')">{{ isNoData('precipitation') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
-          <div class="daily-field"><label>أكبر سماكة ثلج لأقرب سم<input #snowThicknessField name="snowThickness" maxlength="3" placeholder="015" required (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('snowThickness')" (click)="toggleNoData(snowThicknessField, 'snowThickness')">{{ isNoData('snowThickness') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
+          <div class="daily-field"><label>أكبر سماكة ثلج لأقرب سم<input #snowThicknessField name="snowThickness" maxlength="3" placeholder="015" (blur)="formatField($event)"></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('snowThickness')" (click)="toggleNoData(snowThicknessField, 'snowThickness')">{{ isNoData('snowThickness') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
           <div class="daily-field"><label>الأثر (T)<input #precipitationTraceField name="precipitationTrace" maxlength="1" placeholder="T" (blur)="formatField($event)"><small>الحرف T أو t عند وجود أثر فقط</small></label><div class="field-actions"><button type="button" class="no-data-btn" [class.active]="isNoData('precipitationTrace')" (click)="toggleNoData(precipitationTraceField, 'precipitationTrace')">{{ isNoData('precipitationTrace') ? 'إعادة إدخال البيانات' : 'لا تتوفر معلومات' }}</button></div></div>
         </div></section>
 
@@ -67,7 +79,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
           <button class="test" type="button" (click)="fillTestData(dailyForm)"><i class="fa-solid fa-vial"></i> إدخال بيانات تجريبية</button>
           <button class="info" type="button" (click)="previewData(dailyForm)"><i class="fa-solid fa-eye"></i> معاينة التقرير</button>
           <a class="whatsapp" *ngIf="whatsAppUrl" [href]="whatsAppUrl" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> مشاركة عبر واتساب</a>
-          <button class="primary" type="button" [disabled]="saving || !apiReady || !selectedStationId" (click)="submitToServer($event, dailyForm)"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button>
+          <button class="primary" type="button" [disabled]="saving || !selectedStationId" (click)="submitToServer($event, dailyForm)"><i class="fa-solid fa-paper-plane"></i> {{ saving ? "جارٍ الإرسال..." : "إرسال النشرة للمراجعة" }}</button>
           <button class="secondary" type="reset" (click)="resetState(dailyForm)">مسح الحقول</button>
         </div>
       </form>
@@ -76,7 +88,7 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
       <div class="validation-box error-box" *ngIf="issues.length"><strong><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات التحقق</strong><ul><li *ngFor="let issue of issues">{{ issue }}</li></ul></div>
       <div class="validation-box success-box" *ngIf="message" role="status"><i class="fa-solid fa-circle-check"></i> {{ message }}</div>
 
-      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> مسودات المعاينة المحلية</h2>
+      <section class="panel preview-panel" *ngIf="previews.length"><h2><i class="fa-solid fa-inbox"></i> سجل هذه الجلسة</h2><p class="footnote">هذه القائمة للعرض داخل الصفحة فقط؛ النشرات المرسلة تحمل معرّفاً أعاده الخادم، أما المسودات المحلية فلا تُحفظ في قاعدة البيانات.</p>
         <article class="preview-row" *ngFor="let item of previews"><div><strong>{{ item.reference }}</strong><p>{{ typeLabel(item.reportType) }} · {{ item.station }} · {{ item.date }}</p></div><span class="status" [class.submitted]="item.status === 'submitted'">{{ item.status === 'draft' ? 'مسودة' : 'بانتظار المراجعة' }}</span></article>
       </section>
       <p class="footnote">تمت مواءمة الحقول المطلوبة وأنماط الترميز مع نموذج daily.html وملف daily_validation.js الأصلي. لا تزال هذه المعاينة بحاجة إلى اختبار ميداني ومطابقة قاعدة البيانات قبل التشغيل الفعلي.</p>
@@ -86,15 +98,172 @@ interface DailyPreview { reference: string; date: string; reportType: string; st
     :host{display:block;font-family:'Tajawal','Segoe UI',Tahoma,sans-serif;color:#2c3e50}.page{max-width:1500px;margin:auto}.page-head{display:flex;align-items:center;gap:18px;background:linear-gradient(135deg,#3498db,#2471a3);color:#fff;padding:24px 28px;border-radius:16px;margin-bottom:18px;box-shadow:0 8px 24px #3498db30}.head-icon{width:62px;height:62px;border-radius:15px;background:#ffffff25;display:grid;place-items:center;font-size:30px}.page-head h1{margin:0 0 5px;font-size:27px}.page-head p{margin:0;opacity:.9}.preview-tag{margin-right:auto;background:#fff3cd;color:#856404;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;white-space:nowrap}.demo-warning{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin-bottom:18px;border-radius:9px;background:#eaf4fb;border-right:4px solid #3498db;color:#245575}.demo-warning>i{font-size:19px}.demo-warning div{display:grid;gap:4px}.demo-warning span{font-size:12px}.type-panel{background:#fff;border:1px solid #e5eaee;border-radius:12px;padding:17px 20px;margin-bottom:18px}.type-options{display:flex;flex-wrap:wrap;gap:18px;margin:12px 0}.type-options label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}.type-panel p{color:#2980b9;font-size:12px}.panel{background:#fff;border:1px solid #e5eaee;border-radius:14px;padding:22px;margin-bottom:18px;box-shadow:0 5px 18px #2638490a}.panel h2{font-size:18px;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid #edf1f4;color:#34495e}.panel h2 i{color:#3498db;margin-left:9px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.daily-field{display:flex;flex-direction:column;gap:7px;min-width:0}.daily-field>label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.field-actions{display:flex;gap:7px;flex-wrap:wrap}.no-data-btn,.sign-toggle{border:1px solid #c8dce8;border-radius:7px;background:#f3f8fb;color:#28658a;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}.no-data-btn.active{background:#e8f5ec;border-color:#8ac79d;color:#267443}.sign-toggle{min-width:42px;font-weight:800}.grid label,.notes-label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#536471}.grid input,.notes-label textarea{width:100%;box-sizing:border-box;border:1px solid #d9e1e7;border-radius:8px;padding:11px 12px;background:#fbfcfd;color:#2c3e50;font:inherit;font-weight:400;outline:none}.grid input:focus,.notes-label textarea:focus{border-color:#3498db;box-shadow:0 0 0 3px #3498db20}.grid small{font-size:10px;color:#84919a;font-weight:400}.phenomena{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px}.phenomena label{display:flex;align-items:center;gap:8px;background:#f7f9fb;padding:11px;border-radius:8px;font-size:13px}.agreement{display:flex;align-items:center;gap:9px;background:#f4f8fb;padding:14px 16px;border-radius:9px;margin:15px 0;font-size:13px}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions .test,.actions .info,.actions .whatsapp{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px}.actions .test{background:#fff3cd;color:#856404}.actions .info{background:#d9edf7;color:#245575}.actions .whatsapp{background:#25d366;color:#fff}.report-preview{white-space:pre-wrap;direction:rtl;text-align:right;background:#f7f9fb;border:1px solid #e5eaee;border-radius:8px;padding:14px;font:13px/1.8 inherit;max-height:420px;overflow:auto}.actions button,.send-btn{border:0;border-radius:9px;padding:12px 20px;font:inherit;font-weight:700;cursor:pointer}.primary,.send-btn{background:#2980b9;color:#fff}.secondary{background:#ecf0f1;color:#34495e}.validation-box{margin-top:16px;padding:14px 16px;border-radius:9px;font-size:13px}.error-box{background:#fff0ef;border-right:4px solid #dc3545;color:#9d2929}.error-box ul{margin:8px 0 0;padding-right:20px}.success-box{background:#eaf7ef;border-right:4px solid #27ae60;color:#218348}.preview-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #edf0f2}.preview-row>div{flex:1}.preview-row p{margin:5px 0 0;color:#84919a;font-size:12px}.status{padding:5px 10px;border-radius:20px;background:#edf0f2;color:#59636b;font-size:11px}.status.submitted{background:#fff3cd;color:#946200}.footnote{font-size:12px;color:#8a969e;margin-top:18px}@media(max-width:850px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.phenomena{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.grid,.phenomena{grid-template-columns:1fr}.page-head{padding:18px;flex-wrap:wrap}.page-head h1{font-size:22px}.head-icon{width:50px;height:50px}.panel{padding:16px}.actions{flex-direction:column}.preview-row{align-items:flex-start;flex-wrap:wrap}}
   `]
 })
-export class DailyReportsComponent {
+export class DailyReportsComponent implements OnDestroy {
   readonly api = inject(ObservationApiService);
   stations: StationDirectoryItem[] = [];
   stationsLoading = false;
   stationsError = '';
   selectedStationId = '';
   saving = false;
+  private pendingSubmission: { fingerprint: string; idempotencyKey: string } | null = null;
+  private readonly pendingSubmissionStorageKey = 'metra.daily.pending-submission.v1';
+  private readonly offlineQueue = new DailyOfflineQueue();
+  private readonly syncOwner = 'daily-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+  private syncChannel?: BroadcastChannel;
+  private readonly handleSyncAvailable = (event: MessageEvent<{ owner?: string; type?: string; retry?: boolean }>): void => { if (event.data?.owner === this.syncOwner) return; if (event.data?.type === 'network-online') { this.isOnline = true; void this.flushOfflineQueue(); return; } if (event.data?.type === 'lease-released' && event.data.retry !== false && this.isOnline) void this.flushOfflineQueue(); };
+  isOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
+  syncing = false;
+  private syncRequested = false;
+  pendingOfflineCount = 0;
+  pendingOfflineItems: DailyOfflineSubmission[] = [];
+  blockedOfflineCount = 0;
+  blockedOfflineItems: DailyOfflineSubmission[] = [];
+  syncMessage = '';
 
-  constructor() { void this.loadStations(); }
+  constructor() {
+    void this.loadStations();
+    void this.refreshOfflineCount();
+    if (typeof window !== 'undefined') {
+      if (typeof BroadcastChannel !== 'undefined') {
+        this.syncChannel = new BroadcastChannel('metra-offline-outbox-sync');
+        this.syncChannel.addEventListener('message', this.handleSyncAvailable);
+      }
+      window.addEventListener('online', this.handleOnline);
+      window.addEventListener('offline', this.handleOffline);
+      if (navigator.onLine) void this.flushOfflineQueue();
+    }
+  }
+
+  private readonly handleOnline = (): void => {
+    this.isOnline = true;
+    this.syncChannel?.postMessage({ type: 'network-online', owner: this.syncOwner, at: Date.now() });
+    void this.flushOfflineQueue();
+  };
+  private readonly handleOffline = (): void => { this.isOnline = false; };
+
+  ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.handleOnline);
+      window.removeEventListener('offline', this.handleOffline);
+    }
+    this.syncChannel?.removeEventListener('message', this.handleSyncAvailable);
+    this.syncChannel?.close();
+  }
+
+  private async refreshOfflineCount(): Promise<void> {
+    try { const items = (await this.offlineQueue.list()).filter(x => (x.observationType ?? 'daily') === 'daily'); this.pendingOfflineItems = items.filter(x => x.state === 'pending' || x.state === 'blocked'); this.pendingOfflineCount = items.filter(x => x.state === 'pending').length; this.blockedOfflineItems = items.filter(x => x.state === 'blocked'); this.blockedOfflineCount = this.blockedOfflineItems.length; }
+    catch (error) { this.syncMessage = error instanceof Error ? error.message : 'تعذر قراءة صندوق الإرسال المحلي.'; }
+  }
+
+  restoreOfflineSubmission(item: DailyOfflineSubmission, form: HTMLFormElement): void {
+    const payload = item.payload ?? {};
+    const values = payload['values'] && typeof payload['values'] === 'object'
+      ? payload['values'] as Record<string, unknown> : {};
+    this.reportType = item.reportType as typeof this.reportType;
+    this.selectedStationId = item.stationId;
+    const setValue = (name: string, value: unknown): void => {
+      const field = form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+      if (field && typeof value === 'string') field.value = value;
+    };
+    setValue('currentDate', item.reportDate);
+    setValue('stationId', item.stationId);
+    setValue('observer', typeof payload['observerName'] === 'string' ? payload['observerName'] : '');
+    setValue('observerNotes', typeof payload['observerNotes'] === 'string' ? payload['observerNotes'] : '');
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(name) as HTMLInputElement | null;
+      if (field && value === '#') this.toggleNoData(field, name);
+      else setValue(name, value);
+    }
+    const agreement = form.elements.namedItem('responsibilityAgreement') as HTMLInputElement | null;
+    if (agreement) agreement.checked = payload['responsibilityAgreement'] === true;
+    const selectedPhenomena = Array.isArray(payload['phenomena']) ? payload['phenomena'] : [];
+    for (const phenomenon of this.phenomena) {
+      const field = form.elements.namedItem(phenomenon.id) as HTMLInputElement | null;
+      if (field) field.checked = selectedPhenomena.includes(phenomenon.id);
+    }
+    this.noDataFields.clear();
+    this.issues = [];
+    this.clearPreview();
+    this.message = 'أُعيد فتح النشرة المحفوظة محلياً. عدّلها عند الحاجة ثم أرسلها عند توفر الاتصال؛ ما زالت محفوظة في قائمة الانتظار.';
+  }
+
+  async retryBlockedOffline(): Promise<void> {
+    const items = await this.offlineQueue.list();
+    for (const item of items) if ((item.observationType ?? 'daily') === 'daily' && item.state === 'blocked') {
+      await this.offlineQueue.update({ ...item, state: 'pending', lastError: undefined });
+    }
+    await this.refreshOfflineCount();
+    if (this.isOnline && this.apiReady) await this.flushOfflineQueue();
+  }
+
+  private async flushOfflineQueue(): Promise<void> {
+    if (this.syncing) { this.syncRequested = true; return; }
+    if (!this.isOnline || !this.apiReady) return;
+    this.syncing = true;
+    this.syncMessage = '';
+    let leaseAcquired = false;
+    let stoppedForTransientFailure = false;
+    try {
+      leaseAcquired = await this.offlineQueue.acquireSyncLease(this.syncOwner);
+      if (!leaseAcquired) return;
+      // Re-read the shared outbox after each item: the queue can receive
+      // records from another tab while a request is in flight.
+      while (this.isOnline) {
+        const item = (await this.offlineQueue.list()).find(candidate => candidate.state === 'pending');
+        if (!item) break;
+        // The shared lease owner drains both daily and hourly records.
+        if (!(await this.offlineQueue.renewSyncLease(this.syncOwner))) break;
+        try {
+          const result = await this.api.submitObservation(item.stationId, {
+            idempotencyKey: item.idempotencyKey,
+            observationType: item.observationType ?? 'daily',
+            observedAt: item.observedAt,
+            payload: item.payload,
+            submit: true
+          });
+          const receipt = getConfirmedDailySubmission(result);
+          if (!receipt) throw new Error('لم يصل إيصال حفظ مؤكد؛ ستبقى النشرة في قائمة الانتظار.');
+          await this.offlineQueue.remove(item.idempotencyKey);
+          if (this.pendingSubmission?.idempotencyKey === item.idempotencyKey) this.clearPendingSubmission();
+          this.previews.unshift({ reference: receipt.id, date: item.reportDate,
+            reportType: item.reportType, station: item.stationName, status: 'submitted', values: {} });
+        } catch (error) {
+          const response = error && typeof error === 'object' && 'status' in error
+            ? Number((error as { status: unknown }).status) : 0;
+          if (response === 400 || response === 403 || response === 422) {
+            await this.offlineQueue.update({ ...item, state: 'blocked', lastError: getSubmissionErrorMessage(error, 'رفض الخادم النشرة؛ راجع البيانات أو الصلاحيات.') });
+          } else {
+            await this.offlineQueue.update({ ...item, state: 'pending', attempts: item.attempts + 1,
+              lastError: getSubmissionErrorMessage(error, 'تعذر الاتصال بالخادم.') });
+            stoppedForTransientFailure = true;
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      this.syncMessage = error instanceof Error ? error.message : 'تعذرت المزامنة.';
+    } finally {
+      if (leaseAcquired) {
+        try {
+          await this.offlineQueue.releaseSyncLease(this.syncOwner);
+          this.syncChannel?.postMessage({ type: 'lease-released', owner: this.syncOwner, at: Date.now(), retry: !stoppedForTransientFailure });
+        } catch { /* lease expires automatically */ }
+      }
+      this.syncing = false;
+      await this.refreshOfflineCount();
+      const pendingRemain = (await this.offlineQueue.list()).some(item => item.state === 'pending');
+      if (this.isOnline && this.apiReady && !stoppedForTransientFailure &&
+          (this.syncRequested || pendingRemain)) {
+        this.syncRequested = false;
+        // When a competing tab owns the lease, rely on its explicit release
+        // message. A transient failure releases the lease with retry=false,
+        // preventing another tab from immediately repeating the failed POST.
+        if (leaseAcquired || !this.syncChannel) {
+          window.setTimeout(() => void this.flushOfflineQueue(), leaseAcquired ? 150 : 500);
+        }
+      }
+    }
+  }
 
   get apiReady(): boolean { return this.api.isConfigured; }
   get selectedStationName(): string {
@@ -103,16 +272,27 @@ export class DailyReportsComponent {
   setStation(value: string): void { this.selectedStationId = value; }
 
   private async loadStations(): Promise<void> {
-    if (!this.apiReady) {
-      this.stationsError = 'الاتصال الفعلي غير مهيأ: يلزم ضبط API وSupabase.';
+    try {
+      const cached = await this.offlineQueue.getCachedStations<StationDirectoryItem>();
+      if (cached.length) this.stations = cached;
+    } catch {
+      // IndexedDB may be disabled; online station loading can still work.
+    }
+    if (!this.apiReady || !this.isOnline) {
+      this.stationsError = this.stations.length
+        ? 'يتم استخدام دليل المحطات المحفوظ محلياً؛ ستتم مزامنته عند عودة الاتصال.'
+        : 'لا يوجد اتصال أو إعداد API؛ اتصل بالشبكة مرة واحدة على الأقل لتحميل دليل المحطات.';
       return;
     }
     this.stationsLoading = true;
     try {
       this.stations = await this.api.getAllStations();
-      if (!this.stations.length) this.stationsError = 'لا توجد محطات تشغيلية متاحة في الدليل.';
+      await this.offlineQueue.cacheStations(this.stations);
+      this.stationsError = this.stations.length ? '' : 'لا توجد محطات تشغيلية متاحة في الدليل.';
     } catch {
-      this.stationsError = 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
+      this.stationsError = this.stations.length
+        ? 'تعذر تحديث الدليل؛ نستخدم آخر نسخة محلية محفوظة.'
+        : 'تعذر تحميل المحطات؛ تحقق من الدخول واتصال API وصلاحيات الدليل.';
     } finally {
       this.stationsLoading = false;
     }
@@ -123,47 +303,126 @@ export class DailyReportsComponent {
     this.issues = [];
     this.message = '';
     if (this.saving) return;
-    if (!this.apiReady) { this.message = 'لم يتم الإرسال: إعدادات API أو Supabase غير مكتملة.'; return; }
     if (!this.selectedStationId) { this.issues = ['اختر محطة من دليل المحطات قبل الإرسال.']; return; }
     if (!form.reportValidity()) return;
     const values = this.readForm(form);
     this.issues = this.validateValues(values);
     if (this.issues.length) return;
     const stationName = this.selectedStationName;
-    const payload = { reportType: this.reportType, stationName, observerName: values['observer'] ?? '', values };
+    // Only canonical meteorological fields belong in payload.values.
+    // Form controls such as date, station, observer, agreement and phenomena
+    // are envelope metadata and must never leak into the validator's field map.
+    const fieldNames = [
+      'minTemp', 'maxTemp', 'precipitation', 'precipitationTrace',
+      'evaporation', 'sunshineDuration', 'sunshinePercentage',
+      'maxGustSpeed', 'maxGustDirection', 'maxGustTime',
+      'maxHumidity', 'maxHumidityTime', 'minHumidity', 'minHumidityTime'
+    ] as const;
+    const canonicalValues: Record<string, string> = {};
+    for (const name of fieldNames) {
+      const value = values[name]?.trim();
+      if (value) canonicalValues[name] = value;
+    }
+    const phenomena = this.phenomena
+      .filter(item => values[item.id] === '1')
+      .map(item => item.id);
+    const payload = {
+      reportType: this.reportType,
+      responsibilityAgreement: values['responsibilityAgreement'] === 'on',
+      stationName,
+      observerName: values['observer'] ?? '',
+      observerNotes: values['observerNotes'] ?? '',
+      phenomena,
+      values: canonicalValues
+    };
+    const reportDate = values['currentDate'] ?? this.today;
+    const observedAt = dailyObservedAtForReport(reportDate, this.reportType);
+    // Reuse the same idempotency key after an ambiguous network failure.
+    // If any submitted value changes, start a distinct logical submission.
+    const submissionFingerprint = JSON.stringify({
+      stationId: this.selectedStationId,
+      observationType: 'daily',
+      observedAt,
+      payload,
+      submit: true
+    });
     this.saving = true;
     try {
+      const idempotencyKey = await this.getOrCreateSubmissionKey(submissionFingerprint);
+      if (!this.isOnline || !this.apiReady) {
+        await this.offlineQueue.enqueue({
+          idempotencyKey, observationType: 'daily', stationId: this.selectedStationId, stationName,
+          reportDate: values['currentDate'] ?? this.today, reportType: this.reportType,
+          observedAt, payload, createdAt: new Date().toISOString(), attempts: 0, state: 'pending'
+        });
+        await this.refreshOfflineCount();
+        this.message = this.isOnline
+          ? 'حُفظت النشرة محلياً؛ ستُرسل بعد تهيئة API وتوفر الاتصال. لم تُعتمد بعد.'
+          : 'تم حفظ النشرة محلياً داخل صندوق الإرسال؛ ستُرسل تلقائياً عند عودة الشبكة. لا تعتبر مرسلة بعد.';
+        return;
+      }
       const result = await this.api.submitObservation(this.selectedStationId, {
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey,
         observationType: 'daily',
-        observedAt: new Date((values['currentDate'] ?? this.today) + 'T00:00:00.000Z').toISOString(),
+        observedAt,
         payload,
         submit: true
       });
-      const id = result && typeof result === 'object' && 'id' in result
-        ? String((result as { id: unknown }).id) : '';
-      if (!id) throw new Error('استجابة الخادم لا تحتوي معرّف النشرة المحفوظة.');
+      const confirmed = getConfirmedDailySubmission(result);
+      if (!confirmed) {
+        throw new Error('لم يؤكد الخادم حالة submitted ومعرّف UUID v4 للنشرة؛ لم يتم إعلان نجاح الحفظ.');
+      }
+      const id = confirmed.id;
       this.previews.unshift({ reference: id, date: values['currentDate'] ?? this.today,
         reportType: this.reportType, station: stationName, status: 'submitted', values });
       this.message = 'تم حفظ النشرة وإرسالها للمراجعة. رقم النشرة: ' + id;
+      this.clearPendingSubmission();
       this.resetState(form);
       form.reset();
       this.selectedStationId = '';
     } catch (error) {
-      this.message = error instanceof Error ? 'لم يتم تأكيد الحفظ: ' + error.message : 'تعذر إرسال النشرة إلى الخادم.';
+      const body = error && typeof error === 'object' && 'error' in error
+        ? (error as { error?: unknown }).error : null;
+      if (body && typeof body === 'object' && 'issues' in body &&
+          Array.isArray((body as { issues: unknown }).issues)) {
+        this.issues = (body as { issues: Array<{ field?: unknown; message?: unknown }> }).issues
+          .map(issue => `${typeof issue.field === 'string' ? issue.field : 'حقل'}: ${typeof issue.message === 'string' ? issue.message : 'قيمة غير صالحة'}`);
+        this.message = 'رفض الخادم النشرة؛ لم يتم تأكيد حفظها. صحح الحقول الموضحة ثم أعد الإرسال.';
+      } else if (body && typeof body === 'object' && 'error' in body &&
+          typeof (body as { error: unknown }).error === 'string') {
+        this.message = 'رفض الخادم الإرسال: ' + (body as { error: string }).error;
+      } else {
+        this.message = error instanceof Error
+          ? 'لم يتم تأكيد الحفظ: ' + error.message
+          : 'تعذر إرسال النشرة إلى الخادم؛ لم يتم تأكيد الحفظ.';
+      }
     } finally {
       this.saving = false;
     }
   }
 
-  readonly today = this.localDate(new Date());
-  private localDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  private async getOrCreateSubmissionKey(fingerprint: string): Promise<string> {
+    const pending = await getOrCreateDailySubmissionKey(fingerprint, this.pendingSubmission);
+    this.pendingSubmission = pending;
+    return pending.idempotencyKey;
   }
 
+  private clearPendingSubmission(): void {
+    this.pendingSubmission = null;
+    try {
+      sessionStorage.removeItem(this.pendingSubmissionStorageKey);
+    } catch {
+      // Storage cleanup is best-effort; a later fingerprint mismatch rotates the key.
+    }
+  }
+
+  readonly today = this.utcDate(new Date());
+  private utcDate(date: Date): string {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
   readonly phenomena = [
     {id:'thunderstorm',label:'عواصف رعدية'},{id:'hail',label:'برد'},{id:'snow',label:'ثلوج'},
@@ -180,9 +439,7 @@ export class DailyReportsComponent {
   whatsAppUrl = '';
 
   get typeDescription(): string {
-    if (this.reportType === '06utc') return 'نشرة الساعة 06:00 UTC؛ تُطلب الحرارة والهطول والثلوج فقط من حقول الملخص.';
-    if (this.reportType === '18utc') return 'نشرة الساعة 18:00 UTC؛ تُطلب الحرارة والهطول والثلوج فقط من حقول الملخص.';
-    return 'ملخص 24 ساعة؛ جميع عناصر الحرارة والهطول والتبخر والسطوع والرياح والرطوبة مطلوبة.';
+    return 'ملخص يومي لمدة 24 ساعة؛ تقارير 06:00 UTC و18:00 UTC تُسجَّل ضمن النشرات الساعية وفق العقد المعتمد.';
   }
 
   setType(value: string): void { this.reportType = value; this.issues = []; this.message = ''; }
@@ -211,7 +468,7 @@ export class DailyReportsComponent {
     field.value = field.value.startsWith('-') ? field.value.slice(1) : '-' + field.value;
   }
 
-  typeLabel(value: string): string { return value === '24h' ? 'ملخص 24 ساعة' : value === '06utc' ? 'رصد 06 UTC' : 'رصد 18 UTC'; }
+  typeLabel(_value: string): string { return 'ملخص 24 ساعة'; }
   resetState(form?: HTMLFormElement): void {
     this.issues = []; this.message = ''; this.noDataFields.clear(); this.clearPreview();
     form?.querySelectorAll<HTMLInputElement>('[data-original-pattern], [data-original-required]').forEach(field => {
@@ -267,42 +524,14 @@ export class DailyReportsComponent {
   }
 
   private validateValues(values: Record<string,string>): string[] {
-    const issues: string[] = [];
-    const required = this.reportType === '24h'
-      ? ['minTemp','maxTemp','precipitation','snowThickness','evaporation','sunshineDuration','sunshinePercentage','maxGustSpeed','maxGustDirection','maxGustTime','maxHumidity','maxHumidityTime','minHumidity','minHumidityTime']
-      : ['minTemp','maxTemp','precipitation','snowThickness'];
-    for (const key of required) if (!values[key]) issues.push(this.label(key) + ': هذا الحقل مطلوب لهذا النوع من التقرير.');
-
-    const rules: Record<string,{pattern:RegExp,min:number,max:number,label:string}> = {
-      minTemp:{pattern:/^-?\d{2}\.\d$/,min:-20,max:50,label:'الحرارة الصغرى'},
-      maxTemp:{pattern:/^-?\d{2}\.\d$/,min:-20,max:50,label:'الحرارة العظمى'},
-      precipitation:{pattern:/^\d{3}\.\d$/,min:0,max:999.9,label:'الهطول'},
-      snowThickness:{pattern:/^\d{3}$/,min:0,max:999,label:'سماكة الثلج'},
-      evaporation:{pattern:/^\d{2}\.\d$/,min:0,max:99.9,label:'التبخر'},
-      sunshineDuration:{pattern:/^\d{2}\.\d$/,min:0,max:24,label:'مدة سطوع الشمس'},
-      sunshinePercentage:{pattern:/^\d{3}$/,min:0,max:100,label:'نسبة سطوع الشمس'},
-      maxGustSpeed:{pattern:/^\d{2}$/,min:0,max:36,label:'سرعة هبات الرياح'},
-      maxGustDirection:{pattern:/^\d{2}$/,min:0,max:36,label:'اتجاه هبات الرياح'},
-      maxGustTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الهبات القصوى'},
-      maxHumidity:{pattern:/^\d{3}$/,min:0,max:100,label:'الرطوبة العظمى'},
-      minHumidity:{pattern:/^\d{2}$/,min:0,max:99,label:'الرطوبة الصغرى'},
-      maxHumidityTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الرطوبة العظمى'},
-      minHumidityTime:{pattern:/^\d{2}\.\d$/,min:0,max:23.9,label:'وقت الرطوبة الصغرى'}
-    };
-    for (const [key,rule] of Object.entries(rules)) {
-      const value = values[key] ?? '';
-      if (!value || value === '#') continue;
-      const numeric = Number(value);
-      if (!rule.pattern.test(value) || !Number.isFinite(numeric) || numeric < rule.min || numeric > rule.max)
-        issues.push(rule.label + ': التنسيق أو القيمة خارج المجال المقبول.');
-    }
-    if (values['precipitationTrace'] && values['precipitationTrace'] !== '#' && !/^[Tt]$/.test(values['precipitationTrace']))
-      issues.push('أثر الهطول: أدخل T فقط أو اترك الحقل فارغاً.');
-    if (values['minTemp'] && values['maxTemp'] && values['minTemp'] !== '#' && values['maxTemp'] !== '#' && Number(values['maxTemp']) < Number(values['minTemp']))
-      issues.push('درجة الحرارة العظمى يجب أن تكون أكبر من أو تساوي درجة الحرارة الصغرى.');
-    if (values['maxHumidity'] && values['minHumidity'] && values['maxHumidity'] !== '#' && values['minHumidity'] !== '#' && Number(values['minHumidity']) > Number(values['maxHumidity']))
-      issues.push('الرطوبة الصغرى لا يمكن أن تتجاوز الرطوبة العظمى.');
-    return issues;
+    const errors = validateDailyObservation(
+      this.reportType,
+      values,
+      values['responsibilityAgreement'] === 'on'
+    );
+    return Object.entries(errors).map(
+      ([key, message]) => this.label(key) + ': ' + message
+    );
   }
 
   private readForm(form: HTMLFormElement): Record<string,string> {

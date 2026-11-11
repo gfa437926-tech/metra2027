@@ -116,3 +116,18 @@ Authority membership administration and individual permission-grant/revoke
 administration are not exposed through this station workflow. Permission
 grants remain separate, explicitly approved records; no assignment endpoint
 creates or broadens a permission grant.
+
+## Electronic Auditor permissions (proposed — not wired)
+
+| Code | Intent |
+|---|---|
+| `electronic_auditor.case.read` | View audit cases for authorized stations |
+| `electronic_auditor.case.create` | Open new chart audit case |
+| `electronic_auditor.image.upload` | Upload original chart image |
+| `electronic_auditor.extract.run` | Calibration and curve extraction |
+| `electronic_auditor.compare.run` | Compare to electronic observations + engines |
+| `electronic_auditor.decide` | Record audit decision (does not mutate observations) |
+| `electronic_auditor.report.read` | Read audit report |
+
+These codes are **documentation only** until owner approval and server enforcement tests exist.
+Observer / forecasting read rights do **not** imply `electronic_auditor.decide`.

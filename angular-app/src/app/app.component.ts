@@ -21,38 +21,67 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
         <section class="user-card">
           <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
           <div class="user-name" id="sidebarUser">{{ currentUserEmail || 'لم يتم تسجيل الدخول' }}</div>
-          <div class="user-details" id="sidebarStation">{{ currentUserEmail ? 'جلسة Supabase نشطة' : 'وضع العرض / غير متصل' }}</div>
+          <div class="user-details" id="sidebarStation">{{ currentUserEmail ? 'جلسة مصادقة نشطة · UTC' : 'يلزم تسجيل الدخول للعمليات' }}</div>
           @if (currentUserEmail) { <button class="signout" type="button" (click)="signOut()">تسجيل الخروج</button> }
         </section>
         <div id="sidebarMenu">
-        <div class="section-title">الإدارة</div>
-        <nav>
+        <div class="section-title">الرئيسية</div>
+        <nav aria-label="الرئيسية">
           <a class="nav-link" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeSidebar()"><i class="fa-solid fa-gauge-high"></i><span>لوحة التحكم</span></a>
+          <a class="nav-link" routerLink="/stations" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-map-location-dot users"></i><span>دليل المحطات</span></a>
+          <a class="nav-link" routerLink="/reports/observation-status" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-chart-simple users"></i><span>حالة نشرات المحطة</span></a>
         </nav>
-        <div class="section-title">النشرات الجوية</div>
-        <nav>
-          <a class="nav-link" routerLink="/phenomena/input" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain daily"></i><span>نظام تسجيل الظواهر الجوية</span></a>
-          <a class="nav-link" routerLink="/phenomena" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-rain daily"></i><span>عرض ظواهر المطر والثلج</span></a>
-        </nav>
-        <nav>
+
+        <div class="section-title">الرصد والإدخال</div>
+        <nav aria-label="الرصد والإدخال">
+          <a class="nav-link" routerLink="/forecasting" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain users"></i><span>مركز التنبؤ الجوي</span></a>
           <a class="nav-link" routerLink="/reports/hourly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-clock hourly"></i><span>النشرات الساعية</span></a>
-          <a class="nav-link" routerLink="/reports/climate" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-wind climate"></i><span>المناخ الساعي</span></a>
           <a class="nav-link" routerLink="/reports/daily" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-regular fa-calendar-days daily"></i><span>النشرات اليومية</span></a>
-          <a class="nav-link" routerLink="/reports/rainfall" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-rain daily"></i><span>النشرة المطرية اليومية</span></a>
-          <a class="nav-link" routerLink="/reports/monthly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar-week daily"></i><span>التقارير الشهرية</span></a>
+          <a class="nav-link" routerLink="/phenomena/input" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-sun-rain daily"></i><span>تسجيل الظواهر الجوية</span></a>
+          <a class="nav-link" routerLink="/phenomena" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-rain daily"></i><span>عرض الظواهر</span></a>
+        </nav>
+
+        <div class="section-title">المراجعة والاعتماد</div>
+        <nav aria-label="المراجعة">
+          <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
+        </nav>
+
+        <div class="section-title">التقارير</div>
+        <nav aria-label="التقارير">
+          <a class="nav-link" routerLink="/reports/monthly" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar-week daily"></i><span>التقارير الشهرية (إدارية)</span></a>
           <a class="nav-link" routerLink="/reports/annual" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-calendar users"></i><span>التقارير السنوية</span></a>
+          <a class="nav-link" routerLink="/reports/climate" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-wind climate"></i><span>التقارير المناخية</span></a>
+          <a class="nav-link" routerLink="/reports/rainfall" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-cloud-rain daily"></i><span>النشرة المطرية (معاينة)</span></a>
           <a class="nav-link" routerLink="/soil-temperature" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-temperature-half soil"></i><span>حرارة التربة</span></a>
           <a class="nav-link" routerLink="/agriculture" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-seedling agriculture"></i><span>النشرات الزراعية</span></a>
         </nav>
-        <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
-        <div class="section-title">إدارة النظام</div>
-        <nav>
-          <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
-          <a class="nav-link" routerLink="/register" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-plus users"></i><span>إنشاء حساب / استكمال التسجيل</span></a>
+
+        @if (currentUserEmail) {
+        <div class="section-title">إدارة المحطة</div>
+        <nav aria-label="إدارة المحطة">
+          <a class="nav-link" routerLink="/admin/registration-review" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-check users"></i><span>مراجعة التسجيل</span></a>
+          <a class="nav-link" routerLink="/admin/station-assignments" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-people-arrows users"></i><span>تعيين المحطات</span></a>
+          <a class="nav-link" routerLink="/admin/manual-archive" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-file-excel users"></i><span>تأكيد أرشفة Excel</span></a>
         </nav>
-        <nav>
-          <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
+        }
+
+        <div class="section-title">الصيانة والدعم</div>
+        <nav aria-label="الصيانة والدعم">
+          <a class="nav-link" routerLink="/equipment-faults" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-wrench users"></i><span>أعطال المعدات</span></a>
+          <a class="nav-link" routerLink="/support-incidents" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-headset users"></i><span>حوادث الدعم</span></a>
         </nav>
+
+        <div class="section-title">الحساب</div>
+        <nav aria-label="الحساب">
+          @if (!currentUserEmail) {
+            <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
+            <a class="nav-link" routerLink="/register" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-user-plus users"></i><span>إنشاء حساب</span></a>
+          } @else {
+            <a class="nav-link" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-users users"></i><span>المستخدمون والصلاحيات</span></a>
+            <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تبديل الحساب</span></a>
+          }
+        </nav>
+        <p class="nav-footnote">إخفاء عناصر القائمة لا يغني عن رفض الصلاحية على الخادم. الأوقات التشغيلية UTC.</p>
         </div>
       </div>
     </aside>
@@ -76,6 +105,7 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
     .nav-link{color:#ecf0f1;text-decoration:none;display:flex;align-items:center;gap:12px;padding:11px 16px;margin:3px 15px;border-radius:8px;font-size:13px;transition:background .2s,transform .2s}
     .nav-link i{width:20px;text-align:center;font-size:15px;color:#27ae60}.nav-link i.hourly{color:#bb8fce}.nav-link i.climate{color:#1abc9c}.nav-link i.daily{color:#f39c12}.nav-link i.soil{color:#af7ac5}.nav-link i.agriculture{color:#2ecc71}.nav-link i.users{color:#d7bde2}
     .nav-link:hover{background:rgba(255,255,255,.1);transform:translateX(-3px);color:#fff}.nav-link.active{background:#2980b9;color:#fff;box-shadow:0 4px 12px rgba(41,128,185,.3)}.nav-link.active i{color:#fff}
+    .nav-footnote{margin:14px 12px 18px;font-size:11px;color:rgba(255,255,255,.55);line-height:1.6}
     .content-area{margin-right:300px;padding:30px;min-height:100vh;display:flex;flex-direction:column;background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%)}
     footer{margin-top:auto;text-align:center;padding:24px 8px 0;color:#83929b;font-size:11px}
     .mobile-menu,.sidebar-backdrop{display:none}

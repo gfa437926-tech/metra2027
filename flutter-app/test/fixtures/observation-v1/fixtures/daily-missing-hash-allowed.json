@@ -1,0 +1,14 @@
+{
+  "id": "daily-missing-hash-allowed",
+  "observationType": "daily",
+  "reportType": "06utc",
+  "responsibilityAgreement": true,
+  "values": {
+    "minTemp": "#",
+    "maxTemp": "#",
+    "precipitation": "#",
+    "snowThickness": "#"
+  },
+  "expectValid": true,
+  "expectErrorFields": []
+}

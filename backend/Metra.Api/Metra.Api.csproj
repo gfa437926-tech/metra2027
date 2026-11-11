@@ -9,5 +9,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <!-- Pin patched OpenAPI.NET: fixes CVE-2026-49451 (GHSA-v5pm-xwqc-g5wc). -->
     <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
   </ItemGroup>
 </Project>

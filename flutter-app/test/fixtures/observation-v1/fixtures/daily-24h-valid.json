@@ -1,0 +1,24 @@
+{
+  "id": "daily-24h-valid",
+  "observationType": "daily",
+  "reportType": "24h",
+  "responsibilityAgreement": true,
+  "values": {
+    "minTemp": "12.5",
+    "maxTemp": "28.0",
+    "precipitation": "012.5",
+    "snowThickness": "000",
+    "evaporation": "03.2",
+    "sunshineDuration": "08.5",
+    "sunshinePercentage": "070",
+    "maxGustSpeed": "12",
+    "maxGustDirection": "18",
+    "maxGustTime": "14.5",
+    "maxHumidity": "085",
+    "maxHumidityTime": "06.0",
+    "minHumidity": "35",
+    "minHumidityTime": "15.0"
+  },
+  "expectValid": true,
+  "expectErrorFields": []
+}

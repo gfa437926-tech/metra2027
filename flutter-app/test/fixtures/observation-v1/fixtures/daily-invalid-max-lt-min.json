@@ -1,0 +1,16 @@
+{
+  "id": "daily-invalid-max-lt-min",
+  "observationType": "daily",
+  "reportType": "06utc",
+  "responsibilityAgreement": true,
+  "values": {
+    "minTemp": "20.0",
+    "maxTemp": "10.0",
+    "precipitation": "000.0",
+    "snowThickness": "000"
+  },
+  "expectValid": false,
+  "expectErrorFields": [
+    "maxTemp"
+  ]
+}

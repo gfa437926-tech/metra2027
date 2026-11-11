@@ -114,6 +114,13 @@ public static class ObservationSubmissionEndpoints
                 if (validationError is not null)
                     return Results.BadRequest(new { error = validationError });
 
+                // Enforce the same authoritative field contract on the write path;
+                // clients cannot bypass validation by skipping the separate validate endpoint.
+                var fieldIssues = ObservationFieldContract.ValidateSubmission(
+                    request!.ObservationType!, request.Payload!.Value);
+                if (fieldIssues.Count > 0)
+                    return Results.BadRequest(new { error = "invalid_observation_fields", issues = fieldIssues });
+
                 if (!submission.IsConfigured)
                     return Results.Problem(
                         title: "Observation service unavailable",
@@ -170,66 +177,299 @@ public static class ObservationSubmissionRequestGuard
 }
 
 public sealed record ObservationDecisionRequest(string? Decision, string? Note);
-public sealed record ObservationDecisionOutcome(bool IsConfigured, bool Succeeded, HttpStatusCode? StatusCode, JsonElement? Data);
+
+public sealed record ObservationDecisionOutcome(
+    bool IsConfigured,
+    bool Succeeded,
+    HttpStatusCode? StatusCode,
+    JsonElement? Data);
+
+public sealed record ObservationOwnership(
+    Guid ObservationId,
+    Guid StationId,
+    Guid CreatedByUserId,
+    string Status);
+
 public interface IObservationDecisionService
 {
     bool IsConfigured { get; }
-    Task<ObservationDecisionOutcome> DecideAsync(Guid userId, Guid stationId, Guid observationId, ObservationDecisionRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Loads observation ownership only within the requested station scope.
+    /// Returns null when the observation is missing, mis-scoped, or the read fails closed.
+    /// </summary>
+    Task<ObservationOwnership?> GetOwnershipAsync(
+        Guid stationId,
+        Guid observationId,
+        CancellationToken cancellationToken);
+
+    Task<ObservationDecisionOutcome> DecideAsync(
+        Guid userId,
+        Guid stationId,
+        Guid observationId,
+        ObservationDecisionRequest request,
+        CancellationToken cancellationToken);
 }
-public sealed class SupabaseObservationDecisionService(IHttpClientFactory clients, IConfiguration configuration) : IObservationDecisionService
+
+public sealed class SupabaseObservationDecisionService(
+    IHttpClientFactory clients,
+    IConfiguration configuration) : IObservationDecisionService
 {
-    private readonly string? _url=configuration["Supabase:Url"];
-    private readonly string? _key=configuration["Supabase:ServiceRoleKey"];
-    public bool IsConfigured => Uri.TryCreate(_url,UriKind.Absolute,out var uri) && uri.Scheme==Uri.UriSchemeHttps && !string.IsNullOrWhiteSpace(_key);
-    public async Task<ObservationDecisionOutcome> DecideAsync(Guid userId,Guid stationId,Guid observationId,ObservationDecisionRequest request,CancellationToken cancellationToken)
+    private readonly string? _url = configuration["Supabase:Url"];
+    private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
+
+    public bool IsConfigured =>
+        Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
+        uri.Scheme == Uri.UriSchemeHttps &&
+        !string.IsNullOrWhiteSpace(_key);
+
+    public async Task<ObservationOwnership?> GetOwnershipAsync(
+        Guid stationId,
+        Guid observationId,
+        CancellationToken cancellationToken)
     {
-        if(!IsConfigured) return new(false,false,null,null);
-        using var message=new HttpRequestMessage(HttpMethod.Post,$"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_decide_observation");
-        message.Headers.TryAddWithoutValidation("apikey",_key);
-        message.Headers.Authorization=new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",_key);
-        message.Content=JsonContent.Create(new { p_user_id=userId,p_station_id=stationId,p_observation_id=observationId,p_decision=request.Decision,p_note=request.Note });
-        try {
-          using var response=await clients.CreateClient(nameof(SupabaseObservationDecisionService)).SendAsync(message,cancellationToken);
-          if(!response.IsSuccessStatusCode) return new(true,false,response.StatusCode,null);
-          var data=await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken:cancellationToken);
-          return new(true,true,response.StatusCode,data);
-        } catch(JsonException) {
-            // Do not report success when the database response cannot be parsed.
-            return new(true,false,HttpStatusCode.ServiceUnavailable,null);
-          } catch(HttpRequestException) { return new(true,false,HttpStatusCode.ServiceUnavailable,null); }
-          catch(TaskCanceledException) when(!cancellationToken.IsCancellationRequested) { return new(true,false,HttpStatusCode.ServiceUnavailable,null); }
+        if (!IsConfigured || stationId == Guid.Empty || observationId == Guid.Empty)
+            return null;
+
+        // Station scope is enforced in the query so a cross-station id cannot leak ownership.
+        var query =
+            $"id=eq.{observationId:D}&station_id=eq.{stationId:D}" +
+            "&select=id,station_id,created_by,status&limit=1";
+        using var message = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"{_url!.TrimEnd('/')}/rest/v1/metra_observations?{query}");
+        message.Headers.TryAddWithoutValidation("apikey", _key);
+        message.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _key);
+
+        try
+        {
+            using var response = await clients
+                .CreateClient(nameof(SupabaseObservationDecisionService))
+                .SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var payload = await response.Content.ReadFromJsonAsync<JsonElement>(
+                cancellationToken: cancellationToken);
+            if (payload.ValueKind != JsonValueKind.Array || payload.GetArrayLength() != 1)
+                return null;
+
+            var row = payload[0];
+            if (!row.TryGetProperty("id", out var idEl) ||
+                !row.TryGetProperty("station_id", out var stationEl) ||
+                !row.TryGetProperty("created_by", out var createdEl) ||
+                !row.TryGetProperty("status", out var statusEl) ||
+                !Guid.TryParse(idEl.GetString(), out var id) ||
+                !Guid.TryParse(stationEl.GetString(), out var scopedStationId) ||
+                !Guid.TryParse(createdEl.GetString(), out var createdBy) ||
+                statusEl.GetString() is not { Length: > 0 } status ||
+                scopedStationId != stationId ||
+                id != observationId)
+            {
+                return null;
+            }
+
+            return new ObservationOwnership(id, scopedStationId, createdBy, status);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    public async Task<ObservationDecisionOutcome> DecideAsync(
+        Guid userId,
+        Guid stationId,
+        Guid observationId,
+        ObservationDecisionRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsConfigured)
+            return new(false, false, null, null);
+
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_decide_observation");
+        message.Headers.TryAddWithoutValidation("apikey", _key);
+        message.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _key);
+        message.Content = JsonContent.Create(new
+        {
+            p_user_id = userId,
+            p_station_id = stationId,
+            p_observation_id = observationId,
+            p_decision = request.Decision,
+            p_note = request.Note
+        });
+
+        try
+        {
+            using var response = await clients
+                .CreateClient(nameof(SupabaseObservationDecisionService))
+                .SendAsync(message, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                var mapped = MapDecisionFailure(errorBody, response.StatusCode);
+                return new(true, false, mapped, null);
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>(
+                cancellationToken: cancellationToken);
+            return new(true, true, response.StatusCode, data);
+        }
+        catch (JsonException)
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+        catch (HttpRequestException)
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+    }
+
+    /// <summary>
+    /// Maps database decision failures to stable HTTP outcomes. The database RPC is
+    /// authoritative for ownership, station scope, status, and separation of duties.
+    /// </summary>
+    public static HttpStatusCode MapDecisionFailure(string? errorBody, HttpStatusCode fallback)
+    {
+        if (string.IsNullOrWhiteSpace(errorBody))
+            return fallback is HttpStatusCode.Forbidden or HttpStatusCode.NotFound or HttpStatusCode.Conflict
+                ? fallback
+                : HttpStatusCode.ServiceUnavailable;
+
+        if (errorBody.Contains("self_review_forbidden", StringComparison.Ordinal))
+            return HttpStatusCode.Conflict;
+        if (errorBody.Contains("observation_not_found", StringComparison.Ordinal))
+            return HttpStatusCode.NotFound;
+        if (errorBody.Contains("observation_not_in_submitted_state", StringComparison.Ordinal))
+            return HttpStatusCode.Conflict;
+        if (errorBody.Contains("station_observation_decision_forbidden", StringComparison.Ordinal) ||
+            errorBody.Contains("42501", StringComparison.Ordinal))
+            return HttpStatusCode.Forbidden;
+        if (errorBody.Contains("invalid_observation_decision", StringComparison.Ordinal) ||
+            errorBody.Contains("decision_note_required", StringComparison.Ordinal) ||
+            errorBody.Contains("decision_note_too_long", StringComparison.Ordinal))
+            return HttpStatusCode.BadRequest;
+
+        return fallback is >= HttpStatusCode.BadRequest and < HttpStatusCode.InternalServerError
+            ? fallback
+            : HttpStatusCode.ServiceUnavailable;
     }
 }
+
 public static class ObservationDecisionEndpoints
 {
- public static IEndpointRouteBuilder MapObservationDecisionEndpoints(this IEndpointRouteBuilder endpoints)
- {
-  endpoints.MapPost("/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
-   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,IStationAuthorizationService authorization,CancellationToken ct)=>{
-    if(!Guid.TryParse(http.User.FindFirstValue("sub"),out var userId)) return Results.Unauthorized();
-    var validationError = ObservationDecisionRequestGuard.GetError(request);
-    if (validationError is not null)
-      return Results.BadRequest(new { error = validationError });
-    if (!authorization.IsConfigured)
-      return Results.Problem(title: "Authorization service unavailable", statusCode: 503);
-    var requiredPermission = request!.Decision == "approve"
-      ? "observation.approve"
-      : "observation.return_for_correction";
-    var allowed = await authorization.HasStationPermissionAsync(userId, stationId, requiredPermission, ct);
-    if (!allowed) return Results.Forbid();
-    if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
-    var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
-    if(!result.Succeeded) {
-      if(result.StatusCode==HttpStatusCode.Forbidden) return Results.Forbid();
-      if(result.StatusCode==HttpStatusCode.NotFound) return Results.NotFound();
-      if(result.StatusCode==HttpStatusCode.BadRequest || result.StatusCode==HttpStatusCode.Conflict)
-        return Results.Conflict(new {error="observation_decision_rejected"});
-      return Results.Problem(title: "Observation decision unavailable", statusCode: 503);
+    public static IEndpointRouteBuilder MapObservationDecisionEndpoints(
+        this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost(
+            "/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
+            async (
+                Guid stationId,
+                Guid observationId,
+                ObservationDecisionRequest? request,
+                HttpContext http,
+                IObservationDecisionService service,
+                IStationAuthorizationService authorization,
+                CancellationToken ct) =>
+            {
+                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
+                    return Results.Unauthorized();
+
+                var validationError = ObservationDecisionRequestGuard.GetError(request);
+                if (validationError is not null)
+                    return Results.BadRequest(new { error = validationError });
+
+                // Fail closed: missing authorization configuration never becomes allow.
+                if (!authorization.IsConfigured)
+                    return Results.Problem(
+                        title: "Authorization service unavailable",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                if (!service.IsConfigured)
+                    return Results.Problem(
+                        title: "Observation service unavailable",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                var requiredPermission = request!.Decision == "approve"
+                    ? "observation.approve"
+                    : "observation.return_for_correction";
+                var requiredDomainPermission = request.Decision == "approve"
+                    ? Metra.Api.Domain.Observations.ObservationPermission.Approve
+                    : Metra.Api.Domain.Observations.ObservationPermission.ReturnForCorrection;
+
+                var allowed = await authorization.HasStationPermissionAsync(
+                    userId, stationId, requiredPermission, ct);
+                if (!allowed)
+                    return Results.Forbid();
+
+                // Load ownership inside the station scope before any decision write.
+                var ownership = await service.GetOwnershipAsync(stationId, observationId, ct);
+                if (ownership is null)
+                    return Results.NotFound(new { error = "observation_not_found" });
+
+                var policy = Metra.Api.Domain.Observations.ObservationAuthorizationPolicy.Authorize(
+                    new Metra.Api.Domain.Observations.ObservationActorContext(
+                        userId.ToString(),
+                        stationId.ToString(),
+                        HasActiveStationAssignment: true,
+                        Permissions: new HashSet<Metra.Api.Domain.Observations.ObservationPermission>
+                        {
+                            requiredDomainPermission
+                        }),
+                    new Metra.Api.Domain.Observations.ObservationResourceContext(
+                        ownership.StationId.ToString(),
+                        ownership.CreatedByUserId.ToString()),
+                    requiredDomainPermission);
+
+                if (!policy.IsAuthorized)
+                {
+                    if (policy.ErrorCode == "self_review_forbidden")
+                        return Results.Conflict(new { error = "self_review_forbidden" });
+                    if (policy.ErrorCode == "station_scope_violation")
+                        return Results.Forbid();
+                    return Results.Forbid();
+                }
+
+                var result = await service.DecideAsync(
+                    userId, stationId, observationId, request, ct);
+                if (!result.Succeeded)
+                {
+                    if (result.StatusCode == HttpStatusCode.Forbidden)
+                        return Results.Forbid();
+                    if (result.StatusCode == HttpStatusCode.NotFound)
+                        return Results.NotFound(new { error = "observation_not_found" });
+                    if (result.StatusCode == HttpStatusCode.BadRequest)
+                        return Results.BadRequest(new { error = "invalid_observation_decision" });
+                    if (result.StatusCode == HttpStatusCode.Conflict)
+                        return Results.Conflict(new { error = "observation_decision_rejected" });
+                    return Results.Problem(
+                        title: "Observation decision unavailable",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                }
+
+                return Results.Ok(result.Data);
+            })
+            .WithTags("Observations")
+            .WithName("DecideStationObservation");
+
+        return endpoints;
     }
-    return Results.Ok(result.Data);
-   }).WithTags("Observations").WithName("DecideStationObservation");
-  return endpoints;
- }
 }
 
 public static class ObservationDecisionRequestGuard

@@ -1,0 +1,20 @@
+{
+  "name": "METRA 2027 - نظام الأرصاد الجوية",
+  "short_name": "METRA 2027",
+  "description": "نظام الأرصاد الجوية وإدخال النشرات",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fa",
+  "theme_color": "#123b52",
+  "icons": [
+    {
+      "src": "./metra-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

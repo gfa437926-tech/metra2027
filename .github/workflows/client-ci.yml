@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "angular-app/**"
+      - "flutter-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
       - ".github/workflows/deploy-pages.yml"
@@ -12,6 +13,7 @@ on:
     branches: [main]
     paths:
       - "angular-app/**"
+      - "flutter-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
       - ".github/workflows/deploy-pages.yml"
@@ -27,7 +29,7 @@ concurrency:
 jobs:
   angular:
     name: Angular build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: angular-app
@@ -39,14 +41,37 @@ jobs:
           cache: npm
           cache-dependency-path: angular-app/package.json
       - run: npm install --no-audit --no-fund
+      - run: npm test
       - run: npm run build
+      - name: Install Chromium for offline browser tests
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run real Chromium PWA and IndexedDB smoke test three times
+        shell: bash
+        run: |
+          failures=0
+          for attempt in 1 2 3; do
+            echo "Offline Chromium PWA test run ${attempt}/3"
+            if npm run test:browser; then
+              echo "Offline Chromium PWA test run ${attempt}/3: PASS"
+            else
+              status=$?
+              echo "Offline Chromium PWA test run ${attempt}/3: FAIL (exit ${status})"
+              failures=1
+            fi
+          done
+          if [ "$failures" -ne 0 ]; then
+            echo "One or more Chromium runs failed; see individual run output above."
+            exit 1
+          fi
 
   flutter:
     name: Flutter analyze and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
-        working-directory: mobile/metra_mobile
+        working-directory: flutter-app
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

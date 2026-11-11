@@ -22,11 +22,45 @@ public sealed class ObservationAuthorizationPolicyTests
     {
         var result = ObservationAuthorizationPolicy.Authorize(
             Actor(permissions: [ObservationPermission.Approve]),
-            Resource(),
+            Resource(owner: "user-2"),
             ObservationPermission.Approve);
 
         Assert.True(result.IsAuthorized);
         Assert.Null(result.ErrorCode);
+    }
+
+    [Fact]
+    public void Denies_self_approval_of_own_observation()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.Approve]),
+            Resource(owner: "user-1"),
+            ObservationPermission.Approve);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("self_review_forbidden", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Denies_self_return_for_correction_of_own_observation()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.ReturnForCorrection]),
+            Resource(owner: "user-1"),
+            ObservationPermission.ReturnForCorrection);
+
+        Assert.Equal("self_review_forbidden", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Denies_self_review_of_own_observation()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.Review]),
+            Resource(owner: "user-1"),
+            ObservationPermission.Review);
+
+        Assert.Equal("self_review_forbidden", result.ErrorCode);
     }
 
     [Fact]

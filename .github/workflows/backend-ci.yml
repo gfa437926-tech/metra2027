@@ -24,6 +24,48 @@ permissions:
   contents: read
 
 jobs:
+  postgres-isolation:
+    name: Disposable PostgreSQL RLS isolation test
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: metra_ops_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d metra_ops_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Bootstrap disposable test schema
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f database/tests/ops_isolation_bootstrap.sql
+      - name: Apply ops schema and security migrations to disposable DB only
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261107030000_equipment_faults_station_scoped.sql
+          psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261107031000_support_incidents_station_scoped.sql
+          psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261107032000_harden_ops_rls_and_assignee_checks.sql
+          psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261108010000_metra_ops_runtime_role_and_fault_read.sql
+          psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f supabase/migrations/20261108020000_npgsql_ops_session_context_rls.sql
+      - name: Verify least-privilege operations role grants in disposable PostgreSQL
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f database/tests/ops_role_grant_boundary_pg_test.sql
+      - name: Run real PostgreSQL station isolation harness
+        env:
+          PGPASSWORD: postgres
+        run: psql -h localhost -U postgres -d metra_ops_test -v ON_ERROR_STOP=1 -f database/tests/ops_station_isolation_pg_test.sql
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -57,9 +99,33 @@ jobs:
         run: bash database/tests/verify_station_audit_contract.sh
       - name: Verify authority access lifecycle contract
         run: bash database/tests/verify_authority_access_lifecycle_contract.sh
+      - name: Verify support and maintenance transition permission contract
+        run: bash database/tests/verify_ops_transition_permission_contract.sh
+      - name: Verify station isolation static security contract
+        run: bash database/tests/verify_ops_station_isolation_contract.sh
+      - name: Verify read-only staging smoke script syntax
+        run: bash -n scripts/deployment/staging-smoke-test.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
         run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release
       - name: Build production container image
         run: docker build --file backend/Metra.Api/Dockerfile --tag metra-api:ci .
+      - name: Smoke-test container liveness and fail-closed readiness
+        run: |
+          set -euo pipefail
+          docker run --detach --name metra-api-smoke --publish 127.0.0.1:18080:8080 metra-api:ci
+          trap 'docker rm --force metra-api-smoke >/dev/null 2>&1 || true' EXIT
+          healthy=0
+          for attempt in $(seq 1 20); do
+            if curl --silent --show-error --fail http://127.0.0.1:18080/api/v1/health -o /tmp/metra-health.json; then
+              healthy=1
+              break
+            fi
+            sleep 2
+          done
+          test "$healthy" -eq 1
+          grep -Eq '"status"[[:space:]]*:[[:space:]]*"healthy"' /tmp/metra-health.json
+          ready_status="$(curl --silent --show-error -o /dev/null -w '%{http_code}' http://127.0.0.1:18080/api/v1/ready)"
+          test "$ready_status" = "503"
+          echo "Container liveness passed; readiness correctly fails closed without server credentials."

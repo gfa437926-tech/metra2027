@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { SupabaseAuthService } from '../../core/supabase/supabase-auth.service';
+import { StationContextService } from '../../core/station/station-context.service';
 
 interface DashboardCard {
   title: string;
@@ -53,9 +55,9 @@ interface DashboardCard {
           <h3>نشرة الظواهر الجوية الخطرة</h3>
           <p>قم بإرسال تقارير الظواهر الجوية الخطرة والاستثنائية مثل العواصف الرعدية، الأمطار الغزيرة، العواصف الترابية، والصقيع. هذه النشرة مهمة للتحذير المبكر وإدارة الطوارئ لحماية الأرواح والممتلكات.</p>
         </div>
-        <button class="btn phenomena-button" type="button" (click)="showPending('نشرة الظواهر الجوية')">
+        <a class="btn phenomena-button" routerLink="/phenomena/input" [queryParams]="stationQueryParams">
           <i class="fa-solid fa-paper-plane"></i> إرسال النشرة
-        </button>
+        </a>
       </section>
 
       <section class="card-section">
@@ -121,7 +123,7 @@ interface DashboardCard {
         <h4 class="card-title">{{ card.title }}</h4>
         <p class="card-description">{{ card.description }}</p>
         @if (card.path) {
-          <a class="card-btn" [class]="card.buttonClass" [routerLink]="card.path">
+          <a class="card-btn" [class]="card.buttonClass" [routerLink]="card.path" [queryParams]="stationQueryParams">
             <i class="fa-solid fa-chart-line"></i> {{ card.actionLabel }}
           </a>
         } @else {
@@ -177,13 +179,17 @@ export class DashboardComponent implements OnInit {
   userName = 'مستخدم النظام';
   userRole = '';
   stationName = '';
+  stationId = '';
+  stationQueryParams: Record<string, string> = {};
   greetingTime = this.getGreetingTime();
   toastMessage = '';
 
   readonly basicReports: DashboardCard[] = [
+    { title: 'حالة نشرات المحطة', icon: 'fa-solid fa-chart-column', description: 'ملخص النشرات المرسلة والمُرجَعة ضمن صلاحية المحطة', path: '/reports/observation-status', colorClass: 'card-report', iconColor: '#0369a1', buttonClass: 'btn-primary', actionLabel: 'عرض الملخص' },
+    { title: 'مراجعة النشرات', icon: 'fa-solid fa-list-check', description: 'مراجعة واعتماد أو إرجاع النشرات المرسلة وإعادة تقديم المُرجَعة', path: '/observations/workflow', colorClass: 'card-report', iconColor: '#0f766e', buttonClass: 'btn-primary', actionLabel: 'فتح المراجعة' },
     { title: 'النشرات الساعية', icon: 'fa-regular fa-clock', description: 'إرسال وعرض التقارير الساعية لبيانات الطقس مثل الحرارة والرطوبة والرياح', path: '/reports/hourly', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
     { title: 'النشرات اليومية', icon: 'fa-regular fa-calendar-days', description: 'التقارير اليومية الشاملة لبيانات الطقس والإحصائيات اليومية', path: '/reports/daily', colorClass: 'card-report', iconColor: '#2980b9', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' },
-    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
+    { title: 'النشرات المطرية', icon: 'fa-solid fa-cloud-rain', description: 'تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل', path: '/reports/rainfall', colorClass: 'card-report', iconColor: '#3498db', buttonClass: 'btn-primary', actionLabel: 'فتح التقرير' }
   ];
 
   readonly climateCards: DashboardCard[] = [
@@ -193,9 +199,10 @@ export class DashboardComponent implements OnInit {
   ];
 
   readonly maintenanceCards: DashboardCard[] = [
-    { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
-    { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
-    { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
+    { title: 'المدقق الإلكتروني', icon: 'fa-solid fa-ruler-combined', description: 'تدقيق مخططات المسجلات الميكانيكية (هيكل تصميمي — بدون OCR بعد)', path: '/electronic-auditor', colorClass: 'card-report', iconColor: '#7c3aed', buttonClass: 'btn-primary', actionLabel: 'فتح المساحة' },
+    { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', path: '/equipment-faults', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
+    { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
+    { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
   ];
 
   readonly aboutCards: DashboardCard[] = [
@@ -206,9 +213,15 @@ export class DashboardComponent implements OnInit {
 
   managementCards: DashboardCard[] = [];
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly auth: SupabaseAuthService,
+    private readonly stationContext: StationContextService
+  ) {}
 
   ngOnInit(): void {
+    this.stationId = this.stationContext.resolveStationId();
+    this.stationQueryParams = this.stationId ? { stationId: this.stationId } : {};
     if (typeof localStorage === 'undefined') return;
     try {
       const raw = localStorage.getItem('currentUser');
@@ -228,14 +241,24 @@ export class DashboardComponent implements OnInit {
     this.showPending('تم تحديث لوحة التحكم');
   }
 
-  logout(): void {
-    if (typeof localStorage !== 'undefined' && window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+  async logout(): Promise<void> {
+    if (typeof localStorage === 'undefined' || !window.confirm('هل أنت متأكد من رغبتك في تسجيل الخروج؟')) {
+      return;
+    }
+
+    try {
+      await this.auth.signOut();
       localStorage.removeItem('currentUser');
       this.userName = 'مستخدم النظام';
       this.userRole = '';
       this.stationName = '';
+      this.stationId = '';
+      this.stationQueryParams = {};
+      this.stationContext.clear();
       this.managementCards = [];
-      this.showPending('تم تسجيل الخروج من هذه الجلسة المحلية');
+      await this.router.navigate(['/login']);
+    } catch {
+      this.toastMessage = 'تعذر إنهاء جلسة الدخول. حاول مرة أخرى.';
     }
   }
 
@@ -245,12 +268,35 @@ export class DashboardComponent implements OnInit {
   }
 
   private setManagementCards(): void {
+    // Always expose the modern identity/permissions hub when the session is known.
+    // Role-specific titles remain informational; navigation targets real /users APIs.
+    const usersCard: DashboardCard = {
+      title: 'المستخدمون والصلاحيات',
+      icon: 'fa-solid fa-users-gear',
+      description: 'مراجعة طلبات التسجيل، مستخدمي المحطة، التعيينات، ومنح صلاحيات الجهات عبر API',
+      path: '/users',
+      colorClass: 'card-management',
+      iconColor: '#9b59b6',
+      buttonClass: 'btn-purple',
+      actionLabel: 'فتح الإدارة'
+    };
     if (this.userRole === 'رئيس محطة') {
-      this.managementCards = [{ title: 'إدارة المحطة', icon: 'fa-solid fa-user-tie', description: 'لوحة تحكم رئيس المحطة لإدارة المستخدمين والتقارير والعمليات', colorClass: 'card-management', iconColor: '#9b59b6', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'إدارة المحطة', icon: 'fa-solid fa-user-tie', description: 'مراجعة الحسابات والتعيينات وسجلات المحطة', path: '/users', colorClass: 'card-management', iconColor: '#9b59b6', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
     } else if (this.userRole === 'مدير مركز') {
-      this.managementCards = [{ title: 'إدارة المركز', icon: 'fa-solid fa-user-gear', description: 'لوحة تحكم مدير المركز للمتابعة والإشراف والتقارير الشاملة', colorClass: 'card-management', iconColor: '#8e44ad', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'إدارة المركز', icon: 'fa-solid fa-user-gear', description: 'متابعة الاعتماد والصلاحيات عبر المسارات الحديثة', path: '/users', colorClass: 'card-management', iconColor: '#8e44ad', buttonClass: 'btn-purple', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
     } else if (this.userRole === 'مدير النظام') {
-      this.managementCards = [{ title: 'لوحة المدير العام', icon: 'fa-solid fa-crown', description: 'لوحة التحكم الشاملة لمدير النظام والإحصائيات والتقارير الإدارية', colorClass: 'card-management', iconColor: '#f1c40f', buttonClass: 'btn-warning', actionLabel: 'فتح اللوحة' }];
+      this.managementCards = [
+        { title: 'لوحة المدير العام', icon: 'fa-solid fa-crown', description: 'إدارة الهوية والصلاحيات والاعتماد النظامي', path: '/users', colorClass: 'card-management', iconColor: '#f1c40f', buttonClass: 'btn-warning', actionLabel: 'فتح اللوحة' },
+        usersCard,
+      ];
+    } else {
+      this.managementCards = [usersCard];
     }
   }
 

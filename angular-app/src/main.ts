@@ -6,4 +6,10 @@ import { routes } from './app/app.routes';
 
 bootstrapApplication(AppComponent, {
   providers: [provideRouter(routes), provideHttpClient()]
+}).then(() => {
+  if ('serviceWorker' in navigator && window.isSecureContext) {
+    void navigator.serviceWorker.register('./metra-sw.js').catch(error => {
+      console.error('METRA offline shell registration failed', error);
+    });
+  }
 }).catch((error: unknown) => console.error(error));

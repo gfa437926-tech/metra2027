@@ -1,0 +1,14 @@
+{
+  "contractVersion": "1.0",
+  "description": "Shared observation validation fixtures for .NET, Flutter, and Angular. Authoritative field rules live in ObservationFieldContract + domain validators.",
+  "fixtures": [
+    "daily-24h-valid.json",
+    "daily-06utc-valid.json",
+    "daily-18utc-valid.json",
+    "daily-invalid-max-lt-min.json",
+    "daily-invalid-no-agreement.json",
+    "daily-missing-hash-allowed.json",
+    "hourly-valid-synoptic.json",
+    "hourly-invalid-dry-lt-wet.json"
+  ]
+}
