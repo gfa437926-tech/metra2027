@@ -8,6 +8,7 @@ import '../../features/home/metra_home.dart';
 import '../../features/account/account_state_gate.dart';
 import '../../features/account/account_access_state_screen.dart';
 import '../../features/auth/password_recovery_screen.dart';
+import '../../features/auth/password_update_screen.dart';
 import '../../features/auth/registration_screen.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
@@ -51,6 +52,7 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
   late final MetraApiClient _api;
   StreamSubscription<AuthState>? _subscription;
   bool _signedIn = false;
+  bool _passwordRecoveryPending = false;
   Future<Map<String, dynamic>>? _accountStatusFuture;
 
   @override
@@ -63,9 +65,20 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
     );
     if (_signedIn) _accountStatusFuture = _api.getMyRegistrationStatus();
     _subscription = _supabase.auth.onAuthStateChange.listen((state) {
+      if (state.event == AuthChangeEvent.passwordRecovery) {
+        if (mounted) {
+          setState(() {
+            _passwordRecoveryPending = true;
+            _signedIn = state.session != null;
+            _accountStatusFuture = null;
+          });
+        }
+        return;
+      }
       final signedIn = state.session != null;
       if (mounted) {
         setState(() {
+          if (!signedIn) _passwordRecoveryPending = false;
           if (signedIn != _signedIn) {
             _accountStatusFuture = signedIn ? _api.getMyRegistrationStatus() : null;
           }
@@ -80,6 +93,16 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
     setState(() => _accountStatusFuture = _api.getMyRegistrationStatus());
   }
 
+  Future<void> _updatePassword(String password) async {
+    await _supabase.auth.updateUser(UserAttributes(password: password));
+    if (!mounted) return;
+    setState(() {
+      _passwordRecoveryPending = false;
+      _signedIn = _supabase.auth.currentSession != null;
+      _accountStatusFuture = _signedIn ? _api.getMyRegistrationStatus() : null;
+    });
+  }
+
   Future<void> _signOut() => _supabase.auth.signOut();
 
   @override
@@ -91,6 +114,12 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
 
   @override
   Widget build(BuildContext context) {
+    if (_passwordRecoveryPending) {
+      return MetraPasswordUpdateScreen(
+        updatePassword: _updatePassword,
+        onCancel: _signOut,
+      );
+    }
     if (!_signedIn) return const MetraLoginScreen();
     final statusFuture = _accountStatusFuture;
     if (statusFuture == null) {
