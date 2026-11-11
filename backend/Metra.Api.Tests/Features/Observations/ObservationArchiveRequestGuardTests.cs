@@ -1,4 +1,5 @@
 using Metra.Api.Features.Observations;
+using Xunit;
 
 namespace Metra.Api.Tests.Features.Observations;
 
