@@ -70,13 +70,12 @@ void main() {
       '/api/v1/stations/$stationId/observations/$observationId',
     ));
 
-    final sourcePayloadTitle = find.text('محتوى الرصد الأصلي');
-    for (var attempt = 0; attempt < 10 && sourcePayloadTitle.evaluate().isEmpty; attempt++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
-    expect(sourcePayloadTitle, findsOneWidget);
-    await tester.ensureVisible(sourcePayloadTitle);
+    // The detail is a lazily built ListView. Scroll before searching for
+    // widgets below the initial viewport; waiting/pump cannot build offscreen
+    // sliver children.
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
     await tester.pumpAndSettle();
+    expect(find.text('محتوى الرصد الأصلي'), findsOneWidget);
     expect(find.textContaining('temperature'), findsOneWidget);
     api.close();
   });
