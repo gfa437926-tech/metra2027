@@ -28,7 +28,7 @@ Legend: `Done` = API-backed usable · `Partial` · `Scaffold` = honest empty/no 
 | FLT-015 | Electronic audit | `electronic_auditor_screen.dart` — 8 tabs incl. paper, mechanical, comparison, review, library, training, reports | No case/evidence/OCR API | Partial UI / Blocked operationally |
 | FLT-016 | AI workspace | `ai_workspace_screen.dart` — analysis, anomalies, reports, governance | No AI gateway | Partial UI / Blocked operationally |
 | FLT-017 | Climatol | `climatol_workspace_screen.dart` — station/variable/period setup, pipeline, diagnostics, versions | No isolated worker/API | Partial UI / Blocked operationally |
-| FLT-018 | Reports hub | reports/* | status + archive partial | Partial — hourly/daily history and exports need read models |\n| FLT-019 | AFTN console | `aftn_console_shell_screen.dart` — inbox, outbox, local composer, channel/audit | No AFTN gateway/message API | Partial UI / Blocked operationally |
+| FLT-018 | Reports hub | reports/* + manual_archive_screen.dart | status queues, returned queue, archive confirmations/monthly summary, station audit | Partial — history reads up to 100 per currently authorized queue with type/status/text/UTC filters and detail; full approved/rejected/version history, missing-data register, aggregate monthly/annual/climate/rainfall/agriculture/soil reports and PDF/Excel exports require new approved API read models |\n| FLT-019 | AFTN console | `aftn_console_shell_screen.dart` — inbox, outbox, local composer, channel/audit | No AFTN gateway/message API | Partial UI / Blocked operationally |
 | OP | Faults / support | maintenance + support | Yes | Partial — verify complete lifecycle, evidence and authorization |
 | — | Review/return/resubmit | observation_review + returned editor | Yes | Done baseline — additional concurrency/authorization tests remain |
 
@@ -41,3 +41,11 @@ Legend: `Done` = API-backed usable · `Partial` · `Scaffold` = honest empty/no 
 - Angular CI in the same run: npm tests, production build and Chromium PWA/IndexedDB smoke checks passed.
 - AI, Climatol, electronic-audit, AFTN and specialist screens have navigable, RTL workspaces and honest unavailable states; they are **not** operationally complete until their named backend contracts exist.
 - No database changes or deployment were performed.
+
+
+## Reports/history implementation trace — 2026-11-11T18:32:18.872Z
+
+- Flutter report/history screens now use the existing station-scoped review, returned, manual-archive and station-audit APIs only.
+- History access is partial by permission: a 403 on one queue does not hide the other permitted queue; 403 on both fails closed.
+- Archive confirmation is evidence that an external/manual Excel archive occurred. It does not upload files or transfer observation data. The API's default service path is process-local in-memory unless MetraOps is configured; durable use must be verified separately.
+- Aggregate report and full historical read models remain blocked. No schema or database changes were made.
