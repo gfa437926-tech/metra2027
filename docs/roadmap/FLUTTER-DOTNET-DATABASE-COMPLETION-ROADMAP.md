@@ -1,6 +1,6 @@
 # METRA 2027 — Flutter, ASP.NET Core and New Database Completion Roadmap
 
-Last updated: 2026-11-11T15:34:26.685Z
+Last updated: 2026-11-11T15:37:35.040Z
 Repository: gfa437926-tech/metra2027
 Default branch: main
 
@@ -218,3 +218,19 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - **Not run:** Flutter analyzer/tests, app builds or runtime visual checks. The current environment has no Flutter/Dart executable; test source is not represented as passing.
 - Database changes: none. Legacy database: untouched.
 - Next: execute the tests in Flutter CI, then continue the forecast-centre UI using approved station metadata and an explicitly separate live-telemetry contract. Role-based navigation remains gated on server-authoritative access context; FLT-001 archive inspection remains in progress.
+
+
+## FLT-005 — Forecast-centre station comparison workspace (2026-11-11T15:37:35.040Z)
+
+- **Task:** FLT-005.
+- **Status:** In progress — station-catalogue comparison UI, main-shell integration and test source committed; analyzer/runtime verification and live telemetry integration pending.
+- Added a dedicated forecast-centre screen that loads the approved station catalogue through the existing API client, permits selection of 2–4 stations, compares verified elevation/coordinates/provenance, and computes Haversine distance from a selected reference station only for valid coordinate pairs.
+- Added loading, error, empty and retry states, plus explicit scientific wording distinguishing catalogue metadata from live observations.
+- Integrated the screen into Flutter main navigation as `مراكز التنبؤ`; existing destinations remain present.
+- Added widget-test source for two station fixtures and the live-feed unavailable guard. The test has not been executed.
+- Code commits: `1d3286cd1981102ad0afb15ff9f31e3421408754`, `9dce065ae5ba36c154163e0dd54fcae2e55f6051`, `bfe0282a3c9541375d85b7f0c4a398fe03fefc8e`, `6271ce521d46ae7772bca50e60ee408153e26e9f`, `a08613f05593bedafaba839cc1191e58b7b4fba0`.
+- Round report: `docs/delivery/FLUTTER-ROUND-FLT-005-FORECAST-CENTRE-COMPARISON.md` (commit `4b894b80d68b8b8b5811e1638bb10a9923e6a602`).
+- Reviewed API contract supplies station-catalogue metadata only. It does not expose a live telemetry or bulletin contract in the reviewed client/routes; those panels remain unavailable rather than fabricated.
+- **Not run:** Flutter analyzer/tests, app builds or visual runtime checks. No passing test or CI result is claimed.
+- Database changes: none. Legacy database: untouched.
+- Next: run Flutter CI, then define/approve telemetry and bulletin backend contracts with source/time/quality/freshness provenance before implementing live readings. FLT-001 archive inspection remains in progress.
