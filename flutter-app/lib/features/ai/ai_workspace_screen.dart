@@ -94,7 +94,7 @@ class _AiWorkspaceScreenState extends State<AiWorkspaceScreen>
       const SizedBox(height: 16),
       _section('إعداد طلب التحليل'),
       DropdownButtonFormField<String>(
-        value: _task,
+        initialValue: _task,
         decoration: const InputDecoration(labelText: 'نوع المهمة', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'explain', child: Text('تفسير حالة جوية')),
@@ -107,7 +107,7 @@ class _AiWorkspaceScreenState extends State<AiWorkspaceScreen>
       ),
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
-        value: _source,
+        initialValue: _source,
         decoration: const InputDecoration(labelText: 'نطاق مصدر البيانات', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'authorized_station', child: Text('المحطات المصرح بها فقط')),
@@ -118,7 +118,7 @@ class _AiWorkspaceScreenState extends State<AiWorkspaceScreen>
       ),
       const SizedBox(height: 12),
       DropdownButtonFormField<String>(
-        value: _period,
+        initialValue: _period,
         decoration: const InputDecoration(labelText: 'الفترة الزمنية (UTC)', border: OutlineInputBorder()),
         items: const [
           DropdownMenuItem(value: 'latest_24h', child: Text('آخر 24 ساعة')),
@@ -193,9 +193,9 @@ class _AiWorkspaceScreenState extends State<AiWorkspaceScreen>
     ],
   );
 
-  Widget _statusBanner() => Card(
-    color: const Color(0xFFFFF7E8),
-    child: const Padding(
+  Widget _statusBanner() => const Card(
+    color: Color(0xFFFFF7E8),
+    child: Padding(
       padding: EdgeInsets.all(14),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
