@@ -88,10 +88,25 @@ void main() {
     expect(find.text('محطة دمشق'), findsOneWidget);
     expect(find.text('محطة حمص'), findsOneWidget);
 
-    await tester.tap(find.text('محطة دمشق'));
+    // Tap the complete selectable tiles, as a user does, rather than the
+    // nested title Text widget whose hit target is not the tile contract.
+    final damascusTile = find.byType(CheckboxListTile).at(0);
+    await tester.ensureVisible(damascusTile);
+    await tester.tap(damascusTile);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محطة حمص'));
+    expect(
+      tester.widget<CheckboxListTile>(damascusTile).value,
+      isTrue,
+    );
+
+    final homsTile = find.byType(CheckboxListTile).at(1);
+    await tester.ensureVisible(homsTile);
+    await tester.tap(homsTile);
     await tester.pumpAndSettle();
+    expect(
+      tester.widget<CheckboxListTile>(homsTile).value,
+      isTrue,
+    );
 
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
     expect(find.text('مصدر الإحداثيات'), findsNWidgets(2));
