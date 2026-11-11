@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 import '../observations/observation_review_screen.dart';
 import '../stations/station_directory_screen.dart';
+import '../forecast_centres/forecast_centre_screen.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 
 const _navy = Color(0xFF061B4A);
@@ -24,6 +25,7 @@ class _MetraHomeState extends State<MetraHome> {
       _HomeOverview(onOpenStations: () => setState(() => _index = 1)),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
         onStationSelected: (id) => setState(() => _selectedStationId = id)),
+      ForecastCentreScreen(api: widget.api),
       _selectedStationId == null
         ? const _InformationPage(icon: Icons.fact_check_outlined, title: 'مراجعة الرصدات',
             message: 'اختر محطة أولاً من دليل المحطات. سيطبّق الخادم صلاحيات حسابك على المحطة والعمليات المتاحة.')
@@ -47,6 +49,7 @@ class _MetraHomeState extends State<MetraHome> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
+          NavigationDestination(icon: Icon(Icons.query_stats_outlined), selectedIcon: Icon(Icons.query_stats), label: 'مراكز التنبؤ'),
           NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'الرصد'),
           NavigationDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: 'التقارير'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
