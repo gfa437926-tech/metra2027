@@ -160,6 +160,11 @@ void main() {
       }),
     );
 
+    final directReview = await api.getReviewQueue(stationId, limit: 50);
+    final directReturned = await api.getReturnedObservations(stationId, limit: 50);
+    expect(directReview, hasLength(1));
+    expect(directReturned, hasLength(1));
+
     useTallViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: ObservationHistoryScreen(api: api, stationId: stationId),
@@ -168,7 +173,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pumpAndSettle();
 
-    expect(requests, hasLength(2));
+    expect(requests, hasLength(4));
     expect(requests.every((request) =>
         request.url.path.startsWith('/api/v1/stations/$stationId/observations')), isTrue);
     expect(requests.every((request) =>
