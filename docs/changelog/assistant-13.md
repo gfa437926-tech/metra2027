@@ -127,3 +127,17 @@ All timestamps are UTC. Entries are append-only; do not replace earlier entries.
 - Re-read active decision migration blob e3115f6f9830930ab38879e3ed55cdbc25678e21; p_decision remains inserted directly into event_type, retaining the CHECK vocabulary mismatch. PR #26 proposal is still not an active migration.
 - No tests run locally, no DB/Supabase/SQL/migration execution or schema/data/secrets changes; no other branch modified, no merge/rebase/deploy.
 - Progress unchanged: 0% formally closed; 12/12 audit workstreams open. Next: owner-reviewed migration fix + PostgreSQL branch/transaction tests, decision endpoint negative integration tests, station audit source baseline/ACL/immutability tests.
+
+
+## 2026-11-11T12:27:51.775Z UTC — Round 9: scientific validation and climate-report source verification
+
+- M13 independently inspected the current .NET daily validator, observation submission/validation endpoints, observation test inventory, Angular monthly/annual report components and station-coordinate audit.
+- Confirmed the .NET daily validator checks individual humidity fields but has no cross-field rule enforcing maximum humidity >= minimum humidity; temperature ordering is checked. Numerical thresholds remain unapproved and unchanged.
+- Confirmed the observation submission endpoint does not call the daily/hourly/phenomenon domain validators before the persistence RPC. Separate validation routes do not establish validation on the write path; equivalent database enforcement remains unverified.
+- Confirmed the current observation test directory has request-guard tests but no dedicated daily domain-validator test file or decision endpoint integration test in the inspected inventory.
+- Confirmed monthly/annual Angular report components are preview-only, explicitly state the data source is not connected, and do not calculate indicators.
+- Reconfirmed the station-coordinate audit records 62 catalogue rows, 50 current coordinate pairs and 12 classic entries without current coordinates; no coordinates were inferred or changed.
+- Rechecked owner PRs #22/#25/#26/#28/#30: heads unchanged; #22/#25/#26/#28 have no exact-head PR-triggered run returned; #26 remains a proposal, not an active migration. #30's previously recorded exact-head CI successes remain unchanged.
+- Reconfirmed PR #31 targets current main while owner PRs #22/#25/#26/#28/#30 target the earlier main base. No branch synchronization, rebase or retarget was performed.
+- Tests run by assistant 13: none. No SQL, DB, Supabase, R/CLIMATOL, build, merge, rebase or deployment.
+- Only M13 progress/changelog and PR #31 description were updated. M13 remains 0% formally closed; 12/12 workstreams remain open.
