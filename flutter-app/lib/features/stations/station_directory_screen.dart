@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
+import 'station_detail_screen.dart';
 
 class StationDirectoryScreen extends StatefulWidget {
   const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
@@ -18,6 +19,12 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   @override
   void initState() { super.initState(); _load(); }
   void _load() { _stations = widget.api.getAllStationDirectory(stationType: _type); }
+  void _openStation(StationDirectoryItem station) {
+    widget.onStationSelected?.call(station.id);
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => StationDetailScreen(station: station),
+    ));
+  }
   @override
   Widget build(BuildContext context) => Column(children: [
     Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 4), child: Column(children: [
@@ -75,7 +82,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
           alignment: Alignment.topCenter,
           child: Tooltip(message: '${station.nameArabic} • ${station.localCode}',
             child: GestureDetector(
-              onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
+              onTap: () => _openStation(station),
               child: Icon(station.stationType == 'classic' ? Icons.cell_tower : Icons.sensors,
                 size: 38, color: station.stationType == 'classic'
                   ? const Color(0xFF2463B5) : const Color(0xFF16835D)),
@@ -114,7 +121,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     final coords = station.hasValidCoordinates ? 'إحداثيات صالحة' : station.hasCoordinates ? 'إحداثيات غير صالحة — لن تظهر على الخريطة' : 'لا توجد إحداثيات موثقة';
     return Card(elevation: 0, child: ListTile(
       selected: station.id == widget.selectedStationId,
-      onTap: widget.onStationSelected == null ? null : () => widget.onStationSelected!(station.id),
+      onTap: () => _openStation(station),
       leading: CircleAvatar(backgroundColor: classic ? const Color(0xFFEAF2FF) : const Color(0xFFE7F8F2),
         child: Icon(classic ? Icons.cell_tower : Icons.sensors,
           color: classic ? const Color(0xFF2463B5) : const Color(0xFF16835D))),
