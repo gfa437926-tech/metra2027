@@ -63,7 +63,10 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           );
         }
         final selected = stations.where((s) => _selectedIds.contains(s.id)).toList();
-        StationDirectoryItem? reference;\n        for (final station in stations) {\n          if (station.id == _referenceId) { reference = station; break; }\n        }
+        StationDirectoryItem? reference;
+        for (final station in stations) {
+          if (station.id == _referenceId) { reference = station; break; }
+        }
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
