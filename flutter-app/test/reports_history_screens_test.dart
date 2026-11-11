@@ -83,6 +83,16 @@ void main() {
     expect(find.textContaining('من: '), findsOneWidget);
     expect(find.textContaining('إلى: '), findsOneWidget);
 
+    final DateTime nowUtc = DateTime.now().toUtc();
+    final DateTime previousMonth = DateTime.utc(nowUtc.year, nowUtc.month - 1, 1);
+    await tester.tap(find.text('الشهر السابق'));
+    await tester.pumpAndSettle();
+    final summaryRequest = requests.lastWhere((request) =>
+        request.method == 'GET' &&
+        request.url.path.endsWith('/archive-confirmations/monthly-summary'));
+    expect(summaryRequest.url.queryParameters['year'], '${previousMonth.year}');
+    expect(summaryRequest.url.queryParameters['month'], '${previousMonth.month}');
+
     await tester.enterText(
       find.byWidgetPredicate((widget) =>
           widget is TextField && widget.decoration?.labelText == 'اسم ملف Excel'),
