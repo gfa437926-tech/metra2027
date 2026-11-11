@@ -139,7 +139,7 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: DropdownButtonFormField<String>(
-              value: _selectedType ?? '',
+              initialValue: _selectedType ?? '',
               decoration: const InputDecoration(
                 labelText: 'نوع الرصد',
                 border: OutlineInputBorder(),
@@ -270,15 +270,21 @@ class _ObservationArchiveDetailScreenState extends State<ObservationArchiveDetai
     try {
       final item = await widget.api.getObservationArchiveDetail(
         widget.stationId, widget.observationId);
-      if (mounted) setState(() => _item = item);
+      if (mounted) {
+        setState(() => _item = item);
+      }
     } on MetraApiException catch (error) {
-      if (mounted) setState(() => _error = error.statusCode == 403
-          ? 'لا تملك صلاحية قراءة هذا السجل.'
-          : error.statusCode == 404
-              ? 'السجل غير موجود ضمن أرشيف هذه المحطة.'
-              : 'تعذر تحميل تفاصيل السجل.');
+      if (mounted) {
+        setState(() => _error = error.statusCode == 403
+            ? 'لا تملك صلاحية قراءة هذا السجل.'
+            : error.statusCode == 404
+                ? 'السجل غير موجود ضمن أرشيف هذه المحطة.'
+                : 'تعذر تحميل تفاصيل السجل.');
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر تحميل تفاصيل السجل.');
+      if (mounted) {
+        setState(() => _error = 'تعذر تحميل تفاصيل السجل.');
+      }
     }
   }
 
