@@ -450,6 +450,10 @@ class _ForecastingStationProfileSheetState
             final lat = data['latitude'];
             final lon = data['longitude'];
             final elev = data['elevationM'];
+            final coordinateSource = data['coordinateSource']?.toString() ??
+                widget.fallback.coordinateSource ?? 'غير موثق';
+            final coordinateAccuracy =
+                data['coordinateAccuracyM'] ?? widget.fallback.coordinateAccuracyM;
             final freshness = data['dataFreshness']?.toString() ?? 'catalogue_only';
             final retrieved = data['retrievedAtUtc']?.toString() ?? '';
             return SingleChildScrollView(
@@ -465,6 +469,10 @@ class _ForecastingStationProfileSheetState
                   _row('خط العرض', lat?.toString() ?? 'غير متاح'),
                   _row('خط الطول', lon?.toString() ?? 'غير متاح'),
                   _row('الارتفاع (م)', elev?.toString() ?? 'غير متاح'),
+                  _row('مصدر الإحداثيات', coordinateSource),
+                  _row('دقة الإحداثيات', coordinateAccuracy == null
+                      ? 'غير متوفرة'
+                      : '${coordinateAccuracy.toString()} م'),
                   _row('مصدر البيانات', freshness),
                   _row('وقت الاسترجاع UTC', retrieved),
                   _row('قيم الرصد اللحظية', 'غير متاحة قبل اعتماد عقد اللقطة'),
