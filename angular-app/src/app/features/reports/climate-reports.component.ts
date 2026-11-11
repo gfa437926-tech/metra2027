@@ -41,6 +41,19 @@ import { ActivatedRoute } from '@angular/router';
         </label>
       </div>
 
+      <section class="card filters">
+        <h2>إعداد استعلام مناخي</h2>
+        <p>واجهة الفلاتر جاهزة؛ لا توجد معادلات تجميع أو API معتمد لإنتاج القيم.</p>
+        <div class="fields">
+          <label>المتغير<select [(ngModel)]="variable" name="variable"><option value="">اختر المتغير</option><option value="temperature">درجة الحرارة</option><option value="precipitation">الهطول</option><option value="humidity">الرطوبة</option><option value="pressure">الضغط</option><option value="wind">الرياح</option></select></label>
+          <label>نوع التقرير<select [(ngModel)]="reportType" name="reportType"><option value="monthly">شهري</option><option value="seasonal">فصلي</option><option value="annual">سنوي</option><option value="period">فترة مخصصة</option></select></label>
+          <label>بداية الفترة UTC<input type="date" [(ngModel)]="periodStart" name="periodStart"></label>
+          <label>نهاية الفترة UTC<input type="date" [(ngModel)]="periodEnd" name="periodEnd"></label>
+        </div>
+        <button type="button" (click)="preview()">معاينة معايير الاستعلام</button>
+        <p class="preview" *ngIf="previewMessage" role="status">{{ previewMessage }}</p>
+      </section>
+
       <div class="links">
         <a routerLink="/reports/hourly" [queryParams]="qp">إدخال ساعي</a>
         <a routerLink="/reports/daily" [queryParams]="qp">إدخال يومي</a>
@@ -83,6 +96,19 @@ export class ClimateReportsComponent implements OnInit {
 
   stations: StationDirectoryItem[] = [];
   stationId = '';
+  variable = '';
+  reportType = 'monthly';
+  periodStart = '';
+  periodEnd = '';
+  previewMessage = '';
+
+  preview(): void {
+    if (!this.stationId || !this.variable || !this.periodStart || !this.periodEnd) {
+      this.previewMessage = 'حدد المحطة والمتغير وبداية الفترة ونهايتها.';
+      return;
+    }
+    this.previewMessage = 'تم إعداد معايير الاستعلام محلياً فقط. لا توجد نتائج مناخية ولم يتم إرسال طلب للخادم.';
+  }
 
   get qp(): Record<string, string> {
     return this.stationId ? { stationId: this.stationId } : {};
