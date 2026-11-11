@@ -419,6 +419,27 @@ class MetraApiClient {
 
 
 
+  Future<List<Map<String, dynamic>>> listRegistrationAudit(
+    String stationId, {
+    bool systemStage = false,
+    int limit = 100,
+  }) async {
+    if (limit < 1 || limit > 200) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final path = systemStage
+        ? '/api/v1/stations/${Uri.encodeComponent(stationId)}/system-registration-audit?limit=$limit'
+        : '/api/v1/stations/${Uri.encodeComponent(stationId)}/registration-audit?limit=$limit';
+    final response = await _send('GET', path);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) {
+      throw const FormatException('invalid_registration_audit_list');
+    }
+    return decoded
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
   Future<List<Map<String, dynamic>>> listRegistrationRequests(
     String stationId, {
     bool systemStage = false,
