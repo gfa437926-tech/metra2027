@@ -212,9 +212,9 @@ class _ObservationHistoryScreenState extends State<ObservationHistoryScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: <Widget>[
-                  const Card(
+                  Card(
                     child: ListTile(
-                      leading: Icon(Icons.info_outline),
+                      leading: const Icon(Icons.info_outline),
                       title: Text('نطاق السجل'),
                       subtitle: Text(
                         'يعرض حتى 100 عنصر من طابور المراجعة المصرح للمحطة، وحتى 100 نشرة مُرجَعة تخص المستخدم الحالي. لا يتضمن السجل الكامل للنشرات المعتمدة أو المرفوضة أو المؤرشفة؛ لا يوجد لها endpoint تاريخي معتمد حالياً.'
