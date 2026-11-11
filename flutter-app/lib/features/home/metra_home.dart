@@ -25,7 +25,8 @@ class _MetraHomeState extends State<MetraHome> {
     final pages = [
       _HomeOverview(
         api: widget.api,
-        onOpenStations: () => setState(() => _index = 1)),
+        onOpenStations: () => setState(() => _index = 1),
+        onOpenForecasting: () => setState(() => _index = 5)),
       StationDirectoryScreen(api: widget.api, selectedStationId: _selectedStationId,
         onStationSelected: (id) => setState(() => _selectedStationId = id)),
       _selectedStationId == null
@@ -40,6 +41,7 @@ class _MetraHomeState extends State<MetraHome> {
         ? const _InformationPage(icon: Icons.build_outlined, title: 'الصيانة والدعم',
             message: 'اختر محطة أولاً لتسجيل أعطال المعدات أو بلاغات الدعم على الخادم.')
         : StationOpsHubScreen(api: widget.api, stationId: _selectedStationId!),
+      ForecastingCenterScreen(api: widget.api),
       _InformationPage(icon: Icons.settings_outlined, title: 'إعدادات الحساب',
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
@@ -59,15 +61,17 @@ class _MetraHomeState extends State<MetraHome> {
           NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'مراجعة'),
           NavigationDestination(icon: Icon(Icons.edit_note_outlined), selectedIcon: Icon(Icons.edit_note), label: 'إدخال'),
           NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'عمليات'),
+          NavigationDestination(icon: Icon(Icons.cloud_outlined), selectedIcon: Icon(Icons.cloud), label: 'التنبؤ'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
         ]),
     ));
   }
 }
 class _HomeOverview extends StatelessWidget {
-  const _HomeOverview({required this.api, required this.onOpenStations});
+  const _HomeOverview({required this.api, required this.onOpenStations, required this.onOpenForecasting});
   final MetraApiClient api;
   final VoidCallback onOpenStations;
+  final VoidCallback onOpenForecasting;
   @override
   Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(20), children: [
     Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(borderRadius: BorderRadius.circular(24),
@@ -88,13 +92,7 @@ class _HomeOverview extends StatelessWidget {
       icon: Icons.cloud_outlined,
       title: 'مركز التنبؤ الجوي',
       description: 'مقارنة جغرافية وتفاصيل الكتالوج — اطلاع فقط بدون تعديل السجلات.',
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => ForecastingCenterScreen(api: api),
-          ),
-        );
-      },
+      onTap: onOpenForecasting,
     ),
   ]);
 }
