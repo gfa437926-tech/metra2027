@@ -105,7 +105,7 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 | DY-06 | Daily correction | Returned observation editor | Baseline exists — verify daily field contract and version history |
 | AU-01/02 | Auditor workspace / station observation view | Electronic auditor scaffold and station review surfaces | Partial — no complete auditor queue/scope model |
 | AU-03 | Missing-data register | Not present | Missing — needs approved missing-data rules/API |
-| AU-04 | Review history | Registration review now links to station/system registration audit API and read-only audit screen | Partial — full observation event history remains separate |
+| AU-04 | Review history | Registration review links station/system registration audit; station assignment links station audit log | Partial — full observation event history remains separate |
 | AU-05 | Monthly audit report | Manual archive confirmation screen and summary API | Partial — reconcile archive confirmations, missing data and outstanding items |
 | AD-01 | User directory | Station-scoped user list in assignment screen | Partial — global directory not available |
 | AD-02 | User details | Own-account profile + read-only station assignment detail sheet | Partial — authorized personal account detail/history API is missing |
@@ -153,3 +153,10 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - Added server-state gate before operational home; non-active or unverified account states do not enter the operational shell.
 - Added station assignment validity-end UTC field and read-only detail sheet.
 - New source tests cover account gate states, registration duplicate guard, authority access reads/self-request and assignment validity/detail. All await Flutter CI execution.
+
+
+## Recovery and station-audit parity — 2026-11-11T16:57:02.249Z
+
+- Password recovery completion screen, Supabase passwordRecovery event route, and Android/iOS custom scheme registration are in the canonical source. Supabase Dashboard allow-list and actual email round-trip are external verification gates.
+- Station assignment now links to the station-scoped audit log endpoint and displays immutable audit fields with UTC timestamps.
+- Added source tests; CI run for exact code tip is being checked.
