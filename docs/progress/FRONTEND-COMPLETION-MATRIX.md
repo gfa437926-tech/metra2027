@@ -1,7 +1,7 @@
 # METRA 2027 — FRONTEND Completion Matrix (Flutter)
 
 **Updated (UTC):** 2026-11-11  
-**Branch:** `work/legacy-ui-migration-audit`  
+**Branch:** `work/flutter-canonical-consolidation`  
 **Canonical source (CI):** `flutter-app/` only  
 **Reference only:** `mobile/metra_mobile/` (do not develop in parallel)
 
@@ -12,10 +12,11 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-AUTH-01 | تسجيل الدخول / Login | جيد | بوابة Supabase | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-AUTH-02 | التسجيل / Registration | جيد | طلب انضمام | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | reset email | مربوط | — | موجود | معلق | قيد العمل |
-| FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + خروج | مربوط | شرح صلاحيات | موجود | معلق | قيد العمل |
-| FLT-AUTH-05 | الصلاحيات UI / Permissions view | ناقص | لا شاشة مستقلة | جزئي عبر الملف | — | لا | معلق | ناقص |
+| FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + حالة الحساب + حالة طلب الانضمام + خروج | `GET /api/v1/account/registration-status` | لا يعرض أدواراً/محطات دون access-context | موجود مصدرّياً | CI معلق | جزئي — ACC-02 مطلوب |
+| FLT-AUTH-05 | الصلاحيات UI / Permissions view | ناقص | لا شاشة فعلية؛ كتالوج الأدوار ثابت | لا يوجد access-context API | لا يجوز استنتاج الصلاحية من اسم الدور | لا | CI معلق | ناقص — ACC-02/03 |
+| FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | ناقص | معالجة 401/403 محلية فقط؛ لا شاشة/بوابة موحدة | جزئي | الخادم مرجع القرار | لا | CI معلق | ناقص — ACC-04 |
 | FLT-STN-01 | دليل المحطات / Directory | جيد | قائمة+خريطة+بحث | مربوط | خادم | موجود | معلق | قيد العمل |
-| FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل؛ تفاصيل المصدر/الدقة غير مثبتة في canonical | مربوط | — | جزئي | معلق | قيد العمل — FLT-004 provenance enhancement في المسار المرجعي فقط |
+| FLT-STN-02 | تفاصيل المحطة / Detail | جيد | بيانات الدليل + مصدر الإحداثيات ودقتها | مربوط | لا تمنح تعديل المحطة | موجود مصدرّياً | CI معلق | مواءمة المصدر/الدقة تمت؛ تحقق CI مطلوب |
 | FLT-STN-03 | اختيار محطة العمل / Active station | جيد | الرئيسية+تنقل | محلي+API | — | جزئي | معلق | جيد |
 | FLT-STN-04 | الإسناد / Assignment | جيد | طلب/قرار/إلغاء | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-OBS-01 | إدخال ساعي / Hourly entry | جيد | عقد+إرسال | مربوط | خادم | موجود | معلق | قيد العمل |
@@ -33,7 +34,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 | FLT-RPT-01 | حالة النشرات / Observation status | جيد | طوابير | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-RPT-02 | تقارير المحطة / Reports hub | جيد | روابط | جزئي | محطة | جزئي | معلق | جزئي |
 | FLT-RPT-03 | تقارير مناخية/مطرية/سنوية | هيكل | غير متاح | غير متاح | — | لا | معلق | محجوبة |
-| FLT-FC-01 | مركز التنبؤ / Forecasting | جيد | خريطة+بحث+اختيار+مقارنة API في `flutter-app/`؛ إضافة Grok FLT-005 منفصلة في المسار المرجعي فقط | كتالوج ومقارنة خادمية | قراءة | موجود جزئياً؛ FLT-005 المرجعي غير مثبت في canonical | لا دليل أخضر | جزئي — مراجعة مسار مطلوبة |
+| FLT-FC-01 | مركز التنبؤ / Forecasting | جيد | خريطة+بحث+اختيار+مقارنة خادمية 2–12+ملف محطة+مصدر/دقة الإحداثيات | كتالوج ومقارنة خادمية | قراءة | موجود؛ metadata tests أضيفت | CI معلق | جزئي — الرصد اللحظي محجوب بعقد API |
 | FLT-FC-02 | رصد لحظي / Live snapshot | — | غير معروض | عقد غير معتمد | — | لا | — | محجوبة |
 | FLT-SPEC-01 | أمطار/مناخ/زراعي/تربة | هيكل | حالة عدم توفر | غير متاح | — | هيكل | معلق | محجوبة |
 | FLT-AUD-01 | التدقيق الإلكتروني | هيكل | تصميم فقط | غير متاح | — | هيكل | معلق | محجوبة |
@@ -74,3 +75,17 @@ No SQL · no legacy DB · no main merge · no publish without approval · UTC on
 - The canonical station model currently parses `elevation_m` but does not expose `coordinateSource` or `coordinateAccuracyM`; therefore provenance/accuracy parity from FLT-004 is not established in the canonical Flutter app.
 - FLT-004 report states implementation and test execution/visual acceptance are pending; no analyzer/test pass is claimed.
 - Required action: port only the missing verified provenance/accuracy fields and corresponding details UI/test to canonical Flutter after a source-level reconciliation. Preserve the canonical implementation and do not delete the reference tree prematurely.
+
+
+## Canonical consolidation round — 2026-11-11T16:28:04.698Z
+
+- Branch: `work/flutter-canonical-consolidation`; this branch was created from `work/legacy-ui-migration-audit` to isolate consolidation work from Grok's current `main` changes.
+- Canonical destination: `flutter-app/`; source/reference: `mobile/metra_mobile/` on `main`.
+- The canonical tree already contains more complete versions of the API client, auth, home, station directory, observations, maintenance, support, operations and reports than the reference tree. These were preserved; no wholesale overwrite/copy was performed.
+- Ported and integrated the unique responsive navigation widget into the canonical home shell.
+- Ported FLT-004 station coordinate provenance and accuracy into the canonical API model, station detail screen and forecasting station profile.
+- Account profile now reads the existing server registration-status projection and displays account state, registration stage, review note and UTC submission time. It does not invent role or station assignments.
+- Added source tests for responsive navigation, coordinate provenance parsing/detail display, and account status/error handling. **Not executed**: no Flutter SDK is available in this execution environment.
+- Forecast-centre implementation in canonical is retained because it already has station map/search, profile API and server-side comparison endpoint (2–12 stations), which is stronger than the reference screen's local-only distance calculation. The reference screen is not copied as a duplicate.
+- Account audit: `docs/progress/ACCOUNT-SCREENS-AUDIT.md`. Effective role/assignment access context, global permissions UI and global user administration remain blocked pending API contract and owner approval.
+- No database changes, no migrations/RLS/grants, no old database access, no main merge, no deployment.
