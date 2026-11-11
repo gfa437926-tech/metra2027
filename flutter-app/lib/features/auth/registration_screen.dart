@@ -83,7 +83,9 @@ class _MetraRegistrationScreenState extends State<MetraRegistrationScreen> {
     } catch (_) {
       if (mounted) setState(() => _error = 'تعذر إنشاء حساب الهوية. تحقق من البيانات أو حاول لاحقاً.');
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() => _busy = false);
+      }
     }
   }
 
