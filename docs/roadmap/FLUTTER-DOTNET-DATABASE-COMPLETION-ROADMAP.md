@@ -135,3 +135,43 @@ Flutter is complete only when every requirement in the traceability matrix is im
 ## Immediate next task
 
 FLT-001: finish the complete Flutter requirements/screen traceability inventory from the project specification and reference source files. Do not begin broad UI expansion or database writes until the inventory and data contract are established.
+
+
+## Scope amendment — additional mandatory modules (2026-11-11 UTC)
+
+The requirements baseline must explicitly account for these additional METRA modules. They are mandatory Flutter scope and must be included in the same requirement → screen → API → domain → database → test traceability matrix:
+
+### Phase 4A — Electronic audit workspace
+- Audit work queue with filters by station, record type, period, status and responsible actor, subject to the user's server-authorized scope.
+- Record/bulletin review details, field-level differences, validation findings, reviewer notes, decision history and evidence references.
+- Explicit states and transitions (pending, under review, accepted, returned for correction, rejected, closed) only where confirmed by the authoritative requirements.
+- Immutable, append-only audit events; no client ability to edit or delete audit history.
+- Backend authorization and tests for reviewer scope, separation of duties, tamper resistance and audit read access.
+- Do not equate the existing station-audit endpoints with a complete electronic meteorological-record audit module until requirements and endpoint coverage are reconciled.
+
+### Phase 5A — AI-assisted meteorological intelligence
+- A dedicated AI workspace for user-authorized analytical questions, summaries, anomaly explanations and decision support, based on approved data sources.
+- Every result must expose provenance, data time range, source records, model/service identity and uncertainty/limitations where applicable.
+- Clearly distinguish observed station measurements, numerical model output, derived analytics and AI-generated interpretation.
+- Human review/approval remains required for operational bulletins or consequential decisions unless an explicitly approved workflow states otherwise.
+- No fabricated telemetry, unsupported forecast claims, autonomous database writes, or exposure of protected station/user data.
+- Define backend AI gateway, prompt/data access policy, redaction, rate limits, logging, retention and evaluation tests before implementation.
+
+### Phase 5B — Climatol climate-series homogenization
+- A dedicated Climatol workflow for selecting station series, variables, reference/comparison stations and analysis periods.
+- Import/validate time series with units, calendar, missing-value conventions, station metadata and provenance.
+- Run controlled Climatol jobs server-side or in an isolated worker; do not execute scientific jobs inside the Flutter client.
+- Show run configuration, software/version, input dataset fingerprint, diagnostics, break candidates, adjustment outputs, quality flags and reproducible reports.
+- Preserve raw observations unchanged; adjusted/homogenized series must be separate, versioned, attributable products with review and approval history.
+- Define API/job lifecycle, storage, access control, reproducibility and scientific acceptance tests before database implementation.
+
+### Requirements archive inspection blocker
+A root-level archive exists: `10-5-2026 برنامج ادارة البيانات الجوية مع الربط على.rar` (629,492 bytes). GitHub tree metadata confirms its presence, but the current GitHub file-fetch interface cannot decode its binary RAR payload as UTF-8. Its contents have therefore **not** been reviewed and no requirements are inferred from its filename. FLT-001 remains in progress until the archive is inspected through a binary-capable download/extraction path and its internal specification, screenshots and project-step documents are indexed.
+
+### Task tracking
+- Task: FLT-001 — requirements and screen traceability inventory.
+- Status: In progress / blocked on inspection of the RAR archive contents.
+- UTC date: 2026-11-11.
+- Repository: `gfa437926-tech/metra2027`, branch `main`.
+- Database changes: none.
+- Flutter implementation claim: none added by this scope amendment.
