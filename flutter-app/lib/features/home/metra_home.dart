@@ -7,6 +7,7 @@ import '../observations/observation_submit_screen.dart';
 import '../forecasting/forecasting_center_screen.dart';
 import '../account/account_profile_screen.dart';
 import '../auth/registration_screen.dart';
+import '../observations/phenomenon_capture_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -54,6 +55,19 @@ class _MetraHomeState extends State<MetraHome> {
         onRegistration: () => Navigator.of(context).push(MaterialPageRoute<void>(
           builder: (_) => MetraRegistrationScreen(api: widget.api, initiallyAuthenticated: true),
         )),
+        onPhenomena: () {
+          final stationId = _selectedStationId;
+          if (stationId == null) {
+            setState(() => _index = 1);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('اختر محطة من الدليل أولاً لتسجيل الظاهرة.')),
+            );
+            return;
+          }
+          Navigator.of(context).push(MaterialPageRoute<void>(
+            builder: (_) => PhenomenonCaptureScreen(api: widget.api, stationId: stationId),
+          ));
+        },
       ),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
@@ -95,12 +109,14 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onOperations,
     required this.onSettings,
     required this.onRegistration,
+    required this.onPhenomena,
   });
 
   final VoidCallback onReview;
   final VoidCallback onOperations;
   final VoidCallback onSettings;
   final VoidCallback onRegistration;
+  final VoidCallback onPhenomena;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -120,6 +136,13 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'العمليات والصيانة',
         description: 'الأعطال والدعم والتقارير وتعيينات المحطة.',
         onTap: onOperations,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.cloud_queue_outlined,
+        title: 'تسجيل ظاهرة جوية',
+        description: 'بدء وإنهاء الظواهر مع تحقق الخادم وحفظها ضمن المحطة المحددة.',
+        onTap: onPhenomena,
       ),
       const SizedBox(height: 10),
       _ActionCard(
