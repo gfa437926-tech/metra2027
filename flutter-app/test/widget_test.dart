@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
+import 'package:metra_mobile/features/home/metra_home.dart';
 
 void main() {
   testWidgets('configuration screen explains missing secure environment values', (tester) async {
@@ -63,4 +64,28 @@ void main() {
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
   });
+
+  testWidgets('forecasting center is a persistent shared navigation destination', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'navigation-test-token',
+      client: MockClient((_) async => http.Response(
+        '[]',
+        200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
+      )),
+    );
+    await tester.pumpWidget(MaterialApp(home: MetraHome(api: api)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('التنبؤ'), findsOneWidget);
+    await tester.tap(find.text('التنبؤ'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('مركز التنبؤ الجوي'), findsOneWidget);
+    expect(find.textContaining('قيم الرصد اللحظية غير متاحة'), findsOneWidget);
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
+    api.close();
+  });
+
 }
