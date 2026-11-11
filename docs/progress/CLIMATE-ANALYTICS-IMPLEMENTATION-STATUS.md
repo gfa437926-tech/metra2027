@@ -147,3 +147,13 @@ The editing environment did not contain an R executable. No local `R CMD check` 
 - Worker now uses an atomic workspace lock to reject overlapping Climatol invocations in the same workspace while it relies on process working-directory changes. Lock PID and UTC start time are recorded; forced termination can leave a stale lock requiring verified manual recovery.
 - Regression test covers nested overlapping invocation rejection. [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) for commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88` was pending at this update.
 - This is serialized execution, not multi-job parallel support. Progress remains 55%; six major work items remain.
+
+
+---
+
+## Assistant 04 verification and lock lifecycle tests — 2026-11-11T00:09:37Z
+
+- [R CI run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) passed for workspace-lock serialization code commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88`; Climatol 4.5-0 verification and R package check completed successfully.
+- Added tests for lock release after runner failure and rejection/preservation of a pre-existing lock. Fresh CI is required before these two tests are considered passed.
+- Current task estimate remains 55%; six major work items remain. The security/reproducibility workstream is still partial.
+- No local R run, METRA data processing, .NET adapter, database/Supabase modification, review UI, scientific validation, or scientific approval is claimed.

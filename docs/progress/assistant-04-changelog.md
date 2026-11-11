@@ -106,3 +106,14 @@
 - [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) is the fresh CI run for the serialization commit and was in progress at report time; no pass is claimed for the lock changes yet.
 - PR #23 remains Open / Draft / not merged; PR #18 remains untouched and unmerged.
 - Progress remains 55%; six major work items remain. No database, raw observation, .NET, Angular/Flutter, merge, or deployment changes.
+
+
+## 2026-11-11T00:09:37Z — Verify workspace lock CI and add lock lifecycle regressions
+
+- Verified [Climate Analytics R run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749): completed successfully on serialization code commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88`; all six job steps succeeded, including pinned Climatol 4.5-0 verification and R package check.
+- Added regression coverage that the worker releases its atomic workspace lock after a runner exception.
+- Added regression coverage that a pre-existing lock is rejected and left intact; the worker does not automatically delete a possibly-live or stale lock.
+- Changed: `services/climate-analytics-r/tests/testthat/test-worker.R`, assistant report, this append-only changelog, and implementation status.
+- New tests are committed in this round but require a fresh CI run. No local R execution is claimed.
+- PR #23 remains Open / Draft / not merged; PR #18 remains Open / Draft / not merged and untouched.
+- Progress remains 55%; six major work items remain. No database/Supabase, production observations, .NET adapter, Angular/Flutter, merge, or deployment changes.

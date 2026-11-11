@@ -3,12 +3,12 @@
 ## Latest work report
 
 - **Task:** Assistant 04 — climate homogenization and climate analytics with R/Climatol.
-- **Report timestamp (UTC):** 2026-11-10T23:28:22Z
+- **Report timestamp (UTC):** 2026-11-11T00:09:37Z
 - **Task status:** In progress. The engineering hardening slice is committed and its R GitHub Actions run passed; the complete climate-homogenization task remains incomplete.
 - **Branch:** `work/climate-analytics-r-hardening`
 - **Pull request:** [PR #23 — Harden R/Climatol job provenance and integrity](https://github.com/gfa437926-tech/metra2027/pull/23) — Open, Draft, not merged.
 - **PR #18:** Open, Draft, not merged, and not modified by this task.
-- **Latest commit at report creation:** `c9d26c55d0743ea96830ba1df157f2cc05c7455f`.
+- **Latest verified branch commit before this round:** `5579f13057a6ee114c8a336c76a029a96f45de89`; this round adds lock-release and pre-existing-lock regression coverage.
 
 ## Files inspected
 
@@ -65,7 +65,7 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 - [Climate Analytics R — GitHub Actions run #22](https://github.com/gfa437926-tech/metra2027/actions/runs/42923998106): **Success** on smoke-test code commit `015a470646e108f2f38977e08b196bd959e9137c`; verified Climatol 4.5-0, `R CMD check` `Status: OK`, and 0 errors / 0 warnings / 0 notes. The test suite includes the real Climatol Temp example fixture smoke test.
 
-- [Climate Analytics R — GitHub Actions run #19](https://github.com/gfa437926-tech/metra2027/actions/runs/42922431783): **Success** for code/documentation commit `c9d26c55d0743ea96830ba1df157f2cc05c7455f`.
+- [Climate Analytics R — GitHub Actions run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749): **Success** on serialization code commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88`; all six job steps completed, including Climatol 4.5-0 verification and R package check. This run predates the new tests in this round.
 - Earlier R runs #16, #17, and #18 also completed successfully: [#16](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198272), [#17](https://github.com/gfa437926-tech/metra2027/actions/runs/42922289719), [#18](https://github.com/gfa437926-tech/metra2027/actions/runs/42922349649). Run #16 exercised the worker/provenance/test code commit `dde09bdecb356c6f90d10e2809536936c4eed3f0`; later commits in the PR added documentation and progress records only.
 - [Backend build — GitHub Actions run #1388](https://github.com/gfa437926-tech/metra2027/actions/runs/42922198331): **Success** for the same PR event/head code commit. This is not evidence of a completed .NET/R integration.
 - Baseline runs before this hardening: [R run #15](https://github.com/gfa437926-tech/metra2027/actions/runs/42919914442) and [Backend build #1386](https://github.com/gfa437926-tech/metra2027/actions/runs/42919914413), both reported successful.
@@ -74,7 +74,7 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 
 ## Commit and PR
 
-- Latest commit: `c9d26c55d0743ea96830ba1df157f2cc05c7455f`
+- Latest commit before current unverified test round: `5579f13057a6ee114c8a336c76a029a96f45de89`
 - Commit URL: https://github.com/gfa437926-tech/metra2027/commit/c9d26c55d0743ea96830ba1df157f2cc05c7455f
 - Branch URL: https://github.com/gfa437926-tech/metra2027/tree/work/climate-analytics-r-hardening
 - PR #23: https://github.com/gfa437926-tech/metra2027/pull/23 — Open / Draft / not merged.
@@ -94,7 +94,7 @@ No files in Angular or Flutter were changed. No database, Supabase, production o
 5. Validate the method on an independently curated climate reference dataset.
 6. Obtain scientific sign-off for variable-specific settings, thresholds, completeness rules, and publication criteria.
 
-**Next step:** expand adversarial input-boundary tests (symlink escape, traversal, malformed/oversized inputs) and verify them in CI.
+**Next step:** verify the newly added lock-release and pre-existing-lock tests in CI; then continue malformed-input and cancellation/resource-bound testing.
 
 ## Safety declaration
 
@@ -180,3 +180,16 @@ The Climatol fixture smoke-test milestone is now verified by CI run #22 and is n
 - [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) is the fresh CI run for the serialization commit and was in progress at report time; no pass is claimed for the lock changes yet.
 - PR #23 remains Open / Draft / not merged; PR #18 remains untouched and unmerged.
 - Progress remains 55%; six major work items remain. No database, raw observation, .NET, Angular/Flutter, merge, or deployment changes.
+
+
+## Assistant 04 follow-up — 2026-11-11T00:09:37Z
+
+- **Status:** In progress; lock serialization CI has now passed, and this round adds two regression tests that are not yet CI-verified.
+- **Verified CI:** [Run #26](https://github.com/gfa437926-tech/metra2027/actions/runs/42925484749) — Success on code commit `3bb44f842cce30473be36e25e5798cc4ffcf1e88`. The R package-check job completed setup, dependency installation, pinned Climatol 4.5-0 verification, and R CMD check successfully.
+- **New tests added:** (1) a runner failure releases the workspace lock; (2) a pre-existing lock causes a safe rejection and is not deleted or bypassed. These tests explicitly preserve manual stale-lock recovery rather than guessing whether an owner process is alive.
+- **Files inspected:** worker implementation, request-validation implementation, worker tests, assistant report, append-only changelog, implementation status, PR #23, PR #18, and run #26 job result.
+- **Files changed this round:** `services/climate-analytics-r/tests/testthat/test-worker.R`, `docs/progress/assistant-04.md`, `docs/progress/assistant-04-changelog.md`, and `docs/progress/CLIMATE-ANALYTICS-IMPLEMENTATION-STATUS.md`.
+- **Not done:** no .NET adapter, database/Supabase changes, raw observation processing, durable artifact store, review UI, independent climate-reference validation, cancellation/timeouts, or scientific sign-off. No local R run is claimed.
+- **Progress:** remains 55% using (3 completed + 5 partial × 0.5) / 10 workstreams. Six major work items remain.
+- **Branch / PR:** `work/climate-analytics-r-hardening`; [PR #23](https://github.com/gfa437926-tech/metra2027/pull/23) remains Open / Draft / not merged. [PR #18](https://github.com/gfa437926-tech/metra2027/pull/18) remains untouched and unmerged.
+- **Safety:** no main merge, deployment, database, raw data, Angular, or Flutter changes.

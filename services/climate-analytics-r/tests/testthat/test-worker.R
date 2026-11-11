@@ -196,3 +196,50 @@ test_that("worker rejects overlapping jobs sharing the process working directory
   expect_equal(result$status, "completed")
   expect_false(dir.exists(file.path(root, ".metra-climatol-worker.lock")))
 })
+
+
+test_that("worker releases the workspace lock after runner failure", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+
+  expect_error(
+    metra_run_homogenization(request, workspace_root = root,
+      runner = function(...) stop("forced worker failure")),
+    "forced worker failure"
+  )
+  expect_false(dir.exists(file.path(root, ".metra-climatol-worker.lock")))
+})
+
+test_that("worker refuses a pre-existing lock without deleting it", {
+  root <- tempfile("metra-work-")
+  input <- file.path(root, "input")
+  output <- file.path(root, "output")
+  lock <- file.path(root, ".metra-climatol-worker.lock")
+  dir.create(input, recursive = TRUE)
+  dir.create(output)
+  dir.create(lock)
+  on.exit(unlink(root, recursive = TRUE), add = TRUE)
+  writeLines(c("pid=not-verified", "started_at_utc=operator-review"),
+             file.path(lock, "owner.txt"))
+  writeLines("1 2", file.path(input, "TX_1991-1991.dat"))
+  writeLines("35 36 100 TX Station", file.path(input, "TX_1991-1991.est"))
+  request <- list(variable = "TX", start_year = 1991, end_year = 1991,
+                  input_dir = input, output_dir = output)
+
+  expect_error(
+    metra_run_homogenization(request, workspace_root = root,
+      runner = function(...) writeLines("must not run", "unexpected.txt")),
+    "Another Climatol job is active"
+  )
+  expect_true(dir.exists(lock))
+  expect_true(file.exists(file.path(lock, "owner.txt")))
+  expect_length(list.files(output, all.files = TRUE, no.. = TRUE), 0L)
+})
