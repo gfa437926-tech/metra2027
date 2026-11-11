@@ -79,6 +79,15 @@ interface DashboardCard {
       </section>
 
       <section class="card-section">
+        <h3><i class="fa-solid fa-brain"></i> مراكز العمل المتخصصة</h3>
+        <div class="cards-grid">
+          @for (card of specialistCards; track card.title; let i = $index) {
+            <ng-container *ngTemplateOutlet="cardTemplate; context: { $implicit: card, index: i + 6 }"></ng-container>
+          }
+        </div>
+      </section>
+
+      <section class="card-section">
         <h3><i class="fa-solid fa-screwdriver-wrench"></i> الصيانة والإصلاح</h3>
         <div class="cards-grid">
           @for (card of maintenanceCards; track card.title; let i = $index) {
@@ -198,8 +207,15 @@ export class DashboardComponent implements OnInit {
     { title: 'النشرات الزراعية', icon: 'fa-solid fa-seedling', description: 'تقارير خاصة بالبيانات الزراعية والمناخية لدعم القطاع الزراعي', path: '/agriculture', colorClass: 'card-agriculture', iconColor: '#e67e22', buttonClass: 'btn-warning', actionLabel: 'عرض البيانات' }
   ];
 
+  readonly specialistCards: DashboardCard[] = [
+    { title: 'مركز التنبؤ الجوي', icon: 'fa-solid fa-cloud-sun-rain', description: 'مقارنة المحطات والمناطق ومراجعة القياسات المتاحة والنشرات', path: '/forecasting', colorClass: 'card-climate', iconColor: '#1677d2', buttonClass: 'btn-primary', actionLabel: 'فتح المركز' },
+    { title: 'المدقق الإلكتروني', icon: 'fa-solid fa-clipboard-check', description: 'مراجعة السجلات الورقية والمخططات الميكانيكية ومقارنة المصادر', path: '/electronic-auditor', colorClass: 'card-report', iconColor: '#7c3aed', buttonClass: 'btn-primary', actionLabel: 'فتح المساحة' },
+    { title: 'الذكاء الاصطناعي', icon: 'fa-solid fa-brain', description: 'تحليل مساعد واكتشاف الشذوذ مع توثيق المصادر والحوكمة', path: '/ai', colorClass: 'card-report', iconColor: '#2563eb', buttonClass: 'btn-primary', actionLabel: 'فتح المساحة' },
+    { title: 'تجانس Climatol', icon: 'fa-solid fa-chart-line', description: 'إعداد سلاسل المحطات وتشخيص التجانس وإدارة الإصدارات', path: '/climatol', colorClass: 'card-climate', iconColor: '#16805d', buttonClass: 'btn-success', actionLabel: 'فتح المساحة' },
+    { title: 'وحدة AFTN', icon: 'fa-solid fa-tower-broadcast', description: 'إدارة الرسائل الواردة والصادرة ومعاينة الرسائل', path: '/aftn', colorClass: 'card-maintenance', iconColor: '#b45309', buttonClass: 'btn-warning', actionLabel: 'فتح الوحدة' }
+  ];
+
   readonly maintenanceCards: DashboardCard[] = [
-    { title: 'المدقق الإلكتروني', icon: 'fa-solid fa-ruler-combined', description: 'تدقيق مخططات المسجلات الميكانيكية (هيكل تصميمي — بدون OCR بعد)', path: '/electronic-auditor', colorClass: 'card-report', iconColor: '#7c3aed', buttonClass: 'btn-primary', actionLabel: 'فتح المساحة' },
     { title: 'أعطال الرصد', icon: 'fa-solid fa-satellite-dish', description: 'تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات', path: '/equipment-faults', colorClass: 'card-maintenance', iconColor: '#e74c3c', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
     { title: 'أعطال الاتصالات', icon: 'fa-solid fa-network-wired', description: 'مشاكل الاتصالات والشبكات في المحطة ونقل البيانات', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#c0392b', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' },
     { title: 'أعطال البرامج (IT)', icon: 'fa-solid fa-laptop-code', description: 'مشاكل البرامج والنظم التقنية ودعم المستخدمين', path: '/support-incidents', colorClass: 'card-maintenance', iconColor: '#d35400', buttonClass: 'btn-danger', actionLabel: 'إدارة الأعطال' }
