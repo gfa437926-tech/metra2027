@@ -62,6 +62,20 @@ async function main() {
       elevation_m: 10, station_coordinates: []
     };
     page.on('pageerror', error => errors.push(error.message));
+    // Operational route guards require the account-state API to explicitly
+    // return active; keep this fixture isolated from any real API host.
+    await context.route('https://metra-api-e2e.local/api/v1/account/registration-status', route => route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        account_state: 'active',
+        state_reason: null,
+        request_id: '00000000-0000-4000-8000-000000000003',
+        request_status: 'approved',
+        submitted_at: '2026-01-01T00:00:00Z',
+        review_note: null
+      })
+    }));
     await context.route('https://metra-api-e2e.local/api/v1/stations**', async route => {
       if (route.request().method() === 'GET') {
         await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([station]) });
