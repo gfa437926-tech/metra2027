@@ -46,6 +46,11 @@ class _MetraHomeState extends State<MetraHome> {
         message:  'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تحفظ وتُجدد بواسطة Supabase Auth.',
         action: widget.onSignOut == null ? null : FilledButton.tonalIcon(
           onPressed: widget.onSignOut, icon: const Icon(Icons.logout), label: const Text('تسجيل الخروج'))),
+      _MoreMenuPage(
+        onReview: () => setState(() => _index = 2),
+        onOperations: () => setState(() => _index = 4),
+        onSettings: () => setState(() => _index = 6),
+      ),
     ];
     return Directionality(textDirection: TextDirection.rtl, child: Scaffold(
       appBar: AppBar(backgroundColor: _navy, foregroundColor: Colors.white,
@@ -53,20 +58,74 @@ class _MetraHomeState extends State<MetraHome> {
         actions: [Padding(padding: const EdgeInsetsDirectional.only(end: 16),
           child: Center(child: Text('منصة الأرصاد', style: TextStyle(color: Colors.white.withValues(alpha: .78), fontSize: 12))))]),
       body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: NavigationBar(selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: switch (_index) {
+          0 => 0,
+          1 => 1,
+          3 => 2,
+          5 => 3,
+          _ => 4,
+        },
+        onDestinationSelected: (value) => setState(() {
+          _index = switch (value) {
+            0 => 0,
+            1 => 1,
+            2 => 3,
+            3 => 5,
+            _ => 7,
+          };
+        }),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.map_outlined), selectedIcon: Icon(Icons.map), label: 'المحطات'),
-          NavigationDestination(icon: Icon(Icons.fact_check_outlined), selectedIcon: Icon(Icons.fact_check), label: 'مراجعة'),
           NavigationDestination(icon: Icon(Icons.edit_note_outlined), selectedIcon: Icon(Icons.edit_note), label: 'إدخال'),
-          NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build), label: 'عمليات'),
           NavigationDestination(icon: Icon(Icons.cloud_outlined), selectedIcon: Icon(Icons.cloud), label: 'التنبؤ'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), selectedIcon: Icon(Icons.settings), label: 'الإعدادات'),
+          NavigationDestination(icon: Icon(Icons.grid_view_outlined), selectedIcon: Icon(Icons.grid_view), label: 'المزيد'),
         ]),
     ));
   }
 }
+class _MoreMenuPage extends StatelessWidget {
+  const _MoreMenuPage({
+    required this.onReview,
+    required this.onOperations,
+    required this.onSettings,
+  });
+
+  final VoidCallback onReview;
+  final VoidCallback onOperations;
+  final VoidCallback onSettings;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      const Text('المزيد', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 12),
+      _ActionCard(
+        icon: Icons.fact_check_outlined,
+        title: 'مراجعة الرصدات',
+        description: 'طوابير المراجعة والقرارات والسجلات المُعادة.',
+        onTap: onReview,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.build_outlined,
+        title: 'العمليات والصيانة',
+        description: 'الأعطال والدعم والتقارير وتعيينات المحطة.',
+        onTap: onOperations,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.settings_outlined,
+        title: 'إعدادات الحساب',
+        description: 'بيانات الحساب والجلسة وتسجيل الخروج.',
+        onTap: onSettings,
+      ),
+    ],
+  );
+}
+
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview({required this.api, required this.onOpenStations, required this.onOpenForecasting});
   final MetraApiClient api;
