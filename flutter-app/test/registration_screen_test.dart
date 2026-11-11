@@ -116,9 +116,13 @@ void main() {
     rolePicker.onChanged!('observer');
     await tester.pump();
 
-    await tester.tap(find.textContaining('أقر بصحة البيانات'));
+    final terms = find.textContaining('أقر بصحة البيانات');
+    await tester.ensureVisible(terms);
+    await tester.tap(terms);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('إرسال طلب الانضمام'));
+    final submitButton = find.text('إرسال طلب الانضمام');
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
     expect(submitted, isTrue);
