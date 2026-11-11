@@ -57,3 +57,17 @@ Push rejected: PAT lacks `workflow` scope.
 - Live forecasting meteorological snapshot (pending contract + owner approval).
 - Specialist unit APIs (rainfall/climate/agriculture/soil/AI/Climatol).
 - Supabase SQL apply, main merge, staging publish.
+
+
+## FLT-OPS-TEST-01 — إصلاح اختبار مركز عمليات المحطة — 2026-11-11T16:00:00Z
+
+- **الحالة:** الإصلاح أُرسل؛ التحقق على commit الإصلاح بانتظار CI.
+- **الفرع:** `work/legacy-ui-migration-audit`.
+- **المصدر السابق:** `361968aafcb7d483a93e2356f3a4d05dc6804676`.
+- **دليل الفشل:** Client CI run `43053464016` — `flutter analyze` نجح، لكن `flutter test` فشل في اختبار واحد من 65.
+- **السبب الجذري:** اختبار `station_ops_hub_screen_test.dart` بحث عن عنصر «بلاغات الدعم» قبل تمرير قائمة `ListView` إلى موضع العنصر؛ الشاشة نفسها تحتوي بطاقة الدعم، لكن العنصر يقع أسفل مجال العرض الأول.
+- **التصحيح:** أضيف `tester.scrollUntilVisible(...)` قبل التحقق من ظهور بطاقة الدعم. لم يُحذف الاختبار ولم تُخفّض شروطه، ولم يتغير سلوك الشاشة.
+- **Commit الإصلاح:** `e381a6790330830075cad2a69eecb6e79033c718`.
+- **التحقق المطلوب:** تشغيل Client CI على هذا الـcommit والتأكد من نجاح `flutter analyze` و`flutter test`. لا يُعد الإصلاح مغلقاً قبل النتيجة الخضراء.
+- **CI السابق:** Angular npm tests وbuild نجحا في run `43053464016`؛ تثبيت Chromium كان جارياً عند آخر فحص، لذلك اختبار المتصفح غير محسوم.
+- **القيود:** لا SQL أو migrations أو تغييرات RLS، لا دمج إلى `main`، لا نشر، ولا تعديل لقاعدة البيانات القديمة.
