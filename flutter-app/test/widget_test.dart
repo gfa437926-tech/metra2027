@@ -61,7 +61,10 @@ void main() {
     expect(find.text('محطة كلاسيكية'), findsOneWidget);
     expect(find.text('محطة آلية'), findsOneWidget);
     await tester.tap(find.text('محطة آلية'));
+    await tester.pumpAndSettle();
     expect(selected, '22222222-2222-4222-8222-222222222222');
+    expect(find.text('تفاصيل المحطة'), findsOneWidget);
+    expect(find.text('AU-01'), findsOneWidget);
     api.close();
   });
 
