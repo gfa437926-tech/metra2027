@@ -134,3 +134,19 @@ Push rejected: PAT lacks `workflow` scope.
 - النموذج في `flutter-app/` يتضمن الارتفاع `elevation_m` لكنه لا يعرّف حقلي `coordinateSource` و`coordinateAccuracyM`؛ لذلك لم تثبت مطابقة هذه الجزئية في المسار الذي يبنيه CI.
 - تقرير FLT-004 نفسه يصرح بأن analyzer/tests والبناء والتحقق البصري لم تُنفذ.
 - **الإجراء التالي:** مواءمة حقول مصدر الإحداثيات ودقتها وواجهة التفاصيل واختبارها داخل `flutter-app/` بعد مقارنة دقيقة، دون نسخ أعمى أو حذف المسار المرجعي.
+
+
+## CONSOLIDATE-FLUTTER-01 — مواءمة الواجهات المرجعية مع Flutter المعتمد — 2026-11-11T16:28:23.193Z
+
+- **الحالة:** مواءمة أولية منجزة؛ اختبارات Flutter/CI والتحقق البصري بانتظار التنفيذ.
+- **الفرع:** `work/flutter-canonical-consolidation` (فرع مستقل مشتق من `work/legacy-ui-migration-audit`؛ لا دمج إلى `main`).
+- **مقارنة المصدر:** `mobile/metra_mobile/` على `main` مقابل `flutter-app/` على فرع الدمج.
+- **قرار الدمج:** لم يُنسخ المسار المرجعي بالكامل. النسخة المعتمدة أوسع في API/auth/home/station directory/observation/ops/reports؛ تم الحفاظ عليها، ونُقلت الوظائف الفريدة فقط.
+- **التنقل:** نقل `MetraAdaptiveNavigation` إلى `flutter-app/lib/core/widgets/` ودمجه في `MetraHome`: NavigationRail على العرض الواسع وNavigationBar على العرض الصغير، مع الإبقاء على الوجهات الأساسية الخمس. اختبار responsive أضيف.
+- **FLT-004:** أضيف `coordinateSource` و`coordinateAccuracyM` إلى `StationDirectoryItem` مع parsing من station_coordinates؛ عُرض المصدر والدقة في تفاصيل المحطة وملف مركز التنبؤ. أضيفت اختبارات API model وstation detail.
+- **FLT-005:** لم تُنسخ شاشة المقارنة المرجعية كنسخة مكررة؛ الشاشة المعتمدة موجودة وتستخدم خريطة وبحثاً وملف محطة وAPI مقارنة خادمي يدعم 2–12 محطة، وهو أقوى من حساب المسافة محلياً في الشاشة المرجعية. تم الحفاظ على هذا التنفيذ.
+- **الحسابات:** أضيفت قراءة `GET /api/v1/account/registration-status` إلى الملف الشخصي لإظهار حالة الحساب ومرحلة طلب الانضمام وملاحظة المراجعة ووقت UTC، مع loading/error/retry. أضيفت اختبارات حالة ناجحة وفشل آمن.
+- **نتيجة التدقيق:** تسجيل الدخول لا يزال يفتح `MetraHome` بمجرد وجود Supabase session؛ لا يوجد access-context endpoint يعيد التعيينات والصلاحيات الفعلية. لا توجد شاشة فعلية لإدارة الأدوار والصلاحيات أو منع الوصول/انتهاء الجلسة. هذه فجوات موثقة في `docs/progress/ACCOUNT-SCREENS-AUDIT.md`.
+- **الملفات التوثيقية:** تحديث `docs/progress/FRONTEND-COMPLETION-MATRIX.md`؛ إنشاء `docs/progress/ACCOUNT-SCREENS-AUDIT.md`.
+- **التحقق:** لم يتم تشغيل `flutter analyze` أو `flutter test` أو Android/iOS build أو visual tests؛ لا يوجد Flutter SDK في بيئة التنفيذ الحالية. لا تُعتبر الاختبارات المضافة ناجحة قبل CI.
+- **القيود:** لم يتم تعديل `main`، لم يحدث نشر، لم تُمس قاعدة البيانات الجديدة أو القديمة، ولم تطبق migrations/RLS/grants/seeds. لم يُحذف `mobile/metra_mobile/`.
