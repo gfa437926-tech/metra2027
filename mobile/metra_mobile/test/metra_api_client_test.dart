@@ -220,7 +220,7 @@ void main() {
             'payload': {'temperature': 24.5},
             'importedAtUtc': '2026-11-11T01:00:00Z'
           }],
-          'page': {'limit': 25, 'offset': 0, 'returned': 1}
+          'page': {'limit': 25, 'offset': 0, 'returned': 1, 'hasMore': false}
         }), 200);
       }),
     );
