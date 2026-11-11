@@ -25,6 +25,8 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
   Map<String, dynamic>? _summary;
   String _reportKind = 'daily';
   String _fileName = '';
+  late int _summaryYear;
+  late int _summaryMonth;
   late DateTime _periodStartUtc;
   late DateTime _periodEndUtc;
   bool _saving = false;
@@ -46,6 +48,8 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
     final DateTime now = DateTime.now().toUtc();
     _periodStartUtc = DateTime.utc(now.year, now.month, now.day);
     _periodEndUtc = _periodStartUtc;
+    _summaryYear = now.year;
+    _summaryMonth = now.month;
     _reload();
   }
 
@@ -61,12 +65,15 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
       _error = null;
       _rows = widget.api.listArchiveConfirmations(widget.stationId);
     });
-    final DateTime now = DateTime.now().toUtc();
+    _loadSummary();
+  }
+
+  void _loadSummary() {
     widget.api
         .archiveMonthlySummary(
           stationId: widget.stationId,
-          year: now.year,
-          month: now.month,
+          year: _summaryYear,
+          month: _summaryMonth,
         )
         .then((Map<String, dynamic> value) {
       if (mounted) {
@@ -77,6 +84,27 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
         setState(() => _summary = null);
       }
     });
+  }
+
+  void _changeSummaryMonth(int delta) {
+    final DateTime selected = DateTime.utc(_summaryYear, _summaryMonth + delta, 1);
+    final DateTime now = DateTime.now().toUtc();
+    final DateTime currentMonth = DateTime.utc(now.year, now.month, 1);
+    if (selected.isAfter(currentMonth)) return;
+    setState(() {
+      _summaryYear = selected.year;
+      _summaryMonth = selected.month;
+      _summary = null;
+    });
+    _loadSummary();
+  }
+
+  String _summaryMonthLabel() {
+    const List<String> months = <String>[
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+    ];
+    return '${months[_summaryMonth - 1]} $_summaryYear UTC';
   }
 
   // These are date-only UTC period values. Do not convert local midnight,
@@ -191,13 +219,50 @@ class _ManualArchiveScreenState extends State<ManualArchiveScreen> {
                 style: const TextStyle(color: Color(0xFF1F6B3C)),
               ),
             ),
-          if (_summary != null)
-            Card(
-              child: ListTile(
-                title: const Text('ملخص الشهر الحالي (UTC)'),
-                subtitle: Text('التأكيدات: ${confirmationCount ?? '—'}'),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    'ملخص الأرشفة — ${_summaryMonthLabel()}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _summary == null
+                        ? 'ملخص الشهر غير متاح حالياً'
+                        : 'تأكيدات الأرشفة: ${confirmationCount ?? '—'}',
+                  ),
+                  if (_summary != null && _summary!['reportKinds'] is List)
+                    Text('أنواع التقارير: ${(_summary!['reportKinds'] as List).join('، ')}'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      TextButton.icon(
+                        onPressed: () => _changeSummaryMonth(-1),
+                        icon: const Icon(Icons.chevron_right),
+                        label: const Text('الشهر السابق'),
+                      ),
+                      TextButton.icon(
+                        onPressed: DateTime.utc(_summaryYear, _summaryMonth + 1, 1)
+                                .isAfter(DateTime.utc(
+                                  DateTime.now().toUtc().year,
+                                  DateTime.now().toUtc().month,
+                                  1,
+                                ))
+                            ? null
+                            : () => _changeSummaryMonth(1),
+                        icon: const Icon(Icons.chevron_left),
+                        label: const Text('الشهر التالي'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
+          ),
           const SizedBox(height: 8),
           const Text('فترة التقرير بالتاريخ UTC'),
           Wrap(
