@@ -175,3 +175,13 @@ The detailed requirements-based mobile audit supersedes older top-level Flutter 
 - Flutter remains incomplete: registration request, recovery, profile, station detail, hourly/daily list/detail/history, phenomena, specialist reports, agriculture, soil, complete auditor workspace and live forecasting snapshots remain open or contract-blocked.
 
 No SQL was applied, no main merge was performed, and metra-old was not modified.
+
+
+## Flutter identity/account continuation — 2026-11-11 UTC
+
+- FLT-AUTH-02: password recovery page added and linked from login using Supabase Auth resetPasswordForEmail. Success feedback is privacy-safe and does not reveal whether an account exists.
+- FLT-ACCOUNT-01: account profile page added; shows authenticated email and explains that permissions are server-authoritative; sign-out requires confirmation.
+- Widget tests added for recovery validation/privacy/error redaction and profile/sign-out confirmation.
+- Detailed evidence and remaining gaps: docs/progress/FLUTTER-COMPLETION-AUDIT-2026-11-11.md
+- Current source tip before this status update: 4219b5d5492de6325dccc50f0ad24184abd48041.
+- Verification: pending a completed Client CI run for the latest tip; Client CI #811 success applies only to the earlier baseline.
