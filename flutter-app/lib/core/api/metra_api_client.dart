@@ -519,6 +519,47 @@ class MetraApiClient {
     return Map<String, dynamic>.from(decoded);
   }
 
+
+  Future<List<Map<String, dynamic>>> getRequestableRegistrationRoles() async {
+    final response = await _send('GET', '/api/v1/registration-roles');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw const FormatException('invalid_registration_roles');
+    return decoded.map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
+  }
+
+  Future<Map<String, dynamic>> getMyRegistrationStatus() async {
+    final response = await _send('GET', '/api/v1/account/registration-status');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_registration_status');
+    return Map<String, dynamic>.from(decoded);
+  }
+
+  Future<Map<String, dynamic>> submitRegistrationRequest({
+    required String firstName,
+    required String fatherName,
+    required String lastName,
+    String? phone,
+    required String roleCode,
+    required String stationId,
+    required String termsVersion,
+    required String idempotencyKey,
+  }) async {
+    final response = await _send('POST', '/api/v1/registration-requests', body: {
+      'firstName': firstName,
+      'fatherName': fatherName,
+      'lastName': lastName,
+      'phone': phone,
+      'roleCode': roleCode,
+      'stationId': stationId,
+      'termsVersion': termsVersion,
+      'idempotencyKey': idempotencyKey,
+    });
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) throw const FormatException('invalid_registration_receipt');
+    return Map<String, dynamic>.from(decoded);
+  }
+
   Future<http.Response> _send(String method, String path,
       {Map<String, dynamic>? body}) async {
     if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');
