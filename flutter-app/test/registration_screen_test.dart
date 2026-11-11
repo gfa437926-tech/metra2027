@@ -79,15 +79,14 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('محطة معتمدة — ST-01'), findsOneWidget);
-    expect(find.text('محطة تجريبية — ST-02'), findsNothing);
-
     await tester.enterText(find.widgetWithText(TextField, 'الاسم الأول'), 'أحمد');
     await tester.enterText(find.widgetWithText(TextField, 'اسم الأب'), 'محمد');
     await tester.enterText(find.widgetWithText(TextField, 'اسم العائلة'), 'علي');
 
     await tester.tap(find.text('المحطة المطلوبة'));
     await tester.pumpAndSettle();
+    expect(find.text('محطة معتمدة — ST-01'), findsOneWidget);
+    expect(find.text('محطة تجريبية — ST-02'), findsNothing);
     await tester.tap(find.text('محطة معتمدة — ST-01').last);
     await tester.pumpAndSettle();
 
