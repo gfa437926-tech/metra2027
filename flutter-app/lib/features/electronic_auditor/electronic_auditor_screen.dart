@@ -42,6 +42,8 @@ class ElectronicAuditorScreen extends StatelessWidget {
             _tile(Icons.show_chart, 'المسجلات الميكانيكية', 'Thermograph / Hygrograph / Barograph / Pluviograph — غير مفعّل'),
             _tile(Icons.compare_arrows, 'المقارنة الثلاثية', 'ورقي ↔ ميكانيكي ↔ إلكتروني — غير مفعّل'),
             _tile(Icons.rule, 'محركات التحقق', 'فيزيائي ورياضي بإصدارات قواعد موثّقة — غير مفعّل'),
+            _tile(Icons.folder_open_outlined, 'ملفات الحالات', 'قائمة حالات تدقيق فارغة حتى يتوفر API — غير مفعّل'),
+            _tile(Icons.fact_check_outlined, 'قرارات المدقق', 'اعتماد/رفض بشري بعد الأدلة — غير مفعّل'),
             _tile(Icons.model_training, 'مختبر التدريب', 'تسميات بشرية معتمدة فقط — غير مفعّل على الجهاز'),
             const SizedBox(height: 12),
             Text(

@@ -8,12 +8,15 @@ class SpecialistUnitShellScreen extends StatelessWidget {
     required this.unitCode,
     required this.description,
     this.requiredBeforeBinding = const <String>[],
+    this.plannedFields = const <String>[],
   });
 
   final String title;
   final String unitCode;
   final String description;
   final List<String> requiredBeforeBinding;
+  /// Design-only field names; inputs are disabled and never submitted.
+  final List<String> plannedFields;
 
   static const _navy = Color(0xFF061B4A);
 
@@ -63,6 +66,25 @@ class SpecialistUnitShellScreen extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.radio_button_unchecked, size: 18),
                   title: Text(item),
+                ),
+              ),
+            ],
+            if (plannedFields.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text('حقول مخططة (معطّلة — لا إرسال):',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ...plannedFields.map(
+                (field) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: TextField(
+                    enabled: false,
+                    decoration: InputDecoration(
+                      labelText: field,
+                      border: const OutlineInputBorder(),
+                      helperText: 'غير متاح حتى اعتماد API',
+                    ),
+                  ),
                 ),
               ),
             ],

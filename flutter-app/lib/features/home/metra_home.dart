@@ -14,6 +14,9 @@ import '../electronic_auditor/electronic_auditor_screen.dart';
 import '../observations/daily_observation_submit_screen.dart';
 import '../reports/station_reports_hub_screen.dart';
 import '../reports/observation_status_screen.dart';
+import '../roles/role_workspaces_screen.dart';
+import '../aftn/aftn_console_shell_screen.dart';
+import '../matching/record_matching_shell_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -141,6 +144,12 @@ class _MetraHomeState extends State<MetraHome> {
               'Endpoints خادمية مع عزل المحطة',
               'اختبارات قبول بدون بيانات وهمية',
             ],
+            plannedFields: [
+              'كمية الهطول (مم)',
+              'نوع الهطول',
+              'فترة القياس (UTC)',
+              'ملاحظات الراصد',
+            ],
           ),
         )),
         onClimate: () => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -160,6 +169,12 @@ class _MetraHomeState extends State<MetraHome> {
             unitCode: 'agriculture',
             description: 'حقول الرصد الزراعي من المراجع المعتمدة بعد ربط API.',
             requiredBeforeBinding: ['عقد الحقول الزراعية', 'مسار حفظ خادمي'],
+            plannedFields: [
+              'حالة التربة السطحية',
+              'حالة المحصول',
+              'آفات/ملاحظات زراعية',
+              'وقت الرصد (UTC)',
+            ],
           ),
         )),
         onSoil: () => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -168,6 +183,11 @@ class _MetraHomeState extends State<MetraHome> {
             unitCode: 'soil_temperature',
             description: 'قياسات الأعماق والوحدات وفق المرجع — الهيكل فقط حالياً.',
             requiredBeforeBinding: ['عقد حرارة التربة', 'API محطة-معزول'],
+            plannedFields: [
+              'العمق (سم)',
+              'درجة الحرارة',
+              'وقت القياس (UTC)',
+            ],
           ),
         )),
         onAiWorkspace: () => Navigator.of(context).push(MaterialPageRoute<void>(
@@ -193,6 +213,15 @@ class _MetraHomeState extends State<MetraHome> {
               'مسار اعتماد بشري للنتائج',
             ],
           ),
+        )),
+        onRoleWorkspaces: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const RoleWorkspacesScreen(),
+        )),
+        onAftn: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const AftnConsoleShellScreen(),
+        )),
+        onRecordMatching: () => Navigator.of(context).push(MaterialPageRoute<void>(
+          builder: (_) => const RecordMatchingShellScreen(),
         )),
       ),
     ];
@@ -246,6 +275,9 @@ class _MoreMenuPage extends StatelessWidget {
     required this.onSoil,
     required this.onAiWorkspace,
     required this.onClimatol,
+    required this.onRoleWorkspaces,
+    required this.onAftn,
+    required this.onRecordMatching,
   });
 
   final VoidCallback onReview;
@@ -263,6 +295,9 @@ class _MoreMenuPage extends StatelessWidget {
   final VoidCallback onSoil;
   final VoidCallback onAiWorkspace;
   final VoidCallback onClimatol;
+  final VoidCallback onRoleWorkspaces;
+  final VoidCallback onAftn;
+  final VoidCallback onRecordMatching;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -366,6 +401,27 @@ class _MoreMenuPage extends StatelessWidget {
         title: 'تجانس Climatol',
         description: 'تشغيل على عامل معزول بعد الاعتماد — الهيكل فقط.',
         onTap: onClimatol,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.badge_outlined,
+        title: 'مكاتب الأدوار التشغيلية',
+        description: 'رئيس المحطة، الرصد، الاتصالات، الشبكات، مدير النظام، المتنبئ، AFTN، Climatol.',
+        onTap: onRoleWorkspaces,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.cell_tower_outlined,
+        title: 'وحدة AFTN',
+        description: 'مستقبل/مرسل AFTN — هيكل حتى اعتماد القناة الخادمية.',
+        onTap: onAftn,
+      ),
+      const SizedBox(height: 10),
+      _ActionCard(
+        icon: Icons.compare_outlined,
+        title: 'مطابقة السجلات',
+        description: 'ورقي ↔ ميكانيكي ↔ إلكتروني — بدون OCR حالياً.',
+        onTap: onRecordMatching,
       ),
       const SizedBox(height: 10),
       _ActionCard(

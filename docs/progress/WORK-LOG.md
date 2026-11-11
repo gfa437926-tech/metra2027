@@ -102,3 +102,11 @@ Push rejected: PAT lacks `workflow` scope.
 - Updated `FRONTEND-COMPLETION-MATRIX.md` with screen IDs and honest API status.
 - Added observation detail bottom sheet from server payload (review + status).
 **Not done:** CI green proof deferred until foundation stabilizes; live snapshot blocked.
+
+## 2026-11-11T16:20Z — Phase-2 interface gap closure (honest shells)
+
+**Added:**
+- Role workspaces (station head, observation dept, communications, networks, system manager, forecaster, AFTN recipient, Climatol).
+- AFTN console shell; record matching shell; expanded electronic auditor case/decision tiles.
+- Specialist planned disabled fields for rainfall, agriculture, soil temperature.
+**Explicit:** no OCR, no AFTN traffic, no live forecast snapshot, no fake soil/rain values, server remains authz source.
