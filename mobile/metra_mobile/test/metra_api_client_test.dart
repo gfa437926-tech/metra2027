@@ -103,7 +103,7 @@ void main() {
       accessTokenProvider: () async => 'audit-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode([
+        return http.Response.bytes(utf8.encode(jsonEncode([
           {
             'id': '33333333-3333-4333-8333-333333333333',
             'entity_type': 'station_assignment',
@@ -119,7 +119,7 @@ void main() {
             'valid_from': '2026-11-11T00:00:00Z',
             'valid_to': null
           }
-        ]), 200);
+        ])), 200, headers: {'content-type': 'application/json'});
       }),
     );
 
