@@ -11,7 +11,7 @@ Acceptance rule: design + functions + real API (when contract exists) + Arabic e
 |---|---|---|---|---|---|---|---|---|
 | FLT-AUTH-01 | تسجيل الدخول / Login | جيد | بوابة Supabase | مربوط | خادم | جزئي | معلق | قيد العمل |
 | FLT-AUTH-02 | التسجيل / Registration | جيد | طلب انضمام | مربوط | خادم | جزئي | معلق | قيد العمل |
-| FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | reset email | مربوط | — | موجود | معلق | قيد العمل |
+| FLT-AUTH-03 | استعادة كلمة المرور / Password recovery | جيد | طلب بريد + deep-link + شاشة كلمة مرور جديدة وتأكيد | Supabase Auth | أخطاء مزود الهوية لا تعرض التفاصيل | موجود مصدرّياً | CI + allow-list + جهاز حقيقي معلق | جزئي — تحقق end-to-end مطلوب |
 | FLT-AUTH-04 | الملف الشخصي / Profile | جيد | بريد + حالة الحساب + حالة طلب الانضمام + خروج | `GET /api/v1/account/registration-status` | لا يعرض أدواراً/محطات دون access-context | موجود مصدرّياً | CI معلق | جزئي — ACC-02 مطلوب |
 | FLT-AUTH-05 | الصلاحيات UI / Permissions view | جيد | شاشة إدارة عضويات وصلاحيات الجهات: طلب/مراجعة/رفض/إلغاء/سجل تدقيق | Authority access APIs + server checks | لا تستنتج صلاحيات محلية | موجود مصدرّياً | CI معلق | جزئي — access-context وvalidity/user-target UI مطلوبان |
 | FLT-AUTH-06 | منع الوصول/انتهاء الجلسة | جيد | بوابة حالة الحساب + شاشة منع الوصول/فشل التحقق + إعادة محاولة/خروج | `GET /api/v1/account/registration-status` | fail-closed؛ لا تعرض مساحة العمل عند حالة غير نشطة أو تعذر التحقق | موجود مصدرّياً | CI معلق | جزئي — اختبار revoked/expired session مطلوب |
