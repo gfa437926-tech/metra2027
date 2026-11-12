@@ -362,7 +362,7 @@ class MetraApiClient {
       if (toUtc != null) 'toUtc': toUtc.toIso8601String(),
     };
     final path = Uri(
-      path: '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/archive',
+      path: '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive',
       queryParameters: query,
     ).toString();
     final response = await _send('GET', path);
@@ -442,7 +442,16 @@ class MetraApiClient {
     }
     final response = await http.Response.fromStream(await _client.send(request));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw MetraApiException(response.statusCode, 'request_failed');
+      var code = 'request_failed';
+      try {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded is Map && decoded['code'] is String) {
+          code = decoded['code'] as String;
+        } else if (decoded is Map && decoded['error'] is String) {
+          code = decoded['error'] as String;
+        }
+      } catch (_) {}
+      throw MetraApiException(response.statusCode, code);
     }
     return response;
   }

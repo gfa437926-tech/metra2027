@@ -232,7 +232,7 @@ void main() {
       limit: 25,
     );
     expect(captured.method, 'GET');
-    expect(captured.url.path, '/api/v1/stations/$stationId/observations/archive');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observation-archive');
     expect(captured.url.queryParameters['type'], 'hourly');
     expect(captured.url.queryParameters['limit'], '25');
     expect(captured.headers['authorization'], 'Bearer archive-token');
@@ -297,6 +297,28 @@ void main() {
     );
     expect(requests, 0);
     client.close();
+  });
+
+
+  test('maps archive 503 code from API body', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      httpClient: MockClient((request) async {
+        return http.Response(
+          '{"code":"archive_service_unavailable"}',
+          503,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    try {
+      await client.getObservationArchive('11111111-1111-1111-1111-111111111111');
+      fail('expected exception');
+    } on MetraApiException catch (e) {
+      expect(e.statusCode, 503);
+      expect(e.code, 'archive_service_unavailable');
+    }
   });
 
 }
