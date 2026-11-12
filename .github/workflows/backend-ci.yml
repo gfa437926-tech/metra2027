@@ -8,7 +8,11 @@ on:
       - "database/migrations/**"
       - "database/tests/**"
       - "database/isolated/**"
+      - "database/baseline/**"
+      - "database/proposals/**"
+      - "database/seeds/**"
       - "docs/security/**"
+      - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/workflows/publish-api-container.yml"
   pull_request:
@@ -17,7 +21,11 @@ on:
       - "database/migrations/**"
       - "database/tests/**"
       - "database/isolated/**"
+      - "database/baseline/**"
+      - "database/proposals/**"
+      - "database/seeds/**"
       - "docs/security/**"
+      - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
       - ".github/workflows/publish-api-container.yml"
   workflow_dispatch:
