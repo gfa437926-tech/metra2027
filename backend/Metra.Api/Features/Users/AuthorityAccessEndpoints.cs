@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 
+using Metra.Api.Security;
+
 namespace Metra.Api.Features.Users;
 
 public sealed record AuthorityMembershipRequest(Guid? UserId, string? RoleCode, string? Reason,
@@ -87,7 +89,8 @@ public static class AuthorityAccessEndpoints
                 p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_membership_request_failed");
-        }).WithTags("Authority access").WithName("RequestAuthorityMembership");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RequestAuthorityMembership");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/memberships/{membershipId:guid}/decision", async (
             Guid authorityId, Guid membershipId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -138,7 +141,8 @@ public static class AuthorityAccessEndpoints
                 p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_permission_request_failed");
-        }).WithTags("Authority access").WithName("RequestAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RequestAuthorityPermissionGrant");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/permission-grants/{grantId:guid}/decision", async (
             Guid authorityId, Guid grantId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -154,7 +158,8 @@ public static class AuthorityAccessEndpoints
                 p_decision = request!.Decision, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
-        }).WithTags("Authority access").WithName("DecideAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("DecideAuthorityPermissionGrant");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/permission-grants/{grantId:guid}/revocation", async (
             Guid authorityId, Guid grantId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -169,7 +174,8 @@ public static class AuthorityAccessEndpoints
                 p_grant_id = grantId, p_authority_id = authorityId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
-        }).WithTags("Authority access").WithName("RevokeAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RevokeAuthorityPermissionGrant");
 
         endpoints.MapGet("/api/v1/authorities/{authorityId:guid}/access-queue", async (
             Guid authorityId, string? kind, int? limit, HttpContext http,

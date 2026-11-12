@@ -19,8 +19,10 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
     public ApiAuthenticationTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = factory.CreateClient();
+        // Disable rate limiting for auth/readiness suite so sequential health probes do not 429.
+        _factory = factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("RateLimiting:Disabled", "true"));
+        _client = _factory.CreateClient();
     }
 
     [Fact]

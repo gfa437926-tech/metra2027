@@ -154,6 +154,7 @@ public static class ObservationArchiveEndpoints
                 });
             })
             .RequireAuthorization()
+            .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("ListStationObservationArchive")
             .WithTags("Observations", "Archive")
             .WithSummary("List station-scoped observation archive (explicit archive grant required)")

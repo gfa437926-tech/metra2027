@@ -47,6 +47,9 @@ builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationRevie
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
 builder.Services.AddScoped<IObservationArchiveService, UnconfiguredObservationArchiveService>();
 builder.Services.AddOpenApi();
+var rateLimitingDisabled = builder.Configuration.GetValue("RateLimiting:Disabled", false);
+if (!rateLimitingDisabled)
+    builder.Services.AddMetraRateLimiting();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -63,6 +66,7 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = audience,
             ValidateLifetime = true,
+            RequireExpirationTime = true,
             ValidateIssuerSigningKey = true,
             NameClaimType = "sub",
             ClockSkew = TimeSpan.FromSeconds(60)
@@ -103,6 +107,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+if (!rateLimitingDisabled)
+    app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -132,6 +138,7 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
     version = "v1"
 }))
 .AllowAnonymous()
+.RequireRateLimiting(MetraRateLimiting.PolicyAnonymousProbe)
 .WithName("GetApiHealth");
 
 // Readiness is separate from liveness: it verifies server configuration and a
@@ -180,6 +187,7 @@ app.MapGet("/api/v1/ready", async (
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
+.RequireRateLimiting(MetraRateLimiting.PolicyAnonymousProbe)
 .WithName("GetApiReadiness");
 
 app.Run();
