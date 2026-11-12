@@ -96,6 +96,74 @@ void main() {
     client.close();
   });
 
+
+  test('station directory accepts exactly the configured maximum row count', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        requests++;
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final count = offset < 10000 ? 500 : 0;
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    final rows = await client.getAllStationDirectory();
+    expect(rows, hasLength(10000));
+    expect(requests, 21); // 20 pages plus the one-row overflow probe.
+    client.close();
+  });
+
+  test('station directory rejects rows beyond the configured maximum', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final count = offset < 10000 ? 500 : 1;
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    await expectLater(
+      client.getAllStationDirectory(),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 413)
+          .having((error) => error.code, 'code', 'station_directory_limit_exceeded')),
+    );
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
@@ -139,6 +207,107 @@ void main() {
     expect(ApiConfig.isValidUrl('https://api.example.test/api/v1'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
+  });
+
+
+  test('decision request uses station-scoped endpoint and sends the expected payload', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'reviewer-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await client.decideObservation(
+      stationId: stationId,
+      observationId: '22222222-2222-4222-8222-222222222222',
+      decision: 'approve',
+    );
+
+    expect(captured.method, 'POST');
+    expect(captured.url.path,
+      '/api/v1/stations/$stationId/observations/22222222-2222-4222-8222-222222222222/decision');
+    expect(captured.headers['authorization'], 'Bearer reviewer-token');
+    expect(jsonDecode(captured.body), {'decision': 'approve', 'note': null});
+    client.close();
+  });
+
+  test('return-for-correction requires a non-empty trimmed note before network access', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'reviewer-token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await expectLater(
+      client.decideObservation(
+        stationId: stationId,
+        observationId: '22222222-2222-4222-8222-222222222222',
+        decision: 'return_for_correction',
+        note: '   ',
+      ),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.code, 'code', 'decision_note_required')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('decision endpoint conflict status is preserved for the UI', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'reviewer-token',
+      client: MockClient((_) async => http.Response(
+        '{"error":"observation_decision_rejected"}', 409)),
+    );
+
+    await expectLater(
+      client.decideObservation(
+        stationId: stationId,
+        observationId: '22222222-2222-4222-8222-222222222222',
+        decision: 'approve',
+      ),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 409)
+          .having((error) => error.code, 'code', 'request_failed')),
+    );
+    client.close();
+  });
+
+  test('observation submission serializes observedAt as UTC', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'observer-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'test-key-001',
+      observationType: 'hourly',
+      observedAt: DateTime.parse('2026-11-03T15:00:00+03:00'),
+      payload: {'temperature': 22.5},
+      submit: true,
+    );
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+    expect(body['observedAt'], '2026-11-03T12:00:00.000Z');
+    expect(body['idempotencyKey'], 'test-key-001');
+    expect(body['submit'], isTrue);
+    client.close();
   });
 
 }

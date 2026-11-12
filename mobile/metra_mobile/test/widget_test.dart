@@ -18,6 +18,66 @@ void main() {
     expect(find.textContaining('service_role'), findsOneWidget);
   });
 
+  testWidgets('password visibility control exposes an Arabic tooltip and toggles obscuring', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: MetraLoginScreen()));
+
+    expect(find.byTooltip('إظهار كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isTrue);
+
+    await tester.tap(find.byTooltip('إظهار كلمة المرور'));
+    await tester.pump();
+
+    expect(find.byTooltip('إخفاء كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isFalse);
+
+    await tester.tap(find.byTooltip('إخفاء كلمة المرور'));
+    await tester.pump();
+
+    expect(find.byTooltip('إظهار كلمة المرور'), findsOneWidget);
+    expect(tester.widget<TextFormField>(find.byType(TextFormField).last).obscureText, isTrue);
+  });
+
+  testWidgets('station map markers expose button semantics and a descriptive Arabic label', (tester) async {
+    final semantics = tester.ensureSemantics();
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'test-token',
+      client: MockClient((_) async => http.Response.json([
+        {
+          'id': '33333333-3333-4333-8333-333333333333',
+          'local_station_code': 'ST-03',
+          'name_ar': 'محطة اختبار الوصول',
+          'name_en': 'Accessibility test station',
+          'station_type': 'classic',
+          'operational_status': 'active',
+          'approval_status': 'approved',
+          'is_demo': false,
+          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}],
+        },
+      ])),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StationDirectoryScreen(
+          api: api,
+          onStationSelected: (_) {},
+        ),
+      ),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final marker = find.bySemanticsLabel('محطة اختبار الوصول • ST-03');
+    expect(marker, findsOneWidget);
+    final node = tester.getSemantics(marker);
+    expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+    expect(node.hasAction(SemanticsAction.tap), isTrue);
+
+    semantics.dispose();
+    api.close();
+  });
+
   testWidgets('station directory displays classic and automatic records together', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',

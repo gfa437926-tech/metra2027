@@ -177,6 +177,7 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                             labelText: 'كلمة المرور',
                             border: const OutlineInputBorder(),
                             suffixIcon: IconButton(
+                              tooltip: _obscure ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور',
                               onPressed: () => setState(() => _obscure = !_obscure),
                               icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                             ),

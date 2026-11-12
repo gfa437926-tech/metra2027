@@ -128,7 +128,18 @@ class MetraApiClient {
       stations.addAll(page);
       if (page.length < pageSize) return stations;
     }
-    throw const MetraApiException(413, 'station_directory_limit_exceeded');
+
+    // A full final page may mean exactly maximumRows records, not overflow.
+    // Probe one row beyond the supported cap before reporting an error.
+    final overflowProbe = await getStationDirectory(
+      limit: 1,
+      offset: maximumRows,
+      stationType: stationType,
+    );
+    if (overflowProbe.isNotEmpty) {
+      throw const MetraApiException(413, 'station_directory_limit_exceeded');
+    }
+    return stations;
   }
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
