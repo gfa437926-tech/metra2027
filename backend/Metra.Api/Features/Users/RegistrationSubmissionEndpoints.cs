@@ -170,7 +170,8 @@ public static class RegistrationSubmissionEndpoints
                 : Results.Ok(roles.Value);
         })
         .WithTags("Users")
-        .WithName("GetRequestableRegistrationRoles");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetRequestableRegistrationRoles");
 
         endpoints.MapGet("/api/v1/account/registration-status", async (
             HttpContext http, IRegistrationSubmissionService service, CancellationToken cancellationToken) =>
@@ -185,7 +186,8 @@ public static class RegistrationSubmissionEndpoints
                 : Results.Ok(status.Value);
         })
         .WithTags("Users")
-        .WithName("GetMyRegistrationStatus");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetMyRegistrationStatus");
 
         endpoints.MapPost("/api/v1/registration-requests", async (
             RegistrationSubmissionRequest? request, HttpContext http,
@@ -214,7 +216,8 @@ public static class RegistrationSubmissionEndpoints
             return Results.Problem(title: "Unexpected registration submission response", statusCode: 503);
         })
         .WithTags("Users")
-        .WithName("SubmitRegistrationRequest");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("SubmitRegistrationRequest");
 
         return endpoints;
     }

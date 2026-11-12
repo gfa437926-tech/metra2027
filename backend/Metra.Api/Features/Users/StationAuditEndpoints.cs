@@ -68,7 +68,8 @@ public static class StationAuditEndpoints
         })
         .RequireStationPermission("users.station.view")
         .WithTags("Users")
-        .WithName("GetStationAuditLog");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationAuditLog");
 
         return endpoints;
     }

@@ -69,7 +69,9 @@ builder.Services
             RequireExpirationTime = true,
             ValidateIssuerSigningKey = true,
             NameClaimType = "sub",
-            ClockSkew = TimeSpan.FromSeconds(60)
+            ClockSkew = TimeSpan.FromSeconds(60),
+            // Supabase Auth issues asymmetric JWTs (RS256/ES256). Reject none/HS by omission.
+            ValidAlgorithms = ["RS256", "ES256"]
         };
     });
 
@@ -112,7 +114,11 @@ if (!rateLimitingDisabled)
 app.UseAuthentication();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
+// OpenAPI document: Development always; other environments only when OpenApi:Enabled=true.
+// Do not enable anonymously on public production without an edge auth layer.
+var openApiEnabled = app.Environment.IsDevelopment()
+    || app.Configuration.GetValue("OpenApi:Enabled", false);
+if (openApiEnabled)
 {
     app.MapOpenApi();
 }

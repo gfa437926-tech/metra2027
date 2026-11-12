@@ -62,7 +62,8 @@ public static class StationUserDirectoryEndpoints
         })
         .RequireStationPermission("users.station.view")
         .WithTags("Users")
-        .WithName("GetStationUsers");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationUsers");
 
         return endpoints;
     }

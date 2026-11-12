@@ -201,7 +201,8 @@ public static class StationAssignmentEndpoints
         })
         .RequireStationPermission("users.station.manage")
         .WithTags("Users")
-        .WithName("GetStationAssignableRoles");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationAssignableRoles");
 
         endpoints.MapPost("/api/v1/stations/{stationId:guid}/assignments", async (
             Guid stationId, StationAssignmentRequest? request, HttpContext http,
@@ -228,7 +229,8 @@ public static class StationAssignmentEndpoints
         })
         .RequireStationPermission("users.station.manage")
         .WithTags("Users")
-        .WithName("RequestStationAssignment");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("RequestStationAssignment");
 
         endpoints.MapPost("/api/v1/stations/{stationId:guid}/assignments/{assignmentId:guid}/decision", async (
             Guid stationId, Guid assignmentId, StationAssignmentDecisionRequest? request, HttpContext http,
@@ -253,7 +255,8 @@ public static class StationAssignmentEndpoints
         })
         .RequireStationPermission("users.station.manage")
         .WithTags("Users")
-        .WithName("DecideStationAssignment");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("DecideStationAssignment");
 
 
         endpoints.MapPost("/api/v1/stations/{stationId:guid}/assignments/{assignmentId:guid}/revoke", async (
@@ -279,7 +282,8 @@ public static class StationAssignmentEndpoints
         })
         .RequireStationPermission("users.station.manage")
         .WithTags("Users")
-        .WithName("RevokeStationAssignment");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("RevokeStationAssignment");
 
         return endpoints;
     }

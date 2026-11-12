@@ -118,6 +118,7 @@ public static class ObservationQueueEndpoints
                 return Results.Ok(data.Value);
             })
             .WithTags("Observations")
+            .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("GetStationObservationReviewQueue");
 
         return endpoints;

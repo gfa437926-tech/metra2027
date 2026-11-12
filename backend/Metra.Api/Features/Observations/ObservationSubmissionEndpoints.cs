@@ -140,6 +140,7 @@ public static class ObservationSubmissionEndpoints
             })
             .RequireStationPermission("observation.create")
             .WithTags("Observations")
+            .RequireRateLimiting(MetraRateLimiting.PolicyWrite)
             .WithName("SubmitStationObservation");
 
         return endpoints;
@@ -227,7 +228,8 @@ public static class ObservationDecisionEndpoints
       return Results.Problem(title: "Observation decision unavailable", statusCode: 503);
     }
     return Results.Ok(result.Data);
-   }).WithTags("Observations").WithName("DecideStationObservation");
+   }).WithTags("Observations").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("DecideStationObservation");
   return endpoints;
  }
 }
