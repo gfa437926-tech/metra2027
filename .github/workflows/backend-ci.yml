@@ -131,3 +131,34 @@ jobs:
         env:
           PATH_N_DATABASE_URL: postgres://metra_test:metra_test_isolated@127.0.0.1:5432/metra_path_n
         run: bash database/baseline/path_n_apply.sh
+
+  grant-uniqueness-isolation:
+    name: Isolated grant uniqueness (Path N + partial indexes)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: metra_test
+          POSTGRES_PASSWORD: metra_test_isolated
+          POSTGRES_DB: metra_grants
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U metra_test -d metra_grants"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install psql client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Path N then unique indexes and concurrency SQL
+        env:
+          PATH_N_DATABASE_URL: postgres://metra_test:metra_test_isolated@127.0.0.1:5432/metra_grants
+          PGPASSWORD: metra_test_isolated
+        run: |
+          set -euo pipefail
+          bash database/baseline/path_n_apply.sh
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/c25_readiness/04_grant_unique_apply.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/05_grant_uniqueness_concurrency.sql

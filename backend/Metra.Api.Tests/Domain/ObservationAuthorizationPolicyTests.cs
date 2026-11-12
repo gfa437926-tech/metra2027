@@ -143,4 +143,45 @@ public sealed class ObservationAuthorizationPolicyTests
 
         Assert.Equal("inactive_station_assignment", result.ErrorCode);
     }
+
+    [Fact]
+    public void Archive_read_denies_empty_station_id()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(station: "station-1", permissions: [ObservationPermission.ArchiveRead]),
+            "");
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("station_required", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Archive_read_denies_when_permissions_null()
+    {
+        var actor = new ObservationActorContext("user-1", "station-1", true, null!);
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(actor, "station-1");
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("archive_permission_denied", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Approve_does_not_authorize_archive_read()
+    {
+        var result = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+            Actor(station: "station-1", permissions: [ObservationPermission.Approve, ObservationPermission.Review]),
+            "station-1");
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("archive_permission_denied", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Denies_create_without_permission_even_with_active_assignment()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(station: "station-1", permissions: [ObservationPermission.Review]),
+            new ObservationResourceContext("station-1", "user-1"),
+            ObservationPermission.Create);
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("permission_denied", result.ErrorCode);
+    }
+
 }
