@@ -45,6 +45,42 @@ public sealed class SupabaseAuthorityAccessServiceTests
         Assert.False(result.Succeeded);
     }
 
+
+        [Fact]
+    public async Task Maps_unique_violation_body_to_conflict_even_when_http_500()
+    {
+        var service = Create(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError)
+        {
+            Content = new StringContent(
+                "{\"code\":\"23505\",\"message\":\"duplicate key value violates unique constraint permission_grants_active_station_unique\"}",
+                System.Text.Encoding.UTF8, "application/json")
+        });
+        var result = await service.CallAsync("decide_authority_permission_grant",
+            new { p_grant_id = Guid.NewGuid(), p_actor_user_id = Guid.NewGuid(),
+                p_decision = "approve", p_reason = "approve concurrent active grant" }, CancellationToken.None);
+        Assert.True(result.IsConfigured);
+        Assert.False(result.Succeeded);
+        Assert.Equal(HttpStatusCode.Conflict, result.StatusCode);
+        Assert.Equal(AuthorityAccessConflictDetector.UniqueViolationKind, result.ErrorKind);
+    }
+
+    [Fact]
+    public async Task Does_not_map_permission_denied_to_conflict()
+    {
+        var service = Create(_ => new HttpResponseMessage(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent(
+                "{\"code\":\"42501\",\"message\":\"permission denied\"}",
+                System.Text.Encoding.UTF8, "application/json")
+        });
+        var result = await service.CallAsync("request_authority_permission_grant",
+            new { p_user_id = Guid.NewGuid() }, CancellationToken.None);
+        Assert.True(result.IsConfigured);
+        Assert.False(result.Succeeded);
+        Assert.Equal(HttpStatusCode.Forbidden, result.StatusCode);
+        Assert.Null(result.ErrorKind);
+    }
+
     private static SupabaseAuthorityAccessService Create(Func<HttpRequestMessage, HttpResponseMessage> response)
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
