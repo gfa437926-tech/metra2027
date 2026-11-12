@@ -1,28 +1,29 @@
 # Stage C8 — Full-System Verification
 
 **Branch:** `work/backend-db-integration-phase`  
-**Base HEAD:** `d89eef1b666918900ebdd6dcc497fa776edf4008`
+**Verified HEAD:** `fe62488e5d95c1a442ab3c17f7884d92cb47f794` (docs commit) + prior code through `d89eef1…`  
+**Re-run date:** 2026-11-12 (this session)
 
-## Backend (.NET) — re-run on current code
+## Backend (.NET) — fresh run
 | Suite | Result |
 |-------|--------|
 | `dotnet build` Metra.Api Release | **Success** |
 | Full Metra.Api.Tests | **Passed 264 / Failed 0 / Skipped 0** |
 
-## Database (isolated PostgreSQL)
+## Database (isolated PostgreSQL) — fresh run
 | Check | Result |
 |-------|--------|
-| Path N `metra_c8` | exit **0** |
-| Grant uniqueness concurrency | **ALL … PASSED** |
+| Path N `metra_c8v` | exit **0** |
+| Grant uniqueness (`05_…`) | **ALL GRANT UNIQUENESS TESTS PASSED** |
 | R4 apply/rollback/reapply | **OK** |
-| Archive isolation suite `metra_c8_arch` | **ALL ARCHIVE ISOLATION TESTS PASSED** (A allow, B deny, role-only deny, revoke, expired assignment, audit append-only) |
-| Path H hosted | **Not executed** (forbidden) |
+| Archive isolation `metra_c8a` (`00`→`01`→`02`) | **ALL ARCHIVE ISOLATION TESTS PASSED** |
+| Path H hosted | **Not executed** |
 
 ## Flutter
-See `STAGE-C8-FLUTTER-TEST-CLOSURE-REPORT.md` — suite **not run** in this environment.
+See `STAGE-C8-FLUTTER-TEST-CLOSURE-REPORT.md`. Suite **not executed** (1.2 GiB RAM, no swap, Flutter tool OOM history).
 
-## E2E local (Backend + real login + Flutter UI)
-**Not executed** — no full identity provider stack + Flutter runtime in this 1.2 GiB sandbox.
+## E2E (login + Flutter UI + live API)
+**Not executed** — identity provider + Flutter runtime not available in this sandbox.
 
-## Regression vs C2.4–C7
-.NET count matches C4/C5 baseline (264). No failure introduced on backend/DB isolated path.
+## Regression
+.NET 264 matches C4/C5/C8 prior count. Isolated DB suites green.

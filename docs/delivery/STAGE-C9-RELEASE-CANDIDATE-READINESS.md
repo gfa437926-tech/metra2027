@@ -1,26 +1,24 @@
 # Stage C9 — Release Candidate Readiness
 
-## Decision
+## Verdict
 **Release Candidate for technical review: PARTIAL / CONDITIONAL**  
-**Not Production Ready.**
+**Production release: NOT READY**
 
-### Ready for review
-- .NET API with authz, rate limits, JWT constraints, security headers
-- Isolated DB Path N + proposal packages (R4, unique grants) tested offline
-- Flutter client archive path aligned; error code mapping; service readiness classification
-- Documentation trail C2–C9
+### Ready for reviewer inspection
+- .NET API build + 264 automated tests (local)
+- Path N + isolated authz SQL evidence
+- Security controls: JWT validation, rate limits, headers, station-scoped archive policy, 409 grant conflicts
+- Flutter source contracts for stations/queue/submit/archive path alignment
+- Documentation chain C2–C9
 
-### Blockers before any production release
-1. Hosted DB changes need explicit approval (R4 RPC + unique indexes)
-2. Real archive service not enabled (503 by design)
-3. Flutter full test suite not evidenced in CI/this sandbox
-4. Branch not pushed; no green GitHub Actions URLs
-5. Mock remains for AI/Climatol/forecast
-6. Staging deployment never executed
+### Blocks production
+1. Flutter test suite **not executed** in delivery environment (OOM/1.2 GiB)
+2. Branch **not on GitHub** → no Actions green URL
+3. Hosted R4 + unique indexes **not applied** (await approval)
+4. Archive service **503** by design
+5. No Staging/Production deploy performed
+6. E2E with real IdP not run here
+7. Mock remains for AI/Climatol/forecast
 
-## Environments
-| Env | Config | Secrets |
-|-----|--------|---------|
-| Dev/Local | user-secrets / env for Supabase URL + service role (server only) | Never in Flutter |
-| Flutter | `METRA_API_BASE_URL` HTTPS dart-define | No service role |
-| Prod prep | same patterns; OpenApi:Enabled false unless gated | External secret store |
+## Secrets
+No production service-role keys should be committed; Flutter uses `METRA_API_BASE_URL` dart-define only.

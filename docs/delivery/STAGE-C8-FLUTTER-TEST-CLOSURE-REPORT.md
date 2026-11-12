@@ -1,32 +1,28 @@
 # Stage C8 — Flutter Test Closure (C7 barrier)
 
-## Environment (this sandbox)
+## Environment
 | Resource | Value |
 |----------|--------|
-| RAM | **1.2 GiB** total, ~0.9 GiB available |
-| Swap | **0 B** (cannot create: no `sudo`) |
-| Flutter CLI | **Not installed** at run time (`/opt/flutter` missing after prior OOM kill) |
-| Prior failure | Flutter tool killed while building JIT snapshot as root |
+| RAM | **1.2 GiB** total |
+| Swap | **0 B** (no privilege to add) |
+| Flutter CLI | Not persistently available; prior install **Killed** during JIT snapshot |
+| Conclusion | Cannot complete `flutter test` or `flutter analyze` **in this sandbox** |
 
-## Attempts
-1. Reinstall Flutter + `flutter test` in C7 → process **Killed** during snapshot.
-2. C8: no sudo for swap; Flutter binary absent; cannot claim green suite.
+## Source contract checks (static)
+| Check | Result |
+|-------|--------|
+| Path `/observation-archive` | Present in client + unit test expectation |
+| JSON error `code`/`error` | Present in `_send` |
+| 503 → exception | Test source includes `archive_service_unavailable` |
+| Mock classification | AI/Climatol/forecast mock in `service_readiness.dart` |
 
-## Contract verification (source, not runtime Flutter)
-| Check | Evidence |
-|-------|----------|
-| Archive path | `metra_api_client.dart` uses `/observation-archive` |
-| Error JSON `code`/`error` | `_send` maps status + body code |
-| 503 not success | throws `MetraApiException`; test case added for `archive_service_unavailable` |
-| Mock vs live | `service_readiness.dart` keeps AI/Climatol/forecast on mock |
-
-## Operator command (required outside this sandbox)
+## Operator-required (outside sandbox)
 ```bash
 cd mobile/metra_mobile
 flutter pub get
-flutter test test/metra_api_client_test.dart
-flutter test
+flutter test test/metra_api_client_test.dart --concurrency=1
+flutter test --concurrency=1
 flutter analyze
 ```
 
-**Status:** Flutter automated suite = **not executed here** (environment limitation). Not claimed green.
+**Do not treat Flutter as green until those commands succeed with recorded output.**
