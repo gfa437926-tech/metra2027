@@ -2,8 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/api/service_readiness.dart';
 
 void main() {
-  test('observation submission is wired to the API while archive remains gated', () {
-    expect(MetraServiceReadiness.observationSubmit, MetraDataSourceMode.liveApi);
+  test('observation writes remain gated until scientific approval and atomic RPC deployment', () {
+    expect(MetraServiceReadiness.observationSubmit, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.observationDecision, MetraDataSourceMode.gated);
     expect(MetraServiceReadiness.observationArchive, MetraDataSourceMode.mock);
   });
 
