@@ -134,9 +134,15 @@ void main() {
     // is brought into view through its own scrollable ancestor rather than
     // resolving a separate Scrollable finder after earlier test interactions.
     final referencePicker = find.byType(DropdownButtonFormField<String>);
-    expect(referencePicker, findsOneWidget);
-    await tester.ensureVisible(referencePicker);
+    // ListView lazily builds off-screen children. Scroll until the picker is
+    // built before asserting or interacting with its widget.
+    await tester.scrollUntilVisible(
+      referencePicker,
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
+    expect(referencePicker, findsOneWidget);
     await tester.tap(referencePicker);
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة حمص').last);
