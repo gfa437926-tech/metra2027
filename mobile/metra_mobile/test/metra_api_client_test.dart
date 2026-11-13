@@ -304,7 +304,7 @@ void main() {
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'token',
-      httpClient: MockClient((request) async {
+      client: MockClient((request) async {
         return http.Response(
           '{"code":"archive_service_unavailable"}',
           503,
