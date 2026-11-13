@@ -37,7 +37,7 @@ BEGIN
     WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
       AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
       AND a.is_active AND c.is_active
-      AND m.approval_status = 'approved' AND m.revoked_at IS NULL
+      AND m.approval_status = 'approved' AND m.approved_by IS NOT NULL AND m.reviewed_at IS NOT NULL
       AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
       AND sa.approval_status = 'approved'
     AND sa.approved_by IS NOT NULL AND sa.reviewed_at IS NOT NULL
@@ -62,7 +62,7 @@ BEGIN
     WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
       AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
       AND a.is_active AND c.is_active
-      AND m.approval_status = 'approved' AND m.revoked_at IS NULL
+      AND m.approval_status = 'approved' AND m.approved_by IS NOT NULL AND m.reviewed_at IS NOT NULL
       AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
       AND sa.approval_status = 'approved'
     AND sa.approved_by IS NOT NULL AND sa.reviewed_at IS NOT NULL
