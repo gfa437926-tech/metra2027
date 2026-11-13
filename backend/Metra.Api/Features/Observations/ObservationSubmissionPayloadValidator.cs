@@ -27,8 +27,9 @@ public static class ObservationSubmissionPayloadValidator
     public static IReadOnlyList<ValidationIssue> Validate(ObservationSubmissionRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.Payload is not { ValueKind: JsonValueKind.Object } payload)
+        if (!request.Payload.HasValue || request.Payload.Value.ValueKind != JsonValueKind.Object)
             return [new("payload", "يجب أن تكون بيانات الرصد كائناً JSON.")];
+        var payload = request.Payload.Value;
 
         var issues = new List<ValidationIssue>();
         foreach (var property in payload.EnumerateObject())
