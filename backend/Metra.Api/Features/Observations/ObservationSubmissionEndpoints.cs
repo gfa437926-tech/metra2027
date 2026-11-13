@@ -225,13 +225,13 @@ public static class ObservationDecisionEndpoints
  public static IEndpointRouteBuilder MapObservationDecisionEndpoints(this IEndpointRouteBuilder endpoints)
  {
   endpoints.MapPost("/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
-   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,CancellationToken ct)=>{
+   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,IConfiguration configuration,CancellationToken ct)=>{
     if(!Guid.TryParse(http.User.FindFirstValue("sub"),out var userId)) return Results.Unauthorized();
     var validationError = ObservationDecisionRequestGuard.GetError(request);
     if (validationError is not null)
       return Results.BadRequest(new { error = validationError });
     if (!ObservationDecisionFeatureGate.IsEnabled(
-        http.RequestServices.GetRequiredService<IConfiguration>()[ObservationDecisionFeatureGate.ConfigurationKey]))
+        configuration[ObservationDecisionFeatureGate.ConfigurationKey]))
       return Results.Conflict(new { code = "atomic_decision_authorization_not_approved" });
     if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
     var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
