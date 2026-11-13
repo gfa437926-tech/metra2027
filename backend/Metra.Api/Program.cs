@@ -156,6 +156,7 @@ app.MapGet("/api/v1/ready", async (
     IObservationSubmissionService submission,
     IObservationDecisionService decision,
     IObservationQueueService queue,
+    IObservationArchiveService archive,
     IStationDirectoryService directory,
     IStationCatalogueReviewService stationReview,
     IRegistrationReviewService registrationReview,
@@ -170,6 +171,7 @@ app.MapGet("/api/v1/ready", async (
         submission.IsConfigured &&
         decision.IsConfigured &&
         queue.IsConfigured &&
+        archive.IsConfigured &&
         directory.IsConfigured &&
         stationReview.IsConfigured &&
         registrationReview.IsConfigured &&
