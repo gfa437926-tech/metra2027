@@ -114,6 +114,14 @@ public static class ObservationSubmissionEndpoints
                 if (validationError is not null)
                     return Results.BadRequest(new { error = validationError });
 
+                var payloadIssues = ObservationSubmissionPayloadValidator.Validate(request!);
+                if (payloadIssues.Count > 0)
+                {
+                    var errors = payloadIssues.GroupBy(issue => issue.Field, StringComparer.Ordinal)
+                        .ToDictionary(group => group.Key, group => group.Select(issue => issue.Message).ToArray(), StringComparer.Ordinal);
+                    return Results.ValidationProblem(errors, statusCode: StatusCodes.Status422UnprocessableEntity);
+                }
+
                 if (!submission.IsConfigured)
                     return Results.Problem(
                         title: "Observation service unavailable",
