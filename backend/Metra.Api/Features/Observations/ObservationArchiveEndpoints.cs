@@ -75,7 +75,7 @@ public sealed class SupabaseObservationArchiveService(
     /// </summary>
     public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
     {
-        if (!IsConfigured) return false;
+        if (!IsConfigured || !await ProbeArchiveTableAsync(cancellationToken)) return false;
 
         var listDenied = await IsExpectedAuthorizationDenialAsync(
             "get_station_observation_archive_atomic",
@@ -101,6 +101,29 @@ public sealed class SupabaseObservationArchiveService(
                 p_observation_id = Guid.Empty
             },
             cancellationToken);
+    }
+
+    private async Task<bool> ProbeArchiveTableAsync(CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/metra_observation_records?select=id&limit=0");
+        request.Headers.TryAddWithoutValidation("apikey", _key);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationArchiveService))
+                .SendAsync(request, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (HttpRequestException)
+        {
+            return false;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
     }
 
     private async Task<bool> IsExpectedAuthorizationDenialAsync(

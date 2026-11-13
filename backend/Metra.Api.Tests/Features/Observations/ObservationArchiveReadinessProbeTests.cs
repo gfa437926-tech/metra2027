@@ -11,58 +11,58 @@ public sealed class ObservationArchiveReadinessProbeTests
     [Fact]
     public async Task Probe_is_ready_only_when_both_atomic_archive_rpcs_exist_and_deny_empty_actor()
     {
-        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
+        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
         var service = CreateService(handler);
 
         var ready = await service.ProbeAsync(CancellationToken.None);
 
         Assert.True(ready);
-        Assert.Equal(2, handler.Requests.Count);
-        Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_atomic", handler.Requests[0]!.AbsolutePath);
-        Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_item_atomic", handler.Requests[1]!.AbsolutePath);
+        Assert.Equal(3, handler.Requests.Count);
+        Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_atomic", handler.Requests[1]!.AbsolutePath);
+        Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_item_atomic", handler.Requests[2]!.AbsolutePath);
     }
 
     [Fact]
     public async Task Probe_fails_when_archive_item_rpc_is_missing()
     {
-        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
+        var service = CreateService(handler);
+
+        var ready = await service.ProbeAsync(CancellationToken.None);
+
+        Assert.False(ready);
+        Assert.Equal(3, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task Probe_fails_if_empty_actor_is_not_denied()
+    {
+        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.Forbidden);
         var service = CreateService(handler);
 
         var ready = await service.ProbeAsync(CancellationToken.None);
 
         Assert.False(ready);
         Assert.Equal(2, handler.Requests.Count);
-    }
-
-    [Fact]
-    public async Task Probe_fails_if_empty_actor_is_not_denied()
-    {
-        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.OK, HttpStatusCode.Forbidden);
-        var service = CreateService(handler);
-
-        var ready = await service.ProbeAsync(CancellationToken.None);
-
-        Assert.False(ready);
-        Assert.Single(handler.Requests);
     }
 
     [Fact]
     public async Task Probe_fails_when_service_role_is_denied_execute_privilege()
     {
         var handler = new SequenceHandler("permission denied for function get_station_observation_archive_atomic",
-            HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
+            HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
         var service = CreateService(handler);
 
         var ready = await service.ProbeAsync(CancellationToken.None);
 
         Assert.False(ready);
-        Assert.Single(handler.Requests);
+        Assert.Equal(2, handler.Requests.Count);
     }
 
     [Fact]
     public async Task Probe_fails_closed_when_archive_service_is_not_configured()
     {
-        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
+        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.OK, HttpStatusCode.Forbidden, HttpStatusCode.Forbidden);
         var service = new SupabaseObservationArchiveService(
             new StaticClientFactory(handler),
             new ConfigurationBuilder().Build());
