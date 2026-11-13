@@ -24,7 +24,7 @@ jobs:
           unar -q -o "$RUNNER_TEMP/metra-requirements-raw" "10-5-2026 برنامج ادارة البيانات الجوية مع الربط على.rar" || true
           count=0
           while IFS= read -r -d '' file; do
-            relative="\${file#"$RUNNER_TEMP/metra-requirements-raw/"}"
+            relative="${file#"$RUNNER_TEMP/metra-requirements-raw/"}"
             case "$relative" in
               *supabase-config.js|*.env|*credential*|*secret*|*.db|*.sqlite) continue ;;
             esac
@@ -38,6 +38,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: metra-requirements-review
-          path: \${{ runner.temp }}/metra-requirements-review/
+          path: ${{ runner.temp }}/metra-requirements-review/
           if-no-files-found: error
           retention-days: 1
