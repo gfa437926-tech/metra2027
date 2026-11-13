@@ -1,22 +1,19 @@
+using System.Net;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
-using Metra.Api.Domain.Observations;
+using System.Text.Json;
 using Metra.Api.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Metra.Api.Features.Observations;
 
-/// <summary>
-/// Station-scoped observation archive read contract.
-/// Production data access remains fail-closed until an approved, isolated
-/// archive read model and explicit observation.archive.read grants exist.
-/// This endpoint enforces the approved authorization policy and returns
-/// structured contract errors without inventing historical data.
-/// </summary>
 public interface IObservationArchiveService
 {
     bool IsConfigured { get; }
 
     Task<ObservationArchiveListResult?> ListAsync(
+        Guid actorUserId,
         Guid stationId,
         DateTime? fromUtc,
         DateTime? toUtc,
@@ -26,6 +23,7 @@ public interface IObservationArchiveService
         CancellationToken cancellationToken);
 
     Task<ObservationArchiveItemDto?> GetAsync(
+        Guid actorUserId,
         Guid stationId,
         Guid observationId,
         CancellationToken cancellationToken);
@@ -47,15 +45,26 @@ public sealed record ObservationArchiveItemDto(
     string SourceRecordId,
     IReadOnlyDictionary<string, object?> Payload);
 
-/// <summary>
-/// Placeholder archive service: always reports not configured so the API
-/// fails closed. Replace only after isolated DB read-model + grants ship.
-/// </summary>
-public sealed class UnconfiguredObservationArchiveService : IObservationArchiveService
-{
-    public bool IsConfigured => false;
+public sealed class ObservationArchiveForbiddenException : Exception;
 
-    public Task<ObservationArchiveListResult?> ListAsync(
+/// <summary>
+/// Reads the real metra_observation_records archive through actor-bound atomic RPCs.
+/// The JWT subject is passed by the endpoint; the service-role credential never leaves the API.
+/// </summary>
+public sealed class SupabaseObservationArchiveService(
+    IHttpClientFactory clients,
+    IConfiguration configuration) : IObservationArchiveService
+{
+    private readonly string? _url = configuration["Supabase:Url"];
+    private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
+
+    public bool IsConfigured =>
+        Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
+        uri.Scheme == Uri.UriSchemeHttps &&
+        !string.IsNullOrWhiteSpace(_key);
+
+    public async Task<ObservationArchiveListResult?> ListAsync(
+        Guid actorUserId,
         Guid stationId,
         DateTime? fromUtc,
         DateTime? toUtc,
@@ -63,17 +72,183 @@ public sealed class UnconfiguredObservationArchiveService : IObservationArchiveS
         int limit,
         string? cursor,
         CancellationToken cancellationToken)
-        => Task.FromResult<ObservationArchiveListResult?>(null);
+    {
+        if (!IsConfigured || actorUserId == Guid.Empty || stationId == Guid.Empty ||
+            limit is < 1 or > 100 || cursor?.Length > 200)
+            return null;
 
-    public Task<ObservationArchiveItemDto?> GetAsync(
+        var result = await CallRpcAsync(
+            "get_station_observation_archive_atomic",
+            new
+            {
+                p_actor_user_id = actorUserId,
+                p_station_id = stationId,
+                p_from_utc = NormalizeUtc(fromUtc),
+                p_to_utc = NormalizeUtc(toUtc),
+                p_observation_type = observationType,
+                p_limit = limit,
+                p_cursor = cursor
+            },
+            cancellationToken);
+
+        if (result is null || result.Value.ValueKind != JsonValueKind.Object)
+            return null;
+
+        var root = result.Value;
+        if (!root.TryGetProperty("items", out var itemArray) ||
+            itemArray.ValueKind != JsonValueKind.Array ||
+            !root.TryGetProperty("hasMore", out var hasMoreElement) ||
+            hasMoreElement.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            return null;
+
+        var items = new List<ObservationArchiveItemDto>();
+        foreach (var item in itemArray.EnumerateArray())
+        {
+            var mapped = MapItem(item);
+            if (mapped is null) return null;
+            items.Add(mapped);
+        }
+
+        var nextCursor = root.TryGetProperty("nextCursor", out var cursorElement) &&
+            cursorElement.ValueKind == JsonValueKind.String
+                ? cursorElement.GetString()
+                : null;
+
+        return new ObservationArchiveListResult(items, hasMoreElement.GetBoolean(), nextCursor);
+    }
+
+    public async Task<ObservationArchiveItemDto?> GetAsync(
+        Guid actorUserId,
         Guid stationId,
         Guid observationId,
         CancellationToken cancellationToken)
-        => Task.FromResult<ObservationArchiveItemDto?>(null);
+    {
+        if (!IsConfigured || actorUserId == Guid.Empty ||
+            stationId == Guid.Empty || observationId == Guid.Empty)
+            return null;
+
+        var result = await CallRpcAsync(
+            "get_station_observation_archive_item_atomic",
+            new
+            {
+                p_actor_user_id = actorUserId,
+                p_station_id = stationId,
+                p_observation_id = observationId
+            },
+            cancellationToken);
+
+        if (result is null || result.Value.ValueKind == JsonValueKind.Null)
+            return null;
+        return result.Value.ValueKind == JsonValueKind.Object ? MapItem(result.Value) : null;
+    }
+
+    private async Task<JsonElement?> CallRpcAsync(
+        string functionName,
+        object body,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/{functionName}");
+        request.Headers.TryAddWithoutValidation("apikey", _key);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+        request.Content = JsonContent.Create(body);
+
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationArchiveService))
+                .SendAsync(request, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+                throw new ObservationArchiveForbiddenException();
+            if (!response.IsSuccessStatusCode)
+                return null;
+            return await response.Content.ReadFromJsonAsync<JsonElement>(
+                cancellationToken: cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    private static DateTime? NormalizeUtc(DateTime? value) =>
+        value is null ? null : value.Value.Kind == DateTimeKind.Utc
+            ? value.Value
+            : value.Value.ToUniversalTime();
+
+    private static ObservationArchiveItemDto? MapItem(JsonElement item)
+    {
+        if (item.ValueKind != JsonValueKind.Object ||
+            !TryGetString(item, "id", out var id) ||
+            !TryGetString(item, "stationId", out var stationId) ||
+            !TryGetString(item, "observationType", out var observationType) ||
+            !TryGetDateTime(item, "importedAtUtc", out var importedAt) ||
+            !TryGetString(item, "sourceSystem", out var sourceSystem) ||
+            !TryGetString(item, "sourceTable", out var sourceTable) ||
+            !TryGetString(item, "sourceRecordId", out var sourceRecordId))
+            return null;
+
+        DateTime? observedAt = null;
+        if (item.TryGetProperty("observedAtUtc", out var observedElement) &&
+            observedElement.ValueKind == JsonValueKind.String &&
+            observedElement.TryGetDateTime(out var parsedObserved))
+            observedAt = parsedObserved;
+
+        var payload = new Dictionary<string, object?>(StringComparer.Ordinal);
+        if (item.TryGetProperty("payload", out var payloadElement) &&
+            payloadElement.ValueKind == JsonValueKind.Object)
+        {
+            try
+            {
+                payload = JsonSerializer.Deserialize<Dictionary<string, object?>>(
+                    payloadElement.GetRawText()) ?? payload;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+        else
+        {
+            return null;
+        }
+
+        return new ObservationArchiveItemDto(
+            id, stationId, observationType, observedAt, importedAt,
+            sourceSystem, sourceTable, sourceRecordId, payload);
+    }
+
+    private static bool TryGetString(JsonElement element, string name, out string value)
+    {
+        value = string.Empty;
+        return element.TryGetProperty(name, out var property) &&
+            property.ValueKind == JsonValueKind.String &&
+            !string.IsNullOrWhiteSpace(value = property.GetString() ?? string.Empty);
+    }
+
+    private static bool TryGetDateTime(JsonElement element, string name, out DateTime value)
+    {
+        value = default;
+        return element.TryGetProperty(name, out var property) &&
+            property.ValueKind == JsonValueKind.String &&
+            property.TryGetDateTime(out value);
+    }
 }
 
 public static class ObservationArchiveEndpoints
 {
+    private static readonly HashSet<string> AllowedTypes = new(StringComparer.Ordinal)
+    {
+        "hourly", "daily", "climate", "soil", "agricultural", "phenomenon", "fieldclimate"
+    };
+
     public static IEndpointRouteBuilder MapObservationArchiveEndpoints(
         this IEndpointRouteBuilder endpoints)
     {
@@ -87,91 +262,64 @@ public static class ObservationArchiveEndpoints
                 [FromQuery] int? limit,
                 [FromQuery] string? cursor,
                 HttpContext http,
-                IStationAuthorizationService authorization,
                 IObservationArchiveService archive,
                 CancellationToken cancellationToken) =>
             {
-                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
+                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var actorUserId))
                     return Results.Unauthorized();
-
                 if (stationId == Guid.Empty)
                     return Results.BadRequest(new { code = "station_required" });
 
-                var pageSize = limit is null ? 25 : Math.Clamp(limit.Value, 1, 100);
+                if (limit is < 1 or > 100)
+                    return Results.BadRequest(new { code = "invalid_archive_limit", maximum = 100 });
+                if (cursor?.Length > 200)
+                    return Results.BadRequest(new { code = "invalid_archive_cursor" });
+                if (fromUtc.HasValue && toUtc.HasValue && fromUtc.Value >= toUtc.Value)
+                    return Results.BadRequest(new { code = "invalid_archive_date_range" });
 
-                // Server-side station authorization (assignment + explicit archive grant).
-                // Never trust client role claims. Fail closed on any uncertainty.
-                var allowed = await authorization.HasStationArchivePermissionAsync(
-                    userId,
-                    stationId,
-                    cancellationToken);
+                var type = string.IsNullOrWhiteSpace(observationType) ? null : observationType.Trim();
+                if (type is not null && !AllowedTypes.Contains(type))
+                    return Results.BadRequest(new { code = "invalid_archive_observation_type" });
 
-                if (!allowed)
+                if (!archive.IsConfigured)
+                    return Results.Json(
+                        new { code = "archive_service_unavailable", message = "خدمة الأرشيف غير مهيأة." },
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                try
+                {
+                    var result = await archive.ListAsync(
+                        actorUserId, stationId, fromUtc, toUtc, type, limit ?? 25, cursor, cancellationToken);
+                    if (result is null)
+                        return Results.Json(
+                            new { code = "archive_unavailable", message = "تعذر قراءة الأرشيف." },
+                            statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                    return Results.Ok(new
+                    {
+                        items = result.Items,
+                        hasMore = result.HasMore,
+                        nextCursor = result.NextCursor
+                    });
+                }
+                catch (ObservationArchiveForbiddenException)
                 {
                     return Results.Json(
                         new
                         {
                             code = "archive_permission_denied",
-                            message =
-                                "قراءة الأرشيف تتطلب منحة صريحة observation.archive.read لهذه المحطة تحديداً. لا تُستنتج من الدور أو عضوية الجهة."
+                            message = "لا يملك المستخدم منحة أرشيف سارية مع تكليف نشط لهذه المحطة."
                         },
                         statusCode: StatusCodes.Status403Forbidden);
                 }
-
-                // Domain policy double-check (station scope isolation).
-                var actor = new ObservationActorContext(
-                    userId.ToString("D"),
-                    stationId.ToString("D"),
-                    HasActiveStationAssignment: true,
-                    Permissions: new HashSet<ObservationPermission> { ObservationPermission.ArchiveRead });
-
-                var policy = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
-                    actor, stationId.ToString("D"));
-                if (!policy.IsAuthorized)
-                {
-                    return Results.Json(
-                        new { code = policy.ErrorCode, message = policy.Message },
-                        statusCode: StatusCodes.Status403Forbidden);
-                }
-
-                if (!archive.IsConfigured)
-                {
-                    return Results.Json(
-                        new
-                        {
-                            code = "archive_service_unavailable",
-                            message =
-                                "خدمة أرشيف الرصدات غير مفعّلة بعد. لا تُعرض بيانات تاريخية تجريبية. يتطلب نموذجاً معزولاً ومنحاً صريحة لكل محطة."
-                        },
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
-                }
-
-                var result = await archive.ListAsync(
-                    stationId, fromUtc, toUtc, observationType, pageSize, cursor, cancellationToken);
-
-                if (result is null)
-                {
-                    return Results.Json(
-                        new { code = "archive_unavailable", message = "تعذر قراءة الأرشيف." },
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
-                }
-
-                return Results.Ok(new
-                {
-                    items = result.Items,
-                    hasMore = result.HasMore,
-                    nextCursor = result.NextCursor
-                });
             })
             .RequireAuthorization()
             .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("ListStationObservationArchive")
             .WithTags("Observations", "Archive")
-            .WithSummary("List station-scoped observation archive (explicit archive grant required)")
+            .WithSummary("List station-scoped historical observations")
             .WithDescription(
-                "Requires authenticated user, active station assignment, and explicit " +
-                "observation.archive.read grant for this station only. Authority membership " +
-                "or role alone is insufficient. Cross-station access is denied.");
+                "The JWT subject and station-bound authorization are verified inside the same database RPC transaction. Unlinked and demo archive records are never returned.");
 
         endpoints.MapGet(
             "/api/v1/stations/{stationId:guid}/observation-archive/{observationId:guid}",
@@ -179,56 +327,38 @@ public static class ObservationArchiveEndpoints
                 Guid stationId,
                 Guid observationId,
                 HttpContext http,
-                IStationAuthorizationService authorization,
                 IObservationArchiveService archive,
                 CancellationToken cancellationToken) =>
             {
-                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
+                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var actorUserId))
                     return Results.Unauthorized();
-
                 if (stationId == Guid.Empty || observationId == Guid.Empty)
                     return Results.BadRequest(new { code = "archive_identifier_required" });
+                if (!archive.IsConfigured)
+                    return Results.Json(
+                        new { code = "archive_service_unavailable" },
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
 
-                var allowed = await authorization.HasStationArchivePermissionAsync(
-                    userId,
-                    stationId,
-                    cancellationToken);
-                if (!allowed)
+                try
+                {
+                    var item = await archive.GetAsync(
+                        actorUserId, stationId, observationId, cancellationToken);
+                    return item is null
+                        ? Results.NotFound(new { code = "archive_record_not_found" })
+                        : Results.Ok(item);
+                }
+                catch (ObservationArchiveForbiddenException)
+                {
                     return Results.Json(
                         new { code = "archive_permission_denied" },
                         statusCode: StatusCodes.Status403Forbidden);
-
-                var actor = new ObservationActorContext(
-                    userId.ToString("D"),
-                    stationId.ToString("D"),
-                    HasActiveStationAssignment: true,
-                    Permissions: new HashSet<ObservationPermission> { ObservationPermission.ArchiveRead });
-                var policy = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
-                    actor, stationId.ToString("D"));
-                if (!policy.IsAuthorized)
-                    return Results.Json(
-                        new { code = policy.ErrorCode, message = policy.Message },
-                        statusCode: StatusCodes.Status403Forbidden);
-
-                if (!archive.IsConfigured)
-                    return Results.Json(
-                        new
-                        {
-                            code = "archive_service_unavailable",
-                            message = "خدمة أرشيف الرصدات غير مفعّلة بعد."
-                        },
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
-
-                var item = await archive.GetAsync(stationId, observationId, cancellationToken);
-                return item is null
-                    ? Results.NotFound(new { code = "archive_record_not_found" })
-                    : Results.Ok(item);
+                }
             })
             .RequireAuthorization()
             .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("GetStationObservationArchiveItem")
             .WithTags("Observations", "Archive")
-            .WithSummary("Get one station-scoped observation archive item");
+            .WithSummary("Get one station-scoped historical observation");
 
         return endpoints;
     }
