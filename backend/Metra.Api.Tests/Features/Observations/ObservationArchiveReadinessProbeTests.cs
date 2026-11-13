@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Metra.Api.Features.Observations;
 using Xunit;
@@ -103,7 +104,7 @@ public sealed class ObservationArchiveReadinessProbeTests
             var body = status switch
             {
                 HttpStatusCode.OK => "[]",
-                HttpStatusCode.Forbidden => $"""{"code":"42501","message":"{{forbiddenMessage}}"}""",
+                HttpStatusCode.Forbidden => JsonSerializer.Serialize(new { code = "42501", message = forbiddenMessage }),
                 _ => string.Empty
             };
             return Task.FromResult(new HttpResponseMessage(status)
