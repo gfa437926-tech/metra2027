@@ -5,6 +5,11 @@ on:
   push:
     branches:
       - work/backend-db-integration-phase
+      - work/backend-db-integration-full-2026-11-13
+    paths:
+      - "mobile/metra_mobile/**"
+      - ".github/workflows/flutter-c7-ci.yml"
+  pull_request:
     paths:
       - "mobile/metra_mobile/**"
       - ".github/workflows/flutter-c7-ci.yml"
