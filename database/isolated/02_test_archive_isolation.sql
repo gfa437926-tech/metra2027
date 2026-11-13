@@ -10,19 +10,19 @@ DECLARE
   ok boolean;
   v_grant_id uuid;
 BEGIN
-  ok := public.metra_user_has_station_archive_permission(u_observer, st_a, 'observation.archive.read');
+  ok := public.metra_user_has_station_archive_permission(u_observer, st_a);
   IF ok IS NOT TRUE THEN
     RAISE EXCEPTION 'FAIL: observer should read archive A';
   END IF;
   RAISE NOTICE 'PASS: observer archive A allowed';
 
-  ok := public.metra_user_has_station_archive_permission(u_observer, st_b, 'observation.archive.read');
+  ok := public.metra_user_has_station_archive_permission(u_observer, st_b);
   IF ok IS TRUE THEN
     RAISE EXCEPTION 'FAIL: observer must NOT read archive B without grant';
   END IF;
   RAISE NOTICE 'PASS: observer archive B denied (same authority)';
 
-  ok := public.metra_user_has_station_archive_permission(u_reviewer, st_a, 'observation.archive.read');
+  ok := public.metra_user_has_station_archive_permission(u_reviewer, st_a);
   IF ok IS TRUE THEN
     RAISE EXCEPTION 'FAIL: role/review alone must not grant archive';
   END IF;
@@ -35,7 +35,7 @@ BEGIN
   INSERT INTO public.permission_grant_audit (grant_id, action, actor_user_id, station_id, permission_code, note)
   VALUES (v_grant_id, 'revoked', u_reviewer, st_a, 'observation.archive.read', 'isolated revoke');
 
-  ok := public.metra_user_has_station_archive_permission(u_observer, st_a, 'observation.archive.read');
+  ok := public.metra_user_has_station_archive_permission(u_observer, st_a);
   IF ok IS TRUE THEN
     RAISE EXCEPTION 'FAIL: revoked grant must deny archive A';
   END IF;
@@ -46,7 +46,7 @@ BEGIN
   UPDATE public.station_assignments
      SET valid_to = now() - interval '1 hour'
    WHERE user_id = u_observer AND station_id = st_a;
-  ok := public.metra_user_has_station_archive_permission(u_observer, st_a, 'observation.archive.read');
+  ok := public.metra_user_has_station_archive_permission(u_observer, st_a);
   IF ok IS TRUE THEN
     RAISE EXCEPTION 'FAIL: expired station assignment must deny archive';
   END IF;
