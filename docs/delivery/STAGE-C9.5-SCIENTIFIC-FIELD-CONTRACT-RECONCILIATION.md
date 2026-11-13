@@ -46,7 +46,7 @@ The backend `HourlyObservationValidator` already implements these conditions and
 
 ### Remaining hourly UI parity
 
-The current Flutter screen still groups several fields into aggregate text boxes and omits distinct source fields, including the UTC hour, average wind direction/speed, vapor pressure difference, separate pressure slope/shape, cloud-layer amount/type/height fields, and cover12/cover123. It therefore cannot yet produce a complete source-conformant payload. The psychrometric lookup table named in earlier requirements was not recovered from the archive or repository, so automatic RH/dew-point calculation must not be fabricated.
+The current Flutter screen now exposes the distinct source fields, including UTC hour, average wind direction/speed, vapor pressure difference, pressure slope/shape, cloud-layer amount/type/height fields, and cover12/cover123. It sends the payload to the .NET submission endpoint. The psychrometric lookup table named in earlier requirements was not recovered from the archive or repository, so automatic RH/dew-point calculation remains unavailable and must not be fabricated. The unresolved -20..+50 versus -50..+50 temperature range remains a scientific approval blocker.
 
 ## 2. Daily observation contract
 
@@ -86,7 +86,7 @@ These statements cannot all be true simultaneously. The API therefore rejects 06
 
 ### Remaining daily UI parity
 
-The current Flutter screen omits the report-type selector, precipitation trace, individual gust direction/time, humidity times and weather-phenomena checkboxes. It also combines some distinct scientific fields into a single input. No live submission should be enabled until the UI sends the full agreed field contract.
+The current Flutter screen now exposes the 24-hour report-type selector, precipitation trace, individual gust direction/time, humidity times, and weather-phenomena checkboxes. The 06/18 UTC options remain disabled because the source contract is contradictory. The 24-hour form calls the .NET submission endpoint, but staging verification and scientific-owner approval remain outstanding.
 
 ## 3. Server-side submission guard
 
@@ -97,14 +97,14 @@ The .NET submission endpoint now:
 - rejects client-supplied server-owned identity/workflow fields such as user ID, station ID, status and approval metadata;
 - returns HTTP 422 with field-level validation issues before calling the database persistence RPC.
 
-This is server-side validation only. The Flutter forms remain local-session drafts and do not claim a successful API submission.
+This validation runs before the atomic persistence RPC. The current Flutter hourly and daily 24-hour screens call the .NET endpoint and report server acceptance only after a successful API response. This is not evidence of a completed staging or production rollout; the unresolved scientific range, psychrometric method, and 06/18 UTC contract remain blockers.
 
 ## 4. No-go items still requiring approved external inputs
 
 - Confirm whether hourly temperatures use -20..+50 or -50..+50; the extracted validator uses -20..+50 while an earlier requirements note records -50..+50.
 - Supply the approved psychrometric lookup table or an approved calculation method.
 - Resolve the 06/18 UTC daily conflict described above.
-- Complete Flutter field parity and tests before connecting live writes.
+- Verify complete Flutter field parity against the authoritative source and run end-to-end staging tests before enabling production writes.
 - Configure a non-production staging environment and real identity-provider test credentials.
 - Do not reuse legacy station identifiers or legacy database configuration.
 

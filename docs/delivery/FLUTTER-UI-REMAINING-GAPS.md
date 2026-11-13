@@ -1,14 +1,21 @@
 # METRA 2027 — Flutter UI Remaining Gaps
 
-1. **Scientific field contracts** for hourly/daily entry (precision, units, missing markers, validation ranges, psychrometrics) — blocked on authoritative archive extraction.
-2. **Production observation submit** — currently local draft mock only.
-3. **Live forecast products / bulletins** — UI exists; feed contract pending.
-4. **AI gateway** — UI exists; no synthetic results shown.
-5. **Climatol server jobs** — UI prepares requests only; no client-side series mutation.
-6. **User directory / registration data** — UI tabs ready; API binding pending.
-7. **Charts / export / print** — not production-wired.
-8. **Role-aware destination visibility** — still needs server access-context contract.
-9. **Widget/integration tests for new screens** — to be added when Flutter SDK is available in CI environment.
-10. **RAR requirements archive** still uninspected — full field-level parity provisional.
+## Implemented integration paths
 
-No gap is hidden. Every incomplete scientific or integration area is marked in UI banners and this document.
+- **Hourly observation:** Flutter exposes the source-derived individual fields and calls the .NET submission endpoint. Server-side validation and atomic persistence RPC code exist. Staging verification is still pending.
+- **Daily 24-hour observation:** Flutter exposes the 24-hour fields, report type, precipitation trace, and weather-phenomena controls, and calls the .NET endpoint. The 06/18 UTC options remain disabled.
+- **Observation API readiness:** a successful API response means the backend accepted the submission; it does not mean the observation has been reviewed or approved.
+
+## Remaining blockers
+
+1. **Scientific approval:** temperature range conflict (-20..+50 versus -50..+50), approved psychrometric lookup/calculation method, and the 06/18 UTC daily source contradiction.
+2. **Staging:** no real identity-provider end-to-end test has been completed against a dedicated staging environment.
+3. **Archive:** the .NET archive service and actor-bound RPC proposals exist, but the required functions are not deployed to the configured hosted project; archive remains fail-closed.
+4. **AI gateway:** UI exists; provider contract, credentials, real inference, and tests remain pending.
+5. **Climatol:** UI prepares requests; server runtime, versioned execution contract, job lifecycle, and integration tests remain pending.
+6. **Forecast centres:** UI exists; approved feed/provider contract, credentials, freshness policy, and tests remain pending.
+7. **User directory / audit / review queue:** actor-bound API and RPC paths exist, but hosted RPC deployment and staging authorization fixtures remain pending.
+8. **Charts / export / print:** not fully production-wired.
+9. **Role-aware destination visibility:** still needs a server access-context contract and end-to-end tests.
+
+No mock provider is represented as a live external integration. No hosted schema, production data, or legacy database was changed.

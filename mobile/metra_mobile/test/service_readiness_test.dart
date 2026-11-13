@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/api/service_readiness.dart';
 
 void main() {
-  test('non-production observation workflows are not classified as live API', () {
+  test('observation submission is wired to the API while archive remains gated', () {
     expect(MetraServiceReadiness.observationSubmit, MetraDataSourceMode.liveApi);
     expect(MetraServiceReadiness.observationArchive, MetraDataSourceMode.mock);
   });
