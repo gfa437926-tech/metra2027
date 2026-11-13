@@ -7,6 +7,7 @@ public interface IStationAuthorizationService
 {
     bool IsConfigured { get; }
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasStationArchivePermissionAsync(Guid userId, Guid stationId, CancellationToken cancellationToken = default);
     Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
@@ -31,6 +32,15 @@ public sealed class SupabaseStationAuthorizationService(
         CancellationToken cancellationToken = default) =>
         HasPermissionAsync(
             "metra_user_has_station_permission", userId, stationId, permissionCode, cancellationToken);
+
+    public Task<bool> HasStationArchivePermissionAsync(
+        Guid userId, Guid stationId,
+        CancellationToken cancellationToken = default) =>
+        // Deliberately use a dedicated RPC: the generic permission RPC is authority-scoped
+        // and does not prove that an archive grant belongs to this exact station.
+        HasPermissionAsync(
+            "metra_user_has_station_archive_permission", userId, stationId,
+            "observation.archive.read", cancellationToken);
 
     public Task<bool> HasStationOwnerAuthorityPermissionAsync(
         Guid userId, Guid stationId, string permissionCode,

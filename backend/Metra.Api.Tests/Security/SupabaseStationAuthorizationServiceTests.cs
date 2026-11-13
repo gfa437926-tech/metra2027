@@ -84,6 +84,36 @@ public sealed class SupabaseStationAuthorizationServiceTests
             Guid.NewGuid(), Guid.Empty, "stations.catalogue.review"));
     }
 
+    [Fact]
+    public async Task Archive_permission_uses_dedicated_station_bound_rpc()
+    {
+        var service = CreateService(request =>
+        {
+            Assert.Equal(
+                "/rest/v1/rpc/metra_user_has_station_archive_permission",
+                request.RequestUri!.AbsolutePath);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        Assert.True(await service.HasStationArchivePermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid()));
+    }
+
+    [Fact]
+    public async Task Archive_permission_fails_closed_until_station_bound_rpc_is_installed()
+    {
+        var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        {
+            Content = new StringContent("{\"code\":\"PGRST202\"}")
+        });
+
+        Assert.False(await service.HasStationArchivePermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid()));
+    }
+
     private static SupabaseStationAuthorizationService CreateService(
         Func<HttpRequestMessage, HttpResponseMessage> responseFactory)
     {

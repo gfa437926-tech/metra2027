@@ -101,10 +101,9 @@ public static class ObservationArchiveEndpoints
 
                 // Server-side station authorization (assignment + explicit archive grant).
                 // Never trust client role claims. Fail closed on any uncertainty.
-                var allowed = await authorization.HasStationPermissionAsync(
+                var allowed = await authorization.HasStationArchivePermissionAsync(
                     userId,
                     stationId,
-                    "observation.archive.read",
                     cancellationToken);
 
                 if (!allowed)
@@ -190,10 +189,9 @@ public static class ObservationArchiveEndpoints
                 if (stationId == Guid.Empty || observationId == Guid.Empty)
                     return Results.BadRequest(new { code = "archive_identifier_required" });
 
-                var allowed = await authorization.HasStationPermissionAsync(
+                var allowed = await authorization.HasStationArchivePermissionAsync(
                     userId,
                     stationId,
-                    "observation.archive.read",
                     cancellationToken);
                 if (!allowed)
                     return Results.Json(
