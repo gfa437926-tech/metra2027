@@ -21,9 +21,9 @@ assert_blocked_update() {
  if [[ "$allowed" != "f" ]]; then echo "FAIL: $name did not deny subsequent authorization" >&2; exit 1; fi
  echo "PASS: $name waited for active read transaction; subsequent read denied"
 }
-grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND station_id='$station' AND permission_code='users.station.view' LIMIT 1")"
+grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND authority_id='$authority' AND permission_code='users.station.view' LIMIT 1")"
 if [[ -z "$grant_id" ]]; then
- psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.permission_grants(user_id,permission_code,station_id,authority_id) VALUES('$actor','users.station.view','$station','$authority')"
+ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.permission_grants(user_id,permission_code,authority_id) VALUES('$actor','users.station.view','$authority')"
  grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND station_id='$station' AND permission_code='users.station.view' LIMIT 1")"
 fi
 assert_blocked_update "UPDATE public.permission_grants SET revoked_at=clock_timestamp() WHERE id='$grant_id'" "grant revocation"

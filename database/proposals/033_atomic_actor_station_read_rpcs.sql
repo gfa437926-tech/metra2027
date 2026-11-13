@@ -35,8 +35,6 @@ BEGIN
   JOIN public.metra_role_permissions rp ON rp.role_code = r.role_code AND rp.permission_code = p_permission_code
   JOIN public.permission_grants g ON g.user_id = ac.user_id AND g.authority_id = s.owner_authority_id
     AND g.permission_code = p_permission_code
-    AND ((p_permission_code = 'observation.archive.read' AND g.station_id = p_station_id)
-      OR (p_permission_code <> 'observation.archive.read' AND (g.station_id IS NULL OR g.station_id = p_station_id)))
   WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
     AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
     AND a.is_active AND c.is_active

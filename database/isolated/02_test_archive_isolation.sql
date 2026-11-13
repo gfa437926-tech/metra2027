@@ -29,7 +29,7 @@ BEGIN
   RAISE NOTICE 'PASS: role-only archive denied';
 
   SELECT id INTO v_grant_id FROM public.permission_grants
-   WHERE user_id = u_observer AND station_id = st_a AND permission_code = 'observation.archive.read'
+   WHERE user_id = u_observer AND authority_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' AND permission_code = 'observation.archive.read'
    LIMIT 1;
   UPDATE public.permission_grants SET revoked_at = now() WHERE id = v_grant_id;
   INSERT INTO public.permission_grant_audit (grant_id, action, actor_user_id, station_id, permission_code, note)

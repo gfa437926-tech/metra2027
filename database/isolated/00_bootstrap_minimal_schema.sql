@@ -77,7 +77,6 @@ CREATE TABLE IF NOT EXISTS public.permission_grants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id),
   permission_code text NOT NULL,
-  station_id uuid REFERENCES public.station_catalogue(id),
   authority_id uuid REFERENCES public.meteorological_authorities(id),
   approval_status text NOT NULL DEFAULT 'approved',
   approved_at timestamptz,
@@ -146,7 +145,6 @@ AS $function$
         JOIN public.permission_grants AS permission
           ON permission.user_id = account.user_id
          AND permission.permission_code = p_permission_code
-         AND permission.station_id = station.id
          AND permission.revoked_at IS NULL
          AND permission.valid_from <= now()
          AND (permission.valid_to IS NULL OR permission.valid_to > now())

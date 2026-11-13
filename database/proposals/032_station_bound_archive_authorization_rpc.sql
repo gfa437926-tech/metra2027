@@ -43,7 +43,6 @@ SELECT COALESCE(EXISTS(
     ON g.user_id = ac.user_id
    AND g.authority_id = s.owner_authority_id
    AND g.permission_code = 'observation.archive.read'
-   AND g.station_id = p_station_id
   WHERE ac.user_id = p_user_id
     AND ac.account_state = 'active'
     AND s.approval_status = 'approved'

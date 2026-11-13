@@ -43,20 +43,18 @@ INSERT INTO public.authority_memberships (user_id, authority_id, approval_status
 -- Observer assigned to BOTH stations (same authority) — still must not cross-read archive without per-station grant
 INSERT INTO public.station_assignments (user_id, station_id, authority_id, assignment_role_code) VALUES
   ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'observer'),
-  ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-0002-0002-0002-000000000002', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'observer'),
   ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head');
 
 -- Explicit archive grant ONLY for station A for observer
-INSERT INTO public.permission_grants (user_id, permission_code, station_id, authority_id)
+INSERT INTO public.permission_grants (user_id, permission_code, authority_id)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
   'observation.archive.read',
-  'aaaaaaaa-0001-0001-0001-000000000001',
   'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
 );
 
 INSERT INTO public.permission_grant_audit (grant_id, action, actor_user_id, station_id, permission_code, note)
-SELECT id, 'granted', '22222222-2222-2222-2222-222222222222', station_id, permission_code, 'isolated test grant A'
+SELECT id, 'granted', '22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', permission_code, 'isolated test grant for assigned station A'
 FROM public.permission_grants
 WHERE user_id = '11111111-1111-1111-1111-111111111111'
   AND permission_code = 'observation.archive.read';
