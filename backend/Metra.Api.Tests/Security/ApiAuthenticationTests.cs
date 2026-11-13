@@ -139,8 +139,35 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 services.RemoveAll<IObservationArchiveService>();
                 services.AddSingleton<IObservationArchiveService>(
                     new ReadinessObservationArchiveStub(archiveProbeSucceeds));
+
+                services.RemoveAll<IObservationSubmissionService>();
+                services.AddSingleton<IObservationSubmissionService>(
+                    new ReadinessObservationSubmissionStub());
+                services.RemoveAll<IObservationDecisionService>();
+                services.AddSingleton<IObservationDecisionService>(
+                    new ReadinessObservationDecisionStub());
             });
         });
+    }
+
+    private sealed class ReadinessObservationSubmissionStub : IObservationSubmissionService
+    {
+        public bool IsConfigured => true;
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<ObservationSubmissionOutcome> SubmitAsync(
+            Guid userId, Guid stationId, ObservationSubmissionRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ObservationSubmissionOutcome(true, false, HttpStatusCode.ServiceUnavailable, null));
+    }
+
+    private sealed class ReadinessObservationDecisionStub : IObservationDecisionService
+    {
+        public bool IsConfigured => true;
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<ObservationDecisionOutcome> DecideAsync(
+            Guid userId, Guid stationId, Guid observationId, ObservationDecisionRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ObservationDecisionOutcome(true, false, HttpStatusCode.ServiceUnavailable, null));
     }
 
     private sealed class ReadinessObservationArchiveStub(bool probeSucceeds) : IObservationArchiveService
