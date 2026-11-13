@@ -208,7 +208,6 @@ void main() {
       client: MockClient((request) async {
         captured = request;
         return http.Response(jsonEncode({
-          'authorized': true,
           'items': [{
             'id': '66666666-6666-4666-8666-666666666666',
             'stationId': stationId,
@@ -220,7 +219,8 @@ void main() {
             'payload': {'temperature': 24.5},
             'importedAtUtc': '2026-11-11T01:00:00Z'
           }],
-          'page': {'limit': 25, 'offset': 0, 'returned': 1, 'hasMore': false}
+          'hasMore': true,
+          'nextCursor': 'cursor-page-2'
         }), 200);
       }),
     );
@@ -230,17 +230,20 @@ void main() {
       fromUtc: DateTime.utc(2026, 11, 1),
       toUtc: DateTime.utc(2026, 11, 12),
       limit: 25,
+      cursor: 'cursor-page-1',
     );
     expect(captured.method, 'GET');
     expect(captured.url.path, '/api/v1/stations/$stationId/observation-archive');
-    expect(captured.url.queryParameters['type'], 'hourly');
+    expect(captured.url.queryParameters['observationType'], 'hourly');
     expect(captured.url.queryParameters['limit'], '25');
+    expect(captured.url.queryParameters['cursor'], 'cursor-page-1');
     expect(captured.headers['authorization'], 'Bearer archive-token');
     expect(page.items, hasLength(1));
     expect(page.items.single.payload['temperature'], 24.5);
     expect(page.items.single.sourceSystem, 'legacy-import');
     expect(page.items.single.observedAtUtc!.isUtc, isTrue);
-    expect(page.returned, 1);
+    expect(page.hasMore, isTrue);
+    expect(page.nextCursor, 'cursor-page-2');
     client.close();
   });
 
@@ -252,26 +255,22 @@ void main() {
       client: MockClient((request) async {
         captured = request;
         return http.Response(jsonEncode({
-          'authorized': true,
-          'found': true,
-          'item': {
-            'id': '66666666-6666-4666-8666-666666666666',
-            'stationId': stationId,
-            'sourceSystem': 'legacy-import',
-            'sourceTable': 'daily_records',
-            'sourceRecordId': 'daily-42',
-            'observationType': 'daily',
-            'observedAtUtc': null,
-            'payload': {'rainfall': 2},
-            'importedAtUtc': '2026-11-11T01:00:00Z'
-          }
+          'id': '66666666-6666-4666-8666-666666666666',
+          'stationId': stationId,
+          'sourceSystem': 'legacy-import',
+          'sourceTable': 'daily_records',
+          'sourceRecordId': 'daily-42',
+          'observationType': 'daily',
+          'observedAtUtc': null,
+          'payload': {'rainfall': 2},
+          'importedAtUtc': '2026-11-11T01:00:00Z'
         }), 200);
       }),
     );
     final item = await client.getObservationArchiveDetail(
       stationId, '66666666-6666-4666-8666-666666666666');
     expect(captured.url.path,
-      '/api/v1/stations/$stationId/observations/66666666-6666-4666-8666-666666666666');
+      '/api/v1/stations/$stationId/observation-archive/66666666-6666-4666-8666-666666666666');
     expect(item.observedAtUtc, isNull);
     expect(item.payload['rainfall'], 2);
     client.close();

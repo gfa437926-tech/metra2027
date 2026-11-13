@@ -86,17 +86,15 @@ class _ObservationArchiveScreenState extends State<ObservationArchiveScreen> {
         fromUtc: _fromUtc,
         toUtc: _toUtc,
         limit: _pageSize,
-        offset: append ? (_page?.items.length ?? 0) : 0,
+        cursor: append ? _page?.nextCursor : null,
       );
       if (!mounted || requestGeneration != _requestGeneration) return;
       setState(() {
         _page = append && _page != null
             ? ObservationArchivePage(
                 items: [..._page!.items, ...next.items],
-                limit: next.limit,
-                offset: next.offset,
-                returned: next.returned,
                 hasMore: next.hasMore,
+                nextCursor: next.nextCursor,
               )
             : next;
         _error = null;

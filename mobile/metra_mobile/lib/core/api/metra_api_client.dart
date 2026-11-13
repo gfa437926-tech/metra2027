@@ -96,39 +96,28 @@ class ObservationArchiveItem {
 class ObservationArchivePage {
   const ObservationArchivePage({
     required this.items,
-    required this.limit,
-    required this.offset,
-    required this.returned,
     required this.hasMore,
+    this.nextCursor,
   });
+
   final List<ObservationArchiveItem> items;
-  final int limit, offset, returned;
   final bool hasMore;
+  final String? nextCursor;
 
   factory ObservationArchivePage.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'];
-    final rawPage = json['page'];
-    if (rawItems is! List || rawPage is! Map) {
-      throw const FormatException('invalid_observation_archive_page');
-    }
-    final page = Map<String, dynamic>.from(rawPage);
-    int requiredInt(String key) {
-      final value = page[key];
-      if (value is! int || value < 0) {
-        throw const FormatException('invalid_observation_archive_page');
-      }
-      return value;
-    }
-    if (page['hasMore'] is! bool) {
+    final hasMore = json['hasMore'];
+    final nextCursor = json['nextCursor'];
+    if (rawItems is! List ||
+        hasMore is! bool ||
+        (nextCursor != null && nextCursor is! String)) {
       throw const FormatException('invalid_observation_archive_page');
     }
     return ObservationArchivePage(
       items: rawItems.map((item) => ObservationArchiveItem.fromJson(
         Map<String, dynamic>.from(item as Map))).toList(growable: false),
-      limit: requiredInt('limit'),
-      offset: requiredInt('offset'),
-      returned: requiredInt('returned'),
-      hasMore: page['hasMore'] as bool,
+      hasMore: hasMore,
+      nextCursor: nextCursor as String?,
     );
   }
 }
@@ -332,12 +321,13 @@ class MetraApiClient {
     DateTime? fromUtc,
     DateTime? toUtc,
     int limit = 50,
-    int offset = 0,
+    String? cursor,
   }) async {
     if (stationId.trim().isEmpty) {
       throw const MetraApiException(400, 'invalid_station_id');
     }
-    if (limit < 1 || limit > 100 || offset < 0 || offset > 100000) {
+    if (limit < 1 || limit > 100 ||
+        (cursor != null && cursor.length > 2048)) {
       throw const MetraApiException(400, 'invalid_pagination');
     }
     const types = {
@@ -356,8 +346,8 @@ class MetraApiClient {
     }
     final query = <String, String>{
       'limit': '$limit',
-      'offset': '$offset',
-      if (observationType != null) 'type': observationType,
+      if (cursor != null) 'cursor': cursor,
+      if (observationType != null) 'observationType': observationType,
       if (fromUtc != null) 'fromUtc': fromUtc.toIso8601String(),
       if (toUtc != null) 'toUtc': toUtc.toIso8601String(),
     };
@@ -367,7 +357,7 @@ class MetraApiClient {
     ).toString();
     final response = await _send('GET', path);
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! Map || decoded['authorized'] != true) {
+    if (decoded is! Map) {
       throw const FormatException('invalid_observation_archive_response');
     }
     return ObservationArchivePage.fromJson(Map<String, dynamic>.from(decoded));
@@ -382,15 +372,14 @@ class MetraApiClient {
     }
     final response = await _send(
       'GET',
-      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive/${Uri.encodeComponent(observationId)}',
     );
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! Map || decoded['authorized'] != true ||
-        decoded['found'] != true || decoded['item'] is! Map) {
+    if (decoded is! Map) {
       throw const FormatException('invalid_observation_archive_detail');
     }
     return ObservationArchiveItem.fromJson(
-      Map<String, dynamic>.from(decoded['item'] as Map));
+      Map<String, dynamic>.from(decoded));
   }
 
   Future<void> decideObservation({

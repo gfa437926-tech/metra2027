@@ -24,6 +24,11 @@ public interface IObservationArchiveService
         int limit,
         string? cursor,
         CancellationToken cancellationToken);
+
+    Task<ObservationArchiveItemDto?> GetAsync(
+        Guid stationId,
+        Guid observationId,
+        CancellationToken cancellationToken);
 }
 
 public sealed record ObservationArchiveListResult(
@@ -59,6 +64,12 @@ public sealed class UnconfiguredObservationArchiveService : IObservationArchiveS
         string? cursor,
         CancellationToken cancellationToken)
         => Task.FromResult<ObservationArchiveListResult?>(null);
+
+    public Task<ObservationArchiveItemDto?> GetAsync(
+        Guid stationId,
+        Guid observationId,
+        CancellationToken cancellationToken)
+        => Task.FromResult<ObservationArchiveItemDto?>(null);
 }
 
 public static class ObservationArchiveEndpoints
@@ -162,6 +173,64 @@ public static class ObservationArchiveEndpoints
                 "Requires authenticated user, active station assignment, and explicit " +
                 "observation.archive.read grant for this station only. Authority membership " +
                 "or role alone is insufficient. Cross-station access is denied.");
+
+        endpoints.MapGet(
+            "/api/v1/stations/{stationId:guid}/observation-archive/{observationId:guid}",
+            async (
+                Guid stationId,
+                Guid observationId,
+                HttpContext http,
+                IStationAuthorizationService authorization,
+                IObservationArchiveService archive,
+                CancellationToken cancellationToken) =>
+            {
+                if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
+                    return Results.Unauthorized();
+
+                if (stationId == Guid.Empty || observationId == Guid.Empty)
+                    return Results.BadRequest(new { code = "archive_identifier_required" });
+
+                var allowed = await authorization.HasStationPermissionAsync(
+                    userId,
+                    stationId,
+                    "observation.archive.read",
+                    cancellationToken);
+                if (!allowed)
+                    return Results.Json(
+                        new { code = "archive_permission_denied" },
+                        statusCode: StatusCodes.Status403Forbidden);
+
+                var actor = new ObservationActorContext(
+                    userId.ToString("D"),
+                    stationId.ToString("D"),
+                    HasActiveStationAssignment: true,
+                    Permissions: new HashSet<ObservationPermission> { ObservationPermission.ArchiveRead });
+                var policy = ObservationArchiveAuthorizationPolicy.AuthorizeArchiveRead(
+                    actor, stationId.ToString("D"));
+                if (!policy.IsAuthorized)
+                    return Results.Json(
+                        new { code = policy.ErrorCode, message = policy.Message },
+                        statusCode: StatusCodes.Status403Forbidden);
+
+                if (!archive.IsConfigured)
+                    return Results.Json(
+                        new
+                        {
+                            code = "archive_service_unavailable",
+                            message = "خدمة أرشيف الرصدات غير مفعّلة بعد."
+                        },
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+
+                var item = await archive.GetAsync(stationId, observationId, cancellationToken);
+                return item is null
+                    ? Results.NotFound(new { code = "archive_record_not_found" })
+                    : Results.Ok(item);
+            })
+            .RequireAuthorization()
+            .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationObservationArchiveItem")
+            .WithTags("Observations", "Archive")
+            .WithSummary("Get one station-scoped observation archive item");
 
         return endpoints;
     }
