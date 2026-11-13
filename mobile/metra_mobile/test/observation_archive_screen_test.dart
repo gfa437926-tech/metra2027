@@ -20,7 +20,7 @@ void main() {
       accessTokenProvider: () async => 'archive-token',
       client: MockClient((request) async {
         requestedPaths.add(request.url.path);
-        if (request.url.path.endsWith('/archive')) {
+        if (request.url.path.endsWith('/observation-archive')) {
           return http.Response(jsonEncode({
             'authorized': true,
             'items': [{
@@ -107,7 +107,7 @@ void main() {
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'archive-token',
       client: MockClient((request) async {
-        if (request.url.path.endsWith('/archive')) {
+        if (request.url.path.endsWith('/observation-archive')) {
           archiveRequestCount++;
           if (archiveRequestCount == 1) {
             requestedStations.add(stationId);

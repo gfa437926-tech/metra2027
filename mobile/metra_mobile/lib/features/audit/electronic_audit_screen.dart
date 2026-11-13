@@ -81,13 +81,13 @@ class _ElectronicAuditScreenState extends State<ElectronicAuditScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        MetraSectionCard(
+        const MetraSectionCard(
           title: 'سجلات التدقيق (قراءة فقط)',
           trailing: const MetraStatusBadge(
             label: 'محمي',
             tone: MetraBannerTone.success,
           ),
-          child: Column(
+          child: const Column(
             children: [
               _AuditRow(
                 operation: 'مراجعة',

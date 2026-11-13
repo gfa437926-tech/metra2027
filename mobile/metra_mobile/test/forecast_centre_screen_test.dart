@@ -132,7 +132,10 @@ void main() {
 
     // The reference selector is a real control; changing it must recalculate
     // which station is the zero-distance reference.
-    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    final referencePicker = find.byType(DropdownButtonFormField);
+    await tester.ensureVisible(referencePicker);
+    await tester.pumpAndSettle();
+    await tester.tap(referencePicker);
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة حمص').last);
     await tester.pumpAndSettle();

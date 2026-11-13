@@ -48,7 +48,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
           child: Column(
             children: [
               DropdownButtonFormField<String>(
-                value: _station ?? _stations.first,
+                initialValue: _station ?? _stations.first,
                 items: _stations
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
@@ -57,7 +57,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: _variable ?? _variables.first,
+                initialValue: _variable ?? _variables.first,
                 items: _variables
                     .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                     .toList(),
