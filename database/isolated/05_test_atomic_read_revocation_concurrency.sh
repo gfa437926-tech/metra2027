@@ -24,7 +24,7 @@ assert_blocked_update() {
 grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND authority_id='$authority' AND permission_code='users.station.view' LIMIT 1")"
 if [[ -z "$grant_id" ]]; then
  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.permission_grants(user_id,permission_code,authority_id) VALUES('$actor','users.station.view','$authority')"
- grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND station_id='$station' AND permission_code='users.station.view' LIMIT 1")"
+ grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND authority_id='$authority' AND permission_code='users.station.view' LIMIT 1")"
 fi
 assert_blocked_update "UPDATE public.permission_grants SET revoked_at=clock_timestamp() WHERE id='$grant_id'" "grant revocation"
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE public.permission_grants SET revoked_at=NULL WHERE id='$grant_id'"
