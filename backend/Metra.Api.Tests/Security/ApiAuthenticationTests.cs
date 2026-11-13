@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Metra.Api.Features.Stations;
+using Metra.Api.Features.Observations;
 using Metra.Api.Features.Users;
 using System.Text.Json;
 using Xunit;
@@ -35,6 +36,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             "SupabaseObservationSubmissionService",
             "SupabaseObservationDecisionService",
             "SupabaseObservationQueueService",
+            "SupabaseObservationArchiveService",
             "SupabaseStationDirectoryService",
             "SupabaseStationCatalogueReviewService",
             "SupabaseRegistrationReviewService",
@@ -91,7 +93,19 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_probe_succeeds()
+    public async Task Readiness_endpoint_fails_when_archive_rpc_probe_fails()
+    {
+        using var configuredFactory = CreateConfiguredReadinessFactory(
+            JsonDocument.Parse("[]").RootElement.Clone(), archiveProbeSucceeds: false);
+        using var client = configuredFactory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_and_archive_probes_succeed()
     {
         using var configuredFactory = CreateConfiguredReadinessFactory(JsonDocument.Parse("[]").RootElement.Clone());
         using var client = configuredFactory.CreateClient();
@@ -104,7 +118,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     private WebApplicationFactory<Program> CreateConfiguredReadinessFactory(
-        JsonElement? stations, bool auditConfigured = true)
+        JsonElement? stations, bool auditConfigured = true, bool archiveProbeSucceeds = true)
     {
         return _factory.WithWebHostBuilder(builder =>
         {
@@ -122,8 +136,28 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 services.RemoveAll<IStationAuditService>();
                 services.AddSingleton<IStationAuditService>(
                     new ReadinessStationAuditStub(auditConfigured));
+                services.RemoveAll<IObservationArchiveService>();
+                services.AddSingleton<IObservationArchiveService>(
+                    new ReadinessObservationArchiveStub(archiveProbeSucceeds));
             });
         });
+    }
+
+    private sealed class ReadinessObservationArchiveStub(bool probeSucceeds) : IObservationArchiveService
+    {
+        public bool IsConfigured => true;
+
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(probeSucceeds);
+
+        public Task<ObservationArchiveListResult?> ListAsync(
+            Guid actorUserId, Guid stationId, DateTime? fromUtc, DateTime? toUtc,
+            string? observationType, int limit, string? cursor, CancellationToken cancellationToken) =>
+            Task.FromResult<ObservationArchiveListResult?>(null);
+
+        public Task<ObservationArchiveItemDto?> GetAsync(
+            Guid actorUserId, Guid stationId, Guid observationId, CancellationToken cancellationToken) =>
+            Task.FromResult<ObservationArchiveItemDto?>(null);
     }
 
     private sealed class ReadinessStationAuditStub(bool isConfigured) : IStationAuditService
