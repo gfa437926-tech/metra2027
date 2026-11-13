@@ -83,5 +83,10 @@ BEGIN
   SELECT status INTO status_value FROM public.metra_observations WHERE id=observation_id;
   IF status_value <> 'returned' THEN RAISE EXCEPTION 'unexpected final status for returned record'; END IF;
 
+  -- Restore the fixture after the negative assignment-expiry assertion.
+  -- The following concurrency suite depends on an active observer assignment.
+  UPDATE public.station_assignments SET valid_to=NULL
+   WHERE user_id=observer AND station_id=station_a;
+
   RAISE NOTICE 'PASS: atomic submit, idempotent replay, cross-station denial, return, approve, self-review denial, revoked grant and expired assignment';
 END $$;
