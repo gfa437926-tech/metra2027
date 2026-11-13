@@ -16,10 +16,13 @@ public sealed class ObservationSubmissionPayloadValidatorTests
     [Fact]
     public void Hourly_submission_requires_source_contract_fields()
     {
-        var issues = ObservationSubmissionPayloadValidator.Validate(
+        var missingTime = ObservationSubmissionPayloadValidator.Validate(
             Request("hourly", """{"dryTemp":"+20.0"}"""));
-        Assert.Contains(issues, issue => issue.Field == "utcTime");
-        Assert.Contains(issues, issue => issue.Field == "stationPressure");
+        Assert.Contains(missingTime, issue => issue.Field == "utcTime");
+
+        var missingRequiredFields = ObservationSubmissionPayloadValidator.Validate(
+            Request("hourly", """{"utcTime":"01","dryTemp":"+20.0"}"""));
+        Assert.Contains(missingRequiredFields, issue => issue.Field == "stationPressure");
     }
 
     [Fact]
