@@ -132,12 +132,18 @@ void main() {
 
     // The reference selector is a real control; changing it must recalculate
     // which station is the zero-distance reference.
-    final forecastList = find.byType(ListView);
-    await tester.drag(forecastList, const Offset(0, 2000));
+    // Scroll to the selector by its visible label. A fixed drag distance is
+    // brittle because the preceding provenance assertions may leave the list
+    // at different offsets across Flutter engine versions.
+    final referenceLabel = find.text('المحطة المرجعية لحساب المسافات');
+    await tester.scrollUntilVisible(
+      referenceLabel,
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     final referencePicker = find.byType(DropdownButtonFormField);
-    await tester.ensureVisible(referencePicker);
-    await tester.pumpAndSettle();
+    expect(referencePicker, findsOneWidget);
     await tester.tap(referencePicker);
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة حمص').last);
