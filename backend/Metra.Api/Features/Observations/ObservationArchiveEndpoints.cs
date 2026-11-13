@@ -110,7 +110,7 @@ public sealed class SupabaseObservationArchiveService(
     {
         try
         {
-            var result = await CallRpcAsync(functionName, body, cancellationToken);
+            await CallRpcAsync(functionName, body, cancellationToken);
             // A successful response for an empty actor is a security failure;
             // null means the function/schema/network is unavailable.
             return false;
