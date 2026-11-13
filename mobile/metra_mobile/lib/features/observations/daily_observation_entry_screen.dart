@@ -1,12 +1,8 @@
-// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/widgets/metra_ui.dart';
 
-/// Daily observation entry workspace (not a reports query screen).
-/// Field groups follow the executive requirements. Scientific rules and
-/// production submission remain blocked on authoritative sources and API contracts.
 class DailyObservationEntryScreen extends StatefulWidget {
   const DailyObservationEntryScreen({
     super.key,
@@ -18,79 +14,235 @@ class DailyObservationEntryScreen extends StatefulWidget {
   final String? stationId;
 
   @override
-  State<DailyObservationEntryScreen> createState() =>
-      _DailyObservationEntryScreenState();
+  State<DailyObservationEntryScreen> createState() => _DailyObservationEntryScreenState();
 }
 
-class _DailyObservationEntryScreenState
-    extends State<DailyObservationEntryScreen> {
+class _DailyObservationEntryScreenState extends State<DailyObservationEntryScreen> {
+  static const _fieldKeys = <String>[
+    'minTemp','maxTemp','precipitation','snowThickness','precipitationTrace',
+    'evaporation','sunshineDuration','sunshinePercentage',
+    'maxGustSpeed','maxGustDirection','maxGustTime',
+    'maxHumidity','maxHumidityTime','minHumidity','minHumidityTime','observerNotes'
+  ];
+
+  static const _required24h = <String>{
+    'minTemp','maxTemp','precipitation','snowThickness',
+    'evaporation','sunshineDuration','sunshinePercentage',
+    'maxGustSpeed','maxGustDirection','maxGustTime',
+    'maxHumidity','maxHumidityTime','minHumidity','minHumidityTime'
+  };
+
+  static const _rules = <String, _DailyFieldRule>{
+    'minTemp': _DailyFieldRule(r'^-?\d{2}\.\d$', -20, 50),
+    'maxTemp': _DailyFieldRule(r'^-?\d{2}\.\d$', -20, 50),
+    'precipitation': _DailyFieldRule(r'^\d{3}\.\d$', 0, 999.9),
+    'snowThickness': _DailyFieldRule(r'^\d{3}$', 0, 999),
+    'evaporation': _DailyFieldRule(r'^\d{2}\.\d$', 0, 99.9),
+    'sunshineDuration': _DailyFieldRule(r'^\d{2}\.\d$', 0, 24),
+    'sunshinePercentage': _DailyFieldRule(r'^\d{3}$', 0, 100),
+    'maxGustSpeed': _DailyFieldRule(r'^\d{2}$', 0, 36),
+    'maxGustDirection': _DailyFieldRule(r'^\d{2}$', 0, 36),
+    'maxGustTime': _DailyFieldRule(r'^\d{2}\.\d$', 0, 23.9),
+    'maxHumidity': _DailyFieldRule(r'^\d{3}$', 0, 100),
+    'maxHumidityTime': _DailyFieldRule(r'^\d{2}\.\d$', 0, 23.9),
+    'minHumidity': _DailyFieldRule(r'^\d{2}$', 0, 99),
+    'minHumidityTime': _DailyFieldRule(r'^\d{2}\.\d$', 0, 23.9),
+  };
+
+  late final Map<String, TextEditingController> _fields = {
+    for (final key in _fieldKeys) key: TextEditingController(),
+  };
   final _formKey = GlobalKey<FormState>();
-  final _maxTemp = TextEditingController();
-  final _minTemp = TextEditingController();
-  final _precipitation = TextEditingController();
-  final _snow = TextEditingController();
-  final _evaporation = TextEditingController();
-  final _sunshine = TextEditingController();
-  final _gusts = TextEditingController();
-  final _maxHumidity = TextEditingController();
-  final _minHumidity = TextEditingController();
-  final _notes = TextEditingController();
-  final _referencePeriod = TextEditingController();
+  final Map<String, bool> _phenomena = {
+    'thunderstorm': false,
+    'hail': false,
+    'snow_phenomena': false,
+    'rain': false,
+    'frost': false,
+    'fog': false,
+    'mist': false,
+    'dust_storm': false,
+    'blowing_dust': false,
+    'haze': false,
+    'stormy_wind': false,
+  };
+  DateTime _reportDate = DateTime.now().toUtc();
+  String _reportType = '24h';
   bool _responsibilityConfirmed = false;
   bool _submitting = false;
+  bool _submitted = false;
   String? _statusMessage;
+  String? _idempotencyKey;
 
   @override
   void dispose() {
-    for (final c in [
-      _maxTemp,
-      _minTemp,
-      _precipitation,
-      _snow,
-      _evaporation,
-      _sunshine,
-      _gusts,
-      _maxHumidity,
-      _minHumidity,
-      _notes,
-      _referencePeriod,
-    ]) {
-      c.dispose();
+    for (final controller in _fields.values) {
+      controller.dispose();
     }
     super.dispose();
   }
 
+  String? _validateField(String key, String? raw) {
+    final value = raw?.trim() ?? '';
+    if (value.isEmpty) return _required24h.contains(key) ? 'هذا الحقل مطلوب في تقرير 24 ساعة.' : null;
+    if (value == '#') return null;
+    if (key == 'precipitationTrace') {
+      return RegExp(r'^[Tt]$').hasMatch(value) ? null : 'أدخل T أو اترك الحقل فارغاً.';
+    }
+    final rule = _rules[key];
+    if (rule != null) {
+      if (!RegExp(rule.pattern).hasMatch(value)) return 'تنسيق القيمة غير صحيح.';
+      final number = double.tryParse(value);
+      if (number == null || number < rule.minimum || number > rule.maximum) {
+        return 'القيمة خارج المجال المسموح.';
+      }
+    }
+    if (key == 'minTemp' && _fields['maxTemp']!.text.trim().isNotEmpty &&
+        _fields['maxTemp']!.text.trim() != '#') {
+      final min = double.tryParse(value);
+      final max = double.tryParse(_fields['maxTemp']!.text.trim());
+      if (min != null && max != null && max < min) return 'العظمى يجب أن تكون أكبر من أو تساوي الصغرى.';
+    }
+    if (key == 'maxTemp' && _fields['minTemp']!.text.trim().isNotEmpty &&
+        _fields['minTemp']!.text.trim() != '#') {
+      final max = double.tryParse(value);
+      final min = double.tryParse(_fields['minTemp']!.text.trim());
+      if (min != null && max != null && max < min) return 'العظمى يجب أن تكون أكبر من أو تساوي الصغرى.';
+    }
+    if (key == 'minHumidity' && _fields['maxHumidity']!.text.trim().isNotEmpty &&
+        _fields['maxHumidity']!.text.trim() != '#') {
+      final min = double.tryParse(value);
+      final max = double.tryParse(_fields['maxHumidity']!.text.trim());
+      if (min != null && max != null && min > max) return 'الرطوبة الصغرى لا يجوز أن تتجاوز العظمى.';
+    }
+    if (key == 'maxHumidity' && _fields['minHumidity']!.text.trim().isNotEmpty &&
+        _fields['minHumidity']!.text.trim() != '#') {
+      final max = double.tryParse(value);
+      final min = double.tryParse(_fields['minHumidity']!.text.trim());
+      if (min != null && max != null && min > max) return 'الرطوبة الصغرى لا يجوز أن تتجاوز العظمى.';
+    }
+    return null;
+  }
+
+  void _invalidateSubmission() {
+    _idempotencyKey = null;
+    if (_submitted) setState(() => _submitted = false);
+  }
+
+  String _dateText(DateTime date) =>
+      date.year.toString().padLeft(4, '0') + '-' +
+      date.month.toString().padLeft(2, '0') + '-' +
+      date.day.toString().padLeft(2, '0');
+
+  Future<void> _chooseDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _reportDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now().toUtc().add(const Duration(days: 1)),
+    );
+    if (selected == null) return;
+    setState(() {
+      _reportDate = DateTime.utc(selected.year, selected.month, selected.day);
+      _submitted = false;
+      _idempotencyKey = null;
+    });
+  }
+
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_responsibilityConfirmed) {
-      setState(() => _statusMessage = 'يجب تأكيد مسؤولية الإدخال قبل الحفظ.');
+    if (_submitting || _submitted) return;
+    if (_reportType != '24h') {
+      setState(() => _statusMessage = 'تقارير 06 و18 UTC متوقفة حتى اعتماد تعارض الحقول المرجعية.');
       return;
     }
-    if (widget.stationId == null || widget.stationId!.isEmpty) {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_responsibilityConfirmed) {
+      setState(() => _statusMessage = 'يجب تأكيد مسؤولية صحة البيانات اليومية قبل الإرسال.');
+      return;
+    }
+    final stationId = widget.stationId;
+    if (stationId == null || stationId.isEmpty) {
       setState(() => _statusMessage = 'اختر محطة أولاً من دليل المحطات.');
       return;
     }
+
+    final observedAt = DateTime.utc(_reportDate.year, _reportDate.month, _reportDate.day);
     setState(() {
       _submitting = true;
       _statusMessage = null;
     });
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() {
-      _submitting = false;
-      _statusMessage =
-          'تم حفظ المسودة محلياً في هذه الجلسة. الإرسال الإنتاجي معلّق حتى اعتماد عقد الإدخال اليومي والحقول المرجعية.';
-    });
+    _idempotencyKey ??= 'daily-' + DateTime.now().microsecondsSinceEpoch.toString();
+
+    final payload = <String, dynamic>{
+      for (final entry in _fields.entries)
+        entry.key: entry.value.text.trim().isEmpty ? null : entry.value.text.trim(),
+      'reportType': _reportType,
+      'responsibility_agreed': true,
+      ..._phenomena,
+    };
+
+    try {
+      await widget.api.submitObservation(
+        stationId: stationId,
+        idempotencyKey: _idempotencyKey!,
+        observationType: 'daily',
+        observedAt: observedAt,
+        payload: payload,
+        submit: true,
+      );
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitted = true;
+        _statusMessage = 'استلم الخادم التقرير اليومي بنجاح. اعتماد التقرير النهائي يخضع لمسار المراجعة.';
+      });
+    } on MetraApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _statusMessage = 'لم يقبل الخادم الإرسال: HTTP ' + error.statusCode.toString() + ' (' + error.code + '). تم الاحتفاظ بالمدخلات.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _statusMessage = 'تعذر الاتصال بالخادم. بقيت البيانات في النموذج ولم يُعلن نجاح الإرسال.';
+      });
+    }
+  }
+
+  Widget _field(String key, String label, {int maxLines = 1, int? maxLength}) {
+    final numeric = _rules.containsKey(key);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextFormField(
+        controller: _fields[key],
+        maxLines: maxLines,
+        maxLength: maxLength ?? (numeric ? 8 : 200),
+        keyboardType: numeric
+            ? const TextInputType.numberWithOptions(decimal: true, signed: true)
+            : TextInputType.text,
+        inputFormatters: numeric
+            ? [FilteringTextInputFormatter.allow(RegExp(r'[0-9.+#\-]'))]
+            : const [],
+        validator: (value) => _validateField(key, value),
+        onChanged: (_) => _invalidateSubmission(),
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: numeric ? 'استخدم # عند عدم توفر المعلومة' : null,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.stationId == null || widget.stationId!.isEmpty) {
+    final stationId = widget.stationId;
+    if (stationId == null || stationId.isEmpty) {
       return const MetraEmptyState(
         icon: Icons.calendar_today_outlined,
         title: 'الرصد اليومي',
-        message:
-            'اختر محطة أولاً من دليل المحطات. هذه شاشة إدخال يومي حقيقية وليست شاشة استعلام تقارير.',
+        message: 'اختر محطة أولاً من دليل المحطات. يطبق الخادم صلاحيات الإدخال على المحطة المحددة فقط.',
       );
     }
 
@@ -101,126 +253,157 @@ class _DailyObservationEntryScreenState
         children: [
           const MetraPageHeader(
             title: 'إدخال الرصد اليومي',
-            subtitle:
-                'نموذج إدخال يومي تشغيلي. قواعد التجميع والدقة والفترات المرجعية تُستكمل بعد اعتماد المصدر المرجعي.',
+            subtitle: 'إدخال التقرير اليومي 24 ساعة وفق الحقول العلمية المستخرجة. التحقق النهائي يتم في .NET قبل الحفظ.',
           ),
           const SizedBox(height: 8),
           const MetraStatusBanner(
             tone: MetraBannerTone.warning,
-            message:
-                'لا تُعرض بيانات تجريبية كقياسات حقيقية. الإنتاج معلّق حتى اعتماد العقود العلمية وAPI.',
-          ),
-          const SizedBox(height: 14),
-          MetraSectionCard(
-            title: 'درجات الحرارة والرطوبة',
-            child: Column(
-              children: [
-                _numField(_maxTemp, 'العظمى (°م)'),
-                _numField(_minTemp, 'الصغرى (°م)'),
-                _numField(_maxHumidity, 'الرطوبة العظمى (%)'),
-                _numField(_minHumidity, 'الرطوبة الصغرى (%)'),
-              ],
-            ),
+            message: 'تقريرا 06 و18 UTC غير متاحين مؤقتاً بسبب تعارض موثق في المصدر القديم. لا يتم إسقاط حقول الهطول أو الثلج بالتخمين.',
           ),
           const SizedBox(height: 12),
           MetraSectionCard(
-            title: 'الهطول والثلوج والتبخر وسطوع الشمس',
+            title: 'التاريخ ونوع التقرير',
             child: Column(
               children: [
-                _numField(_precipitation, 'الهطول'),
-                _numField(_snow, 'الثلوج'),
-                _numField(_evaporation, 'التبخر'),
-                _numField(_sunshine, 'سطوع الشمس'),
-                _numField(_gusts, 'هبات الرياح'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          MetraSectionCard(
-            title: 'الفترة المرجعية والملاحظات',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _textField(_referencePeriod, 'الفترة المرجعية'),
-                _textField(_notes, 'ملاحظات', maxLines: 3),
-                CheckboxListTile(
+                ListTile(
                   contentPadding: EdgeInsets.zero,
-                  value: _responsibilityConfirmed,
-                  onChanged: (v) =>
-                      setState(() => _responsibilityConfirmed = v ?? false),
-                  title: const Text(
-                    'أؤكد مسؤولية صحة البيانات اليومية المدخلة.',
-                    style: TextStyle(fontSize: 14),
+                  title: const Text('تاريخ التقرير'),
+                  subtitle: Text(_dateText(_reportDate) + ' UTC'),
+                  trailing: IconButton(
+                    onPressed: _submitting || _submitted ? null : _chooseDate,
+                    icon: const Icon(Icons.calendar_month_outlined),
                   ),
-                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                DropdownButtonFormField<String>(
+                  value: _reportType,
+                  decoration: const InputDecoration(labelText: 'نوع التقرير'),
+                  items: const [
+                    DropdownMenuItem(value: '24h', child: Text('24 ساعة')),
+                    DropdownMenuItem(value: '06utc', enabled: false, child: Text('06 UTC — متوقف لحين اعتماد العقد')),
+                    DropdownMenuItem(value: '18utc', enabled: false, child: Text('18 UTC — متوقف لحين اعتماد العقد')),
+                  ],
+                  onChanged: _submitting || _submitted ? null : (value) {
+                    if (value == null) return;
+                    setState(() {
+                      _reportType = value;
+                      _submitted = false;
+                      _idempotencyKey = null;
+                    });
+                  },
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'درجات الحرارة',
+            child: Column(children: [
+              _field('minTemp', 'درجة الحرارة الصغرى (°م)'),
+              _field('maxTemp', 'درجة الحرارة العظمى (°م)'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'الهطول والثلوج',
+            child: Column(children: [
+              _field('precipitation', 'كمية الهطول (mm)'),
+              _field('snowThickness', 'أكبر سماكة للثلج (cm)'),
+              _field('precipitationTrace', 'أثر الهطول (T أو فارغ)'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'الظواهر الجوية',
+            child: Column(children: _phenomena.entries.map((entry) {
+              const labels = <String, String>{
+                'thunderstorm': 'عواصف رعدية','hail': 'برد','snow_phenomena': 'ثلج',
+                'rain': 'مطر','frost': 'صقيع','fog': 'ضباب','mist': 'شابورة',
+                'dust_storm': 'عاصفة ترابية/رملية','blowing_dust': 'غبار متصاعد',
+                'haze': 'سديم','stormy_wind': 'رياح عاصفة',
+              };
+              return CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: entry.value,
+                onChanged: _submitting || _submitted ? null : (value) {
+                  setState(() {
+                    _phenomena[entry.key] = value ?? false;
+                    _idempotencyKey = null;
+                    _submitted = false;
+                  });
+                },
+                title: Text(labels[entry.key] ?? entry.key),
+                controlAffinity: ListTileControlAffinity.leading,
+              );
+            }).toList()),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'التبخر وسطوع الشمس',
+            child: Column(children: [
+              _field('evaporation', 'مجموع التبخر اليومي (mm)'),
+              _field('sunshineDuration', 'مدة سطوع الشمس (ساعة)'),
+              _field('sunshinePercentage', 'نسبة سطوع الشمس (%)'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'الرياح',
+            child: Column(children: [
+              _field('maxGustSpeed', 'سرعة أكبر هبة (م/ث)'),
+              _field('maxGustDirection', 'اتجاه أكبر هبة'),
+              _field('maxGustTime', 'وقت أكبر هبة UTC'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'الرطوبة',
+            child: Column(children: [
+              _field('maxHumidity', 'الرطوبة العظمى (%)'),
+              _field('maxHumidityTime', 'وقت الرطوبة العظمى UTC'),
+              _field('minHumidity', 'الرطوبة الصغرى (%)'),
+              _field('minHumidityTime', 'وقت الرطوبة الصغرى UTC'),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          MetraSectionCard(
+            title: 'ملاحظات الراصد وتأكيد المسؤولية',
+            child: Column(children: [
+              _field('observerNotes', 'ملاحظات الراصد', maxLines: 3, maxLength: 2000),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _responsibilityConfirmed,
+                onChanged: _submitting || _submitted ? null : (value) {
+                  setState(() {
+                    _responsibilityConfirmed = value ?? false;
+                    _idempotencyKey = null;
+                  });
+                },
+                title: const Text('أؤكد مسؤولية صحة البيانات اليومية المدخلة.'),
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+            ]),
           ),
           if (_statusMessage != null) ...[
             const SizedBox(height: 12),
-            MetraStatusBanner(tone: MetraBannerTone.info, message: _statusMessage!),
+            MetraStatusBanner(tone: _submitted ? MetraBannerTone.success : MetraBannerTone.warning, message: _statusMessage!),
           ],
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () {
-                          _formKey.currentState?.reset();
-                          setState(() {
-                            _responsibilityConfirmed = false;
-                            _statusMessage = null;
-                          });
-                        },
-                  child: const Text('مسح'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: _submitting ? null : _submit,
-                  icon: _submitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(_submitting ? 'جاري الحفظ...' : 'حفظ المسودة'),
-                ),
-              ),
-            ],
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: _submitting || _submitted ? null : _submit,
+            icon: _submitting
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.cloud_upload_outlined),
+            label: Text(_submitting ? 'جاري الإرسال...' : _submitted ? 'تم الإرسال' : 'إرسال التقرير إلى الخادم'),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _numField(TextEditingController c, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        controller: c,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[0-9.\-]')),
-        ],
-        decoration: InputDecoration(labelText: label),
-      ),
-    );
-  }
-
-  Widget _textField(TextEditingController c, String label, {int maxLines = 1}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextFormField(
-        controller: c,
-        maxLines: maxLines,
-        decoration: InputDecoration(labelText: label),
-      ),
-    );
-  }
+class _DailyFieldRule {
+  const _DailyFieldRule(this.pattern, this.minimum, this.maximum);
+  final String pattern;
+  final double minimum;
+  final double maximum;
 }
