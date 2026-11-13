@@ -109,9 +109,10 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Authenticate first so per-user rate-limit partitions can read the validated JWT subject.
+app.UseAuthentication();
 if (!rateLimitingDisabled)
     app.UseRateLimiter();
-app.UseAuthentication();
 app.UseAuthorization();
 
 // OpenAPI document: Development always; other environments only when OpenApi:Enabled=true.
