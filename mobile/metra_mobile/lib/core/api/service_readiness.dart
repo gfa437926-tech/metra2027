@@ -1,7 +1,7 @@
 /// Classification of Flutter ↔ backend readiness for METRA mobile.
 /// Live binding is allowed only when API contract + backend + tests exist.
 /// Mock must never be presented as production data in UI labels.
-enum MetraDataSourceMode { mock, liveApi }
+enum MetraDataSourceMode { mock, gated, liveApi }
 
 class MetraServiceReadiness {
   const MetraServiceReadiness._();
@@ -15,10 +15,13 @@ class MetraServiceReadiness {
   static const stationAudit = MetraDataSourceMode.mock;
   static const observationQueue = MetraDataSourceMode.mock;
 
-  /// Hourly/daily forms currently save an in-session draft only; no live write API.
-  /// Hourly and daily 24-hour submissions now use the .NET API; staging remains pending.
-  static const observationSubmit = MetraDataSourceMode.liveApi;
-  static const observationDecision = MetraDataSourceMode.liveApi;
+  /// The .NET submission endpoint exists, but the scientific-contract feature gate
+  /// is not approved and the required atomic RPC is not deployed to the hosted DB.
+  /// Keep the client explicitly gated until both deployment prerequisites are verified.
+  static const observationSubmit = MetraDataSourceMode.gated;
+
+  /// The decision endpoint exists, but its atomic authorization RPC is not deployed.
+  static const observationDecision = MetraDataSourceMode.gated;
 
   /// Archive API remains fail-closed (503) until a real archive service exists.
   static const observationArchive = MetraDataSourceMode.mock;
