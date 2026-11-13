@@ -197,7 +197,7 @@ app.MapGet("/api/v1/ready", async (
         ? Results.Ok(new { status = "ready", service = "metra-api" })
         : Results.Problem(
             title: "Supabase readiness probe failed",
-            detail = "One or more required database RPC contracts are missing or not executable.",
+            detail: "One or more required database RPC contracts are missing or not executable.",
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
