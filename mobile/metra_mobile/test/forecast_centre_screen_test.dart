@@ -109,10 +109,24 @@ void main() {
     );
 
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
-    expect(find.text('مصدر الإحداثيات'), findsNWidgets(2));
+    // Comparison cards sit below the selection list in a scrollable; ensure
+    // lazy ListView children are built before provenance assertions.
+    await tester.scrollUntilVisible(
+      find.text('مصدر الإحداثيات').first,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('مصدر الإحداثيات'), findsWidgets);
     expect(find.text('survey'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('GPS'),
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('GPS'), findsOneWidget);
-    expect(find.text('المسافة من المرجع'), findsNWidgets(2));
+    expect(find.text('المسافة من المرجع'), findsWidgets);
     expect(find.text('0 كم'), findsOneWidget);
     expect(find.textContaining('كم'), findsWidgets);
 
