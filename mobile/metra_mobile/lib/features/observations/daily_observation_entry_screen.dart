@@ -275,7 +275,7 @@ class _DailyObservationEntryScreenState extends State<DailyObservationEntryScree
                   ),
                 ),
                 DropdownButtonFormField<String>(
-                  value: _reportType,
+                  initialValue: _reportType,
                   decoration: const InputDecoration(labelText: 'نوع التقرير'),
                   items: const [
                     DropdownMenuItem(value: '24h', child: Text('24 ساعة')),

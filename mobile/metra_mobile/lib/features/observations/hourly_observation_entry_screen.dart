@@ -87,8 +87,8 @@ class _HourlyObservationEntryScreenState extends State<HourlyObservationEntryScr
     super.dispose();
   }
 
-  bool _isSynopticHour => const {'00','03','06','09','12','15','18','21'}.contains(_utcHour);
-  bool _isPrecipitationHour => const {'00','06','12','18'}.contains(_utcHour);
+  bool get _isSynopticHour => const {'00','03','06','09','12','15','18','21'}.contains(_utcHour);
+  bool get _isPrecipitationHour => const {'00','06','12','18'}.contains(_utcHour);
 
   bool _isRequired(String key) {
     if (_alwaysRequired.contains(key)) return true;
@@ -278,7 +278,7 @@ class _HourlyObservationEntryScreenState extends State<HourlyObservationEntryScr
                   ),
                 ),
                 DropdownButtonFormField<String>(
-                  value: _utcHour,
+                  initialValue: _utcHour,
                   decoration: const InputDecoration(labelText: 'ساعة الرصد بالتوقيت العالمي'),
                   items: List.generate(24, (hour) {
                     final value = hour.toString().padLeft(2, '0');
