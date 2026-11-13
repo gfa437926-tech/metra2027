@@ -138,3 +138,18 @@ No production service-role key or test password is stored in the repository.
 7. Review PR #34 first, then PR #36; obtain explicit merge and deployment approval.
 
 **Release verdict: NOT PRODUCTION READY.** The branch has meaningful code and isolated-test progress, but hosted atomic RPCs, approved operational stations, identity records/grants, real providers, and staging verification remain outstanding.
+
+
+## 9. Verification update — 2026-11-13
+
+**Latest branch head:** `85a6581798371b2f8883ac367c34dfe702052359`
+
+- Backend build: success — [run 43502605218](https://github.com/gfa437926-tech/metra2027/actions/runs/43502605218)
+- Flutter C7 CI: success — [run 43502605177](https://github.com/gfa437926-tech/metra2027/actions/runs/43502605177)
+- Flutter Client CI: success — [run 43502605107](https://github.com/gfa437926-tech/metra2027/actions/runs/43502605107)
+
+The archive readiness implementation was strengthened to check the archive table through a zero-row PostgREST request, then verify both atomic archive RPCs. It treats only the RPC's explicit `station_observation_archive_forbidden` response as the expected policy denial; a service-role EXECUTE ACL denial does not mark the API ready. Unit tests cover missing table, missing RPC, unexpected success, ACL denial, and the expected actor-policy denial.
+
+Proposal `035_harden_audit_trigger_search_paths.sql` was added and is executed in the isolated PostgreSQL CI path; its verification asserts both trigger functions pin `search_path=pg_catalog` and remain `SECURITY INVOKER`. No hosted SQL was applied.
+
+PR #36 remains open and unmerged. The current head is mergeable/clean, but neither PR #34 nor PR #36 has review approvals or review comments. The PR sequence and owner-approval boundary remain unchanged.

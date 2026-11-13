@@ -7,12 +7,12 @@
 
 ## 1. Verified GitHub state
 
-- PR #34 is still open and unmerged.
-- PR #36 is still open and unmerged.
+- PR #34 is still open and unmerged; no review approvals or review comments are recorded.
+- PR #36 is still open and unmerged; no review approvals or review comments are recorded.
 - PR #36 currently targets `main`, whose reviewed SHA is `6ff6f36a80106d19f4ba6b8bb8cf0316a911cc34`.
-- PR #36 head at review was `24855825dd3f4deb98d5cc71fadf09479065afee`.
-- GitHub compare `main...PR36-head` reports 138 commits ahead, 0 behind, and 165 changed files.
-- GitHub compare `PR34-head...PR36-head` reports 52 commits ahead, 0 behind. PR #34 head `dd377081f7f211d3c15e5ca1db2cf8e551fda8e6` is an ancestor of PR #36 head.
+- PR #36 head at this update is `85a6581798371b2f8883ac367c34dfe702052359`.
+- GitHub compare `main...PR36-head` reports 200 commits ahead, 0 behind, and 189 changed files.
+- GitHub compare `PR34-head...PR36-head` reports 114 commits ahead, 0 behind, and 174 changed files. PR #34 head `dd377081f7f211d3c15e5ca1db2cf8e551fda8e6` is an ancestor of PR #36 head.
 
 ## 2. Consequence
 
@@ -32,8 +32,8 @@ Do not force-push, rewrite history, or merge either PR automatically.
 
 ## 4. CI evidence boundary
 
-- Backend build on `874df2d` completed successfully.
-- Flutter C7 and Backend runs for `2485582` were still running at the time of this report.
+- Backend build, Flutter C7 CI, and Flutter Client CI on `85a6581` all completed successfully.
+- The current PR head `85a6581` has green Backend, Flutter C7, and Flutter Client workflows.
 - The previous green CI on `94e3497` does not prove the later Flutter readiness change.
 - A successful GitHub mergeability calculation does not replace tests or security review.
 
