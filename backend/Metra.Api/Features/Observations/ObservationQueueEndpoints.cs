@@ -44,7 +44,12 @@ public sealed class SupabaseObservationQueueService(
         {
             using var response = await clients.CreateClient(nameof(SupabaseObservationQueueService))
                 .SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                if (await SupabaseRpcErrorHandling.IsPermissionDeniedAsync(response, cancellationToken))
+                    throw new StationReadForbiddenException();
+                return null;
+            }
             return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
         }
         catch (HttpRequestException) { return null; }
@@ -73,7 +78,12 @@ public static class ObservationQueueEndpoints
                     return Results.Problem(title: "Observation queue unavailable",
                         statusCode: StatusCodes.Status503ServiceUnavailable);
 
-                var data = await queue.GetSubmittedAsync(actorUserId, stationId, take, cancellationToken);
+                JsonElement? data;
+                try { data = await queue.GetSubmittedAsync(actorUserId, stationId, take, cancellationToken); }
+                catch (StationReadForbiddenException)
+                {
+                    return Results.Json(new { code = "station_permission_denied" }, statusCode: 403);
+                }
                 if (data is null)
                     return Results.Problem(title: "Observation queue read failed",
                         statusCode: StatusCodes.Status503ServiceUnavailable);

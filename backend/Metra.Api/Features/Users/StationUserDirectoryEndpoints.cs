@@ -40,7 +40,12 @@ public sealed class SupabaseStationUserDirectoryService(
         {
             using var response = await clients.CreateClient(nameof(SupabaseStationUserDirectoryService))
                 .SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                if (await SupabaseRpcErrorHandling.IsPermissionDeniedAsync(response, cancellationToken))
+                    throw new StationReadForbiddenException();
+                return null;
+            }
             return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
         }
         catch (HttpRequestException) { return null; }
@@ -64,7 +69,12 @@ public static class StationUserDirectoryEndpoints
                 return Results.BadRequest(new { error = "invalid_limit", maximum = 500 });
             if (!directory.IsConfigured)
                 return Results.Problem(title: "Station user directory unavailable", statusCode: 503);
-            var users = await directory.GetUsersAsync(actorUserId, stationId, take, cancellationToken);
+            JsonElement? users;
+            try { users = await directory.GetUsersAsync(actorUserId, stationId, take, cancellationToken); }
+            catch (StationReadForbiddenException)
+            {
+                return Results.Json(new { code = "station_permission_denied" }, statusCode: 403);
+            }
             return users is null
                 ? Results.Problem(title: "Station user directory read failed", statusCode: 503)
                 : Results.Ok(users.Value);

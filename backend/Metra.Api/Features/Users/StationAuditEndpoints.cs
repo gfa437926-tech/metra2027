@@ -40,7 +40,12 @@ public sealed class SupabaseStationAuditService(
         {
             using var response = await clients.CreateClient(nameof(SupabaseStationAuditService))
                 .SendAsync(request, cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                if (await SupabaseRpcErrorHandling.IsPermissionDeniedAsync(response, cancellationToken))
+                    throw new StationReadForbiddenException();
+                return null;
+            }
             return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
         }
         catch (HttpRequestException) { return null; }
@@ -67,7 +72,12 @@ public static class StationAuditEndpoints
                 return Results.BadRequest(new { error = validationError, maximum = 250 });
             if (!audit.IsConfigured)
                 return Results.Problem(title: "Station audit service unavailable", statusCode: 503);
-            var events = await audit.GetAuditAsync(actorUserId, stationId, take, cancellationToken);
+            JsonElement? events;
+            try { events = await audit.GetAuditAsync(actorUserId, stationId, take, cancellationToken); }
+            catch (StationReadForbiddenException)
+            {
+                return Results.Json(new { code = "station_permission_denied" }, statusCode: 403);
+            }
             return events is null
                 ? Results.Problem(title: "Station audit read failed", statusCode: 503)
                 : Results.Ok(events.Value);
