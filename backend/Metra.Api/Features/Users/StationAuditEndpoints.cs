@@ -73,6 +73,7 @@ public static class StationAuditEndpoints
                 : Results.Ok(events.Value);
         })
         .WithTags("Users")
+        .RequireAuthorization()
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
         .WithName("GetStationAuditLog");
         return endpoints;

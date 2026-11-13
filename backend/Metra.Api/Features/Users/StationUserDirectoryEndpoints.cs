@@ -70,6 +70,7 @@ public static class StationUserDirectoryEndpoints
                 : Results.Ok(users.Value);
         })
         .WithTags("Users")
+        .RequireAuthorization()
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
         .WithName("GetStationUsers");
         return endpoints;

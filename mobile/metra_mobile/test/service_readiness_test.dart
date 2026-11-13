@@ -7,9 +7,9 @@ void main() {
     expect(MetraServiceReadiness.observationArchive, MetraDataSourceMode.mock);
   });
 
-  test('implemented station and review reads retain live API classification', () {
+  test('station catalogue remains live while gated atomic reads stay non-live until deployed', () {
     expect(MetraServiceReadiness.stationDirectory, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.mock);
+    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.mock);
   });
 }

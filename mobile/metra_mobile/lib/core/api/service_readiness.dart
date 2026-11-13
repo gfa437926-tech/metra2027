@@ -11,8 +11,9 @@ class MetraServiceReadiness {
 
   /// Station directory and audit require configured METRA_API_BASE_URL.
   static const stationDirectory = MetraDataSourceMode.liveApi;
-  static const stationAudit = MetraDataSourceMode.liveApi;
-  static const observationQueue = MetraDataSourceMode.liveApi;
+  /// Atomic actor-bound read RPCs are not deployed to hosted Supabase yet.
+  static const stationAudit = MetraDataSourceMode.mock;
+  static const observationQueue = MetraDataSourceMode.mock;
 
   /// Hourly/daily forms currently save an in-session draft only; no live write API.
   static const observationSubmit = MetraDataSourceMode.mock;
