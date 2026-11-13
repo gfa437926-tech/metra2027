@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS public.permission_grants (
   permission_code text NOT NULL,
   station_id uuid REFERENCES public.station_catalogue(id),
   authority_id uuid REFERENCES public.meteorological_authorities(id),
-  approved_at timestamptz NOT NULL DEFAULT now(),
+  approval_status text NOT NULL DEFAULT 'approved',
+  approved_at timestamptz,
   valid_from timestamptz NOT NULL DEFAULT now(),
   valid_to timestamptz,
   revoked_at timestamptz

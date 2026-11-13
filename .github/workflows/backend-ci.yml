@@ -104,6 +104,7 @@ jobs:
           until pg_isready -h 127.0.0.1 -U metra_test -d metra_isolated; do sleep 1; done
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/00_bootstrap_minimal_schema.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/01_seed_archive_isolation_fixtures.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/proposals/032_station_bound_archive_authorization_rpc.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/02_test_archive_isolation.sql
 
   path-n-empty-db:
