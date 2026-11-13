@@ -98,7 +98,7 @@ class _ElectronicAuditScreenState extends State<ElectronicAuditScreen> {
                 reason: 'اعتماد روتيني',
               ),
               const Divider(height: 24),
-              const MetraEmptyState(
+              MetraEmptyState(
                 icon: Icons.shield_outlined,
                 title: 'لا توجد سجلات تدقيق معروضة حالياً',
                 message:

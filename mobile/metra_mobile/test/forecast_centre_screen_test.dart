@@ -132,6 +132,9 @@ void main() {
 
     // The reference selector is a real control; changing it must recalculate
     // which station is the zero-distance reference.
+    final forecastList = find.byType(ListView);
+    await tester.drag(forecastList, const Offset(0, 2000));
+    await tester.pumpAndSettle();
     final referencePicker = find.byType(DropdownButtonFormField);
     await tester.ensureVisible(referencePicker);
     await tester.pumpAndSettle();
