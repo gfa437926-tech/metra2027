@@ -8,7 +8,8 @@ TRUNCATE permission_grant_audit, permission_grants, station_assignments,
 
 INSERT INTO auth.users (id, email) VALUES
   ('11111111-1111-1111-1111-111111111111', 'observer@example.test'),
-  ('22222222-2222-2222-2222-222222222222', 'reviewer@example.test');
+  ('22222222-2222-2222-2222-222222222222', 'reviewer@example.test'),
+  ('33333333-3333-3333-3333-333333333333', 'chief-auditor@example.test');
 
 INSERT INTO public.countries (id, is_active) VALUES
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', true);
@@ -23,26 +24,33 @@ INSERT INTO public.station_catalogue (id, owner_authority_id, country_id) VALUES
 
 INSERT INTO public.metra_role_catalogue (role_code, is_active) VALUES
   ('observer', true),
-  ('station_head', true);
+  ('station_head', true),
+  ('chief_auditor', true);
 
 -- Role allow-list: archive access is an explicit permission grant; observer role alone is not enough
 INSERT INTO public.metra_role_permissions (role_code, permission_code) VALUES
   ('observer', 'observation.create'),
+  ('observer', 'observation.submit'),
   ('station_head', 'observation.review'),
-  ('station_head', 'observation.approve');
+  ('station_head', 'observation.return_for_correction'),
+  ('chief_auditor', 'observation.approve'),
+  ('chief_auditor', 'observation.return_for_correction');
 
 INSERT INTO public.metra_account_states (user_id, account_state) VALUES
   ('11111111-1111-1111-1111-111111111111', 'active'),
-  ('22222222-2222-2222-2222-222222222222', 'active');
+  ('22222222-2222-2222-2222-222222222222', 'active'),
+  ('33333333-3333-3333-3333-333333333333', 'active');
 
 INSERT INTO public.authority_memberships (user_id, authority_id, membership_role_code, approval_status, requested_by, approved_by, reviewed_at, reason) VALUES
   ('11111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', now(), 'isolated archive membership'),
-  ('22222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer membership');
+  ('22222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer membership'),
+  ('33333333-3333-3333-3333-333333333333', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', now(), 'isolated chief auditor membership');
 
 -- Observer is assigned to station A only; station B remains outside the actor's station scope.
 INSERT INTO public.station_assignments (user_id, station_id, authority_id, assignment_role_code, approval_status, requested_by, approved_by, reviewed_at, reason) VALUES
   ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'observer', 'approved', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', now(), 'isolated observer assignment'),
-  ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer assignment');
+  ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer assignment'),
+  ('33333333-3333-3333-3333-333333333333', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'chief_auditor', 'approved', '33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', now(), 'isolated chief auditor assignment');
 
 -- Explicit archive grant ONLY for station A for observer
 INSERT INTO public.permission_grants (user_id, permission_code, authority_id, requested_by, approved_by, reviewed_at, reason)
