@@ -16,7 +16,8 @@ class MetraServiceReadiness {
   static const observationQueue = MetraDataSourceMode.mock;
 
   /// Hourly/daily forms currently save an in-session draft only; no live write API.
-  static const observationSubmit = MetraDataSourceMode.mock;
+  /// Hourly and daily 24-hour submissions now use the .NET API; staging remains pending.
+  static const observationSubmit = MetraDataSourceMode.liveApi;
   static const observationDecision = MetraDataSourceMode.liveApi;
 
   /// Archive API remains fail-closed (503) until a real archive service exists.
