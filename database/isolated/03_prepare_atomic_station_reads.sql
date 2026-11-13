@@ -32,3 +32,43 @@ VALUES ('station','aaaaaaaa-0001-0001-0001-000000000001','updated',
 INSERT INTO public.metra_observations(station_id,created_by,observation_type,observed_at,payload,status,submitted_at)
 VALUES ('aaaaaaaa-0001-0001-0001-000000000001','11111111-1111-1111-1111-111111111111',
  'hourly',now(),'{"dryTemp":"20.0"}'::jsonb,'submitted',now());
+
+
+CREATE TABLE IF NOT EXISTS public.metra_observation_records (
+ id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ source_system text NOT NULL,
+ source_table text NOT NULL,
+ source_record_id text NOT NULL,
+ station_id uuid REFERENCES public.station_catalogue(id),
+ station_name_source text,
+ observation_type text NOT NULL,
+ observed_at timestamptz,
+ payload jsonb NOT NULL,
+ is_demo boolean NOT NULL DEFAULT false,
+ imported_at timestamptz NOT NULL DEFAULT now(),
+ UNIQUE(source_system,source_table,source_record_id)
+);
+CREATE INDEX IF NOT EXISTS metra_observation_station_time_idx
+ ON public.metra_observation_records(station_id,observed_at DESC)
+ WHERE station_id IS NOT NULL;
+
+INSERT INTO public.metra_observation_records
+ (id,source_system,source_table,source_record_id,station_id,station_name_source,observation_type,observed_at,payload,is_demo,imported_at)
+VALUES
+ ('eeeeeeee-0001-0001-0001-000000000001','legacy-test','hourly_reports','hourly-A-new',
+  'aaaaaaaa-0001-0001-0001-000000000001','Station A legacy name','hourly','2026-01-02T00:00:00Z',
+  '{"utc_time":"00","dry_temp":"+20.0","raw_data":"private-original","station_name":"private-name","user_station":"legacy-user-station","status":"approved"}'::jsonb,
+  false,'2026-01-02T00:05:00Z'),
+ ('eeeeeeee-0001-0001-0001-000000000002','legacy-test','daily_reports','daily-A-old',
+  'aaaaaaaa-0001-0001-0001-000000000001','Station A legacy name','daily','2026-01-01T00:00:00Z',
+  '{"report_type":"24h","min_temperature":"05.0","max_temperature":"20.0"}'::jsonb,
+  false,'2026-01-01T00:05:00Z'),
+ ('eeeeeeee-0002-0002-0002-000000000003','legacy-test','hourly_reports','hourly-B',
+  'aaaaaaaa-0002-0002-0002-000000000002','Station B legacy name','hourly','2026-01-03T00:00:00Z',
+  '{"utc_time":"00","dry_temp":"+21.0"}'::jsonb,
+  false,'2026-01-03T00:05:00Z'),
+ ('eeeeeeee-0000-0000-0000-000000000004','legacy-test','hourly_reports','hourly-unlinked',
+  NULL,NULL,'hourly','2026-01-04T00:00:00Z',
+  '{"utc_time":"00","dry_temp":"+22.0"}'::jsonb,
+  false,'2026-01-04T00:05:00Z')
+ON CONFLICT (source_system,source_table,source_record_id) DO NOTHING;
