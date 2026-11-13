@@ -69,6 +69,8 @@ jobs:
         run: bash database/tests/verify_authority_access_lifecycle_contract.sh
       - name: Verify atomic actor-bound station read API contract
         run: bash database/tests/verify_atomic_station_read_api_contract.sh
+      - name: Verify atomic observation write authorization contract
+        run: bash database/tests/verify_atomic_observation_write_contract.sh
       - name: Build API
         run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
       - name: Run domain and API tests
