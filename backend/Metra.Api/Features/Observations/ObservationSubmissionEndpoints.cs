@@ -108,6 +108,7 @@ public static class ObservationSubmissionEndpoints
                 ObservationSubmissionRequest? request,
                 HttpContext http,
                 IObservationSubmissionService submission,
+                IConfiguration configuration,
                 CancellationToken cancellationToken) =>
             {
                 if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
@@ -124,6 +125,10 @@ public static class ObservationSubmissionEndpoints
                         .ToDictionary(group => group.Key, group => group.Select(issue => issue.Message).ToArray(), StringComparer.Ordinal);
                     return Results.ValidationProblem(errors, statusCode: StatusCodes.Status422UnprocessableEntity);
                 }
+
+                if (!ObservationSubmissionFeatureGate.IsEnabled(
+                    configuration[ObservationSubmissionFeatureGate.ConfigurationKey]))
+                    return Results.Conflict(new { code = "scientific_contract_not_approved" });
 
                 if (!submission.IsConfigured)
                     return Results.Problem(
@@ -258,4 +263,18 @@ public static class ObservationDecisionRequestGuard
             return "invalid_decision_note";
         return null;
     }
+}
+
+
+/// <summary>
+/// Fail-closed release gate: scientific observation writes remain disabled until
+/// the meteorological owner approves the field contract and the deployment
+/// explicitly sets ObservationSubmission:ScientificContractApproved=true.
+/// </summary>
+public static class ObservationSubmissionFeatureGate
+{
+    public const string ConfigurationKey = "ObservationSubmission:ScientificContractApproved";
+
+    public static bool IsEnabled(string? configuredValue) =>
+        bool.TryParse(configuredValue, out var enabled) && enabled;
 }

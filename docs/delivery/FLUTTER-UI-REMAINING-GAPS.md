@@ -2,13 +2,13 @@
 
 ## Implemented integration paths
 
-- **Hourly observation:** Flutter exposes the source-derived individual fields and calls the .NET submission endpoint. Server-side validation and atomic persistence RPC code exist. Staging verification is still pending.
-- **Daily 24-hour observation:** Flutter exposes the 24-hour fields, report type, precipitation trace, and weather-phenomena controls, and calls the .NET endpoint. The 06/18 UTC options remain disabled.
+- **Hourly observation:** Flutter exposes the source-derived individual fields and calls the .NET submission endpoint. Server-side validation and atomic persistence RPC code exist. Writes are fail-closed until the scientific owner approves the temperature range and deployment explicitly enables `ObservationSubmission:ScientificContractApproved=true`.
+- **Daily 24-hour observation:** Flutter exposes the 24-hour fields, report type, precipitation trace, and weather-phenomena controls, and calls the .NET endpoint. The 06/18 UTC options remain disabled. All writes remain behind the same explicit scientific-contract approval gate.
 - **Observation API readiness:** a successful API response means the backend accepted the submission; it does not mean the observation has been reviewed or approved.
 
 ## Remaining blockers
 
-1. **Scientific approval:** temperature range conflict (-20..+50 versus -50..+50), approved psychrometric lookup/calculation method, and the 06/18 UTC daily source contradiction.
+1. **Scientific approval:** temperature range conflict (-20..+50 versus -50..+50), approved psychrometric lookup/calculation method, and the 06/18 UTC daily source contradiction. The .NET write endpoint now defaults to HTTP 409 until the approval flag is explicitly enabled.
 2. **Staging:** no real identity-provider end-to-end test has been completed against a dedicated staging environment.
 3. **Archive:** the .NET archive service and actor-bound RPC proposals exist, but the required functions are not deployed to the configured hosted project; archive remains fail-closed.
 4. **AI gateway:** UI exists; provider contract, credentials, real inference, and tests remain pending.

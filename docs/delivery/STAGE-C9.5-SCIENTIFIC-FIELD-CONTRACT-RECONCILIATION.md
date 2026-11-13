@@ -97,7 +97,7 @@ The .NET submission endpoint now:
 - rejects client-supplied server-owned identity/workflow fields such as user ID, station ID, status and approval metadata;
 - returns HTTP 422 with field-level validation issues before calling the database persistence RPC.
 
-This validation runs before the atomic persistence RPC. The current Flutter hourly and daily 24-hour screens call the .NET endpoint and report server acceptance only after a successful API response. This is not evidence of a completed staging or production rollout; the unresolved scientific range, psychrometric method, and 06/18 UTC contract remain blockers.
+The hourly and daily 24-hour Flutter screens call this endpoint, but persistence is fail-closed by default. The deployment must explicitly set `ObservationSubmission:ScientificContractApproved=true` only after the meteorological owner signs off on the temperature range and the remaining scientific contract. Missing, malformed, or false configuration returns HTTP 409 (`scientific_contract_not_approved`) before the database RPC is called.\n\nThis validation runs before the atomic persistence RPC. The current Flutter hourly and daily 24-hour screens call the .NET endpoint and report server acceptance only after a successful API response. This is not evidence of a completed staging or production rollout; the unresolved scientific range, psychrometric method, and 06/18 UTC contract remain blockers.
 
 ## 4. No-go items still requiring approved external inputs
 
