@@ -230,6 +230,9 @@ public static class ObservationDecisionEndpoints
     var validationError = ObservationDecisionRequestGuard.GetError(request);
     if (validationError is not null)
       return Results.BadRequest(new { error = validationError });
+    if (!ObservationDecisionFeatureGate.IsEnabled(
+        http.RequestServices.GetRequiredService<IConfiguration>()[ObservationDecisionFeatureGate.ConfigurationKey]))
+      return Results.Conflict(new { code = "atomic_decision_authorization_not_approved" });
     if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
     var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
     if(!result.Succeeded) {
@@ -274,6 +277,20 @@ public static class ObservationDecisionRequestGuard
 public static class ObservationSubmissionFeatureGate
 {
     public const string ConfigurationKey = "ObservationSubmission:ScientificContractApproved";
+
+    public static bool IsEnabled(string? configuredValue) =>
+        bool.TryParse(configuredValue, out var enabled) && enabled;
+}
+
+
+/// <summary>
+/// Fail-closed release gate for review decisions. The atomic authorization RPC
+/// must be deployed and verified in an isolated staging environment before the
+/// API can issue approval or return-for-correction writes.
+/// </summary>
+public static class ObservationDecisionFeatureGate
+{
+    public const string ConfigurationKey = "ObservationDecision:AtomicAuthorizationApproved";
 
     public static bool IsEnabled(string? configuredValue) =>
         bool.TryParse(configuredValue, out var enabled) && enabled;
