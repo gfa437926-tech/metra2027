@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using System.Text.Json;
 using Metra.Api.Security;
 
@@ -8,7 +9,7 @@ namespace Metra.Api.Features.Users;
 public interface IStationAuditService
 {
     bool IsConfigured { get; }
-    Task<JsonElement?> GetAuditAsync(Guid stationId, int limit, CancellationToken cancellationToken);
+    Task<JsonElement?> GetAuditAsync(Guid actorUserId, Guid stationId, int limit, CancellationToken cancellationToken);
 }
 
 public sealed class SupabaseStationAuditService(
@@ -19,23 +20,26 @@ public sealed class SupabaseStationAuditService(
 
     public bool IsConfigured =>
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
-        uri.Scheme == Uri.UriSchemeHttps &&
-        !string.IsNullOrWhiteSpace(_key);
+        uri.Scheme == Uri.UriSchemeHttps && !string.IsNullOrWhiteSpace(_key);
 
-    public async Task<JsonElement?> GetAuditAsync(Guid stationId, int limit, CancellationToken cancellationToken)
+    public async Task<JsonElement?> GetAuditAsync(
+        Guid actorUserId, Guid stationId, int limit, CancellationToken cancellationToken)
     {
-        if (!IsConfigured || stationId == Guid.Empty || limit is < 1 or > 250) return null;
+        if (!IsConfigured || actorUserId == Guid.Empty || stationId == Guid.Empty || limit is < 1 or > 250)
+            return null;
 
-        using var message = new HttpRequestMessage(
-            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/get_station_audit_log");
-        message.Headers.TryAddWithoutValidation("apikey", _key);
-        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
-        message.Content = JsonContent.Create(new { p_station_id = stationId, p_limit = limit });
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/get_station_audit_log_atomic");
+        request.Headers.TryAddWithoutValidation("apikey", _key);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
+        request.Content = JsonContent.Create(new {
+            p_actor_user_id = actorUserId, p_station_id = stationId, p_limit = limit
+        });
 
         try
         {
             using var response = await clients.CreateClient(nameof(SupabaseStationAuditService))
-                .SendAsync(message, cancellationToken);
+                .SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode) return null;
             return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
         }
@@ -50,8 +54,11 @@ public static class StationAuditEndpoints
     public static IEndpointRouteBuilder MapStationAuditEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/api/v1/stations/{stationId:guid}/audit-log", async (
-            Guid stationId, int? limit, IStationAuditService audit, CancellationToken cancellationToken) =>
+            Guid stationId, int? limit, HttpContext http,
+            IStationAuditService audit, CancellationToken cancellationToken) =>
         {
+            if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var actorUserId))
+                return Results.Unauthorized();
             var take = limit ?? 100;
             var validationError = StationAuditRequestGuard.GetError(stationId, take);
             if (validationError == "invalid_station_id")
@@ -59,18 +66,15 @@ public static class StationAuditEndpoints
             if (validationError == "invalid_limit")
                 return Results.BadRequest(new { error = validationError, maximum = 250 });
             if (!audit.IsConfigured)
-                return Results.Problem(title: "Station audit service unavailable", statusCode: 503);
-
-            var events = await audit.GetAuditAsync(stationId, take, cancellationToken);
+                return Results.Problem(title: "Station audit service unavailable", statusCode = 503);
+            var events = await audit.GetAuditAsync(actorUserId, stationId, take, cancellationToken);
             return events is null
                 ? Results.Problem(title: "Station audit read failed", statusCode: 503)
                 : Results.Ok(events.Value);
         })
-        .RequireStationPermission("users.station.view")
         .WithTags("Users")
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
-            .WithName("GetStationAuditLog");
-
+        .WithName("GetStationAuditLog");
         return endpoints;
     }
 }
