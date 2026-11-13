@@ -35,14 +35,14 @@ INSERT INTO public.metra_account_states (user_id, account_state) VALUES
   ('11111111-1111-1111-1111-111111111111', 'active'),
   ('22222222-2222-2222-2222-222222222222', 'active');
 
-INSERT INTO public.authority_memberships (user_id, authority_id, approval_status) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'approved'),
-  ('22222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'approved');
+INSERT INTO public.authority_memberships (user_id, authority_id, membership_role_code, approval_status, requested_by, approved_by, reviewed_at, reason) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', now(), 'isolated archive membership'),
+  ('22222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'member', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer membership');
 
 -- Observer is assigned to station A only; station B remains outside the actor's station scope.
-INSERT INTO public.station_assignments (user_id, station_id, authority_id, assignment_role_code) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'observer'),
-  ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head');
+INSERT INTO public.station_assignments (user_id, station_id, authority_id, assignment_role_code, approval_status, requested_by, approved_by, reviewed_at, reason) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'observer', 'approved', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', now(), 'isolated observer assignment'),
+  ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head', 'approved', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', now(), 'isolated reviewer assignment');
 
 -- Explicit archive grant ONLY for station A for observer
 INSERT INTO public.permission_grants (user_id, permission_code, authority_id, requested_by, approved_by, reviewed_at, reason)

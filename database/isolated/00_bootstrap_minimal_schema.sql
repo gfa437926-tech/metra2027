@@ -46,9 +46,16 @@ CREATE TABLE IF NOT EXISTS public.authority_memberships (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id),
   authority_id uuid NOT NULL REFERENCES public.meteorological_authorities(id),
+  membership_role_code text NOT NULL DEFAULT 'member',
   approval_status text NOT NULL DEFAULT 'approved',
   valid_from timestamptz NOT NULL DEFAULT now(),
-  valid_to timestamptz
+  valid_to timestamptz,
+  requested_by uuid NOT NULL REFERENCES auth.users(id),
+  approved_by uuid REFERENCES auth.users(id),
+  reviewed_at timestamptz,
+  reason text NOT NULL DEFAULT 'isolated test membership',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.metra_role_catalogue (
@@ -64,7 +71,13 @@ CREATE TABLE IF NOT EXISTS public.station_assignments (
   assignment_role_code text NOT NULL REFERENCES public.metra_role_catalogue(role_code),
   approval_status text NOT NULL DEFAULT 'approved',
   valid_from timestamptz NOT NULL DEFAULT now(),
-  valid_to timestamptz
+  valid_to timestamptz,
+  requested_by uuid NOT NULL REFERENCES auth.users(id),
+  approved_by uuid REFERENCES auth.users(id),
+  reviewed_at timestamptz,
+  reason text NOT NULL DEFAULT 'isolated test assignment',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS public.metra_role_permissions (

@@ -48,11 +48,11 @@ SELECT COALESCE(EXISTS(
     AND a.is_active
     AND c.is_active
     AND m.approval_status = 'approved'
-    AND m.revoked_at IS NULL
-    AND m.revoked_at IS NULL
+    AND m.approved_by IS NOT NULL AND m.reviewed_at IS NOT NULL
     AND m.valid_from <= statement_timestamp()
     AND (m.valid_to IS NULL OR m.valid_to > statement_timestamp())
     AND sa.approval_status = 'approved'
+    AND sa.approved_by IS NOT NULL AND sa.reviewed_at IS NOT NULL
     AND sa.valid_from <= statement_timestamp()
     AND (sa.valid_to IS NULL OR sa.valid_to > statement_timestamp())
     AND g.approval_status = 'approved'

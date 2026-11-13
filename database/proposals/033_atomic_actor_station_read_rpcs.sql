@@ -40,6 +40,7 @@ BEGIN
       AND m.approval_status = 'approved' AND m.revoked_at IS NULL
       AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
       AND sa.approval_status = 'approved'
+    AND sa.approved_by IS NOT NULL AND sa.reviewed_at IS NOT NULL
       AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
       AND r.is_active
       AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
@@ -64,6 +65,7 @@ BEGIN
       AND m.approval_status = 'approved' AND m.revoked_at IS NULL
       AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
       AND sa.approval_status = 'approved'
+    AND sa.approved_by IS NOT NULL AND sa.reviewed_at IS NOT NULL
       AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
       AND r.is_active
       AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
