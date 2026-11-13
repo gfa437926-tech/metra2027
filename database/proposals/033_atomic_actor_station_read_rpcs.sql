@@ -176,3 +176,192 @@ GRANT EXECUTE ON FUNCTION public.get_station_observation_review_queue_atomic(uui
 
 COMMENT ON FUNCTION private.metra_lock_authorized_station_read(uuid,uuid,text) IS
 'PROPOSAL ONLY: locks active account, station, authority, country, membership, assignment, role, role permission and grant FOR SHARE; protected projection must run in same RPC transaction.';
+
+
+-- Station-bound historical archive reads. The live schema's permission_grants
+-- is authority-scoped (it has no station_id); station scope is therefore enforced
+-- by the actor's active station_assignments row inside the same transaction.
+CREATE OR REPLACE FUNCTION public.get_station_observation_archive_atomic(
+  p_actor_user_id uuid,
+  p_station_id uuid,
+  p_from_utc timestamptz DEFAULT NULL,
+  p_to_utc timestamptz DEFAULT NULL,
+  p_observation_type text DEFAULT NULL,
+  p_limit integer DEFAULT 50,
+  p_cursor text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = pg_catalog, public, private
+AS $function$
+DECLARE
+  v_cursor_sort_at timestamptz := NULL;
+  v_cursor_id uuid := NULL;
+  v_has_more boolean := false;
+  v_next_cursor text := NULL;
+  v_items jsonb := '[]'::jsonb;
+BEGIN
+  IF p_actor_user_id IS NULL OR p_station_id IS NULL THEN
+    RAISE EXCEPTION 'archive_actor_and_station_required' USING ERRCODE = '22023';
+  END IF;
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 100 THEN
+    RAISE EXCEPTION 'invalid_archive_limit' USING ERRCODE = '22023';
+  END IF;
+  IF p_from_utc IS NOT NULL AND p_to_utc IS NOT NULL AND p_from_utc >= p_to_utc THEN
+    RAISE EXCEPTION 'invalid_archive_date_range' USING ERRCODE = '22023';
+  END IF;
+  IF p_observation_type IS NOT NULL AND p_observation_type NOT IN
+    ('hourly','daily','climate','soil','agricultural','phenomenon','fieldclimate') THEN
+    RAISE EXCEPTION 'invalid_archive_observation_type' USING ERRCODE = '22023';
+  END IF;
+  IF p_cursor IS NOT NULL THEN
+    IF length(p_cursor) > 200 THEN
+      RAISE EXCEPTION 'invalid_archive_cursor' USING ERRCODE = '22023';
+    END IF;
+    BEGIN
+      v_cursor_sort_at := split_part(p_cursor, '|', 1)::timestamptz;
+      v_cursor_id := split_part(p_cursor, '|', 2)::uuid;
+    EXCEPTION WHEN OTHERS THEN
+      RAISE EXCEPTION 'invalid_archive_cursor' USING ERRCODE = '22023';
+    END;
+  END IF;
+
+  IF NOT private.metra_lock_authorized_station_read(
+    p_actor_user_id, p_station_id, 'observation.archive.read'
+  ) THEN
+    RAISE EXCEPTION 'station_observation_archive_forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  WITH filtered AS MATERIALIZED (
+    SELECT o.id, o.station_id, o.observation_type, o.observed_at, o.imported_at,
+      o.source_system, o.source_table, o.source_record_id, o.payload,
+      COALESCE(o.observed_at, o.imported_at) AS sort_at
+    FROM public.metra_observation_records o
+    WHERE o.station_id = p_station_id
+      AND o.is_demo = false
+      AND (p_from_utc IS NULL OR (o.observed_at IS NOT NULL AND o.observed_at >= p_from_utc))
+      AND (p_to_utc IS NULL OR (o.observed_at IS NOT NULL AND o.observed_at < p_to_utc))
+      AND (p_observation_type IS NULL OR o.observation_type = p_observation_type)
+      AND (v_cursor_sort_at IS NULL OR
+        (COALESCE(o.observed_at, o.imported_at), o.id) < (v_cursor_sort_at, v_cursor_id))
+    ORDER BY sort_at DESC, o.id DESC
+    LIMIT p_limit + 1
+  ),
+  page AS (
+    SELECT * FROM filtered
+    ORDER BY sort_at DESC, id DESC
+    LIMIT p_limit
+  ),
+  stats AS (
+    SELECT count(*) > p_limit AS has_more FROM filtered
+  ),
+  last_item AS (
+    SELECT sort_at, id FROM page
+    ORDER BY sort_at ASC, id ASC
+    LIMIT 1
+  )
+  SELECT
+    COALESCE((
+      SELECT jsonb_agg(jsonb_build_object(
+        'id', p.id::text,
+        'stationId', p.station_id::text,
+        'observationType', p.observation_type,
+        'observedAtUtc', p.observed_at,
+        'importedAtUtc', p.imported_at,
+        'sourceSystem', p.source_system,
+        'sourceTable', p.source_table,
+        'sourceRecordId', p.source_record_id,
+        'payload', CASE
+          WHEN jsonb_typeof(p.payload) = 'object' THEN p.payload - ARRAY[
+            'id','station_id','station','station_name','user_station','raw_data',
+            'report_id','status','validation_status','approval_confirmed',
+            'responsibility_confirmed','responsibility_agreed','is_draft',
+            'supabase_success','whatsapp_shared','shared_at','submitted_at',
+            'updated_at','created_at','submission_date','submission_time',
+            'submission_timestamp','recorded_at','fetched_at','is_shared_with_station'
+          ]::text[]
+          ELSE '{}'::jsonb
+        END
+      ) ORDER BY p.sort_at DESC, p.id DESC)
+      FROM page p
+    ), '[]'::jsonb),
+    (SELECT has_more FROM stats),
+    CASE WHEN (SELECT has_more FROM stats)
+      THEN (SELECT sort_at::text || '|' || id::text FROM last_item)
+      ELSE NULL
+    END
+  INTO v_items, v_has_more, v_next_cursor;
+
+  RETURN jsonb_build_object(
+    'items', v_items,
+    'hasMore', v_has_more,
+    'nextCursor', v_next_cursor
+  );
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_station_observation_archive_atomic(uuid,uuid,timestamptz,timestamptz,text,integer,text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_station_observation_archive_atomic(uuid,uuid,timestamptz,timestamptz,text,integer,text)
+  TO service_role;
+
+CREATE OR REPLACE FUNCTION public.get_station_observation_archive_item_atomic(
+  p_actor_user_id uuid,
+  p_station_id uuid,
+  p_observation_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = pg_catalog, public, private
+AS $function$
+DECLARE v_item jsonb;
+BEGIN
+  IF p_actor_user_id IS NULL OR p_station_id IS NULL OR p_observation_id IS NULL THEN
+    RAISE EXCEPTION 'archive_identifiers_required' USING ERRCODE = '22023';
+  END IF;
+  IF NOT private.metra_lock_authorized_station_read(
+    p_actor_user_id, p_station_id, 'observation.archive.read'
+  ) THEN
+    RAISE EXCEPTION 'station_observation_archive_forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT jsonb_build_object(
+    'id', o.id::text,
+    'stationId', o.station_id::text,
+    'observationType', o.observation_type,
+    'observedAtUtc', o.observed_at,
+    'importedAtUtc', o.imported_at,
+    'sourceSystem', o.source_system,
+    'sourceTable', o.source_table,
+    'sourceRecordId', o.source_record_id,
+    'payload', CASE
+      WHEN jsonb_typeof(o.payload) = 'object' THEN o.payload - ARRAY[
+        'id','station_id','station','station_name','user_station','raw_data',
+        'report_id','status','validation_status','approval_confirmed',
+        'responsibility_confirmed','responsibility_agreed','is_draft',
+        'supabase_success','whatsapp_shared','shared_at','submitted_at',
+        'updated_at','created_at','submission_date','submission_time',
+        'submission_timestamp','recorded_at','fetched_at','is_shared_with_station'
+      ]::text[]
+      ELSE '{}'::jsonb
+    END
+  )
+  INTO v_item
+  FROM public.metra_observation_records o
+  WHERE o.id = p_observation_id
+    AND o.station_id = p_station_id
+    AND o.is_demo = false;
+
+  RETURN v_item;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.get_station_observation_archive_item_atomic(uuid,uuid,uuid)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_station_observation_archive_item_atomic(uuid,uuid,uuid)
+  TO service_role;
+
+COMMENT ON FUNCTION public.get_station_observation_archive_atomic(uuid,uuid,timestamptz,timestamptz,text,integer,text) IS
+  'Actor-bound station archive list. Locks authorization facts in the same transaction; excludes unlinked/demo records and removes workflow/private metadata from payload.';
