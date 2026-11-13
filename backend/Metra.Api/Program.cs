@@ -191,10 +191,13 @@ app.MapGet("/api/v1/ready", async (
     // failure must keep the instance out of service.
     var probe = await directory.GetStationsAsync(1, 0, null, cancellationToken);
     var archiveProbe = probe is not null && await archive.ProbeAsync(cancellationToken);
-    return probe is not null && archiveProbe
+    var submissionRpcProbe = archiveProbe && await submission.ProbeAsync(cancellationToken);
+    var decisionRpcProbe = submissionRpcProbe && await decision.ProbeAsync(cancellationToken);
+    return probe is not null && archiveProbe && submissionRpcProbe && decisionRpcProbe
         ? Results.Ok(new { status = "ready", service = "metra-api" })
         : Results.Problem(
             title: "Supabase readiness probe failed",
+            detail = "One or more required database RPC contracts are missing or not executable.",
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
