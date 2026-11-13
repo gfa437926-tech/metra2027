@@ -16,8 +16,8 @@ class MetraServiceReadiness {
   /// Hourly/daily forms currently save an in-session draft only; no live write API.\n  static const observationSubmit = MetraDataSourceMode.mock;
   static const observationDecision = MetraDataSourceMode.liveApi;
 
-  /// Archive HTTP remains fail-closed (503) on API until real archive service.
-  static const observationArchive = MetraDataSourceMode.liveApi;
+  /// Archive API remains fail-closed (503) until a real archive service exists.
+  static const observationArchive = MetraDataSourceMode.mock;
 
   static const aiWorkspace = MetraDataSourceMode.mock;
   static const climatol = MetraDataSourceMode.mock;
