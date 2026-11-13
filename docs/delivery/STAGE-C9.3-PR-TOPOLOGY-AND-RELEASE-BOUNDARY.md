@@ -16,7 +16,7 @@
 
 ## 2. Consequence
 
-PR #36 is not currently a narrow backend-only PR relative to `main`. Its diff includes the earlier PR #34 line as well as subsequent Backend/DB/security work. Merging PR #36 into `main` now would bring the combined 138-commit / 165-file change set, not merely the latest C9 follow-up.
+PR #36 is not currently a narrow backend-only PR relative to `main`. Its diff includes the earlier PR #34 line as well as subsequent Backend/DB/security work. Merging PR #36 into `main` at the reviewed head would bring the combined 200-commit / 189-file change set, not merely the latest C9 follow-up.
 
 The branch topology is mergeable in Git terms, but that is not the same as a safe or approved release sequence. The presence of two open PRs means the intended integration order must be explicit.
 
@@ -39,7 +39,7 @@ Do not force-push, rewrite history, or merge either PR automatically.
 
 ## 5. Change boundary
 
-This report is documentation only. No PR base was changed, no branch was force-updated, no merge was performed, no deployment was started, and no hosted Supabase/legacy database was accessed or changed.
+This report is documentation only. No PR base was changed, no branch was force-updated, no merge was performed, no deployment was started, and no hosted Supabase or legacy database was changed. The current METRA Supabase project was inspected read-only for schema, function, row-count, and advisor metadata.
 
 ## 6. Release decision
 
