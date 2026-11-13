@@ -34,7 +34,7 @@ The form uses a UTC hour selector from 00 through 23. The missing-data marker `#
 | `cloud1Height`–`cloud3Height` | 1–3 digits; 0–999 (tens of metres) | optional |
 | `cloud1Type`–`cloud3Type` | text cloud code | optional |
 | `cover12`, `cover123` | one digit; 0–8 | required |
-| `pressureSlope` | d.d or dd.d; 0.0–99.0 | required at synoptic hours |
+| `pressureSlope` | d.d or dd.d; 0.0–99.0 | optional (not required by the source form) |
 | `pressureShape` | one digit; 0–8 | required at synoptic hours |
 | `precipitationAmount` | ddd.d; 000.0–999.9 mm | required at 00, 06, 12, 18 UTC |
 
