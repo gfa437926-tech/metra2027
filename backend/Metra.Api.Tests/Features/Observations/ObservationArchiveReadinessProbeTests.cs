@@ -18,8 +18,21 @@ public sealed class ObservationArchiveReadinessProbeTests
 
         Assert.True(ready);
         Assert.Equal(3, handler.Requests.Count);
+        Assert.EndsWith("/rest/v1/metra_observation_records", handler.Requests[0]!.AbsolutePath);
         Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_atomic", handler.Requests[1]!.AbsolutePath);
         Assert.EndsWith("/rest/v1/rpc/get_station_observation_archive_item_atomic", handler.Requests[2]!.AbsolutePath);
+    }
+
+    [Fact]
+    public async Task Probe_fails_when_archive_table_is_missing_or_not_exposed()
+    {
+        var handler = new SequenceHandler("station_observation_archive_forbidden", HttpStatusCode.NotFound);
+        var service = CreateService(handler);
+
+        var ready = await service.ProbeAsync(CancellationToken.None);
+
+        Assert.False(ready);
+        Assert.Single(handler.Requests);
     }
 
     [Fact]
