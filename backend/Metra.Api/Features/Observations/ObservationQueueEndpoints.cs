@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -46,7 +47,8 @@ public sealed class SupabaseObservationQueueService(
                 .SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                if (await SupabaseRpcErrorHandling.IsPermissionDeniedAsync(response, cancellationToken))
+                var mappedStatus = await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response, cancellationToken);
+                if (mappedStatus == HttpStatusCode.Forbidden)
                     throw new StationReadForbiddenException();
                 return null;
             }

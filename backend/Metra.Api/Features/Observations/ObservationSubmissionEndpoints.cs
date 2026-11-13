@@ -71,7 +71,10 @@ public sealed class SupabaseObservationSubmissionService(
         {
             using var response = await client.SendAsync(message, cancellationToken);
             if (!response.IsSuccessStatusCode)
-                return new(true, false, response.StatusCode, null);
+            {
+                var mappedStatus = await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response, cancellationToken);
+                return new(true, false, mappedStatus, null);
+            }
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(
                 cancellationToken: cancellationToken);
@@ -199,7 +202,10 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
         message.Content=JsonContent.Create(new { p_user_id=userId,p_station_id=stationId,p_observation_id=observationId,p_decision=request.Decision,p_note=request.Note });
         try {
           using var response=await clients.CreateClient(nameof(SupabaseObservationDecisionService)).SendAsync(message,cancellationToken);
-          if(!response.IsSuccessStatusCode) return new(true,false,response.StatusCode,null);
+          if(!response.IsSuccessStatusCode) {
+            var mappedStatus=await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response,cancellationToken);
+            return new(true,false,mappedStatus,null);
+          }
           var data=await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken:cancellationToken);
           return new(true,true,response.StatusCode,data);
         } catch(JsonException) {

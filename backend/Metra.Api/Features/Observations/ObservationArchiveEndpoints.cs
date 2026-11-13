@@ -160,22 +160,11 @@ public sealed class SupabaseObservationArchiveService(
         {
             using var response = await clients.CreateClient(nameof(SupabaseObservationArchiveService))
                 .SendAsync(request, cancellationToken);
-            if (response.StatusCode == HttpStatusCode.Forbidden)
-                throw new ObservationArchiveForbiddenException();
             if (!response.IsSuccessStatusCode)
             {
-                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-                try
-                {
-                    using var errorJson = JsonDocument.Parse(errorBody);
-                    if (errorJson.RootElement.TryGetProperty("code", out var code) &&
-                        code.ValueKind == JsonValueKind.String && code.GetString() == "42501")
-                        throw new ObservationArchiveForbiddenException();
-                }
-                catch (JsonException)
-                {
-                    // Non-JSON provider errors remain unavailable, not authorized.
-                }
+                var mappedStatus = await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response, cancellationToken);
+                if (mappedStatus == HttpStatusCode.Forbidden)
+                    throw new ObservationArchiveForbiddenException();
                 return null;
             }
             return await response.Content.ReadFromJsonAsync<JsonElement>(
