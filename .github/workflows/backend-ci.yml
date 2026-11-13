@@ -106,6 +106,10 @@ jobs:
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/01_seed_archive_isolation_fixtures.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/proposals/032_station_bound_archive_authorization_rpc.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/02_test_archive_isolation.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/03_prepare_atomic_station_reads.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/proposals/033_atomic_actor_station_read_rpcs.sql
+          psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/04_test_atomic_station_reads.sql
+          DATABASE_URL=postgres://metra_test:metra_test_isolated@127.0.0.1:5432/metra_isolated bash database/isolated/05_test_atomic_read_revocation_concurrency.sh
 
   path-n-empty-db:
     name: Path N empty PostgreSQL schema build
