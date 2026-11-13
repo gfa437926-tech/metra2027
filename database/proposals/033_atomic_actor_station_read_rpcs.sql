@@ -20,7 +20,7 @@ DECLARE v_now timestamptz := clock_timestamp();
 BEGIN
   IF p_actor_user_id IS NULL OR p_actor_user_id = '00000000-0000-0000-0000-000000000000'::uuid
      OR p_station_id IS NULL OR p_station_id = '00000000-0000-0000-0000-000000000000'::uuid
-     OR p_permission_code IS NULL OR p_permission_code NOT IN ('users.station.view','observation.review','observation.archive.read') THEN
+     OR p_permission_code IS NULL OR p_permission_code NOT IN ('users.station.view','observation.review','observation.archive.read','observation.create','observation.submit','observation.approve','observation.return_for_correction') THEN
     RETURN false;
   END IF;
 
@@ -175,7 +175,7 @@ REVOKE ALL ON FUNCTION public.get_station_observation_review_queue_atomic(uuid,u
 GRANT EXECUTE ON FUNCTION public.get_station_observation_review_queue_atomic(uuid,uuid,integer) TO service_role;
 
 COMMENT ON FUNCTION private.metra_lock_authorized_station_read(uuid,uuid,text) IS
-'PROPOSAL ONLY: locks active account, station, authority, country, membership, assignment, role, role permission and grant FOR SHARE; protected projection must run in same RPC transaction.';
+'PROPOSAL ONLY: locks active account, station, authority, country, membership, assignment, role, role permission and grant FOR SHARE; protected read or write must run in the same RPC transaction.';
 
 
 -- Station-bound historical archive reads. The live schema's permission_grants
