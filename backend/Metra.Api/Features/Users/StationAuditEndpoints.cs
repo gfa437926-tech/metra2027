@@ -66,7 +66,7 @@ public static class StationAuditEndpoints
             if (validationError == "invalid_limit")
                 return Results.BadRequest(new { error = validationError, maximum = 250 });
             if (!audit.IsConfigured)
-                return Results.Problem(title: "Station audit service unavailable", statusCode = 503);
+                return Results.Problem(title: "Station audit service unavailable", statusCode: 503);
             var events = await audit.GetAuditAsync(actorUserId, stationId, take, cancellationToken);
             return events is null
                 ? Results.Problem(title: "Station audit read failed", statusCode: 503)
