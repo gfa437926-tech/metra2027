@@ -21,4 +21,21 @@ public sealed class ObservationSubmissionFeatureGateTests
     {
         Assert.True(ObservationSubmissionFeatureGate.IsEnabled("true"));
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("false")]
+    [InlineData("0")]
+    [InlineData("yes")]
+    public void Missing_or_unrecognized_atomic_decision_approval_keeps_decisions_disabled(string? configuredValue)
+    {
+        Assert.False(ObservationDecisionFeatureGate.IsEnabled(configuredValue));
+    }
+
+    [Fact]
+    public void Explicit_true_enables_decisions_after_atomic_authorization_deployment()
+    {
+        Assert.True(ObservationDecisionFeatureGate.IsEnabled("true"));
+    }
 }
