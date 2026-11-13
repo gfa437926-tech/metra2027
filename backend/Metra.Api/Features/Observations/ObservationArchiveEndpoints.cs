@@ -46,9 +46,9 @@ public sealed record ObservationArchiveItemDto(
     string SourceRecordId,
     IReadOnlyDictionary<string, object?> Payload);
 
-public sealed class ObservationArchiveForbiddenException : Exception
+public sealed class ObservationArchiveForbiddenException(bool isPolicyDenial = false) : Exception("Station archive permission denied.")
 {
-    public ObservationArchiveForbiddenException() : base("Station archive permission denied.") { }
+    public bool IsPolicyDenial { get; } = isPolicyDenial;
 }
 
 /// <summary>
@@ -115,9 +115,12 @@ public sealed class SupabaseObservationArchiveService(
             // null means the function/schema/network is unavailable.
             return false;
         }
-        catch (ObservationArchiveForbiddenException)
+        catch (ObservationArchiveForbiddenException exception)
         {
-            return true;
+            // Only the RPC's explicit actor/station policy denial proves that
+            // the function and its authorization helper are installed. A
+            // service_role EXECUTE denial must not make readiness look healthy.
+            return exception.IsPolicyDenial;
         }
     }
 
@@ -219,7 +222,12 @@ public sealed class SupabaseObservationArchiveService(
             {
                 var mappedStatus = await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response, cancellationToken);
                 if (mappedStatus == HttpStatusCode.Forbidden)
-                    throw new ObservationArchiveForbiddenException();
+                {
+                    var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var isPolicyDenial = errorBody.Contains(
+                        "station_observation_archive_forbidden", StringComparison.Ordinal);
+                    throw new ObservationArchiveForbiddenException(isPolicyDenial);
+                }
                 return null;
             }
             return await response.Content.ReadFromJsonAsync<JsonElement>(
