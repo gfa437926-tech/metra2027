@@ -7,7 +7,7 @@ authority="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 assert_blocked_update() {
  local sql="$1"
  local name="$2"
- psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "BEGIN; SELECT public.metra_lock_authorized_station_read('$actor','$station','users.station.view'); SELECT pg_sleep(2); COMMIT" >/tmp/metra-reader.log 2>&1 &
+ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "BEGIN; SELECT private.metra_lock_authorized_station_read('$actor','$station','users.station.view'); SELECT pg_sleep(2); COMMIT" >/tmp/metra-reader.log 2>&1 &
  local reader_pid=$!
  sleep 0.35
  local start
@@ -17,7 +17,7 @@ assert_blocked_update() {
  wait "$reader_pid"
  if (( elapsed < 1 )); then echo "FAIL: $name did not wait for active read lock (elapsed=\${elapsed}s)" >&2; exit 1; fi
  local allowed
- allowed="$(psql "$DATABASE_URL" -Atqc "SELECT public.metra_lock_authorized_station_read('$actor','$station','users.station.view')")"
+ allowed="$(psql "$DATABASE_URL" -Atqc "SELECT private.metra_lock_authorized_station_read('$actor','$station','users.station.view')")"
  if [[ "$allowed" != "f" ]]; then echo "FAIL: $name did not deny subsequent authorization" >&2; exit 1; fi
  echo "PASS: $name waited for active read transaction; subsequent read denied"
 }

@@ -7,13 +7,13 @@ DECLARE
  station_b uuid := 'aaaaaaaa-0002-0002-0002-000000000002';
  n integer;
 BEGIN
- IF public.metra_lock_authorized_station_read(reviewer,station_a,'users.station.view') IS NOT TRUE THEN
+ IF private.metra_lock_authorized_station_read(reviewer,station_a,'users.station.view') IS NOT TRUE THEN
   RAISE EXCEPTION 'authorized reviewer denied on assigned station'; END IF;
- IF public.metra_lock_authorized_station_read(reviewer,station_b,'users.station.view') IS TRUE THEN
+ IF private.metra_lock_authorized_station_read(reviewer,station_b,'users.station.view') IS TRUE THEN
   RAISE EXCEPTION 'reviewer unexpectedly authorized for unassigned station'; END IF;
- IF public.metra_lock_authorized_station_read(observer,station_a,'users.station.view') IS TRUE THEN
+ IF private.metra_lock_authorized_station_read(observer,station_a,'users.station.view') IS TRUE THEN
   RAISE EXCEPTION 'observer unexpectedly inherited station directory permission'; END IF;
- IF public.metra_lock_authorized_station_read(NULL,station_a,'users.station.view') IS TRUE THEN
+ IF private.metra_lock_authorized_station_read(NULL,station_a,'users.station.view') IS TRUE THEN
   RAISE EXCEPTION 'null actor unexpectedly authorized'; END IF;
  SELECT count(*) INTO n FROM public.get_station_user_directory_atomic(reviewer,station_a,100);
  IF n <> 2 THEN RAISE EXCEPTION 'expected 2 directory rows, got %',n; END IF;
