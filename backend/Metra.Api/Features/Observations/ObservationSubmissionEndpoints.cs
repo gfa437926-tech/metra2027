@@ -22,6 +22,7 @@ public sealed record ObservationSubmissionOutcome(
 public interface IObservationSubmissionService
 {
     bool IsConfigured { get; }
+    Task<bool> ProbeAsync(CancellationToken cancellationToken);
     Task<ObservationSubmissionOutcome> SubmitAsync(
         Guid userId, Guid stationId, ObservationSubmissionRequest request,
         CancellationToken cancellationToken);
@@ -42,6 +43,40 @@ public sealed class SupabaseObservationSubmissionService(
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_serviceKey);
+
+    /// <summary>
+    /// Confirms the write RPC is installed and executable without creating data.
+    /// Null required identifiers must be rejected by the database contract.
+    /// </summary>
+    public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return false;
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_submit_observation");
+        message.Headers.TryAddWithoutValidation("apikey", _serviceKey);
+        message.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
+        message.Content = JsonContent.Create(new
+        {
+            p_user_id = (Guid?)null,
+            p_station_id = (Guid?)null,
+            p_idempotency_key = "readiness-probe",
+            p_observation_type = "hourly",
+            p_observed_at = (DateTimeOffset?)null,
+            p_payload = (object?)new { },
+            p_submit = false
+        });
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationSubmissionService))
+                .SendAsync(message, cancellationToken);
+            if (response.StatusCode != HttpStatusCode.BadRequest) return false;
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return body.Contains("user_id_and_station_id_required", StringComparison.Ordinal);
+        }
+        catch (HttpRequestException) { return false; }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return false; }
+    }
 
     public async Task<ObservationSubmissionOutcome> SubmitAsync(
         Guid userId, Guid stationId, ObservationSubmissionRequest request,
@@ -191,6 +226,7 @@ public sealed record ObservationDecisionOutcome(bool IsConfigured, bool Succeede
 public interface IObservationDecisionService
 {
     bool IsConfigured { get; }
+    Task<bool> ProbeAsync(CancellationToken cancellationToken);
     Task<ObservationDecisionOutcome> DecideAsync(Guid userId, Guid stationId, Guid observationId, ObservationDecisionRequest request, CancellationToken cancellationToken);
 }
 public sealed class SupabaseObservationDecisionService(IHttpClientFactory clients, IConfiguration configuration) : IObservationDecisionService
@@ -198,6 +234,34 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
     private readonly string? _url=configuration["Supabase:Url"];
     private readonly string? _key=configuration["Supabase:ServiceRoleKey"];
     public bool IsConfigured => Uri.TryCreate(_url,UriKind.Absolute,out var uri) && uri.Scheme==Uri.UriSchemeHttps && !string.IsNullOrWhiteSpace(_key);
+    /// <summary>Checks the decision RPC contract without changing observation state.</summary>
+    public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return false;
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_decide_observation");
+        message.Headers.TryAddWithoutValidation("apikey", _key);
+        message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _key);
+        message.Content = JsonContent.Create(new
+        {
+            p_user_id = (Guid?)null,
+            p_station_id = (Guid?)null,
+            p_observation_id = (Guid?)null,
+            p_decision = "approve",
+            p_note = (string?)null
+        });
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationDecisionService))
+                .SendAsync(message, cancellationToken);
+            if (response.StatusCode != HttpStatusCode.BadRequest) return false;
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return body.Contains("user_station_observation_required", StringComparison.Ordinal);
+        }
+        catch (HttpRequestException) { return false; }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return false; }
+    }
+
     public async Task<ObservationDecisionOutcome> DecideAsync(Guid userId,Guid stationId,Guid observationId,ObservationDecisionRequest request,CancellationToken cancellationToken)
     {
         if(!IsConfigured) return new(false,false,null,null);
