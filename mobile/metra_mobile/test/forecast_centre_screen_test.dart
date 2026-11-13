@@ -133,7 +133,7 @@ void main() {
     // The selector is eagerly present in the ListView's children. Ensure it
     // is brought into view through its own scrollable ancestor rather than
     // resolving a separate Scrollable finder after earlier test interactions.
-    final referencePicker = find.byType(DropdownButtonFormField);
+    final referencePicker = find.byType(DropdownButtonFormField<String>);
     expect(referencePicker, findsOneWidget);
     await tester.ensureVisible(referencePicker);
     await tester.pumpAndSettle();
