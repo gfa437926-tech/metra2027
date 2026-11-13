@@ -131,7 +131,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         public bool IsConfigured => isConfigured;
 
         public Task<JsonElement?> GetAuditAsync(
-            Guid stationId, int limit, CancellationToken cancellationToken) =>
+            Guid actorUserId, Guid stationId, int limit, CancellationToken cancellationToken) =>
             Task.FromResult<JsonElement?>(JsonDocument.Parse("[]").RootElement.Clone());
     }
 
