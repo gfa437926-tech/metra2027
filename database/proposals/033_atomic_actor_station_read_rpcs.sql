@@ -5,13 +5,16 @@
 -- These RPCs are service_role-only; the key must remain server-side.
 -- Authorization rows are locked FOR SHARE before the protected projection is read.
 
-CREATE OR REPLACE FUNCTION public.metra_lock_authorized_station_read(
+CREATE SCHEMA IF NOT EXISTS private;
+GRANT USAGE ON SCHEMA private TO service_role;
+
+CREATE OR REPLACE FUNCTION private.metra_lock_authorized_station_read(
   p_actor_user_id uuid, p_station_id uuid, p_permission_code text
 )
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public
+SET search_path = pg_catalog, public, private
 AS $function$
 DECLARE v_now timestamptz := clock_timestamp();
 BEGIN
@@ -42,25 +45,26 @@ BEGIN
     AND r.is_active
     AND g.approval_status = 'approved' AND g.revoked_at IS NULL
     AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
+  ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, rp.permission_code, g.id
   FOR SHARE OF ac, s, a, c, m, sa, r, rp, g;
 
   RETURN FOUND;
 END;
 $function$;
 
-REVOKE ALL ON FUNCTION public.metra_lock_authorized_station_read(uuid, uuid, text) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.metra_lock_authorized_station_read(uuid, uuid, text) TO service_role;
+REVOKE ALL ON FUNCTION private.metra_lock_authorized_station_read(uuid, uuid, text) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION private.metra_lock_authorized_station_read(uuid, uuid, text) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.get_station_user_directory_atomic(
   p_actor_user_id uuid, p_station_id uuid, p_limit integer DEFAULT 250
 )
-RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER
+RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY INVOKER
 SET search_path = pg_catalog, public AS $function$
 BEGIN
   IF p_limit IS NULL OR p_limit < 1 OR p_limit > 500 THEN
     RAISE EXCEPTION 'invalid_station_user_directory_query' USING ERRCODE = '22023';
   END IF;
-  IF NOT public.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,'users.station.view') THEN
+  IF NOT private.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,'users.station.view') THEN
     RAISE EXCEPTION 'station_user_directory_forbidden' USING ERRCODE = '42501';
   END IF;
   RETURN QUERY SELECT jsonb_build_object(
@@ -86,13 +90,13 @@ GRANT EXECUTE ON FUNCTION public.get_station_user_directory_atomic(uuid,uuid,int
 CREATE OR REPLACE FUNCTION public.get_station_audit_log_atomic(
   p_actor_user_id uuid, p_station_id uuid, p_limit integer DEFAULT 100
 )
-RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER
+RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY INVOKER
 SET search_path = pg_catalog, public AS $function$
 BEGIN
   IF p_limit IS NULL OR p_limit < 1 OR p_limit > 250 THEN
     RAISE EXCEPTION 'invalid_station_audit_query' USING ERRCODE = '22023';
   END IF;
-  IF NOT public.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,'users.station.view') THEN
+  IF NOT private.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,'users.station.view') THEN
     RAISE EXCEPTION 'station_audit_forbidden' USING ERRCODE = '42501';
   END IF;
   RETURN QUERY SELECT jsonb_build_object(
@@ -118,7 +122,7 @@ GRANT EXECUTE ON FUNCTION public.get_station_audit_log_atomic(uuid,uuid,integer)
 CREATE OR REPLACE FUNCTION public.get_station_observation_review_queue_atomic(
   p_actor_user_id uuid, p_station_id uuid, p_limit integer DEFAULT 50
 )
-RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY DEFINER
+RETURNS SETOF jsonb LANGUAGE plpgsql SECURITY INVOKER
 SET search_path = pg_catalog, public AS $function$
 DECLARE v_allowed boolean := false; v_permission text;
 BEGIN
@@ -126,7 +130,7 @@ BEGIN
     RAISE EXCEPTION 'invalid_observation_queue_query' USING ERRCODE = '22023';
   END IF;
   FOREACH v_permission IN ARRAY ARRAY['observation.review','observation.approve','observation.return_for_correction'] LOOP
-    IF public.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,v_permission) THEN
+    IF private.metra_lock_authorized_station_read(p_actor_user_id,p_station_id,v_permission) THEN
       v_allowed := true; EXIT;
     END IF;
   END LOOP;
@@ -143,5 +147,5 @@ $function$;
 REVOKE ALL ON FUNCTION public.get_station_observation_review_queue_atomic(uuid,uuid,integer) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_station_observation_review_queue_atomic(uuid,uuid,integer) TO service_role;
 
-COMMENT ON FUNCTION public.metra_lock_authorized_station_read(uuid,uuid,text) IS
+COMMENT ON FUNCTION private.metra_lock_authorized_station_read(uuid,uuid,text) IS
 'PROPOSAL ONLY: locks active account, station, authority, country, membership, assignment, role, role permission and grant FOR SHARE; protected projection must run in same RPC transaction.';
