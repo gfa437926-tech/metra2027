@@ -56,15 +56,15 @@ class _DailyObservationEntryScreenState extends State<DailyObservationEntryScree
   final Map<String, bool> _phenomena = {
     'thunderstorm': false,
     'hail': false,
-    'snow_phenomena': false,
+    'snow': false,
     'rain': false,
     'frost': false,
     'fog': false,
     'mist': false,
-    'dust_storm': false,
+    'dustStorm': false,
     'blowing_dust': false,
     'haze': false,
-    'stormy_wind': false,
+    'stormyWind': false,
   };
   DateTime _reportDate = DateTime.now().toUtc();
   String _reportType = '24h';
@@ -178,7 +178,7 @@ class _DailyObservationEntryScreenState extends State<DailyObservationEntryScree
         entry.key: entry.value.text.trim().isEmpty ? null : entry.value.text.trim(),
       'reportType': _reportType,
       'responsibility_agreed': true,
-      ..._phenomena,
+      'weatherPhenomena': _phenomena.entries.where((entry) => entry.value).map((entry) => entry.key).toList(),
     };
 
     try {
@@ -316,10 +316,10 @@ class _DailyObservationEntryScreenState extends State<DailyObservationEntryScree
             title: 'الظواهر الجوية',
             child: Column(children: _phenomena.entries.map((entry) {
               const labels = <String, String>{
-                'thunderstorm': 'عواصف رعدية','hail': 'برد','snow_phenomena': 'ثلج',
+                'thunderstorm': 'عواصف رعدية','hail': 'برد','snow': 'ثلج',
                 'rain': 'مطر','frost': 'صقيع','fog': 'ضباب','mist': 'شابورة',
-                'dust_storm': 'عاصفة ترابية/رملية','blowing_dust': 'غبار متصاعد',
-                'haze': 'سديم','stormy_wind': 'رياح عاصفة',
+                'dustStorm': 'عاصفة ترابية/رملية','blowing_dust': 'غبار متصاعد',
+                'haze': 'سديم','stormyWind': 'رياح عاصفة',
               };
               return CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
