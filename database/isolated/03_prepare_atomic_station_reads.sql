@@ -20,9 +20,9 @@ UPDATE public.metra_role_catalogue SET name_ar='راصد',name_en='Observer' WHE
 UPDATE public.metra_role_catalogue SET name_ar='رئيس محطة',name_en='Station Head' WHERE role_code='station_head';
 INSERT INTO public.metra_role_permissions(role_code,permission_code)
 VALUES ('station_head','users.station.view') ON CONFLICT DO NOTHING;
-INSERT INTO public.permission_grants(user_id,permission_code,authority_id) VALUES
- ('22222222-2222-2222-2222-222222222222','users.station.view','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
- ('22222222-2222-2222-2222-222222222222','observation.review','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+INSERT INTO public.permission_grants(user_id,permission_code,authority_id,requested_by,approved_by,reviewed_at,reason) VALUES
+ ('22222222-2222-2222-2222-222222222222','users.station.view','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','22222222-2222-2222-2222-222222222222','11111111-1111-1111-1111-111111111111',now(),'isolated read grant'),
+ ('22222222-2222-2222-2222-222222222222','observation.review','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb','22222222-2222-2222-2222-222222222222','11111111-1111-1111-1111-111111111111',now(),'isolated read grant');
 INSERT INTO public.metra_user_profiles(user_id,first_name,father_name,last_name,phone) VALUES
  ('11111111-1111-1111-1111-111111111111','Observer','Test','One','000000001'),
  ('22222222-2222-2222-2222-222222222222','Reviewer','Test','Two','000000002');

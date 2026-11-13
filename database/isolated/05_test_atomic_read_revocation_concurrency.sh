@@ -23,10 +23,10 @@ assert_blocked_update() {
 }
 grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND authority_id='$authority' AND permission_code='users.station.view' LIMIT 1")"
 if [[ -z "$grant_id" ]]; then
- psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.permission_grants(user_id,permission_code,authority_id) VALUES('$actor','users.station.view','$authority')"
+ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "INSERT INTO public.permission_grants(user_id,permission_code,authority_id,requested_by,approved_by,reviewed_at,reason) VALUES('$actor','users.station.view','$authority','$actor','$actor',now(),'isolated concurrency grant')"
  grant_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.permission_grants WHERE user_id='$actor' AND authority_id='$authority' AND permission_code='users.station.view' LIMIT 1")"
 fi
 assert_blocked_update "UPDATE public.permission_grants SET revoked_at=clock_timestamp() WHERE id='$grant_id'" "grant revocation"
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE public.permission_grants SET revoked_at=NULL WHERE id='$grant_id'"
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE public.permission_grants SET revoked_at=NULL, approval_status='approved', approved_by='$actor', reviewed_at=now() WHERE id='$grant_id'"
 assignment_id="$(psql "$DATABASE_URL" -Atqc "SELECT id FROM public.station_assignments WHERE user_id='$actor' AND station_id='$station' LIMIT 1")"
 assert_blocked_update "UPDATE public.station_assignments SET valid_to=clock_timestamp()-interval '1 second' WHERE id='$assignment_id'" "assignment expiry"

@@ -43,7 +43,7 @@ BEGIN
       AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
       AND r.is_active
       AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
-      AND g.approved_at IS NOT NULL AND g.revoked_at IS NULL
+      AND g.approved_by IS NOT NULL AND g.reviewed_at IS NOT NULL AND g.revoked_at IS NULL
       AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
     ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, g.id
     FOR SHARE OF ac, s, a, c, m, sa, r, g;
@@ -67,7 +67,7 @@ BEGIN
       AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
       AND r.is_active
       AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
-      AND g.approved_at IS NOT NULL AND g.revoked_at IS NULL
+      AND g.approved_by IS NOT NULL AND g.reviewed_at IS NOT NULL AND g.revoked_at IS NULL
       AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
     ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, rp.permission_code, g.id
     FOR SHARE OF ac, s, a, c, m, sa, r, rp, g;

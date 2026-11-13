@@ -79,7 +79,12 @@ CREATE TABLE IF NOT EXISTS public.permission_grants (
   permission_code text NOT NULL,
   authority_id uuid REFERENCES public.meteorological_authorities(id),
   approval_status text NOT NULL DEFAULT 'approved',
-  approved_at timestamptz,
+  requested_by uuid NOT NULL REFERENCES auth.users(id),
+  approved_by uuid REFERENCES auth.users(id),
+  reviewed_at timestamptz,
+  reason text NOT NULL DEFAULT 'isolated test grant',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
   valid_from timestamptz NOT NULL DEFAULT now(),
   valid_to timestamptz,
   revoked_at timestamptz

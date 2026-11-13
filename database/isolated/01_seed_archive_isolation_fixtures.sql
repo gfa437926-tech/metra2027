@@ -45,11 +45,15 @@ INSERT INTO public.station_assignments (user_id, station_id, authority_id, assig
   ('22222222-2222-2222-2222-222222222222', 'aaaaaaaa-0001-0001-0001-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'station_head');
 
 -- Explicit archive grant ONLY for station A for observer
-INSERT INTO public.permission_grants (user_id, permission_code, authority_id)
+INSERT INTO public.permission_grants (user_id, permission_code, authority_id, requested_by, approved_by, reviewed_at, reason)
 VALUES (
   '11111111-1111-1111-1111-111111111111',
   'observation.archive.read',
-  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+  now(),
+  'isolated archive authorization fixture'
 );
 
 INSERT INTO public.permission_grant_audit (grant_id, action, actor_user_id, station_id, permission_code, note)
