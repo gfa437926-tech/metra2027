@@ -78,7 +78,6 @@ public static class HourlyObservationValidator
         {
             required.Add("pressureSlope");
             required.Add("pressureShape");
-            required.Add("pastWeather");
         }
 
         foreach (var field in required)

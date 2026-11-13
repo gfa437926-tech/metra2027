@@ -92,7 +92,7 @@ class _HourlyObservationEntryScreenState extends State<HourlyObservationEntryScr
 
   bool _isRequired(String key) {
     if (_alwaysRequired.contains(key)) return true;
-    if (_isSynopticHour && const {'pressureSlope','pressureShape','pastWeather'}.contains(key)) return true;
+    if (_isSynopticHour && const {'pressureSlope','pressureShape'}.contains(key)) return true;
     if (_isPrecipitationHour && key == 'precipitationAmount') return true;
     return false;
   }

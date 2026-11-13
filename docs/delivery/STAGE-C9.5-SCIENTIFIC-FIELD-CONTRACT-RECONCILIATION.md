@@ -28,7 +28,7 @@ The form uses a UTC hour selector from 00 through 23. The missing-data marker `#
 | `windSpeed`, `avgWindSpeed` | two digits; 00–99 m/s | surface speed required; average optional |
 | `visibility` | three digits; 000–200 | always required |
 | `currentWeather` | two digits; 00–99 | optional |
-| `pastWeather` | one digit; 0–9 | required at synoptic hours |
+| `pastWeather` | one digit; 0–9 | optional (not required by the source form) |
 | `totalCloudCover` | one digit; 0–8 | always required |
 | `cloud1Amount`–`cloud4Amount` | one digit; 0–8 | optional |
 | `cloud1Height`–`cloud3Height` | 1–3 digits; 0–999 (tens of metres) | optional |
@@ -40,7 +40,7 @@ The form uses a UTC hour selector from 00 through 23. The missing-data marker `#
 
 Conditional hours confirmed by the source:
 - Precipitation: 00, 06, 12, 18 UTC.
-- Pressure slope, pressure shape and past weather: 00, 03, 06, 09, 12, 15, 18, 21 UTC.
+- Pressure slope and pressure shape: 00, 03, 06, 09, 12, 15, 18, 21 UTC. Past weather remains optional in the source form.
 
 The backend `HourlyObservationValidator` already implements these conditions and field-level checks. The submission endpoint now invokes that validator before persistence.
 
