@@ -20,31 +20,58 @@ DECLARE v_now timestamptz := clock_timestamp();
 BEGIN
   IF p_actor_user_id IS NULL OR p_actor_user_id = '00000000-0000-0000-0000-000000000000'::uuid
      OR p_station_id IS NULL OR p_station_id = '00000000-0000-0000-0000-000000000000'::uuid
-     OR p_permission_code IS NULL OR length(btrim(p_permission_code)) = 0 THEN
+     OR p_permission_code IS NULL OR p_permission_code NOT IN ('users.station.view','observation.review','observation.archive.read') THEN
     RETURN false;
   END IF;
 
-  PERFORM 1
-  FROM public.metra_account_states ac
-  JOIN public.station_catalogue s ON s.id = p_station_id
-  JOIN public.meteorological_authorities a ON a.id = s.owner_authority_id AND a.country_id = s.country_id
-  JOIN public.countries c ON c.id = s.country_id
-  JOIN public.authority_memberships m ON m.user_id = ac.user_id AND m.authority_id = s.owner_authority_id
-  JOIN public.station_assignments sa ON sa.user_id = ac.user_id AND sa.station_id = s.id AND sa.authority_id = s.owner_authority_id
-  JOIN public.metra_role_catalogue r ON r.role_code = sa.assignment_role_code
-  JOIN public.metra_role_permissions rp ON rp.role_code = r.role_code AND rp.permission_code = p_permission_code
-  JOIN public.permission_grants g ON g.user_id = ac.user_id AND g.authority_id = s.owner_authority_id
-    AND g.permission_code = p_permission_code
-  WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
-    AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
-    AND a.is_active AND c.is_active
-    AND m.approval_status = 'approved' AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
-    AND sa.approval_status = 'approved' AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
-    AND r.is_active
-    AND g.approval_status = 'approved' AND g.revoked_at IS NULL
-    AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
-  ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, rp.permission_code, g.id
-  FOR SHARE OF ac, s, a, c, m, sa, r, rp, g;
+  IF p_permission_code = 'observation.archive.read' THEN
+    PERFORM 1
+    FROM public.metra_account_states ac
+    JOIN public.station_catalogue s ON s.id = p_station_id
+    JOIN public.meteorological_authorities a ON a.id = s.owner_authority_id AND a.country_id = s.country_id
+    JOIN public.countries c ON c.id = s.country_id
+    JOIN public.authority_memberships m ON m.user_id = ac.user_id AND m.authority_id = s.owner_authority_id
+    JOIN public.station_assignments sa ON sa.user_id = ac.user_id AND sa.station_id = s.id AND sa.authority_id = s.owner_authority_id
+    JOIN public.metra_role_catalogue r ON r.role_code = sa.assignment_role_code
+    JOIN public.permission_grants g ON g.user_id = ac.user_id AND g.authority_id = s.owner_authority_id
+    WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
+      AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
+      AND a.is_active AND c.is_active
+      AND m.approval_status = 'approved' AND m.revoked_at IS NULL
+      AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
+      AND sa.approval_status = 'approved'
+      AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
+      AND r.is_active
+      AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
+      AND g.approved_at IS NOT NULL AND g.revoked_at IS NULL
+      AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
+    ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, g.id
+    FOR SHARE OF ac, s, a, c, m, sa, r, g;
+  ELSE
+    PERFORM 1
+    FROM public.metra_account_states ac
+    JOIN public.station_catalogue s ON s.id = p_station_id
+    JOIN public.meteorological_authorities a ON a.id = s.owner_authority_id AND a.country_id = s.country_id
+    JOIN public.countries c ON c.id = s.country_id
+    JOIN public.authority_memberships m ON m.user_id = ac.user_id AND m.authority_id = s.owner_authority_id
+    JOIN public.station_assignments sa ON sa.user_id = ac.user_id AND sa.station_id = s.id AND sa.authority_id = s.owner_authority_id
+    JOIN public.metra_role_catalogue r ON r.role_code = sa.assignment_role_code
+    JOIN public.metra_role_permissions rp ON rp.role_code = r.role_code AND rp.permission_code = p_permission_code
+    JOIN public.permission_grants g ON g.user_id = ac.user_id AND g.authority_id = s.owner_authority_id
+    WHERE ac.user_id = p_actor_user_id AND ac.account_state = 'active'
+      AND s.approval_status = 'approved' AND s.operational_status = 'active' AND s.is_demo = false
+      AND a.is_active AND c.is_active
+      AND m.approval_status = 'approved' AND m.revoked_at IS NULL
+      AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
+      AND sa.approval_status = 'approved'
+      AND sa.valid_from <= v_now AND (sa.valid_to IS NULL OR sa.valid_to > v_now)
+      AND r.is_active
+      AND g.permission_code = p_permission_code AND g.approval_status = 'approved'
+      AND g.approved_at IS NOT NULL AND g.revoked_at IS NULL
+      AND g.valid_from <= v_now AND (g.valid_to IS NULL OR g.valid_to > v_now)
+    ORDER BY ac.user_id, s.id, a.id, c.id, m.id, sa.id, r.role_code, rp.permission_code, g.id
+    FOR SHARE OF ac, s, a, c, m, sa, r, rp, g;
+  END IF;
 
   RETURN FOUND;
 END;

@@ -36,9 +36,6 @@ SELECT COALESCE(EXISTS(
   JOIN public.metra_role_catalogue AS r
     ON r.role_code = sa.assignment_role_code
    AND r.is_active
-  JOIN public.metra_role_permissions AS rp
-    ON rp.role_code = r.role_code
-   AND rp.permission_code = 'observation.archive.read'
   JOIN public.permission_grants AS g
     ON g.user_id = ac.user_id
    AND g.authority_id = s.owner_authority_id
@@ -51,12 +48,14 @@ SELECT COALESCE(EXISTS(
     AND a.is_active
     AND c.is_active
     AND m.approval_status = 'approved'
+    AND m.revoked_at IS NULL
     AND m.valid_from <= statement_timestamp()
     AND (m.valid_to IS NULL OR m.valid_to > statement_timestamp())
     AND sa.approval_status = 'approved'
     AND sa.valid_from <= statement_timestamp()
     AND (sa.valid_to IS NULL OR sa.valid_to > statement_timestamp())
     AND g.approval_status = 'approved'
+    AND g.approved_at IS NOT NULL
     AND g.revoked_at IS NULL
     AND g.valid_from <= statement_timestamp()
     AND (g.valid_to IS NULL OR g.valid_to > statement_timestamp())
@@ -68,4 +67,4 @@ REVOKE ALL ON FUNCTION public.metra_user_has_station_archive_permission(uuid, uu
 GRANT EXECUTE ON FUNCTION public.metra_user_has_station_archive_permission(uuid, uuid) TO service_role;
 
 COMMENT ON FUNCTION public.metra_user_has_station_archive_permission(uuid, uuid) IS
-  'PROPOSAL ONLY: requires active station assignment and explicit observation.archive.read grant bound to the exact station_id.';
+  'PROPOSAL ONLY: requires active assignment to this exact station plus an approved user/authority-scoped observation.archive.read grant. The current permission_grants schema has no station_id; station scope is enforced by station_assignments.';
