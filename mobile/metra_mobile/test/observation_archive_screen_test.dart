@@ -22,7 +22,6 @@ void main() {
         requestedPaths.add(request.url.path);
         if (request.url.path.endsWith('/observation-archive')) {
           return http.Response(jsonEncode({
-            'authorized': true,
             'items': [{
               'id': observationId,
               'stationId': stationId,
@@ -34,23 +33,20 @@ void main() {
               'payload': {'temperature': 24},
               'importedAtUtc': '2026-11-11T01:00:00Z'
             }],
-            'page': {'limit': 50, 'offset': 0, 'returned': 1, 'hasMore': false}
+            'hasMore': false,
+            'nextCursor': null
           }), 200);
         }
         return http.Response(jsonEncode({
-          'authorized': true,
-          'found': true,
-          'item': {
-            'id': observationId,
-            'stationId': stationId,
-            'sourceSystem': 'legacy-import',
-            'sourceTable': 'hourly_records',
-            'sourceRecordId': 'source-1',
-            'observationType': 'hourly',
-            'observedAtUtc': '2026-11-10T18:00:00Z',
-            'payload': {'temperature': 24},
-            'importedAtUtc': '2026-11-11T01:00:00Z'
-          }
+          'id': observationId,
+          'stationId': stationId,
+          'sourceSystem': 'legacy-import',
+          'sourceTable': 'hourly_records',
+          'sourceRecordId': 'source-1',
+          'observationType': 'hourly',
+          'observedAtUtc': '2026-11-10T18:00:00Z',
+          'payload': {'temperature': 24},
+          'importedAtUtc': '2026-11-11T01:00:00Z'
         }), 200);
       }),
     );
@@ -68,7 +64,7 @@ void main() {
 
     expect(find.text('تفاصيل الرصد التاريخي'), findsOneWidget);
     expect(requestedPaths, contains(
-      '/api/v1/stations/$stationId/observations/$observationId',
+      '/api/v1/stations/$stationId/observation-archive/$observationId',
     ));
 
     // The detail is a lazily built ListView. Scroll before searching for
@@ -88,7 +84,6 @@ void main() {
     var archiveRequestCount = 0;
 
     Map<String, dynamic> archiveResponse(String station, int temperature) => {
-      'authorized': true,
       'items': [{
         'id': observationId,
         'stationId': station,
@@ -100,7 +95,8 @@ void main() {
         'payload': {'temperature': temperature},
         'importedAtUtc': '2026-11-11T01:00:00Z'
       }],
-      'page': {'limit': 50, 'offset': 0, 'returned': 1, 'hasMore': false}
+      'hasMore': false,
+      'nextCursor': null
     };
 
     final api = MetraApiClient(
@@ -117,19 +113,15 @@ void main() {
           return http.Response(jsonEncode(archiveResponse(secondStationId, 22)), 200);
         }
         return http.Response(jsonEncode({
-          'authorized': true,
-          'found': true,
-          'item': {
-            'id': observationId,
-            'stationId': secondStationId,
-            'sourceSystem': 'fixture',
-            'sourceTable': 'hourly_records',
-            'sourceRecordId': 'source-22',
-            'observationType': 'hourly',
-            'observedAtUtc': '2026-11-10T18:00:00Z',
-            'payload': {'temperature': 22},
-            'importedAtUtc': '2026-11-11T01:00:00Z'
-          }
+          'id': observationId,
+          'stationId': secondStationId,
+          'sourceSystem': 'fixture',
+          'sourceTable': 'hourly_records',
+          'sourceRecordId': 'source-22',
+          'observationType': 'hourly',
+          'observedAtUtc': '2026-11-10T18:00:00Z',
+          'payload': {'temperature': 22},
+          'importedAtUtc': '2026-11-11T01:00:00Z'
         }), 200);
       }),
     );
