@@ -149,7 +149,7 @@ public static class ObservationSubmissionEndpoints
 
                 return Results.Ok(result.Data);
             })
-            .RequireStationPermission("observation.create")
+            .RequireAuthorization()
             .WithTags("Observations")
             .RequireRateLimiting(MetraRateLimiting.PolicyWrite)
             .WithName("SubmitStationObservation");
