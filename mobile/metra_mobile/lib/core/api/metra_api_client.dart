@@ -39,6 +39,155 @@ class ObservationQueueItem {
   }
 }
 
+
+
+class ObservationArchiveItem {
+  const ObservationArchiveItem({
+    required this.id,
+    required this.stationId,
+    required this.sourceSystem,
+    required this.sourceTable,
+    required this.sourceRecordId,
+    required this.observationType,
+    required this.payload,
+    required this.importedAtUtc,
+    this.observedAtUtc,
+  });
+
+  final String id, stationId, sourceSystem, sourceTable, sourceRecordId, observationType;
+  final Map<String, dynamic> payload;
+  final DateTime importedAtUtc;
+  final DateTime? observedAtUtc;
+
+  factory ObservationArchiveItem.fromJson(Map<String, dynamic> json) {
+    String requiredString(String key) {
+      final value = json[key];
+      if (value is! String || value.isEmpty) {
+        throw const FormatException('invalid_observation_archive_item');
+      }
+      return value;
+    }
+
+    final importedAt = DateTime.tryParse('${json['importedAtUtc'] ?? ''}');
+    final observedAtRaw = json['observedAtUtc'];
+    final observedAt = observedAtRaw == null
+        ? null
+        : DateTime.tryParse('$observedAtRaw');
+    final rawPayload = json['payload'];
+    if (importedAt == null || (observedAtRaw != null && observedAt == null) ||
+        rawPayload is! Map) {
+      throw const FormatException('invalid_observation_archive_item');
+    }
+
+    return ObservationArchiveItem(
+      id: requiredString('id'),
+      stationId: requiredString('stationId'),
+      sourceSystem: requiredString('sourceSystem'),
+      sourceTable: requiredString('sourceTable'),
+      sourceRecordId: requiredString('sourceRecordId'),
+      observationType: requiredString('observationType'),
+      observedAtUtc: observedAt?.toUtc(),
+      importedAtUtc: importedAt.toUtc(),
+      payload: Map<String, dynamic>.from(rawPayload),
+    );
+  }
+}
+
+class ObservationArchivePage {
+  const ObservationArchivePage({
+    required this.items,
+    required this.hasMore,
+    this.nextCursor,
+  });
+
+  final List<ObservationArchiveItem> items;
+  final bool hasMore;
+  final String? nextCursor;
+
+  factory ObservationArchivePage.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'];
+    final hasMore = json['hasMore'];
+    final nextCursor = json['nextCursor'];
+    if (rawItems is! List ||
+        hasMore is! bool ||
+        (nextCursor != null && nextCursor is! String)) {
+      throw const FormatException('invalid_observation_archive_page');
+    }
+    return ObservationArchivePage(
+      items: rawItems.map((item) => ObservationArchiveItem.fromJson(
+        Map<String, dynamic>.from(item as Map))).toList(growable: false),
+      hasMore: hasMore,
+      nextCursor: nextCursor as String?,
+    );
+  }
+}
+
+class StationAuditEvent {
+  const StationAuditEvent({
+    required this.id,
+    required this.entityType,
+    required this.entityId,
+    required this.action,
+    required this.actorId,
+    required this.occurredAt,
+    this.reason,
+    this.targetUserId,
+    this.roleCode,
+    this.previousStatus,
+    this.resultingStatus,
+    this.validFrom,
+    this.validTo,
+  });
+
+  final String id;
+  final String entityType;
+  final String entityId;
+  final String action;
+  final String actorId;
+  final DateTime occurredAt;
+  final String? reason;
+  final String? targetUserId;
+  final String? roleCode;
+  final String? previousStatus;
+  final String? resultingStatus;
+  final String? validFrom;
+  final String? validTo;
+
+  factory StationAuditEvent.fromJson(Map<String, dynamic> json) {
+    String requiredString(String key) {
+      final value = json[key];
+      if (value is! String || value.isEmpty) {
+        throw const FormatException('invalid_station_audit_event');
+      }
+      return value;
+    }
+
+    String? optionalString(String key) =>
+        json[key] is String ? json[key] as String : null;
+
+    final occurredAt = DateTime.tryParse('${json['occurred_at'] ?? ''}');
+    if (occurredAt == null) {
+      throw const FormatException('invalid_station_audit_event');
+    }
+
+    return StationAuditEvent(
+      id: requiredString('id'),
+      entityType: requiredString('entity_type'),
+      entityId: requiredString('entity_id'),
+      action: requiredString('action'),
+      actorId: requiredString('actor_id'),
+      occurredAt: occurredAt,
+      reason: optionalString('reason'),
+      targetUserId: optionalString('target_user_id'),
+      roleCode: optionalString('role_code'),
+      previousStatus: optionalString('previous_status'),
+      resultingStatus: optionalString('resulting_status'),
+      validFrom: optionalString('valid_from'),
+      validTo: optionalString('valid_to'),
+    );
+  }
+}
+
 class StationDirectoryItem {
   const StationDirectoryItem({required this.id, required this.localCode,
     required this.nameArabic, required this.nameEnglish, required this.stationType,
@@ -131,6 +280,30 @@ class MetraApiClient {
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
   }
 
+  Future<List<StationAuditEvent>> getStationAuditLog(
+    String stationId, {int limit = 100}
+  ) async {
+    if (stationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (limit < 1 || limit > 250) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/audit-log?limit=$limit',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) {
+      throw const FormatException('invalid_station_audit_log');
+    }
+    return decoded
+        .map((item) => StationAuditEvent.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ))
+        .toList(growable: false);
+  }
+
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',
@@ -139,6 +312,74 @@ class MetraApiClient {
     if (decoded is! List) throw const FormatException('invalid_observation_queue');
     return decoded.map((item) => ObservationQueueItem.fromJson(
       Map<String, dynamic>.from(item as Map))).toList(growable: false);
+  }
+
+
+  Future<ObservationArchivePage> getObservationArchive(
+    String stationId, {
+    String? observationType,
+    DateTime? fromUtc,
+    DateTime? toUtc,
+    int limit = 50,
+    String? cursor,
+  }) async {
+    if (stationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (limit < 1 || limit > 100 ||
+        (cursor != null && cursor.length > 2048)) {
+      throw const MetraApiException(400, 'invalid_pagination');
+    }
+    const types = {
+      'daily', 'hourly', 'climate', 'soil',
+      'agricultural', 'phenomenon', 'fieldclimate'
+    };
+    if (observationType != null && !types.contains(observationType)) {
+      throw const MetraApiException(400, 'invalid_observation_type');
+    }
+    if ((fromUtc != null && !fromUtc.isUtc) ||
+        (toUtc != null && !toUtc.isUtc)) {
+      throw const MetraApiException(400, 'utc_offset_required');
+    }
+    if (fromUtc != null && toUtc != null && !fromUtc.isBefore(toUtc)) {
+      throw const MetraApiException(400, 'invalid_time_range');
+    }
+    final query = <String, String>{
+      'limit': '$limit',
+      if (cursor != null) 'cursor': cursor,
+      if (observationType != null) 'observationType': observationType,
+      if (fromUtc != null) 'fromUtc': fromUtc.toIso8601String(),
+      if (toUtc != null) 'toUtc': toUtc.toIso8601String(),
+    };
+    final path = Uri(
+      path: '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive',
+      queryParameters: query,
+    ).toString();
+    final response = await _send('GET', path);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) {
+      throw const FormatException('invalid_observation_archive_response');
+    }
+    return ObservationArchivePage.fromJson(Map<String, dynamic>.from(decoded));
+  }
+
+  Future<ObservationArchiveItem> getObservationArchiveDetail(
+    String stationId,
+    String observationId,
+  ) async {
+    if (stationId.trim().isEmpty || observationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_archive_identifier');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive/${Uri.encodeComponent(observationId)}',
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map) {
+      throw const FormatException('invalid_observation_archive_detail');
+    }
+    return ObservationArchiveItem.fromJson(
+      Map<String, dynamic>.from(decoded));
   }
 
   Future<void> decideObservation({
@@ -190,7 +431,16 @@ class MetraApiClient {
     }
     final response = await http.Response.fromStream(await _client.send(request));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw MetraApiException(response.statusCode, 'request_failed');
+      var code = 'request_failed';
+      try {
+        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+        if (decoded is Map && decoded['code'] is String) {
+          code = decoded['code'] as String;
+        } else if (decoded is Map && decoded['error'] is String) {
+          code = decoded['error'] as String;
+        }
+      } catch (_) {}
+      throw MetraApiException(response.statusCode, code);
     }
     return response;
   }

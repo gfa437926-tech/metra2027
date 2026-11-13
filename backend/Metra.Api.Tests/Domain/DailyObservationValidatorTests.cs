@@ -65,6 +65,34 @@ public sealed class DailyObservationValidatorTests
     }
 
     [Fact]
+    public void Rejects_minimum_humidity_greater_than_maximum_humidity()
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["maxHumidity"] = "045",
+            ["minHumidity"] = "62"
+        };
+
+        var issues = DailyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "minHumidity");
+    }
+
+    [Fact]
+    public void Accepts_humidity_missing_markers_without_inventing_a_relationship()
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["maxHumidity"] = "#",
+            ["minHumidity"] = "62"
+        };
+
+        var issues = DailyObservationValidator.Validate(values);
+
+        Assert.DoesNotContain(issues, issue => issue.Field == "minHumidity");
+    }
+
+    [Fact]
     public void Rejects_required_fields_missing_from_the_submitted_dictionary()
     {
         var values = new Dictionary<string, string?>();

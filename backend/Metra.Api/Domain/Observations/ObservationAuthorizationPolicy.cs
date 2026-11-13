@@ -7,7 +7,12 @@ public enum ObservationPermission
     Submit = 2,
     Review = 3,
     ReturnForCorrection = 4,
-    Approve = 5
+    Approve = 5,
+    /// <summary>
+    /// Explicit station-scoped archive read. Never inferred from role or authority membership.
+    /// Grant must name a single station. Station A grant does not authorize station B.
+    /// </summary>
+    ArchiveRead = 6
 }
 
 public sealed record ObservationActorContext(
@@ -62,4 +67,37 @@ public static class ObservationAuthorizationPolicy
 
     private static ObservationAuthorizationResult Deny(string code, string message)
         => new(false, code, message);
+}
+/// <summary>
+/// Station-scoped observation archive authorization.
+/// Approved policy (Stage B): archive read is an explicit per-station grant only.
+/// Role membership and authority membership never imply archive access.
+/// A grant for station A never authorizes station B, even inside the same authority.
+/// </summary>
+public static class ObservationArchiveAuthorizationPolicy
+{
+    public static ObservationAuthorizationResult AuthorizeArchiveRead(
+        ObservationActorContext? actor,
+        string requestedStationId)
+    {
+        if (actor is null || string.IsNullOrWhiteSpace(actor.UserId))
+            return new(false, "unauthenticated", "يجب تسجيل الدخول أولاً.");
+
+        if (string.IsNullOrWhiteSpace(requestedStationId))
+            return new(false, "station_required", "يجب تحديد المحطة المطلوب قراءة أرشيفها.");
+
+        if (!actor.HasActiveStationAssignment)
+            return new(false, "inactive_station_assignment", "لا يوجد تكليف فعّال للمستخدم بالمحطة.");
+
+        if (string.IsNullOrWhiteSpace(actor.StationId) ||
+            !string.Equals(actor.StationId, requestedStationId, StringComparison.Ordinal))
+            return new(false, "station_scope_violation",
+                "منحة أرشيف محطة أخرى لا تمنح الوصول إلى هذه المحطة، حتى لو كانت ضمن الجهة نفسها.");
+
+        if (actor.Permissions is null || !actor.Permissions.Contains(ObservationPermission.ArchiveRead))
+            return new(false, "archive_permission_denied",
+                "قراءة الأرشيف تتطلب منحة صريحة observation.archive.read لهذه المحطة تحديداً.");
+
+        return new(true, null, null);
+    }
 }
