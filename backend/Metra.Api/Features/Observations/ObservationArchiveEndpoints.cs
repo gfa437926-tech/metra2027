@@ -45,7 +45,10 @@ public sealed record ObservationArchiveItemDto(
     string SourceRecordId,
     IReadOnlyDictionary<string, object?> Payload);
 
-public sealed class ObservationArchiveForbiddenException : Exception;
+public sealed class ObservationArchiveForbiddenException : Exception
+{
+    public ObservationArchiveForbiddenException() : base("Station archive permission denied.") { }
+}
 
 /// <summary>
 /// Reads the real metra_observation_records archive through actor-bound atomic RPCs.
@@ -160,7 +163,21 @@ public sealed class SupabaseObservationArchiveService(
             if (response.StatusCode == HttpStatusCode.Forbidden)
                 throw new ObservationArchiveForbiddenException();
             if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                try
+                {
+                    using var errorJson = JsonDocument.Parse(errorBody);
+                    if (errorJson.RootElement.TryGetProperty("code", out var code) &&
+                        code.ValueKind == JsonValueKind.String && code.GetString() == "42501")
+                        throw new ObservationArchiveForbiddenException();
+                }
+                catch (JsonException)
+                {
+                    // Non-JSON provider errors remain unavailable, not authorized.
+                }
                 return null;
+            }
             return await response.Content.ReadFromJsonAsync<JsonElement>(
                 cancellationToken: cancellationToken);
         }

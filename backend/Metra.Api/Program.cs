@@ -24,6 +24,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationSe
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationArchiveService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationReviewService));
@@ -45,7 +46,7 @@ builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
-builder.Services.AddScoped<IObservationArchiveService, UnconfiguredObservationArchiveService>();
+builder.Services.AddScoped<IObservationArchiveService, SupabaseObservationArchiveService>();
 builder.Services.AddOpenApi();
 var rateLimitingDisabled = builder.Configuration.GetValue("RateLimiting:Disabled", false);
 if (!rateLimitingDisabled)
