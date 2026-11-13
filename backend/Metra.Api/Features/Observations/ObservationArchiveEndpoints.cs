@@ -11,6 +11,7 @@ namespace Metra.Api.Features.Observations;
 public interface IObservationArchiveService
 {
     bool IsConfigured { get; }
+    Task<bool> ProbeAsync(CancellationToken cancellationToken);
 
     Task<ObservationArchiveListResult?> ListAsync(
         Guid actorUserId,
@@ -65,6 +66,60 @@ public sealed class SupabaseObservationArchiveService(
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
+
+    /// <summary>
+    /// Verifies that both protected archive RPC entry points and their shared
+    /// authorization helper are installed. Empty actor/station IDs must be
+    /// rejected by the database; a 403 is the expected healthy response.
+    /// No archive rows or user data are requested by this probe.
+    /// </summary>
+    public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return false;
+
+        var listDenied = await IsExpectedAuthorizationDenialAsync(
+            "get_station_observation_archive_atomic",
+            new
+            {
+                p_actor_user_id = Guid.Empty,
+                p_station_id = Guid.Empty,
+                p_from_utc = (DateTime?)null,
+                p_to_utc = (DateTime?)null,
+                p_observation_type = (string?)null,
+                p_limit = 1,
+                p_cursor = (string?)null
+            },
+            cancellationToken);
+        if (!listDenied) return false;
+
+        return await IsExpectedAuthorizationDenialAsync(
+            "get_station_observation_archive_item_atomic",
+            new
+            {
+                p_actor_user_id = Guid.Empty,
+                p_station_id = Guid.Empty,
+                p_observation_id = Guid.Empty
+            },
+            cancellationToken);
+    }
+
+    private async Task<bool> IsExpectedAuthorizationDenialAsync(
+        string functionName,
+        object body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await CallRpcAsync(functionName, body, cancellationToken);
+            // A successful response for an empty actor is a security failure;
+            // null means the function/schema/network is unavailable.
+            return false;
+        }
+        catch (ObservationArchiveForbiddenException)
+        {
+            return true;
+        }
+    }
 
     public async Task<ObservationArchiveListResult?> ListAsync(
         Guid actorUserId,

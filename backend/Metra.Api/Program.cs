@@ -149,8 +149,8 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
 .RequireRateLimiting(MetraRateLimiting.PolicyAnonymousProbe)
 .WithName("GetApiHealth");
 
-// Readiness is separate from liveness: it verifies server configuration and a
-// bounded, server-authenticated Supabase catalogue request without exposing secrets.
+// Readiness is separate from liveness: it verifies server configuration, a
+// bounded catalogue request, and both protected archive RPC entry points without exposing secrets.
 app.MapGet("/api/v1/ready", async (
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,
@@ -190,7 +190,8 @@ app.MapGet("/api/v1/ready", async (
     // non-empty environment variables. A schema, credential, or network
     // failure must keep the instance out of service.
     var probe = await directory.GetStationsAsync(1, 0, null, cancellationToken);
-    return probe is not null
+    var archiveProbe = probe is not null && await archive.ProbeAsync(cancellationToken);
+    return probe is not null && archiveProbe
         ? Results.Ok(new { status = "ready", service = "metra-api" })
         : Results.Problem(
             title: "Supabase readiness probe failed",
