@@ -130,20 +130,13 @@ void main() {
     expect(find.text('0 كم'), findsOneWidget);
     expect(find.textContaining('كم'), findsWidgets);
 
-    // The reference selector is a real control; changing it must recalculate
-    // which station is the zero-distance reference.
-    // Scroll to the selector by its visible label. A fixed drag distance is
-    // brittle because the preceding provenance assertions may leave the list
-    // at different offsets across Flutter engine versions.
-    final referenceLabel = find.text('المحطة المرجعية لحساب المسافات');
-    await tester.scrollUntilVisible(
-      referenceLabel,
-      240,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
+    // The selector is eagerly present in the ListView's children. Ensure it
+    // is brought into view through its own scrollable ancestor rather than
+    // resolving a separate Scrollable finder after earlier test interactions.
     final referencePicker = find.byType(DropdownButtonFormField);
     expect(referencePicker, findsOneWidget);
+    await tester.ensureVisible(referencePicker);
+    await tester.pumpAndSettle();
     await tester.tap(referencePicker);
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة حمص').last);
