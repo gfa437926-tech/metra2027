@@ -42,8 +42,10 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      # Info-level findings (e.g. material.dart deprecation on Flutter 3.50) must not
+      # block the suite; warnings/errors still fail the job.
       - name: flutter analyze
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
 
       - name: flutter test --concurrency=1
         run: flutter test --concurrency=1
