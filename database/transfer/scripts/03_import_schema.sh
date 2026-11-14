@@ -10,8 +10,7 @@ DST_URL="${METRA_DST_DATABASE_URL:?Set METRA_DST_DATABASE_URL}"
 DUMP_DIR="${1:?Usage: 03_import_schema.sh /path/to/export_stamp_dir}"
 : "${METRA_TRANSFER_PASSPHRASE:?Set METRA_TRANSFER_PASSPHRASE in the secure shell environment}"
 
-forbidden_refs=(tbdnklyxjvbrilvnwgmq nhovijnbtrocqahxxjou wdrcqceiagsmdxltqfwd vktcvkwqszehgmhqjrkb)
-for forbidden_ref in "${forbidden_refs[@]}"; do
+for forbidden_ref in tbdnklyxjvbrilvnwgmq nhovijnbtrocqahxxjou wdrcqceiagsmdxltqfwd vktcvkwqszehgmhqjrkb; do
   if [[ "$DST_REF" == "$forbidden_ref" ]]; then
     echo "Refusing: destination must be a new, non-legacy project." >&2
     exit 3
@@ -21,14 +20,17 @@ metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
 command -v gpg >/dev/null 2>&1 || { echo "gpg is required." >&2; exit 4; }
 [[ -s "$DUMP_DIR/01_schema_public.sql.gpg" ]] || { echo "Missing encrypted public schema dump." >&2; exit 4; }
 
-# Do not write to a target that already contains application objects.
+# Refuse to write into a target containing public application objects.
 existing_objects="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -c "
 SELECT
   (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
    WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f'))
   +
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-   WHERE n.nspname='public');
+   WHERE n.nspname='public')
+  +
+  (SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
+   WHERE n.nspname='public' AND t.typtype IN ('e','d','r'));
 ")"
 if [[ "$existing_objects" != "0" ]]; then
   echo "Refusing: target public schema is not empty ($existing_objects application objects)." >&2
