@@ -32,5 +32,7 @@ class MetraServiceReadiness {
   static const aiWorkspace = MetraDataSourceMode.mock;
   static const climatol = MetraDataSourceMode.mock;
   static const forecastCentres = MetraDataSourceMode.mock;
-  static const electronicAuditUi = MetraDataSourceMode.mock;
+
+  /// Station operational audit via .NET audit-log (not observation provenance).
+  static const electronicAuditUi = MetraDataSourceMode.liveApi;
 }
