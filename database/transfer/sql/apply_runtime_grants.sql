@@ -3,6 +3,7 @@
 
 -- Schema access: client roles have public USAGE only; private is restricted.
 REVOKE CREATE ON SCHEMA public FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+REVOKE CREATE ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role, metra_api_runtime;
 GRANT USAGE ON SCHEMA private TO metra_api_runtime;
