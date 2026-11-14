@@ -52,7 +52,12 @@ api_keys_and_jwt_secrets_exported=false
 MANIFEST
 (
   cd "$DUMP_DIR"
-  sha256sum 07_extensions.txt MANIFEST.txt > SHA256SUMS
+  sha256sum \
+    01_schema_application.sql.gpg 02_data_application.sql.gpg \
+    03_inventory_tables.txt 03_inventory_functions.txt \
+    04_auth_user_fk_inventory.txt 05_observation_provenance.txt \
+    06_runtime_role_inventory.txt 07_extensions.txt \
+    08_station_catalogue_provenance.txt MANIFEST.txt > SHA256SUMS
 )
 
 # An extension already installed in the wrong schema must be rejected, not silently accepted.
