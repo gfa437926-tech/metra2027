@@ -57,6 +57,17 @@ No coordinates or WMO identifiers have been guessed or inserted.
 
 This means the 62 non-demo rows can appear in the authenticated directory while still being unapproved and unverified. They must not be treated as operational stations for observation submission, station assignment, or scientific reporting.
 
+## Review workflow
+
+The backend exposes `POST /api/v1/stations/{stationId}/review`, protected by the station-owner authority permission `stations.catalogue.review`. The hosted source contains the corresponding public/private RPC. Read-only ACL checks confirmed:
+
+- `service_role` can execute the public review RPC.
+- `anon` and `authenticated` cannot execute it directly.
+- The public security-definer function checks an active reviewer account, approved authority membership, and an approved unrevoked permission grant, and locks the station row before delegating to the private mutation/audit function.
+- The private mutation function is not executable by `service_role`, `authenticated`, or `anon`; it is reached through the protected public wrapper.
+
+A backend response-mapping defect was found and corrected in the code: the SQL RPC returns `result_status=state_conflict` as a successful HTTP response row, so the API previously returned HTTP 200. The service now maps that row to HTTP 409 and includes the current station approval status; unit tests cover updated, conflict, malformed, and unexpected RPC results. This code change does not approve any station.
+
 ## Required follow-up before operational station use
 
 1. Review the 62 non-demo station records against the new station catalogue supplied for METRA.
