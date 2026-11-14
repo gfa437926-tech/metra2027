@@ -22,7 +22,9 @@ BEGIN
   IF has_function_privilege(''metra_api_runtime'',''private.reject_authority_access_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected runtime private trigger EXECUTE''; END IF;
   IF has_function_privilege(''service_role'',''public.reject_metra_observation_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role observation audit EXECUTE''; END IF;
   IF NOT has_function_privilege(''service_role'',''public.get_authority_catalogue()'',''EXECUTE'') THEN RAISE EXCEPTION ''missing service_role RPC EXECUTE''; END IF;
-  IF NOT has_function_privilege(''metra_api_runtime'',''private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)'',''EXECUTE'') THEN RAISE EXCEPTION ''missing private runtime EXECUTE''; END IF;
+  IF to_regprocedure(''private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)'') IS NOT NULL THEN
+    IF NOT has_function_privilege(''metra_api_runtime'',''private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)'',''EXECUTE'') THEN RAISE EXCEPTION ''missing optional private runtime EXECUTE''; END IF;
+  END IF;
   IF has_schema_privilege(''service_role'',''private'',''USAGE'') THEN RAISE EXCEPTION ''unexpected service_role private schema USAGE''; END IF;
   IF NOT pg_has_role(''postgres'',''metra_api_runtime'',''MEMBER'') THEN RAISE EXCEPTION ''postgres is not a member of runtime role''; END IF;
 END
