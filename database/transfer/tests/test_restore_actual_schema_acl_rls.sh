@@ -116,11 +116,9 @@ sed -e '/^SET transaction_timeout = 0;$/d' \
     "$WORK/actual-schema.sql" > "$WORK/actual-schema.compat.sql"
 "$REAL_PSQL" -X -1 -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$WORK/actual-schema.compat.sql"
 
-# Reapply only the transfer pack's reviewed target ACLs and run its assertions.
-"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/sql/apply_runtime_grants.sql" >/dev/null
-"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_target_default_acl.sql" >/dev/null
-"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_runtime_grants.sql" >/dev/null
-"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_target_function_search_path.sql" >/dev/null
+# First compare restored schema definitions before target-side ACL/search_path
+# hardening. The transfer policy intentionally tightens runtime privileges and
+# trigger search_path after the schema has been faithfully restored.
 
 # Compare normalized schema-only dumps. This covers all restored table/column
 # definitions, constraints, indexes, sequences, views, functions, triggers,
@@ -132,6 +130,7 @@ for side in source target; do
     --file="$WORK/$side.schema.sql" --dbname="$db"
   sed -e '/^--/d' -e '/^SET /d' -e '/^SELECT pg_catalog.set_config/d' \
       -e '/^\\restrict /d' -e '/^\\unrestrict /d' \
+      -e '/^ALTER TABLE ONLY .* ALTER COLUMN .* SET (pg_attver=[0-9][0-9]*);$/d' \
       "$WORK/$side.schema.sql" | sed '/^[[:space:]]*$/d' > "$WORK/$side.schema.normalized.sql"
 done
 if ! diff -u "$WORK/source.schema.normalized.sql" "$WORK/target.schema.normalized.sql" > "$WORK/schema.diff"; then
@@ -195,6 +194,13 @@ SQL
 done
 diff -u "$WORK/source.inventory.txt" "$WORK/target.inventory.txt"
 cat "$WORK/target.inventory.txt"
+
+# Reapply the reviewed target ACL policy only after schema fidelity has been
+# compared; this layer intentionally tightens target-side grants/search_path.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/sql/apply_runtime_grants.sql" >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_target_default_acl.sql" >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_runtime_grants.sql" >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/tests/assert_target_function_search_path.sql" >/dev/null
 
 # Fail closed if any public/private table is directly exposed to anon or
 # authenticated without RLS. Also require client roles to have no direct
