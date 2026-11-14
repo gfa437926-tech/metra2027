@@ -34,7 +34,7 @@ begin
   ) then
     execute $fn$
       create or replace function public.metra_user_has_station_permission(
-        p_user_id uuid, p_station_id uuid, p_permission text
+        p_user_id uuid, p_station_id uuid, p_permission_code text
       ) returns boolean language sql stable as $s$
         select true;
       $s$
