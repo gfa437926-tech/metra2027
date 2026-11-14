@@ -67,7 +67,6 @@ jobs:
             IF NOT has_function_privilege('service_role','public.get_authority_catalogue()','EXECUTE') THEN RAISE EXCEPTION 'missing service_role RPC EXECUTE'; END IF;
             IF NOT has_function_privilege('metra_api_runtime','private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)','EXECUTE') THEN RAISE EXCEPTION 'missing private runtime EXECUTE'; END IF;
             IF has_schema_privilege('service_role','private','USAGE') THEN RAISE EXCEPTION 'unexpected service_role private schema USAGE'; END IF;
-            IF NOT has_function_privilege('metra_api_runtime','private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)','EXECUTE') THEN RAISE EXCEPTION 'missing registration decision EXECUTE'; END IF;
             IF NOT pg_has_role('postgres','metra_api_runtime','MEMBER') THEN RAISE EXCEPTION 'postgres is not a member of runtime role'; END IF;
           END \$\$;"
       - name: Test exact row counts and empty-target guard
