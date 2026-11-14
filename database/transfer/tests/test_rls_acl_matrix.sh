@@ -14,11 +14,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Managed role fixtures are provisioned by the preceding isolated CI setup step.\npsql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+# Managed role fixtures are provisioned by the preceding isolated CI setup step.
+psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL
 CREATE SCHEMA $SCHEMA;
 CREATE FUNCTION $SCHEMA.current_user_id()
 RETURNS uuid LANGUAGE sql STABLE
-AS \\$\\$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid \\$\\$;
+AS \$\$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid \$\$;
 GRANT USAGE ON SCHEMA $SCHEMA TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION $SCHEMA.current_user_id() TO authenticated;
 CREATE TABLE $SCHEMA.station_records (
