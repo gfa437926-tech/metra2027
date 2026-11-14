@@ -119,6 +119,8 @@ require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_r
 require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'RLS flags or policy definitions changed during full schema restore'
 require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'station_coordinates exists in some hosted snapshots but is not defined by'
 require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'to_regprocedure(function_signature) IS NOT NULL'
+require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'optional_runtime_functions'
+require_contains "$ROOT/database/transfer/tests/assert_runtime_grants.sql" 'optional private runtime EXECUTE'
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "20261103164003_create_operational_observation_submission.sql"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observations lost ENABLE/FORCE RLS"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observation_audit_events lost ENABLE/FORCE RLS"
