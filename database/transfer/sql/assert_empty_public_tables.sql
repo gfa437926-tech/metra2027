@@ -8,7 +8,7 @@ BEGIN
   FOR item IN
     SELECT schemaname, tablename
     FROM pg_tables
-    WHERE schemaname = 'public'
+    WHERE schemaname IN ('public','private')
     ORDER BY schemaname, tablename
   LOOP
     EXECUTE format(
