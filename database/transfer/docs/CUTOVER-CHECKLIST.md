@@ -9,6 +9,7 @@
 - [ ] Encrypted backup retained offline/outside Git
 - [ ] Restore drill performed into an isolated target
 - [ ] Auth FK inventory reviewed; no blind UUID rewriting
+- [ ] Observation provenance summary reviewed; non-demo records and null station references reconciled
 - [ ] Legacy METRA databases not used
 
 ## Target project bootstrap
