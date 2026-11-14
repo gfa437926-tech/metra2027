@@ -19,7 +19,7 @@
 - [ ] Auth site URL, redirect URLs, SMTP, and providers configured independently
 - [ ] Required extensions installed at source-compatible versions and schemas
 - [ ] `metra_observation_records` target table is empty; non-demo source rows were not transferred
-- [ ] New station catalogue content matches; coordinate gaps (15 in source) are reviewed and no orphan/duplicate coordinate links exist
+- [ ] New station catalogue content matches; coordinate gaps reported by the source provenance inventory are reviewed and no orphan/duplicate coordinate links exist
 - [ ] New target publishable/anon and server-only secret/service_role keys generated
 - [ ] Backend secrets configured only in target secret store
 - [ ] Flutter configuration uses target URL and public publishable key only
