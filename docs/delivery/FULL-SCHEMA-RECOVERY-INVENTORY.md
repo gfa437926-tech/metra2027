@@ -74,3 +74,8 @@ The full repository tree also contains 29 ordered files in `database/migrations/
 The read-only two-database comparison runner is `database/tests/compare_isolated_schema_snapshots.sh`. It compares schema-only dumps and catalog inventories from two already-restored isolated databases. It does not apply DDL or connect to hosted environments.
 
 **Acceptance remains blocked:** source inspection confirms baseline/migration conflicts. Do not run a linear empty-database replay until the canonical table shapes are reconciled.
+
+
+## Baseline-to-migration reconciliation
+
+The relation-by-relation discrepancy register is maintained in [SCHEMA-RECONCILIATION-MATRIX.md](../../database/baseline/SCHEMA_RECONCILIATION_MATRIX.md). It distinguishes verified baseline columns from migration dependencies and marks unresolved schema contracts as blocked rather than inventing definitions. This is a static review artifact; it does not authorize DDL execution.
