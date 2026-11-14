@@ -146,6 +146,8 @@ jobs:
         run: |
           set -euo pipefail
           PATH_N_APPLY_OBSERVATIONS=1 bash database/baseline/path_n_apply.sh
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/033_atomic_actor_station_read_rpcs.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/034_atomic_observation_write_authorization.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/20261114010000_unify_observation_decision_event_type.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/10_test_observation_decision_event_type.sql
 
