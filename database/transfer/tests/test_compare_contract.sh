@@ -47,7 +47,7 @@ for artifact in \
   acl \
   extensions \
   station_catalogue; do
-  require_contains "$RUNNER" '${side}_${artifact}.txt'
+  require_contains "$RUNNER" '"$OUT/${side}_'"${artifact}"'.txt"'
 done
 
 # Verify the target-only acceptance checks are actually run.
