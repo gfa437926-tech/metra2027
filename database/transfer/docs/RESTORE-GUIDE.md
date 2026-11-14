@@ -22,16 +22,18 @@ Also required: a new, explicitly identified Supabase target with an empty applic
 
 ## Restore sequence
 
-Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply METRA_TRANSFER_PASSPHRASE through a protected secret manager. Never paste credentials or passphrases into chat or Git.
+Set `METRA_DST_PROJECT_REF` and `METRA_DST_DATABASE_URL` to the new target. Supply `METRA_TRANSFER_PASSPHRASE` through a protected secret manager. Never paste credentials or passphrases into chat or Git.
 
-1. Run scripts/02_bootstrap_target.sh to create the least-privilege non-login runtime role, private schema, and public default ACLs.
-2. Run scripts/03_import_schema.sh with the export directory. It verifies the complete manifest, decrypts the schema, verifies target identity and emptiness, and imports in one transaction.
-3. Run scripts/06_apply_runtime_grants.sh after schema import.
-4. Review 04_auth_user_fk_inventory.txt before attempting data import. Recreate target Auth users through the supported target Auth flow and prepare a protected source→target UUID mapping for every declared Auth FK.
-5. **Data import is currently blocked when the Auth FK inventory is non-empty.** The current pack deliberately fails closed because it does not yet transform the SQL data dump using the approved UUID mapping. Do not bypass the guard or manually delete the inventory. Implement and review the mapping-aware data transformation, test it against fixtures, and only then enable the data import.
-6. Once the mapping-aware import step is implemented and verified, run scripts/04_import_data.sh with the export directory; it verifies the manifest, refuses populated tables, decrypts the data, and imports in one transaction.
-7. Set METRA_SRC_PROJECT_REF to tbdnklyxjvbrilvnwgmq and METRA_SRC_DATABASE_URL to the approved source URL. Run scripts/05_compare.sh.
-8. Review 05_observation_provenance.txt. Reconcile source-system/source-table groups and records without station_id before declaring the restored dataset accepted.
+1. Run `scripts/02_bootstrap_target.sh` to create the least-privilege non-login runtime role, private schema, and public default ACLs.
+2. Run `scripts/03_import_schema.sh` with the export directory. It verifies the complete manifest, required extensions, target identity and emptiness, then imports in one transaction.
+3. Run `scripts/06_apply_runtime_grants.sh` after schema import.
+4. Review `04_auth_user_fk_inventory.txt`. Recreate target Auth users through the supported target Auth flow and prepare a protected `source_user_id,target_user_id` CSV mapping. Set its file mode to `0600`.
+5. Set `METRA_AUTH_USER_MAPPING_FILE` to the protected mapping file. The data importer checks that all mapped target UUIDs exist in `auth.users`, then rewrites only the declared FK columns in the decrypted COPY dump. It fails closed on missing mappings or unexpected COPY structures.
+6. Run `scripts/04_import_data.sh` with the export directory. It verifies checksums and manifest, checks required extensions and target emptiness, remaps declared Auth FK values, then imports in one transaction.
+7. Set `METRA_SRC_PROJECT_REF` to `tbdnklyxjvbrilvnwgmq` and `METRA_SRC_DATABASE_URL` to the approved source URL. Run `scripts/05_compare.sh`.
+8. Review `05_observation_provenance.txt`. Reconcile source-system/source-table groups and records without `station_id` before declaring the restored dataset accepted.
+9. Audit unconstrained UUID references, JSON claims, and application metadata separately; the FK remapper does not rewrite these.
+
 ## Acceptance tests
 
 - [ ] SHA-256 verification succeeds for all export artifacts.
