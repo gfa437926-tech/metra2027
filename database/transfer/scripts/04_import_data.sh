@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Decrypt and import public data into empty tables on an identified target.
+# Decrypt and import public/private data into empty tables on an identified target.
 set -euo pipefail
 umask 077
 
@@ -28,7 +28,7 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
   sha256sum --check --strict SHA256SUMS
 )
 
-# Stop before writing if any target public table already contains rows.
+# Stop before writing if any target application table already contains rows.
 psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_application_tables.sql"
 
 TMP_DIR="$(mktemp -d)"
@@ -37,6 +37,6 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
   --passphrase-fd 0 --decrypt --output "$TMP_DIR/02_data_public.sql" \
   "$DUMP_DIR/02_data_public.sql.gpg"
 
-echo "Importing public data into verified empty target $DST_REF"
+echo "Importing public/private data into verified empty target $DST_REF"
 psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$TMP_DIR/02_data_public.sql"
 echo "Data import finished. Auth users are not imported by this script."
