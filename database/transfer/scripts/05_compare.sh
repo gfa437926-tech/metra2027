@@ -46,7 +46,7 @@ for side in source target; do
 done
 
 # The target intentionally has tighter default ACLs than the experimental source.
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT/sql/assert_target_default_acl.sql" > "$OUT/target_default_acl_assertion.txt"
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT/tests/assert_target_default_acl.sql" > "$OUT/target_default_acl_assertion.txt"
 psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT/tests/assert_target_function_search_path.sql" > "$OUT/target_function_search_path_assertion.txt"
 
 set +e
