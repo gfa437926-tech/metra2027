@@ -4,6 +4,19 @@ DO $$
 DECLARE
   role_row record;
 BEGIN
+  IF (
+    SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname IN ('public','private') AND c.relkind IN ('r','p','v','m','S','f')
+  ) + (
+    SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+    WHERE n.nspname IN ('public','private')
+  ) + (
+    SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
+    WHERE n.nspname IN ('public','private') AND t.typtype IN ('c','e','d','r')
+  ) > 0 THEN
+    RAISE EXCEPTION 'Target public/private application schemas are not empty; refusing bootstrap';
+  END IF;
+
   SELECT rolsuper, rolinherit, rolcreaterole, rolcreatedb, rolcanlogin,
          rolreplication, rolbypassrls
   INTO role_row
