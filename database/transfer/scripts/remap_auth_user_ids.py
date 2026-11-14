@@ -78,7 +78,7 @@ def load_inventory(path: Path) -> dict[tuple[str, str], set[str]]:
     result: dict[tuple[str, str], set[str]] = {}
     with path.open(encoding="utf-8", newline="") as handle:
         for line_number, raw in enumerate(handle, start=1):
-            row = raw.rstrip("\\r\\n")
+            row = raw.rstrip("\r\n")
             if not row:
                 continue
             try:
