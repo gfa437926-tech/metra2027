@@ -5,8 +5,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 WORK_DIR="$(mktemp -d)"
 DUMP_DIR="$WORK_DIR/export"
-trap 'rm -rf "$WORK_DIR"' EXIT
+cleanup() {
+  PGDATABASE=postgres dropdb --if-exists metra_import_test >/dev/null 2>&1 || true
+  rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
 mkdir -p "$WORK_DIR/bin" "$DUMP_DIR"
+
+createdb metra_import_test
+export PGDATABASE=metra_import_test
 
 # The importer validates a Supabase URL; this test wrapper maps that validated
 # URL to the disposable local PostgreSQL service without changing importer code.
