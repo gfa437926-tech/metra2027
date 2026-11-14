@@ -1,4 +1,3 @@
-  if grep -Eq -e 'COPY public\.metra_observation_records([[:space:]]|\()' -e 'COPY "public"\."metra_observation_records"([[:space:]]|\()' -e 'INSERT INTO public\.metra_observation_records([[:space:]]|\()' -e 'INSERT INTO "public"\."metra_observation_records"([[:space:]]|\()' "$dump_file"; then
 #!/usr/bin/env bash
 # Validate that a Postgres URL identifies the expected Supabase project.
 # Direct connections must use db.<ref>.supabase.co.
