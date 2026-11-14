@@ -8,9 +8,12 @@ void main() {
     expect(MetraServiceReadiness.observationArchive, MetraDataSourceMode.mock);
   });
 
-  test('station catalogue remains live while gated atomic reads stay non-live until deployed', () {
+  test('non-scientific reads use live API contracts while unavailable services fail closed', () {
     expect(MetraServiceReadiness.stationDirectory, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.mock);
-    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.mock);
+    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.stationUsers, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.registrationRead, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.authorityAccessRead, MetraDataSourceMode.liveApi);
   });
 }
