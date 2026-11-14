@@ -44,10 +44,10 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, s
 -- Reset existing function ACLs because Supabase defaults are broader than
 -- several source-specific RPC/trigger ACLs.
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
-  FROM PUBLIC, anon, authenticated, service_role;
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
 REVOKE EXECUTE ON FUNCTION public.reject_metra_observation_audit_mutation()
-  FROM PUBLIC, anon, authenticated, service_role;
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 GRANT EXECUTE ON FUNCTION
   public.reject_metra_equipment_fault_audit_mutation(),
   public.reject_metra_support_incident_audit_mutation()
