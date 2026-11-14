@@ -112,6 +112,8 @@ require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observation_audit_events lost ENABLE/FORCE RLS"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operational observation tables unexpectedly gained direct-client RLS policies"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operational observation RPC execute ACL is not service_role-only"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "restored no-policy RLS accepted client INSERT"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "all client DML ACLs"
 require_file "$ROOT/database/transfer/tests/compare_fixture.sql"
 require_file "$ROOT/database/transfer/tests/test_excluded_dump_patterns.sh"
 require_file "$ROOT/database/transfer/tests/test_compare_runner_preflight.sh"
