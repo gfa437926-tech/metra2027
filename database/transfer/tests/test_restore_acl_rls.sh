@@ -50,6 +50,10 @@ SQL
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -c 'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;' >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$TRANSFER/tests/runtime_role_fixtures.sql" >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$TRANSFER/tests/compare_fixture.sql" >/dev/null
+# Remove placeholder-only names from the generic ACL fixture so the real migration
+# can create the authoritative operational observation table definitions.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -c \
+  "DROP TABLE IF EXISTS public.metra_observation_audit_events CASCADE; DROP TABLE IF EXISTS public.metra_observations CASCADE;" >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$ROOT/supabase/migrations/20261103164003_create_operational_observation_submission.sql" >/dev/null
 
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" <<SQL
