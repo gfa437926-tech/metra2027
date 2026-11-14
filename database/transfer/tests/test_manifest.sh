@@ -14,6 +14,7 @@ observation_records_data_exported=false
 non_demo_observation_records_excluded=true
 runtime_role_inventory_exported=true
 required_extensions_inventory_exported=true
+station_catalogue_provenance_exported=true
 api_keys_and_jwt_secrets_exported=false
 EOF
 metra_verify_transfer_manifest "$TMP_DIR"
