@@ -2,7 +2,7 @@
 
 ## Scope
 
-The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, API secrets, or provider configuration. The scripts recreate the reviewed application role ACLs, sequence/function grants, and public default privileges. This is a database transfer pack, not a complete Supabase project clone.
+The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, API secrets, or provider configuration. The scripts recreate the reviewed application role ACLs, sequence/function grants, and public default privileges. Schema import refuses to proceed unless the target has every required extension at the recorded version and schema. This is a database transfer pack, not a complete Supabase project clone.
 
 ## Required inputs
 
@@ -14,6 +14,7 @@ An export directory from 01_export_source.sh containing:
 - 04_auth_user_fk_inventory.txt
 - 05_observation_provenance.txt
 - 06_runtime_role_inventory.txt
+- 07_extensions.txt
 - SHA256SUMS
 - MANIFEST.txt
 
@@ -35,7 +36,7 @@ Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply M
 
 - [ ] SHA-256 verification succeeds for all export artifacts.
 - [ ] Public/private schema and data import complete without errors.
-- [ ] Exact public/private row counts, object inventory, and role/default-ACL comparison pass.
+- [ ] Exact public/private row counts, object inventory, and role/default-ACL comparison pass; required source extensions are present on target.
 - [ ] Foreign keys validate and no orphaned user references remain after approved Auth remapping.
 - [ ] RLS policies and required grants are verified separately with anonymous, authenticated, and privileged test identities.
 - [ ] .NET health/readiness, login, station directory, observation gating, and Flutter login smoke tests pass.
