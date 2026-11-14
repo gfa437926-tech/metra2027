@@ -1,5 +1,5 @@
--- Deterministic inventory of application-owned public objects.
--- Managed Supabase schemas and private are intentionally excluded from this public-only transfer.
+-- Deterministic inventory of application-owned public/private objects.
+-- Managed Supabase schemas are excluded; this is not a byte-for-byte schema-definition diff.
 -- This is not a byte-for-byte schema-definition diff.
 SELECT object_type, object_schema, object_name, object_detail
 FROM (
@@ -19,7 +19,7 @@ FROM (
     ''::text AS object_detail
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public','private')
     AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f', 'i', 'I')
 
   UNION ALL
@@ -82,6 +82,6 @@ FROM (
     tablename || '.' || policyname,
     cmd
   FROM pg_policies
-  WHERE schemaname = 'public'
+  WHERE schemaname IN ('public','private')
 ) inventory
 ORDER BY object_schema, object_type, object_name, object_detail;
