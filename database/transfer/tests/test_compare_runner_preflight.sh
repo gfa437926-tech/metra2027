@@ -30,7 +30,7 @@ expect_preflight_rejection() {
   shift
   rm -f "$METRA_PSQL_MARKER"
   if env PATH="$PATH" METRA_PSQL_MARKER="$METRA_PSQL_MARKER" \
-    METRA_TRANSFER_OUT="$WORK_DIR/$label-output" "$@" "$RUNNER" \
+    METRA_TRANSFER_OUT="$WORK_DIR/$label-output" "$@" bash "$RUNNER" \
     >"$WORK_DIR/$label.stdout" 2>"$WORK_DIR/$label.stderr"; then
     echo "FAIL: $label unexpectedly passed preflight." >&2
     exit 1
@@ -74,7 +74,7 @@ env PATH="$PATH" METRA_PSQL_MARKER="$METRA_PSQL_MARKER" \
   METRA_TRANSFER_OUT="$WORK_DIR/valid-output" \
   METRA_SRC_PROJECT_REF="$SOURCE_REF" METRA_DST_PROJECT_REF="$TARGET_REF" \
   METRA_SRC_DATABASE_URL="$SOURCE_URL" METRA_DST_DATABASE_URL="$TARGET_URL" \
-  "$RUNNER" >"$WORK_DIR/valid.stdout" 2>"$WORK_DIR/valid.stderr"
+  bash "$RUNNER" >"$WORK_DIR/valid.stdout" 2>"$WORK_DIR/valid.stderr"
 status=$?
 set -e
 if [[ "$status" -ne 97 || ! -s "$METRA_PSQL_MARKER" ]]; then
