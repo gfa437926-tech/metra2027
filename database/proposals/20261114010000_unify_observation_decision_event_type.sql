@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION public.metra_decide_observation(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public, private
+SET search_path = pg_catalog, public
 AS $function$
 DECLARE
   v_row public.metra_observations%rowtype;
