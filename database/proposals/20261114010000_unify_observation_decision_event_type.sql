@@ -1,110 +1,113 @@
 -- PROPOSAL ONLY — DO NOT APPLY TO HOSTED SUPABASE WITHOUT EXPLICIT OWNER APPROVAL.
 --
--- Fixes release-blocking vocabulary mismatch:
---   CHECK on metra_observation_audit_events.event_type allows
---     ('created_draft','submitted','returned','approved','resubmitted')
---   but metra_decide_observation previously inserted the command token
---     ('approve' | 'return_for_correction') into event_type.
+-- Canonical decision vocabulary:
+--   API/UI commands: approve | return_for_correction
+--   stored status + audit event_type: approved | returned
 --
--- Decision (owner, 2026-11-14):
---   Audit event_type and observation status use: approved | returned
---   API / UI command names remain: approve | return_for_correction
---
--- Safety:
---   - CREATE OR REPLACE function only; no table rewrite, no data migration.
---   - Input validation and permission keys unchanged.
---   - Service-role execute grant preserved; all other roles revoked.
---   - Rollback = re-apply the previous function definition from
---     supabase/migrations/20261103220500_harden_observation_decision_null_validation.sql
+-- This definition intentionally preserves C9.7's atomic authorization contract:
+--   * authorization facts are locked in the same transaction as the decision;
+--   * self-review is forbidden;
+--   * return-for-correction requires a non-empty note;
+--   * observation row is locked and must still be submitted.
+-- The migration changes only the event/status vocabulary, not the security model.
 
-create or replace function public.metra_decide_observation(
+CREATE OR REPLACE FUNCTION public.metra_decide_observation(
   p_user_id uuid,
   p_station_id uuid,
   p_observation_id uuid,
   p_decision text,
-  p_note text default null
-) returns jsonb
-language plpgsql
-security definer
-set search_path = pg_catalog, public
-as $$
-declare
+  p_note text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = pg_catalog, public, private
+AS $function$
+DECLARE
   v_row public.metra_observations%rowtype;
   v_permission text;
   v_status text;
-begin
-  if p_user_id is null or p_station_id is null or p_observation_id is null then
-    raise exception 'user_station_observation_required' using errcode = '22023';
-  end if;
+  v_note text;
+BEGIN
+  IF p_user_id IS NULL OR p_station_id IS NULL OR p_observation_id IS NULL THEN
+    RAISE EXCEPTION 'user_station_observation_required' USING ERRCODE = '22023';
+  END IF;
+  IF p_decision IS NULL OR p_decision NOT IN ('approve','return_for_correction') THEN
+    RAISE EXCEPTION 'invalid_observation_decision' USING ERRCODE = '22023';
+  END IF;
 
-  -- API/UI command vocabulary (unchanged).
-  if p_decision is null or p_decision not in ('approve', 'return_for_correction') then
-    raise exception 'invalid_observation_decision' using errcode = '22023';
-  end if;
+  v_note := nullif(btrim(coalesce(p_note,'')),'');
+  IF p_note IS NOT NULL AND length(p_note) > 2000 THEN
+    RAISE EXCEPTION 'decision_note_too_long' USING ERRCODE = '22023';
+  END IF;
+  IF p_decision = 'return_for_correction' AND v_note IS NULL THEN
+    RAISE EXCEPTION 'decision_note_required' USING ERRCODE = '22023';
+  END IF;
 
-  if p_note is not null and length(p_note) > 2000 then
-    raise exception 'decision_note_too_long' using errcode = '22023';
-  end if;
+  SELECT * INTO v_row
+  FROM public.metra_observations
+  WHERE id = p_observation_id AND station_id = p_station_id
+  FOR UPDATE;
 
-  v_permission := case
-    when p_decision = 'approve' then 'observation.approve'
-    else 'observation.return_for_correction'
-  end;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'observation_not_found' USING ERRCODE = 'P0002';
+  END IF;
+  IF v_row.status <> 'submitted' THEN
+    RAISE EXCEPTION 'observation_not_in_submitted_state' USING ERRCODE = '22023';
+  END IF;
+  IF v_row.created_by = p_user_id THEN
+    RAISE EXCEPTION 'self_review_forbidden' USING ERRCODE = '42501';
+  END IF;
 
-  if not public.metra_user_has_station_permission(p_user_id, p_station_id, v_permission) then
-    raise exception 'station_observation_decision_forbidden' using errcode = '42501';
-  end if;
+  v_permission := CASE
+    WHEN p_decision = 'approve' THEN 'observation.approve'
+    ELSE 'observation.return_for_correction'
+  END;
+  IF NOT private.metra_lock_authorized_station_read(
+    p_user_id, p_station_id, v_permission
+  ) THEN
+    RAISE EXCEPTION 'station_observation_decision_forbidden' USING ERRCODE = '42501';
+  END IF;
 
-  select * into v_row
-    from public.metra_observations
-   where id = p_observation_id
-     and station_id = p_station_id
-   for update;
+  v_status := CASE
+    WHEN p_decision = 'approve' THEN 'approved'
+    ELSE 'returned'
+  END;
 
-  if not found then
-    raise exception 'observation_not_found' using errcode = 'P0002';
-  end if;
+  UPDATE public.metra_observations
+  SET status = v_status,
+      reviewed_by = p_user_id,
+      reviewed_at = now(),
+      review_note = v_note,
+      updated_at = now()
+  WHERE id = p_observation_id
+    AND station_id = p_station_id
+    AND status = 'submitted';
 
-  if v_row.status <> 'submitted' then
-    raise exception 'observation_not_in_submitted_state' using errcode = '22023';
-  end if;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'observation_not_in_submitted_state' USING ERRCODE = '22023';
+  END IF;
 
-  -- Canonical status + audit event_type vocabulary (owner decision 2026-11-14).
-  v_status := case
-    when p_decision = 'approve' then 'approved'
-    else 'returned'
-  end;
+  INSERT INTO public.metra_observation_audit_events (
+    observation_id, station_id, actor_user_id, event_type,
+    from_status, to_status, note
+  ) VALUES (
+    p_observation_id, p_station_id, p_user_id, v_status,
+    'submitted', v_status, v_note
+  );
 
-  update public.metra_observations
-     set status      = v_status,
-         reviewed_by = p_user_id,
-         reviewed_at = now(),
-         review_note = nullif(btrim(p_note), ''),
-         updated_at  = now()
-   where id = p_observation_id
-     and station_id = p_station_id;
-
-  -- event_type now matches the CHECK constraint and the resulting status.
-  insert into public.metra_observation_audit_events
-    (observation_id, station_id, actor_user_id, event_type, from_status, to_status, note)
-  values
-    (p_observation_id, p_station_id, p_user_id, v_status, 'submitted', v_status,
-     nullif(btrim(p_note), ''));
-
-  return jsonb_build_object(
-    'id',       p_observation_id,
-    'status',   v_status,
+  RETURN jsonb_build_object(
+    'id', p_observation_id,
+    'status', v_status,
     'replayed', false
   );
-end;
-$$;
+END;
+$function$;
 
-revoke all on function public.metra_decide_observation(uuid, uuid, uuid, text, text)
-  from public, anon, authenticated, metra_api_runtime;
+REVOKE ALL ON FUNCTION public.metra_decide_observation(uuid,uuid,uuid,text,text)
+  FROM PUBLIC, anon, authenticated, metra_api_runtime;
+GRANT EXECUTE ON FUNCTION public.metra_decide_observation(uuid,uuid,uuid,text,text)
+  TO service_role;
 
-grant execute on function public.metra_decide_observation(uuid, uuid, uuid, text, text)
-  to service_role;
-
-comment on function public.metra_decide_observation(uuid, uuid, uuid, text, text) is
-  'Atomic observation review decision. Accepts command tokens approve|return_for_correction; '
-  'writes status and audit event_type as approved|returned. Proposed 2026-11-14.';
+COMMENT ON FUNCTION public.metra_decide_observation(uuid,uuid,uuid,text,text) IS
+  'Atomic station-authorized observation decision. API commands approve|return_for_correction; stored status and audit event_type approved|returned. Self-review is forbidden and return requires a note. Proposal 2026-11-14.';
