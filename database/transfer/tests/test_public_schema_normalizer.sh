@@ -9,13 +9,10 @@ cat > "$TMP_DIR/valid.sql" <<'SQL'
 CREATE SCHEMA public;
 CREATE SCHEMA private;
 CREATE TABLE public.fixture(id integer PRIMARY KEY);
-CREATE FUNCTION private.fixture() RETURNS void LANGUAGE sql AS $ SELECT; $;
+CREATE FUNCTION private.fixture() RETURNS integer LANGUAGE sql AS 'SELECT 1;';
 SQL
 metra_normalize_public_schema_dump "$TMP_DIR/valid.sql" "$TMP_DIR/normalized.sql"
-if grep -Eq '^CREATE SCHEMA "?public"?;$|^CREATE SCHEMA "?private"?;
-
-echo "PASS: public schema dump normalization guard."
- "$TMP_DIR/normalized.sql"; then
+if grep -Eq '^CREATE SCHEMA "?public"?;$|^CREATE SCHEMA "?private"?;$' "$TMP_DIR/normalized.sql"; then
   echo "FAIL: application schema creation was not removed." >&2
   exit 1
 fi
@@ -40,6 +37,6 @@ SQL
 if metra_normalize_public_schema_dump "$TMP_DIR/duplicate.sql" "$TMP_DIR/duplicate.out.sql"; then
   echo "FAIL: dump with duplicate public schema statements was accepted." >&2
   exit 1
-  fi
+fi
 
-echo "PASS: public schema dump normalization guard."
+echo "PASS: public/private schema dump normalization guard."
