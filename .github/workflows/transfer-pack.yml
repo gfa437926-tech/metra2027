@@ -48,22 +48,27 @@ jobs:
           sudo apt-get install -y postgresql-client
       - name: Test target role bootstrap and least-privilege grants
         run: |
-          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
           psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN
             IF NOT has_schema_privilege('metra_api_runtime','private','USAGE') THEN RAISE EXCEPTION 'missing private USAGE'; END IF;
-            IF NOT has_table_privilege('metra_api_runtime','public.station_catalogue','SELECT') THEN RAISE EXCEPTION 'missing station SELECT'; END IF;
-            IF has_table_privilege('metra_api_runtime','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'unexpected station INSERT'; END IF;
+            IF NOT has_table_privilege('metra_api_runtime','public.station_catalogue','SELECT') THEN RAISE EXCEPTION 'missing runtime station SELECT'; END IF;
+            IF has_table_privilege('metra_api_runtime','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'unexpected runtime station INSERT'; END IF;
+            IF NOT has_table_privilege('service_role','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'missing service_role table INSERT'; END IF;
+            IF has_table_privilege('service_role','public.authority_access_audit_events','INSERT') THEN RAISE EXCEPTION 'unexpected service_role audit INSERT'; END IF;
+            IF NOT has_sequence_privilege('anon','public.station_audit_log_id_seq','USAGE') THEN RAISE EXCEPTION 'missing anon sequence USAGE'; END IF;
+            IF NOT has_function_privilege('anon','public.reject_metra_equipment_fault_audit_mutation()','EXECUTE') THEN RAISE EXCEPTION 'missing anon trigger function EXECUTE'; END IF;
+            IF has_function_privilege('service_role','public.reject_metra_observation_audit_mutation()','EXECUTE') THEN RAISE EXCEPTION 'unexpected service_role observation audit EXECUTE'; END IF;
             IF NOT has_function_privilege('metra_api_runtime','private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)','EXECUTE') THEN RAISE EXCEPTION 'missing registration decision EXECUTE'; END IF;
             IF NOT pg_has_role('postgres','metra_api_runtime','MEMBER') THEN RAISE EXCEPTION 'postgres is not a member of runtime role'; END IF;
           END \$\$;"
       - name: Test exact row counts and empty-target guard
         run: |
-          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY);"
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
           grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
-          grep -Fx "private|transfer_pack_fixture|0" /tmp/rowcounts.txt
+          grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
           grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
           grep -F "function|private|decide_metra_registration|" /tmp/objects.txt
