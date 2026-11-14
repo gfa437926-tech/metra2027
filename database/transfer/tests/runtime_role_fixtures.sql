@@ -1,8 +1,4 @@
 -- Create an isolated fixture for Supabase managed-role and runtime ACL checks.
-CREATE ROLE anon NOLOGIN;
-CREATE ROLE authenticated NOLOGIN;
-CREATE ROLE service_role NOLOGIN BYPASSRLS;
-
 CREATE TABLE public.meteorological_authorities(id uuid);
 CREATE TABLE public.metra_account_states(id uuid);
 CREATE TABLE public.metra_role_catalogue(id uuid);
