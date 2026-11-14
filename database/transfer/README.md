@@ -19,13 +19,13 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
-- `scripts/04_import_data.sh` — verifies the complete manifest, validates target Auth UUIDs, remaps declared Auth FK columns, then atomically imports public/private data into empty tables
-- `scripts/remap_auth_user_ids.py` — remaps only declared `auth.users(id)` FK values in pg_dump COPY streams using a protected mapping CSV (mode 0600)
+- `scripts/04_import_data.sh` — verifies the complete manifest and the zero-source-Auth-user boundary, checks target emptiness, rejects excluded observation data, then atomically imports public/private data into empty tables
+- `scripts/remap_auth_user_ids.py` — standalone, unit-tested future utility; deliberately not called by the current import path because source Auth users must be zero
 - `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
 - `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
-- `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so target UUID remapping does not create false data drift
+- `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so regenerated Auth IDs do not create false data drift
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
 - `sql/compare_data_hashes.sql` — exact row counts and SHA-256 content fingerprints for application tables
 - `sql/station_catalogue_provenance.sql` — checks station catalogue, coordinate coverage, orphan rows, and duplicates
@@ -65,7 +65,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 ## Auth and restore status
 
-Auth users are not exported or imported. Recreate accounts with target-side credentials and supply `METRA_AUTH_USER_MAPPING_FILE` (CSV mode 0600) when the Auth FK inventory is non-empty. The importer verifies target UUIDs and remaps only declared FK columns. Unconstrained UUID/JSON references still require a separate audit; never copy active sessions or source JWT secrets.
+Auth users are not exported or imported. The exporter refuses to proceed if `auth.users` is non-empty, and the manifest requires `auth_user_count=0`. The remapping utility is standalone and is not part of the current import path. Auth FK cardinality is compared separately; unconstrained UUID/JSON references still require a separate audit. Never copy active sessions or source JWT secrets.
 A successful script run is not a restore acceptance. A full restore drill, application smoke tests, row/object comparison, and owner sign-off remain required.
 
 ## Live dump status
