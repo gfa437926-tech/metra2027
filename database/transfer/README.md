@@ -27,7 +27,6 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
 - `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so regenerated Auth IDs do not create false data drift
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
-- `sql/compare_data_hashes.sql` — exact row counts and SHA-256 content fingerprints for application tables
 - `sql/station_catalogue_provenance.sql` — checks station catalogue, coordinate coverage, orphan rows, and duplicates
 - `sql/compare_excluded_data.sql` — verifies the target has no observation-history rows excluded by policy
 - `sql/assert_empty_application_tables.sql` — read-only guard that blocks data import into populated tables
