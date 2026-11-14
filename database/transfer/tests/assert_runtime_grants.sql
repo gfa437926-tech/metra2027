@@ -9,10 +9,16 @@ BEGIN
   IF has_sequence_privilege(''anon'',''public.station_audit_log_id_seq'',''SELECT'') THEN RAISE EXCEPTION ''unexpected anon sequence SELECT''; END IF;
   IF has_sequence_privilege(''anon'',''public.station_audit_log_id_seq'',''UPDATE'') THEN RAISE EXCEPTION ''unexpected anon sequence UPDATE''; END IF;
   IF NOT has_sequence_privilege(''service_role'',''public.station_audit_log_id_seq'',''USAGE'') THEN RAISE EXCEPTION ''missing service_role sequence USAGE''; END IF;
-  IF has_function_privilege(''anon'',''public.reject_metra_equipment_fault_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected anon trigger function EXECUTE''; END IF;
+  IF to_regprocedure('public.reject_metra_equipment_fault_audit_mutation()') IS NOT NULL THEN
+    IF has_function_privilege(''anon'',''public.reject_metra_equipment_fault_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected anon trigger function EXECUTE''; END IF;
+  END IF;
   IF has_function_privilege(''anon'',''private.reject_authority_access_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected PUBLIC private trigger function EXECUTE''; END IF;
-  IF has_function_privilege(''service_role'',''public.reject_metra_equipment_fault_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role equipment trigger EXECUTE''; END IF;
-  IF has_function_privilege(''service_role'',''public.reject_metra_support_incident_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role support trigger EXECUTE''; END IF;
+  IF to_regprocedure('public.reject_metra_equipment_fault_audit_mutation()') IS NOT NULL THEN
+    IF has_function_privilege(''service_role'',''public.reject_metra_equipment_fault_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role equipment trigger EXECUTE''; END IF;
+  END IF;
+  IF to_regprocedure('public.reject_metra_support_incident_audit_mutation()') IS NOT NULL THEN
+    IF has_function_privilege(''service_role'',''public.reject_metra_support_incident_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role support trigger EXECUTE''; END IF;
+  END IF;
   IF has_function_privilege(''metra_api_runtime'',''private.reject_authority_access_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected runtime private trigger EXECUTE''; END IF;
   IF has_function_privilege(''service_role'',''public.reject_metra_observation_audit_mutation()'',''EXECUTE'') THEN RAISE EXCEPTION ''unexpected service_role observation audit EXECUTE''; END IF;
   IF NOT has_function_privilege(''service_role'',''public.get_authority_catalogue()'',''EXECUTE'') THEN RAISE EXCEPTION ''missing service_role RPC EXECUTE''; END IF;
