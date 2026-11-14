@@ -25,7 +25,7 @@
 - [ ] Target runtime role and private schema bootstrapped with least privilege
 - [ ] Public/private schema import completed atomically
 - [ ] Public/private data import completed atomically
-- [ ] Reviewed metra_api_runtime table/function grants applied and verified
+- [ ] Managed role, PUBLIC, sequence, function, and metra_api_runtime ACLs match the source inventory
 - [ ] SHA-256 checks pass before each import
 - [ ] Auth users recreated/invited through supported target Auth flow
 - [ ] User UUID mapping applied only to verified FK columns
