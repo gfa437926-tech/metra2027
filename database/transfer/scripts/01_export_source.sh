@@ -31,7 +31,8 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Exporting approved source $SRC_REF to encrypted artifacts."
 pg_dump "$SRC_URL" --format=plain --schema-only --no-owner --no-privileges \
-  --schema=public --file="$TMP_DIR/01_schema_public.sql"
+  --schema=public --file="$TMP_DIR/01_schema_public.raw.sql"
+metra_normalize_public_schema_dump "$TMP_DIR/01_schema_public.raw.sql" "$TMP_DIR/01_schema_public.sql"
 pg_dump "$SRC_URL" --format=plain --data-only --no-owner --disable-triggers \
   --schema=public --file="$TMP_DIR/02_data_public.sql"
 
