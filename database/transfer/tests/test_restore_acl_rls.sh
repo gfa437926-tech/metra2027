@@ -9,14 +9,13 @@ REAL_PSQL="$(command -v psql)"
 REAL_CREATEDB="$(command -v createdb)"
 REAL_DROPDB="$(command -v dropdb)"
 REAL_PGDUMP="$(command -v pg_dump)"
-REAL_PGRESTORE="$(command -v pg_restore)"
 SOURCE_DB="metra_restore_acl_source_$$"
 TARGET_DB="metra_restore_acl_target_$$"
 WORK="$(mktemp -d)"
 OWNER_ID="11111111-1111-4111-8111-111111111111"
 OTHER_ID="22222222-2222-4222-8222-222222222222"
 
-for cmd in psql createdb dropdb pg_dump pg_restore; do
+for cmd in psql createdb dropdb pg_dump sed; do
   command -v "$cmd" >/dev/null 2>&1 || { echo "FAIL: $cmd is required." >&2; exit 2; }
 done
 
@@ -92,10 +91,13 @@ SQL
 
 # Export/import only application schemas, with ownership and source ACLs
 # intentionally excluded; reviewed target grants are reapplied afterwards.
-"$REAL_PGDUMP" --format=custom --schema=public --schema=private --no-owner --no-privileges \
-  --file="$WORK/application.dump" --dbname="$SOURCE_DB"
-"$REAL_PGRESTORE" --exit-on-error --no-owner --no-privileges \
-  --dbname="$TARGET_DB" "$WORK/application.dump"
+"$REAL_PGDUMP" --format=plain --schema=public --schema=private --no-owner --no-privileges \
+  --file="$WORK/application.sql" --dbname="$SOURCE_DB"
+# pg_dump from a newer client can emit SET transaction_timeout, which older
+# supported PostgreSQL servers (including the CI PostgreSQL 16 service) lack.
+# Strip only this session-setting line; schema/data statements remain unchanged.
+sed '/^SET transaction_timeout = 0;$/d' "$WORK/application.sql" > "$WORK/application.compat.sql"
+"$REAL_PSQL" -X -1 -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$WORK/application.compat.sql"
 
 # Apply the same reviewed target-side runtime ACL policy used by transfer.
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/sql/apply_runtime_grants.sql" >/dev/null
