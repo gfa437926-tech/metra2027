@@ -155,7 +155,17 @@ public static class StationCatalogueReviewEndpoints
                 if (outcome.StatusCode == HttpStatusCode.Forbidden) return Results.Forbid();
                 if (outcome.StatusCode == HttpStatusCode.NotFound) return Results.NotFound();
                 if (outcome.StatusCode == HttpStatusCode.Conflict)
-                    return Results.Conflict(new { error = "station_review_state_conflict" });
+                {
+                    var currentStatus = outcome.Data is { ValueKind: JsonValueKind.Object } data &&
+                        data.TryGetProperty("resulting_status", out var statusValue)
+                            ? statusValue.GetString()
+                            : null;
+                    return Results.Conflict(new
+                    {
+                        error = "station_review_state_conflict",
+                        currentStatus
+                    });
+                }
                 if (outcome.StatusCode == HttpStatusCode.BadRequest)
                     return Results.BadRequest(new { error = "station_review_rejected" });
                 return Results.Problem(title: "Station review persistence unavailable", statusCode: 503);
