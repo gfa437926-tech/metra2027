@@ -1,5 +1,6 @@
--- Deterministic inventory of application-owned objects in public/private.
--- Managed Supabase schemas are intentionally excluded; this is not a definition-level schema diff.
+-- Deterministic inventory of application-owned public objects.
+-- Managed Supabase schemas and private are intentionally excluded from this public-only transfer.
+-- This is not a byte-for-byte schema-definition diff.
 SELECT object_type, object_schema, object_name, object_detail
 FROM (
   SELECT
@@ -18,7 +19,7 @@ FROM (
     ''::text AS object_detail
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname IN ('public', 'private')
+  WHERE n.nspname = 'public'
     AND c.relkind IN ('r', 'p', 'v', 'm', 'S', 'f', 'i', 'I')
 
   UNION ALL
@@ -30,19 +31,23 @@ FROM (
     pg_get_function_identity_arguments(p.oid)
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname IN ('public', 'private')
+  WHERE n.nspname = 'public'
 
   UNION ALL
 
   SELECT
-    CASE t.typtype WHEN 'e' THEN 'enum' WHEN 'd' THEN 'domain' ELSE 'range' END,
+    CASE t.typtype WHEN 'c' THEN 'composite_type' WHEN 'e' THEN 'enum' WHEN 'd' THEN 'domain' ELSE 'range' END,
     n.nspname,
     t.typname::text,
     ''
   FROM pg_type t
   JOIN pg_namespace n ON n.oid = t.typnamespace
-  WHERE n.nspname IN ('public', 'private')
-    AND t.typtype IN ('e', 'd', 'r')
+  WHERE n.nspname = 'public'
+    AND t.typtype IN ('c', 'e', 'd', 'r')
+    AND NOT EXISTS (
+      SELECT 1 FROM pg_class c
+      WHERE c.oid = t.typrelid AND c.relkind IN ('r', 'p', 'v', 'm', 'f')
+    )
 
   UNION ALL
 
@@ -54,7 +59,7 @@ FROM (
   FROM pg_constraint con
   JOIN pg_class c ON c.oid = con.conrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname IN ('public', 'private')
+  WHERE n.nspname = 'public'
 
   UNION ALL
 
@@ -66,7 +71,7 @@ FROM (
   FROM pg_trigger trg
   JOIN pg_class c ON c.oid = trg.tgrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname IN ('public', 'private')
+  WHERE n.nspname = 'public'
     AND NOT trg.tgisinternal
 
   UNION ALL
@@ -77,6 +82,6 @@ FROM (
     tablename || '.' || policyname,
     cmd
   FROM pg_policies
-  WHERE schemaname IN ('public', 'private')
+  WHERE schemaname = 'public'
 ) inventory
 ORDER BY object_schema, object_type, object_name, object_detail;
