@@ -42,6 +42,8 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `tests/test_import_data.sh` — end-to-end import, manifest, empty-target, and excluded-observation guards
 - `tests/test_compare_contract.sh` — static contract guard ensuring every declared source/target comparison and target-only acceptance check remains wired into `05_compare.sh`
 - `tests/test_empty_target_guard.sh` — disposable-PostgreSQL regression proving empty `public`/`private` schemas pass and populated tables in either schema are rejected
+- `tests/test_empty_target_guard.sh` — disposable-PostgreSQL regression proving empty `public`/`private` schemas pass and populated tables in either schema are rejected
+- `RESTORE-ACCEPTANCE-CHECKLIST.md` — owner/security/data-owner gated restore acceptance runbook; explicitly blocks hosted restore/cutover until separate approvals
 - `tests/test_excluded_observation_guard.sh` — disposable-PostgreSQL regression proving the excluded observation-history acceptance query reports zero for an empty target and detects a populated target
 - `tests/test_checksums.sh` — exact artifact-set, tamper, duplicate, and path-traversal checksum-manifest tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
