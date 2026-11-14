@@ -2,7 +2,7 @@
 
 ## Scope
 
-The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, API secrets, or provider configuration. The scripts recreate the reviewed application role ACLs, sequence/function grants, and public default privileges. Schema import refuses to proceed unless the target has every required extension at the recorded version and schema. This is a database transfer pack, not a complete Supabase project clone.
+The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, API secrets, or provider configuration. The scripts recreate the reviewed application role ACLs, sequence/function grants, and public default privileges. Schema import refuses to proceed unless the target has every required extension at the recorded version and schema. No rows from `metra_observation_records` are transferred; target acceptance requires that table to remain empty. This is a database transfer pack, not a complete Supabase project clone.
 
 ## Required inputs
 
