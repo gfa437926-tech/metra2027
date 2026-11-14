@@ -19,7 +19,8 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
-- `scripts/04_import_data.sh` — verifies the complete manifest, then atomically decrypts/imports public/private data into empty tables
+- `scripts/04_import_data.sh` — verifies the complete manifest, validates target Auth UUIDs, remaps declared Auth FK columns, then atomically imports public/private data into empty tables
+- `scripts/remap_auth_user_ids.py` — remaps only declared `auth.users(id)` FK values in pg_dump COPY streams using a protected mapping CSV (mode 0600)
 - `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
@@ -28,6 +29,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `sql/assert_empty_application_tables.sql` — read-only guard that blocks data import into populated tables
 - `tests/create_managed_roles.sql` and `tests/runtime_role_fixtures.sql` — isolated PostgreSQL fixtures for ACL tests
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, wrong-project URL, and pg_dump compatibility tests
+- `tests/test_auth_user_remap.py` — mapping privacy, duplicate IDs, exact FK-only replacement, and fail-closed COPY parsing tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
 - Export artifacts also include `05_observation_provenance.txt` and `06_runtime_role_inventory.txt`; review source provenance, null station references, and ACL inventory before accepting a restore.
 
@@ -59,7 +61,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 ## Auth and restore status
 
-Auth users are not exported or imported. Use the separately reviewed Auth transfer procedure and recreate accounts with target-side credentials; never copy active sessions or source JWT secrets.
+Auth users are not exported or imported. Recreate accounts with target-side credentials and supply `METRA_AUTH_USER_MAPPING_FILE` (CSV mode 0600) when the Auth FK inventory is non-empty. The importer verifies target UUIDs and remaps only declared FK columns. Unconstrained UUID/JSON references still require a separate audit; never copy active sessions or source JWT secrets.
 A successful script run is not a restore acceptance. A full restore drill, application smoke tests, row/object comparison, and owner sign-off remain required.
 
 ## Live dump status
