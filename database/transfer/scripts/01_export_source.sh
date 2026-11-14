@@ -78,7 +78,7 @@ FROM (
            'create',has_schema_privilege(r.rolname,n.oid,'CREATE'))
   FROM pg_roles r CROSS JOIN pg_namespace n
   WHERE n.nspname IN ('public','private')
-    AND r.rolname IN ('anon','authenticated','service_role','metra_api_runtime','postgres')
+    AND r.rolname IN ('anon','authenticated','service_role','metra_api_runtime','postgres','pg_database_owner')
   UNION ALL
   SELECT '03_table',
          jsonb_build_object('kind','table_privilege','grantee',grantee,'schema',table_schema,
@@ -113,6 +113,29 @@ FROM (
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid=p.pronamespace
   CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f',p.proowner))) a
+  WHERE n.nspname IN ('public','private') AND a.grantee=0
+  UNION ALL
+  SELECT '06_public_acl',
+         jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','relation',
+           'object_name',c.relname,'privilege',a.privilege_type,'grantable',a.is_grantable)
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid=c.relnamespace
+  CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, acldefault('r',c.relowner))) a
+  WHERE n.nspname IN ('public','private') AND c.relkind IN ('r','p','v','m','f') AND a.grantee=0
+  UNION ALL
+  SELECT '06_public_acl',
+         jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','sequence',
+           'object_name',c.relname,'privilege',a.privilege_type,'grantable',a.is_grantable)
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid=c.relnamespace
+  CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl, acldefault('S',c.relowner))) a
+  WHERE n.nspname IN ('public','private') AND c.relkind='S' AND a.grantee=0
+  UNION ALL
+  SELECT '06_public_acl',
+         jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','schema',
+           'object_name',n.nspname,'privilege',a.privilege_type,'grantable',a.is_grantable)
+  FROM pg_namespace n
+  CROSS JOIN LATERAL aclexplode(COALESCE(n.nspacl, acldefault('n',n.nspowner))) a
   WHERE n.nspname IN ('public','private') AND a.grantee=0
   UNION ALL
   SELECT '07_default_acl',
