@@ -16,6 +16,11 @@ trap cleanup EXIT
 
 # Managed role fixtures are provisioned by the preceding isolated CI setup step.\npsql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL
 CREATE SCHEMA $SCHEMA;
+CREATE FUNCTION $SCHEMA.current_user_id()
+RETURNS uuid LANGUAGE sql STABLE
+AS \\$\\$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid \\$\\$;
+GRANT USAGE ON SCHEMA $SCHEMA TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION $SCHEMA.current_user_id() TO authenticated;
 CREATE TABLE $SCHEMA.station_records (
   id integer PRIMARY KEY, station_id integer NOT NULL,
   owner_id uuid NOT NULL, payload text NOT NULL
@@ -30,11 +35,10 @@ CREATE POLICY station_select_own ON $SCHEMA.station_records
 CREATE POLICY station_insert_own ON $SCHEMA.station_records
   FOR INSERT TO authenticated WITH CHECK (owner_id = $SCHEMA.current_user_id());
 CREATE POLICY station_update_own ON $SCHEMA.station_records
-  FOR UPDATE TO authenticated USING (owner_id = auth.uid())
+  FOR UPDATE TO authenticated USING (owner_id = $SCHEMA.current_user_id())
   WITH CHECK (owner_id = auth.uid());
 CREATE POLICY station_delete_own ON $SCHEMA.station_records
   FOR DELETE TO authenticated USING (owner_id = auth.uid());
-GRANT USAGE ON SCHEMA $SCHEMA TO authenticated, service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON $SCHEMA.station_records TO authenticated, service_role;
 SQL
 
