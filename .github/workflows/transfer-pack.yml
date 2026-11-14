@@ -50,8 +50,8 @@ jobs:
         run: |
           createdb dump_fixture
           psql -X -v ON_ERROR_STOP=1 -d dump_fixture -c "CREATE SCHEMA private; CREATE TABLE public.fixture_public(id integer); CREATE TABLE private.fixture_private(id integer); CREATE TABLE public.excluded_fixture(id integer); INSERT INTO public.fixture_public VALUES (1); INSERT INTO public.excluded_fixture VALUES (99);"
-          pg_dump -X --schema-only --schema=public --schema=private --no-owner --no-privileges -d dump_fixture > /tmp/actual_schema_dump.sql
-          pg_dump -X --data-only --schema=public --schema=private --exclude-table-data=public.excluded_fixture -d dump_fixture > /tmp/actual_data_dump.sql
+          pg_dump --schema-only --schema=public --schema=private --no-owner --no-privileges -d dump_fixture > /tmp/actual_schema_dump.sql
+          pg_dump --data-only --schema=public --schema=private --exclude-table-data=public.excluded_fixture -d dump_fixture > /tmp/actual_data_dump.sql
           if grep -Fq "COPY public.excluded_fixture" /tmp/actual_data_dump.sql; then
             echo "pg_dump did not exclude the non-demo table data."
             exit 1
