@@ -64,7 +64,74 @@ FROM public.metra_observation_records \
 GROUP BY source_system, source_table, is_demo \
 ORDER BY source_system, source_table, is_demo;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/06_runtime_role_inventory.txt" -c "\
-SELECT item::text FROM (   SELECT '01_role'::text AS sort_key,          jsonb_build_object('kind','role','rolname',rolname,'rolsuper',rolsuper,'rolinherit',rolinherit,            'rolcreaterole',rolcreaterole,'rolcreatedb',rolcreatedb,'rolcanlogin',rolcanlogin,            'rolreplication',rolreplication,'rolbypassrls',rolbypassrls) AS item   FROM pg_roles WHERE rolname='metra_api_runtime'   UNION ALL   SELECT '02_schema',          jsonb_build_object('kind','schema_privilege','schema',n.nspname,            'usage',has_schema_privilege('metra_api_runtime',n.oid,'USAGE'),            'create',has_schema_privilege('metra_api_runtime',n.oid,'CREATE'))   FROM pg_namespace n WHERE n.nspname IN ('public','private')   UNION ALL   SELECT '03_table',          jsonb_build_object('kind','table_privilege','schema',table_schema,'table',table_name,            'privilege',privilege_type,'grantable',is_grantable)   FROM information_schema.role_table_grants WHERE grantee='metra_api_runtime'   UNION ALL   SELECT '04_routine',          jsonb_build_object('kind','routine_privilege','schema',routine_schema,'routine',specific_name,            'privilege',privilege_type,'grantable',is_grantable)   FROM information_schema.role_routine_grants WHERE grantee='metra_api_runtime'   UNION ALL   SELECT '05_membership',          jsonb_build_object('kind','membership','granted_role',granted.rolname,            'member_role',member.rolname,'admin_option',m.admin_option)   FROM pg_auth_members m   JOIN pg_roles granted ON granted.oid=m.roleid   JOIN pg_roles member ON member.oid=m.member   WHERE granted.rolname='metra_api_runtime' OR member.rolname='metra_api_runtime' ) inventory(sort_key,item) ORDER BY sort_key, item::text;"
+SELECT item::text
+FROM (
+  SELECT '01_role'::text AS sort_key,
+         jsonb_build_object('kind','role','rolname',rolname,'rolsuper',rolsuper,'rolinherit',rolinherit,
+           'rolcreaterole',rolcreaterole,'rolcreatedb',rolcreatedb,'rolcanlogin',rolcanlogin,
+           'rolreplication',rolreplication,'rolbypassrls',rolbypassrls) AS item
+  FROM pg_roles WHERE rolname='metra_api_runtime'
+  UNION ALL
+  SELECT '02_schema',
+         jsonb_build_object('kind','schema_privilege','role',r.rolname,'schema',n.nspname,
+           'usage',has_schema_privilege(r.rolname,n.oid,'USAGE'),
+           'create',has_schema_privilege(r.rolname,n.oid,'CREATE'))
+  FROM pg_roles r CROSS JOIN pg_namespace n
+  WHERE n.nspname IN ('public','private')
+    AND r.rolname IN ('anon','authenticated','service_role','metra_api_runtime','postgres')
+  UNION ALL
+  SELECT '03_table',
+         jsonb_build_object('kind','table_privilege','grantee',grantee,'schema',table_schema,
+           'table',table_name,'privilege',privilege_type,'grantable',is_grantable)
+  FROM information_schema.role_table_grants
+  WHERE table_schema IN ('public','private')
+    AND grantee IN ('anon','authenticated','service_role','metra_api_runtime')
+  UNION ALL
+  SELECT '04_sequence',
+         jsonb_build_object('kind','sequence_privilege','grantee',r.rolname,'schema',n.nspname,
+           'sequence',c.relname,
+           'usage',has_sequence_privilege(r.rolname,c.oid,'USAGE'),
+           'select',has_sequence_privilege(r.rolname,c.oid,'SELECT'),
+           'update',has_sequence_privilege(r.rolname,c.oid,'UPDATE'))
+  FROM pg_roles r CROSS JOIN pg_class c
+  JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE c.relkind='S' AND n.nspname IN ('public','private')
+    AND r.rolname IN ('anon','authenticated','service_role','metra_api_runtime')
+  UNION ALL
+  SELECT '05_routine',
+         jsonb_build_object('kind','routine_privilege','grantee',grantee,'schema',routine_schema,
+           'routine',routine_name,'specific_name',specific_name,'privilege',privilege_type,
+           'grantable',is_grantable)
+  FROM information_schema.role_routine_grants
+  WHERE routine_schema IN ('public','private')
+    AND grantee IN ('anon','authenticated','service_role','metra_api_runtime')
+  UNION ALL
+  SELECT '06_public_acl',
+         jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','function',
+           'object_name',p.proname,'identity_arguments',pg_get_function_identity_arguments(p.oid),
+           'privilege',a.privilege_type,'grantable',a.is_grantable)
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid=p.pronamespace
+  CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl, acldefault('f',p.proowner))) a
+  WHERE n.nspname IN ('public','private') AND a.grantee=0
+  UNION ALL
+  SELECT '07_default_acl',
+         jsonb_build_object('kind','default_acl','owner',pg_get_userbyid(defaclrole),
+           'schema',defaclnamespace::regnamespace::text,'object_type',defaclobjtype,
+           'acl',defaclacl::text)
+  FROM pg_default_acl
+  WHERE defaclrole='postgres'::regrole
+    AND defaclnamespace='public'::regnamespace
+  UNION ALL
+  SELECT '08_membership',
+         jsonb_build_object('kind','membership','granted_role',granted.rolname,
+           'member_role',member.rolname,'admin_option',m.admin_option)
+  FROM pg_auth_members m
+  JOIN pg_roles granted ON granted.oid=m.roleid
+  JOIN pg_roles member ON member.oid=m.member
+  WHERE granted.rolname='metra_api_runtime' OR member.rolname='metra_api_runtime'
+) inventory(sort_key,item)
+ORDER BY sort_key,item::text;"
 
 (
   cd "$OUT_DIR"
