@@ -72,6 +72,9 @@ jobs:
           grep -F "CREATE TABLE public.fixture_public" /tmp/normalized_schema_dump.sql
           grep -F "CREATE TABLE private.fixture_private" /tmp/normalized_schema_dump.sql
           dropdb dump_fixture
+      - name: Install pgcrypto for table-content fingerprints
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
       - name: Test target role bootstrap and least-privilege grants
         run: |
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
@@ -99,6 +102,49 @@ jobs:
           fi
           grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
           grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_before.txt
+          grep -E '^public\|transfer_pack_fixture\|1\|[0-9a-f]{64}
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
+          grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
+          grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
+            echo "Expected empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
+            echo "Expected private empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_excluded_data.sql | grep -Fx "0"
+      - name: Verify export checksums reject tampering
+        run: |
+          mkdir -p /tmp/metra-export-check
+          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_application.sql.gpg
+          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_application.sql.gpg
+          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg > SHA256SUMS)
+          (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
+          printf "tampered\n" >> /tmp/metra-export-check/02_data_application.sql.gpg
+          if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
+            echo "Expected checksum verification to reject a tampered export."
+            exit 1
+          fi
+      - name: Verify encrypted dump round trip
+        run: |
+          printf "METRA transfer test\n" > /tmp/plain.txt
+          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
+          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
+          cmp /tmp/plain.txt /tmp/roundtrip.txt
+ /tmp/data_hashes_before.txt
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=2;"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after.txt
+          if cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after.txt; then
+            echo "Table content hash did not change after data mutation."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=1;"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
           grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
           grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
