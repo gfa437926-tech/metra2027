@@ -17,14 +17,17 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/00_preflight.sh` — read-only source identity/connectivity check
 - `scripts/01_export_source.sh` — encrypted public/private schema/data export, strips pre-existing schema creation statements, SHA-256 manifest, JSON-lines Auth-user FK inventory, observation provenance, station catalogue provenance, and role ACL inventory
 - `scripts/02_install_required_extensions.sh` — installs the source extension set into the recorded schemas and verifies exact versions
-- `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
+- `scripts/02_install_required_extensions.sh` — installs the recorded source extensions and verifies exact target versions/schemas
+- `scripts/02_bootstrap_target.sh` — creates the runtime role and restrictive target default ACLs
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
-- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
+- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed object grants and verifies restrictive target default ACLs
 - `scripts/04_import_data.sh` — verifies the complete manifest and zero-source-Auth-user boundary, checks target emptiness, rejects all observation data, then atomically imports public/private data into empty tables
 - `scripts/remap_auth_user_ids.py` — standalone, unit-tested future utility; deliberately not called by the current import path because source Auth users must be zero
 - `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
-- `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
+- `sql/compare_acl_inventory.sql` — full source ACL inventory, including the source's broad public default ACLs, retained for audit
+- `sql/compare_acl_inventory_acceptance.sql` — compares reviewed object grants while excluding intentionally tightened source defaults and client sequence/trigger-function grants
+- `tests/assert_target_default_acl.sql` — requires no implicit PUBLIC/anon/authenticated privileges on future public objects
 - `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
 - `sql/compare_sequence_state.sql` — compares sequence configuration and restored `last_value` values
 - `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so regenerated Auth IDs do not create false data drift
@@ -58,11 +61,11 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 - Row counts use exact `COUNT(*)` for each public/private table except the intentionally excluded `public.metra_observation_records`; that target table is separately required to be empty. This can be expensive on large datasets.
 - Object comparison fingerprints table columns, indexes, views, functions/procedures, types, constraints, triggers, RLS flags, and policy expressions in public/private. It is a structural fingerprint, not a byte-for-byte database file comparison.
-- Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The custom metra_api_runtime role, service_role, anon/authenticated, sequence, function, PUBLIC, and default ACLs are recreated from the reviewed source inventory.
+- Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The full source ACL inventory is retained for review. The target intentionally tightens default privileges: only server-side `service_role` receives implicit table/sequence/function privileges; `PUBLIC`, `anon`, and `authenticated` receive none. Existing object grants are checked against a separate acceptance inventory.
 
 ## Automated validation
 
-`.github/workflows/transfer-pack.yml` runs isolated PostgreSQL SQL checks and GPG integrity checks. `.github/workflows/transfer-auth-remap.yml` runs Python Auth UUID remapping unit tests and shell guards. These checks do not connect to Supabase and do not prove a live export/import.
+`.github/workflows/transfer-pack.yml` runs isolated PostgreSQL SQL checks and GPG integrity checks. `.github/workflows/transfer-auth-remap.yml` runs ShellCheck, Python remapper tests, PostgreSQL ACL/sequence/station SQL checks, extension installation, and end-to-end data-import tests. These checks do not connect to Supabase and do not prove a live export/import.
 
 ## Auth and restore status
 
