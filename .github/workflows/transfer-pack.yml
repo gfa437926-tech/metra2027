@@ -83,7 +83,7 @@ jobs:
           grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
           grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
-          grep -F "function|private|decide_metra_registration|" /tmp/objects.txt
+          grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
           if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
             echo "Expected empty-target guard to reject a populated table."
             exit 1
