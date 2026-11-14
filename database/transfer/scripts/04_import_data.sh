@@ -40,21 +40,6 @@ while IFS= read -r required_extension; do
   fi
 done < "$DUMP_DIR/07_extensions.txt"
 
-# If Auth FKs exist, require a protected UUID mapping and verify every target
-# user was created before any application data is written.
-if [[ -s "$AUTH_FK_INVENTORY" ]]; then
-  : "${METRA_AUTH_USER_MAPPING_FILE:?Auth FK inventory is non-empty; set METRA_AUTH_USER_MAPPING_FILE to a protected CSV mapping}"
-  command -v python3 >/dev/null 2>&1 || { echo "python3 is required for Auth UUID remapping." >&2; exit 4; }
-  REMAPPER="$SCRIPT_DIR/remap_auth_user_ids.py"
-  [[ -s "$REMAPPER" ]] || { echo "Auth UUID remapper is missing." >&2; exit 4; }
-  mapping_count="$(python3 "$REMAPPER" --inventory "$AUTH_FK_INVENTORY" --mapping "$METRA_AUTH_USER_MAPPING_FILE" --count)"
-  target_ids="$(python3 "$REMAPPER" --inventory "$AUTH_FK_INVENTORY" --mapping "$METRA_AUTH_USER_MAPPING_FILE" --print-target-ids)"
-  found_target_users="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -v target_ids="$target_ids" -c "SELECT count(DISTINCT id) FROM auth.users WHERE id = ANY (string_to_array(:'target_ids', ',')::uuid[])")"
-  if [[ "$found_target_users" != "$mapping_count" ]]; then
-    echo "Refusing data import: target Auth user count ($found_target_users) does not match mapping count ($mapping_count)." >&2
-    exit 7
-  fi
-fi
 
 # Stop before writing if any target application table already contains rows.
 psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_application_tables.sql"
@@ -65,15 +50,7 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
   --passphrase-fd 0 --decrypt --output "$TMP_DIR/02_data_application.sql" \
   "$DUMP_DIR/02_data_application.sql.gpg"
 
-IMPORT_DATA="$TMP_DIR/02_data_application.sql"
-if [[ -s "$AUTH_FK_INVENTORY" ]]; then
-  python3 "$SCRIPT_DIR/remap_auth_user_ids.py" \
-    --dump "$TMP_DIR/02_data_application.sql" \
-    --output "$TMP_DIR/02_data_application.remapped.sql" \
-    --inventory "$AUTH_FK_INVENTORY" \
-    --mapping "$METRA_AUTH_USER_MAPPING_FILE"
-  IMPORT_DATA="$TMP_DIR/02_data_application.remapped.sql"
-fi
+metra_assert_no_excluded_observation_data "$TMP_DIR/02_data_application.sql"
 
 echo "Importing public/private data into verified empty target $DST_REF"
 psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$IMPORT_DATA"
