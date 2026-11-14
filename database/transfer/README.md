@@ -15,10 +15,10 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 
 - `scripts/lib/project_url_guard.sh` — checks that a Postgres URL identifies the exact project ref
 - `scripts/00_preflight.sh` — read-only source identity/connectivity check
-- `scripts/01_export_source.sh` — encrypted public schema/data export, strips the already-existing Supabase public schema creation statement, SHA-256 manifest, Auth-user FK inventory, and observation provenance summary
+- `scripts/01_export_source.sh` — encrypted public/private schema/data export, strips the already-existing Supabase public/private schema creation statements, SHA-256 manifest, Auth-user FK inventory, and observation provenance summary
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public schema into an empty target
 - `scripts/04_import_data.sh` — verifies the complete manifest, then atomically decrypts/imports public data into empty tables
-- `scripts/05_compare.sh` — exact public row counts and deterministic public-object inventory comparison
+- `scripts/05_compare.sh` — exact public/private row counts and deterministic public/private object inventory comparison
 - `sql/assert_empty_public_tables.sql` — read-only guard that blocks data import into populated tables
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, wrong-project URL, and pg_dump compatibility tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
@@ -44,7 +44,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 - Row counts use exact `COUNT(*)` for each public table; this can be expensive on large datasets.
 - Object comparison checks names and selected signatures/types of listed public objects. It is not a byte-for-byte schema-definition comparison.
-- Private schemas, Auth, Storage, extensions, grants, secrets, provider settings, and user identities are outside this automated transfer scope and require separate handling.
+- Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The custom metra_api_runtime role and reviewed grants are recreated separately.
 
 ## Automated validation
 
