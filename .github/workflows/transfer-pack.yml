@@ -42,6 +42,8 @@ jobs:
         run: bash database/transfer/tests/test_url_guard.sh
       - name: Test Supabase public/private schema dump normalization
         run: bash database/transfer/tests/test_public_schema_normalizer.sh
+      - name: Test transfer manifest provenance and data exclusion
+        run: bash database/transfer/tests/test_manifest.sh
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
