@@ -81,7 +81,7 @@ The following counts were obtained with exact `COUNT(*)` queries on 2026-11-14:
 - Two warnings report mutable function search paths:
   - `public.reject_metra_equipment_fault_audit_mutation`
   - `public.reject_metra_support_incident_audit_mutation`
-- Read-only definition review confirms both are **SECURITY INVOKER** trigger functions whose bodies only raise an exception; neither reads tables or performs privileged operations. Recommended hardening is to pin their function search path to `pg_catalog` in a reviewed migration. **Not applied**.
+- Read-only definition review confirms both are **SECURITY INVOKER** trigger functions whose bodies only raise an exception; neither reads tables or performs privileged operations. The target transfer pack now pins these functions (and the two already-safe audit triggers) to `search_path=pg_catalog` and asserts the setting. The experimental source remains unchanged.
 
 ### Performance
 
