@@ -4,7 +4,6 @@ import csv
 import sys
 import tempfile
 import unittest
-import uuid
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
@@ -19,7 +18,7 @@ class AuthUserRemapTests(unittest.TestCase):
         self.target_id = "22222222-2222-4222-8222-222222222222"
         self.inventory = self.root / "auth-fks.tsv"
         self.inventory.write_text(
-            "public\tuser_profiles\tuser_id\tauth\tusers\tid\tuser_profiles_user_id_fkey\n",
+            '["public","user_profiles","user_id","auth","users","id","user_profiles_user_id_fkey"]\n',
             encoding="utf-8",
         )
         self.mapping = self.root / "mapping.csv"
