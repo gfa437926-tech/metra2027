@@ -50,4 +50,10 @@ CREATE FUNCTION public.reject_metra_support_incident_audit_mutation()
 RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable'; END $$;
 
 CREATE FUNCTION public.reject_metra_observation_audit_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable'; END $$;
+RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'immutable'; END $;
+
+CREATE FUNCTION private.reject_authority_access_audit_mutation()
+RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'immutable'; END $;
+
+CREATE FUNCTION public.get_authority_catalogue()
+RETURNS text LANGUAGE sql AS $ SELECT 'fixture'::text $;
