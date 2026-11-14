@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Test the extension installer against a disposable PostgreSQL database.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+WORK_DIR="$(mktemp -d)"
+DUMP_DIR="$WORK_DIR/export"
+cleanup() {
+  PGDATABASE=postgres dropdb --if-exists metra_extension_test >/dev/null 2>&1 || true
+  rm -rf "$WORK_DIR"
+}
+trap cleanup EXIT
+mkdir -p "$WORK_DIR/bin" "$DUMP_DIR"
+
+cat > "$WORK_DIR/bin/psql" <<'WRAPPER'
+#!/usr/bin/env bash
+if [[ "${1:-}" == postgresql://* ]]; then
+  shift
+fi
+exec /usr/bin/psql "$@"
+WRAPPER
+chmod 700 "$WORK_DIR/bin/psql"
+export PATH="$WORK_DIR/bin:$PATH"
+export PGPASSWORD="${PGPASSWORD:-postgres}"
+export PGHOST="${PGHOST:-127.0.0.1}"
+export PGPORT="${PGPORT:-5432}"
+export PGUSER="${PGUSER:-postgres}"
+createdb metra_extension_test
+export PGDATABASE=metra_extension_test
+
+export METRA_DST_PROJECT_REF="newmetratarget12345678"
+export METRA_DST_DATABASE_URL="postgresql://postgres:ci-secret@db.newmetratarget12345678.supabase.co:5432/metra_extension_test"
+
+cat > "$DUMP_DIR/07_extensions.txt" <<'EXTENSIONS'
+plpgsql|1.0|pg_catalog
+pgcrypto|1.3|extensions
+EXTENSIONS
+cat > "$DUMP_DIR/MANIFEST.txt" <<'MANIFEST'
+source_project_ref=tbdnklyxjvbrilvnwgmq
+auth_users_exported=false
+auth_user_count=0
+auth_user_fk_inventory_exported=true
+observation_provenance_exported=true
+observation_records_data_exported=false
+all_observation_records_excluded=true
+demo_observation_records_excluded=true
+non_demo_observation_records_excluded=true
+runtime_role_inventory_exported=true
+required_extensions_inventory_exported=true
+station_catalogue_provenance_exported=true
+api_keys_and_jwt_secrets_exported=false
+MANIFEST
+(
+  cd "$DUMP_DIR"
+  sha256sum 07_extensions.txt MANIFEST.txt > SHA256SUMS
+)
+
+bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
+bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
+
+installed_schema="$(psql -X -At -c "SELECT n.nspname FROM pg_extension e JOIN pg_namespace n ON n.oid=e.extnamespace WHERE e.extname='pgcrypto'")"
+installed_version="$(psql -X -At -c "SELECT extversion FROM pg_extension WHERE extname='pgcrypto'")"
+[[ "$installed_schema" == "extensions" ]] || { echo "pgcrypto was installed in the wrong schema." >&2; exit 1; }
+[[ "$installed_version" == "1.3" ]] || { echo "Unexpected pgcrypto version: $installed_version" >&2; exit 1; }
+
+echo "PASS: required extensions install idempotently with matching schema and version."
