@@ -22,7 +22,7 @@ CREATE TABLE public.permission_grants(id uuid);
 CREATE TABLE public.registration_audit_events(id uuid);
 CREATE TABLE public.registration_requests(id uuid);
 CREATE TABLE public.station_assignments(id uuid);
-CREATE TABLE public.station_catalogue(id uuid, is_demo boolean NOT NULL DEFAULT false);
+CREATE TABLE public.station_catalogue(id uuid, is_demo boolean NOT NULL DEFAULT false, approval_status text NOT NULL DEFAULT 'approved', operational_status text NOT NULL DEFAULT 'active');
 CREATE TABLE public.station_coordinates(id uuid, station_id uuid);
 CREATE TABLE public.authority_access_audit_events(id uuid);
 CREATE TABLE public.authority_memberships(id uuid);
