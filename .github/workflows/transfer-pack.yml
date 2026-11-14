@@ -69,6 +69,12 @@ jobs:
             IF has_schema_privilege('service_role','private','USAGE') THEN RAISE EXCEPTION 'unexpected service_role private schema USAGE'; END IF;
             IF NOT pg_has_role('postgres','metra_api_runtime','MEMBER') THEN RAISE EXCEPTION 'postgres is not a member of runtime role'; END IF;
           END \$\$;"
+      - name: Test deterministic role and default ACL inventory
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl_inventory.txt
+          grep -F '"kind": "role"' /tmp/acl_inventory.txt
+          grep -F '"kind": "default_acl"' /tmp/acl_inventory.txt
+          grep -F '"kind": "public_acl"' /tmp/acl_inventory.txt
       - name: Test exact row counts and empty-target guard
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
