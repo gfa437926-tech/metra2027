@@ -45,6 +45,9 @@ for side in source target; do
     -f "$ROOT/sql/station_catalogue_provenance.sql" > "$OUT/${side}_station_catalogue.txt"
 done
 
+# The target intentionally has tighter default ACLs than the experimental source.
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$ROOT/sql/assert_target_default_acl.sql" > "$OUT/target_default_acl_assertion.txt"
+
 set +e
 diff -u "$OUT/source_rowcounts.txt" "$OUT/target_rowcounts.txt" > "$OUT/rowcounts.diff"
 rows_status=$?
