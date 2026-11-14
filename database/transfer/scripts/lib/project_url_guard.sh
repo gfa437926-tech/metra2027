@@ -122,3 +122,74 @@ metra_assert_no_excluded_observation_data() {
     return 1
   fi
 }
+
+# Verify the complete export checksum manifest, reject path traversal/extra files,
+# and require every artifact used by restore to be covered exactly once.
+metra_verify_transfer_checksums() {
+  local dump_dir="${1:?transfer export directory required}"
+  local sums="$dump_dir/SHA256SUMS"
+  if [[ ! -s "$sums" ]]; then
+    echo "Refusing import: SHA256SUMS is missing." >&2
+    return 1
+  fi
+
+  local expected_files=(
+    "01_schema_application.sql.gpg"
+    "02_data_application.sql.gpg"
+    "03_inventory_tables.txt"
+    "03_inventory_functions.txt"
+    "04_auth_user_fk_inventory.txt"
+    "05_observation_provenance.txt"
+    "06_runtime_role_inventory.txt"
+    "07_extensions.txt"
+    "08_station_catalogue_provenance.txt"
+    "MANIFEST.txt"
+  )
+  local seen_files=()
+  local checksum filename extra
+  while read -r checksum filename extra; do
+    [[ -z "${checksum:-}" && -z "${filename:-}" ]] && continue
+    if [[ ! "$checksum" =~ ^[0-9a-fA-F]{64}$ || ! "$filename" =~ ^[A-Za-z0-9_.-]+$ || -n "${extra:-}" ]]; then
+      echo "Refusing import: malformed or unsafe checksum entry." >&2
+      return 1
+    fi
+    local expected=false
+    local item
+    for item in "${expected_files[@]}"; do
+      if [[ "$filename" == "$item" ]]; then expected=true; break; fi
+    done
+    if [[ "$expected" != true ]]; then
+      echo "Refusing import: unexpected checksum entry: $filename" >&2
+      return 1
+    fi
+    for item in "${seen_files[@]}"; do
+      if [[ "$filename" == "$item" ]]; then
+        echo "Refusing import: duplicate checksum entry: $filename" >&2
+        return 1
+      fi
+    done
+    seen_files+=("$filename")
+  done < "$sums"
+
+  local required
+  for required in "${expected_files[@]}"; do
+    local found=false
+    for item in "${seen_files[@]}"; do
+      if [[ "$required" == "$item" ]]; then found=true; break; fi
+    done
+    if [[ "$found" != true ]]; then
+      echo "Refusing import: checksum manifest omits required artifact: $required" >&2
+      return 1
+    fi
+  done
+
+  if [[ "${#seen_files[@]}" -ne "${#expected_files[@]}" ]]; then
+    echo "Refusing import: checksum manifest does not cover the exact required artifact set." >&2
+    return 1
+  fi
+
+  (
+    cd "$dump_dir"
+    sha256sum --check --strict SHA256SUMS
+  )
+}
