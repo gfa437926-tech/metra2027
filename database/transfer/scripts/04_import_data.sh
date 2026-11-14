@@ -1,24 +1,53 @@
 #!/usr/bin/env bash
-# Import public data into the explicitly identified target.
+# Decrypt and import public data into an empty, explicitly identified target.
 set -euo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/project_url_guard.sh"
 DST_REF="${METRA_DST_PROJECT_REF:?Set METRA_DST_PROJECT_REF}"
 DST_URL="${METRA_DST_DATABASE_URL:?Set METRA_DST_DATABASE_URL}"
 DUMP_DIR="${1:?Usage: 04_import_data.sh /path/to/export_stamp_dir}"
+: "${METRA_TRANSFER_PASSPHRASE:?Set METRA_TRANSFER_PASSPHRASE in the secure shell environment}"
 
-if [[ "$DST_REF" == "tbdnklyxjvbrilvnwgmq" || "$DST_REF" == "nhovijnbtrocqahxxjou" || "$DST_REF" == "wdrcqceiagsmdxltqfwd" || "$DST_REF" == "vktcvkwqszehgmhqjrkb" ]]; then
-  echo "Refusing: destination must be a new, non-legacy project." >&2
-  exit 3
-fi
+for forbidden_ref in tbdnklyxjvbrilvnwgmq nhovijnbtrocqahxxjou wdrcqceiagsmdxltqfwd vktcvkwqszehgmhqjrkb; do
+  if [[ "$DST_REF" == "$forbidden_ref" ]]; then
+    echo "Refusing: destination must be a new, non-legacy project." >&2
+    exit 3
+  fi
+done
 metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
+command -v gpg >/dev/null 2>&1 || { echo "gpg is required." >&2; exit 4; }
+[[ -s "$DUMP_DIR/02_data_public.sql.gpg" ]] || { echo "Missing encrypted public data dump." >&2; exit 4; }
 
-if [[ ! -s "$DUMP_DIR/02_data_public.sql" ]]; then
-  echo "Missing or empty $DUMP_DIR/02_data_public.sql" >&2
-  exit 4
+# Refuse to append duplicate rows to a target that already contains data.
+nonempty_tables="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
+DO $$
+DECLARE item record;
+DECLARE has_rows boolean;
+DECLARE nonempty integer := 0;
+BEGIN
+  FOR item IN SELECT schemaname, tablename FROM pg_tables WHERE schemaname='public'
+  LOOP
+    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I.%I)', item.schemaname, item.tablename)
+      INTO has_rows;
+    IF has_rows THEN nonempty := nonempty + 1; END IF;
+  END LOOP;
+  RAISE NOTICE 'NONEMPTY_TABLES=%', nonempty;
+END $$;
+SQL
+2>&1 | sed -n 's/.*NONEMPTY_TABLES=//p' | tail -1)"
+if [[ -z "$nonempty_tables" || "$nonempty_tables" != "0" ]]; then
+  echo "Refusing: target contains data or its emptiness could not be verified." >&2
+  exit 5
 fi
 
-echo "Importing public data into explicitly identified target $DST_REF"
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$DUMP_DIR/02_data_public.sql"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+  --passphrase-fd 0 --decrypt --output "$TMP_DIR/02_data_public.sql" \
+  "$DUMP_DIR/02_data_public.sql.gpg"
+
+echo "Importing public data into verified empty target $DST_REF"
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$TMP_DIR/02_data_public.sql"
 echo "Data import finished. Auth users are not imported by this script."
