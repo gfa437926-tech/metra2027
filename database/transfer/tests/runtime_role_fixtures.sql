@@ -1,3 +1,18 @@
+-- Minimal Supabase Auth fixture used to prove remapped UUID columns are
+-- excluded from content hashes but retain exact cardinality.
+CREATE SCHEMA auth;
+CREATE TABLE auth.users(id uuid PRIMARY KEY);
+INSERT INTO auth.users(id) VALUES
+  ('11111111-1111-4111-8111-111111111111'),
+  ('22222222-2222-4222-8222-222222222222');
+CREATE TABLE public.auth_fk_fixture(
+  id integer PRIMARY KEY,
+  user_id uuid REFERENCES auth.users(id),
+  note text
+);
+INSERT INTO public.auth_fk_fixture(id,user_id,note)
+VALUES (1,'11111111-1111-4111-8111-111111111111','fixture');
+
 -- Create an isolated fixture for Supabase managed-role and runtime ACL checks.
 CREATE TABLE public.meteorological_authorities(id uuid);
 CREATE TABLE public.metra_account_states(id uuid);
