@@ -1,5 +1,5 @@
--- Target-only bootstrap. Recreate the least-privilege custom runtime role
--- and Supabase public-schema default ACLs observed on the approved source.
+-- Target-only bootstrap. Create the least-privilege custom runtime role
+-- and stricter default ACLs than the approved experimental source.
 DO $$
 DECLARE
   role_row record;
