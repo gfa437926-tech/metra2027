@@ -48,6 +48,8 @@ jobs:
         run: bash database/transfer/tests/test_public_schema_normalizer.sh
       - name: Test transfer manifest provenance and data exclusion
         run: bash database/transfer/tests/test_manifest.sh
+      - name: Test Auth UUID remapping
+        run: python3 -m unittest discover -s database/transfer/tests -p 'test_*.py'
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
