@@ -44,6 +44,8 @@ jobs:
         run: bash database/transfer/tests/test_public_schema_normalizer.sh
       - name: Test transfer manifest provenance
         run: bash database/transfer/tests/test_manifest.sh
+      - name: Test excluded observation data dump guard
+        run: bash database/transfer/tests/test_data_policy.sh
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
