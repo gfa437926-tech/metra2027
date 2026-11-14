@@ -114,7 +114,7 @@ require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operat
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operational observation RPC execute ACL is not service_role-only"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "restored no-policy RLS accepted client INSERT"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "client role received direct privileges"
-require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "has_table_privilege(\x27authenticated\x27,\x27public.metra_observation_audit_events\x27,\x27DELETE\x27)"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "has_table_privilege('authenticated','public.metra_observation_audit_events','DELETE')"
 require_file "$ROOT/database/transfer/tests/compare_fixture.sql"
 require_file "$ROOT/database/transfer/tests/test_excluded_dump_patterns.sh"
 require_file "$ROOT/database/transfer/tests/test_compare_runner_preflight.sh"
