@@ -9,17 +9,24 @@ void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
   test('review queue authenticates and parses API rows', () async {
     late http.Request captured;
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'test-access-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response(jsonEncode([{
-          'id': '22222222-2222-4222-8222-222222222222',
-          'station_id': stationId, 'observation_type': 'daily',
-          'observed_at': '2026-11-03T12:00:00Z', 'status': 'submitted',
-          'payload': {'temperature': 28}
-        }]), 200);
-      }));
+    final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'test-access-token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(
+              jsonEncode([
+                {
+                  'id': '22222222-2222-4222-8222-222222222222',
+                  'station_id': stationId,
+                  'observation_type': 'daily',
+                  'observed_at': '2026-11-03T12:00:00Z',
+                  'status': 'submitted',
+                  'payload': {'temperature': 28}
+                }
+              ]),
+              200);
+        }));
     final rows = await client.getReviewQueue(stationId);
     expect(captured.headers['authorization'], 'Bearer test-access-token');
     expect(rows, hasLength(1));
@@ -29,18 +36,29 @@ void main() {
 
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'directory-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response.bytes(utf8.encode(jsonEncode([{
-          'id': stationId, 'local_station_code': 'ST-001',
-          'name_ar': 'محطة اختبار', 'name_en': 'Test station',
-          'station_type': 'classic', 'operational_status': 'unverified',
-          'approval_status': 'pending', 'is_demo': false,
-          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}]
-        }])), 200);
-      }));
+    final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'directory-token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response.bytes(
+              utf8.encode(jsonEncode([
+                {
+                  'id': stationId,
+                  'local_station_code': 'ST-001',
+                  'name_ar': 'محطة اختبار',
+                  'name_en': 'Test station',
+                  'station_type': 'classic',
+                  'operational_status': 'unverified',
+                  'approval_status': 'pending',
+                  'is_demo': false,
+                  'station_coordinates': [
+                    {'latitude': 24.7, 'longitude': 46.7}
+                  ]
+                }
+              ])),
+              200);
+        }));
     final rows = await client.getStationDirectory(stationType: 'classic');
     expect(captured.url.path, '/api/v1/stations');
     expect(captured.url.queryParameters['stationType'], 'classic');
@@ -51,19 +69,29 @@ void main() {
     client.close();
   });
 
-
-  test('station coordinates distinguish missing, valid and out-of-range values', () {
-    StationDirectoryItem station(double? latitude, double? longitude) => StationDirectoryItem(
-      id: stationId, localCode: 'ST-001', nameArabic: 'اختبار', nameEnglish: 'Test',
-      stationType: 'classic', operationalStatus: 'unverified', approvalStatus: 'pending',
-      isDemo: false, latitude: latitude, longitude: longitude);
+  test('station coordinates distinguish missing, valid and out-of-range values',
+      () {
+    StationDirectoryItem station(double? latitude, double? longitude) =>
+        StationDirectoryItem(
+            id: stationId,
+            localCode: 'ST-001',
+            nameArabic: 'اختبار',
+            nameEnglish: 'Test',
+            stationType: 'classic',
+            operationalStatus: 'unverified',
+            approvalStatus: 'pending',
+            isDemo: false,
+            latitude: latitude,
+            longitude: longitude);
     expect(station(24.7, 46.7).hasValidCoordinates, isTrue);
     expect(station(null, 46.7).hasValidCoordinates, isFalse);
     expect(station(91, 46.7).hasValidCoordinates, isFalse);
     expect(station(24.7, -181).hasValidCoordinates, isFalse);
   });
 
-  test('station directory fetches every page instead of silently hiding stations', () async {
+  test(
+      'station directory fetches every page instead of silently hiding stations',
+      () async {
     var requests = 0;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -96,30 +124,34 @@ void main() {
     client.close();
   });
 
-  test('station audit log uses the read-only station-scoped API contract', () async {
+  test('station audit log uses the read-only station-scoped API contract',
+      () async {
     late http.Request captured;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'audit-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response.bytes(utf8.encode(jsonEncode([
-          {
-            'id': '33333333-3333-4333-8333-333333333333',
-            'entity_type': 'station_assignment',
-            'entity_id': stationId,
-            'action': 'update',
-            'actor_id': '44444444-4444-4444-8444-444444444444',
-            'reason': 'تحديث تعيين',
-            'occurred_at': '2026-11-11T12:00:00Z',
-            'target_user_id': '55555555-5555-4555-8555-555555555555',
-            'role_code': 'station_observer',
-            'previous_status': 'pending',
-            'resulting_status': 'approved',
-            'valid_from': '2026-11-11T00:00:00Z',
-            'valid_to': null
-          }
-        ])), 200, headers: {'content-type': 'application/json'});
+        return http.Response.bytes(
+            utf8.encode(jsonEncode([
+              {
+                'id': '33333333-3333-4333-8333-333333333333',
+                'entity_type': 'station_assignment',
+                'entity_id': stationId,
+                'action': 'update',
+                'actor_id': '44444444-4444-4444-8444-444444444444',
+                'reason': 'تحديث تعيين',
+                'occurred_at': '2026-11-11T12:00:00Z',
+                'target_user_id': '55555555-5555-4555-8555-555555555555',
+                'role_code': 'station_observer',
+                'previous_status': 'pending',
+                'resulting_status': 'approved',
+                'valid_from': '2026-11-11T00:00:00Z',
+                'valid_to': null
+              }
+            ])),
+            200,
+            headers: {'content-type': 'application/json'});
       }),
     );
 
@@ -136,7 +168,8 @@ void main() {
     client.close();
   });
 
-  test('station audit log rejects invalid limits before network access', () async {
+  test('station audit log rejects invalid limits before network access',
+      () async {
     var requests = 0;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -148,36 +181,46 @@ void main() {
     );
     await expectLater(
       client.getStationAuditLog(stationId, limit: 251),
-      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit')),
+      throwsA(isA<MetraApiException>()
+          .having((e) => e.code, 'code', 'invalid_limit')),
     );
     expect(requests, 0);
     client.close();
   });
 
   test('requires access token', () async {
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => null,
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId),
-      throwsA(isA<MetraApiException>().having((e) => e.statusCode, 'statusCode', 401)));
+    final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => null,
+        client: MockClient((_) async => http.Response('[]', 200)));
+    await expectLater(
+        client.getReviewQueue(stationId),
+        throwsA(isA<MetraApiException>()
+            .having((e) => e.statusCode, 'statusCode', 401)));
     client.close();
   });
 
   test('requires HTTPS API origin', () async {
-    final client = MetraApiClient(baseUrl: 'http://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId),
-      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'api_not_configured')));
+    final client = MetraApiClient(
+        baseUrl: 'http://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async => http.Response('[]', 200)));
+    await expectLater(
+        client.getReviewQueue(stationId),
+        throwsA(isA<MetraApiException>()
+            .having((e) => e.code, 'code', 'api_not_configured')));
     client.close();
   });
 
   test('bounds queue limit', () async {
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId, limit: 101),
-      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit')));
+    final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async => http.Response('[]', 200)));
+    await expectLater(
+        client.getReviewQueue(stationId, limit: 101),
+        throwsA(isA<MetraApiException>()
+            .having((e) => e.code, 'code', 'invalid_limit')));
     client.close();
   });
   test('API is not configured when the build-time URL is missing', () {
@@ -191,37 +234,43 @@ void main() {
   });
 
   test('rejects API URLs containing credentials, query or fragment', () {
-    expect(ApiConfig.isValidUrl('https://user:secret@api.example.test'), isFalse);
-    expect(ApiConfig.isValidUrl('https://api.example.test?token=secret'), isFalse);
+    expect(
+        ApiConfig.isValidUrl('https://user:secret@api.example.test'), isFalse);
+    expect(
+        ApiConfig.isValidUrl('https://api.example.test?token=secret'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test#section'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test/api/v1'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
 
-
-  test('observation archive authenticates, filters and parses imported records', () async {
+  test('observation archive authenticates, filters and parses imported records',
+      () async {
     late http.Request captured;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'archive-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode({
-          'items': [{
-            'id': '66666666-6666-4666-8666-666666666666',
-            'stationId': stationId,
-            'sourceSystem': 'legacy-import',
-            'sourceTable': 'hourly_records',
-            'sourceRecordId': 'source-123',
-            'observationType': 'hourly',
-            'observedAtUtc': '2026-11-10T18:00:00Z',
-            'payload': {'temperature': 24.5},
-            'importedAtUtc': '2026-11-11T01:00:00Z'
-          }],
-          'hasMore': true,
-          'nextCursor': 'cursor-page-2'
-        }), 200);
+        return http.Response(
+            jsonEncode({
+              'items': [
+                {
+                  'id': '66666666-6666-4666-8666-666666666666',
+                  'stationId': stationId,
+                  'sourceSystem': 'legacy-import',
+                  'sourceTable': 'hourly_records',
+                  'sourceRecordId': 'source-123',
+                  'observationType': 'hourly',
+                  'observedAtUtc': '2026-11-10T18:00:00Z',
+                  'payload': {'temperature': 24.5},
+                  'importedAtUtc': '2026-11-11T01:00:00Z'
+                }
+              ],
+              'hasMore': true,
+              'nextCursor': 'cursor-page-2'
+            }),
+            200);
       }),
     );
     final page = await client.getObservationArchive(
@@ -233,7 +282,8 @@ void main() {
       cursor: 'cursor-page-1',
     );
     expect(captured.method, 'GET');
-    expect(captured.url.path, '/api/v1/stations/$stationId/observation-archive');
+    expect(
+        captured.url.path, '/api/v1/stations/$stationId/observation-archive');
     expect(captured.url.queryParameters['observationType'], 'hourly');
     expect(captured.url.queryParameters['limit'], '25');
     expect(captured.url.queryParameters['cursor'], 'cursor-page-1');
@@ -247,36 +297,40 @@ void main() {
     client.close();
   });
 
-  test('observation archive detail uses station-scoped detail endpoint', () async {
+  test('observation archive detail uses station-scoped detail endpoint',
+      () async {
     late http.Request captured;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'archive-detail-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode({
-          'id': '66666666-6666-4666-8666-666666666666',
-          'stationId': stationId,
-          'sourceSystem': 'legacy-import',
-          'sourceTable': 'daily_records',
-          'sourceRecordId': 'daily-42',
-          'observationType': 'daily',
-          'observedAtUtc': null,
-          'payload': {'rainfall': 2},
-          'importedAtUtc': '2026-11-11T01:00:00Z'
-        }), 200);
+        return http.Response(
+            jsonEncode({
+              'id': '66666666-6666-4666-8666-666666666666',
+              'stationId': stationId,
+              'sourceSystem': 'legacy-import',
+              'sourceTable': 'daily_records',
+              'sourceRecordId': 'daily-42',
+              'observationType': 'daily',
+              'observedAtUtc': null,
+              'payload': {'rainfall': 2},
+              'importedAtUtc': '2026-11-11T01:00:00Z'
+            }),
+            200);
       }),
     );
     final item = await client.getObservationArchiveDetail(
-      stationId, '66666666-6666-4666-8666-666666666666');
+        stationId, '66666666-6666-4666-8666-666666666666');
     expect(captured.url.path,
-      '/api/v1/stations/$stationId/observation-archive/66666666-6666-4666-8666-666666666666');
+        '/api/v1/stations/$stationId/observation-archive/66666666-6666-4666-8666-666666666666');
     expect(item.observedAtUtc, isNull);
     expect(item.payload['rainfall'], 2);
     client.close();
   });
 
-  test('observation archive rejects local timestamps before network access', () async {
+  test('observation archive rejects local timestamps before network access',
+      () async {
     var requests = 0;
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
@@ -291,13 +345,12 @@ void main() {
         stationId,
         fromUtc: DateTime(2026, 11, 1),
       ),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'utc_offset_required')),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.code, 'code', 'utc_offset_required')),
     );
     expect(requests, 0);
     client.close();
   });
-
 
   test('maps archive 503 code from API body', () async {
     final client = MetraApiClient(
@@ -312,7 +365,8 @@ void main() {
       }),
     );
     try {
-      await client.getObservationArchive('11111111-1111-1111-1111-111111111111');
+      await client
+          .getObservationArchive('11111111-1111-1111-1111-111111111111');
       fail('expected exception');
     } on MetraApiException catch (e) {
       expect(e.statusCode, 503);
@@ -320,4 +374,134 @@ void main() {
     }
   });
 
+  test('getStationUsers requests station users path', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'tok',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode([
+            {
+              'id': 'u1',
+              'email': 'observer@example.test',
+              'role_code': 'observer',
+              'status': 'active',
+            }
+          ]),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    final rows = await client.getStationUsers(stationId, limit: 25);
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/v1/stations/$stationId/users');
+    expect(captured.url.queryParameters['limit'], '25');
+    expect(rows.single.displayTitle(), 'observer@example.test');
+    client.close();
+  });
+
+  test('getRegistrationRoles and authorities parse list payloads', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'tok',
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('/registration-roles')) {
+          return http.Response(
+            jsonEncode([
+              {
+                'role_code': 'observer',
+                'name_ar': 'راصد',
+                'name_en': 'Observer'
+              }
+            ]),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        if (request.url.path.endsWith('/authorities')) {
+          return http.Response(
+            jsonEncode([
+              {
+                'id': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+                'name_ar': 'جهة اختبار'
+              }
+            ]),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }
+        return http.Response('{}', 404);
+      }),
+    );
+    final roles = await client.getRegistrationRoles();
+    expect(roles.single.displayTitle(), 'راصد');
+    final authorities = await client.getAuthorities();
+    expect(authorities.single.displayTitle(), 'جهة اختبار');
+    client.close();
+  });
+
+  test('getMyRegistrationStatus returns object map', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'tok',
+      client: MockClient((request) async {
+        expect(request.url.path, '/api/v1/account/registration-status');
+        return http.Response(
+          jsonEncode({'status': 'pending', 'role_code': 'observer'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    final status = await client.getMyRegistrationStatus();
+    expect(status['status'], 'pending');
+    client.close();
+  });
+  test('authority access queue and audit use authority path', () async {
+    final authorityId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    final paths = <String>[];
+    final queries = <Map<String, String>>[];
+
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'tok',
+      client: MockClient((request) async {
+        paths.add(request.url.path);
+        queries.add(request.url.queryParameters);
+        return http.Response(
+          '[]',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+
+    await client.getAuthorityAccessQueue(
+      authorityId,
+      kind: 'membership',
+    );
+    await client.getAuthorityAccessAudit(authorityId);
+    await client.getAuthorityMembershipRoles(authorityId);
+    await client.getAuthorityPermissionOptions(authorityId);
+
+    expect(paths, [
+      '/api/v1/authorities/$authorityId/access-queue',
+      '/api/v1/authorities/$authorityId/access-audit',
+      '/api/v1/authorities/$authorityId/membership-roles',
+      '/api/v1/authorities/$authorityId/permission-options',
+    ]);
+
+    expect(queries[0], {
+      'kind': 'membership',
+      'limit': '100',
+    });
+    expect(queries[1], {'limit': '100'});
+    expect(queries[2], isEmpty);
+    expect(queries[3], isEmpty);
+
+    client.close();
+  });
 }
