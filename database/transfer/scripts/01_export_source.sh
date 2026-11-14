@@ -31,10 +31,10 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Exporting approved source $SRC_REF to encrypted artifacts."
 pg_dump "$SRC_URL" --format=plain --schema-only --no-owner --no-privileges \
-  --schema=public --file="$TMP_DIR/01_schema_public.raw.sql"
+  --schema=public --schema=private --file="$TMP_DIR/01_schema_public.raw.sql"
 metra_normalize_public_schema_dump "$TMP_DIR/01_schema_public.raw.sql" "$TMP_DIR/01_schema_public.sql"
 pg_dump "$SRC_URL" --format=plain --data-only --no-owner --disable-triggers \
-  --schema=public --file="$TMP_DIR/02_data_public.sql"
+  --schema=public --schema=private --file="$TMP_DIR/02_data_public.sql"
 
 for dump in 01_schema_public.sql 02_data_public.sql; do
   printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
@@ -44,11 +44,11 @@ done
 
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_tables.txt" -c "\
 SELECT table_schema, table_name FROM information_schema.tables \
-WHERE table_schema = 'public' ORDER BY 1,2;"
+WHERE table_schema IN ('public','private') ORDER BY 1,2;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_functions.txt" -c "\
 SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) \
 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace \
-WHERE n.nspname = 'public' ORDER BY 1,2,3;"
+WHERE n.nspname IN ('public','private') ORDER BY 1,2,3;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
 SELECT n.nspname, c.relname, con.conname, pg_get_constraintdef(con.oid) \
 FROM pg_constraint con \
