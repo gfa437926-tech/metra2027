@@ -23,10 +23,7 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
 [[ -s "$DUMP_DIR/01_schema_application.sql.gpg" ]] || { echo "Missing encrypted application schema dump." >&2; exit 4; }
 
 # Verify every artifact in the export before connecting to the destination.
-(
-  cd "$DUMP_DIR"
-  sha256sum --check --strict SHA256SUMS
-)
+metra_verify_transfer_checksums "$DUMP_DIR"
 metra_verify_transfer_manifest "$DUMP_DIR"
 [[ -s "$DUMP_DIR/07_extensions.txt" ]] || { echo "Missing required extension inventory." >&2; exit 4; }
 
