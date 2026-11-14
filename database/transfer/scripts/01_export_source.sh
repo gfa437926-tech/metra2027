@@ -63,10 +63,12 @@ SELECT source_system, source_table, is_demo, count(*)::bigint AS rows, \
 FROM public.metra_observation_records \
 GROUP BY source_system, source_table, is_demo \
 ORDER BY source_system, source_table, is_demo;"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/06_runtime_role_inventory.txt" -c "\
+SELECT item::text FROM (   SELECT '01_role'::text AS sort_key,          jsonb_build_object('kind','role','rolname',rolname,'rolsuper',rolsuper,'rolinherit',rolinherit,            'rolcreaterole',rolcreaterole,'rolcreatedb',rolcreatedb,'rolcanlogin',rolcanlogin,            'rolreplication',rolreplication,'rolbypassrls',rolbypassrls) AS item   FROM pg_roles WHERE rolname='metra_api_runtime'   UNION ALL   SELECT '02_schema',          jsonb_build_object('kind','schema_privilege','schema',n.nspname,            'usage',has_schema_privilege('metra_api_runtime',n.oid,'USAGE'),            'create',has_schema_privilege('metra_api_runtime',n.oid,'CREATE'))   FROM pg_namespace n WHERE n.nspname IN ('public','private')   UNION ALL   SELECT '03_table',          jsonb_build_object('kind','table_privilege','schema',table_schema,'table',table_name,            'privilege',privilege_type,'grantable',is_grantable)   FROM information_schema.role_table_grants WHERE grantee='metra_api_runtime'   UNION ALL   SELECT '04_routine',          jsonb_build_object('kind','routine_privilege','schema',routine_schema,'routine',specific_name,            'privilege',privilege_type,'grantable',is_grantable)   FROM information_schema.role_routine_grants WHERE grantee='metra_api_runtime'   UNION ALL   SELECT '05_membership',          jsonb_build_object('kind','membership','granted_role',granted.rolname,            'member_role',member.rolname,'admin_option',m.admin_option)   FROM pg_auth_members m   JOIN pg_roles granted ON granted.oid=m.roleid   JOIN pg_roles member ON member.oid=m.member   WHERE granted.rolname='metra_api_runtime' OR member.rolname='metra_api_runtime' ) inventory(sort_key,item) ORDER BY sort_key, item::text;"
 
 (
   cd "$OUT_DIR"
-  sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt > SHA256SUMS
+  sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt > SHA256SUMS
 )
 
 {
@@ -77,6 +79,7 @@ ORDER BY source_system, source_table, is_demo;"
   echo "auth_users_exported=false"
   echo "auth_user_fk_inventory_exported=true"
   echo "observation_provenance_exported=true"
+  echo "runtime_role_inventory_exported=true"
   echo "api_keys_and_jwt_secrets_exported=false"
 } > "$OUT_DIR/MANIFEST.txt"
 
