@@ -36,7 +36,7 @@ Protect it with `chmod 600 /secure/path/auth-user-map.csv` and set `METRA_AUTH_U
 ## Current status
 
 - Auth users exported/imported automatically: NOT IMPLEMENTED; target users must be recreated through supported Auth flows.
-- Auth FK inventory: implemented as a machine-readable TSV export and included in SHA256SUMS; not yet run against the hosted source.
+- Auth FK inventory: implemented as a machine-readable JSON-lines export and included in SHA256SUMS; not yet run against the hosted source.
 - Auth UUID remapper: implemented for declared FK columns in plain pg_dump COPY data; unit tests added but latest CI result is pending.
 - Target UUID existence check: implemented in `04_import_data.sh`; not run against a real target.
 - Unconstrained UUID/JSON references: manual audit still required.
