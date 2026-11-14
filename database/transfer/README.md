@@ -9,7 +9,7 @@
 
 Repeatable export/import of the approved experimental project's `public` and `private` schemas and data to a future, explicitly identified target.
 The source is never modified or deleted by this pack. It does not copy API keys, JWT secrets, Auth sessions, refresh tokens, or managed Supabase schemas.
-The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory of declared application foreign keys referencing auth.users, and a row-count summary grouped by observation source table/system/demo flag. The passphrase must be supplied through a protected shell environment and stored separately from artifacts.
+The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory of declared application foreign keys referencing auth.users, a row-count summary grouped by observation source table/system/demo flag, and an ACL/default-privilege inventory. The passphrase must be supplied through a protected shell environment and stored separately from artifacts.
 
 ## Scripts
 
@@ -18,10 +18,12 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/01_export_source.sh` — encrypted public/private schema/data export, strips pre-existing schema creation statements, SHA-256 manifest, Auth-user FK inventory, observation provenance, and role ACL inventory
 - `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
-- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed service_role and metra_api_runtime grants
+- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
 - `scripts/04_import_data.sh` — verifies the complete manifest, then atomically decrypts/imports public/private data into empty tables
 - `scripts/05_compare.sh` — exact public/private row counts and deterministic public/private object inventory comparison
+- `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/assert_empty_application_tables.sql` — read-only guard that blocks data import into populated tables
+- `tests/create_managed_roles.sql` and `tests/runtime_role_fixtures.sql` — isolated PostgreSQL fixtures for ACL tests
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, wrong-project URL, and pg_dump compatibility tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
 - Export artifacts also include `05_observation_provenance.txt` and `06_runtime_role_inventory.txt`; review source provenance, null station references, and ACL inventory before accepting a restore.
