@@ -20,7 +20,7 @@ metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
 command -v gpg >/dev/null 2>&1 || { echo "gpg is required." >&2; exit 4; }
 command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exit 4; }
 [[ -s "$DUMP_DIR/SHA256SUMS" ]] || { echo "Missing SHA256SUMS manifest." >&2; exit 4; }
-[[ -s "$DUMP_DIR/02_data_application.sql.gpg" ]] || { echo "Missing encrypted public data dump." >&2; exit 4; }
+[[ -s "$DUMP_DIR/02_data_application.sql.gpg" ]] || { echo "Missing encrypted application data dump." >&2; exit 4; }
 
 # Verify every artifact in the export before connecting to the destination.
 (
