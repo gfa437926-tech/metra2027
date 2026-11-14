@@ -33,6 +33,8 @@ for side in source target; do
     -f "$ROOT/sql/compare_objects.sql" > "$OUT/${side}_objects.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At \
     -f "$ROOT/sql/compare_acl_inventory.sql" > "$OUT/${side}_acl.txt"
+  psql "$url" -X -v ON_ERROR_STOP=1 -At \
+    -f "$ROOT/sql/compare_extensions.sql" > "$OUT/${side}_extensions.txt"
 done
 
 set +e
@@ -42,13 +44,15 @@ diff -u "$OUT/source_objects.txt" "$OUT/target_objects.txt" > "$OUT/objects.diff
 objects_status=$?
 diff -u "$OUT/source_acl.txt" "$OUT/target_acl.txt" > "$OUT/acl.diff"
 acl_status=$?
+comm -23 <(sort "$OUT/source_extensions.txt") <(sort "$OUT/target_extensions.txt") > "$OUT/missing_extensions.diff"
+if [[ -s "$OUT/missing_extensions.diff" ]]; then extension_status=1; else extension_status=0; fi
 set -e
 
 printf 'Source ref: %s\nTarget ref: %s\n' "$SRC_REF" "$DST_REF" > "$OUT/RESULT.txt"
-if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 ]]; then
-  echo "PASS: exact row counts, application objects, and ACL inventories match." | tee -a "$OUT/RESULT.txt"
+if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 && "$extension_status" -eq 0 ]]; then
+  echo "PASS: exact row counts, application objects, ACL inventories, and required extensions match." | tee -a "$OUT/RESULT.txt"
 else
-  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, and acl.diff." | tee -a "$OUT/RESULT.txt"
+  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, acl.diff, and missing_extensions.diff." | tee -a "$OUT/RESULT.txt"
   exit 1
 fi
 
