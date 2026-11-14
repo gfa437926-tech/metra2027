@@ -58,6 +58,7 @@ jobs:
           bash database/transfer/tests/test_url_guard.sh
           bash database/transfer/tests/test_public_schema_normalizer.sh
           bash database/transfer/tests/test_manifest.sh
+          bash database/transfer/tests/test_checksums.sh
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
