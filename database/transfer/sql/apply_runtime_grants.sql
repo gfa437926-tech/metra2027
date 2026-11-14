@@ -78,25 +78,33 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
   FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
-REVOKE EXECUTE ON FUNCTION
-  public.reject_metra_observation_audit_mutation(),
-  public.reject_metra_equipment_fault_audit_mutation(),
-  public.reject_metra_support_incident_audit_mutation()
-FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
-
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA private
   FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
-REVOKE EXECUTE ON FUNCTION private.reject_authority_access_audit_mutation()
-  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
--- Trigger-only rejection functions contain no non-catalog lookups; pin their search path.
-ALTER FUNCTION public.reject_metra_observation_audit_mutation()
-  SET search_path = pg_catalog;
-ALTER FUNCTION public.reject_metra_equipment_fault_audit_mutation()
-  SET search_path = pg_catalog;
-ALTER FUNCTION public.reject_metra_support_incident_audit_mutation()
-  SET search_path = pg_catalog;
-ALTER FUNCTION private.reject_authority_access_audit_mutation()
-  SET search_path = pg_catalog;
+
+-- Revoke direct execution and pin search_path for every audit-trigger function
+-- present in this schema pack. Equipment/support trigger functions are optional
+-- in the checked-in baseline and are handled only when their definitions exist.
+DO $audit_trigger_acl$
+DECLARE
+  function_signature text;
+BEGIN
+  FOREACH function_signature IN ARRAY ARRAY[
+    'public.reject_append_only_audit_mutation()',
+    'public.reject_metra_observation_audit_mutation()',
+    'public.reject_metra_equipment_fault_audit_mutation()',
+    'public.reject_metra_support_incident_audit_mutation()',
+    'private.reject_authority_access_audit_mutation()'
+  ] LOOP
+    IF to_regprocedure(function_signature) IS NOT NULL THEN
+      EXECUTE format(
+        'REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime',
+        function_signature
+      );
+      EXECUTE format('ALTER FUNCTION %s SET search_path = pg_catalog', function_signature);
+    END IF;
+  END LOOP;
+END
+$audit_trigger_acl$;
 GRANT EXECUTE ON FUNCTION private.decide_metra_registration(
   uuid, text, uuid, text, text, timestamp with time zone
 ) TO metra_api_runtime;
