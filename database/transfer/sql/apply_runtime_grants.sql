@@ -105,9 +105,16 @@ BEGIN
   END LOOP;
 END
 $audit_trigger_acl$;
-GRANT EXECUTE ON FUNCTION private.decide_metra_registration(
-  uuid, text, uuid, text, text, timestamp with time zone
-) TO metra_api_runtime;
-GRANT EXECUTE ON FUNCTION private.submit_metra_registration(
-  uuid, text, text, text, text, text, uuid, text, timestamp with time zone, text
-) TO metra_api_runtime;
+-- Older hosted snapshots may expose these private registration helpers;
+-- the current checked-in migration pack exposes station-bound public RPCs
+-- instead, so do not fail a restore when the optional private signatures are absent.
+DO $optional_runtime_functions$
+BEGIN
+  IF to_regprocedure('private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)') IS NOT NULL THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone) TO metra_api_runtime';
+  END IF;
+  IF to_regprocedure('private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamp with time zone,text)') IS NOT NULL THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamp with time zone,text) TO metra_api_runtime';
+  END IF;
+END
+$optional_runtime_functions$;
