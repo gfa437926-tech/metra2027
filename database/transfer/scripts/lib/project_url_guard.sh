@@ -53,8 +53,8 @@ metra_assert_pg_dump_compatible() {
   fi
 }
 
-# Remove the public schema CREATE statement because Supabase target projects
-# already contain public. Fail closed if pg_dump output differs unexpectedly.
+# Supabase target projects already contain public; the target bootstrap creates
+# private. Remove exactly one CREATE statement for each schema from pg_dump.
 metra_normalize_public_schema_dump() {
   local input_file="${1:?input schema dump required}"
   local output_file="${2:?output schema dump required}"
@@ -62,15 +62,19 @@ metra_normalize_public_schema_dump() {
     echo "Refusing schema normalization: input dump is missing or empty." >&2
     return 1
   fi
-  local create_count
-  create_count="$(grep -Ec '^CREATE SCHEMA "?public"?;$' "$input_file" || true)"
-  if [[ "$create_count" != "1" ]]; then
-    echo "Refusing schema normalization: expected exactly one CREATE SCHEMA public statement; found $create_count." >&2
+  local public_count private_count
+  public_count="$(grep -Ec '^CREATE SCHEMA "?public"?;
+ "$input_file" || true)"
+  private_count="$(grep -Ec '^CREATE SCHEMA "?private"?;
+ "$input_file" || true)"
+  if [[ "$public_count" != "1" || "$private_count" != "1" ]]; then
+    echo "Refusing schema normalization: expected one public and one private schema statement; found public=$public_count private=$private_count." >&2
     return 1
   fi
-  sed -E '/^CREATE SCHEMA "?public"?;$/d' "$input_file" > "$output_file"
-  if grep -Eq '^CREATE SCHEMA "?public"?;$' "$output_file"; then
-    echo "Refusing schema normalization: public schema creation statement remains." >&2
+  sed -E '/^CREATE SCHEMA "?public"?;$/d; /^CREATE SCHEMA "?private"?;$/d' "$input_file" > "$output_file"
+  if grep -Eq '^CREATE SCHEMA "?public"?;$|^CREATE SCHEMA "?private"?;
+ "$output_file"; then
+    echo "Refusing schema normalization: existing schema creation statement remains." >&2
     return 1
   fi
   [[ -s "$output_file" ]] || { echo "Refusing schema normalization: output is empty." >&2; return 1; }
