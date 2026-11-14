@@ -32,6 +32,7 @@
 - [ ] SHA-256 checks pass before each import
 - [ ] No source Auth users, identities, sessions, or credentials are copied
 - [ ] Auth FK row/non-null/distinct counts match between source and target
+- [ ] Sequence definitions and current values match after pg_dump setval restoration
 - [ ] Unconstrained UUID/JSON references separately audited and reconciled
 - [ ] Public/private data import completed atomically after manifest and empty-target guards
 - [ ] Exact public/private row-count, object, and ACL inventory comparison passes
