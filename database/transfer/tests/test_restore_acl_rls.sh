@@ -81,6 +81,7 @@ SQL
 # Target bootstrap is performed while public/private are empty. Auth is managed
 # separately, mirroring the transfer contract: Auth users are not imported.
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$TRANSFER/sql/bootstrap_target_roles.sql" >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" -c 'DROP SCHEMA private CASCADE' >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<SQL
 CREATE SCHEMA auth;
 CREATE TABLE auth.users(id uuid PRIMARY KEY);
