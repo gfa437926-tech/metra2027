@@ -90,3 +90,16 @@ No hosted export, target import, restore drill, or live cutover is claimed by th
 ### Full isolated restore ACL/RLS acceptance
 
 `tests/test_restore_acl_rls.sh` creates disposable source and target PostgreSQL databases, builds the source with the checked-in operational-observation migration, exports/restores the synthetic `public`/`private` schemas, and reapplies reviewed target grants. It verifies the four-policy/FORCE-RLS owner-scoped fixture survives restore, then audits the actual `public.metra_observations` and `public.metra_observation_audit_events` tables from the operational migration: ENABLE/FORCE RLS, intentional absence of direct-client policies, denial of all direct `anon`/`authenticated` SELECT/INSERT/UPDATE/DELETE grants, default-deny RLS even after temporary test-only client grants, server-role access, service-role-only RPC execution, successful synthetic server inserts, and append-only audit mutation rejection. It also verifies `security_invoker` view behavior, private-schema isolation, default ACLs, and the runtime role's non-privileged posture. The test uses only disposable local PostgreSQL databases and synthetic UUIDs; it never connects to hosted Supabase.
+
+
+## Full METRA schema restore rehearsal (disposable PostgreSQL)
+
+`tests/test_restore_actual_schema_acl_rls.sh` builds the source database from the checked-in authoritative schema pack:
+- all `database/baseline/00*.sql` files via `database/baseline/path_n_apply.sh`
+- the official role catalogue seed
+- every `database/migrations/*.sql` migration in the Path N apply order, including the documented compatibility substitutions
+- every `supabase/migrations/*.sql` operational observation migration (`PATH_N_APPLY_OBSERVATIONS=1`)
+
+It then dumps and restores the complete `public` and `private` schemas into a second disposable database, reapplies reviewed target ACLs, and compares normalized schema-only dumps, per-table RLS enable/force flags, complete policy definitions, and object counts. The audit checks client table ACLs across every restored public/private table, including elevated TRUNCATE/REFERENCES/TRIGGER privileges.
+
+This is a schema-definition rehearsal, not a production-data restore. The isolated `auth.users` stub is not populated with identities; no historical observation rows, legacy station data, or hosted Supabase connections are used. The separate `test_restore_acl_rls.sh` remains as a focused behavioral test for its deliberately synthetic owner-scoped RLS fixture and the operational observation RPC tables.
