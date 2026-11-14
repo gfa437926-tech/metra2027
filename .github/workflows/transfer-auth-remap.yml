@@ -1,0 +1,113 @@
+name: METRA transfer safety and Auth remap tests
+
+on:
+  push:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-auth-remap.yml"
+  pull_request:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-auth-remap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-remap:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m py_compile database/transfer/scripts/remap_auth_user_ids.py
+      - name: Run ShellCheck on transfer scripts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+          shellcheck -e SC1091 database/transfer/scripts/*.sh database/transfer/scripts/lib/*.sh database/transfer/tests/*.sh
+      - name: Run Auth UUID remapping unit tests
+        run: python -m unittest discover -s database/transfer/tests -p 'test_*.py' -v
+      - name: Run transfer shell guards
+        run: |
+          bash -n database/transfer/scripts/*.sh
+          bash -n database/transfer/scripts/lib/*.sh
+          bash -n database/transfer/tests/*.sh
+          bash database/transfer/tests/test_url_guard.sh
+          bash database/transfer/tests/test_public_schema_normalizer.sh
+          bash database/transfer/tests/test_manifest.sh
+          bash database/transfer/tests/test_checksums.sh
+          bash database/transfer/tests/test_compare_contract.sh
+          bash database/transfer/tests/test_compare_runner_preflight.sh
+          bash database/transfer/tests/test_excluded_dump_patterns.sh
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Test empty-target import guard
+        run: bash database/transfer/tests/test_empty_target_guard.sh
+      - name: Test excluded observation-history guard
+        run: bash database/transfer/tests/test_excluded_observation_guard.sh
+      - name: Test required extension installer
+        run: bash database/transfer/tests/test_install_extensions.sh
+      - name: Exercise transfer SQL and Auth FK comparisons
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_extensions.sql > /tmp/extensions.txt
+          grep -E '^pgcrypto[|][^|]+[|]extensions$' /tmp/extensions.txt
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_target_default_acl.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_target_function_search_path.sql
+          psql -X -v ON_ERROR_STOP=1 -c "INSERT INTO public.metra_equipment_fault_audit_events(id) VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'); CREATE TRIGGER immutable_fixture BEFORE UPDATE OR DELETE ON public.metra_equipment_fault_audit_events FOR EACH ROW EXECUTE FUNCTION public.reject_metra_equipment_fault_audit_mutation();"
+          if psql -X -v ON_ERROR_STOP=1 -c "SET ROLE service_role; UPDATE public.metra_equipment_fault_audit_events SET id=id;" > /tmp/immutable-trigger.log 2>&1; then
+            echo "Expected immutable audit trigger to reject service_role UPDATE."
+            exit 1
+          fi
+          grep -F "immutable" /tmp/immutable-trigger.log
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/station_catalogue_provenance.sql > /tmp/station-provenance.txt
+          grep -Fx "orphan_coordinate_rows|0" /tmp/station-provenance.txt
+          grep -Fx "duplicate_coordinate_station_ids|0" /tmp/station-provenance.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth-fk-counts.txt
+          grep -Fx "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth-fk-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence-state.txt
+          grep -E '^public[|]station_audit_log_id_seq[|].*[|]42$' /tmp/sequence-state.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/row-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data-hashes.txt
+          grep -F "public|auth_fk_fixture|1|" /tmp/data-hashes.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/object-inventory.txt
+          grep -F "table|public|auth_fk_fixture|" /tmp/object-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl-inventory.txt
+          grep -F '"kind": "default_acl"' /tmp/acl-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory_acceptance.sql > /tmp/acl-acceptance.txt
+          grep -F '"kind": "role"' /tmp/acl-acceptance.txt
+      - name: Run isolated source/target comparison regression
+        run: bash database/transfer/tests/test_compare_end_to_end.sh
+      - name: Exercise data importer end to end
+        run: bash database/transfer/tests/test_import_data.sh

@@ -1,3 +1,4 @@
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import '../../core/api/metra_api_client.dart';
 
@@ -161,16 +162,22 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إرسال قرار المراجعة')),
+        const SnackBar(content: Text('تم إرسال قرار المراجعة إلى الخادم')),
       );
       await _refresh();
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = error.statusCode == 403
-          ? 'ليست لديك صلاحية تنفيذ هذا القرار'
-          : error.statusCode == 409
-              ? 'تمت معالجة النشرة مسبقاً أو تغيرت حالتها'
-              : 'تعذر تنفيذ القرار. حاول مجدداً';
+      final message = switch (error.statusCode) {
+        403 => 'ليست لديك صلاحية تنفيذ هذا القرار على هذه المحطة',
+        404 => 'النشرة غير موجودة أو لم تعد متاحة للمراجعة',
+        409 when error.code == 'atomic_decision_authorization_not_approved' =>
+          'قرار الاعتماد/الإرجاع موقوف حتى اعتماد التفويض الذري على الخادم',
+        409 when error.code == 'scientific_contract_not_approved' =>
+          'العقد العلمي غير معتمد بعد؛ لا يُسمح بالعمليات التشغيلية',
+        409 => 'تمت معالجة النشرة مسبقاً أو تغيرت حالتها',
+        503 => 'خدمة القرار غير متاحة حالياً (إعداد الخادم أو قاعدة البيانات)',
+        _ => 'تعذر تنفيذ القرار (${error.statusCode}/${error.code}). حاول مجدداً',
+      };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );

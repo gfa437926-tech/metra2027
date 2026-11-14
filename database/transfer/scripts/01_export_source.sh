@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Encrypted export of public/private schema and data from the approved experimental source.
+set -euo pipefail
+umask 077
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/lib/project_url_guard.sh"
+SRC_REF="${METRA_SRC_PROJECT_REF:-tbdnklyxjvbrilvnwgmq}"
+SRC_URL="${METRA_SRC_DATABASE_URL:?Set METRA_SRC_DATABASE_URL}"
+ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+OUT_DIR="${METRA_TRANSFER_OUT:-$ROOT/database/transfer/artifacts/$STAMP}"
+: "${METRA_TRANSFER_PASSPHRASE:?Set METRA_TRANSFER_PASSPHRASE in the secure shell environment}"
+
+if [[ "$SRC_REF" != "tbdnklyxjvbrilvnwgmq" ]]; then
+  echo "Refusing: only the approved experimental source project is allowed." >&2
+  exit 3
+fi
+metra_assert_supabase_project_url "$SRC_REF" "$SRC_URL" "source"
+command -v pg_dump >/dev/null 2>&1 || { echo "pg_dump is required." >&2; exit 4; }
+command -v psql >/dev/null 2>&1 || { echo "psql is required." >&2; exit 4; }
+command -v gpg >/dev/null 2>&1 || { echo "gpg is required for encrypted exports." >&2; exit 4; }
+command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exit 4; }
+
+SERVER_VERSION_NUM="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SHOW server_version_num")"
+metra_assert_pg_dump_compatible "$SERVER_VERSION_NUM" "$(pg_dump --version)"
+AUTH_USER_COUNT="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM auth.users")"
+if [[ "$AUTH_USER_COUNT" != "0" ]]; then
+  echo "Refusing export: source auth.users contains $AUTH_USER_COUNT accounts; no Auth-user migration plan is approved." >&2
+  exit 7
+fi
+
+mkdir -p "$OUT_DIR"
+chmod 700 "$OUT_DIR"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+echo "Exporting approved source $SRC_REF to encrypted artifacts."
+pg_dump "$SRC_URL" --format=plain --schema-only --no-owner --no-privileges \
+  --schema=public --schema=private --file="$TMP_DIR/01_schema_application.raw.sql"
+metra_normalize_public_schema_dump "$TMP_DIR/01_schema_application.raw.sql" "$TMP_DIR/01_schema_application.sql"
+
+# Observation history is deliberately excluded from this migration package.
+pg_dump "$SRC_URL" --format=plain --data-only --no-owner --disable-triggers \
+  --schema=public --schema=private \
+  --exclude-table-data=public.metra_observation_records \
+  --file="$TMP_DIR/02_data_application.sql"
+
+for dump in 01_schema_application.sql 02_data_application.sql; do
+  printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+    --passphrase-fd 0 --symmetric --cipher-algo AES256 \
+    --output "$OUT_DIR/$dump.gpg" "$TMP_DIR/$dump"
+done
+
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_tables.txt" -c "\
+SELECT table_schema, table_name FROM information_schema.tables \
+WHERE table_schema IN ('public','private') ORDER BY 1,2;"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_functions.txt" -c "\
+SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) \
+FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace \
+WHERE n.nspname IN ('public','private') ORDER BY 1,2,3;"
+
+# JSON-lines output preserves arbitrary identifier characters without delimiter ambiguity.
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
+SELECT jsonb_build_array(n.nspname, c.relname, src_att.attname, \
+                         ref_ns.nspname, ref_table.relname, ref_att.attname, con.conname)::text \
+FROM pg_constraint con \
+JOIN pg_class c ON c.oid = con.conrelid \
+JOIN pg_namespace n ON n.oid = c.relnamespace \
+JOIN pg_class ref_table ON ref_table.oid = con.confrelid \
+JOIN pg_namespace ref_ns ON ref_ns.oid = ref_table.relnamespace \
+CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS src_key(attnum, ord) \
+JOIN LATERAL unnest(con.confkey) WITH ORDINALITY AS ref_key(attnum, ord) ON ref_key.ord = src_key.ord \
+JOIN pg_attribute src_att ON src_att.attrelid = c.oid AND src_att.attnum = src_key.attnum \
+JOIN pg_attribute ref_att ON ref_att.attrelid = ref_table.oid AND ref_att.attnum = ref_key.attnum \
+WHERE con.contype = 'f' AND con.confrelid = 'auth.users'::regclass \
+ORDER BY n.nspname, c.relname, src_att.attname, con.conname;"
+
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/05_observation_provenance.txt" -c "\
+SELECT source_system, source_table, is_demo, count(*)::bigint AS rows, \
+       count(DISTINCT station_id)::bigint AS distinct_station_ids, \
+       count(*) FILTER (WHERE station_id IS NULL)::bigint AS rows_without_station \
+FROM public.metra_observation_records \
+GROUP BY source_system, source_table, is_demo \
+ORDER BY source_system, source_table, is_demo;"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_acl_inventory.sql" > "$OUT_DIR/06_runtime_role_inventory.txt"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_extensions.sql" > "$OUT_DIR/07_extensions.txt"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/station_catalogue_provenance.sql" > "$OUT_DIR/08_station_catalogue_provenance.txt"
+
+{
+  echo "source_project_ref=$SRC_REF"
+  echo "exported_at_utc=$STAMP"
+  echo "host_tool=$(pg_dump --version | head -1)"
+  echo "encryption=gpg-symmetric-AES256"
+  echo "auth_users_exported=false"
+  echo "auth_user_count=$AUTH_USER_COUNT"
+  echo "auth_user_fk_inventory_exported=true"
+  echo "observation_provenance_exported=true"
+  echo "observation_records_data_exported=false"
+  echo "all_observation_records_excluded=true"
+  echo "demo_observation_records_excluded=true"
+  echo "non_demo_observation_records_excluded=true"
+  echo "runtime_role_inventory_exported=true"
+  echo "required_extensions_inventory_exported=true"
+  echo "station_catalogue_provenance_exported=true"
+  echo "api_keys_and_jwt_secrets_exported=false"
+} > "$OUT_DIR/MANIFEST.txt"
+
+(
+  cd "$OUT_DIR"
+  sha256sum \
+    01_schema_application.sql.gpg \
+    02_data_application.sql.gpg \
+    03_inventory_tables.txt \
+    03_inventory_functions.txt \
+    04_auth_user_fk_inventory.txt \
+    05_observation_provenance.txt \
+    06_runtime_role_inventory.txt \
+    07_extensions.txt \
+    08_station_catalogue_provenance.txt \
+    MANIFEST.txt > SHA256SUMS
+)
+
+echo "Encrypted export complete: $OUT_DIR"
+echo "Plaintext temporary dumps were removed on exit. Keep the passphrase separately."

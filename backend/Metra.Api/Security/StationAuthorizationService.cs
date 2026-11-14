@@ -7,6 +7,7 @@ public interface IStationAuthorizationService
 {
     bool IsConfigured { get; }
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasStationArchivePermissionAsync(Guid userId, Guid stationId, CancellationToken cancellationToken = default);
     Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
@@ -32,6 +33,15 @@ public sealed class SupabaseStationAuthorizationService(
         HasPermissionAsync(
             "metra_user_has_station_permission", userId, stationId, permissionCode, cancellationToken);
 
+    public Task<bool> HasStationArchivePermissionAsync(
+        Guid userId, Guid stationId,
+        CancellationToken cancellationToken = default) =>
+        // Deliberately use a dedicated RPC: the generic permission RPC is authority-scoped
+        // and does not prove that an archive grant belongs to this exact station.
+        HasPermissionAsync(
+            "metra_user_has_station_archive_permission", userId, stationId,
+            permissionCode: null, cancellationToken);
+
     public Task<bool> HasStationOwnerAuthorityPermissionAsync(
         Guid userId, Guid stationId, string permissionCode,
         CancellationToken cancellationToken = default) =>
@@ -39,11 +49,11 @@ public sealed class SupabaseStationAuthorizationService(
             "metra_user_has_station_owner_authority_permission", userId, stationId, permissionCode, cancellationToken);
 
     private async Task<bool> HasPermissionAsync(
-        string rpcName, Guid userId, Guid stationId, string permissionCode,
+        string rpcName, Guid userId, Guid stationId, string? permissionCode,
         CancellationToken cancellationToken)
     {
         if (!IsConfigured || userId == Guid.Empty || stationId == Guid.Empty ||
-            string.IsNullOrWhiteSpace(permissionCode))
+            (permissionCode is not null && string.IsNullOrWhiteSpace(permissionCode)))
             return false;
 
         var client = httpClientFactory.CreateClient(nameof(SupabaseStationAuthorizationService));
@@ -53,12 +63,12 @@ public sealed class SupabaseStationAuthorizationService(
         request.Headers.TryAddWithoutValidation("apikey", _serviceKey);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
-        request.Content = JsonContent.Create(new
-        {
-            p_user_id = userId,
-            p_station_id = stationId,
-            p_permission_code = permissionCode
-        });
+        // The station-bound archive RPC intentionally has exactly two parameters.
+        // Other station permission RPCs require the permission code as a third parameter.
+        object rpcArguments = permissionCode is null
+            ? new { p_user_id = userId, p_station_id = stationId }
+            : new { p_user_id = userId, p_station_id = stationId, p_permission_code = permissionCode };
+        request.Content = JsonContent.Create(rpcArguments);
 
         try
         {

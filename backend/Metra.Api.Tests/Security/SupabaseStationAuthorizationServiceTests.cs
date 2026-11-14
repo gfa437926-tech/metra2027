@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.Json;
 using Metra.Api.Security;
 using Microsoft.Extensions.Configuration;
 using Xunit;
@@ -82,6 +83,43 @@ public sealed class SupabaseStationAuthorizationServiceTests
             Guid.Empty, Guid.NewGuid(), "stations.catalogue.review"));
         Assert.False(await service.HasStationOwnerAuthorityPermissionAsync(
             Guid.NewGuid(), Guid.Empty, "stations.catalogue.review"));
+    }
+
+    [Fact]
+    public async Task Archive_permission_uses_exact_two_parameter_station_bound_rpc()
+    {
+        var userId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var stationId = Guid.Parse("aaaaaaaa-0001-0001-0001-000000000001");
+        var service = CreateService(request =>
+        {
+            Assert.Equal(
+                "/rest/v1/rpc/metra_user_has_station_archive_permission",
+                request.RequestUri!.AbsolutePath);
+            var body = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
+            using var json = JsonDocument.Parse(body);
+            Assert.Equal(2, json.RootElement.EnumerateObject().Count());
+            Assert.Equal(userId, json.RootElement.GetProperty("p_user_id").GetGuid());
+            Assert.Equal(stationId, json.RootElement.GetProperty("p_station_id").GetGuid());
+            Assert.False(json.RootElement.TryGetProperty("p_permission_code", out _));
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        Assert.True(await service.HasStationArchivePermissionAsync(userId, stationId));
+    }
+
+    [Fact]
+    public async Task Archive_permission_fails_closed_until_station_bound_rpc_is_installed()
+    {
+        var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        {
+            Content = new StringContent("{\"code\":\"PGRST202\"}")
+        });
+
+        Assert.False(await service.HasStationArchivePermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid()));
     }
 
     private static SupabaseStationAuthorizationService CreateService(

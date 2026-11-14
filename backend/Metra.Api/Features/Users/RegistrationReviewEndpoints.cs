@@ -140,7 +140,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationPermission("registrations.station.approve")
         .WithTags("Users")
-        .WithName("GetStationRegistrationRequests");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationRegistrationRequests");
 
         endpoints.MapPost("/api/v1/stations/{stationId:guid}/registration-requests/{requestId:guid}/decision", async (
             Guid stationId, Guid requestId, RegistrationDecisionRequest? request, HttpContext http,
@@ -180,7 +181,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationPermission("registrations.station.approve")
         .WithTags("Users")
-        .WithName("DecideStationRegistrationRequest");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("DecideStationRegistrationRequest");
 
 
         endpoints.MapGet("/api/v1/stations/{stationId:guid}/system-registration-requests", async (
@@ -198,7 +200,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationOwnerAuthorityPermission("registrations.system.approve")
         .WithTags("Users")
-        .WithName("GetSystemRegistrationRequests");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetSystemRegistrationRequests");
 
         endpoints.MapPost("/api/v1/stations/{stationId:guid}/system-registration-requests/{requestId:guid}/decision", async (
             Guid stationId, Guid requestId, RegistrationDecisionRequest? request, HttpContext http,
@@ -235,7 +238,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationOwnerAuthorityPermission("registrations.system.approve")
         .WithTags("Users")
-        .WithName("DecideSystemRegistrationRequest");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("DecideSystemRegistrationRequest");
 
 
         endpoints.MapGet("/api/v1/stations/{stationId:guid}/registration-audit", async (
@@ -253,7 +257,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationPermission("registrations.station.approve")
         .WithTags("Users")
-        .WithName("GetStationRegistrationAudit");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationRegistrationAudit");
 
         endpoints.MapGet("/api/v1/stations/{stationId:guid}/system-registration-audit", async (
             Guid stationId, int? limit, HttpContext http, IRegistrationReviewService review, CancellationToken cancellationToken) =>
@@ -270,7 +275,8 @@ public static class RegistrationReviewEndpoints
         })
         .RequireStationOwnerAuthorityPermission("registrations.system.approve")
         .WithTags("Users")
-        .WithName("GetSystemRegistrationAudit");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetSystemRegistrationAudit");
 
         return endpoints;
     }

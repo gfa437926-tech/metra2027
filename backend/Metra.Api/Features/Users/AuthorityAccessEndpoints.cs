@@ -4,6 +4,8 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 
+using Metra.Api.Security;
+
 namespace Metra.Api.Features.Users;
 
 public sealed record AuthorityMembershipRequest(Guid? UserId, string? RoleCode, string? Reason,
@@ -12,7 +14,7 @@ public sealed record AuthorityPermissionGrantRequest(string? PermissionCode, str
     DateTimeOffset? ValidFrom, DateTimeOffset? ValidTo);
 public sealed record AuthorityAccessDecisionRequest(string? Decision, string? Reason);
 public sealed record AuthorityAccessRpcOutcome(bool IsConfigured, bool Succeeded,
-    HttpStatusCode? StatusCode, JsonElement? Data);
+    HttpStatusCode? StatusCode, JsonElement? Data, string? ErrorKind = null);
 
 public interface IAuthorityAccessService
 {
@@ -48,9 +50,14 @@ public sealed class SupabaseAuthorityAccessService(
             using var response = await clients.CreateClient(nameof(SupabaseAuthorityAccessService))
                 .SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode)
-                return new(true, false, response.StatusCode, null);
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                if (AuthorityAccessConflictDetector.IsUniqueViolation(errorBody, response.StatusCode))
+                    return new(true, false, HttpStatusCode.Conflict, null, AuthorityAccessConflictDetector.UniqueViolationKind);
+                return new(true, false, response.StatusCode, null, null);
+            }
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            return new(true, true, response.StatusCode, data);
+            return new(true, true, response.StatusCode, data, null);
         }
         catch (HttpRequestException) { return new(true, false, HttpStatusCode.ServiceUnavailable, null); }
         catch (JsonException) { return new(true, false, HttpStatusCode.ServiceUnavailable, null); }
@@ -82,7 +89,8 @@ public static class AuthorityAccessEndpoints
                 p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_membership_request_failed");
-        }).WithTags("Authority access").WithName("RequestAuthorityMembership");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RequestAuthorityMembership");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/memberships/{membershipId:guid}/decision", async (
             Guid authorityId, Guid membershipId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -133,7 +141,8 @@ public static class AuthorityAccessEndpoints
                 p_valid_from = request.ValidFrom ?? DateTimeOffset.UtcNow, p_valid_to = request.ValidTo
             }, ct);
             return RequestResult(result, "authority_permission_request_failed");
-        }).WithTags("Authority access").WithName("RequestAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RequestAuthorityPermissionGrant");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/permission-grants/{grantId:guid}/decision", async (
             Guid authorityId, Guid grantId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -149,7 +158,8 @@ public static class AuthorityAccessEndpoints
                 p_decision = request!.Decision, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
-        }).WithTags("Authority access").WithName("DecideAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("DecideAuthorityPermissionGrant");
 
         endpoints.MapPost("/api/v1/authorities/{authorityId:guid}/permission-grants/{grantId:guid}/revocation", async (
             Guid authorityId, Guid grantId, AuthorityAccessDecisionRequest? request, HttpContext http,
@@ -164,7 +174,8 @@ public static class AuthorityAccessEndpoints
                 p_grant_id = grantId, p_authority_id = authorityId, p_actor_user_id = actor, p_reason = request.Reason!.Trim()
             }, ct);
             return TransitionResult(result);
-        }).WithTags("Authority access").WithName("RevokeAuthorityPermissionGrant");
+        }).WithTags("Authority access").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+        .WithName("RevokeAuthorityPermissionGrant");
 
         endpoints.MapGet("/api/v1/authorities/{authorityId:guid}/access-queue", async (
             Guid authorityId, string? kind, int? limit, HttpContext http,
@@ -277,8 +288,69 @@ public static class AuthorityAccessEndpoints
         {
             HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized => Results.Forbid(),
             HttpStatusCode.NotFound => Results.NotFound(),
-            HttpStatusCode.Conflict => Results.Conflict(new { error }),
+            HttpStatusCode.Conflict => Results.Conflict(new
+            {
+                error = result.ErrorKind == AuthorityAccessConflictDetector.UniqueViolationKind
+                    ? "authority_permission_grant_conflict"
+                    : error
+            }),
             HttpStatusCode.BadRequest => Results.BadRequest(new { error }),
             _ => Unavailable()
         };
 }
+
+/// <summary>
+/// Detects PostgreSQL unique_violation (SQLSTATE 23505) from PostgREST/Supabase error bodies.
+/// Only unique constraint conflicts are remapped to HTTP 409; other failures keep their status.
+/// </summary>
+public static class AuthorityAccessConflictDetector
+{
+    public const string UniqueViolationKind = "unique_violation";
+
+    public static bool IsUniqueViolation(string? responseBody, HttpStatusCode? statusCode)
+    {
+        if (statusCode == HttpStatusCode.Conflict)
+        {
+            // PostgREST often already maps 23505 to 409; still inspect body when present.
+            if (string.IsNullOrWhiteSpace(responseBody))
+                return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(responseBody))
+            return false;
+
+        // Prefer structured JSON: { "code": "23505", ... }
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            if (doc.RootElement.ValueKind == JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty("code", out var codeEl))
+            {
+                var code = codeEl.GetString();
+                if (string.Equals(code, "23505", StringComparison.Ordinal))
+                    return true;
+            }
+        }
+        catch (JsonException)
+        {
+            // Fall through to token scan.
+        }
+
+        // Conservative token scan — only unique/primary constraint signals, not generic errors.
+        var body = responseBody;
+        if (body.Contains("23505", StringComparison.Ordinal))
+            return true;
+        if (body.Contains("unique_violation", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (body.Contains("permission_grants_active_station_unique", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (body.Contains("permission_grants_active_authority_unique", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (body.Contains("duplicate key value", StringComparison.OrdinalIgnoreCase) &&
+            body.Contains("permission_grants", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+}
+

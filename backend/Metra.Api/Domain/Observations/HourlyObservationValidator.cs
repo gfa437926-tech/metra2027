@@ -16,9 +16,9 @@ public static class HourlyObservationValidator
     private static readonly IReadOnlyDictionary<string, FieldRule> Rules =
         new Dictionary<string, FieldRule>(StringComparer.Ordinal)
         {
-            ["dryTemp"] = new(@"^[+-]\d{2}\.\d$", -20m, 50m, "الحرارة الجافة"),
-            ["wetTemp"] = new(@"^[+-]\d{2}\.\d$", -20m, 50m, "الحرارة الرطبة"),
-            ["dewPoint"] = new(@"^[+-]\d{2}\.\d$", -20m, 50m, "نقطة الندى"),
+            ["dryTemp"] = new(@"^[+-]?\d{2}\.\d$", -20m, 50m, "الحرارة الجافة"),
+            ["wetTemp"] = new(@"^[+-]?\d{2}\.\d$", -20m, 50m, "الحرارة الرطبة"),
+            ["dewPoint"] = new(@"^[+-]?\d{2}\.\d$", -20m, 50m, "نقطة الندى"),
             ["stationPressure"] = new(@"^\d{4}\.\d$", 850m, 1050m, "الضغط الجوي بالمحطة"),
             ["seaLevelPressure"] = new(@"^\d{4}\.\d$", 0m, 1050m, "الضغط المصحح لمستوى سطح البحر"),
             ["relativeHumidity"] = new(@"^\d{3}$", 1m, 100m, "الرطوبة النسبية"),
@@ -78,7 +78,6 @@ public static class HourlyObservationValidator
         {
             required.Add("pressureSlope");
             required.Add("pressureShape");
-            required.Add("pastWeather");
         }
 
         foreach (var field in required)

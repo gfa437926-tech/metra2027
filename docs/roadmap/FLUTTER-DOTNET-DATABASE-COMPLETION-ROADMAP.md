@@ -234,3 +234,68 @@ Verification remains pending: Flutter analyzer/tests and actual Supabase email-t
 - **Not run:** Flutter analyzer/tests, app builds or visual runtime checks. No passing test or CI result is claimed.
 - Database changes: none. Legacy database: untouched.
 - Next: run Flutter CI, then define/approve telemetry and bulletin backend contracts with source/time/quality/freshness provenance before implementing live readings. FLT-001 archive inspection remains in progress.
+
+
+## FLT-006 — Station audit history and report-contract boundary (2026-11-11)
+
+- Added a read-only Flutter station audit history screen backed by the existing `GET /api/v1/stations/{stationId}/audit-log?limit=` contract.
+- The screen displays station/assignment audit events and provenance fields; it is not an observation archive.
+- Added API and widget test source and a navigation destination for the selected station.
+- Added a dedicated reports hub for the historical archive, hourly/daily, monthly/annual, climate/homogeneity and export modules. Each capability is explicitly marked as waiting for an API contract; no synthetic values or charts are shown.
+- The reviewed API has no daily/monthly/annual reporting or complete observation archive endpoints. The reports hub is a transparent blocked-state UI, not a claim that report functions are implemented.
+- Implementation report: `docs/delivery/FLUTTER-ROUND-FLT-006-STATION-AUDIT-HISTORY.md`.
+- Verification: Client CI #1099 passed Flutter analyze, Flutter tests and Angular build at exact code head `1635b7064843ed5c13711bc0fd47b07a565c2128`.
+- Database, Supabase, Backend, SQL/migrations and legacy repository: unchanged.
+
+## Verification update — 2026-11-12 UTC
+
+### CI evidence
+- Flutter Client CI #1133 passed on code head `f3e6e730b26cb1e874c93657ff342c79abc2aaa2`: Flutter analyze passed, 27 Flutter tests passed, Angular build passed. This includes the deterministic stale-response regression test for station switching in the observation archive.
+- Flutter Client CI #1134 passed on documentation follow-up head `2b446bdb757bf7590c73752687bcd9a9bfcd862d`.
+- Backend build #1549 passed on `cc190dbd29b3b81d4833cbf8d714080f31846346`: disposable PostgreSQL 17 migration/security integration tests, .NET dependency/advisory checks, API build, Domain/API tests and production container image build passed.
+- CI success is scoped to the exact commits above; it is not a full product completion, visual parity, production deployment or end-to-end sign-off.
+
+### Current implementation boundaries
+- Flutter now has a forecast-centre station-comparison screen, read-only station audit history, a reports hub, and a read-only observation archive. These are partial workflows; contract-blocked categories are not counted as completed.
+- Forecast-centre live observations and bulletins remain unavailable until an approved feed/API contract supplies provenance, time, quality and freshness.
+- Station audit history must not be represented as the electronic meteorological-record audit module.
+- Dedicated operational screens for hourly/daily entry, phenomena, rainfall, climate, agriculture, soil temperature, electronic audit, AI intelligence and Climatol remain incomplete or blocked on authoritative requirements/contracts.
+- The RAR requirements archive is still not decoded by the available GitHub text interface. Its internal contents remain unknown; no field-level requirements are inferred from its filename.
+
+### Security decision still open
+- PR #35's existing isolated database tests pass, but its grant model is authority-scoped and joins active station assignments. If one user has multiple active station assignments under one authority, the grant may cover all such assignments.
+- The exact-station-only policy is not yet proven. Owner/security approval of the intended scope and a negative same-authority station A/B integration test remain required.
+- PR #34 and PR #35 remain Draft and unmerged. Do not issue live archive grants.
+
+### Next executable work
+1. Obtain a binary-capable copy/extraction of the root RAR archive, index all requirements, screenshots and workflows, then finish FLT-001 traceability.
+2. Resolve the archive grant scope and add the same-authority station A/B negative integration test before approval.
+3. Build one fully specified meteorological entry workflow end-to-end (fields, scientific rules, API, domain, persistence, permissions, tests) before expanding to further modules.
+4. Continue Flutter-only implementation and CI; defer Angular parity until the Flutter completion gate is met.
+
+### Safety boundary reaffirmed
+No hosted Supabase migration, schema, RLS, policy, permission grant or data write was performed. The legacy database and legacy repository were not changed.
+## FLT-007 — Forecast-centre widget verification added (2026-11-12)
+
+- Added widget tests for station-directory loading, comparison display, coordinate provenance, reference station switching, and a 403/API failure state.
+- Commit: `557435c6674466c3b13866af833c976ee4a0f12b`.
+- CI verification is pending/unavailable in the current workflow-run lookup; do not count the new tests as passing until an exact-head Client CI run completes.
+- No forecast values, bulletin content, live feeds or synthetic observations were introduced.
+- No backend, database, Supabase, migration, RLS, permission grant, legacy repository or METRA OLD changes.
+## FLT-007 / FLT-008 follow-up — 2026-11-12
+
+- Added forecast-centre widget tests for catalogue loading, comparison values/provenance, reference-station changes, API denial, the four-station selection limit and missing coordinates.
+- The first Client CI attempt #1138 (`43102830955`) failed during `flutter analyze` before running tests because the newly added test import lacked the repository's `deprecated_member_use` ignore annotation. Angular build passed.
+- Corrected the test import in commit `018132d55926f51264ea92d2f470856518cb6137` and expanded the test cases in commit `806ae6d232d000df6b7e54fae36694b2c70c82ca`.
+- No Client CI run has yet been observed for the latest head `806ae6d232d000df6b7e54fae36694b2c70c82ca`; do not claim that analyzer or tests pass on this head.
+- Added `docs/delivery/FLT-008-LEGACY-OBSERVATION-FORM-SOURCE-AUDIT.md` from static inspection of hourly and daily legacy sources. The inspected daily_reports.html is a 24-hour report query/export page, not the authoritative daily-entry form.
+- The legacy hourly scripts contain overlapping client validators, localStorage identity attribution and local backup behavior. These must not be copied into the new client; server identity, station scope and persistence remain API-controlled.
+- No backend/database/Supabase changes or live grants were performed.
+
+## FLT-007 CI failure analysis and correction — 2026-11-12 UTC
+
+- Client CI #1140 (run `43103208410`) completed on merge commit `ecf159486430065cbcd421c87cbad00863e90690`, corresponding to PR head `ed998ddafabb3b6b7e133ede18ec4c6ae880eadd` at that run: Flutter analyze passed; Flutter tests reported 29 passed and 1 failed; Angular build passed.
+- The single failure was `forecast_centre_screen_test.dart`: tapping nested station-name Text finders did not select the two `CheckboxListTile` options, so the comparison section correctly remained absent. This was a test interaction issue; the separate forecast-centre widget test already used full-tile taps and asserted checked state.
+- Corrected the test to tap each complete `CheckboxListTile`, assert its selected value, then assert the comparison output. Commit: `ab013485a349e1f56c5c440db2ea704e5b631af5`.
+- Client CI run `43103656704` is in progress for exact head `ab013485a349e1f56c5c440db2ea704e5b631af5`; Flutter analyze/tests and Angular build have not completed at this update. Do not count this correction as verified until that run succeeds.
+- PR #34 remains Draft/unmerged. No backend, database, hosted Supabase, SQL/migration, RLS, archive grant, legacy repository or METRA OLD changes.

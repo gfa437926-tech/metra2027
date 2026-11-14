@@ -9,6 +9,46 @@ namespace Metra.Api.Features.Stations;
 public sealed record StationCatalogueReviewRequest(string? ExpectedStatus, string? Decision, string? Reason);
 public sealed record StationCatalogueReviewOutcome(bool IsConfigured, bool Succeeded, HttpStatusCode? StatusCode, JsonElement? Data);
 
+public static class StationCatalogueReviewResponseParser
+{
+    public static StationCatalogueReviewOutcome Parse(HttpStatusCode httpStatus, JsonElement response)
+    {
+        if ((int)httpStatus is < 200 or >= 300)
+            return new(true, false, httpStatus, null);
+
+        JsonElement row;
+        if (response.ValueKind == JsonValueKind.Array && response.GetArrayLength() == 1)
+        {
+            row = response[0];
+        }
+        else if (response.ValueKind == JsonValueKind.Object)
+        {
+            row = response;
+        }
+        else
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+
+        if (row.ValueKind != JsonValueKind.Object ||
+            !row.TryGetProperty("result_status", out var resultStatus) ||
+            resultStatus.ValueKind != JsonValueKind.String ||
+            !row.TryGetProperty("resulting_status", out var resultingStatus) ||
+            resultingStatus.ValueKind != JsonValueKind.String ||
+            string.IsNullOrWhiteSpace(resultingStatus.GetString()))
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+
+        return resultStatus.GetString() switch
+        {
+            "updated" => new(true, true, httpStatus, row.Clone()),
+            "state_conflict" => new(true, false, HttpStatusCode.Conflict, row.Clone()),
+            _ => new(true, false, HttpStatusCode.ServiceUnavailable, null)
+        };
+    }
+}
+
 public interface IStationCatalogueReviewService
 {
     bool IsConfigured { get; }
@@ -52,7 +92,7 @@ public sealed class SupabaseStationCatalogueReviewService(IHttpClientFactory cli
                 return new(true, false, response.StatusCode, null);
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            return new(true, true, response.StatusCode, data);
+            return StationCatalogueReviewResponseParser.Parse(response.StatusCode, data);
         }
         catch (JsonException)
         {
@@ -113,7 +153,18 @@ public static class StationCatalogueReviewEndpoints
                 if (outcome.StatusCode == HttpStatusCode.Forbidden) return Results.Forbid();
                 if (outcome.StatusCode == HttpStatusCode.NotFound) return Results.NotFound();
                 if (outcome.StatusCode == HttpStatusCode.Conflict)
-                    return Results.Conflict(new { error = "station_review_state_conflict" });
+                {
+                    string? currentStatus = null;
+                    if (outcome.Data.HasValue &&
+                        outcome.Data.Value.ValueKind == JsonValueKind.Object &&
+                        outcome.Data.Value.TryGetProperty("resulting_status", out var statusValue))
+                        currentStatus = statusValue.GetString();
+                    return Results.Conflict(new
+                    {
+                        error = "station_review_state_conflict",
+                        currentStatus
+                    });
+                }
                 if (outcome.StatusCode == HttpStatusCode.BadRequest)
                     return Results.BadRequest(new { error = "station_review_rejected" });
                 return Results.Problem(title: "Station review persistence unavailable", statusCode: 503);
@@ -123,7 +174,8 @@ public static class StationCatalogueReviewEndpoints
         })
         .RequireStationOwnerAuthorityPermission("stations.catalogue.review")
         .WithTags("Stations")
-        .WithName("ReviewStationCatalogue");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("ReviewStationCatalogue");
 
         return endpoints;
     }
