@@ -62,6 +62,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+      - name: Test required extension installer
+        run: bash database/transfer/tests/test_install_extensions.sh
       - name: Exercise transfer SQL and Auth FK comparisons
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
