@@ -10,7 +10,7 @@
 - [ ] Restore drill performed into an isolated target
 - [ ] Export manifest confirms `auth_user_count=0`; any non-zero source Auth count blocks export
 - [ ] Auth FK inventory reviewed; non-null source-user references must be zero; no blind UUID rewriting
-- [ ] Observation provenance summary reviewed; non-demo records and null station references reconciled
+- [ ] Observation provenance reviewed; all demo and non-demo observation records excluded; 1,251 historical rows without `station_id` documented
 - [ ] Legacy METRA databases not used
 
 ## Target project bootstrap
@@ -18,7 +18,7 @@
 - [ ] New Supabase project created under the intended organization/account
 - [ ] Auth site URL, redirect URLs, SMTP, and providers configured independently
 - [ ] Required extensions installed at source-compatible versions and schemas
-- [ ] `metra_observation_records` target table is empty; non-demo source rows were not transferred
+- [ ] `metra_observation_records` target table is empty; neither demo nor non-demo source rows were transferred
 - [ ] New station catalogue content matches; coordinate gaps reported by the source provenance inventory are reviewed and no orphan/duplicate coordinate links exist
 - [ ] New target publishable/anon and server-only secret/service_role keys generated
 - [ ] Backend secrets configured only in target secret store
@@ -36,7 +36,7 @@
 - [ ] Sequence definitions and current values match after pg_dump setval restoration
 - [ ] Unconstrained UUID/JSON references separately audited and reconciled
 - [ ] Public/private data import completed atomically after manifest and empty-target guards
-- [ ] Exact public/private row-count, object, and ACL inventory comparison passes
+- [ ] Exact public/private row-count, object inventory, object-grant acceptance comparison, and restrictive default-ACL assertions pass
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
 - [ ] Critical RPCs present and their signatures/authorization verified
