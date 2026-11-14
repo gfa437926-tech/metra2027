@@ -45,6 +45,12 @@ FROM (
   WHERE r.specific_name=p.proname || '_' || p.oid::text
     AND r.routine_schema IN ('public','private')
     AND r.grantee IN ('service_role','metra_api_runtime')
+    AND r.routine_name NOT IN (
+      'reject_metra_observation_audit_mutation',
+      'reject_metra_equipment_fault_audit_mutation',
+      'reject_metra_support_incident_audit_mutation',
+      'reject_authority_access_audit_mutation'
+    )
   UNION ALL
   SELECT '06_public_acl',
          jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','function',
