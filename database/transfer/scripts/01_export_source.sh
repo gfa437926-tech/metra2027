@@ -52,10 +52,17 @@ JOIN pg_class c ON c.oid = con.conrelid \
 JOIN pg_namespace n ON n.oid = c.relnamespace \
 WHERE con.contype = 'f' AND con.confrelid = 'auth.users'::regclass \
 ORDER BY 1,2,3;"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/05_observation_provenance.txt" -c "\
+SELECT source_system, source_table, is_demo, count(*)::bigint AS rows, \
+       count(DISTINCT station_id)::bigint AS distinct_station_ids, \
+       count(*) FILTER (WHERE station_id IS NULL)::bigint AS rows_without_station \
+FROM public.metra_observation_records \
+GROUP BY source_system, source_table, is_demo \
+ORDER BY source_system, source_table, is_demo;"
 
 (
   cd "$OUT_DIR"
-  sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt > SHA256SUMS
+  sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt > SHA256SUMS
 )
 
 {
@@ -65,6 +72,7 @@ ORDER BY 1,2,3;"
   echo "encryption=gpg-symmetric-AES256"
   echo "auth_users_exported=false"
   echo "auth_user_fk_inventory_exported=true"
+  echo "observation_provenance_exported=true"
   echo "api_keys_and_jwt_secrets_exported=false"
 } > "$OUT_DIR/MANIFEST.txt"
 
