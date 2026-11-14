@@ -31,12 +31,12 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Exporting approved source $SRC_REF to encrypted artifacts."
 pg_dump "$SRC_URL" --format=plain --schema-only --no-owner --no-privileges \
-  --schema=public --schema=private --file="$TMP_DIR/01_schema_public.raw.sql"
-metra_normalize_public_schema_dump "$TMP_DIR/01_schema_public.raw.sql" "$TMP_DIR/01_schema_public.sql"
+  --schema=public --schema=private --file="$TMP_DIR/01_schema_application.raw.sql"
+metra_normalize_public_schema_dump "$TMP_DIR/01_schema_application.raw.sql" "$TMP_DIR/01_schema_application.sql"
 pg_dump "$SRC_URL" --format=plain --data-only --no-owner --disable-triggers \
-  --schema=public --schema=private --file="$TMP_DIR/02_data_public.sql"
+  --schema=public --schema=private --file="$TMP_DIR/02_data_application.sql"
 
-for dump in 01_schema_public.sql 02_data_public.sql; do
+for dump in 01_schema_application.sql 02_data_application.sql; do
   printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
     --passphrase-fd 0 --symmetric --cipher-algo AES256 \
     --output "$OUT_DIR/$dump.gpg" "$TMP_DIR/$dump"
@@ -68,7 +68,7 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
 
 (
   cd "$OUT_DIR"
-  sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt > SHA256SUMS
+  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt > SHA256SUMS
 )
 
 {
