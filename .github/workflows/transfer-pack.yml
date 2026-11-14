@@ -104,6 +104,20 @@ jobs:
           grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_before.txt
           grep -F "public|transfer_pack_fixture|1|" /tmp/data_hashes_before.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth_fk_before.txt
+          grep -F "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth_fk_before.txt
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.auth_fk_fixture SET user_id='22222222-2222-4222-8222-222222222222';"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after_auth_remap.txt
+          if ! cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after_auth_remap.txt; then
+            echo "Auth UUID remapping unexpectedly changed non-Auth content fingerprints."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth_fk_after.txt
+          if ! cmp -s /tmp/auth_fk_before.txt /tmp/auth_fk_after.txt; then
+            echo "Auth FK cardinality changed after UUID remapping."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.auth_fk_fixture SET user_id='11111111-1111-4111-8111-111111111111';"
           psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=2;"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after.txt
           if cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after.txt; then
