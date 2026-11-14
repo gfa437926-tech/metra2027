@@ -73,6 +73,8 @@ jobs:
       - name: Install pgcrypto for content fingerprints
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
+      - name: Exercise data importer end to end
+        run: bash database/transfer/tests/test_import_data.sh
       - name: Test target role bootstrap and least-privilege grants
         run: |
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
