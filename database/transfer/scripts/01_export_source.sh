@@ -64,6 +64,7 @@ ORDER BY 1,2,3;"
   echo "host_tool=$(pg_dump --version | head -1)"
   echo "encryption=gpg-symmetric-AES256"
   echo "auth_users_exported=false"
+  echo "auth_user_fk_inventory_exported=true"
   echo "api_keys_and_jwt_secrets_exported=false"
 } > "$OUT_DIR/MANIFEST.txt"
 
