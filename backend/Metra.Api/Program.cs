@@ -49,6 +49,8 @@ builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalo
 builder.Services.AddScoped<IObservationArchiveService, SupabaseObservationArchiveService>();
 builder.Services.AddOpenApi();
 var rateLimitingDisabled = builder.Configuration.GetValue("RateLimiting:Disabled", false);
+if (builder.Environment.IsProduction() && rateLimitingDisabled)
+    throw new InvalidOperationException("Rate limiting cannot be disabled in the Production environment.");
 if (!rateLimitingDisabled)
     builder.Services.AddMetraRateLimiting();
 
