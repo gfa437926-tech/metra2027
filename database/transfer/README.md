@@ -1,0 +1,42 @@
+# METRA 2027 — Experimental → Target Supabase Transfer Pack
+
+**Source project (experimental only):** `tbdnklyxjvbrilvnwgmq`
+**Target project:** to be named by the owner later.
+**Forbidden:** any legacy METRA database outside the experimental project.
+**Baseline:** `3fdc0593d08991d9e540d20fe973c790f7cd5b64`
+
+## Purpose
+
+Repeatable, scripted export/import from the experimental Supabase project to a future target project.
+Does not delete the source. Does not copy API keys, JWT secrets, or live sessions.
+
+## Scripts (local path)
+
+- `database/transfer/scripts/00_preflight.sh` — read-only connectivity check
+- `database/transfer/scripts/01_export_source.sh` — `pg_dump` schema + public data
+- `database/transfer/scripts/02_inventory_source.sh` — object inventory
+- `database/transfer/scripts/03_import_schema.sh` — import into empty target
+- `database/transfer/scripts/04_import_data.sh` — import public data
+- `database/transfer/scripts/05_compare.sh` — row/object compare
+
+## Docs
+
+- `docs/AUTH-USER-TRANSFER.md` — Auth users / password hashes
+- `docs/CUTOVER-CHECKLIST.md` — cutover gates
+- `docs/RESTORE-GUIDE.md` — full restore
+- `docs/ORDERED-MIGRATIONS-INVENTORY.txt` — repo migration order
+
+## Credentials (never in chat)
+
+```bash
+export METRA_SRC_PROJECT_REF=tbdnklyxjvbrilvnwgmq
+export METRA_SRC_DATABASE_URL='postgresql://...'
+export METRA_DST_PROJECT_REF='<new-ref>'
+export METRA_DST_DATABASE_URL='postgresql://...'
+```
+
+Use Database password from Supabase project settings. Configure new anon/service_role keys only on the target project.
+
+## Live dump status
+
+Hosted export runs only when `METRA_SRC_DATABASE_URL` is available in a secure runtime. This commit lands the mechanism only.
