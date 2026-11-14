@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Decrypt and import public data into an empty, explicitly identified target.
+# Decrypt and import public data into empty tables on an identified target.
 set -euo pipefail
 umask 077
 
@@ -20,27 +20,8 @@ metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
 command -v gpg >/dev/null 2>&1 || { echo "gpg is required." >&2; exit 4; }
 [[ -s "$DUMP_DIR/02_data_public.sql.gpg" ]] || { echo "Missing encrypted public data dump." >&2; exit 4; }
 
-# Refuse to append duplicate rows to a target that already contains data.
-nonempty_tables="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At <<'SQL'
-DO $$
-DECLARE item record;
-DECLARE has_rows boolean;
-DECLARE nonempty integer := 0;
-BEGIN
-  FOR item IN SELECT schemaname, tablename FROM pg_tables WHERE schemaname='public'
-  LOOP
-    EXECUTE format('SELECT EXISTS (SELECT 1 FROM %I.%I)', item.schemaname, item.tablename)
-      INTO has_rows;
-    IF has_rows THEN nonempty := nonempty + 1; END IF;
-  END LOOP;
-  RAISE NOTICE 'NONEMPTY_TABLES=%', nonempty;
-END $$;
-SQL
-2>&1 | sed -n 's/.*NONEMPTY_TABLES=//p' | tail -1)"
-if [[ -z "$nonempty_tables" || "$nonempty_tables" != "0" ]]; then
-  echo "Refusing: target contains data or its emptiness could not be verified." >&2
-  exit 5
-fi
+# Stop before writing if any target public table already contains rows.
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_public_tables.sql"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
