@@ -29,13 +29,16 @@
 - [ ] Managed role, PUBLIC, sequence, function, and metra_api_runtime ACLs match the source inventory
 - [ ] SHA-256 checks pass before each import
 - [ ] Auth users recreated/invited through supported target Auth flow
-- [ ] Protected source→target UUID mapping reviewed and stored outside Git
-- [ ] Mapping-aware data transformation implemented and tested; import guard remains enabled until this passes
+- [ ] Protected source→target UUID mapping reviewed and stored outside Git with mode 0600
+- [ ] Every mapped target UUID exists in target auth.users
+- [ ] Declared Auth FK columns remapped by the tested COPY transformer
+- [ ] Unconstrained UUID/JSON references separately audited and reconciled
 - [ ] Public/private data import completed atomically after Auth UUID remapping
-- [ ] Exact public/private row-count and SHA-256 data-content, object, and ACL inventory comparison passes
+- [ ] Exact public/private row-count, object, and ACL inventory comparison passes
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
 - [ ] Critical RPCs present and their signatures/authorization verified
+
 ## Application verification
 
 - [ ] /api/v1/health OK on staging API
