@@ -86,11 +86,11 @@ Read-only grant inspection found no `anon` or `authenticated` table grants on th
 
 `metra_migration.legacy_users_staging` also has RLS enabled and no policies. It is outside the transfer pack's `public/private` export scope and must remain excluded.
 
-## 4. Do not drop the 46 unused indexes from this snapshot
+## 5. Do not drop the 46 unused indexes from this snapshot
 
 The project currently has no Auth users, no operational observations, and very few rows in most application tables. The 46 unused-index notices are not evidence that the indexes are unnecessary. Reassess after realistic workload and query telemetry exist.
 
-## 5. Approval and verification gates
+## 6. Approval and verification gates
 
 1. Review this proposal against the actual migration history and API query patterns.
 2. Generate a proper Supabase migration using the supported CLI workflow; do not apply ad-hoc SQL from this document.
