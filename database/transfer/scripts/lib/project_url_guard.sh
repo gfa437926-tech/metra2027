@@ -132,9 +132,6 @@ metra_assert_no_excluded_observation_data() {
       return 1
     fi
   done
-    echo "Refusing data import: dump contains excluded observation-history rows." >&2
-    return 1
-  fi
 }
 
 # Verify the complete export checksum manifest, reject path traversal/extra files,
