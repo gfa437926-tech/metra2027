@@ -105,7 +105,8 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
           psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence_state.txt
-          grep -E '^public\\|station_audit_log_id_seq\\|.*\\|42          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
+          grep -E '^public[|]station_audit_log_id_seq[|].*[|]42$' /tmp/sequence_state.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
           if grep -F "metra_observation_records" /tmp/rowcounts.txt; then
             echo "Intentionally excluded observation table must not appear in row-count equality."
             exit 1
