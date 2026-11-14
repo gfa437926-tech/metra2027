@@ -38,5 +38,5 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
   "$DUMP_DIR/02_data_public.sql.gpg"
 
 echo "Importing public data into verified empty target $DST_REF"
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$TMP_DIR/02_data_public.sql"
+psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$TMP_DIR/02_data_public.sql"
 echo "Data import finished. Auth users are not imported by this script."
