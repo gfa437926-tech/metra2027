@@ -1,5 +1,5 @@
 -- Exact row counts for application tables. This performs COUNT(*) on each table.
--- Run only against the approved experimental source and the explicitly approved target.
+-- Transfer scope is public only; managed/private schemas are not part of this export.
 SELECT format(
   'SELECT %L::text AS schema_name, %L::text AS table_name, count(*)::bigint AS exact_rows FROM %I.%I;',
   schemaname,
@@ -8,6 +8,6 @@ SELECT format(
   tablename
 )
 FROM pg_tables
-WHERE schemaname IN ('public', 'private')
+WHERE schemaname = 'public'
 ORDER BY schemaname, tablename
 \gexec
