@@ -92,9 +92,7 @@ public sealed class SupabaseStationCatalogueReviewService(IHttpClientFactory cli
                 return new(true, false, response.StatusCode, null);
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            return data is null
-                ? new(true, false, HttpStatusCode.ServiceUnavailable, null)
-                : StationCatalogueReviewResponseParser.Parse(response.StatusCode, data.Value);
+            return StationCatalogueReviewResponseParser.Parse(response.StatusCode, data);
         }
         catch (JsonException)
         {
