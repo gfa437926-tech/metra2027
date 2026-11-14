@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Decrypt and import public schema into an empty, explicitly identified target.
+# Decrypt and import public/private schemas into an empty, explicitly identified target.
 set -euo pipefail
 umask 077
 
@@ -28,7 +28,7 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
   sha256sum --check --strict SHA256SUMS
 )
 
-# Refuse to write into a target containing public application objects.
+# Refuse to write into a target containing public/private application objects.
 existing_objects="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -c "
 SELECT
   (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
@@ -41,7 +41,7 @@ SELECT
    WHERE n.nspname IN ('public','private') AND t.typtype IN ('c','e','d','r'));
 ")"
 if [[ "$existing_objects" != "0" ]]; then
-  echo "Refusing: target public schema is not empty ($existing_objects application objects)." >&2
+  echo "Refusing: target public/private application schemas are not empty ($existing_objects application objects)." >&2
   exit 5
 fi
 
@@ -51,6 +51,6 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
   --passphrase-fd 0 --decrypt --output "$TMP_DIR/01_schema_public.sql" \
   "$DUMP_DIR/01_schema_public.sql.gpg"
 
-echo "Importing public schema into verified empty target $DST_REF"
+echo "Importing public/private schemas into verified empty target $DST_REF"
 psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$TMP_DIR/01_schema_public.sql"
-echo "Schema import finished. Auth schema/users are not imported by this script."
+echo "Schema import finished. Managed Auth schema/users are not imported by this script."
