@@ -42,3 +42,27 @@ A column is considered canonical only when its authoritative definition is prese
 ## Completion gate
 
 **Not complete:** no canonical full-schema source has yet been identified for every blocked relation; no disposable PostgreSQL replay has been run; no schema-equivalence result exists. No hosted Supabase project, legacy database, or `main` branch was modified.
+
+
+## Expanded verified dependencies (source-by-source)
+
+The exhaustive table-definition transcription is now in [SOURCE-VERIFIED-SCHEMA-DEFINITIONS.md](SOURCE-VERIFIED-SCHEMA-DEFINITIONS.md). The following additional blockers were confirmed while tracing all DDL statements:
+
+| Relation / object | Exact source conflict | Status |
+|---|---|---|
+| `meteorological_authorities` | Baseline declares `code`, `name_en`, `name_ar`; migration 027 reads `authority_code` and `is_national` | Blocked: canonical catalogue naming/fields unavailable |
+| `metra_account_states` | Baseline omits `state_reason`; migrations 009/010 read it | Blocked |
+| `authority_memberships` | Baseline omits `requested_by` and `reason`; lifecycle migrations 020–023 write/read them | Blocked |
+| `permission_grants` | Baseline already declares nullable `authority_id`; migration 020 unconditionally adds it again, then sets NOT NULL. Lifecycle migrations also use `requested_by` and `reason` absent from baseline | Blocked: duplicate-column and missing-column conflicts |
+| `permission_grants` constraints | Baseline does not declare `permission_grants_no_overlapping_periods` or `permission_grants_revocation_check`; migrations 020/022 attempt to DROP them | Blocked: expected pre-existing constraint definitions missing |
+| `authority_access_audit_events` | Baseline 007 creates it; migration 020 runs a second non-conditional `CREATE TABLE` | Blocked: duplicate table creation |
+| `station_catalogue` | Baseline declares `station_code`; migrations 008/010 read `local_station_code` | Blocked |
+| `metra_user_profiles` | Baseline declares `display_name`; migrations 008/010 read `first_name`, `father_name`, `last_name` | Blocked |
+| `registration_requests` | Baseline omits `phone_snapshot`, `terms_version`, `submitted_at`, `review_note` required by 008/009/019 | Blocked |
+| `registration_audit_events` | Baseline uses `actor_user_id/action_code/note`; migration 008 reads `user_id/event_type/terms_version/decision_note` | Blocked |
+| `station_assignments` | Baseline omits `requested_by`, `reason`, `approved_by`, `reviewed_at`, `updated_at` required by 012/013 | Blocked |
+| `station_audit_log` | Baseline uses `station_id/actor_user_id/event_type/payload`; 012–014 expect entity/action/before-after audit shape | Blocked |
+
+## Extraction boundary
+
+The current branch contains 16 baseline public table declarations and 2 operational observation table declarations. The role seed contains eight role rows but not a complete permission allow-list. The source set does not contain approved operational table definitions for forecast, AI, Climatol, notifications or the broader electronic-record warehouse. See the source-verified catalogue for the complete 18-table field transcription and exact ownership boundaries.
