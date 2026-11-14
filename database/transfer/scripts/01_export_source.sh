@@ -72,11 +72,6 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   -f "$SCRIPT_DIR/../sql/compare_extensions.sql" > "$OUT_DIR/07_extensions.txt"
 
-(
-  cd "$OUT_DIR"
-  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt 07_extensions.txt > SHA256SUMS
-)
-
 {
   echo "source_project_ref=$SRC_REF"
   echo "exported_at_utc=$STAMP"
@@ -92,5 +87,10 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   echo "api_keys_and_jwt_secrets_exported=false"
 } > "$OUT_DIR/MANIFEST.txt"
 
+
+(
+  cd "$OUT_DIR"
+  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt 07_extensions.txt MANIFEST.txt > SHA256SUMS
+)
 echo "Encrypted export complete: $OUT_DIR"
 echo "Plaintext temporary dumps were removed on exit. Keep the passphrase separately."
