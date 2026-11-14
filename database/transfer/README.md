@@ -25,6 +25,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
 - `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
+- `sql/compare_sequence_state.sql` — compares sequence configuration and restored `last_value` values
 - `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so regenerated Auth IDs do not create false data drift
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
 - `sql/station_catalogue_provenance.sql` — checks station catalogue, coordinate coverage, orphan rows, and duplicates
