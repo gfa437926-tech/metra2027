@@ -54,6 +54,10 @@ SQL
 # can create the authoritative operational observation table definitions.
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -c \
   "DROP TABLE IF EXISTS public.metra_observation_audit_events CASCADE; DROP TABLE IF EXISTS public.metra_observations CASCADE;" >/dev/null
+# The lightweight compare fixture omits production catalogue constraints;
+# restore the actual primary-key uniqueness required by the operational FK.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -c \
+  "ALTER TABLE public.station_catalogue ADD CONSTRAINT restore_station_catalogue_id_unique UNIQUE (id)" >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$ROOT/supabase/migrations/20261103164003_create_operational_observation_submission.sql" >/dev/null
 
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" <<SQL
