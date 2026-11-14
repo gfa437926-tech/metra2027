@@ -33,7 +33,7 @@ export METRA_DST_DATABASE_URL="postgresql://postgres:ci-secret@db.newmetratarget
 
 cat > "$DUMP_DIR/07_extensions.txt" <<'EXTENSIONS'
 plpgsql|1.0|pg_catalog
-pgcrypto|1.3|extensions
+pgcrypto|1.3|public
 EXTENSIONS
 cat > "$DUMP_DIR/MANIFEST.txt" <<'MANIFEST'
 source_project_ref=tbdnklyxjvbrilvnwgmq
@@ -55,6 +55,20 @@ MANIFEST
   sha256sum 07_extensions.txt MANIFEST.txt > SHA256SUMS
 )
 
+# An extension already installed in the wrong schema must be rejected, not silently accepted.
+psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
+if bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"; then
+  echo "Installer accepted pgcrypto in a schema different from the source inventory." >&2
+  exit 1
+fi
+psql -X -v ON_ERROR_STOP=1 -c "DROP EXTENSION pgcrypto;"
+
+# Correct source schema: installer creates the extension and a second run is idempotent.
+sed -i 's/^pgcrypto|1.3|public$/pgcrypto|1.3|extensions/' "$DUMP_DIR/07_extensions.txt"
+(
+  cd "$DUMP_DIR"
+  sha256sum 07_extensions.txt MANIFEST.txt > SHA256SUMS
+)
 bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
 bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
 
