@@ -107,5 +107,7 @@ jobs:
           grep -F '"kind": "default_acl"' /tmp/acl-inventory.txt
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory_acceptance.sql > /tmp/acl-acceptance.txt
           grep -F '"kind": "role"' /tmp/acl-acceptance.txt
+      - name: Run isolated source/target comparison regression
+        run: bash database/transfer/tests/test_compare_end_to_end.sh
       - name: Exercise data importer end to end
         run: bash database/transfer/tests/test_import_data.sh
