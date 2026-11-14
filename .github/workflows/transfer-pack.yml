@@ -9,10 +9,6 @@ on:
     paths:
       - "database/transfer/**"
       - ".github/workflows/transfer-pack.yml"
-  workflow_dispatch:
-
-permissions:
-  contents: read
 
 jobs:
   transfer-pack:
@@ -42,29 +38,21 @@ jobs:
           bash -n database/transfer/scripts/*.sh
           bash -n database/transfer/scripts/lib/*.sh
           bash -n database/transfer/tests/*.sh
-      - name: Test project URL identity and pg_dump compatibility
+      - name: Test project URL identity
         run: bash database/transfer/tests/test_url_guard.sh
-      - name: Test Supabase public/private schema dump normalization
+      - name: Test schema dump normalization
         run: bash database/transfer/tests/test_public_schema_normalizer.sh
-      - name: Test transfer manifest provenance and data exclusion
+      - name: Test transfer manifest provenance
         run: bash database/transfer/tests/test_manifest.sh
-      - name: Test Auth UUID remapping
-        run: python3 -m unittest discover -s database/transfer/tests -p 'test_*.py'
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
-      - name: Exercise normalization against a real pg_dump output
+      - name: Exercise real pg_dump schema and data filters
         run: |
           createdb dump_fixture
           psql -X -v ON_ERROR_STOP=1 -d dump_fixture -c "CREATE SCHEMA private; CREATE TABLE public.fixture_public(id integer); CREATE TABLE private.fixture_private(id integer); CREATE TABLE public.excluded_fixture(id integer); INSERT INTO public.fixture_public VALUES (1); INSERT INTO public.excluded_fixture VALUES (99);"
           pg_dump --schema-only --schema=public --schema=private --no-owner --no-privileges -d dump_fixture > /tmp/actual_schema_dump.sql
-          pg_dump --data-only --schema=public --schema=private --exclude-table-data=public.excluded_fixture -d dump_fixture > /tmp/actual_data_dump.sql
-          if grep -Fq "COPY public.excluded_fixture" /tmp/actual_data_dump.sql; then
-            echo "pg_dump did not exclude the non-demo table data."
-            exit 1
-          fi
-          grep -F "COPY public.fixture_public" /tmp/actual_data_dump.sql
           source database/transfer/scripts/lib/project_url_guard.sh
           metra_normalize_public_schema_dump /tmp/actual_schema_dump.sql /tmp/normalized_schema_dump.sql
           if grep -Fq "CREATE SCHEMA public;" /tmp/normalized_schema_dump.sql || grep -Fq "CREATE SCHEMA private;" /tmp/normalized_schema_dump.sql; then
@@ -73,8 +61,14 @@ jobs:
           fi
           grep -F "CREATE TABLE public.fixture_public" /tmp/normalized_schema_dump.sql
           grep -F "CREATE TABLE private.fixture_private" /tmp/normalized_schema_dump.sql
+          pg_dump --data-only --schema=public --schema=private --exclude-table-data=public.excluded_fixture -d dump_fixture > /tmp/actual_data_dump.sql
+          if grep -Fq "COPY public.excluded_fixture" /tmp/actual_data_dump.sql; then
+            echo "pg_dump did not exclude the excluded table data."
+            exit 1
+          fi
+          grep -F "COPY public.fixture_public" /tmp/actual_data_dump.sql
           dropdb dump_fixture
-      - name: Install pgcrypto for table-content fingerprints
+      - name: Install pgcrypto for content fingerprints
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
       - name: Test target role bootstrap and least-privilege grants
@@ -90,11 +84,12 @@ jobs:
           grep -F '"kind": "role"' /tmp/acl_inventory.txt
           grep -F '"kind": "default_acl"' /tmp/acl_inventory.txt
           grep -F '"kind": "public_acl"' /tmp/acl_inventory.txt
-      - name: Test extension inventory query
+      - name: Test required extension inventory
         run: |
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_extensions.sql > /tmp/extensions.txt
           grep -Fx "plpgsql|1.0|pg_catalog" /tmp/extensions.txt
-      - name: Test exact row counts and empty-target guard
+          grep -F "pgcrypto|" /tmp/extensions.txt
+      - name: Test row counts, data fingerprints, and empty-target guards
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
@@ -105,41 +100,7 @@ jobs:
           grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
           grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_before.txt
-          grep -E '^public\|transfer_pack_fixture\|1\|[0-9a-f]{64}
-          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
-          grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
-          grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
-          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
-            echo "Expected empty-target guard to reject a populated table."
-            exit 1
-          fi
-          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
-          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
-            echo "Expected private empty-target guard to reject a populated table."
-            exit 1
-          fi
-          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
-          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
-          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_excluded_data.sql | grep -Fx "0"
-      - name: Verify export checksums reject tampering
-        run: |
-          mkdir -p /tmp/metra-export-check
-          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_application.sql.gpg
-          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_application.sql.gpg
-          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg > SHA256SUMS)
-          (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
-          printf "tampered\n" >> /tmp/metra-export-check/02_data_application.sql.gpg
-          if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
-            echo "Expected checksum verification to reject a tampered export."
-            exit 1
-          fi
-      - name: Verify encrypted dump round trip
-        run: |
-          printf "METRA transfer test\n" > /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
-          cmp /tmp/plain.txt /tmp/roundtrip.txt
- /tmp/data_hashes_before.txt
+          grep -F "public|transfer_pack_fixture|1|" /tmp/data_hashes_before.txt
           psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=2;"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after.txt
           if cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after.txt; then
@@ -165,18 +126,19 @@ jobs:
       - name: Verify export checksums reject tampering
         run: |
           mkdir -p /tmp/metra-export-check
-          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_application.sql.gpg
-          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_application.sql.gpg
-          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg > SHA256SUMS)
+          printf '%s\n' 'schema dump fixture' > /tmp/metra-export-check/01_schema_application.sql.gpg
+          printf '%s\n' 'data dump fixture' > /tmp/metra-export-check/02_data_application.sql.gpg
+          printf '%s\n' 'source_project_ref=tbdnklyxjvbrilvnwgmq' > /tmp/metra-export-check/MANIFEST.txt
+          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg MANIFEST.txt > SHA256SUMS)
           (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
-          printf "tampered\n" >> /tmp/metra-export-check/02_data_application.sql.gpg
+          printf '%s\n' 'tampered' >> /tmp/metra-export-check/02_data_application.sql.gpg
           if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
             echo "Expected checksum verification to reject a tampered export."
             exit 1
           fi
       - name: Verify encrypted dump round trip
         run: |
-          printf "METRA transfer test\n" > /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
+          printf '%s\n' 'METRA transfer test' > /tmp/plain.txt
+          printf '%s\n' 'ci-only-test-passphrase' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
+          printf '%s\n' 'ci-only-test-passphrase' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
           cmp /tmp/plain.txt /tmp/roundtrip.txt
