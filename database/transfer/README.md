@@ -28,6 +28,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `sql/compare_acl_inventory.sql` — full source ACL inventory, including the source's broad public default ACLs, retained for audit
 - `sql/compare_acl_inventory_acceptance.sql` — compares reviewed object grants while excluding intentionally tightened source defaults and client sequence/trigger-function grants
 - `tests/assert_target_default_acl.sql` — requires no implicit PUBLIC/anon/authenticated privileges on future public objects
+- `tests/assert_target_function_search_path.sql` — verifies audit trigger functions use `search_path=pg_catalog`
 - `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
 - `sql/compare_sequence_state.sql` — compares sequence configuration and restored `last_value` values
 - `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so regenerated Auth IDs do not create false data drift
@@ -64,7 +65,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 - Row counts use exact `COUNT(*)` for each public/private table except the intentionally excluded `public.metra_observation_records`; that target table is separately required to be empty. This can be expensive on large datasets.
 - Object comparison fingerprints table columns, indexes, views, functions/procedures, types, constraints, triggers, RLS flags, and policy expressions in public/private. It is a structural fingerprint, not a byte-for-byte database file comparison.
-- Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The full source ACL inventory is retained for review. The target intentionally tightens default privileges: only server-side `service_role` receives implicit table/sequence/function privileges; `PUBLIC`, `anon`, and `authenticated` receive none. Existing object grants are checked against a separate acceptance inventory.
+- Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The full source ACL inventory is retained for review. The target intentionally tightens default privileges: only server-side `service_role` receives implicit public table/sequence/function privileges; private functions are implicitly executable only by `metra_api_runtime`; `PUBLIC`, `anon`, and `authenticated` receive none. Audit trigger functions are pinned to `search_path=pg_catalog`. Existing object grants are checked against a separate acceptance inventory.
 
 ## Automated validation
 
