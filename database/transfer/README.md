@@ -20,7 +20,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
 - `scripts/04_import_data.sh` — verifies the complete manifest, then atomically decrypts/imports public/private data into empty tables
-- `scripts/05_compare.sh` — exact public/private row counts, object-definition fingerprints, role/default-ACL comparison, and required extension check
+- `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
