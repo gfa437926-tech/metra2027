@@ -38,9 +38,9 @@ jobs:
           bash -n database/transfer/scripts/*.sh
           bash -n database/transfer/scripts/lib/*.sh
           bash -n database/transfer/tests/*.sh
-      - name: Test project URL identity guard
+      - name: Test project URL identity and pg_dump compatibility
         run: bash database/transfer/tests/test_url_guard.sh
-      - name: Test Supabase public schema dump normalization
+      - name: Test Supabase public/private schema dump normalization
         run: bash database/transfer/tests/test_public_schema_normalizer.sh
       - name: Install PostgreSQL client
         run: |
@@ -52,23 +52,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
-          psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN
-            IF NOT has_schema_privilege('metra_api_runtime','private','USAGE') THEN RAISE EXCEPTION 'missing private USAGE'; END IF;
-            IF NOT has_table_privilege('metra_api_runtime','public.station_catalogue','SELECT') THEN RAISE EXCEPTION 'missing runtime station SELECT'; END IF;
-            IF has_table_privilege('metra_api_runtime','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'unexpected runtime station INSERT'; END IF;
-            IF NOT has_table_privilege('service_role','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'missing service_role table INSERT'; END IF;
-            IF has_table_privilege('service_role','public.authority_access_audit_events','INSERT') THEN RAISE EXCEPTION 'unexpected service_role audit INSERT'; END IF;
-            IF has_table_privilege('anon','public.station_catalogue','SELECT') THEN RAISE EXCEPTION 'unexpected anon table SELECT'; END IF;
-            IF has_sequence_privilege('anon','public.station_audit_log_id_seq','SELECT') IS FALSE THEN RAISE EXCEPTION 'missing anon sequence SELECT'; END IF;
-            IF has_sequence_privilege('anon','public.station_audit_log_id_seq','UPDATE') IS FALSE THEN RAISE EXCEPTION 'missing anon sequence UPDATE'; END IF;
-            IF NOT has_function_privilege('anon','public.reject_metra_equipment_fault_audit_mutation()','EXECUTE') THEN RAISE EXCEPTION 'missing anon trigger function EXECUTE'; END IF;
-            IF NOT has_function_privilege('anon','private.reject_authority_access_audit_mutation()','EXECUTE') THEN RAISE EXCEPTION 'missing PUBLIC private trigger function EXECUTE'; END IF;
-            IF has_function_privilege('service_role','public.reject_metra_observation_audit_mutation()','EXECUTE') THEN RAISE EXCEPTION 'unexpected service_role observation audit EXECUTE'; END IF;
-            IF NOT has_function_privilege('service_role','public.get_authority_catalogue()','EXECUTE') THEN RAISE EXCEPTION 'missing service_role RPC EXECUTE'; END IF;
-            IF NOT has_function_privilege('metra_api_runtime','private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)','EXECUTE') THEN RAISE EXCEPTION 'missing private runtime EXECUTE'; END IF;
-            IF has_schema_privilege('service_role','private','USAGE') THEN RAISE EXCEPTION 'unexpected service_role private schema USAGE'; END IF;
-            IF NOT pg_has_role('postgres','metra_api_runtime','MEMBER') THEN RAISE EXCEPTION 'postgres is not a member of runtime role'; END IF;
-          END \$\$;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_runtime_grants.sql
       - name: Test deterministic role and default ACL inventory
         run: |
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl_inventory.txt
@@ -78,46 +62,7 @@ jobs:
       - name: Test extension inventory query
         run: |
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_extensions.sql > /tmp/extensions.txt
-          grep -E '^plpgsql\|[0-9.]+\|pg_catalog
-      - name: Test exact row counts and empty-target guard
-        run: |
-          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
-          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
-          grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
-          grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
-          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
-          grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
-          grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
-          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
-            echo "Expected empty-target guard to reject a populated table."
-            exit 1
-          fi
-          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
-          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
-            echo "Expected private empty-target guard to reject a populated table."
-            exit 1
-          fi
-          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
-          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
-      - name: Verify export checksums reject tampering
-        run: |
-          mkdir -p /tmp/metra-export-check
-          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_application.sql.gpg
-          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_application.sql.gpg
-          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg > SHA256SUMS)
-          (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
-          printf "tampered\n" >> /tmp/metra-export-check/02_data_application.sql.gpg
-          if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
-            echo "Expected checksum verification to reject a tampered export."
-            exit 1
-          fi
-      - name: Verify encrypted dump round trip
-        run: |
-          printf "METRA transfer test\n" > /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
-          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
-          cmp /tmp/plain.txt /tmp/roundtrip.txt
- /tmp/extensions.txt
+          grep -Fx "plpgsql|1.0|pg_catalog" /tmp/extensions.txt
       - name: Test exact row counts and empty-target guard
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
