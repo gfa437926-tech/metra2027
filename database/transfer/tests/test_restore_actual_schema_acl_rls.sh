@@ -104,6 +104,7 @@ CREATE TABLE auth.users (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE EXTENSION pgcrypto WITH SCHEMA public;
+CREATE EXTENSION btree_gist WITH SCHEMA public;
 SQL
 
 # Export and restore every checked-in public/private definition from the full
@@ -119,6 +120,18 @@ sed -e '/^SET transaction_timeout = 0;$/d' \
 # First compare restored schema definitions before target-side ACL/search_path
 # hardening. The transfer policy intentionally tightens runtime privileges and
 # trigger search_path after the schema has been faithfully restored.
+
+# Compare extension names, versions and schemas before object inventories.
+for side in source target; do
+  db="$SOURCE_DB"
+  [[ "$side" == target ]] && db="$TARGET_DB"
+  "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -At -F '|' -d "$db" <<'SQL' > "$WORK/$side.extensions.txt"
+SELECT e.extname,e.extversion,n.nspname
+FROM pg_extension e JOIN pg_namespace n ON n.oid=e.extnamespace
+ORDER BY e.extname;
+SQL
+done
+diff -u "$WORK/source.extensions.txt" "$WORK/target.extensions.txt"
 
 # Compare normalized schema-only dumps. This covers all restored table/column
 # definitions, constraints, indexes, sequences, views, functions, triggers,
