@@ -16,12 +16,11 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/lib/project_url_guard.sh` — checks that a Postgres URL identifies the exact project ref
 - `scripts/00_preflight.sh` — read-only source identity/connectivity check
 - `scripts/01_export_source.sh` — encrypted public/private schema/data export, strips pre-existing schema creation statements, SHA-256 manifest, JSON-lines Auth-user FK inventory, observation provenance, station catalogue provenance, and role ACL inventory
-- `scripts/02_install_required_extensions.sh` — installs the source extension set into the recorded schemas and verifies exact versions
 - `scripts/02_install_required_extensions.sh` — installs the recorded source extensions and verifies exact target versions/schemas
 - `scripts/02_bootstrap_target.sh` — creates the runtime role and restrictive target default ACLs
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
-- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed object grants and verifies restrictive target default ACLs
 - `scripts/04_import_data.sh` — verifies the complete manifest and zero-source-Auth-user boundary, checks target emptiness, rejects all observation data, then atomically imports public/private data into empty tables
+- `scripts/06_apply_runtime_grants.sh` — reapplies reviewed object grants and verifies restrictive target default ACLs
 - `scripts/remap_auth_user_ids.py` — standalone, unit-tested future utility; deliberately not called by the current import path because source Auth users must be zero
 - `scripts/05_compare.sh` — exact public/private row counts, SHA-256 data/object fingerprints, Auth FK counts, sequence state, reviewed object-grant comparison, and restrictive target default-ACL assertion
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
