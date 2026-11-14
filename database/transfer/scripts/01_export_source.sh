@@ -65,10 +65,12 @@ GROUP BY source_system, source_table, is_demo \
 ORDER BY source_system, source_table, is_demo;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   -f "$SCRIPT_DIR/../sql/compare_acl_inventory.sql" > "$OUT_DIR/06_runtime_role_inventory.txt"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_extensions.sql" > "$OUT_DIR/07_extensions.txt"
 
 (
   cd "$OUT_DIR"
-  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt > SHA256SUMS
+  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt 07_extensions.txt > SHA256SUMS
 )
 
 {
@@ -80,6 +82,7 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   echo "auth_user_fk_inventory_exported=true"
   echo "observation_provenance_exported=true"
   echo "runtime_role_inventory_exported=true"
+  echo "required_extensions_inventory_exported=true"
   echo "api_keys_and_jwt_secrets_exported=false"
 } > "$OUT_DIR/MANIFEST.txt"
 
