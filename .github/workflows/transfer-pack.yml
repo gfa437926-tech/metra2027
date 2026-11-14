@@ -98,11 +98,11 @@ jobs:
       - name: Verify export checksums reject tampering
         run: |
           mkdir -p /tmp/metra-export-check
-          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_public.sql.gpg
-          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_public.sql.gpg
-          (cd /tmp/metra-export-check && sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg > SHA256SUMS)
+          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_application.sql.gpg
+          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_application.sql.gpg
+          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg > SHA256SUMS)
           (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
-          printf "tampered\n" >> /tmp/metra-export-check/02_data_public.sql.gpg
+          printf "tampered\n" >> /tmp/metra-export-check/02_data_application.sql.gpg
           if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
             echo "Expected checksum verification to reject a tampered export."
             exit 1
