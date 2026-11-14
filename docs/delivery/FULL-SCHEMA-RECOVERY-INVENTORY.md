@@ -65,3 +65,12 @@ Compare two independent empty-database restores by normalizing and diffing their
 - Production RPCs / archive enablement: **not changed**.
 - Main branch / existing working branch: **not modified**.
 - Full recovery acceptance: **pending** the complete migration-bundle enumeration and compatibility pass above.
+
+
+## Expanded migration bundle extraction
+
+The full repository tree also contains 29 ordered files in `database/migrations/003–031` and 5 files in `supabase/migrations/`. The pinned extraction, source classifications, and verified replay blockers are recorded in [COMPLETE-MIGRATION-BUNDLE-EXTRACTION-REPORT.md](COMPLETE-MIGRATION-BUNDLE-EXTRACTION-REPORT.md).
+
+The read-only two-database comparison runner is `database/tests/compare_isolated_schema_snapshots.sh`. It compares schema-only dumps and catalog inventories from two already-restored isolated databases. It does not apply DDL or connect to hosted environments.
+
+**Acceptance remains blocked:** source inspection confirms baseline/migration conflicts. Do not run a linear empty-database replay until the canonical table shapes are reconciled.
