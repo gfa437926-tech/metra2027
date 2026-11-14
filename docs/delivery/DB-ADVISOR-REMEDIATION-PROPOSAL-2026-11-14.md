@@ -14,7 +14,7 @@ Supabase Security Advisor reports mutable search paths for these functions:
 
 Read-only inspection confirms both are SECURITY INVOKER trigger functions whose bodies only raise an exception; they do not query tables or call unqualified application objects.
 
-Proposed hardening:
+The target transfer pack now applies the following hardening in `apply_runtime_grants.sql` and verifies it with `assert_target_function_search_path.sql`. The experimental source remains unchanged.
 
 ```sql
 ALTER FUNCTION public.reject_metra_equipment_fault_audit_mutation()
@@ -71,7 +71,7 @@ The transfer scripts now intentionally diverge from those source defaults:
 - Existing application-object grants are restored explicitly and checked with `compare_acl_inventory_acceptance.sql`.
 - `assert_target_default_acl.sql` blocks restore acceptance if client roles regain implicit default privileges.
 
-This hardening is target-only. The experimental source defaults remain unchanged. Review any future direct PostgREST/RPC access requirement before adding explicit grants.
+This hardening is target-only. The experimental source defaults remain unchanged. The target also restricts future private-schema function execution to `metra_api_runtime`. Review any future direct PostgREST/RPC access requirement before adding explicit grants.
 
 ## 4. RLS findings — preserve the current default-deny behavior
 
