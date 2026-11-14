@@ -52,5 +52,5 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
   "$DUMP_DIR/01_schema_public.sql.gpg"
 
 echo "Importing public schema into verified empty target $DST_REF"
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$TMP_DIR/01_schema_public.sql"
+psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$TMP_DIR/01_schema_public.sql"
 echo "Schema import finished. Auth schema/users are not imported by this script."
