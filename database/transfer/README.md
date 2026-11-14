@@ -48,7 +48,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 ## Comparison scope
 
-- Row counts use exact `COUNT(*)` for each public/private table; this can be expensive on large datasets.
+- Row counts use exact `COUNT(*)` for each public/private table except the intentionally excluded `public.metra_observation_records`; that target table is separately required to be empty. This can be expensive on large datasets.
 - Object comparison fingerprints table columns, indexes, views, functions/procedures, types, constraints, triggers, RLS flags, and policy expressions in public/private. It is a structural fingerprint, not a byte-for-byte database file comparison.
 - Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The custom metra_api_runtime role, service_role, anon/authenticated, sequence, function, PUBLIC, and default ACLs are recreated from the reviewed source inventory.
 
@@ -63,4 +63,4 @@ A successful script run is not a restore acceptance. A full restore drill, appli
 
 ## Live dump status
 
-No hosted export, target import, restore drill, or live cutover is claimed by this repository change. The scripts require secure runtime credentials and an explicitly named new target.
+No hosted export, target import, restore drill, or live cutover is claimed by this repository change. The non-demo observation history is intentionally excluded. The scripts require secure runtime credentials and an explicitly named new target.
