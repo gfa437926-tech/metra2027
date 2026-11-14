@@ -29,7 +29,7 @@
 - [ ] SHA-256 checks pass before each import
 - [ ] Auth users recreated/invited through supported target Auth flow
 - [ ] User UUID mapping applied only to verified FK columns
-- [ ] Exact public row-count and object inventory comparison passes
+- [ ] Exact public/private row-count, object, and ACL inventory comparison passes
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
 - [ ] Critical RPCs present and their signatures/authorization verified
