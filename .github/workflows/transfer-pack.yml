@@ -9,6 +9,10 @@ on:
     paths:
       - "database/transfer/**"
       - ".github/workflows/transfer-pack.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   transfer-pack:
