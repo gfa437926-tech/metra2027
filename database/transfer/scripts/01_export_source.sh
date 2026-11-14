@@ -64,13 +64,16 @@ FROM public.metra_observation_records \
 GROUP BY source_system, source_table, is_demo \
 ORDER BY source_system, source_table, is_demo;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/06_runtime_role_inventory.txt" -c "\
+-- Stable, deterministic ACL inventory for the application-owned schemas.
+-- This query is read-only and excludes managed Auth/Storage schemas.
 SELECT item::text
 FROM (
   SELECT '01_role'::text AS sort_key,
          jsonb_build_object('kind','role','rolname',rolname,'rolsuper',rolsuper,'rolinherit',rolinherit,
            'rolcreaterole',rolcreaterole,'rolcreatedb',rolcreatedb,'rolcanlogin',rolcanlogin,
            'rolreplication',rolreplication,'rolbypassrls',rolbypassrls) AS item
-  FROM pg_roles WHERE rolname='metra_api_runtime'
+  FROM pg_roles
+  WHERE rolname IN ('anon','authenticated','service_role','metra_api_runtime','postgres','pg_database_owner')
   UNION ALL
   SELECT '02_schema',
          jsonb_build_object('kind','schema_privilege','role',r.rolname,'schema',n.nspname,
@@ -139,12 +142,14 @@ FROM (
   WHERE n.nspname IN ('public','private') AND a.grantee=0
   UNION ALL
   SELECT '07_default_acl',
-         jsonb_build_object('kind','default_acl','owner',pg_get_userbyid(defaclrole),
-           'schema',defaclnamespace::regnamespace::text,'object_type',defaclobjtype,
-           'acl',defaclacl::text)
-  FROM pg_default_acl
-  WHERE defaclrole='postgres'::regrole
-    AND defaclnamespace='public'::regnamespace
+         jsonb_build_object('kind','default_acl','owner',pg_get_userbyid(d.defaclrole),
+           'schema',d.defaclnamespace::regnamespace::text,'object_type',d.defaclobjtype,
+           'grantee',CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE pg_get_userbyid(a.grantee) END,
+           'privilege',a.privilege_type,'grantable',a.is_grantable)
+  FROM pg_default_acl d
+  CROSS JOIN LATERAL aclexplode(d.defaclacl) a
+  WHERE d.defaclrole='postgres'::regrole
+    AND d.defaclnamespace='public'::regnamespace
   UNION ALL
   SELECT '08_membership',
          jsonb_build_object('kind','membership','granted_role',granted.rolname,
