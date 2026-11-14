@@ -1,9 +1,16 @@
--- Create the source-compatible, non-login runtime role before importing
--- public policies/private functions that reference it. Target-only bootstrap.
+-- Target-only bootstrap. Recreate the least-privilege custom runtime role
+-- and Supabase public-schema default ACLs observed on the approved source.
 DO $$
 DECLARE
   role_row record;
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon')
+     OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated')
+     OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role')
+     OR NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='postgres') THEN
+    RAISE EXCEPTION 'Required Supabase managed roles are missing; refusing target bootstrap';
+  END IF;
+
   IF (
     SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
     WHERE n.nspname IN ('public','private') AND c.relkind IN ('r','p','v','m','S','f')
@@ -38,5 +45,14 @@ END
 $$;
 
 CREATE SCHEMA IF NOT EXISTS private;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT USAGE ON SCHEMA public, private TO metra_api_runtime;
 GRANT metra_api_runtime TO postgres WITH ADMIN OPTION;
+
+-- Recreate the approved source's public-schema defaults for future objects.
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON SEQUENCES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
