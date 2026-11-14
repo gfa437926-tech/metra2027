@@ -27,6 +27,16 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
   cd "$DUMP_DIR"
   sha256sum --check --strict SHA256SUMS
 )
+metra_verify_transfer_manifest "$DUMP_DIR"
+[[ -s "$DUMP_DIR/07_extensions.txt" ]] || { echo "Missing required extension inventory." >&2; exit 4; }
+target_extensions="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -f "$SCRIPT_DIR/../sql/compare_extensions.sql")"
+while IFS= read -r required_extension; do
+  [[ -z "$required_extension" ]] && continue
+  if ! grep -Fxq "$required_extension" <<< "$target_extensions"; then
+    echo "Refusing data import: target is missing required extension/version/schema: $required_extension" >&2
+    exit 6
+  fi
+done < "$DUMP_DIR/07_extensions.txt"
 
 # Stop before writing if any target application table already contains rows.
 psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_application_tables.sql"
