@@ -132,14 +132,62 @@ END
 $assert$;
 SQL
 
+# Audit every restored public table: any table granted to a client role must
+# have RLS enabled. This catches accidental broad ACLs outside the focused fixture.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<'SQL'
+DO $audit$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='public' AND c.relkind IN ('r','p')
+      AND NOT c.relrowsecurity
+      AND (
+        has_table_privilege('anon', c.oid, 'SELECT')
+        OR has_table_privilege('anon', c.oid, 'INSERT')
+        OR has_table_privilege('anon', c.oid, 'UPDATE')
+        OR has_table_privilege('anon', c.oid, 'DELETE')
+        OR has_table_privilege('authenticated', c.oid, 'SELECT')
+        OR has_table_privilege('authenticated', c.oid, 'INSERT')
+        OR has_table_privilege('authenticated', c.oid, 'UPDATE')
+        OR has_table_privilege('authenticated', c.oid, 'DELETE')
+      )
+  ) THEN
+    RAISE EXCEPTION 'a restored public table has client grants without RLS';
+  END IF;
+END
+$audit$;
+SQL
+
 # Grant only the test table's reviewed client DML privileges after restore;
 # the RLS policies must then enforce row-level isolation.
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
   -c 'GRANT SELECT, INSERT, UPDATE, DELETE ON public.restore_policy_fixture TO authenticated' >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<'SQL'
+CREATE VIEW public.restore_policy_invoker WITH (security_invoker=true)
+AS SELECT id, user_id, payload FROM public.restore_policy_fixture;
+GRANT SELECT ON public.restore_policy_invoker TO authenticated;
+CREATE TABLE private.restore_future_acl_fixture(id integer);
+DO $defaults$
+BEGIN
+  IF has_table_privilege('anon','private.restore_future_acl_fixture','SELECT')
+     OR has_table_privilege('authenticated','private.restore_future_acl_fixture','SELECT')
+     OR has_table_privilege('service_role','private.restore_future_acl_fixture','SELECT') THEN
+    RAISE EXCEPTION 'private default ACL exposed a future table';
+  END IF;
+END
+$defaults$;
+SQL
 
 visible="$("$REAL_PSQL" -X -v ON_ERROR_STOP=1 -At -d "$TARGET_DB" \
   -c "SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$OWNER_ID',false); SELECT count(*) FROM public.restore_policy_fixture" | tail -n 1)"
 [[ "$visible" == "1" ]] || { echo "FAIL: restored SELECT policy leaked or hid owner rows (count=$visible)." >&2; exit 1; }
+
+view_visible="$("$REAL_PSQL" -X -v ON_ERROR_STOP=1 -At -d "$TARGET_DB" \
+  -c "SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$OWNER_ID',false); SELECT count(*) FROM public.restore_policy_invoker" | tail -n 1)"
+[[ "$view_visible" == "1" ]] || { echo "FAIL: security_invoker view bypassed restored RLS (count=$view_visible)." >&2; exit 1; }
+
 
 if "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
   -c "SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','$OWNER_ID',false); INSERT INTO public.restore_policy_fixture VALUES (3,'$OTHER_ID','forged')" >"$WORK/insert.log" 2>&1; then
