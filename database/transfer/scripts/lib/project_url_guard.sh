@@ -102,20 +102,3 @@ metra_verify_transfer_manifest() {
     fi
   done
 }
-
-# Do not import application data while declared auth.users foreign keys have
-# not been remapped to target-generated Auth user UUIDs.
-metra_assert_auth_user_fk_remapped() {
-  local dump_dir="${1:?transfer export directory required}"
-  local inventory="$dump_dir/04_auth_user_fk_inventory.txt"
-  if [[ ! -f "$inventory" ]]; then
-    echo "Refusing data import: Auth user FK inventory is missing." >&2
-    return 1
-  fi
-  if [[ -s "$inventory" ]]; then
-    echo "Refusing data import: application foreign keys reference auth.users." >&2
-    echo "Target Auth users and an audited source→target UUID remapping must be completed before data import." >&2
-    echo "The current transfer pack does not yet apply Auth UUID remapping." >&2
-    return 1
-  fi
-}
