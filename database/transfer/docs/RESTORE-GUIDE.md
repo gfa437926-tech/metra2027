@@ -2,7 +2,7 @@
 
 ## Scope
 
-The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, grants, secrets, or provider configuration. This is a database transfer pack, not a complete Supabase project clone.
+The current scripts restore the application's public/private schemas and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, API secrets, or provider configuration. The scripts recreate the reviewed application role ACLs and public default privileges. This is a database transfer pack, not a complete Supabase project clone.
 
 ## Required inputs
 
@@ -29,7 +29,7 @@ Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply M
 4. Run scripts/04_import_data.sh with the same export directory. It verifies the manifest again, refuses populated public/private tables, decrypts the data, and imports in one transaction.
 5. Set METRA_SRC_PROJECT_REF to tbdnklyxjvbrilvnwgmq and METRA_SRC_DATABASE_URL to the approved source URL. Run scripts/05_compare.sh.
 6. Review 04_auth_user_fk_inventory.txt and follow AUTH-USER-TRANSFER.md for target-side user recreation and carefully scoped UUID remapping.
-5. Review 05_observation_provenance.txt. Reconcile source-system/source-table groups and records without station_id before declaring the restored dataset accepted.
+7. Review 05_observation_provenance.txt. Reconcile source-system/source-table groups and records without station_id before declaring the restored dataset accepted.
 
 ## Acceptance tests
 
