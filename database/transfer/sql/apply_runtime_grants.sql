@@ -1,7 +1,15 @@
 -- Reapply ACLs excluded by pg_dump --no-privileges.
 -- The exact source ACL inventory is recorded in 06_runtime_role_inventory.txt.
 
--- Supabase server role: full table access except three deliberately read-only tables.
+-- Schema access: client roles have public USAGE only; private is restricted.
+REVOKE CREATE ON SCHEMA public FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role, metra_api_runtime;
+GRANT USAGE ON SCHEMA private TO metra_api_runtime;
+
+-- Existing table ACLs are narrower than Supabase default ACLs; reset then reapply.
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 REVOKE ALL PRIVILEGES ON TABLE
   public.authority_access_audit_events,
@@ -14,7 +22,6 @@ GRANT SELECT ON TABLE
   public.permission_grants
 TO service_role;
 
--- Runtime role is non-login, NO BYPASSRLS, and receives only source-approved reads.
 GRANT SELECT ON TABLE
   public.meteorological_authorities,
   public.metra_account_states,
@@ -28,22 +35,30 @@ GRANT SELECT ON TABLE
   public.station_coordinates
 TO metra_api_runtime;
 
--- Sequence USAGE is present for Supabase client roles on the six public sequences.
-GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+-- Source grants ALL sequence privileges to anon/authenticated/service_role,
+-- and none to PUBLIC or metra_api_runtime.
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC, metra_api_runtime;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
 
--- Preserve the source's explicit function ACLs.
+-- Reset existing function ACLs because Supabase defaults are broader than
+-- several source-specific RPC/trigger ACLs.
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
-REVOKE EXECUTE ON FUNCTION public.reject_metra_observation_audit_mutation() FROM service_role;
-
+REVOKE EXECUTE ON FUNCTION public.reject_metra_observation_audit_mutation()
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION
   public.reject_metra_equipment_fault_audit_mutation(),
   public.reject_metra_support_incident_audit_mutation()
-TO anon, authenticated;
+TO PUBLIC, anon, authenticated;
 
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA private
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+GRANT EXECUTE ON FUNCTION private.reject_authority_access_audit_mutation()
+  TO PUBLIC;
 GRANT EXECUTE ON FUNCTION private.decide_metra_registration(
   uuid, text, uuid, text, text, timestamp with time zone
 ) TO metra_api_runtime;
-
 GRANT EXECUTE ON FUNCTION private.submit_metra_registration(
   uuid, text, text, text, text, text, uuid, text, timestamp with time zone, text
 ) TO metra_api_runtime;
