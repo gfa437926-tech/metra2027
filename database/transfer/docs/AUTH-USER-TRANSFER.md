@@ -2,7 +2,7 @@
 
 ## Current transfer-pack boundary
 
-The automated transfer pack exports only application-owned public schema/data. It does not export or import auth.users, auth.identities, password hashes, sessions, refresh tokens, MFA factors, JWT secrets, or Supabase project keys.
+The automated transfer pack exports application-owned public/private schema/data. It does not export or import auth.users, auth.identities, password hashes, sessions, refresh tokens, MFA factors, JWT secrets, or Supabase project keys.
 
 Do not use generic pg_dump/psql copying of the managed auth schema as a production migration method. Copying internal Auth tables can create inconsistent identities, credentials, sessions, or references and is not covered by this pack's tests.
 
