@@ -46,19 +46,38 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+      - name: Test target role bootstrap and least-privilege grants
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN
+            IF NOT has_schema_privilege('metra_api_runtime','private','USAGE') THEN RAISE EXCEPTION 'missing private USAGE'; END IF;
+            IF NOT has_table_privilege('metra_api_runtime','public.station_catalogue','SELECT') THEN RAISE EXCEPTION 'missing station SELECT'; END IF;
+            IF has_table_privilege('metra_api_runtime','public.station_catalogue','INSERT') THEN RAISE EXCEPTION 'unexpected station INSERT'; END IF;
+            IF NOT has_function_privilege('metra_api_runtime','private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)','EXECUTE') THEN RAISE EXCEPTION 'missing registration decision EXECUTE'; END IF;
+            IF NOT pg_has_role('postgres','metra_api_runtime','MEMBER') THEN RAISE EXCEPTION 'postgres is not a member of runtime role'; END IF;
+          END \$\$;"
       - name: Test exact row counts and empty-target guard
         run: |
-          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1);"
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY);"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
           grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
+          grep -Fx "private|transfer_pack_fixture|0" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
           grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
-          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_public_tables.sql; then
+          grep -F "function|private|decide_metra_registration|" /tmp/objects.txt
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
             echo "Expected empty-target guard to reject a populated table."
             exit 1
           fi
           psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
-          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_public_tables.sql
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
+            echo "Expected private empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
       - name: Verify export checksums reject tampering
         run: |
           mkdir -p /tmp/metra-export-check
