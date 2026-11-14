@@ -94,6 +94,8 @@ WORKFLOW="$ROOT/.github/workflows/transfer-auth-remap.yml"
 require_file "$WORKFLOW"
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_empty_target_guard.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observation_guard.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_runner_preflight.sh'
+require_file "$ROOT/database/transfer/tests/test_compare_runner_preflight.sh"
 
 # The empty-target runtime fixture must cover both application schemas.
 require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "CREATE TABLE public.\$fixture"
