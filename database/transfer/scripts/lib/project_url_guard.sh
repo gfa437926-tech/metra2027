@@ -89,6 +89,8 @@ metra_verify_transfer_manifest() {
   for required_line in \
     "source_project_ref=tbdnklyxjvbrilvnwgmq" \
     "auth_users_exported=false" \
+    "auth_user_fk_inventory_exported=true" \
+    "observation_provenance_exported=true" \
     "observation_records_data_exported=false" \
     "non_demo_observation_records_excluded=true" \
     "runtime_role_inventory_exported=true" \
