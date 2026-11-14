@@ -135,12 +135,20 @@ BEGIN
   END IF;
   IF has_table_privilege('anon','public.metra_observations','SELECT')
      OR has_table_privilege('anon','public.metra_observations','INSERT')
+     OR has_table_privilege('anon','public.metra_observations','UPDATE')
+     OR has_table_privilege('anon','public.metra_observations','DELETE')
      OR has_table_privilege('authenticated','public.metra_observations','SELECT')
      OR has_table_privilege('authenticated','public.metra_observations','INSERT')
+     OR has_table_privilege('authenticated','public.metra_observations','UPDATE')
+     OR has_table_privilege('authenticated','public.metra_observations','DELETE')
      OR has_table_privilege('anon','public.metra_observation_audit_events','SELECT')
      OR has_table_privilege('anon','public.metra_observation_audit_events','INSERT')
+     OR has_table_privilege('anon','public.metra_observation_audit_events','UPDATE')
+     OR has_table_privilege('anon','public.metra_observation_audit_events','DELETE')
      OR has_table_privilege('authenticated','public.metra_observation_audit_events','SELECT')
-     OR has_table_privilege('authenticated','public.metra_observation_audit_events','INSERT') THEN
+     OR has_table_privilege('authenticated','public.metra_observation_audit_events','INSERT')
+     OR has_table_privilege('authenticated','public.metra_observation_audit_events','UPDATE')
+     OR has_table_privilege('authenticated','public.metra_observation_audit_events','DELETE') THEN
     RAISE EXCEPTION 'client role received direct privileges on operational observation tables';
   END IF;
   IF NOT has_table_privilege('service_role','public.metra_observations','SELECT')
