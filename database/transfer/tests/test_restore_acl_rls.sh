@@ -208,6 +208,31 @@ if "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
 fi
 grep -Eqi 'permission denied' "$WORK/actual-client-denial.log"
 
+# Prove RLS itself remains default-deny even if a client is accidentally granted
+# table ACLs: the restored operational tables intentionally have no client policies.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<'SQL'
+GRANT SELECT, INSERT ON public.metra_observations TO authenticated;
+GRANT SELECT, INSERT ON public.metra_observation_audit_events TO authenticated;
+SQL
+for table in metra_observations metra_observation_audit_events; do
+  visible="$("$REAL_PSQL" -X -v ON_ERROR_STOP=1 -At -d "$TARGET_DB" \
+    -c "SET ROLE authenticated; SELECT count(*) FROM public.$table" | tail -n 1)"
+  [[ "$visible" == "0" ]] || {
+    echo "FAIL: RLS leaked rows from restored public.$table after temporary SELECT grant." >&2
+    exit 1
+  }
+done
+if "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
+  -c "SET ROLE authenticated; INSERT INTO public.metra_observations (station_id,created_by,observation_type,observed_at,payload,status,initial_status,idempotency_key) VALUES ('00000000-0000-4000-8000-000000000001','$OWNER_ID','hourly',now(),'{}','draft','draft','client-forged')" >"$WORK/actual-rls-insert-denial.log" 2>&1; then
+  echo "FAIL: restored no-policy RLS accepted client INSERT after temporary ACL grant." >&2
+  exit 1
+fi
+grep -Fqi 'row-level security policy' "$WORK/actual-rls-insert-denial.log"
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<'SQL'
+REVOKE SELECT, INSERT ON public.metra_observations FROM authenticated;
+REVOKE SELECT, INSERT ON public.metra_observation_audit_events FROM authenticated;
+SQL
+
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<SQL
 SET ROLE service_role;
 INSERT INTO public.metra_observations
