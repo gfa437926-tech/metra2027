@@ -1,0 +1,37 @@
+name: METRA transfer safety and Auth remap tests
+
+on:
+  push:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-auth-remap.yml"
+  pull_request:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-auth-remap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-remap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check Python syntax
+        run: python -m py_compile database/transfer/scripts/remap_auth_user_ids.py
+      - name: Run Auth UUID remapping unit tests
+        run: python -m unittest discover -s database/transfer/tests -p 'test_*.py' -v
+      - name: Run transfer shell guards
+        run: |
+          bash -n database/transfer/scripts/*.sh
+          bash -n database/transfer/scripts/lib/*.sh
+          bash -n database/transfer/tests/*.sh
+          bash database/transfer/tests/test_url_guard.sh
+          bash database/transfer/tests/test_public_schema_normalizer.sh
+          bash database/transfer/tests/test_manifest.sh
