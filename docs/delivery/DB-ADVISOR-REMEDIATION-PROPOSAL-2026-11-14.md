@@ -60,7 +60,20 @@ Existing composite indexes already cover `station_id` on `metra_equipment_faults
 
 After applying, verify each FK has a covering index and rerun Performance Advisors. These indexes are proposed based on FK coverage; confirm query patterns and write overhead before adding them to the final migration.
 
-## 3. RLS findings — preserve the current default-deny behavior
+## 3. Tighten the source's broad default ACLs on the target
+
+Read-only inspection found that source defaults for objects created by `postgres` in `public` grant ALL table and sequence privileges and function EXECUTE to `anon`, `authenticated`, and `service_role`. This is broader than the target's server-only data-access design.
+
+The transfer scripts now intentionally diverge from those source defaults:
+
+- `PUBLIC`, `anon`, and `authenticated` receive no default privileges on future public tables, sequences, or functions.
+- `service_role` receives the required default privileges.
+- Existing application-object grants are restored explicitly and checked with `compare_acl_inventory_acceptance.sql`.
+- `assert_target_default_acl.sql` blocks restore acceptance if client roles regain implicit default privileges.
+
+This hardening is target-only. The experimental source defaults remain unchanged. Review any future direct PostgREST/RPC access requirement before adding explicit grants.
+
+## 4. RLS findings — preserve the current default-deny behavior
 
 The following four public tables have RLS enabled but no policies:
 
