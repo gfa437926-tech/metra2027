@@ -99,6 +99,74 @@ jobs:
       - name: Test row counts, data fingerprints, and empty-target guards
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
+          psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence_state.txt
+          grep -E '^public\\|station_audit_log_id_seq\\|.*\\|42          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
+          if grep -F "metra_observation_records" /tmp/rowcounts.txt; then
+            echo "Intentionally excluded observation table must not appear in row-count equality."
+            exit 1
+          fi
+          grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
+          grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_before.txt
+          grep -F "public|transfer_pack_fixture|1|" /tmp/data_hashes_before.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth_fk_before.txt
+          grep -F "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth_fk_before.txt
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.auth_fk_fixture SET user_id='22222222-2222-4222-8222-222222222222';"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after_auth_remap.txt
+          if ! cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after_auth_remap.txt; then
+            echo "Auth UUID remapping unexpectedly changed non-Auth content fingerprints."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth_fk_after.txt
+          if ! cmp -s /tmp/auth_fk_before.txt /tmp/auth_fk_after.txt; then
+            echo "Auth FK cardinality changed after UUID remapping."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.auth_fk_fixture SET user_id='11111111-1111-4111-8111-111111111111';"
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=2;"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data_hashes_after.txt
+          if cmp -s /tmp/data_hashes_before.txt /tmp/data_hashes_after.txt; then
+            echo "Table content hash did not change after data mutation."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "UPDATE public.transfer_pack_fixture SET id=1;"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
+          grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
+          grep -F "function|private|decide_metra_registration(" /tmp/objects.txt
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
+            echo "Expected empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql; then
+            echo "Expected private empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.auth_fk_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_excluded_data.sql | grep -Fx "0"
+      - name: Verify export checksums reject tampering
+        run: |
+          mkdir -p /tmp/metra-export-check
+          printf '%s\n' 'schema dump fixture' > /tmp/metra-export-check/01_schema_application.sql.gpg
+          printf '%s\n' 'data dump fixture' > /tmp/metra-export-check/02_data_application.sql.gpg
+          printf '%s\n' 'source_project_ref=tbdnklyxjvbrilvnwgmq' > /tmp/metra-export-check/MANIFEST.txt
+          (cd /tmp/metra-export-check && sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg MANIFEST.txt > SHA256SUMS)
+          (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
+          printf '%s\n' 'tampered' >> /tmp/metra-export-check/02_data_application.sql.gpg
+          if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
+            echo "Expected checksum verification to reject a tampered export."
+            exit 1
+          fi
+      - name: Verify encrypted dump round trip
+        run: |
+          printf '%s\n' 'METRA transfer test' > /tmp/plain.txt
+          printf '%s\n' 'ci-only-test-passphrase' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
+          printf '%s\n' 'ci-only-test-passphrase' | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
+          cmp /tmp/plain.txt /tmp/roundtrip.txt
+ /tmp/sequence_state.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
           if grep -F "metra_observation_records" /tmp/rowcounts.txt; then
             echo "Intentionally excluded observation table must not appear in row-count equality."
