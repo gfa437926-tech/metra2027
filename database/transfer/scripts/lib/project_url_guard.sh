@@ -115,12 +115,23 @@ metra_assert_no_excluded_observation_data() {
     echo "Refusing data import: decrypted data dump is missing or empty." >&2
     return 1
   fi
-  if grep -Eq \
-      -e 'COPY public\.metra_observation_records([[:space:]]|\()' \
-      -e 'COPY "public"\."metra_observation_records"([[:space:]]|\()' \
-      -e 'INSERT INTO public\.metra_observation_records([[:space:]]|\()' \
-      -e 'INSERT INTO "public"\."metra_observation_records"([[:space:]]|\()' \
-      "$dump_file"; then
+  local excluded_patterns=(
+    'COPY public.metra_observation_records '
+    'COPY public.metra_observation_records('
+    'COPY "public"."metra_observation_records" '
+    'COPY "public"."metra_observation_records"('
+    'INSERT INTO public.metra_observation_records '
+    'INSERT INTO public.metra_observation_records('
+    'INSERT INTO "public"."metra_observation_records" '
+    'INSERT INTO "public"."metra_observation_records"('
+  )
+  local pattern
+  for pattern in "${excluded_patterns[@]}"; do
+    if grep -Fq -- "$pattern" "$dump_file"; then
+      echo "Refusing data import: dump contains excluded observation-history rows." >&2
+      return 1
+    fi
+  done
     echo "Refusing data import: dump contains excluded observation-history rows." >&2
     return 1
   fi
