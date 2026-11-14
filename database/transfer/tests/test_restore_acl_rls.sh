@@ -104,8 +104,11 @@ SQL
   --file="$WORK/application.sql" --dbname="$SOURCE_DB"
 # pg_dump from a newer client can emit SET transaction_timeout, which older
 # supported PostgreSQL servers (including the CI PostgreSQL 16 service) lack.
-# Strip only this session-setting line; schema/data statements remain unchanged.
-sed '/^SET transaction_timeout = 0;$/d' "$WORK/application.sql" > "$WORK/application.compat.sql"
+# It also emits CREATE SCHEMA public although the target database already has
+# that built-in schema. Strip only these two known-incompatible statements.
+sed -e '/^SET transaction_timeout = 0;$/d' \
+    -e '/^CREATE SCHEMA public;$/d' \
+    "$WORK/application.sql" > "$WORK/application.compat.sql"
 "$REAL_PSQL" -X -1 -v ON_ERROR_STOP=1 -d "$TARGET_DB" -f "$WORK/application.compat.sql"
 
 # Apply the same reviewed target-side runtime ACL policy used by transfer.
