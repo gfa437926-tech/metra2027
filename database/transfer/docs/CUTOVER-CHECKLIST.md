@@ -26,16 +26,16 @@
 
 - [ ] Target runtime role and private schema bootstrapped with least privilege
 - [ ] Public/private schema import completed atomically
-- [ ] Public/private data import completed atomically
 - [ ] Managed role, PUBLIC, sequence, function, and metra_api_runtime ACLs match the source inventory
 - [ ] SHA-256 checks pass before each import
 - [ ] Auth users recreated/invited through supported target Auth flow
-- [ ] User UUID mapping applied only to verified FK columns
+- [ ] Protected source→target UUID mapping reviewed and stored outside Git
+- [ ] Mapping-aware data transformation implemented and tested; import guard remains enabled until this passes
+- [ ] Public/private data import completed atomically after Auth UUID remapping
 - [ ] Exact public/private row-count, object, and ACL inventory comparison passes
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
 - [ ] Critical RPCs present and their signatures/authorization verified
-
 ## Application verification
 
 - [ ] /api/v1/health OK on staging API
