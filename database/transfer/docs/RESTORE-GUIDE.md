@@ -7,8 +7,8 @@ The current scripts restore the application's public/private schemas and data. T
 ## Required inputs
 
 An export directory from 01_export_source.sh containing:
-- 01_schema_public.sql.gpg
-- 02_data_public.sql.gpg
+- 01_schema_application.sql.gpg
+- 02_data_application.sql.gpg
 - 03_inventory_tables.txt
 - 03_inventory_functions.txt
 - 04_auth_user_fk_inventory.txt
