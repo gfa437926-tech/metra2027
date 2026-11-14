@@ -1,54 +1,41 @@
-# Full restore guide (experimental source)
+# Restore guide — experimental source to a new target
 
-## Goal
+## Scope
 
-Rebuild a database that matches the experimental project `tbdnklyxjvbrilvnwgmq` export without depending on the live project remaining online.
+The current scripts restore only the application's public schema and data. They do not restore Supabase-managed Auth, Storage objects, project settings, extensions, grants, secrets, or provider configuration. This is a database transfer pack, not a complete Supabase project clone.
 
-## Inputs
+## Required inputs
 
-1. Export directory from `scripts/01_export_source.sh` containing:
-   - `01_schema_public.sql`
-   - `02_data_public.sql`
-   - optional `01_schema_auth.sql` / auth data
-   - `MANIFEST.txt`
-2. Empty Postgres 15+ compatible instance (local, or new Supabase project).
+An export directory from 01_export_source.sh containing:
+- 01_schema_public.sql.gpg
+- 02_data_public.sql.gpg
+- 03_inventory_tables.txt
+- 03_inventory_functions.txt
+- 04_auth_user_fk_inventory.txt
+- SHA256SUMS
+- MANIFEST.txt
 
-## Steps
+Also required: a new, explicitly identified Supabase target with an empty application public schema, the transfer passphrase from a protected secret manager, PostgreSQL client tools, and GPG.
 
-```bash
-export METRA_DST_DATABASE_URL='postgresql://...'
-export METRA_DST_PROJECT_REF='your-new-ref'
+## Restore sequence
 
-# 1. Schema
-bash database/transfer/scripts/03_import_schema.sh /path/to/export_stamp
+Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply METRA_TRANSFER_PASSPHRASE through a protected secret manager. Never paste credentials or passphrases into chat or Git.
 
-# 2. Data
-bash database/transfer/scripts/04_import_data.sh /path/to/export_stamp
+1. Run scripts/03_import_schema.sh with the export directory. It verifies the complete manifest, decrypts the schema, verifies target identity and emptiness, and imports in one transaction.
+2. Run scripts/04_import_data.sh with the same export directory. It verifies the manifest again, refuses populated public tables, decrypts the data, and imports in one transaction.
+3. Set METRA_SRC_PROJECT_REF to tbdnklyxjvbrilvnwgmq and METRA_SRC_DATABASE_URL to the approved source URL. Run scripts/05_compare.sh.
+4. Review 04_auth_user_fk_inventory.txt and follow AUTH-USER-TRANSFER.md for target-side user recreation and carefully scoped UUID remapping.
 
-# 3. Auth (if included)
-# psql "$METRA_DST_DATABASE_URL" -v ON_ERROR_STOP=1 -f /path/to/auth_users_data.sql
+## Acceptance tests
 
-# 4. Analyze
-psql "$METRA_DST_DATABASE_URL" -c 'ANALYZE;'
+- [ ] SHA-256 verification succeeds for all export artifacts.
+- [ ] Public schema and data import complete without errors.
+- [ ] Exact public row counts and object inventory comparison passes.
+- [ ] Foreign keys validate and no orphaned user references remain after approved Auth remapping.
+- [ ] RLS policies and required grants are verified separately with anonymous, authenticated, and privileged test identities.
+- [ ] .NET health/readiness, login, station directory, observation gating, and Flutter login smoke tests pass.
+- [ ] A separate full restore drill succeeds from the retained encrypted archive.
 
-# 5. Compare against source if still online
-export METRA_SRC_DATABASE_URL='postgresql://...'
-bash database/transfer/scripts/05_compare.sh
-```
+## Rollback and source retention
 
-## Acceptance
-
-- Table list matches inventory.
-- Row counts for catalogue and experimental tables match within documented deltas.
-- Foreign keys validate.
-- Application can authenticate against **new** Auth configuration only.
-
-## Rollback
-
-Keep the experimental project `tbdnklyxjvbrilvnwgmq` online until:
-
-1. At least one full restore into a second environment succeeds.
-2. Compare report is archived.
-3. Owner signs off.
-
-This pack never issues `DROP` against the source project.
+Keep the experimental project tbdnklyxjvbrilvnwgmq unchanged and available until a complete restore drill, comparison report, application tests, and owner sign-off are complete. This pack does not issue destructive commands against the source.
