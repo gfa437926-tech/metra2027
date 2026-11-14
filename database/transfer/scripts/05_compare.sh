@@ -38,7 +38,7 @@ for side in source target; do
   psql "$url" -X -v ON_ERROR_STOP=1 -At -F '|' \
     -f "$ROOT/sql/compare_objects.sql" > "$OUT/${side}_objects.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At \
-    -f "$ROOT/sql/compare_acl_inventory.sql" > "$OUT/${side}_acl.txt"
+    -f "$ROOT/sql/compare_acl_inventory_acceptance.sql" > "$OUT/${side}_acl.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At \
     -f "$ROOT/sql/compare_extensions.sql" > "$OUT/${side}_extensions.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At \
