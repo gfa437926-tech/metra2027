@@ -88,8 +88,7 @@ CREATE TABLE auth.users (
   email text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-CREATE SCHEMA extensions;
-CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
+CREATE EXTENSION pgcrypto WITH SCHEMA public;
 SQL
 
 # Export and restore every checked-in public/private definition from the full
