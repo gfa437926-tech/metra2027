@@ -69,6 +69,40 @@ jobs:
       - name: Exercise transfer SQL and Auth FK comparisons
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_extensions.sql > /tmp/extensions.txt
+          grep -E '^pgcrypto[|][^|]+[|]extensions          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_target_default_acl.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_target_function_search_path.sql
+          psql -X -v ON_ERROR_STOP=1 -c "INSERT INTO public.metra_equipment_fault_audit_events(id) VALUES ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'); CREATE TRIGGER immutable_fixture BEFORE UPDATE OR DELETE ON public.metra_equipment_fault_audit_events FOR EACH ROW EXECUTE FUNCTION public.reject_metra_equipment_fault_audit_mutation();"
+          if psql -X -v ON_ERROR_STOP=1 -c "SET ROLE service_role; UPDATE public.metra_equipment_fault_audit_events SET id=id;" > /tmp/immutable-trigger.log 2>&1; then
+            echo "Expected immutable audit trigger to reject service_role UPDATE."
+            exit 1
+          fi
+          grep -F "immutable" /tmp/immutable-trigger.log
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/station_catalogue_provenance.sql > /tmp/station-provenance.txt
+          grep -Fx "orphan_coordinate_rows|0" /tmp/station-provenance.txt
+          grep -Fx "duplicate_coordinate_station_ids|0" /tmp/station-provenance.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth-fk-counts.txt
+          grep -Fx "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth-fk-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence-state.txt
+          grep -E '^public[|]station_audit_log_id_seq[|].*[|]42$' /tmp/sequence-state.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/row-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data-hashes.txt
+          grep -F "public|auth_fk_fixture|1|" /tmp/data-hashes.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/object-inventory.txt
+          grep -F "table|public|auth_fk_fixture|" /tmp/object-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl-inventory.txt
+          grep -F '"kind": "default_acl"' /tmp/acl-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory_acceptance.sql > /tmp/acl-acceptance.txt
+          grep -F '"kind": "role"' /tmp/acl-acceptance.txt
+      - name: Exercise data importer end to end
+        run: bash database/transfer/tests/test_import_data.sh
+ /tmp/extensions.txt
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
