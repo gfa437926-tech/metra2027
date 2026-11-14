@@ -70,7 +70,7 @@ DECLARE
     'metra_account_states','authority_memberships','station_assignments',
     'permission_grants','metra_user_profiles','registration_requests',
     'registration_audit_events','station_audit_log','permission_grant_audit',
-    'authority_access_audit_events','station_coordinates',
+    'authority_access_audit_events',
     'metra_observations','metra_observation_audit_events'
   ];
 BEGIN
