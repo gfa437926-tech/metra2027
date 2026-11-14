@@ -48,8 +48,9 @@ jobs:
           sudo apt-get install -y postgresql-client
       - name: Test target role bootstrap and least-privilege grants
         run: |
-          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
           psql -X -v ON_ERROR_STOP=1 -c "DO \$\$ BEGIN
             IF NOT has_schema_privilege('metra_api_runtime','private','USAGE') THEN RAISE EXCEPTION 'missing private USAGE'; END IF;
