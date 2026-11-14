@@ -88,4 +88,21 @@ for status in \
   require_contains "$RUNNER" "$status"
 done
 
+
+# The workflow must execute the runtime guards, not merely keep them in-tree.
+WORKFLOW="$ROOT/.github/workflows/transfer-auth-remap.yml"
+require_file "$WORKFLOW"
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_empty_target_guard.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observation_guard.sh'
+
+# The empty-target runtime fixture must cover both application schemas.
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'CREATE TABLE public.$fixture'
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'CREATE TABLE private.$fixture'
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'public.$fixture is not empty'
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'private.$fixture is not empty'
+
+# The excluded-history runtime fixture must exercise both empty and populated states.
+require_contains "$ROOT/database/transfer/tests/test_excluded_observation_guard.sh" 'empty_count'
+require_contains "$ROOT/database/transfer/tests/test_excluded_observation_guard.sh" 'populated_count'
+
 echo "PASS: transfer comparison runner covers all declared acceptance checks and fails closed on mismatches."
