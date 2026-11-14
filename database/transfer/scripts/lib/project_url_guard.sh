@@ -93,6 +93,8 @@ metra_verify_transfer_manifest() {
     "auth_user_fk_inventory_exported=true" \
     "observation_provenance_exported=true" \
     "observation_records_data_exported=false" \
+    "all_observation_records_excluded=true" \
+    "demo_observation_records_excluded=true" \
     "non_demo_observation_records_excluded=true" \
     "runtime_role_inventory_exported=true" \
     "required_extensions_inventory_exported=true" \
