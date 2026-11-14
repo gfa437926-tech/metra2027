@@ -34,6 +34,19 @@ public sealed class HttpPipelineContractTests
     }
 
     [Fact]
+    public void Production_rejects_disabled_rate_limiting()
+    {
+        using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
+        {
+            b.UseEnvironment("Production");
+            b.UseSetting("RateLimiting:Disabled", "true");
+        });
+
+        var exception = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        Assert.Contains("Rate limiting cannot be disabled", exception.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Health_is_200_and_ready_is_503_when_deps_missing()
     {
         await using var factory = Factory();
