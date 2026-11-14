@@ -79,3 +79,12 @@ The read-only two-database comparison runner is `database/tests/compare_isolated
 ## Baseline-to-migration reconciliation
 
 The relation-by-relation discrepancy register is maintained in [SCHEMA-RECONCILIATION-MATRIX.md](../../database/baseline/SCHEMA_RECONCILIATION_MATRIX.md). It distinguishes verified baseline columns from migration dependencies and marks unresolved schema contracts as blocked rather than inventing definitions. This is a static review artifact; it does not authorize DDL execution.
+
+
+## Source-verified table-definition catalogue
+
+An exhaustive source transcription of the current branch's table declarations is available at [SOURCE-VERIFIED-SCHEMA-DEFINITIONS.md](../../database/baseline/SOURCE-VERIFIED-SCHEMA-DEFINITIONS.md). It records all 16 baseline public tables and both operational observation tables (18 total), the isolated-only Auth stub, declared indexes/triggers/RLS, and all currently identified missing or incompatible migration dependencies.
+
+This improves the inventory from a table-name list to a field-level source catalogue. It does **not** certify that the current baseline skeletons are the approved canonical full schema: later migrations reference absent fields, mismatched names, missing constraints, and duplicate object creation. The detailed reconciliation matrix records these blockers.
+
+**Step-1 acceptance:** source extraction for all table declarations present in this branch is complete; recovery of every original approved field definition is **not accepted** until the canonical schema package/export resolves the listed discrepancies and supplies the missing domain schemas. No DDL was changed or applied.
