@@ -1,25 +1,46 @@
 #!/usr/bin/env bash
-# Import public schema into an empty target. Requires prior owner approval.
+# Decrypt and import public schema into an empty, explicitly identified target.
 set -euo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/lib/project_url_guard.sh"
 DST_REF="${METRA_DST_PROJECT_REF:?Set METRA_DST_PROJECT_REF to the new project ref}"
 DST_URL="${METRA_DST_DATABASE_URL:?Set METRA_DST_DATABASE_URL}"
 DUMP_DIR="${1:?Usage: 03_import_schema.sh /path/to/export_stamp_dir}"
+: "${METRA_TRANSFER_PASSPHRASE:?Set METRA_TRANSFER_PASSPHRASE in the secure shell environment}"
 
-if [[ "$DST_REF" == "tbdnklyxjvbrilvnwgmq" || "$DST_REF" == "nhovijnbtrocqahxxjou" || "$DST_REF" == "wdrcqceiagsmdxltqfwd" || "$DST_REF" == "vktcvkwqszehgmhqjrkb" ]]; then
-  echo "Refusing: destination must be a new, non-legacy project." >&2
-  exit 3
-fi
+forbidden_refs=(tbdnklyxjvbrilvnwgmq nhovijnbtrocqahxxjou wdrcqceiagsmdxltqfwd vktcvkwqszehgmhqjrkb)
+for forbidden_ref in "${forbidden_refs[@]}"; do
+  if [[ "$DST_REF" == "$forbidden_ref" ]]; then
+    echo "Refusing: destination must be a new, non-legacy project." >&2
+    exit 3
+  fi
+done
 metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
+command -v gpg >/dev/null 2>&1 || { echo "gpg is required." >&2; exit 4; }
+[[ -s "$DUMP_DIR/01_schema_public.sql.gpg" ]] || { echo "Missing encrypted public schema dump." >&2; exit 4; }
 
-if [[ ! -s "$DUMP_DIR/01_schema_public.sql" ]]; then
-  echo "Missing or empty $DUMP_DIR/01_schema_public.sql" >&2
-  exit 4
+# Do not write to a target that already contains application objects.
+existing_objects="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -c "
+SELECT
+  (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+   WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f'))
+  +
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+   WHERE n.nspname='public');
+")"
+if [[ "$existing_objects" != "0" ]]; then
+  echo "Refusing: target public schema is not empty ($existing_objects application objects)." >&2
+  exit 5
 fi
 
-echo "Importing public schema into explicitly identified target $DST_REF"
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -c "SELECT current_database();"
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$DUMP_DIR/01_schema_public.sql"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
+  --passphrase-fd 0 --decrypt --output "$TMP_DIR/01_schema_public.sql" \
+  "$DUMP_DIR/01_schema_public.sql.gpg"
+
+echo "Importing public schema into verified empty target $DST_REF"
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$TMP_DIR/01_schema_public.sql"
 echo "Schema import finished. Auth schema/users are not imported by this script."
