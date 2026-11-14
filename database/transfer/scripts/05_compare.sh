@@ -30,6 +30,8 @@ for side in source target; do
   psql "$url" -X -v ON_ERROR_STOP=1 -At -F '|' \
     -f "$ROOT/sql/compare_rowcounts.sql" > "$OUT/${side}_rowcounts.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At -F '|' \
+    -f "$ROOT/sql/compare_data_hashes.sql" > "$OUT/${side}_data_hashes.txt"
+  psql "$url" -X -v ON_ERROR_STOP=1 -At -F '|' \
     -f "$ROOT/sql/compare_objects.sql" > "$OUT/${side}_objects.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At \
     -f "$ROOT/sql/compare_acl_inventory.sql" > "$OUT/${side}_acl.txt"
@@ -40,6 +42,8 @@ done
 set +e
 diff -u "$OUT/source_rowcounts.txt" "$OUT/target_rowcounts.txt" > "$OUT/rowcounts.diff"
 rows_status=$?
+diff -u "$OUT/source_data_hashes.txt" "$OUT/target_data_hashes.txt" > "$OUT/data_hashes.diff"
+data_hash_status=$?
 diff -u "$OUT/source_objects.txt" "$OUT/target_objects.txt" > "$OUT/objects.diff"
 objects_status=$?
 diff -u "$OUT/source_acl.txt" "$OUT/target_acl.txt" > "$OUT/acl.diff"
@@ -52,10 +56,10 @@ if [[ "$(tr -d '\r\n' < "$OUT/target_excluded_observation_rows.txt")" == "0" ]];
 set -e
 
 printf 'Source ref: %s\nTarget ref: %s\n' "$SRC_REF" "$DST_REF" > "$OUT/RESULT.txt"
-if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 && "$extension_status" -eq 0 && "$excluded_data_status" -eq 0 ]]; then
-  echo "PASS: exact row counts, application objects, ACL inventories, required extensions, and non-demo observation exclusion match." | tee -a "$OUT/RESULT.txt"
+if [[ "$rows_status" -eq 0 && "$data_hash_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 && "$extension_status" -eq 0 && "$excluded_data_status" -eq 0 ]]; then
+  echo "PASS: exact row counts and SHA-256 table-content fingerprints, application objects, ACL inventories, required extensions, and non-demo observation exclusion match." | tee -a "$OUT/RESULT.txt"
 else
-  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, acl.diff, missing_extensions.diff, and target_excluded_observation_rows.txt." | tee -a "$OUT/RESULT.txt"
+  echo "FAIL: differences detected; inspect rowcounts.diff, data_hashes.diff, objects.diff, acl.diff, missing_extensions.diff, and target_excluded_observation_rows.txt." | tee -a "$OUT/RESULT.txt"
   exit 1
 fi
 
