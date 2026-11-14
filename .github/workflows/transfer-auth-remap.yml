@@ -88,5 +88,7 @@ jobs:
           grep -F "table|public|auth_fk_fixture|" /tmp/object-inventory.txt
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl-inventory.txt
           grep -F '"kind": "default_acl"' /tmp/acl-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory_acceptance.sql > /tmp/acl-acceptance.txt
+          grep -F '"kind": "role"' /tmp/acl-acceptance.txt
       - name: Exercise data importer end to end
         run: bash database/transfer/tests/test_import_data.sh
