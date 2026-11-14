@@ -8,6 +8,6 @@ SELECT format(
   tablename
 )
 FROM pg_tables
-WHERE schemaname = 'public'
+WHERE schemaname IN ('public','private')
 ORDER BY schemaname, tablename
 \gexec
