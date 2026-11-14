@@ -40,7 +40,7 @@ done
 
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_tables.txt" -c "\
 SELECT table_schema, table_name FROM information_schema.tables \
-WHERE table_schema IN ('public','private') ORDER BY 1,2;"
+WHERE table_schema = 'public' ORDER BY 1,2;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_functions.txt" -c "\
 SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) \
 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace \
