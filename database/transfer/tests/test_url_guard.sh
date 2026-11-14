@@ -28,4 +28,15 @@ reject_url "wrong-pooler-user" \
 reject_url "missing-userinfo" \
   "postgresql://db.tbdnklyxjvbrilvnwgmq.supabase.co:5432/postgres"
 
-echo "PASS: Supabase URL identity guard."
+metra_assert_pg_dump_compatible "170011" "pg_dump (PostgreSQL) 17.5"
+metra_assert_pg_dump_compatible "160009" "pg_dump (PostgreSQL) 17.5"
+if metra_assert_pg_dump_compatible "170011" "pg_dump (PostgreSQL) 16.9"; then
+  echo "FAIL: older pg_dump client was accepted." >&2
+  exit 1
+fi
+if metra_assert_pg_dump_compatible "170011" "pg_dump version unknown"; then
+  echo "FAIL: unparseable pg_dump version was accepted." >&2
+  exit 1
+fi
+
+echo "PASS: Supabase URL and pg_dump compatibility guards."
