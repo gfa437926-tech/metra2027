@@ -29,6 +29,9 @@ command -v psql >/dev/null 2>&1 || { echo "psql is required." >&2; exit 4; }
 command -v pg_dump >/dev/null 2>&1 || { echo "pg_dump is required." >&2; exit 4; }
 
 echo "Probing approved source (read-only)..."
+SERVER_VERSION_NUM="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SHOW server_version_num")"
+metra_assert_pg_dump_compatible "$SERVER_VERSION_NUM" "$(pg_dump --version)"
+echo "PostgreSQL server major: $((SERVER_VERSION_NUM / 10000)); pg_dump: $(pg_dump --version)"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -c "SELECT current_database() AS db, current_user AS usr;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 <<'SQL'
 SELECT
