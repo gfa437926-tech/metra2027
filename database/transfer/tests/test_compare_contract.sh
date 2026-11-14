@@ -102,7 +102,9 @@ require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observa
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_runner_preflight.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_dump_patterns.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_end_to_end.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_rls_acl_matrix.sh'
 require_file "$ROOT/database/transfer/tests/test_compare_end_to_end.sh"
+require_file "$ROOT/database/transfer/tests/test_rls_acl_matrix.sh"
 require_file "$ROOT/database/transfer/tests/compare_fixture.sql"
 require_file "$ROOT/database/transfer/tests/test_excluded_dump_patterns.sh"
 require_file "$ROOT/database/transfer/tests/test_compare_runner_preflight.sh"
