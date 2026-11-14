@@ -40,6 +40,18 @@ printf 'fixture:07_extensions.txt\n' > "$TMP_DIR/07_extensions.txt"
   sha256sum "${required_files[@]}" > SHA256SUMS
 )
 
+# Duplicate artifact entries are rejected.
+first_line="$(head -n 1 "$TMP_DIR/SHA256SUMS")"
+printf '%s\n' "$first_line" >> "$TMP_DIR/SHA256SUMS"
+if metra_verify_transfer_checksums "$TMP_DIR"; then
+  echo "FAIL: duplicate checksum entry was accepted." >&2
+  exit 1
+fi
+(
+  cd "$TMP_DIR"
+  sha256sum "${required_files[@]}" > SHA256SUMS
+)
+
 # Path traversal and unexpected files are rejected before sha256sum reads them.
 printf '%064d  ../../outside-file\n' 0 >> "$TMP_DIR/SHA256SUMS"
 if metra_verify_transfer_checksums "$TMP_DIR"; then
