@@ -28,6 +28,9 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
   sha256sum --check --strict SHA256SUMS
 )
 metra_verify_transfer_manifest "$DUMP_DIR"
+# Fail closed until target Auth users are recreated and every declared FK is
+# remapped to target-generated UUIDs by a reviewed migration step.
+metra_assert_auth_user_fk_remapped "$DUMP_DIR"
 [[ -s "$DUMP_DIR/07_extensions.txt" ]] || { echo "Missing required extension inventory." >&2; exit 4; }
 target_extensions="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -f "$SCRIPT_DIR/../sql/compare_extensions.sql")"
 while IFS= read -r required_extension; do
