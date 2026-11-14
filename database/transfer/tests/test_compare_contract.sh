@@ -97,6 +97,10 @@ done
 # The workflow must execute the runtime guards, not merely keep them in-tree.
 WORKFLOW="$ROOT/.github/workflows/transfer-auth-remap.yml"
 require_file "$WORKFLOW"
+require_contains "$WORKFLOW" '"database/baseline/**"'
+require_contains "$WORKFLOW" '"database/migrations/**"'
+require_contains "$WORKFLOW" '"database/seeds/**"'
+require_contains "$WORKFLOW" '"supabase/migrations/**"'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_empty_target_guard.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observation_guard.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_runner_preflight.sh'
