@@ -77,7 +77,7 @@ jobs:
           grep -Fx "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth-fk-counts.txt
           psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence-state.txt
-          grep -E '^public\\|station_audit_log_id_seq\\|.*\\|42 /tmp/sequence-state.txt
+          grep -E '^public[|]station_audit_log_id_seq[|].*[|]42$' /tmp/sequence-state.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/row-counts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data-hashes.txt
           grep -F "public|auth_fk_fixture|1|" /tmp/data-hashes.txt
