@@ -104,9 +104,15 @@ require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_dump_pa
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_end_to_end.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_rls_acl_matrix.sh'
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_restore_acl_rls.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_restore_actual_schema_acl_rls.sh'
 require_file "$ROOT/database/transfer/tests/test_compare_end_to_end.sh"
 require_file "$ROOT/database/transfer/tests/test_rls_acl_matrix.sh"
 require_file "$ROOT/database/transfer/tests/test_restore_acl_rls.sh"
+require_file "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh"
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'database/baseline/path_n_apply.sh'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'PATH_N_APPLY_OBSERVATIONS=1'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'source.schema.normalized.sql'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'RLS flags or policy definitions changed during full schema restore'
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "20261103164003_create_operational_observation_submission.sql"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observations lost ENABLE/FORCE RLS"
 require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observation_audit_events lost ENABLE/FORCE RLS"
