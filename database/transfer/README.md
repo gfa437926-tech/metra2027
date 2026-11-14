@@ -45,6 +45,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `tests/test_empty_target_guard.sh` — disposable-PostgreSQL regression proving empty `public`/`private` schemas pass and populated tables in either schema are rejected
 - `RESTORE-ACCEPTANCE-CHECKLIST.md` — owner/security/data-owner gated restore acceptance runbook; explicitly blocks hosted restore/cutover until separate approvals
 - `tests/test_excluded_observation_guard.sh` — disposable-PostgreSQL regression proving the excluded observation-history acceptance query reports zero for an empty target and detects a populated target
+- `tests/test_compare_runner_preflight.sh` — fake-`psql` regression proving the comparison runner rejects wrong, identical, and legacy project refs/URLs before any database-client call
 - `tests/test_checksums.sh` — exact artifact-set, tamper, duplicate, and path-traversal checksum-manifest tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
 - Export artifacts also include `04_auth_user_fk_inventory.txt` (JSON Lines), `05_observation_provenance.txt`, `06_runtime_role_inventory.txt`, `07_extensions.txt`, and `08_station_catalogue_provenance.txt`; review Auth references, observation provenance, station/coordinate integrity, and ACL inventory before accepting a restore.
