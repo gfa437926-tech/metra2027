@@ -12,6 +12,7 @@ An export directory from 01_export_source.sh containing:
 - 03_inventory_tables.txt
 - 03_inventory_functions.txt
 - 04_auth_user_fk_inventory.txt
+- 05_observation_provenance.txt
 - SHA256SUMS
 - MANIFEST.txt
 
@@ -25,6 +26,7 @@ Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply M
 2. Run scripts/04_import_data.sh with the same export directory. It verifies the manifest again, refuses populated public tables, decrypts the data, and imports in one transaction.
 3. Set METRA_SRC_PROJECT_REF to tbdnklyxjvbrilvnwgmq and METRA_SRC_DATABASE_URL to the approved source URL. Run scripts/05_compare.sh.
 4. Review 04_auth_user_fk_inventory.txt and follow AUTH-USER-TRANSFER.md for target-side user recreation and carefully scoped UUID remapping.
+5. Review 05_observation_provenance.txt. Reconcile source-system/source-table groups and records without station_id before declaring the restored dataset accepted.
 
 ## Acceptance tests
 
