@@ -9,18 +9,21 @@ class MetraServiceReadiness {
   /// Supabase Auth is used for session tokens; API calls use Bearer to .NET.
   static const authentication = MetraDataSourceMode.liveApi;
 
-  /// Station directory and audit require configured METRA_API_BASE_URL.
+  /// Station directory requires configured METRA_API_BASE_URL.
   static const stationDirectory = MetraDataSourceMode.liveApi;
-  /// Atomic actor-bound read RPCs are not deployed to hosted Supabase yet.
-  static const stationAudit = MetraDataSourceMode.mock;
-  static const observationQueue = MetraDataSourceMode.mock;
+
+  /// Client calls live .NET endpoints; unavailable backends surface 401/403/503.
+  static const stationAudit = MetraDataSourceMode.liveApi;
+  static const observationQueue = MetraDataSourceMode.liveApi;
+  static const stationUsers = MetraDataSourceMode.liveApi;
+  static const registrationRead = MetraDataSourceMode.liveApi;
+  static const authorityAccessRead = MetraDataSourceMode.liveApi;
 
   /// The .NET submission endpoint exists, but the scientific-contract feature gate
-  /// is not approved and the required atomic RPC is not deployed to the hosted DB.
-  /// Keep the client explicitly gated until both deployment prerequisites are verified.
+  /// is not approved and the required atomic RPC may not be deployed hosted.
   static const observationSubmit = MetraDataSourceMode.gated;
 
-  /// The decision endpoint exists, but its atomic authorization RPC is not deployed.
+  /// The decision endpoint exists; atomic authorization RPC may not be hosted yet.
   static const observationDecision = MetraDataSourceMode.gated;
 
   /// Archive API remains fail-closed (503) until a real archive service exists.
