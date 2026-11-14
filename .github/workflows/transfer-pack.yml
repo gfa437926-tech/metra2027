@@ -81,6 +81,10 @@ jobs:
         run: |
           psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1); CREATE TABLE private.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO private.transfer_pack_fixture VALUES (1);"
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
+          if grep -F "metra_observation_records" /tmp/rowcounts.txt; then
+            echo "Intentionally excluded observation table must not appear in row-count equality."
+            exit 1
+          fi
           grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
           grep -Fx "private|transfer_pack_fixture|1" /tmp/rowcounts.txt
           psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
@@ -97,6 +101,7 @@ jobs:
           fi
           psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_excluded_data.sql | grep -Fx "0"
       - name: Verify export checksums reject tampering
         run: |
           mkdir -p /tmp/metra-export-check
