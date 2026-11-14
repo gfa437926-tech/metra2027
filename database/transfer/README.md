@@ -85,3 +85,8 @@ A successful script run is not a restore acceptance. A full restore drill, appli
 ## Live dump status
 
 No hosted export, target import, restore drill, or live cutover is claimed by this repository change. All observation history (demo and non-demo) is intentionally excluded. The scripts require secure runtime credentials and an explicitly named new target.
+
+
+### Full isolated restore ACL/RLS acceptance
+
+`tests/test_restore_acl_rls.sh` creates disposable source and target PostgreSQL databases, exports and restores the synthetic `public`/`private` application schemas and data with ownership/ACLs excluded, reapplies the reviewed target runtime grants, then checks that all four RLS policies and FORCE RLS survive restoration. It executes SELECT/INSERT/UPDATE/DELETE as `authenticated`, confirms `anon` is denied at the ACL layer, verifies the intended `service_role` bypass, and confirms `metra_api_runtime` has private-schema usage without direct table access or privileged role attributes. The test uses only the local CI PostgreSQL service and synthetic UUIDs; it never connects to hosted Supabase.
