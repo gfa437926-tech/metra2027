@@ -8,6 +8,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 cat > "$TMP_DIR/MANIFEST.txt" <<'EOF'
 source_project_ref=tbdnklyxjvbrilvnwgmq
 auth_users_exported=false
+auth_user_count=0
 auth_user_fk_inventory_exported=true
 observation_provenance_exported=true
 observation_records_data_exported=false
@@ -23,6 +24,13 @@ sed 's/observation_records_data_exported=false/observation_records_data_exported
 mv "$TMP_DIR/bad-manifest.txt" "$TMP_DIR/MANIFEST.txt"
 if metra_verify_transfer_manifest "$TMP_DIR"; then
   echo "FAIL: unsafe manifest was accepted." >&2
+  exit 1
+fi
+
+sed 's/auth_user_count=0/auth_user_count=1/' "$TMP_DIR/MANIFEST.txt" > "$TMP_DIR/bad-manifest.txt"
+mv "$TMP_DIR/bad-manifest.txt" "$TMP_DIR/MANIFEST.txt"
+if metra_verify_transfer_manifest "$TMP_DIR"; then
+  echo "FAIL: manifest with unplanned Auth users was accepted." >&2
   exit 1
 fi
 echo "PASS: transfer manifest provenance and exclusion guard."
