@@ -121,10 +121,10 @@ metra_assert_no_excluded_observation_data() {
     return 1
   fi
   if grep -Eq \
-      -e 'COPY public\\.metra_observation_records([[:space:]]|\\()' \
-      -e 'COPY "public"\\."metra_observation_records"([[:space:]]|\\()' \
-      -e 'INSERT INTO public\\.metra_observation_records([[:space:]]|\\()' \
-      -e 'INSERT INTO "public"\\."metra_observation_records"([[:space:]]|\\()' \
+      -e 'COPY public\.metra_observation_records([[:space:]]|\()' \
+      -e 'COPY "public"\."metra_observation_records"([[:space:]]|\()' \
+      -e 'INSERT INTO public\.metra_observation_records([[:space:]]|\()' \
+      -e 'INSERT INTO "public"\."metra_observation_records"([[:space:]]|\()' \
       "$dump_file"; then
     echo "Refusing data import: dump contains excluded observation-history rows." >&2
     return 1
