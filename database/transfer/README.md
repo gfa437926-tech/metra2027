@@ -75,7 +75,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 
 ## Automated validation
 
-`.github/workflows/transfer-pack.yml` runs isolated PostgreSQL SQL checks and GPG integrity checks. `.github/workflows/transfer-auth-remap.yml` runs ShellCheck, Python remapper tests, PostgreSQL ACL/sequence/station SQL checks, extension installation, and end-to-end data-import tests. These checks do not connect to Supabase and do not prove a live export/import.
+`.github/workflows/transfer-pack.yml` runs isolated PostgreSQL SQL checks and GPG integrity checks. `.github/workflows/transfer-auth-remap.yml` runs ShellCheck, Python remapper tests, PostgreSQL ACL/sequence/station SQL checks, extension installation, and end-to-end data-import tests. The transfer workflow also runs `test_rls_acl_matrix.sh` against a disposable PostgreSQL schema. It verifies anonymous ACL denial, authenticated owner-row isolation, INSERT/UPDATE `WITH CHECK` enforcement, owner-scoped DELETE, server-role RLS bypass, private-schema separation, and the least-privilege runtime-role posture. These checks do not connect to Supabase and do not prove a live export/import.
 
 ## Auth and restore status
 
