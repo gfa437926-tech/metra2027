@@ -50,10 +50,18 @@ GRANT CREATE, USAGE ON SCHEMA public TO pg_database_owner;
 GRANT USAGE ON SCHEMA public, private TO metra_api_runtime;
 GRANT metra_api_runtime TO postgres WITH ADMIN OPTION;
 
--- Recreate the approved source's public-schema defaults for future objects.
+-- Target defaults intentionally tighten the source's overly broad defaults.
+-- Client roles receive no implicit table, sequence, or function privileges.
+-- Access is granted explicitly by reviewed migrations and apply_runtime_grants.sql.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT ALL PRIVILEGES ON TABLES TO anon, authenticated, service_role;
+  REVOKE ALL PRIVILEGES ON TABLES FROM PUBLIC, anon, authenticated;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT ALL PRIVILEGES ON SEQUENCES TO anon, authenticated, service_role;
+  GRANT ALL PRIVILEGES ON TABLES TO service_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
-  GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;
+  REVOKE ALL PRIVILEGES ON SEQUENCES FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO service_role;
