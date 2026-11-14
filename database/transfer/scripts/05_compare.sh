@@ -31,6 +31,8 @@ for side in source target; do
     -f "$ROOT/sql/compare_rowcounts.sql" > "$OUT/${side}_rowcounts.txt"
   psql "$url" -X -v ON_ERROR_STOP=1 -At -F '|' \
     -f "$ROOT/sql/compare_objects.sql" > "$OUT/${side}_objects.txt"
+  psql "$url" -X -v ON_ERROR_STOP=1 -At \
+    -f "$ROOT/sql/compare_acl_inventory.sql" > "$OUT/${side}_acl.txt"
 done
 
 set +e
@@ -38,13 +40,15 @@ diff -u "$OUT/source_rowcounts.txt" "$OUT/target_rowcounts.txt" > "$OUT/rowcount
 rows_status=$?
 diff -u "$OUT/source_objects.txt" "$OUT/target_objects.txt" > "$OUT/objects.diff"
 objects_status=$?
+diff -u "$OUT/source_acl.txt" "$OUT/target_acl.txt" > "$OUT/acl.diff"
+acl_status=$?
 set -e
 
 printf 'Source ref: %s\nTarget ref: %s\n' "$SRC_REF" "$DST_REF" > "$OUT/RESULT.txt"
-if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 ]]; then
-  echo "PASS: exact row counts and listed object inventories match." | tee -a "$OUT/RESULT.txt"
+if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 ]]; then
+  echo "PASS: exact row counts, application objects, and ACL inventories match." | tee -a "$OUT/RESULT.txt"
 else
-  echo "FAIL: differences detected; inspect rowcounts.diff and objects.diff." | tee -a "$OUT/RESULT.txt"
+  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, and acl.diff." | tee -a "$OUT/RESULT.txt"
   exit 1
 fi
 
