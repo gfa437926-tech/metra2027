@@ -32,13 +32,13 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
 existing_objects="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -c "
 SELECT
   (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-   WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m','S','f'))
+   WHERE n.nspname IN ('public','private') AND c.relkind IN ('r','p','v','m','S','f'))
   +
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-   WHERE n.nspname='public')
+   WHERE n.nspname IN ('public','private'))
   +
   (SELECT count(*) FROM pg_type t JOIN pg_namespace n ON n.oid=t.typnamespace
-   WHERE n.nspname='public' AND t.typtype IN ('c','e','d','r'));
+   WHERE n.nspname IN ('public','private') AND t.typtype IN ('c','e','d','r'));
 ")"
 if [[ "$existing_objects" != "0" ]]; then
   echo "Refusing: target public schema is not empty ($existing_objects application objects)." >&2
