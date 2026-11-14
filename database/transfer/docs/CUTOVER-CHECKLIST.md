@@ -32,7 +32,7 @@
 - [ ] Protected source→target UUID mapping reviewed and stored outside Git
 - [ ] Mapping-aware data transformation implemented and tested; import guard remains enabled until this passes
 - [ ] Public/private data import completed atomically after Auth UUID remapping
-- [ ] Exact public/private row-count, object, and ACL inventory comparison passes
+- [ ] Exact public/private row-count and SHA-256 data-content, object, and ACL inventory comparison passes
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
 - [ ] Critical RPCs present and their signatures/authorization verified
