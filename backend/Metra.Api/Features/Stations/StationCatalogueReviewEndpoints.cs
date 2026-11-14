@@ -13,7 +13,7 @@ public static class StationCatalogueReviewResponseParser
 {
     public static StationCatalogueReviewOutcome Parse(HttpStatusCode httpStatus, JsonElement response)
     {
-        if (!httpStatus.IsSuccessStatusCode())
+        if ((int)httpStatus is < 200 or >= 300)
             return new(true, false, httpStatus, null);
 
         JsonElement row;
