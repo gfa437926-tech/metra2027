@@ -170,6 +170,11 @@ def transform(source_path: Path, output_path: Path, inventory: dict[tuple[str, s
 
             fields = split_copy_fields(line)
             for index in active_indexes:
+                if index >= len(fields):
+                    raise ValueError(
+                        f"Malformed COPY row for {active_table[0]}.{active_table[1]}: "
+                        f"missing field index {index}"
+                    )
                 value = fields[index]
                 if value == r"\N":
                     continue
