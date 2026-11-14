@@ -38,7 +38,7 @@ public sealed class HttpPipelineContractTests
     {
         using var factory = new WebApplicationFactory<Program>().WithWebHostBuilder(b =>
         {
-            b.UseEnvironment("Production");
+            b.UseSetting("environment", "Production");
             b.UseSetting("RateLimiting:Disabled", "true");
         });
 
