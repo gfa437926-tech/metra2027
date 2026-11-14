@@ -140,6 +140,7 @@ jobs:
             exit 1
           fi
           psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE private.transfer_pack_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.auth_fk_fixture;"
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_application_tables.sql
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_excluded_data.sql | grep -Fx "0"
       - name: Verify export checksums reject tampering
