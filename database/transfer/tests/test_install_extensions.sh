@@ -50,15 +50,38 @@ required_extensions_inventory_exported=true
 station_catalogue_provenance_exported=true
 api_keys_and_jwt_secrets_exported=false
 MANIFEST
-(
-  cd "$DUMP_DIR"
-  sha256sum \
-    01_schema_application.sql.gpg 02_data_application.sql.gpg \
-    03_inventory_tables.txt 03_inventory_functions.txt \
-    04_auth_user_fk_inventory.txt 05_observation_provenance.txt \
-    06_runtime_role_inventory.txt 07_extensions.txt \
-    08_station_catalogue_provenance.txt MANIFEST.txt > SHA256SUMS
-)
+
+# The installer verifies the complete transfer artifact set, not just the extension
+# inventory. Supply every required artifact so the fixture tests that contract.
+for file in \
+  01_schema_application.sql.gpg \
+  02_data_application.sql.gpg \
+  03_inventory_tables.txt \
+  03_inventory_functions.txt \
+  04_auth_user_fk_inventory.txt \
+  05_observation_provenance.txt \
+  06_runtime_role_inventory.txt \
+  08_station_catalogue_provenance.txt; do
+  printf 'fixture:%s\n' "$file" > "$DUMP_DIR/$file"
+done
+
+write_checksums() {
+  (
+    cd "$DUMP_DIR"
+    sha256sum \
+      01_schema_application.sql.gpg \
+      02_data_application.sql.gpg \
+      03_inventory_tables.txt \
+      03_inventory_functions.txt \
+      04_auth_user_fk_inventory.txt \
+      05_observation_provenance.txt \
+      06_runtime_role_inventory.txt \
+      07_extensions.txt \
+      08_station_catalogue_provenance.txt \
+      MANIFEST.txt > SHA256SUMS
+  )
+}
+write_checksums
 
 # An extension already installed in the wrong schema must be rejected, not silently accepted.
 psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
@@ -70,10 +93,7 @@ psql -X -v ON_ERROR_STOP=1 -c "DROP EXTENSION pgcrypto;"
 
 # Correct source schema: installer creates the extension and a second run is idempotent.
 sed -i 's/^pgcrypto|1.3|public$/pgcrypto|1.3|extensions/' "$DUMP_DIR/07_extensions.txt"
-(
-  cd "$DUMP_DIR"
-  sha256sum 07_extensions.txt MANIFEST.txt > SHA256SUMS
-)
+write_checksums
 bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
 bash "$ROOT/database/transfer/scripts/02_install_required_extensions.sh" "$DUMP_DIR"
 
