@@ -104,3 +104,19 @@ metra_verify_transfer_manifest() {
     fi
   done
 }
+
+# Ensure the decrypted application data dump contains no excluded observation rows.
+metra_assert_no_excluded_observation_data() {
+  local dump_file="${1:?decrypted data dump required}"
+  if [[ ! -s "$dump_file" ]]; then
+    echo "Refusing data import: decrypted data dump is missing or empty." >&2
+    return 1
+  fi
+  if grep -Fq -e 'COPY public.metra_observation_records' \
+      -e 'COPY "public"."metra_observation_records"' \
+      -e 'INSERT INTO public.metra_observation_records' \
+      -e 'INSERT INTO "public"."metra_observation_records"' "$dump_file"; then
+    echo "Refusing data import: dump contains excluded observation-history rows." >&2
+    return 1
+  fi
+}
