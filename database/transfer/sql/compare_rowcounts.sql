@@ -1,10 +1,13 @@
--- Approximate live row counts (analyze may be needed for accuracy)
-SELECT
-  n.nspname AS schema,
-  c.relname AS table_name,
-  c.reltuples::bigint AS approx_rows
-FROM pg_class c
-JOIN pg_namespace n ON n.oid = c.relnamespace
-WHERE n.nspname = 'public'
-  AND c.relkind = 'r'
-ORDER BY 1, 2;
+-- Exact row counts for application tables. This performs COUNT(*) on each table.
+-- Run only against the approved experimental source and the explicitly approved target.
+SELECT format(
+  'SELECT %L::text AS schema_name, %L::text AS table_name, count(*)::bigint AS exact_rows FROM %I.%I;',
+  schemaname,
+  tablename,
+  schemaname,
+  tablename
+)
+FROM pg_tables
+WHERE schemaname IN ('public', 'private')
+ORDER BY schemaname, tablename
+\gexec
