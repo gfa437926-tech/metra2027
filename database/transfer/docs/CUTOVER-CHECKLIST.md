@@ -8,7 +8,8 @@
 - [ ] GPG encryption and SHA-256 manifest verified
 - [ ] Encrypted backup retained offline/outside Git
 - [ ] Restore drill performed into an isolated target
-- [ ] Auth FK inventory reviewed; no blind UUID rewriting
+- [ ] Export manifest confirms `auth_user_count=0`; any non-zero source Auth count blocks export
+- [ ] Auth FK inventory reviewed; non-null source-user references must be zero; no blind UUID rewriting
 - [ ] Observation provenance summary reviewed; non-demo records and null station references reconciled
 - [ ] Legacy METRA databases not used
 
@@ -29,12 +30,10 @@
 - [ ] Public/private schema import completed atomically
 - [ ] Managed role, PUBLIC, sequence, function, and metra_api_runtime ACLs match the source inventory
 - [ ] SHA-256 checks pass before each import
-- [ ] Auth users recreated/invited through supported target Auth flow
-- [ ] Protected source→target UUID mapping reviewed and stored outside Git with mode 0600
-- [ ] Every mapped target UUID exists in target auth.users
-- [ ] Declared Auth FK columns remapped by the tested COPY transformer
+- [ ] No source Auth users, identities, sessions, or credentials are copied
+- [ ] Auth FK row/non-null/distinct counts match between source and target
 - [ ] Unconstrained UUID/JSON references separately audited and reconciled
-- [ ] Public/private data import completed atomically after Auth UUID remapping
+- [ ] Public/private data import completed atomically after manifest and empty-target guards
 - [ ] Exact public/private row-count, object, and ACL inventory comparison passes
 - [ ] Foreign keys validate; no orphaned user references remain
 - [ ] RLS policies and grants verified separately
