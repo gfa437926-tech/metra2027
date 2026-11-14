@@ -55,9 +55,18 @@ GRANT SELECT ON TABLE
   public.registration_audit_events,
   public.registration_requests,
   public.station_assignments,
-  public.station_catalogue,
-  public.station_coordinates
+  public.station_catalogue
 TO metra_api_runtime;
+
+-- station_coordinates exists in some hosted snapshots but is not defined by
+-- the checked-in baseline/migration pack; grant it only when it is present.
+DO $optional_station_coordinates$
+BEGIN
+  IF to_regclass('public.station_coordinates') IS NOT NULL THEN
+    GRANT SELECT ON TABLE public.station_coordinates TO metra_api_runtime;
+  END IF;
+END
+$optional_station_coordinates$;
 
 -- Client roles receive no sequence access; only the server-side service role does.
 REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public
