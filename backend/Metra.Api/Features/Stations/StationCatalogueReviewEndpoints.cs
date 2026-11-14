@@ -156,10 +156,11 @@ public static class StationCatalogueReviewEndpoints
                 if (outcome.StatusCode == HttpStatusCode.NotFound) return Results.NotFound();
                 if (outcome.StatusCode == HttpStatusCode.Conflict)
                 {
-                    var currentStatus = outcome.Data is { ValueKind: JsonValueKind.Object } data &&
-                        data.TryGetProperty("resulting_status", out var statusValue)
-                            ? statusValue.GetString()
-                            : null;
+                    string? currentStatus = null;
+                    if (outcome.Data.HasValue &&
+                        outcome.Data.Value.ValueKind == JsonValueKind.Object &&
+                        outcome.Data.Value.TryGetProperty("resulting_status", out var statusValue))
+                        currentStatus = statusValue.GetString();
                     return Results.Conflict(new
                     {
                         error = "station_review_state_conflict",
