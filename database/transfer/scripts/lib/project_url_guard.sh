@@ -76,3 +76,27 @@ metra_normalize_public_schema_dump() {
   fi
   [[ -s "$output_file" ]] || { echo "Refusing schema normalization: output is empty." >&2; return 1; }
 }
+
+# Verify the provenance and safety assertions in an exported transfer package.
+metra_verify_transfer_manifest() {
+  local dump_dir="${1:?transfer export directory required}"
+  local manifest="$dump_dir/MANIFEST.txt"
+  if [[ ! -s "$manifest" ]]; then
+    echo "Refusing import: MANIFEST.txt is missing." >&2
+    return 1
+  fi
+  local required_line
+  for required_line in \
+    "source_project_ref=tbdnklyxjvbrilvnwgmq" \
+    "auth_users_exported=false" \
+    "observation_records_data_exported=false" \
+    "non_demo_observation_records_excluded=true" \
+    "runtime_role_inventory_exported=true" \
+    "required_extensions_inventory_exported=true" \
+    "api_keys_and_jwt_secrets_exported=false"; do
+    if ! grep -Fxq "$required_line" "$manifest"; then
+      echo "Refusing import: manifest is missing required assertion: $required_line" >&2
+      return 1
+    fi
+  done
+}
