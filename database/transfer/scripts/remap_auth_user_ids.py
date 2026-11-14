@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-import os
+import json
 import re
 import stat
 import sys
@@ -78,13 +78,18 @@ def load_inventory(path: Path) -> dict[tuple[str, str], set[str]]:
     result: dict[tuple[str, str], set[str]] = {}
     with path.open(encoding="utf-8", newline="") as handle:
         for line_number, raw in enumerate(handle, start=1):
-            row = raw.rstrip("\r\n")
+            row = raw.rstrip("\\r\\n")
             if not row:
                 continue
-            parts = row.split("\t")
-            if len(parts) != 7:
+            try:
+                parts = json.loads(row)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"Invalid JSON Auth FK inventory row {line_number}") from exc
+            if not isinstance(parts, list) or len(parts) != 7 or not all(
+                isinstance(part, str) for part in parts
+            ):
                 raise ValueError(
-                    f"Invalid Auth FK inventory row {line_number}: expected 7 tab-separated fields"
+                    f"Invalid Auth FK inventory row {line_number}: expected a seven-string JSON array"
                 )
             schema, table, column, ref_schema, ref_table, ref_column, _constraint = parts
             if (ref_schema, ref_table, ref_column) != ("auth", "users", "id"):
@@ -94,7 +99,6 @@ def load_inventory(path: Path) -> dict[tuple[str, str], set[str]]:
                 )
             result.setdefault((schema, table), set()).add(column)
     return result
-
 
 def load_mapping(path: Path) -> dict[str, str]:
     if not path.is_file():
