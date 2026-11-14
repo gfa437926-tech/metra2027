@@ -103,3 +103,6 @@ No hosted export, target import, restore drill, or live cutover is claimed by th
 It then dumps and restores the complete `public` and `private` schemas into a second disposable database, reapplies reviewed target ACLs, and compares normalized schema-only dumps, per-table RLS enable/force flags, complete policy definitions, and object counts. The audit checks client table ACLs across every restored public/private table, including elevated TRUNCATE/REFERENCES/TRIGGER privileges.
 
 This is a schema-definition rehearsal, not a production-data restore. The isolated `auth.users` stub is not populated with identities; no historical observation rows, legacy station data, or hosted Supabase connections are used. The separate `test_restore_acl_rls.sh` remains as a focused behavioral test for its deliberately synthetic owner-scoped RLS fixture and the operational observation RPC tables.
+
+
+The full-schema rehearsal also compares the source and restored extension inventories by extension name, version, and schema. This includes `btree_gist` from the Path N 020 compatibility patch and `pgcrypto`; extension-owned function counts are reported separately from user-defined functions because extension members are recreated by installing the matching extension rather than by dumping individual function definitions.
