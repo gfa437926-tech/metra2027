@@ -116,3 +116,5 @@ jobs:
         run: bash database/transfer/tests/test_rls_acl_matrix.sh
       - name: Restore full synthetic schema and audit ACL/RLS
         run: bash database/transfer/tests/test_restore_acl_rls.sh
+      - name: Restore complete METRA baseline and migration schema; audit every table ACL/RLS
+        run: bash database/transfer/tests/test_restore_actual_schema_acl_rls.sh
