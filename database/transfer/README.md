@@ -24,6 +24,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
+- `sql/compare_excluded_data.sql` — verifies the target has no observation-history rows excluded by policy
 - `sql/assert_empty_application_tables.sql` — read-only guard that blocks data import into populated tables
 - `tests/create_managed_roles.sql` and `tests/runtime_role_fixtures.sql` — isolated PostgreSQL fixtures for ACL tests
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, wrong-project URL, and pg_dump compatibility tests
