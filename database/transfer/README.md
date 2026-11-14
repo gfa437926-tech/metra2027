@@ -38,6 +38,8 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `tests/create_managed_roles.sql` and `tests/runtime_role_fixtures.sql` — isolated PostgreSQL fixtures for ACL tests
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, wrong-project URL, and pg_dump compatibility tests
 - `tests/test_auth_user_remap.py` — mapping privacy, duplicate IDs, exact FK-only replacement, and fail-closed COPY parsing tests
+- `tests/test_install_extensions.sh` — idempotent extension install and exact version/schema verification
+- `tests/test_import_data.sh` — end-to-end import, manifest, empty-target, and excluded-observation guards
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
 - Export artifacts also include `04_auth_user_fk_inventory.txt` (JSON Lines), `05_observation_provenance.txt`, `06_runtime_role_inventory.txt`, `07_extensions.txt`, and `08_station_catalogue_provenance.txt`; review Auth references, observation provenance, station/coordinate integrity, and ACL inventory before accepting a restore.
 
