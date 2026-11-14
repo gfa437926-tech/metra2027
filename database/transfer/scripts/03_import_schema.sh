@@ -27,6 +27,19 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
   cd "$DUMP_DIR"
   sha256sum --check --strict SHA256SUMS
 )
+[[ -s "$DUMP_DIR/07_extensions.txt" ]] || { echo "Missing required extension inventory." >&2; exit 4; }
+
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_extensions.sql" > "$TMP_DIR/target_extensions.txt"
+while IFS= read -r required_extension; do
+  [[ -z "$required_extension" ]] && continue
+  if ! grep -Fxq "$required_extension" "$TMP_DIR/target_extensions.txt"; then
+    echo "Refusing schema import: target is missing required extension/version/schema: $required_extension" >&2
+    exit 6
+  fi
+done < "$DUMP_DIR/07_extensions.txt"
 
 # Refuse to write into a target containing public/private application objects.
 existing_objects="$(psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At -c "
@@ -45,8 +58,6 @@ if [[ "$existing_objects" != "0" ]]; then
   exit 5
 fi
 
-TMP_DIR="$(mktemp -d)"
-trap 'rm -rf "$TMP_DIR"' EXIT
 printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
   --passphrase-fd 0 --decrypt --output "$TMP_DIR/01_schema_application.sql" \
   "$DUMP_DIR/01_schema_application.sql.gpg"
