@@ -57,6 +57,18 @@ jobs:
           fi
           psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_public_tables.sql
+      - name: Verify export checksums reject tampering
+        run: |
+          mkdir -p /tmp/metra-export-check
+          printf "schema dump fixture\n" > /tmp/metra-export-check/01_schema_public.sql.gpg
+          printf "data dump fixture\n" > /tmp/metra-export-check/02_data_public.sql.gpg
+          (cd /tmp/metra-export-check && sha256sum 01_schema_public.sql.gpg 02_data_public.sql.gpg > SHA256SUMS)
+          (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS)
+          printf "tampered\n" >> /tmp/metra-export-check/02_data_public.sql.gpg
+          if (cd /tmp/metra-export-check && sha256sum --check --strict SHA256SUMS); then
+            echo "Expected checksum verification to reject a tampered export."
+            exit 1
+          fi
       - name: Verify encrypted dump round trip
         run: |
           printf "METRA transfer test\n" > /tmp/plain.txt
