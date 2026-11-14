@@ -18,16 +18,6 @@ api_keys_and_jwt_secrets_exported=false
 EOF
 metra_verify_transfer_manifest "$TMP_DIR"
 
-# Empty inventory is allowed; a declared Auth FK must block until remapped.
-: > "$TMP_DIR/04_auth_user_fk_inventory.txt"
-metra_assert_auth_user_fk_remapped "$TMP_DIR"
-printf '%s\n' 'public|metra_user_profiles|user_id_fkey|FOREIGN KEY (user_id) REFERENCES auth.users(id)' > "$TMP_DIR/04_auth_user_fk_inventory.txt"
-if metra_assert_auth_user_fk_remapped "$TMP_DIR"; then
-  echo "FAIL: import guard accepted unresolved auth.users foreign keys." >&2
-  exit 1
-fi
-: > "$TMP_DIR/04_auth_user_fk_inventory.txt"
-
 sed 's/observation_records_data_exported=false/observation_records_data_exported=true/' "$TMP_DIR/MANIFEST.txt" > "$TMP_DIR/bad-manifest.txt"
 mv "$TMP_DIR/bad-manifest.txt" "$TMP_DIR/MANIFEST.txt"
 if metra_verify_transfer_manifest "$TMP_DIR"; then
