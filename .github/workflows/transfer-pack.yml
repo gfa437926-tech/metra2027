@@ -46,6 +46,20 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
+      - name: Exercise normalization against a real pg_dump output
+        run: |
+          createdb dump_fixture
+          psql -X -v ON_ERROR_STOP=1 -d dump_fixture -c "CREATE SCHEMA private; CREATE TABLE public.fixture_public(id integer); CREATE TABLE private.fixture_private(id integer);"
+          pg_dump -X --schema-only --schema=public --schema=private --no-owner --no-privileges -d dump_fixture > /tmp/actual_schema_dump.sql
+          source database/transfer/scripts/lib/project_url_guard.sh
+          metra_normalize_public_schema_dump /tmp/actual_schema_dump.sql /tmp/normalized_schema_dump.sql
+          if grep -Fq "CREATE SCHEMA public;" /tmp/normalized_schema_dump.sql || grep -Fq "CREATE SCHEMA private;" /tmp/normalized_schema_dump.sql; then
+            echo "Normalized pg_dump still attempts to create an existing schema."
+            exit 1
+          fi
+          grep -F "CREATE TABLE public.fixture_public" /tmp/normalized_schema_dump.sql
+          grep -F "CREATE TABLE private.fixture_private" /tmp/normalized_schema_dump.sql
+          dropdb dump_fixture
       - name: Test target role bootstrap and least-privilege grants
         run: |
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
