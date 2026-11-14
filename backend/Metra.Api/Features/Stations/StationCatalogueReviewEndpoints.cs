@@ -44,7 +44,7 @@ public static class StationCatalogueReviewResponseParser
         {
             "updated" => new(true, true, httpStatus, row.Clone()),
             "state_conflict" => new(true, false, HttpStatusCode.Conflict, row.Clone()),
-            _ => new(true, false, HttpStatusCode.ServiceUnavailable, row.Clone())
+            _ => new(true, false, HttpStatusCode.ServiceUnavailable, null)
         };
     }
 }
