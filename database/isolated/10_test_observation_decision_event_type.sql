@@ -17,10 +17,11 @@ declare
   v_result  jsonb;
   v_event   text;
 begin
-  -- Skip gracefully if core tables are absent (bootstrap not applied).
-  if to_regclass('public.metra_observations') is null then
-    raise notice 'SKIP: metra_observations not present';
-    return;
+  -- This regression must run against the complete operational observation schema.
+  -- Missing prerequisites are a hard failure, never a successful SKIP.
+  if to_regclass('public.metra_observations') is null
+     or to_regclass('public.metra_observation_audit_events') is null then
+    raise exception 'REQUIRED_OBSERVATION_SCHEMA_MISSING';
   end if;
 
   -- Permission stub: allow both decision permissions for the test actor.
@@ -40,12 +41,29 @@ begin
     $fn$;
   end if;
 
-  -- Ensure a catalogue row exists if the FK is present.
-  if to_regclass('public.station_catalogue') is not null then
-    insert into public.station_catalogue (id)
-    values (v_station)
-    on conflict do nothing;
-  end if;
+  -- Build the minimum FK fixture required by the real operational schema.
+  insert into auth.users (id, email)
+  values (v_user, 'event-type-regression@example.invalid')
+  on conflict (id) do nothing;
+
+  insert into public.countries (id, is_active)
+  values ('33333333-3333-3333-3333-333333333333', true)
+  on conflict (id) do nothing;
+
+  insert into public.meteorological_authorities (id, country_id, is_active)
+  values (
+    '44444444-4444-4444-4444-444444444444',
+    '33333333-3333-3333-3333-333333333333', true
+  ) on conflict (id) do nothing;
+
+  insert into public.station_catalogue (
+    id, owner_authority_id, country_id, approval_status, operational_status, is_demo
+  ) values (
+    v_station,
+    '44444444-4444-4444-4444-444444444444',
+    '33333333-3333-3333-3333-333333333333',
+    'approved', 'active', false
+  ) on conflict (id) do nothing;
 
   -- Insert a submitted observation directly (bypassing submit RPC for focus).
   insert into public.metra_observations (
