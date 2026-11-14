@@ -72,6 +72,7 @@ jobs:
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
           psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_target_default_acl.sql
           psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/station_catalogue_provenance.sql > /tmp/station-provenance.txt
           grep -Fx "orphan_coordinate_rows|0" /tmp/station-provenance.txt
           grep -Fx "duplicate_coordinate_station_ids|0" /tmp/station-provenance.txt
