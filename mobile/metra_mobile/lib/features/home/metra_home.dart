@@ -110,7 +110,10 @@ class _MetraHomeState extends State<MetraHome> {
       // 9 Climatol
       const ClimatolWorkspaceScreen(),
       // 10 Admin / users
-      const UserManagementScreen(),
+      UserManagementScreen(
+        api: widget.api,
+        stationId: _selectedStationId,
+      ),
       // 11 Settings
       _SettingsPage(
         userEmail: widget.userEmail,
