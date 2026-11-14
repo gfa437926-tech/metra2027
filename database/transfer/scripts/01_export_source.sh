@@ -33,8 +33,12 @@ echo "Exporting approved source $SRC_REF to encrypted artifacts."
 pg_dump "$SRC_URL" --format=plain --schema-only --no-owner --no-privileges \
   --schema=public --schema=private --file="$TMP_DIR/01_schema_application.raw.sql"
 metra_normalize_public_schema_dump "$TMP_DIR/01_schema_application.raw.sql" "$TMP_DIR/01_schema_application.sql"
+# The current source has 58,059 non-demo observation records. Do not export
+# observation history; keep the table schema and seed demo rows separately later.
 pg_dump "$SRC_URL" --format=plain --data-only --no-owner --disable-triggers \
-  --schema=public --schema=private --file="$TMP_DIR/02_data_application.sql"
+  --schema=public --schema=private \
+  --exclude-table-data=public.metra_observation_records \
+  --file="$TMP_DIR/02_data_application.sql"
 
 for dump in 01_schema_application.sql 02_data_application.sql; do
   printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback \
@@ -81,6 +85,8 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   echo "auth_users_exported=false"
   echo "auth_user_fk_inventory_exported=true"
   echo "observation_provenance_exported=true"
+  echo "observation_records_data_exported=false"
+  echo "non_demo_observation_records_excluded=true"
   echo "runtime_role_inventory_exported=true"
   echo "required_extensions_inventory_exported=true"
   echo "api_keys_and_jwt_secrets_exported=false"
