@@ -24,6 +24,8 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — deterministic schema/table/sequence/function/PUBLIC/default-ACL inventory for source-target comparison
+- `sql/compare_auth_fk_counts.sql` — compares Auth FK row/null/distinct counts while allowing regenerated target UUID values
+- `sql/compare_data_hashes.sql` — hashes all non-Auth-FK application columns so target UUID remapping does not create false data drift
 - `sql/compare_extensions.sql` — source extension/version/schema inventory; target restore requires each source extension
 - `sql/compare_data_hashes.sql` — exact row counts and SHA-256 content fingerprints for application tables
 - `sql/station_catalogue_provenance.sql` — checks station catalogue, coordinate coverage, orphan rows, and duplicates
