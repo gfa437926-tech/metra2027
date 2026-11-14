@@ -29,7 +29,7 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
 )
 
 # Stop before writing if any target public table already contains rows.
-psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_public_tables.sql"
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/assert_empty_application_tables.sql"
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
