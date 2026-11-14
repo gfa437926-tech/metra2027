@@ -76,6 +76,8 @@ The following counts were obtained with exact `COUNT(*)` queries on 2026-11-14:
 
 ### Security
 
+- The source has broad default privileges for objects created by `postgres` in `public`: `anon` and `authenticated` receive ALL table and sequence privileges and function EXECUTE by default, alongside `service_role`. This is recorded in the source ACL inventory but will **not** be copied to the new target.
+- The target transfer scripts now apply a stricter default: only `service_role` receives implicit privileges on future public tables, sequences, and functions. `PUBLIC`, `anon`, and `authenticated` receive none; existing object access is granted explicitly and tested.
 - Two warnings report mutable function search paths:
   - `public.reject_metra_equipment_fault_audit_mutation`
   - `public.reject_metra_support_incident_audit_mutation`
