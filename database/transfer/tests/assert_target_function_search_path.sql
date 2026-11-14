@@ -7,6 +7,7 @@ BEGIN
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid=p.pronamespace
   WHERE (n.nspname,p.proname) IN (
+    ('public','reject_append_only_audit_mutation'),
     ('public','reject_metra_observation_audit_mutation'),
     ('public','reject_metra_equipment_fault_audit_mutation'),
     ('public','reject_metra_support_incident_audit_mutation'),
