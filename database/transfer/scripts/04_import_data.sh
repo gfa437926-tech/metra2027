@@ -53,5 +53,5 @@ printf '%s\n' "$METRA_TRANSFER_PASSPHRASE" | gpg --batch --yes --pinentry-mode l
 metra_assert_no_excluded_observation_data "$TMP_DIR/02_data_application.sql"
 
 echo "Importing public/private data into verified empty target $DST_REF"
-psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$IMPORT_DATA"
+psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$TMP_DIR/02_data_application.sql"
 echo "Data import finished. Auth users are not imported by this script."
