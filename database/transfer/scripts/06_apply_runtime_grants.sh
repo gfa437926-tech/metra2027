@@ -14,4 +14,5 @@ for forbidden_ref in tbdnklyxjvbrilvnwgmq nhovijnbtrocqahxxjou wdrcqceiagsmdxltq
 done
 metra_assert_supabase_project_url "$DST_REF" "$DST_URL" "target"
 psql "$DST_URL" -X -1 -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../sql/apply_runtime_grants.sql"
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -f "$SCRIPT_DIR/../tests/assert_target_default_acl.sql"
 echo "Reviewed metra_api_runtime grants applied to $DST_REF."
