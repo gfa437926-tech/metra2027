@@ -50,6 +50,7 @@ SQL
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -c 'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;' >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$TRANSFER/tests/runtime_role_fixtures.sql" >/dev/null
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$TRANSFER/tests/compare_fixture.sql" >/dev/null
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" -f "$ROOT/supabase/migrations/20261103164003_create_operational_observation_submission.sql" >/dev/null
 
 "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$SOURCE_DB" <<SQL
 CREATE TABLE public.restore_policy_fixture (
@@ -119,6 +120,43 @@ BEGIN
   IF NOT (SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='public.restore_policy_fixture'::regclass) THEN
     RAISE EXCEPTION 'restored table does not have ENABLE and FORCE ROW LEVEL SECURITY';
   END IF;
+  -- These are the actual operational observation tables from the checked-in migration.
+  -- They deliberately have RLS enabled/FORCED with no client policies: access is
+  -- through the reviewed server-side RPC, not direct client table grants.
+  IF NOT (SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='public.metra_observations'::regclass) THEN
+    RAISE EXCEPTION 'restored metra_observations lost ENABLE/FORCE RLS';
+  END IF;
+  IF NOT (SELECT relrowsecurity AND relforcerowsecurity FROM pg_class WHERE oid='public.metra_observation_audit_events'::regclass) THEN
+    RAISE EXCEPTION 'restored metra_observation_audit_events lost ENABLE/FORCE RLS';
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public'
+      AND tablename IN ('metra_observations','metra_observation_audit_events')) THEN
+    RAISE EXCEPTION 'operational observation tables unexpectedly gained direct-client RLS policies';
+  END IF;
+  IF has_table_privilege('anon','public.metra_observations','SELECT')
+     OR has_table_privilege('anon','public.metra_observations','INSERT')
+     OR has_table_privilege('authenticated','public.metra_observations','SELECT')
+     OR has_table_privilege('authenticated','public.metra_observations','INSERT')
+     OR has_table_privilege('anon','public.metra_observation_audit_events','SELECT')
+     OR has_table_privilege('anon','public.metra_observation_audit_events','INSERT')
+     OR has_table_privilege('authenticated','public.metra_observation_audit_events','SELECT')
+     OR has_table_privilege('authenticated','public.metra_observation_audit_events','INSERT') THEN
+    RAISE EXCEPTION 'client role received direct privileges on operational observation tables';
+  END IF;
+  IF NOT has_table_privilege('service_role','public.metra_observations','SELECT')
+     OR NOT has_table_privilege('service_role','public.metra_observations','INSERT')
+     OR NOT has_table_privilege('service_role','public.metra_observation_audit_events','SELECT')
+     OR NOT has_table_privilege('service_role','public.metra_observation_audit_events','INSERT') THEN
+    RAISE EXCEPTION 'service_role lost required server-side observation access';
+  END IF;
+  IF has_function_privilege('anon',
+       'public.metra_submit_observation(uuid,uuid,text,text,timestamp with time zone,jsonb,boolean)','EXECUTE')
+     OR has_function_privilege('authenticated',
+       'public.metra_submit_observation(uuid,uuid,text,text,timestamp with time zone,jsonb,boolean)','EXECUTE')
+     OR NOT has_function_privilege('service_role',
+       'public.metra_submit_observation(uuid,uuid,text,text,timestamp with time zone,jsonb,boolean)','EXECUTE') THEN
+    RAISE EXCEPTION 'operational observation RPC execute ACL is not service_role-only';
+  END IF;
   IF has_table_privilege('anon','public.restore_policy_fixture','SELECT') THEN
     RAISE EXCEPTION 'anon unexpectedly has SELECT on restored policy table';
   END IF;
@@ -161,6 +199,39 @@ BEGIN
 END
 $audit$;
 SQL
+
+# Exercise the actual operational observation tables after restore. Client roles
+# are denied at the ACL layer; the server role can insert; audit mutations fail.
+if "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
+  -c 'SET ROLE authenticated; SELECT * FROM public.metra_observations' >"$WORK/actual-client-denial.log" 2>&1; then
+  echo "FAIL: authenticated accessed the restored operational observation table." >&2; exit 1
+fi
+grep -Eqi 'permission denied' "$WORK/actual-client-denial.log"
+
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" <<SQL
+SET ROLE service_role;
+INSERT INTO public.metra_observations
+  (id, station_id, created_by, observation_type, observed_at, payload,
+   status, initial_status, idempotency_key)
+VALUES
+  ('33333333-3333-4333-8333-333333333333',
+   '00000000-0000-4000-8000-000000000001',
+   '$OWNER_ID', 'hourly', now(), '{"synthetic":true}'::jsonb,
+   'draft', 'draft', 'restore-acl-rls-smoke');
+INSERT INTO public.metra_observation_audit_events
+  (observation_id, station_id, actor_user_id, event_type, to_status)
+VALUES
+  ('33333333-3333-4333-8333-333333333333',
+   '00000000-0000-4000-8000-000000000001',
+   '$OWNER_ID', 'created_draft', 'draft');
+RESET ROLE;
+SQL
+
+if "$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d "$TARGET_DB" \
+  -c "SET ROLE service_role; UPDATE public.metra_observation_audit_events SET note='tampered' WHERE observation_id='33333333-3333-4333-8333-333333333333'" >"$WORK/actual-audit-mutation.log" 2>&1; then
+  echo "FAIL: restored operational audit table accepted UPDATE." >&2; exit 1
+fi
+grep -Fqi 'append-only' "$WORK/actual-audit-mutation.log"
 
 # Grant only the test table's reviewed client DML privileges after restore;
 # the RLS policies must then enforce row-level isolation.
