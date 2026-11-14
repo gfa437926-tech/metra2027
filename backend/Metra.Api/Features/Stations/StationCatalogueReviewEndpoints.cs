@@ -9,6 +9,46 @@ namespace Metra.Api.Features.Stations;
 public sealed record StationCatalogueReviewRequest(string? ExpectedStatus, string? Decision, string? Reason);
 public sealed record StationCatalogueReviewOutcome(bool IsConfigured, bool Succeeded, HttpStatusCode? StatusCode, JsonElement? Data);
 
+public static class StationCatalogueReviewResponseParser
+{
+    public static StationCatalogueReviewOutcome Parse(HttpStatusCode httpStatus, JsonElement response)
+    {
+        if (!httpStatus.IsSuccessStatusCode())
+            return new(true, false, httpStatus, null);
+
+        JsonElement row;
+        if (response.ValueKind == JsonValueKind.Array && response.GetArrayLength() == 1)
+        {
+            row = response[0];
+        }
+        else if (response.ValueKind == JsonValueKind.Object)
+        {
+            row = response;
+        }
+        else
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+
+        if (row.ValueKind != JsonValueKind.Object ||
+            !row.TryGetProperty("result_status", out var resultStatus) ||
+            resultStatus.ValueKind != JsonValueKind.String ||
+            !row.TryGetProperty("resulting_status", out var resultingStatus) ||
+            resultingStatus.ValueKind != JsonValueKind.String ||
+            string.IsNullOrWhiteSpace(resultingStatus.GetString()))
+        {
+            return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+        }
+
+        return resultStatus.GetString() switch
+        {
+            "updated" => new(true, true, httpStatus, row.Clone()),
+            "state_conflict" => new(true, false, HttpStatusCode.Conflict, row.Clone()),
+            _ => new(true, false, HttpStatusCode.ServiceUnavailable, row.Clone())
+        };
+    }
+}
+
 public interface IStationCatalogueReviewService
 {
     bool IsConfigured { get; }
@@ -52,7 +92,9 @@ public sealed class SupabaseStationCatalogueReviewService(IHttpClientFactory cli
                 return new(true, false, response.StatusCode, null);
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
-            return new(true, true, response.StatusCode, data);
+            return data is null
+                ? new(true, false, HttpStatusCode.ServiceUnavailable, null)
+                : StationCatalogueReviewResponseParser.Parse(response.StatusCode, data.Value);
         }
         catch (JsonException)
         {
