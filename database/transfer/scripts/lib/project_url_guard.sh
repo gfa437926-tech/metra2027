@@ -63,17 +63,14 @@ metra_normalize_public_schema_dump() {
     return 1
   fi
   local public_count private_count
-  public_count="$(grep -Ec '^CREATE SCHEMA "?public"?;
- "$input_file" || true)"
-  private_count="$(grep -Ec '^CREATE SCHEMA "?private"?;
- "$input_file" || true)"
+  public_count="$(grep -Fc 'CREATE SCHEMA public;' "$input_file" || true)"
+  private_count="$(grep -Fc 'CREATE SCHEMA private;' "$input_file" || true)"
   if [[ "$public_count" != "1" || "$private_count" != "1" ]]; then
     echo "Refusing schema normalization: expected one public and one private schema statement; found public=$public_count private=$private_count." >&2
     return 1
   fi
-  sed -E '/^CREATE SCHEMA "?public"?;$/d; /^CREATE SCHEMA "?private"?;$/d' "$input_file" > "$output_file"
-  if grep -Eq '^CREATE SCHEMA "?public"?;$|^CREATE SCHEMA "?private"?;
- "$output_file"; then
+  grep -Fv -e 'CREATE SCHEMA public;' -e 'CREATE SCHEMA private;' "$input_file" > "$output_file"
+  if grep -Fq 'CREATE SCHEMA public;' "$output_file" || grep -Fq 'CREATE SCHEMA private;' "$output_file"; then
     echo "Refusing schema normalization: existing schema creation statement remains." >&2
     return 1
   fi
