@@ -45,7 +45,8 @@ END
 $$;
 
 CREATE SCHEMA IF NOT EXISTS private;
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA public TO PUBLIC, anon, authenticated, service_role, metra_api_runtime, postgres;
+GRANT CREATE, USAGE ON SCHEMA public TO pg_database_owner;
 GRANT USAGE ON SCHEMA public, private TO metra_api_runtime;
 GRANT metra_api_runtime TO postgres WITH ADMIN OPTION;
 
