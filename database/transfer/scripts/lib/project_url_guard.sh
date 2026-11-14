@@ -95,6 +95,7 @@ metra_verify_transfer_manifest() {
     "non_demo_observation_records_excluded=true" \
     "runtime_role_inventory_exported=true" \
     "required_extensions_inventory_exported=true" \
+    "station_catalogue_provenance_exported=true" \
     "api_keys_and_jwt_secrets_exported=false"; do
     if ! grep -Fxq "$required_line" "$manifest"; then
       echo "Refusing import: manifest is missing required assertion: $required_line" >&2
