@@ -36,12 +36,15 @@ FROM (
     AND r.rolname IN ('anon','authenticated','service_role','metra_api_runtime')
   UNION ALL
   SELECT '05_routine',
-         jsonb_build_object('kind','routine_privilege','grantee',grantee,'schema',routine_schema,
-           'routine',routine_name,'specific_name',specific_name,'privilege',privilege_type,
-           'grantable',is_grantable)
-  FROM information_schema.role_routine_grants
-  WHERE routine_schema IN ('public','private')
-    AND grantee IN ('anon','authenticated','service_role','metra_api_runtime')
+         jsonb_build_object('kind','routine_privilege','grantee',r.grantee,'schema',r.routine_schema,
+           'routine',r.routine_name,'identity_arguments',pg_get_function_identity_arguments(p.oid),
+           'privilege',r.privilege_type,'grantable',r.is_grantable)
+  FROM information_schema.role_routine_grants r
+  JOIN pg_proc p ON p.proname=r.routine_name
+  JOIN pg_namespace n ON n.oid=p.pronamespace AND n.nspname=r.routine_schema
+  WHERE r.specific_name=p.proname || '_' || p.oid::text
+    AND r.routine_schema IN ('public','private')
+    AND r.grantee IN ('anon','authenticated','service_role','metra_api_runtime')
   UNION ALL
   SELECT '06_public_acl',
          jsonb_build_object('kind','public_acl','schema',n.nspname,'object_type','function',
