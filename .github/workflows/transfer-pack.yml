@@ -1,0 +1,65 @@
+name: Database transfer pack checks
+
+on:
+  push:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-pack.yml"
+  pull_request:
+    paths:
+      - "database/transfer/**"
+      - ".github/workflows/transfer-pack.yml"
+
+jobs:
+  transfer-pack:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check shell syntax
+        run: |
+          bash -n database/transfer/scripts/*.sh
+          bash -n database/transfer/scripts/lib/*.sh
+          bash -n database/transfer/tests/*.sh
+      - name: Test project URL identity guard
+        run: bash database/transfer/tests/test_url_guard.sh
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Test exact row counts and empty-target guard
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE TABLE public.transfer_pack_fixture(id integer PRIMARY KEY); INSERT INTO public.transfer_pack_fixture VALUES (1);"
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/rowcounts.txt
+          grep -Fx "public|transfer_pack_fixture|1" /tmp/rowcounts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/objects.txt
+          grep -F "table|public|transfer_pack_fixture|" /tmp/objects.txt
+          if psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_public_tables.sql; then
+            echo "Expected empty-target guard to reject a populated table."
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -c "TRUNCATE TABLE public.transfer_pack_fixture;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/assert_empty_public_tables.sql
+      - name: Verify encrypted dump round trip
+        run: |
+          printf "METRA transfer test\n" > /tmp/plain.txt
+          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 --output /tmp/plain.txt.gpg /tmp/plain.txt
+          printf "ci-only-test-passphrase\n" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --decrypt --output /tmp/roundtrip.txt /tmp/plain.txt.gpg
+          cmp /tmp/plain.txt /tmp/roundtrip.txt
