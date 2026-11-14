@@ -52,6 +52,11 @@ done
 
 # Verify the target-only acceptance checks are actually run.
 require_contains "$RUNNER" 'assert_target_default_acl.sql'
+require_contains "$RUNNER" '-f "$ROOT/tests/assert_target_default_acl.sql"'
+if grep -Fq '-f "$ROOT/sql/assert_target_default_acl.sql"' "$RUNNER"; then
+  echo "FAIL: target default ACL assertion path must resolve under tests/." >&2
+  exit 1
+fi
 require_contains "$RUNNER" 'assert_target_function_search_path.sql'
 require_contains "$RUNNER" 'compare_excluded_data.sql'
 require_contains "$RUNNER" 'target_excluded_observation_rows.txt'
