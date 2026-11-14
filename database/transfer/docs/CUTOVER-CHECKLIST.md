@@ -1,40 +1,47 @@
-# Cutover checklist — experimental `tbdnklyxjvbrilvnwgmq` → new project
+# Cutover checklist — experimental tbdnklyxjvbrilvnwgmq → new project
 
 ## Before any target write
 
-- [ ] Source ref confirmed: `tbdnklyxjvbrilvnwgmq`
-- [ ] Target ref assigned by owner (different from source)
-- [ ] Source backup artifact retained offline (`01_export_source.sh` output)
-- [ ] Restore drill performed into a throwaway DB or local Postgres
+- [ ] Source ref confirmed: tbdnklyxjvbrilvnwgmq
+- [ ] Target ref assigned by owner; distinct from source and all legacy projects
+- [ ] Source export completed in a secure runtime
+- [ ] GPG encryption and SHA-256 manifest verified
+- [ ] Encrypted backup retained offline/outside Git
+- [ ] Restore drill performed into an isolated target
+- [ ] Auth FK inventory reviewed; no blind UUID rewriting
 - [ ] Legacy METRA databases not used
 
 ## Target project bootstrap
 
-- [ ] New Supabase project created under the intended org/account
-- [ ] Auth site URL + redirect URLs configured for staging/prod apps
-- [ ] New `anon` and `service_role` keys stored only in target secrets
-- [ ] Backend env: `Supabase__Url`, `Supabase__ServiceRoleKey` = **target**
-- [ ] Flutter defines: `METRA_SUPABASE_URL`, publishable key = **target**
+- [ ] New Supabase project created under the intended organization/account
+- [ ] Auth site URL, redirect URLs, SMTP, and providers configured independently
+- [ ] New target publishable/anon and server-only secret/service_role keys generated
+- [ ] Backend secrets configured only in target secret store
+- [ ] Flutter configuration uses target URL and public publishable key only
 
 ## Data / schema
 
-- [ ] Schema import completed without error
-- [ ] Public data import completed
-- [ ] Auth users path completed (see AUTH-USER-TRANSFER.md)
-- [ ] Row-count compare within agreed tolerance
-- [ ] Critical RPCs present: submit/decide observation; atomic read set if approved
-- [ ] RLS policies present; client roles cannot read protected tables anonymously
+- [ ] Public schema import completed atomically
+- [ ] Public data import completed atomically
+- [ ] SHA-256 checks pass before each import
+- [ ] Auth users recreated/invited through supported target Auth flow
+- [ ] User UUID mapping applied only to verified FK columns
+- [ ] Exact public row-count and object inventory comparison passes
+- [ ] Foreign keys validate; no orphaned user references remain
+- [ ] RLS policies and grants verified separately
+- [ ] Critical RPCs present and their signatures/authorization verified
 
 ## Application verification
 
-- [ ] `/api/v1/health` OK on staging API
-- [ ] `/api/v1/ready` behavior understood (may 503 until atomic RPCs exist)
-- [ ] Login + station directory for a test user
-- [ ] Archive remains fail-closed until RPCs + grants exist — do not fake data
-- [ ] Observation submit stays gated until scientific/atomic contract is signed off
+- [ ] /api/v1/health OK on staging API
+- [ ] /api/v1/ready behavior understood (may 503 until approved atomic RPCs exist)
+- [ ] Login and station directory work for target test users
+- [ ] Archive remains fail-closed until RPCs and grants exist
+- [ ] Observation submit stays gated until scientific/atomic contract is approved
+- [ ] Flutter and .NET use target project settings only
 
 ## Source project retention
 
-- [ ] Source **not** deleted
-- [ ] Source backup verified restorable
+- [ ] Source remains unchanged
+- [ ] Encrypted source backup independently verified restorable
 - [ ] Owner explicit approval required before any source teardown
