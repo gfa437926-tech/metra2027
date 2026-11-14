@@ -31,9 +31,24 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Create only local, non-login role names needed by the repository's schema
-# migrations. No credentials, hosted role changes, or Auth identities are used.
-"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d postgres -f "$TRANSFER/tests/create_managed_roles.sql" >/dev/null
+# Ensure only local, non-login role names needed by the repository's schema
+# migrations. This is idempotent because earlier CI steps may have created them.
+"$REAL_PSQL" -X -v ON_ERROR_STOP=1 -d postgres <<'SQL'
+DO $roles$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN BYPASSRLS; END IF;
+END
+$roles$;
+DO $assert$
+BEGIN
+  IF NOT (SELECT rolbypassrls AND NOT rolsuper AND NOT rolcanlogin FROM pg_roles WHERE rolname='service_role') THEN
+    RAISE EXCEPTION 'service_role fixture has unexpected role attributes';
+  END IF;
+END
+$assert$;
+SQL
 
 "$REAL_CREATEDB" "$SOURCE_DB"
 "$REAL_CREATEDB" "$TARGET_DB"
