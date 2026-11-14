@@ -22,6 +22,7 @@ CREATE TABLE public.metra_support_incident_audit_events(id uuid);
 CREATE TABLE public.metra_support_incidents(id uuid);
 CREATE TABLE public.station_access_grants(id uuid);
 CREATE TABLE public.station_audit_log(id uuid);
+
 CREATE SEQUENCE public.authority_access_audit_events_id_seq;
 CREATE SEQUENCE public.metra_equipment_fault_audit_events_id_seq;
 CREATE SEQUENCE public.metra_observation_audit_events_id_seq;
@@ -32,24 +33,24 @@ CREATE SEQUENCE public.station_audit_log_id_seq;
 CREATE FUNCTION private.decide_metra_registration(
   uuid, text, uuid, text, text, timestamp with time zone
 ) RETURNS TABLE(result_status text, resulting_status text)
-LANGUAGE sql AS $$ SELECT 'ok'::text, 'approved'::text $$;
+LANGUAGE sql AS 'SELECT ''ok''::text, ''approved''::text';
 
 CREATE FUNCTION private.submit_metra_registration(
   uuid, text, text, text, text, text, uuid, text, timestamp with time zone, text
 ) RETURNS TABLE(result_status text, account_id uuid, request_id uuid)
-LANGUAGE sql AS $$ SELECT 'ok'::text, NULL::uuid, NULL::uuid $$;
+LANGUAGE sql AS 'SELECT ''ok''::text, NULL::uuid, NULL::uuid';
 
 CREATE FUNCTION public.reject_metra_equipment_fault_audit_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable'; END $$;
+RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RAISE EXCEPTION ''immutable''; END;';
 
 CREATE FUNCTION public.reject_metra_support_incident_audit_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'immutable'; END $$;
+RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RAISE EXCEPTION ''immutable''; END;';
 
 CREATE FUNCTION public.reject_metra_observation_audit_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'immutable'; END $;
+RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RAISE EXCEPTION ''immutable''; END;';
 
 CREATE FUNCTION private.reject_authority_access_audit_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $ BEGIN RAISE EXCEPTION 'immutable'; END $;
+RETURNS trigger LANGUAGE plpgsql AS 'BEGIN RAISE EXCEPTION ''immutable''; END;';
 
 CREATE FUNCTION public.get_authority_catalogue()
-RETURNS text LANGUAGE sql AS $ SELECT 'fixture'::text $;
+RETURNS text LANGUAGE sql AS 'SELECT ''fixture''::text';
