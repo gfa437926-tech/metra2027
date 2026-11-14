@@ -24,6 +24,11 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
 
 SERVER_VERSION_NUM="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SHOW server_version_num")"
 metra_assert_pg_dump_compatible "$SERVER_VERSION_NUM" "$(pg_dump --version)"
+AUTH_USER_COUNT="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM auth.users")"
+if [[ "$AUTH_USER_COUNT" != "0" ]]; then
+  echo "Refusing export: source auth.users contains $AUTH_USER_COUNT accounts; no Auth-user migration plan is approved." >&2
+  exit 7
+fi
 
 mkdir -p "$OUT_DIR"
 chmod 700 "$OUT_DIR"
@@ -91,6 +96,7 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
   echo "host_tool=$(pg_dump --version | head -1)"
   echo "encryption=gpg-symmetric-AES256"
   echo "auth_users_exported=false"
+  echo "auth_user_count=$AUTH_USER_COUNT"
   echo "auth_user_fk_inventory_exported=true"
   echo "observation_provenance_exported=true"
   echo "observation_records_data_exported=false"
