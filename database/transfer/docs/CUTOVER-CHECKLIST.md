@@ -30,6 +30,7 @@
 - [ ] Public/private schema import completed atomically
 - [ ] Reviewed object grants match the acceptance inventory
 - [ ] Target default ACLs are restrictive: no implicit PUBLIC/anon/authenticated privileges on future tables, sequences, or functions; service_role only
+- [ ] Private default functions are executable only by metra_api_runtime; audit trigger functions have `search_path=pg_catalog`
 - [ ] SHA-256 checks pass before each import
 - [ ] No source Auth users, identities, sessions, or credentials are copied
 - [ ] Auth FK row/non-null/distinct counts match between source and target
