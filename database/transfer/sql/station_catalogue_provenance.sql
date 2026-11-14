@@ -10,6 +10,18 @@ FROM (
   SELECT 'station_catalogue_non_demo_rows', count(*)::text
   FROM public.station_catalogue WHERE is_demo IS FALSE
   UNION ALL
+  SELECT 'station_approval_pending_rows', count(*)::text
+  FROM public.station_catalogue WHERE approval_status='pending'
+  UNION ALL
+  SELECT 'station_approval_approved_rows', count(*)::text
+  FROM public.station_catalogue WHERE approval_status='approved'
+  UNION ALL
+  SELECT 'station_operational_unverified_rows', count(*)::text
+  FROM public.station_catalogue WHERE operational_status='unverified'
+  UNION ALL
+  SELECT 'station_operational_active_rows', count(*)::text
+  FROM public.station_catalogue WHERE operational_status='active'
+  UNION ALL
   SELECT 'station_coordinate_rows', count(*)::text
   FROM public.station_coordinates
   UNION ALL
