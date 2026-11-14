@@ -53,7 +53,7 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_functions.txt" -
 SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) \
 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace \
 WHERE n.nspname IN ('public','private') ORDER BY 1,2,3;"
-psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At -F '|' -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
 SELECT n.nspname, c.relname, con.conname, pg_get_constraintdef(con.oid) \
 FROM pg_constraint con \
 JOIN pg_class c ON c.oid = con.conrelid \
