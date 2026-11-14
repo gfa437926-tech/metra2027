@@ -9,5 +9,6 @@ SELECT format(
 )
 FROM pg_tables
 WHERE schemaname IN ('public','private')
+  AND NOT (schemaname='public' AND tablename='metra_observation_records')
 ORDER BY schemaname, tablename
 \gexec
