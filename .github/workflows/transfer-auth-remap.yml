@@ -66,6 +66,8 @@ jobs:
           sudo apt-get install -y postgresql-client
       - name: Test empty-target import guard
         run: bash database/transfer/tests/test_empty_target_guard.sh
+      - name: Test excluded observation-history guard
+        run: bash database/transfer/tests/test_excluded_observation_guard.sh
       - name: Test required extension installer
         run: bash database/transfer/tests/test_install_extensions.sh
       - name: Exercise transfer SQL and Auth FK comparisons
