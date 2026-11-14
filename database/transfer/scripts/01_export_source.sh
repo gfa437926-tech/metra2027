@@ -21,6 +21,9 @@ command -v pg_dump >/dev/null 2>&1 || { echo "pg_dump is required." >&2; exit 4;
 command -v psql >/dev/null 2>&1 || { echo "psql is required." >&2; exit 4; }
 command -v gpg >/dev/null 2>&1 || { echo "gpg is required for encrypted exports." >&2; exit 4; }
 
+SERVER_VERSION_NUM="$(psql "$SRC_URL" -X -At -v ON_ERROR_STOP=1 -c "SHOW server_version_num")"
+metra_assert_pg_dump_compatible "$SERVER_VERSION_NUM" "$(pg_dump --version)"
+
 mkdir -p "$OUT_DIR"
 chmod 700 "$OUT_DIR"
 TMP_DIR="$(mktemp -d)"
