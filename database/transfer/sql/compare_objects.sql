@@ -1,6 +1,5 @@
 -- Deterministic inventory of application-owned public/private objects.
 -- Managed Supabase schemas are excluded; this is not a byte-for-byte schema-definition diff.
--- This is not a byte-for-byte schema-definition diff.
 SELECT object_type, object_schema, object_name, object_detail
 FROM (
   SELECT
@@ -31,7 +30,7 @@ FROM (
     pg_get_function_identity_arguments(p.oid)
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public','private')
 
   UNION ALL
 
@@ -42,7 +41,7 @@ FROM (
     ''
   FROM pg_type t
   JOIN pg_namespace n ON n.oid = t.typnamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public','private')
     AND t.typtype IN ('c', 'e', 'd', 'r')
     AND NOT EXISTS (
       SELECT 1 FROM pg_class c
@@ -59,7 +58,7 @@ FROM (
   FROM pg_constraint con
   JOIN pg_class c ON c.oid = con.conrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public','private')
 
   UNION ALL
 
@@ -71,7 +70,7 @@ FROM (
   FROM pg_trigger trg
   JOIN pg_class c ON c.oid = trg.tgrelid
   JOIN pg_namespace n ON n.oid = c.relnamespace
-  WHERE n.nspname = 'public'
+  WHERE n.nspname IN ('public','private')
     AND NOT trg.tgisinternal
 
   UNION ALL
