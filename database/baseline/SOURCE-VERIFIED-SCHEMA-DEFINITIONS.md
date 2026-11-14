@@ -133,3 +133,20 @@ A read-only search was also made across the repository branches most relevant to
 - The C9.6 report is a read-only reconciliation of a configured hosted project's schema at that time. It records meaningful differences (including authority-scoped grants without a grant-level `station_id`) but is not a complete schema dump and is not authorization to query or change that hosted project now.
 
 **Cross-branch result:** no approved full schema export or original 001/002 migration package was found in the inspected repository sources. Compatibility patches and proposed logical models are not substitutes for that source of truth.
+
+
+## 10. Confirmed project data policy — fresh database, no legacy data migration
+
+The project owner has explicitly confirmed that METRA will use **new data only** and that no data is to be transferred from the legacy database.
+
+Consequences for the recovery and implementation plan:
+
+1. Do not export, copy, import, synchronize, or otherwise migrate legacy rows, including users, stations, observations, audit events, or reference data.
+2. Do not connect the rebuild process to the legacy database. The legacy database remains outside this workflow and untouched.
+3. Schema recovery is still required: table/column definitions, keys, constraints, indexes, policies, triggers and functions define the application contract independently of the data source.
+4. Once the canonical schema contract is approved, provision a separate empty target database and apply the reviewed schema only there.
+5. Populate the new database only with newly authored seed/reference data and clearly labelled synthetic test fixtures. Do not present synthetic station or observation records as real operational records.
+6. Any real station catalogue or scientific reference dataset must be supplied or approved as a new source; it must not be silently copied from the legacy database.
+7. Keep hosted changes gated by explicit review and approval. No hosted migration is authorized by this data-policy decision.
+
+This confirmation removes legacy-data migration from the scope. It does **not** resolve the outstanding schema-definition conflicts or itself approve a new schema design.
