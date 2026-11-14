@@ -13,9 +13,13 @@ class MetraApiException implements Exception {
 }
 
 class ObservationQueueItem {
-  const ObservationQueueItem({required this.id, required this.stationId,
-    required this.observationType, required this.observedAt,
-    required this.status, this.payload = const {}});
+  const ObservationQueueItem(
+      {required this.id,
+      required this.stationId,
+      required this.observationType,
+      required this.observedAt,
+      required this.status,
+      this.payload = const {}});
   final String id;
   final String stationId;
   final String observationType;
@@ -28,18 +32,23 @@ class ObservationQueueItem {
     final stationId = json['station_id'];
     final type = json['observation_type'];
     final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
-    if (id is! String || stationId is! String || type is! String || observedAt == null) {
+    if (id is! String ||
+        stationId is! String ||
+        type is! String ||
+        observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
     final rawPayload = json['payload'];
-    return ObservationQueueItem(id: id, stationId: stationId,
-      observationType: type, observedAt: observedAt,
-      status: json['status'] is String ? json['status'] as String : 'submitted',
-      payload: rawPayload is Map<String, dynamic> ? rawPayload : const {});
+    return ObservationQueueItem(
+        id: id,
+        stationId: stationId,
+        observationType: type,
+        observedAt: observedAt,
+        status:
+            json['status'] is String ? json['status'] as String : 'submitted',
+        payload: rawPayload is Map<String, dynamic> ? rawPayload : const {});
   }
 }
-
-
 
 class ObservationArchiveItem {
   const ObservationArchiveItem({
@@ -54,7 +63,12 @@ class ObservationArchiveItem {
     this.observedAtUtc,
   });
 
-  final String id, stationId, sourceSystem, sourceTable, sourceRecordId, observationType;
+  final String id,
+      stationId,
+      sourceSystem,
+      sourceTable,
+      sourceRecordId,
+      observationType;
   final Map<String, dynamic> payload;
   final DateTime importedAtUtc;
   final DateTime? observedAtUtc;
@@ -70,11 +84,11 @@ class ObservationArchiveItem {
 
     final importedAt = DateTime.tryParse('${json['importedAtUtc'] ?? ''}');
     final observedAtRaw = json['observedAtUtc'];
-    final observedAt = observedAtRaw == null
-        ? null
-        : DateTime.tryParse('$observedAtRaw');
+    final observedAt =
+        observedAtRaw == null ? null : DateTime.tryParse('$observedAtRaw');
     final rawPayload = json['payload'];
-    if (importedAt == null || (observedAtRaw != null && observedAt == null) ||
+    if (importedAt == null ||
+        (observedAtRaw != null && observedAt == null) ||
         rawPayload is! Map) {
       throw const FormatException('invalid_observation_archive_item');
     }
@@ -114,8 +128,10 @@ class ObservationArchivePage {
       throw const FormatException('invalid_observation_archive_page');
     }
     return ObservationArchivePage(
-      items: rawItems.map((item) => ObservationArchiveItem.fromJson(
-        Map<String, dynamic>.from(item as Map))).toList(growable: false),
+      items: rawItems
+          .map((item) => ObservationArchiveItem.fromJson(
+              Map<String, dynamic>.from(item as Map)))
+          .toList(growable: false),
       hasMore: hasMore,
       nextCursor: nextCursor as String?,
     );
@@ -189,11 +205,21 @@ class StationAuditEvent {
 }
 
 class StationDirectoryItem {
-  const StationDirectoryItem({required this.id, required this.localCode,
-    required this.nameArabic, required this.nameEnglish, required this.stationType,
-    required this.operationalStatus, required this.approvalStatus, required this.isDemo,
-    this.latitude, this.longitude, this.wmoStationId, this.elevationM,
-    this.coordinateSource, this.coordinateAccuracyM});
+  const StationDirectoryItem(
+      {required this.id,
+      required this.localCode,
+      required this.nameArabic,
+      required this.nameEnglish,
+      required this.stationType,
+      required this.operationalStatus,
+      required this.approvalStatus,
+      required this.isDemo,
+      this.latitude,
+      this.longitude,
+      this.wmoStationId,
+      this.elevationM,
+      this.coordinateSource,
+      this.coordinateAccuracyM});
   final String id, localCode, nameArabic, nameEnglish, stationType;
   final String operationalStatus, approvalStatus;
   final bool isDemo;
@@ -203,14 +229,27 @@ class StationDirectoryItem {
   final String? coordinateSource;
   final double? coordinateAccuracyM;
   bool get hasCoordinates => latitude != null && longitude != null;
-  bool get hasValidCoordinates => hasCoordinates &&
-      latitude! >= -90 && latitude! <= 90 &&
-      longitude! >= -180 && longitude! <= 180;
+  bool get hasValidCoordinates =>
+      hasCoordinates &&
+      latitude! >= -90 &&
+      latitude! <= 90 &&
+      longitude! >= -180 &&
+      longitude! <= 180;
   factory StationDirectoryItem.fromJson(Map<String, dynamic> json) {
-    for (final key in ['id','local_station_code','name_ar','name_en','station_type','operational_status','approval_status']) {
-      if (json[key] is! String) throw const FormatException('invalid_station_directory_item');
+    for (final key in [
+      'id',
+      'local_station_code',
+      'name_ar',
+      'name_en',
+      'station_type',
+      'operational_status',
+      'approval_status'
+    ]) {
+      if (json[key] is! String)
+        throw const FormatException('invalid_station_directory_item');
     }
-    double? number(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
+    double? number(dynamic value) =>
+        value is num ? value.toDouble() : double.tryParse('$value');
     double? lat, lon;
     Map<String, dynamic>? point;
     final coords = json['station_coordinates'];
@@ -219,26 +258,103 @@ class StationDirectoryItem {
       lat = number(point['latitude']);
       lon = number(point['longitude']);
     }
-    return StationDirectoryItem(id: json['id'] as String,
-      localCode: json['local_station_code'] as String,
-      nameArabic: json['name_ar'] as String, nameEnglish: json['name_en'] as String,
-      stationType: json['station_type'] as String,
-      operationalStatus: json['operational_status'] as String,
-      approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
-      latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?,
-      elevationM: number(json['elevation_m']),
-      coordinateSource: point?['coordinate_source'] is String
-          ? point!['coordinate_source'] as String : null,
-      coordinateAccuracyM: point == null ? null : number(point['accuracy_m']));
+    return StationDirectoryItem(
+        id: json['id'] as String,
+        localCode: json['local_station_code'] as String,
+        nameArabic: json['name_ar'] as String,
+        nameEnglish: json['name_en'] as String,
+        stationType: json['station_type'] as String,
+        operationalStatus: json['operational_status'] as String,
+        approvalStatus: json['approval_status'] as String,
+        isDemo: json['is_demo'] == true,
+        latitude: lat,
+        longitude: lon,
+        wmoStationId: json['wmo_station_id'] as String?,
+        elevationM: number(json['elevation_m']),
+        coordinateSource: point?['coordinate_source'] is String
+            ? point!['coordinate_source'] as String
+            : null,
+        coordinateAccuracyM:
+            point == null ? null : number(point['accuracy_m']));
   }
 }
 
+/// Generic catalogue / queue row from .NET JSON (snake_case or camelCase).
+class MetraJsonRow {
+  const MetraJsonRow(this.fields);
+  final Map<String, dynamic> fields;
+
+  String? stringValue(String snake, [String? camel]) {
+    final a = fields[snake];
+    if (a is String && a.isNotEmpty) return a;
+    if (camel != null) {
+      final b = fields[camel];
+      if (b is String && b.isNotEmpty) return b;
+    }
+    return null;
+  }
+
+  String displayTitle() =>
+      stringValue('name_ar', 'nameAr') ??
+      stringValue('display_name', 'displayName') ??
+      stringValue('email') ??
+      stringValue('role_code', 'roleCode') ??
+      stringValue('permission_code', 'permissionCode') ??
+      stringValue('local_station_code', 'localStationCode') ??
+      stringValue('id') ??
+      'عنصر';
+  String? displaySubtitle() =>
+      stringValue('name_en', 'nameEn') ??
+      stringValue('status') ??
+      stringValue('role_code', 'roleCode') ??
+      stringValue('permission_code', 'permissionCode');
+}
+
+List<MetraJsonRow> _parseJsonRowList(dynamic decoded, String errorCode) {
+  List? list;
+  if (decoded is List) {
+    list = decoded;
+  } else if (decoded is Map) {
+    final map = Map<String, dynamic>.from(decoded);
+    for (final key in ['items', 'data', 'rows', 'results', 'value']) {
+      final candidate = map[key];
+      if (candidate is List) {
+        list = candidate;
+        break;
+      }
+    }
+    // Some RPCs return a single object instead of an array.
+    if (list == null) {
+      return [MetraJsonRow(map)];
+    }
+  }
+  if (list == null) {
+    throw FormatException(errorCode);
+  }
+  final rows = <MetraJsonRow>[];
+  for (final item in list) {
+    if (item is Map) {
+      rows.add(MetraJsonRow(Map<String, dynamic>.from(item)));
+    }
+  }
+  return rows;
+}
+
+Map<String, dynamic> _parseJsonObject(dynamic decoded, String errorCode) {
+  if (decoded is Map) {
+    return Map<String, dynamic>.from(decoded);
+  }
+  throw FormatException(errorCode);
+}
 
 /// API wrapper. Supply a current Supabase access token from the auth layer.
 class MetraApiClient {
-  MetraApiClient({required this.accessTokenProvider,
-    String baseUrl = metraApiBaseUrl, http.Client? client})
-      : _baseUri = Uri.tryParse(baseUrl.trim()), _client = client ?? http.Client();
+  MetraApiClient(
+      {required this.accessTokenProvider,
+      String baseUrl = metraApiBaseUrl,
+      http.Client? client})
+      : _baseUri = Uri.tryParse(baseUrl.trim()),
+        _client = client ?? http.Client();
 
   final Future<String?> Function() accessTokenProvider;
   final Uri? _baseUri;
@@ -246,20 +362,27 @@ class MetraApiClient {
   bool get isConfigured => ApiConfig.isValidUrl(_baseUri?.toString() ?? '');
 
   Future<List<StationDirectoryItem>> getStationDirectory({
-    int limit = 250, int offset = 0, String? stationType,
+    int limit = 250,
+    int offset = 0,
+    String? stationType,
   }) async {
     if (limit < 1 || limit > 500 || offset < 0) {
       throw const MetraApiException(400, 'invalid_pagination');
     }
-    if (stationType != null && !const {'classic', 'automatic', 'synoptic'}.contains(stationType)) {
+    if (stationType != null &&
+        !const {'classic', 'automatic', 'synoptic'}.contains(stationType)) {
       throw const MetraApiException(400, 'invalid_station_type');
     }
     final filter = stationType == null ? '' : '&stationType=$stationType';
-    final response = await _send('GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
+    final response = await _send(
+        'GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) throw const FormatException('invalid_station_directory');
-    return decoded.map((item) => StationDirectoryItem.fromJson(
-      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+    if (decoded is! List)
+      throw const FormatException('invalid_station_directory');
+    return decoded
+        .map((item) => StationDirectoryItem.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
   }
 
   Future<List<StationDirectoryItem>> getAllStationDirectory({
@@ -280,9 +403,8 @@ class MetraApiClient {
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
   }
 
-  Future<List<StationAuditEvent>> getStationAuditLog(
-    String stationId, {int limit = 100}
-  ) async {
+  Future<List<StationAuditEvent>> getStationAuditLog(String stationId,
+      {int limit = 100}) async {
     if (stationId.trim().isEmpty) {
       throw const MetraApiException(400, 'invalid_station_id');
     }
@@ -304,16 +426,20 @@ class MetraApiClient {
         .toList(growable: false);
   }
 
-  Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
-    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
+  Future<List<ObservationQueueItem>> getReviewQueue(String stationId,
+      {int limit = 50}) async {
+    if (limit < 1 || limit > 100)
+      throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',
-      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
+        '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) throw const FormatException('invalid_observation_queue');
-    return decoded.map((item) => ObservationQueueItem.fromJson(
-      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+    if (decoded is! List)
+      throw const FormatException('invalid_observation_queue');
+    return decoded
+        .map((item) => ObservationQueueItem.fromJson(
+            Map<String, dynamic>.from(item as Map)))
+        .toList(growable: false);
   }
-
 
   Future<ObservationArchivePage> getObservationArchive(
     String stationId, {
@@ -326,13 +452,17 @@ class MetraApiClient {
     if (stationId.trim().isEmpty) {
       throw const MetraApiException(400, 'invalid_station_id');
     }
-    if (limit < 1 || limit > 100 ||
-        (cursor != null && cursor.length > 2048)) {
+    if (limit < 1 || limit > 100 || (cursor != null && cursor.length > 2048)) {
       throw const MetraApiException(400, 'invalid_pagination');
     }
     const types = {
-      'daily', 'hourly', 'climate', 'soil',
-      'agricultural', 'phenomenon', 'fieldclimate'
+      'daily',
+      'hourly',
+      'climate',
+      'soil',
+      'agricultural',
+      'phenomenon',
+      'fieldclimate'
     };
     if (observationType != null && !types.contains(observationType)) {
       throw const MetraApiException(400, 'invalid_observation_type');
@@ -352,7 +482,8 @@ class MetraApiClient {
       if (toUtc != null) 'toUtc': toUtc.toIso8601String(),
     };
     final path = Uri(
-      path: '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive',
+      path:
+          '/api/v1/stations/${Uri.encodeComponent(stationId)}/observation-archive',
       queryParameters: query,
     ).toString();
     final response = await _send('GET', path);
@@ -378,8 +509,7 @@ class MetraApiClient {
     if (decoded is! Map) {
       throw const FormatException('invalid_observation_archive_detail');
     }
-    return ObservationArchiveItem.fromJson(
-      Map<String, dynamic>.from(decoded));
+    return ObservationArchiveItem.fromJson(Map<String, dynamic>.from(decoded));
   }
 
   Future<void> decideObservation({
@@ -405,14 +535,146 @@ class MetraApiClient {
     );
   }
 
-  Future<void> submitObservation({required String stationId,
-    required String idempotencyKey, required String observationType,
-    required DateTime observedAt, required Map<String, dynamic> payload,
-    bool submit = false}) async {
-    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
-      body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
-        'observedAt': observedAt.toUtc().toIso8601String(),
-        'payload': payload, 'submit': submit});
+  Future<void> submitObservation(
+      {required String stationId,
+      required String idempotencyKey,
+      required String observationType,
+      required DateTime observedAt,
+      required Map<String, dynamic> payload,
+      bool submit = false}) async {
+    await _send('POST',
+        '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
+        body: {
+          'idempotencyKey': idempotencyKey,
+          'observationType': observationType,
+          'observedAt': observedAt.toUtc().toIso8601String(),
+          'payload': payload,
+          'submit': submit
+        });
+  }
+
+  /// GET /api/v1/stations/{stationId}/users — station-scoped user directory.
+  Future<List<MetraJsonRow>> getStationUsers(String stationId,
+      {int limit = 100}) async {
+    if (stationId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (limit < 1 || limit > 500) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/users?limit=$limit',
+    );
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_station_users');
+  }
+
+  /// GET /api/v1/registration-roles
+  Future<List<MetraJsonRow>> getRegistrationRoles() async {
+    final response = await _send('GET', '/api/v1/registration-roles');
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_registration_roles');
+  }
+
+  /// GET /api/v1/account/registration-status
+  Future<Map<String, dynamic>> getMyRegistrationStatus() async {
+    final response = await _send('GET', '/api/v1/account/registration-status');
+    return _parseJsonObject(
+        jsonDecode(response.body), 'invalid_registration_status');
+  }
+
+  /// GET /api/v1/authorities
+  Future<List<MetraJsonRow>> getAuthorities() async {
+    final response = await _send('GET', '/api/v1/authorities');
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_authority_catalogue');
+  }
+
+  /// GET /api/v1/authorities/{id}/access-queue
+  Future<List<MetraJsonRow>> getAuthorityAccessQueue(
+    String authorityId, {
+    required String kind,
+    int limit = 100,
+  }) async {
+    if (authorityId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_authority_id');
+    }
+
+    const allowedKinds = {
+      'membership',
+      'permission_grant',
+      'membership_active',
+      'permission_grant_active',
+    };
+
+    if (!allowedKinds.contains(kind)) {
+      throw const MetraApiException(400, 'invalid_access_queue_kind');
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+
+    final query = Uri(queryParameters: {
+      'kind': kind,
+      'limit': '$limit',
+    }).query;
+
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/access-queue?$query',
+    );
+
+    return _parseJsonRowList(
+      jsonDecode(response.body),
+      'invalid_authority_access_queue',
+    );
+  }
+
+  /// GET /api/v1/authorities/{id}/access-audit
+  Future<List<MetraJsonRow>> getAuthorityAccessAudit(String authorityId,
+      {int limit = 100}) async {
+    if (authorityId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_authority_id');
+    }
+    if (limit < 1 || limit > 200) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/access-audit?limit=$limit',
+    );
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_authority_access_audit');
+  }
+
+  /// GET /api/v1/authorities/{id}/membership-roles
+  Future<List<MetraJsonRow>> getAuthorityMembershipRoles(
+      String authorityId) async {
+    if (authorityId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_authority_id');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/membership-roles',
+    );
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_membership_roles');
+  }
+
+  /// GET /api/v1/authorities/{id}/permission-options
+  Future<List<MetraJsonRow>> getAuthorityPermissionOptions(
+      String authorityId) async {
+    if (authorityId.trim().isEmpty) {
+      throw const MetraApiException(400, 'invalid_authority_id');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/authorities/${Uri.encodeComponent(authorityId)}/permission-options',
+    );
+    return _parseJsonRowList(
+        jsonDecode(response.body), 'invalid_permission_options');
   }
 
   Future<http.Response> _send(String method, String path,
@@ -423,13 +685,15 @@ class MetraApiClient {
       throw const MetraApiException(401, 'authentication_required');
     }
     final uri = _baseUri!.resolve(path);
-    final request = http.Request(method, uri)..headers.addAll({
-      'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+    final request = http.Request(method, uri)
+      ..headers.addAll(
+          {'Accept': 'application/json', 'Authorization': 'Bearer $token'});
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
     }
-    final response = await http.Response.fromStream(await _client.send(request));
+    final response =
+        await http.Response.fromStream(await _client.send(request));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       var code = 'request_failed';
       try {
