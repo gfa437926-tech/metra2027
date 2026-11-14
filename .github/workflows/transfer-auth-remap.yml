@@ -111,3 +111,6 @@ jobs:
         run: bash database/transfer/tests/test_compare_end_to_end.sh
       - name: Exercise data importer end to end
         run: bash database/transfer/tests/test_import_data.sh
+
+      - name: Run isolated ACL and RLS matrix
+        run: bash database/transfer/tests/test_rls_acl_matrix.sh
