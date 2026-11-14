@@ -49,8 +49,14 @@ jobs:
       - name: Exercise normalization against a real pg_dump output
         run: |
           createdb dump_fixture
-          psql -X -v ON_ERROR_STOP=1 -d dump_fixture -c "CREATE SCHEMA private; CREATE TABLE public.fixture_public(id integer); CREATE TABLE private.fixture_private(id integer);"
+          psql -X -v ON_ERROR_STOP=1 -d dump_fixture -c "CREATE SCHEMA private; CREATE TABLE public.fixture_public(id integer); CREATE TABLE private.fixture_private(id integer); CREATE TABLE public.excluded_fixture(id integer); INSERT INTO public.fixture_public VALUES (1); INSERT INTO public.excluded_fixture VALUES (99);"
           pg_dump -X --schema-only --schema=public --schema=private --no-owner --no-privileges -d dump_fixture > /tmp/actual_schema_dump.sql
+          pg_dump -X --data-only --schema=public --schema=private --exclude-table-data=public.excluded_fixture -d dump_fixture > /tmp/actual_data_dump.sql
+          if grep -Fq "COPY public.excluded_fixture" /tmp/actual_data_dump.sql; then
+            echo "pg_dump did not exclude the non-demo table data."
+            exit 1
+          fi
+          grep -F "COPY public.fixture_public" /tmp/actual_data_dump.sql
           source database/transfer/scripts/lib/project_url_guard.sh
           metra_normalize_public_schema_dump /tmp/actual_schema_dump.sql /tmp/normalized_schema_dump.sql
           if grep -Fq "CREATE SCHEMA public;" /tmp/normalized_schema_dump.sql || grep -Fq "CREATE SCHEMA private;" /tmp/normalized_schema_dump.sql; then
