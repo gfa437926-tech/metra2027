@@ -12,7 +12,7 @@ CREATE TABLE public.fixture(id integer PRIMARY KEY);
 CREATE FUNCTION private.fixture() RETURNS integer LANGUAGE sql AS 'SELECT 1;';
 SQL
 metra_normalize_public_schema_dump "$TMP_DIR/valid.sql" "$TMP_DIR/normalized.sql"
-if grep -Eq '^CREATE SCHEMA "?public"?;$|^CREATE SCHEMA "?private"?;$' "$TMP_DIR/normalized.sql"; then
+if grep -Fq 'CREATE SCHEMA public;' "$TMP_DIR/normalized.sql" || grep -Fq 'CREATE SCHEMA private;' "$TMP_DIR/normalized.sql"; then
   echo "FAIL: application schema creation was not removed." >&2
   exit 1
 fi
