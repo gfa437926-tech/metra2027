@@ -28,7 +28,7 @@ Set `METRA_DST_PROJECT_REF` and `METRA_DST_DATABASE_URL` to the new target. Supp
 1. Run `scripts/02_install_required_extensions.sh` with the export directory. It verifies the manifest/checksums, installs only the recorded source extensions into their recorded schemas, and verifies exact versions.
 2. Run `scripts/02_bootstrap_target.sh` to create the non-login runtime role, private schema, and restrictive target default ACLs.
 3. Run `scripts/03_import_schema.sh` with the export directory. It verifies the complete manifest, required extensions, target identity and emptiness, then imports in one transaction.
-4. Run `scripts/06_apply_runtime_grants.sh` after schema import; it applies reviewed object grants and asserts restrictive public/private default ACLs.
+4. Run `scripts/06_apply_runtime_grants.sh` after schema import; it applies reviewed object grants, asserts restrictive public/private default ACLs, and pins audit trigger function search paths.
 5. Confirm the export manifest states `auth_user_count=0`, `all_observation_records_excluded=true`, `demo_observation_records_excluded=true`, and `non_demo_observation_records_excluded=true`. The source exporter refuses any snapshot with Auth users; do not bypass this guard or copy managed `auth.*` tables.
 6. Review `04_auth_user_fk_inventory.txt`. Since the accepted source Auth count is zero, declared FK columns must not contain non-null source-user references. The comparison step separately checks their row, non-null, and distinct counts.
 7. Run `scripts/04_import_data.sh` with the export directory. It verifies checksums and manifest, confirms the zero-user Auth boundary, checks required extensions and target emptiness, rejects excluded observation-history data, then imports in one transaction.
@@ -40,7 +40,7 @@ Set `METRA_DST_PROJECT_REF` and `METRA_DST_DATABASE_URL` to the new target. Supp
 
 - [ ] SHA-256 verification succeeds for all export artifacts.
 - [ ] Public/private schema and data import complete without errors.
-- [ ] Exact public/private row counts, non-Auth-FK SHA-256 table-content fingerprints, Auth FK row/null/distinct counts, sequence state, object inventory, and object-grant comparison and restrictive target default-ACL assertions pass; required source extensions and station catalogue provenance are present on target.
+- [ ] Exact public/private row counts, non-Auth-FK SHA-256 table-content fingerprints, Auth FK row/null/distinct counts, sequence state, object inventory, and object-grant comparison, restrictive target default-ACL assertions, and audit trigger search-path assertions pass; required source extensions and station catalogue provenance are present on target.
 - [ ] Foreign keys validate; Auth FK non-null counts remain zero and no orphaned user references remain.
 - [ ] RLS policies and required grants are verified separately with anonymous, authenticated, and privileged test identities.
 - [ ] No demo or live observation rows are imported; any later synthetic demo observations use a separate reviewed seed fixture.
