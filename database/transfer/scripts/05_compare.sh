@@ -46,13 +46,16 @@ diff -u "$OUT/source_acl.txt" "$OUT/target_acl.txt" > "$OUT/acl.diff"
 acl_status=$?
 comm -23 <(sort "$OUT/source_extensions.txt") <(sort "$OUT/target_extensions.txt") > "$OUT/missing_extensions.diff"
 if [[ -s "$OUT/missing_extensions.diff" ]]; then extension_status=1; else extension_status=0; fi
+psql "$DST_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$ROOT/sql/compare_excluded_data.sql" > "$OUT/target_excluded_observation_rows.txt"
+if [[ "$(tr -d '\r\n' < "$OUT/target_excluded_observation_rows.txt")" == "0" ]]; then excluded_data_status=0; else excluded_data_status=1; fi
 set -e
 
 printf 'Source ref: %s\nTarget ref: %s\n' "$SRC_REF" "$DST_REF" > "$OUT/RESULT.txt"
-if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 && "$extension_status" -eq 0 ]]; then
-  echo "PASS: exact row counts, application objects, ACL inventories, and required extensions match." | tee -a "$OUT/RESULT.txt"
+if [[ "$rows_status" -eq 0 && "$objects_status" -eq 0 && "$acl_status" -eq 0 && "$extension_status" -eq 0 && "$excluded_data_status" -eq 0 ]]; then
+  echo "PASS: exact row counts, application objects, ACL inventories, required extensions, and non-demo observation exclusion match." | tee -a "$OUT/RESULT.txt"
 else
-  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, acl.diff, and missing_extensions.diff." | tee -a "$OUT/RESULT.txt"
+  echo "FAIL: differences detected; inspect rowcounts.diff, objects.diff, acl.diff, missing_extensions.diff, and target_excluded_observation_rows.txt." | tee -a "$OUT/RESULT.txt"
   exit 1
 fi
 
