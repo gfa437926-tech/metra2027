@@ -36,7 +36,7 @@ Set METRA_DST_PROJECT_REF and METRA_DST_DATABASE_URL to the new target. Supply M
 
 - [ ] SHA-256 verification succeeds for all export artifacts.
 - [ ] Public/private schema and data import complete without errors.
-- [ ] Exact public/private row counts, object inventory, and role/default-ACL comparison pass; required source extensions are present on target.
+- [ ] Exact public/private row counts and SHA-256 table-content fingerprints, object inventory, and role/default-ACL comparison pass; required source extensions are present on target.
 - [ ] Foreign keys validate and no orphaned user references remain after approved Auth remapping.
 - [ ] RLS policies and required grants are verified separately with anonymous, authenticated, and privileged test identities.
 - [ ] .NET health/readiness, login, station directory, observation gating, and Flutter login smoke tests pass.
