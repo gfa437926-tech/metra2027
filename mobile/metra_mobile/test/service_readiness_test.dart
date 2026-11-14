@@ -15,5 +15,6 @@ void main() {
     expect(MetraServiceReadiness.stationUsers, MetraDataSourceMode.liveApi);
     expect(MetraServiceReadiness.registrationRead, MetraDataSourceMode.liveApi);
     expect(MetraServiceReadiness.authorityAccessRead, MetraDataSourceMode.liveApi);
+    expect(MetraServiceReadiness.electronicAuditUi, MetraDataSourceMode.liveApi);
   });
 }
