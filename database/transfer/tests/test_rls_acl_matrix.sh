@@ -37,9 +37,9 @@ CREATE POLICY station_insert_own ON $SCHEMA.station_records
   FOR INSERT TO authenticated WITH CHECK (owner_id = $SCHEMA.current_user_id());
 CREATE POLICY station_update_own ON $SCHEMA.station_records
   FOR UPDATE TO authenticated USING (owner_id = $SCHEMA.current_user_id())
-  WITH CHECK (owner_id = auth.uid());
+  WITH CHECK (owner_id = $SCHEMA.current_user_id());
 CREATE POLICY station_delete_own ON $SCHEMA.station_records
-  FOR DELETE TO authenticated USING (owner_id = auth.uid());
+  FOR DELETE TO authenticated USING (owner_id = $SCHEMA.current_user_id());
 GRANT SELECT, INSERT, UPDATE, DELETE ON $SCHEMA.station_records TO authenticated, service_role;
 SQL
 
