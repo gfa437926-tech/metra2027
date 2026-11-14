@@ -60,6 +60,7 @@ jobs:
           bash database/transfer/tests/test_manifest.sh
           bash database/transfer/tests/test_checksums.sh
           bash database/transfer/tests/test_compare_contract.sh
+          bash database/transfer/tests/test_compare_runner_preflight.sh
       - name: Install PostgreSQL client
         run: |
           sudo apt-get update
