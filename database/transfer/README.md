@@ -9,15 +9,15 @@
 
 Repeatable export/import of the approved experimental project's `public` schema and data to a future, explicitly identified target.
 The source is never modified or deleted by this pack. It does not copy API keys, JWT secrets, Auth sessions, refresh tokens, or managed Supabase schemas.
-The export writes AES-256 encrypted GPG dumps and SHA-256 checksums. The passphrase must be supplied through a protected shell environment and stored separately from artifacts.
+The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, and an inventory of declared application foreign keys referencing auth.users. The passphrase must be supplied through a protected shell environment and stored separately from artifacts.
 
 ## Scripts
 
 - `scripts/lib/project_url_guard.sh` — checks that a Postgres URL identifies the exact project ref
 - `scripts/00_preflight.sh` — read-only source identity/connectivity check
-- `scripts/01_export_source.sh` — encrypted public schema/data export plus SHA-256 manifest
-- `scripts/03_import_schema.sh` — verifies the complete manifest, then decrypts/imports public schema into an empty target
-- `scripts/04_import_data.sh` — verifies the complete manifest, then decrypts/imports public data into empty tables
+- `scripts/01_export_source.sh` — encrypted public schema/data export, SHA-256 manifest, and Auth-user FK inventory
+- `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public schema into an empty target
+- `scripts/04_import_data.sh` — verifies the complete manifest, then atomically decrypts/imports public data into empty tables
 - `scripts/05_compare.sh` — exact public row counts and deterministic public-object inventory comparison
 - `sql/assert_empty_public_tables.sql` — read-only guard that blocks data import into populated tables
 - `tests/test_url_guard.sh` — direct-host, trusted-pooler, spoofed-pooler, and wrong-project URL tests
