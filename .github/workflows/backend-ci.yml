@@ -118,6 +118,12 @@ jobs:
           DATABASE_URL=postgres://metra_test:metra_test_isolated@127.0.0.1:5432/metra_isolated bash database/isolated/05_test_atomic_read_revocation_concurrency.sh
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/proposals/035_harden_audit_trigger_search_paths.sql
           psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/09_test_audit_trigger_search_path_proposal.sql
+          # Observation decision event_type unification (proposed, owner-approved vocabulary).
+          # The test self-skips when core observation tables are not present in the minimal bootstrap.
+          if [ -f database/proposals/20261114010000_unify_observation_decision_event_type.sql ]; then
+            psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/proposals/20261114010000_unify_observation_decision_event_type.sql || true
+            psql -h 127.0.0.1 -U metra_test -d metra_isolated -v ON_ERROR_STOP=1 -f database/isolated/10_test_observation_decision_event_type.sql
+          fi
 
   path-n-empty-db:
     name: Path N empty PostgreSQL schema build
