@@ -48,7 +48,7 @@ The export checks that pg_dump's major version is at least the connected Postgre
 ## Comparison scope
 
 - Row counts use exact `COUNT(*)` for each public/private table; this can be expensive on large datasets.
-- Object comparison checks names and selected signatures/types of listed public/private objects. It is not a byte-for-byte schema-definition comparison.
+- Object comparison fingerprints table columns, indexes, views, functions/procedures, types, constraints, triggers, RLS flags, and policy expressions in public/private. It is a structural fingerprint, not a byte-for-byte database file comparison.
 - Managed Auth, Storage objects, extensions, secrets, provider settings, and user identities are outside this automated transfer scope. The custom metra_api_runtime role, service_role, anon/authenticated, sequence, function, PUBLIC, and default ACLs are recreated from the reviewed source inventory.
 
 ## Automated validation
