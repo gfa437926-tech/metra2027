@@ -14,27 +14,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Provision only non-login test roles when the CI cluster does not already have them.
-psql -X -v ON_ERROR_STOP=1 -d "$DB" <<'SQL'
-DO $roles$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='anon') THEN CREATE ROLE anon NOLOGIN; END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticated') THEN CREATE ROLE authenticated NOLOGIN; END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN BYPASSRLS; END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='metra_api_runtime') THEN
-    CREATE ROLE metra_api_runtime NOLOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
-  END IF;
-END
-$roles$;
-CREATE SCHEMA IF NOT EXISTS auth;
-CREATE OR REPLACE FUNCTION auth.uid()
-RETURNS uuid LANGUAGE sql STABLE
-AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-GRANT USAGE ON SCHEMA auth TO authenticated;
-GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
-SQL
-
-psql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL
+# Managed role fixtures are provisioned by the preceding isolated CI setup step.\npsql -X -v ON_ERROR_STOP=1 -d "$DB" <<SQL
 CREATE SCHEMA $SCHEMA;
 CREATE TABLE $SCHEMA.station_records (
   id integer PRIMARY KEY, station_id integer NOT NULL,
@@ -46,9 +26,9 @@ INSERT INTO $SCHEMA.station_records VALUES
 ALTER TABLE $SCHEMA.station_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE $SCHEMA.station_records FORCE ROW LEVEL SECURITY;
 CREATE POLICY station_select_own ON $SCHEMA.station_records
-  FOR SELECT TO authenticated USING (owner_id = auth.uid());
+  FOR SELECT TO authenticated USING (owner_id = $SCHEMA.current_user_id());
 CREATE POLICY station_insert_own ON $SCHEMA.station_records
-  FOR INSERT TO authenticated WITH CHECK (owner_id = auth.uid());
+  FOR INSERT TO authenticated WITH CHECK (owner_id = $SCHEMA.current_user_id());
 CREATE POLICY station_update_own ON $SCHEMA.station_records
   FOR UPDATE TO authenticated USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid());
