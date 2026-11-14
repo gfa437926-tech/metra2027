@@ -52,3 +52,26 @@ metra_assert_pg_dump_compatible() {
     return 1
   fi
 }
+
+# Remove the public schema CREATE statement because Supabase target projects
+# already contain public. Fail closed if pg_dump output differs unexpectedly.
+metra_normalize_public_schema_dump() {
+  local input_file="${1:?input schema dump required}"
+  local output_file="${2:?output schema dump required}"
+  if [[ ! -s "$input_file" ]]; then
+    echo "Refusing schema normalization: input dump is missing or empty." >&2
+    return 1
+  fi
+  local create_count
+  create_count="$(grep -Ec '^CREATE SCHEMA "?public"?;$' "$input_file" || true)"
+  if [[ "$create_count" != "1" ]]; then
+    echo "Refusing schema normalization: expected exactly one CREATE SCHEMA public statement; found $create_count." >&2
+    return 1
+  fi
+  sed -E '/^CREATE SCHEMA "?public"?;$/d' "$input_file" > "$output_file"
+  if grep -Eq '^CREATE SCHEMA "?public"?;$' "$output_file"; then
+    echo "Refusing schema normalization: public schema creation statement remains." >&2
+    return 1
+  fi
+  [[ -s "$output_file" ]] || { echo "Refusing schema normalization: output is empty." >&2; return 1; }
+}
