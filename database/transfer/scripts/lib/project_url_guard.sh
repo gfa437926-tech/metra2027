@@ -189,7 +189,7 @@ metra_verify_transfer_checksums() {
   fi
 
   (
-    cd "$dump_dir"
+    cd "$dump_dir" || exit 1
     sha256sum --check --strict SHA256SUMS
   )
 }
