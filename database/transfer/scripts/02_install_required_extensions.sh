@@ -21,10 +21,7 @@ command -v sha256sum >/dev/null 2>&1 || { echo "sha256sum is required." >&2; exi
 [[ -s "$DUMP_DIR/SHA256SUMS" ]] || { echo "Missing SHA256SUMS." >&2; exit 4; }
 [[ -s "$DUMP_DIR/07_extensions.txt" ]] || { echo "Missing required extension inventory." >&2; exit 4; }
 
-(
-  cd "$DUMP_DIR"
-  sha256sum --check --strict SHA256SUMS
-)
+metra_verify_transfer_checksums "$DUMP_DIR"
 metra_verify_transfer_manifest "$DUMP_DIR"
 
 TMP_DIR="$(mktemp -d)"
