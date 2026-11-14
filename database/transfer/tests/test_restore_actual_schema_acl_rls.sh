@@ -182,6 +182,20 @@ SELECT 'indexes', count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnam
 UNION ALL
 SELECT 'functions', count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
  WHERE n.nspname IN ('public','private')
+   AND NOT EXISTS (
+     SELECT 1 FROM pg_depend d
+     WHERE d.classid='pg_proc'::regclass AND d.objid=p.oid
+       AND d.refclassid='pg_extension'::regclass AND d.deptype='e'
+   )
+UNION ALL
+SELECT 'extension_functions:' || e.extname, count(*)
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid=p.pronamespace
+JOIN pg_depend d ON d.classid='pg_proc'::regclass AND d.objid=p.oid
+  AND d.refclassid='pg_extension'::regclass AND d.deptype='e'
+JOIN pg_extension e ON e.oid=d.refobjid
+WHERE n.nspname IN ('public','private')
+GROUP BY e.extname
 UNION ALL
 SELECT 'triggers', count(*) FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
  JOIN pg_namespace n ON n.oid=c.relnamespace
