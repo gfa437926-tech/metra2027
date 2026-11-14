@@ -19,7 +19,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
-- `scripts/04_import_data.sh` — verifies the complete manifest and the zero-source-Auth-user boundary, checks target emptiness, rejects excluded observation data, then atomically imports public/private data into empty tables
+- `scripts/04_import_data.sh` — verifies the complete manifest and zero-source-Auth-user boundary, checks target emptiness, rejects all observation data, then atomically imports public/private data into empty tables
 - `scripts/remap_auth_user_ids.py` — standalone, unit-tested future utility; deliberately not called by the current import path because source Auth users must be zero
 - `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
