@@ -53,13 +53,54 @@ psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/03_inventory_functions.txt" -
 SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) \
 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace \
 WHERE n.nspname IN ('public','private') ORDER BY 1,2,3;"
-psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At -F '|' -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
-SELECT n.nspname, c.relname, con.conname, pg_get_constraintdef(con.oid) \
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At -F 
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/05_observation_provenance.txt" -c "\
+SELECT source_system, source_table, is_demo, count(*)::bigint AS rows, \
+       count(DISTINCT station_id)::bigint AS distinct_station_ids, \
+       count(*) FILTER (WHERE station_id IS NULL)::bigint AS rows_without_station \
+FROM public.metra_observation_records \
+GROUP BY source_system, source_table, is_demo \
+ORDER BY source_system, source_table, is_demo;"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_acl_inventory.sql" > "$OUT_DIR/06_runtime_role_inventory.txt"
+psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -At \
+  -f "$SCRIPT_DIR/../sql/compare_extensions.sql" > "$OUT_DIR/07_extensions.txt"
+
+{
+  echo "source_project_ref=$SRC_REF"
+  echo "exported_at_utc=$STAMP"
+  echo "host_tool=$(pg_dump --version | head -1)"
+  echo "encryption=gpg-symmetric-AES256"
+  echo "auth_users_exported=false"
+  echo "auth_user_fk_inventory_exported=true"
+  echo "observation_provenance_exported=true"
+  echo "observation_records_data_exported=false"
+  echo "non_demo_observation_records_excluded=true"
+  echo "runtime_role_inventory_exported=true"
+  echo "required_extensions_inventory_exported=true"
+  echo "api_keys_and_jwt_secrets_exported=false"
+} > "$OUT_DIR/MANIFEST.txt"
+
+
+(
+  cd "$OUT_DIR"
+  sha256sum 01_schema_application.sql.gpg 02_data_application.sql.gpg 03_inventory_tables.txt 03_inventory_functions.txt 04_auth_user_fk_inventory.txt 05_observation_provenance.txt 06_runtime_role_inventory.txt 07_extensions.txt MANIFEST.txt > SHA256SUMS
+)
+echo "Encrypted export complete: $OUT_DIR"
+echo "Plaintext temporary dumps were removed on exit. Keep the passphrase separately."
+\\t' -o "$OUT_DIR/04_auth_user_fk_inventory.txt" -c "\
+SELECT n.nspname, c.relname, src_att.attname, ref_ns.nspname, ref_table.relname, ref_att.attname, con.conname \
 FROM pg_constraint con \
 JOIN pg_class c ON c.oid = con.conrelid \
 JOIN pg_namespace n ON n.oid = c.relnamespace \
+JOIN pg_class ref_table ON ref_table.oid = con.confrelid \
+JOIN pg_namespace ref_ns ON ref_ns.oid = ref_table.relnamespace \
+CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS src_key(attnum, ord) \
+JOIN LATERAL unnest(con.confkey) WITH ORDINALITY AS ref_key(attnum, ord) ON ref_key.ord = src_key.ord \
+JOIN pg_attribute src_att ON src_att.attrelid = c.oid AND src_att.attnum = src_key.attnum \
+JOIN pg_attribute ref_att ON ref_att.attrelid = ref_table.oid AND ref_att.attnum = ref_key.attnum \
 WHERE con.contype = 'f' AND con.confrelid = 'auth.users'::regclass \
-ORDER BY 1,2,3;"
+ORDER BY 1,2,3,7;"
 psql "$SRC_URL" -X -v ON_ERROR_STOP=1 -o "$OUT_DIR/05_observation_provenance.txt" -c "\
 SELECT source_system, source_table, is_demo, count(*)::bigint AS rows, \
        count(DISTINCT station_id)::bigint AS distinct_station_ids, \
