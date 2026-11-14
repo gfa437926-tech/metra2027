@@ -17,6 +17,24 @@ permissions:
 jobs:
   auth-remap:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: postgres
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -40,3 +58,32 @@ jobs:
           bash database/transfer/tests/test_url_guard.sh
           bash database/transfer/tests/test_public_schema_normalizer.sh
           bash database/transfer/tests/test_manifest.sh
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Exercise transfer SQL and Auth FK comparisons
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -c "CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;"
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/create_managed_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/bootstrap_target_roles.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/runtime_role_fixtures.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/sql/apply_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -f database/transfer/tests/assert_runtime_grants.sql
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/station_catalogue_provenance.sql > /tmp/station-provenance.txt
+          grep -Fx "orphan_coordinate_rows|0" /tmp/station-provenance.txt
+          grep -Fx "duplicate_coordinate_station_ids|0" /tmp/station-provenance.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_auth_fk_counts.sql > /tmp/auth-fk-counts.txt
+          grep -Fx "public|auth_fk_fixture|user_id|1|1|1" /tmp/auth-fk-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -c "SELECT setval('public.station_audit_log_id_seq', 42, true);"
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_sequence_state.sql > /tmp/sequence-state.txt
+          grep -E '^public\\|station_audit_log_id_seq\\|.*\\|42 /tmp/sequence-state.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_rowcounts.sql > /tmp/row-counts.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_data_hashes.sql > /tmp/data-hashes.txt
+          grep -F "public|auth_fk_fixture|1|" /tmp/data-hashes.txt
+          psql -X -v ON_ERROR_STOP=1 -At -F '|' -f database/transfer/sql/compare_objects.sql > /tmp/object-inventory.txt
+          grep -F "table|public|auth_fk_fixture|" /tmp/object-inventory.txt
+          psql -X -v ON_ERROR_STOP=1 -At -f database/transfer/sql/compare_acl_inventory.sql > /tmp/acl-inventory.txt
+          grep -F '"kind": "default_acl"' /tmp/acl-inventory.txt
+      - name: Exercise data importer end to end
+        run: bash database/transfer/tests/test_import_data.sh
