@@ -96,10 +96,10 @@ require_contains "$WORKFLOW" 'bash database/transfer/tests/test_empty_target_gua
 require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observation_guard.sh'
 
 # The empty-target runtime fixture must cover both application schemas.
-require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'CREATE TABLE public.$fixture'
-require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'CREATE TABLE private.$fixture'
-require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'public.$fixture is not empty'
-require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" 'private.$fixture is not empty'
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "CREATE TABLE public.\$fixture"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "CREATE TABLE private.\$fixture"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "public.\$fixture is not empty"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "private.\$fixture is not empty"
 
 # The excluded-history runtime fixture must exercise both empty and populated states.
 require_contains "$ROOT/database/transfer/tests/test_excluded_observation_guard.sh" 'empty_count'
