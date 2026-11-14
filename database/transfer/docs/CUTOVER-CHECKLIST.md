@@ -28,7 +28,8 @@
 
 - [ ] Target runtime role and private schema bootstrapped with least privilege
 - [ ] Public/private schema import completed atomically
-- [ ] Managed role, PUBLIC, sequence, function, and metra_api_runtime ACLs match the source inventory
+- [ ] Reviewed object grants match the acceptance inventory
+- [ ] Target default ACLs are restrictive: no implicit PUBLIC/anon/authenticated privileges on future tables, sequences, or functions; service_role only
 - [ ] SHA-256 checks pass before each import
 - [ ] No source Auth users, identities, sessions, or credentials are copied
 - [ ] Auth FK row/non-null/distinct counts match between source and target
