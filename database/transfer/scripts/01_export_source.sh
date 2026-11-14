@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Encrypted export of public schema/data from the approved experimental source.
+# Encrypted export of public/private schema and data from the approved experimental source.
 set -euo pipefail
 umask 077
 
