@@ -114,3 +114,5 @@ jobs:
 
       - name: Run isolated ACL and RLS matrix
         run: bash database/transfer/tests/test_rls_acl_matrix.sh
+      - name: Restore full synthetic schema and audit ACL/RLS
+        run: bash database/transfer/tests/test_restore_acl_rls.sh
