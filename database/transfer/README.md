@@ -16,6 +16,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/lib/project_url_guard.sh` — checks that a Postgres URL identifies the exact project ref
 - `scripts/00_preflight.sh` — read-only source identity/connectivity check
 - `scripts/01_export_source.sh` — encrypted public/private schema/data export, strips pre-existing schema creation statements, SHA-256 manifest, JSON-lines Auth-user FK inventory, observation provenance, station catalogue provenance, and role ACL inventory
+- `scripts/02_install_required_extensions.sh` — installs the source extension set into the recorded schemas and verifies exact versions
 - `scripts/02_bootstrap_target.sh` — creates the least-privilege runtime role and required default ACLs on a new target
 - `scripts/03_import_schema.sh` — verifies the complete manifest, then atomically decrypts/imports public/private schemas into an empty target
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed managed-role and custom runtime grants
