@@ -33,6 +33,7 @@ The inventory identifies declared foreign keys only. It does not find unconstrai
 ## Current status
 
 - Auth users exported/imported automatically: NOT IMPLEMENTED.
-- Auth FK inventory: implemented in the export script; not yet run against the hosted source.
-- User UUID mapping and remap SQL: NOT IMPLEMENTED; depends on actual inventory and owner-approved target identity strategy.
+- Auth FK inventory: implemented in the export script; emitted as machine-readable rows and covered by SHA256SUMS; not yet run against the hosted source.
+- Data import guard: implemented; `04_import_data.sh` refuses to import when the Auth FK inventory is non-empty.
+- User UUID mapping and remap SQL: NOT IMPLEMENTED; depends on actual inventory and owner-approved target identity strategy. The import guard must not be bypassed until a mapping-aware transformation is implemented and tested.
 - Target Auth smoke test: NOT EXECUTED; target project has not been supplied.
