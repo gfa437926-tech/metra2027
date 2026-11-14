@@ -121,3 +121,15 @@ These are not cosmetic discrepancies. They affect row shape, workflow writes, au
 This is an exhaustive transcription of the **18 public table definitions found in the current branch's checked-in executable sources** plus the isolated auth stub. It is not a complete approved schema for all METRA domains. The repository explicitly lacks approved operational definitions for forecast products, AI jobs, Climatol jobs, notifications and the wider electronic-record warehouse. No definitions for those domains are fabricated here.
 
 **Acceptance for the requested “all original approved definitions” step remains blocked** until the canonical full-schema package or approved schema export supplies the missing contracts listed above and confirms whether the current baseline skeletons are authoritative or only isolated fixtures. This catalogue is the verified extraction result; it is not permission to apply DDL to hosted Supabase or the legacy database.
+
+
+## 9. Cross-branch search for the missing original schema
+
+A read-only search was also made across the repository branches most relevant to database engineering:
+
+- `work/backend-db-integration-phase` contains the Stage C2 reconciliation report. It explicitly identifies the absence of original migrations 001/002 and describes the unified schema as a proposed Path N/Path H strategy, not an approved production schema.
+- `work/backend-db-integration-full-2026-11-13` contains Path N compatibility patches for 020, 022 and 027. These are replay adapters for an empty PostgreSQL path; they are not the missing original CREATE TABLE history and do not resolve all missing profile, registration, assignment and audit column contracts. They were not copied into this recovery branch because they are a separate compatibility implementation requiring review.
+- `work/database-engineering-audit` contains `PROPOSED-UNIFIED-DATA-MODEL.md`, which explicitly labels itself a logical proposal, not approved DDL. Its required-fields matrix is likewise a preliminary, non-approved operational contract.
+- The C9.6 report is a read-only reconciliation of a configured hosted project's schema at that time. It records meaningful differences (including authority-scoped grants without a grant-level `station_id`) but is not a complete schema dump and is not authorization to query or change that hosted project now.
+
+**Cross-branch result:** no approved full schema export or original 001/002 migration package was found in the inspected repository sources. Compatibility patches and proposed logical models are not substitutes for that source of truth.
