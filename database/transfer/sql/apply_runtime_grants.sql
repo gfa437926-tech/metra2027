@@ -5,7 +5,8 @@
 REVOKE CREATE ON SCHEMA public FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 REVOKE CREATE ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
 REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
-GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role, metra_api_runtime;
+GRANT USAGE ON SCHEMA public TO PUBLIC, anon, authenticated, service_role, metra_api_runtime, postgres;
+GRANT CREATE, USAGE ON SCHEMA public TO pg_database_owner;
 GRANT USAGE ON SCHEMA private TO metra_api_runtime;
 
 -- Existing table ACLs are narrower than Supabase default ACLs; reset then reapply.
