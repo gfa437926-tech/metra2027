@@ -25,9 +25,10 @@ Also required: a new, explicitly identified Supabase target with an empty applic
 
 Set `METRA_DST_PROJECT_REF` and `METRA_DST_DATABASE_URL` to the new target. Supply `METRA_TRANSFER_PASSPHRASE` through a protected secret manager. Never paste credentials or passphrases into chat or Git.
 
-1. Run `scripts/02_bootstrap_target.sh` to create the least-privilege non-login runtime role, private schema, and public default ACLs.
-2. Run `scripts/03_import_schema.sh` with the export directory. It verifies the complete manifest, required extensions, target identity and emptiness, then imports in one transaction.
-3. Run `scripts/06_apply_runtime_grants.sh` after schema import.
+1. Run `scripts/02_install_required_extensions.sh` with the export directory. It verifies the manifest/checksums, installs only the recorded source extensions into their recorded schemas, and verifies exact versions.
+2. Run `scripts/02_bootstrap_target.sh` to create the least-privilege non-login runtime role, private schema, and public default ACLs.
+3. Run `scripts/03_import_schema.sh` with the export directory. It verifies the complete manifest, required extensions, target identity and emptiness, then imports in one transaction.
+4. Run `scripts/06_apply_runtime_grants.sh` after schema import.
 4. Confirm the export manifest states `auth_user_count=0`, `all_observation_records_excluded=true`, `demo_observation_records_excluded=true`, and `non_demo_observation_records_excluded=true`. The source exporter refuses any snapshot with Auth users; do not bypass this guard or copy managed `auth.*` tables.
 5. Review `04_auth_user_fk_inventory.txt`. Since the accepted source Auth count is zero, declared FK columns must not contain non-null source-user references. The comparison step separately checks their row, non-null, and distinct counts.
 6. Run `scripts/04_import_data.sh` with the export directory. It verifies checksums and manifest, confirms the zero-user Auth boundary, checks required extensions and target emptiness, rejects excluded observation-history data, then imports in one transaction.
