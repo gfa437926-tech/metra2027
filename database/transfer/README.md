@@ -23,7 +23,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `scripts/06_apply_runtime_grants.sh` — reapplies reviewed object grants and verifies restrictive target default ACLs
 - `scripts/04_import_data.sh` — verifies the complete manifest and zero-source-Auth-user boundary, checks target emptiness, rejects all observation data, then atomically imports public/private data into empty tables
 - `scripts/remap_auth_user_ids.py` — standalone, unit-tested future utility; deliberately not called by the current import path because source Auth users must be zero
-- `scripts/05_compare.sh` — exact public/private row counts and SHA-256 table-content fingerprints, object-definition fingerprints, role/default-ACL comparison, and required extension check
+- `scripts/05_compare.sh` — exact public/private row counts, SHA-256 data/object fingerprints, Auth FK counts, sequence state, reviewed object-grant comparison, and restrictive target default-ACL assertion
 - `sql/bootstrap_target_roles.sql` and `sql/apply_runtime_grants.sql` — target role, default ACL, and explicit grant restoration
 - `sql/compare_acl_inventory.sql` — full source ACL inventory, including the source's broad public default ACLs, retained for audit
 - `sql/compare_acl_inventory_acceptance.sql` — compares reviewed object grants while excluding intentionally tightened source defaults and client sequence/trigger-function grants
@@ -40,6 +40,7 @@ The export writes AES-256 encrypted GPG dumps, SHA-256 checksums, an inventory o
 - `tests/test_auth_user_remap.py` — mapping privacy, duplicate IDs, exact FK-only replacement, and fail-closed COPY parsing tests
 - `tests/test_install_extensions.sh` — idempotent extension install and exact version/schema verification
 - `tests/test_import_data.sh` — end-to-end import, manifest, empty-target, and excluded-observation guards
+- `tests/test_checksums.sh` — exact artifact-set, tamper, duplicate, and path-traversal checksum-manifest tests
 - `tests/test_public_schema_normalizer.sh` — ensures the export omits the existing public schema creation statement and rejects unexpected dump structure
 - Export artifacts also include `04_auth_user_fk_inventory.txt` (JSON Lines), `05_observation_provenance.txt`, `06_runtime_role_inventory.txt`, `07_extensions.txt`, and `08_station_catalogue_provenance.txt`; review Auth references, observation provenance, station/coordinate integrity, and ACL inventory before accepting a restore.
 
@@ -76,4 +77,4 @@ A successful script run is not a restore acceptance. A full restore drill, appli
 
 ## Live dump status
 
-No hosted export, target import, restore drill, or live cutover is claimed by this repository change. The non-demo observation history is intentionally excluded. The scripts require secure runtime credentials and an explicitly named new target.
+No hosted export, target import, restore drill, or live cutover is claimed by this repository change. All observation history (demo and non-demo) is intentionally excluded. The scripts require secure runtime credentials and an explicitly named new target.
