@@ -16,6 +16,7 @@
 
 - [ ] New Supabase project created under the intended organization/account
 - [ ] Auth site URL, redirect URLs, SMTP, and providers configured independently
+- [ ] Required extensions installed at source-compatible versions and schemas
 - [ ] New target publishable/anon and server-only secret/service_role keys generated
 - [ ] Backend secrets configured only in target secret store
 - [ ] Flutter configuration uses target URL and public publishable key only
