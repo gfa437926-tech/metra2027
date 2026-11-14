@@ -1,5 +1,5 @@
 -- Deterministic inventory of application-owned objects in public/private.
--- Managed Supabase schemas are intentionally excluded.
+-- Managed Supabase schemas are intentionally excluded; this is not a definition-level schema diff.
 SELECT object_type, object_schema, object_name, object_detail
 FROM (
   SELECT
@@ -15,7 +15,7 @@ FROM (
     END AS object_type,
     n.nspname AS object_schema,
     c.relname AS object_name,
-    COALESCE(pg_get_userbyid(c.relowner), '') AS object_detail
+    ''::text AS object_detail
   FROM pg_class c
   JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE n.nspname IN ('public', 'private')
@@ -37,7 +37,7 @@ FROM (
   SELECT
     CASE t.typtype WHEN 'e' THEN 'enum' WHEN 'd' THEN 'domain' ELSE 'range' END,
     n.nspname,
-    t.typname,
+    t.typname::text,
     ''
   FROM pg_type t
   JOIN pg_namespace n ON n.oid = t.typnamespace
