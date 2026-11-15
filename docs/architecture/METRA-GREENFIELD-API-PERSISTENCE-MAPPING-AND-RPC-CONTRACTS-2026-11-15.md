@@ -120,3 +120,53 @@ The inspected 46-table model does not yet include recorder capture/image/trace l
 The current workflow suite contains isolated PostgreSQL jobs for the repository's Path N baseline and transfer-pack fixtures. The Path N restore test explicitly builds `public.station_catalogue`, `public.metra_role_catalogue`, `public.metra_observations` and the corresponding legacy RPCs. The transfer-pack end-to-end tests use synthetic fixture schemas. These jobs are useful regression evidence for those paths, but they do **not** prove that the normalized live greenfield model in `iam`, `catalog`, `ref`, and `observations` can be recreated from source or that the current .NET API is compatible with it.
 
 A separate greenfield schema build job must be added only after the canonical greenfield migration sequence is reviewed and approved. It must start from an empty disposable PostgreSQL database, apply only the curated greenfield migrations, assert the expected normalized entities and constraints, and run the new .NET adapter integration/security tests under the selected least-privilege identity. Until then, a green CI result must not be reported as greenfield database readiness.
+
+## 9. Live greenfield database inspection — read-only snapshot (2026-11-15)
+
+This section records a fresh read-only inspection of Supabase project `tbdnklyxjvbrilvnwgmq`. It is operational evidence, not approval to alter the schema.
+
+### 9.1 Migration and table inventory
+
+- Supabase migration history reports **86 applied migration records**.
+- The inspected domain schemas contain the expected greenfield table families across `iam`, `catalog`, `ref`, `observations`, `files`, `audit`, `operations`, `weather`, `alerts` and `integration`.
+- RLS is enabled on every table returned by this inspection.
+- Reference catalogue rows observed: 10 roles, 27 permissions, 78 role-permission links, 7 station types and 3 observation types.
+- Operational identity, organization, membership, station, observation, file, audit, weather, alert, equipment and integration tables were empty at inspection time. In particular, no station rows or user profiles were present. Do not mistake reference catalogue seed rows for operational readiness.
+
+### 9.2 Security advisor findings
+
+The Supabase Security Advisor reported **21** `rls_enabled_no_policy` findings:
+
+- `alerts.alert_rules`
+- `catalog.station_capabilities`
+- `catalog.station_identifiers`
+- `catalog.station_operating_periods`
+- `files.objects`
+- `iam.access_reviews`
+- `integration.execution_runs`
+- `integration.sources`
+- `observations.attachments`
+- `observations.quality_flags`
+- `operations.equipment`
+- `operations.equipment_fault_events`
+- `operations.equipment_faults`
+- `operations.support_incident_events`
+- `operations.support_incidents`
+- `weather.forecast_parameter_mappings`
+- `weather.forecast_points`
+- `weather.forecast_runs`
+- `weather.ingestion_runs`
+- `weather.provider_payload_references`
+- `weather.providers`
+
+RLS enabled with no policies is a deny-by-default posture for ordinary table access; it is not permission to add broad policies. Each table needs an explicit access decision: private backend-only, authenticated read, scoped write, or controlled access through a narrowly authorized server operation. Views, functions, grants and storage access must be reviewed together. Do not add `USING (true)`, blanket `TO authenticated` policies, or policies based only on user-editable metadata.
+
+### 9.3 Performance and health advisor findings
+
+- Performance Advisor reported **76** unused-index informational findings. These are not grounds for automatic index removal: the project has no operational station/observation workload yet, so the indexes may be required for the planned query paths and foreign-key enforcement.
+- Health Advisor returned no lints in this inspection.
+- No advisor remediation, DDL, grants, policy changes, seed inserts, storage changes or data writes were performed.
+
+### 9.4 Required review before any access enablement
+
+For each of the 21 tables, the schema review must identify the intended actor classes, organization/station scope, read and write operations, audit requirements, and whether the table must remain inaccessible through the Data API. Then implement and test least-privilege policies or private server operations in a disposable PostgreSQL environment. Re-run security advisors and cross-tenant/cross-station negative tests before any hosted deployment. The current service-role-based legacy .NET adapters must not be treated as a substitute for this review.
