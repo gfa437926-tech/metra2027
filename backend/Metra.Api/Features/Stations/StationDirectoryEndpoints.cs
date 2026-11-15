@@ -1,4 +1,4 @@
-using Metra.Api.Security;
+using Metra.Api.Security;\nusing System.Net.Http.Headers;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -119,6 +119,53 @@ public static class StationDirectoryEndpoints
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("GetStationDirectory");
 
-        return endpoints;
+        
+        endpoints.MapGet("/api/v2/stations", async (
+            HttpContext context,
+            int? limit,
+            int? offset,
+            string? stationType,
+            IGreenfieldStationDirectoryReader directory,
+            CancellationToken cancellationToken) =>
+        {
+            var take = limit ?? 250;
+            var skip = offset ?? 0;
+            if (take is < 1 or > 500 || skip < 0)
+                return Results.BadRequest(new { error = "invalid_pagination", maxLimit = 500 });
+
+            if (stationType is not null &&
+                (stationType.Length is 0 or > 64 ||
+                 !stationType.All(character => char.IsAsciiLetterOrDigit(character) ||
+                     character is '_' or '-')))
+                return Results.BadRequest(new { error = "invalid_station_type" });
+
+            if (!context.User.Identity?.IsAuthenticated ?? true)
+                return Results.Unauthorized();
+
+            if (!AuthenticationHeaderValue.TryParse(
+                    context.Request.Headers.Authorization, out var authorization) ||
+                !string.Equals(authorization.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(authorization.Parameter))
+                return Results.Unauthorized();
+
+            if (!directory.IsConfigured)
+                return Results.Problem(
+                    title: "Greenfield station directory unavailable",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            var result = await directory.GetStationsAsync(
+                authorization.Parameter, take, skip, stationType, cancellationToken);
+            if (result is null || !result.Succeeded)
+                return Results.Problem(
+                    title: "Greenfield station directory read failed",
+                    detail: "The caller-scoped catalog projection is unavailable or invalid.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            return Results.Ok(result.Stations);
+        })
+        .WithTags("Stations")
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+        .WithName("GetGreenfieldStationDirectory");
+\n        return endpoints;
     }
 }
