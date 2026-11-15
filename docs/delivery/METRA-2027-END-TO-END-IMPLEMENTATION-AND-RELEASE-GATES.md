@@ -161,3 +161,12 @@
 - Every upload receives a server-generated attempt identifier; the quarantine provider writes to an immutable object key scoped by both asset ID and attempt ID.
 - Returned metadata must echo the exact attempt ID. Cleanup deletes only that attempt object, never a shared asset-level quarantine key, preventing one concurrent request from overwriting or deleting another request's evidence.
 - The durable asset row records the committed attempt/object reference. Concurrency and replay tests must prove stale attempts cannot replace the winning upload.
+
+### Live Supabase migration-history reconciliation gate (2026-11-15)
+- Read-only inspection of project `tbdnklyxjvbrilvnwgmq` confirmed that it is not empty: 46 application tables exist across 10 domain schemas and 86 migration records are applied.
+- The current Git branch tracks only five SQL files under `supabase/migrations/`. This source-of-truth mismatch blocks reproducible database delivery and any additional hosted schema work.
+- All 46 inspected application tables have RLS enabled. Twenty-one no-policy findings are informational; the checked `anon` and `authenticated` roles had no SELECT/INSERT table privileges on these tables. Complete UPDATE/DELETE/EXECUTE grants and exposed-schema settings still require review.
+- Do not remove the 76 indexes flagged as unused: most domain tables are empty and representative workload evidence is not yet available.
+- Required order: recover the exact 86 migration SQL sources; reconcile Git and live schema objects; verify grants, RLS, RPC and Data API exposure; replay against a disposable empty database; obtain approval of the scientific ERD; only then consider any new migration.
+- No hosted SQL writes, migrations, seeds or legacy-database changes were made during this inspection.
+- Evidence and table inventory: `docs/architecture/METRA-SUPABASE-READONLY-SCHEMA-BASELINE-2026-11-15.md`.
