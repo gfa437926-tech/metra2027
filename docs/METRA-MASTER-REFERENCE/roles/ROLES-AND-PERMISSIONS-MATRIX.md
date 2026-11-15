@@ -1,22 +1,22 @@
-# Roles and Permissions Matrix
+# 04 — الأدوار والصلاحيات
 
-## Roles
-ROLE-OBSERVER, ROLE-STATION-HEAD, ROLE-AUDITOR, ROLE-NETWORK-DIR, ROLE-TELECOM, ROLE-WORKSHOP, ROLE-IT, ROLE-SYSADMIN, ROLE-CLIMATE, ROLE-AI, ROLE-FORECAST.
+## أدوار
+ROLE-OBSERVER · ROLE-STATION-HEAD · ROLE-AUDITOR · ROLE-NETWORK-DIR · ROLE-TELECOM · ROLE-WORKSHOP · ROLE-IT · ROLE-SYSADMIN · ROLE-CLIMATE · ROLE-AI · ROLE-FORECAST
 
-## Hard rules
-1. Normal user sees only own station.
-2. Network director/auditors wider scope only via server grants.
-3. Read-all does not imply write/delete.
-4. Enforce in .NET API + DB, not Flutter visibility.
+## عزل المحطات (إلزامي)
+1. العادي: محطته فقط
+2. stationId دون صلاحية → 403
+3. إخفاء Flutter ليس أمناً
+4. الفرض في .NET + RPC
 
-## Matrix (target)
-| Operation | Observer | Station Head | Auditor | Network Dir | SysAdmin |
+## مصفوفة (مستهدفة)
+| العملية | Observer | Head | Auditor | Network | SysAdmin |
 |---|---|---|---|---|---|
-| Read own station obs | Y | Y | if granted | if granted | Y |
-| Read other station | N | N | if granted | if granted | Y |
-| Submit own station | Y | Y | if granted | N default | Y |
-| Decide observation | N | if granted | if granted | if granted | Y |
-| Manage grants | N | N | N | limited | Y |
-| Archive read | if gate+grant | same | same | same | same |
+| عرض محطته | Y | Y | إن مُنح | إن مُنح | Y |
+| عرض أخرى | N | N | إن مُنح | إن مُنح | Y |
+| إرسال رصد | Y | Y | إن مُنح | N افتراضي | Y |
+| اعتماد/رفض | N | إن مُنح | إن مُنح | إن مُنح | Y |
+| إدارة مستخدمين | N | N | N | محدود | Y |
+| أرشيف | gate+grant | نفس | نفس | نفس | نفس |
 
-Proven partially: station-scoped observation submit/decision/queue + audit endpoints with tests. Full cell runtime proof not claimed.
+مثبت جزئياً: حراس Metra.Api.Tests. غير مثبت: كل خلية runtime.

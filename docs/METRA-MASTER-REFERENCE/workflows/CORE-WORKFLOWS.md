@@ -1,16 +1,22 @@
-# Core Workflows
+# 05 — سير العمل
 
-## W1 Observation
-Draft → Validated → Submitted (FeatureGate) → UnderReview → Approved/Rejected → Archived (currently 503).
+## W1 الرصد
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> LocalValidated
+  LocalValidated --> ServerValidated
+  ServerValidated --> Submitted: FeatureGate
+  Submitted --> UnderReview
+  UnderReview --> Approved
+  UnderReview --> Rejected
+  Rejected --> Draft
+  Approved --> Archived: حالياً 503
+```
+Submit: Observer · Decide: Head/Auditor · Archive: 503 حتى الاعتماد.
 
-Actors: Observer submits; Head/Auditor decides; SysAdmin gates.
-Proven: endpoints + Flutter client; gates closed for scientific write.
+## W2 أعطال
+Report→Assign→InProgress→Resolved→Closed
 
-## W2 Faults (legacy-derived)
-Report → Assign → InProgress → Resolved → Closed. 2027 instruments UI partial.
-
-## W3 Registration
-Submit → review → decision → active/rejected (Registration/Authority APIs).
-
-## W4 Permission grant
-Request → decision → revocation (AuthorityAccessEndpoints).
+## W3 تسجيل / W4 منح صلاحية
+انظر Authority/Registration endpoints.
