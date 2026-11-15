@@ -111,6 +111,10 @@ public interface IRecorderQuarantineStorage
         string verifiedSha256,
         CancellationToken cancellationToken);
 
+    Task DeleteQuarantinedAsync(
+        Guid assetId,
+        CancellationToken cancellationToken);
+
     Task DeleteExpiredQuarantineAsync(
         Guid assetId,
         CancellationToken cancellationToken);
