@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/api/service_readiness.dart';
 
 class StationDirectoryScreen extends StatefulWidget {
   const StationDirectoryScreen({super.key, required this.api, this.selectedStationId, this.onStationSelected});
@@ -18,7 +19,13 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   late Future<List<StationDirectoryItem>> _stations;
   @override
   void initState() { super.initState(); _load(); }
-  void _load() { _stations = widget.api.getAllStationDirectory(stationType: _type); }
+  void _load() {
+    if (MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi) {
+      _stations = Future.error(const MetraApiException(503, 'station_directory_not_ready'));
+      return;
+    }
+    _stations = widget.api.getAllStationDirectory(stationType: _type);
+  }
   @override
   Widget build(BuildContext context) => Column(children: [
     Padding(padding: const EdgeInsets.fromLTRB(12, 12, 12, 4), child: Column(children: [
@@ -36,7 +43,9 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
       if (snapshot.hasError) {
         return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
-          'تحقق من تسجيل الدخول والاتصال بواجهة API.',
+          error is MetraApiException && error.code == 'station_directory_not_ready'
+            ? 'دليل المحطات متوقف مؤقتاً حتى اكتمال ربط قاعدة البيانات الجديدة واختبارات الصلاحيات.'
+            : 'تحقق من تسجيل الدخول والاتصال بواجهة API.',
           TextButton(onPressed: () => setState(_load), child: const Text('إعادة المحاولة')));
       }
       final rows = snapshot.data ?? const <StationDirectoryItem>[];
