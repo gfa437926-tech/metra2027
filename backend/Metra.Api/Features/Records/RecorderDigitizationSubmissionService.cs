@@ -62,8 +62,9 @@ public interface IRecorderAssetStatusReader
 
 /// <summary>
 /// Durable transactional outbox boundary. Implementations must atomically claim
-/// (actor, idempotency key), compare the complete request fingerprint, and insert
-/// the pending job/outbox message in one transaction. A dispatcher publishes
+/// (actor, idempotency key), verify the supplied fingerprint matches the canonical
+/// submission payload, compare it with any existing claim, and insert the pending
+/// job/outbox message in one transaction. A dispatcher publishes
 /// committed outbox rows later; do not enqueue directly to a remote broker here.
 /// </summary>
 public interface IRecorderDigitizationOutbox
