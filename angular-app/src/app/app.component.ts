@@ -45,6 +45,14 @@ import { SupabaseAuthService } from './core/supabase/supabase-auth.service';
           <a class="nav-link" routerLink="/agriculture" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-seedling agriculture"></i><span>النشرات الزراعية</span></a>
         </nav>
         <a class="nav-link" routerLink="/observations/workflow" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-list-check users"></i><span>مراجعة النشرات</span></a>
+        <div class="section-title">الجودة والتحليل العلمي</div>
+        <nav>
+          <a class="nav-link" routerLink="/scientific/climatol" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-chart-line climate"></i><span>التجانس المناخي CLIMATOL</span></a>
+          <a class="nav-link" routerLink="/scientific/records" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-folder-open hourly"></i><span>أرشيف السجلات الورقية والميكانيكية</span></a>
+          <a class="nav-link" routerLink="/scientific/comparison" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-code-compare daily"></i><span>مقارنة مصادر الرصد</span></a>
+          <a class="nav-link" routerLink="/scientific/quality" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-magnifying-glass-chart users"></i><span>تدقيق الصور وجودة البيانات</span></a>
+          <a class="nav-link" routerLink="/scientific/ai" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-brain agriculture"></i><span>مختبر الذكاء الاصطناعي</span></a>
+        </nav>
         <div class="section-title">إدارة النظام</div>
         <nav>
           <a class="nav-link" routerLink="/login" routerLinkActive="active" (click)="closeSidebar()"><i class="fa-solid fa-right-to-bracket users"></i><span>تسجيل الدخول</span></a>
