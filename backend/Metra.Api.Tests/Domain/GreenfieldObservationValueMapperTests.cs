@@ -107,7 +107,7 @@ public sealed class GreenfieldObservationValueMapperTests
             ]"""), Parameters, Units);
 
         Assert.True(result.Succeeded);
-        Assert.Equal([1, 2], result.Values.Select(value => value.SequenceNumber));
+        Assert.Equal(new[] { 1, 2 }, result.Values.Select(value => value.SequenceNumber));
     }
 
     [Fact]
