@@ -82,6 +82,21 @@ public sealed class RecordImageAcceptancePolicyTests
         Assert.Equal("scanner_identity_missing", result.ReasonCode);
     }
 
+    [Theory]
+    [InlineData("scanner name")]
+    [InlineData("scanner/name")]
+    [InlineData("scanner\\name")]
+    [InlineData("scаnner")]
+    public void Keeps_asset_quarantined_for_noncanonical_scanner_identity(string scannerName)
+    {
+        var invalidIdentity = CleanInspection with { ScannerName = scannerName };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, invalidIdentity, ValidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.KeepQuarantined, result.Action);
+        Assert.Equal("scanner_identity_missing", result.ReasonCode);
+    }
+
     [Fact]
     public void Keeps_asset_quarantined_for_invalid_scanner_version()
     {
