@@ -110,6 +110,14 @@ export class ScientificWorkspaceDetailComponent {
   readonly panel = signal<Panel>('overview');
   readonly draftMessage = signal('');
   readonly config = computed(() => this.configs[this.key()]);
+  constructor() {
+    this.route.data.subscribe((data) => {
+      const next = data['workspace'] as WorkspaceKey | undefined;
+      if (next && next in this.configs) this.key.set(next);
+      this.panel.set('overview');
+      this.draftMessage.set('');
+    });
+  }
   prepareDraft(): void {
     this.draftMessage.set('تم تجهيز المسودة في الواجهة الحالية فقط؛ لم تُرسل إلى الخادم ولم تُحفظ.');
   }
