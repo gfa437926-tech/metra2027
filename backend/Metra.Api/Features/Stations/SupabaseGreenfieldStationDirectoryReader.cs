@@ -26,8 +26,11 @@ public sealed class SupabaseGreenfieldStationDirectoryReader(
 {
     private readonly string? _url = configuration["Supabase:Url"];
     private readonly string? _publishableKey = configuration["Supabase:PublishableKey"];
+    private readonly bool _explicitlyEnabled =
+        configuration.GetValue<bool>("Features:GreenfieldStationDirectoryEnabled");
 
     public bool IsConfigured =>
+        _explicitlyEnabled &&
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_publishableKey) &&
