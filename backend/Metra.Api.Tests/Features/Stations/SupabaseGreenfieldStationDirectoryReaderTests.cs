@@ -90,6 +90,32 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     }
 
     [Fact]
+    public async Task Does_not_call_supabase_until_greenfield_directory_feature_is_explicitly_enabled()
+    {
+        var calls = 0;
+        var values = new Dictionary<string, string?>
+        {
+            ["Supabase:Url"] = "https://example.supabase.co",
+            ["Supabase:PublishableKey"] = "sb_publishable_test",
+            ["Features:GreenfieldStationDirectoryEnabled"] = "false"
+        };
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var reader = new SupabaseGreenfieldStationDirectoryReader(
+            new StubClientFactory(new HttpClient(new StubHandler(_ =>
+            {
+                calls++;
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(StationRow, Encoding.UTF8, "application/json")
+                };
+            }))), configuration);
+
+        Assert.False(reader.IsConfigured);
+        Assert.Null(await reader.GetStationsAsync("caller-user-jwt", 25, 0, null, default));
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
     public async Task Does_not_call_supabase_when_publishable_key_is_missing()
     {
         var calls = 0;
