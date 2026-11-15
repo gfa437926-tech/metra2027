@@ -164,3 +164,12 @@ This is a pure domain component and test seam only. It is **not wired to an endp
 ### Mapper/schema alignment correction
 
 The live database check constraint on `ref.parameters.precision_scale` permits null or values from 0 through 12. The mapper and its catalogue validation now enforce that exact bound (not a generic .NET decimal maximum). This constraint was confirmed from the live schema metadata in a read-only inspection; no database mutation was required.
+
+
+## 8. Follow-up containment — legacy station directory fail-closed
+
+- The legacy `SupabaseStationDirectoryService` still queries `public.station_catalogue` and authenticates PostgREST with the server-side `service_role` key. This is not a greenfield adapter and bypasses RLS.
+- The adapter now reports itself unconfigured unless `Features:LegacyStationDirectoryEnabled=true` is explicitly supplied. Credentials alone no longer activate the legacy query, so the station endpoint returns its existing 503 unavailable response by default.
+- Added regression tests for the default-off behavior and the explicit compatibility opt-in.
+- The opt-in is intended only for a deliberately isolated legacy compatibility environment; it must not be enabled against the new greenfield project. The correct production implementation remains a typed `catalog.*` projection through the approved caller-scoped least-privilege boundary.
+- No database schema, grants, RLS policies, records, credentials or deployment settings were changed by this code update. The new behavior must pass exact-head Backend CI before it is treated as validated.
