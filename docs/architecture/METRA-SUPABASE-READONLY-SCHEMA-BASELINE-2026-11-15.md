@@ -94,3 +94,11 @@ This report is an observation-only baseline. It does not authorize:
 - Any production claim for recorder OCR, CLIMATOL, AI training, or mobile distribution.
 
 The 86-migration reconciliation is now a release blocker because source control does not currently contain the complete applied history.
+
+## 8. Legacy-shaped staging schema status
+
+A prior read-only review dated 2026-11-09 recorded 160 rows in `metra_migration.legacy_users_staging` in this new project; row contents were not inspected in that review. The current 2026-11-15 read-only check finds that the entire `metra_migration` schema and staging table are absent. The applied migration `20261114184511_metra_greenfield_application_schema_rebuild` explicitly contains `DROP SCHEMA IF EXISTS metra_migration CASCADE`, which accounts for the staging schema's removal from this project.
+
+The same current check found zero PostgreSQL foreign servers and no installed `postgres_fdw` or `dblink` extensions. This is evidence that this project has no catalogued database-link path to the legacy database; it does not prove anything about external application credentials or the state of the separate legacy database. No legacy database was accessed in this inspection, and no staging records were restored or reused.
+
+The greenfield migration's schema drop is destructive within the new project. Keep its recovered SQL in the non-executable archive and do not replay it against any populated environment without an independently reviewed plan.
