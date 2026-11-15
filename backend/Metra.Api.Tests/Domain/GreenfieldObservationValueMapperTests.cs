@@ -134,6 +134,21 @@ public sealed class GreenfieldObservationValueMapperTests
     }
 
     [Fact]
+    public void Rejects_catalogue_precision_outside_the_database_constraint()
+    {
+        var invalidParameter = new GreenfieldParameterDefinition(
+            Guid.Parse("77777777-7777-7777-7777-777777777777"),
+            "invalid_precision", "decimal", CelsiusId, 13, true);
+
+        var result = GreenfieldObservationValueMapper.Map(
+            Payload("""[{"parameterCode":"air_temperature","value":20.0}]"""),
+            [.. Parameters, invalidParameter], Units);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Issues, issue => issue.Code == "parameter_catalogue_invalid");
+    }
+
+    [Fact]
     public void Rejects_null_and_oversized_payloads()
     {
         var nullResult = GreenfieldObservationValueMapper.Map(Payload("null"), Parameters, Units);
