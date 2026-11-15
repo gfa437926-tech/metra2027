@@ -1,0 +1,14 @@
+Package: metraClimate
+Title: METRA Climate Homogenization Worker
+Version: 0.1.0
+Authors@R: person("METRA", "Engineering", role = c("aut", "cre"), email = "engineering@example.invalid")
+Description: Validated, isolated execution boundary for climate-series homogenization with the CRAN climatol package. Original input files are never modified.
+License: GPL-3
+Encoding: UTF-8
+Depends: R (>= 4.3.0)
+Imports:
+    climatol (>= 4.5-0),
+    jsonlite
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -1,0 +1,12 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) != 1L) stop("Usage: Rscript exec/run-job.R <job-request.json>", call. = FALSE)
+if (!requireNamespace("jsonlite", quietly = TRUE)) stop("jsonlite is required.", call. = FALSE)
+script_arg <- grep("^--file=", commandArgs(), value = TRUE)
+script_path <- normalizePath(sub("^--file=", "", script_arg[[1L]]), winslash = "/")
+package_root <- normalizePath(file.path(dirname(script_path), ".."), winslash = "/")
+source(file.path(package_root, "R", "request-validation.R"))
+source(file.path(package_root, "R", "homogenization.R"))
+request <- jsonlite::fromJSON(args[[1L]], simplifyVector = FALSE)
+result <- metra_run_homogenization(request)
+cat(jsonlite::toJSON(result, auto_unbox = TRUE, pretty = TRUE, null = "null"), "\n")
