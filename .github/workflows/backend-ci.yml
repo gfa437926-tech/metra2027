@@ -158,6 +158,8 @@ jobs:
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/034_atomic_observation_write_authorization.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/20261114010000_unify_observation_decision_event_type.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/10_test_observation_decision_event_type.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/036_global_station_read_roles_and_permissions.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/11_test_station_global_read_roles.sql
 
   grant-uniqueness-isolation:
     name: Isolated grant uniqueness (Path N + partial indexes)
