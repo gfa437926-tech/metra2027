@@ -168,4 +168,38 @@ public sealed class RecorderDigitizationSubmissionServiceTests
 
         Assert.Equal("digitization_submission_unavailable", result.ErrorCode);
     }
+    [Fact]
+    public async Task Rejects_empty_capture_identifier_without_calling_dependencies()
+    {
+        var authorizer = new Authorizer();
+        var reader = new AssetReader();
+        var outbox = new Outbox();
+        var service = new RecorderDigitizationSubmissionService(authorizer, reader, outbox);
+        var request = Request() with { CaptureId = Guid.Empty };
+
+        var result = await service.SubmitAsync(new(ActorId), request, CancellationToken.None);
+
+        Assert.Equal("digitization_resource_required", result.ErrorCode);
+        Assert.Equal(0, authorizer.Calls);
+        Assert.Equal(0, reader.Calls);
+        Assert.Equal(0, outbox.Calls);
+    }
+
+    [Fact]
+    public async Task Rejects_empty_asset_identifier_without_calling_dependencies()
+    {
+        var authorizer = new Authorizer();
+        var reader = new AssetReader();
+        var outbox = new Outbox();
+        var service = new RecorderDigitizationSubmissionService(authorizer, reader, outbox);
+        var request = Request() with { AcceptedAssetId = Guid.Empty };
+
+        var result = await service.SubmitAsync(new(ActorId), request, CancellationToken.None);
+
+        Assert.Equal("digitization_resource_required", result.ErrorCode);
+        Assert.Equal(0, authorizer.Calls);
+        Assert.Equal(0, reader.Calls);
+        Assert.Equal(0, outbox.Calls);
+    }
+
 }
