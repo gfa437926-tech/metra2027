@@ -13,6 +13,7 @@ import '../observations/hourly_observation_entry_screen.dart';
 import '../observations/observation_review_screen.dart';
 import '../reports/observation_archive_screen.dart';
 import '../reports/reports_hub_screen.dart';
+import '../records/records_review_workspace_screen.dart';
 import '../stations/station_audit_log_screen.dart';
 import '../stations/station_directory_screen.dart';
 
@@ -138,6 +139,8 @@ class _MetraHomeState extends State<MetraHome> {
           );
         },
       ),
+      // 12 Records archive, image review and triple-source comparison
+      const RecordsReviewWorkspaceScreen(),
     ];
 
     return Directionality(
@@ -163,7 +166,7 @@ class _MetraHomeState extends State<MetraHome> {
           ],
         ),
         body: MetraAdaptiveNavigation(
-          selectedIndex: _index.clamp(0, 11),
+          selectedIndex: _index.clamp(0, 12),
           onDestinationSelected: (value) => setState(() => _index = value),
           destinations: const [
             NavigationDestination(
@@ -226,8 +229,13 @@ class _MetraHomeState extends State<MetraHome> {
               selectedIcon: Icon(Icons.settings),
               label: 'إعدادات',
             ),
+            NavigationDestination(
+              icon: Icon(Icons.document_scanner_outlined),
+              selectedIcon: Icon(Icons.document_scanner),
+              label: 'السجلات',
+            ),
           ],
-          child: IndexedStack(index: _index.clamp(0, 11), children: pages),
+          child: IndexedStack(index: _index.clamp(0, 12), children: pages),
         ),
       ),
     );
