@@ -235,7 +235,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
     public async Task Malformed_bearer_token_is_rejected_for_observation_and_station_endpoints(string path)
     {
-        using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
+        using var request = new HttpRequestMessage((path.StartsWith("/api/v1/stations", StringComparison.Ordinal) || path.StartsWith("/api/v2/stations", StringComparison.Ordinal)) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
         if (request.Method == HttpMethod.Post) request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
