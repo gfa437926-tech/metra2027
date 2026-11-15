@@ -112,7 +112,7 @@ public sealed class RecordImageAcceptancePolicyTests
     [InlineData("scanner reason")]
     [InlineData("scanner/reason")]
     [InlineData("reason\\injected")]
-    [InlineData("invalid\\nreason")]
+    [InlineData("invalid\nreason")]
     public void Keeps_asset_quarantined_for_unsafe_scanner_reason_code(string reasonCode)
     {
         var inspection = CleanInspection with { SafeReasonCode = reasonCode };
