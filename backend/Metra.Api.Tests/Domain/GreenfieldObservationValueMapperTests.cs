@@ -33,10 +33,7 @@ public sealed class GreenfieldObservationValueMapperTests
     public void Maps_decimal_and_integer_to_their_typed_columns()
     {
         var result = GreenfieldObservationValueMapper.Map(
-            Payload("""[
-                {"parameterCode":"air_temperature","value":21.5},
-                {"parameterCode":"present_weather_code","value":7}
-            ]"""), Parameters, Units);
+            Payload("""[{"parameterCode":"air_temperature","value":21.5},{"parameterCode":"present_weather_code","value":7}]"""), Parameters, Units);
 
         Assert.True(result.Succeeded);
         Assert.Empty(result.Issues);
@@ -53,10 +50,7 @@ public sealed class GreenfieldObservationValueMapperTests
     public void Maps_text_and_boolean_to_their_typed_columns()
     {
         var result = GreenfieldObservationValueMapper.Map(
-            Payload("""[
-                {"parameterCode":"weather_note","value":"clear sky"},
-                {"parameterCode":"instrument_operational","value":true}
-            ]"""), Parameters, Units);
+            Payload("""[{"parameterCode":"weather_note","value":"clear sky"},{"parameterCode":"instrument_operational","value":true}]"""), Parameters, Units);
 
         Assert.True(result.Succeeded);
         Assert.Equal("clear sky", result.Values[0].ValueText);
@@ -133,10 +127,7 @@ public sealed class GreenfieldObservationValueMapperTests
     public void Rejects_duplicate_parameter_sequence_but_allows_distinct_sequences()
     {
         var result = GreenfieldObservationValueMapper.Map(
-            Payload("""[
-                {"parameterCode":"present_weather_code","value":6},
-                {"parameterCode":"present_weather_code","value":7,"sequenceNumber":2}
-            ]"""), Parameters, Units);
+            Payload("""[{"parameterCode":"present_weather_code","value":6},{"parameterCode":"present_weather_code","value":7,"sequenceNumber":2}]"""), Parameters, Units);
 
         Assert.True(result.Succeeded);
         Assert.Equal(new[] { 1, 2 }, result.Values.Select(value => value.SequenceNumber));
