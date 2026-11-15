@@ -85,5 +85,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/observations/observation-workflow.component')
       .then((m) => m.ObservationWorkflowComponent)
   },
+  { path: 'scientific/climatol', canActivate: [requireAuthenticatedUser], data: { workspace: 'climatol' }, loadComponent: () => import('./features/scientific/scientific-workspaces.component').then((m) => m.ScientificWorkspacesComponent) },
+  { path: 'scientific/records', canActivate: [requireAuthenticatedUser], data: { workspace: 'records' }, loadComponent: () => import('./features/scientific/scientific-workspaces.component').then((m) => m.ScientificWorkspacesComponent) },
+  { path: 'scientific/comparison', canActivate: [requireAuthenticatedUser], data: { workspace: 'comparison' }, loadComponent: () => import('./features/scientific/scientific-workspaces.component').then((m) => m.ScientificWorkspacesComponent) },
+  { path: 'scientific/quality', canActivate: [requireAuthenticatedUser], data: { workspace: 'quality' }, loadComponent: () => import('./features/scientific/scientific-workspaces.component').then((m) => m.ScientificWorkspacesComponent) },
+  { path: 'scientific/ai', canActivate: [requireAuthenticatedUser], data: { workspace: 'ai' }, loadComponent: () => import('./features/scientific/scientific-workspaces.component').then((m) => m.ScientificWorkspacesComponent) },
   { path: '**', redirectTo: '' }
 ];
