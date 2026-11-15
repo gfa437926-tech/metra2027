@@ -138,7 +138,7 @@ public sealed class RecorderImageUploadIntakeService(
         if (!storageDecision.IsAccepted || storedObject is null ||
             !string.Equals(storedObject.Sha256, validation.Sha256, StringComparison.Ordinal))
         {
-            await quarantineStorage.DeleteExpiredQuarantineAsync(
+            await quarantineStorage.DeleteQuarantinedAsync(
                 request.AssetId, cancellationToken);
             return RecorderImageUploadResult.Rejected(
                 storageDecision.ErrorCode ?? "stored_object_integrity_mismatch");
@@ -155,7 +155,7 @@ public sealed class RecorderImageUploadIntakeService(
         {
             // A failed compare-and-set must not leave an orphaned object available
             // to downstream processing. Quarantine remains private even on cleanup failure.
-            await quarantineStorage.DeleteExpiredQuarantineAsync(
+            await quarantineStorage.DeleteQuarantinedAsync(
                 request.AssetId, cancellationToken);
             return RecorderImageUploadResult.Rejected("asset_state_conflict");
         }
