@@ -14,6 +14,7 @@ import '../observations/observation_review_screen.dart';
 import '../reports/observation_archive_screen.dart';
 import '../reports/reports_hub_screen.dart';
 import '../records/records_review_workspace_screen.dart';
+import '../instruments/instrument_management_screen.dart';
 import '../stations/station_audit_log_screen.dart';
 import '../stations/station_directory_screen.dart';
 
@@ -57,6 +58,7 @@ class _MetraHomeState extends State<MetraHome> {
         onOpenAi: () => _open(8),
         onOpenClimatol: () => _open(9),
         onOpenAdmin: () => _open(10),
+        onOpenInstruments: () => _open(13),
       ),
       // 1 Stations
       StationDirectoryScreen(
@@ -141,6 +143,8 @@ class _MetraHomeState extends State<MetraHome> {
       ),
       // 12 Records archive, image review and triple-source comparison
       const RecordsReviewWorkspaceScreen(),
+      // 13 Instrument inventory, station deployments, calibration and maintenance
+      const InstrumentManagementScreen(),
     ];
 
     return Directionality(
@@ -166,7 +170,7 @@ class _MetraHomeState extends State<MetraHome> {
           ],
         ),
         body: MetraAdaptiveNavigation(
-          selectedIndex: _index.clamp(0, 12),
+          selectedIndex: _index.clamp(0, 13),
           onDestinationSelected: (value) => setState(() => _index = value),
           destinations: const [
             NavigationDestination(
@@ -234,6 +238,11 @@ class _MetraHomeState extends State<MetraHome> {
               selectedIcon: Icon(Icons.document_scanner),
               label: 'السجلات',
             ),
+            NavigationDestination(
+              icon: Icon(Icons.sensors_outlined),
+              selectedIcon: Icon(Icons.sensors),
+              label: 'الأجهزة',
+            ),
           ],
           child: IndexedStack(index: _index.clamp(0, 12), children: pages),
         ),
@@ -254,6 +263,7 @@ class _HomeOverview extends StatelessWidget {
     required this.onOpenAi,
     required this.onOpenClimatol,
     required this.onOpenAdmin,
+    required this.onOpenInstruments,
     this.userEmail,
   });
 
@@ -267,6 +277,7 @@ class _HomeOverview extends StatelessWidget {
   final VoidCallback onOpenAi;
   final VoidCallback onOpenClimatol;
   final VoidCallback onOpenAdmin;
+  final VoidCallback onOpenInstruments;
   final String? userEmail;
 
   @override
@@ -392,6 +403,12 @@ class _HomeOverview extends StatelessWidget {
           title: 'إدارة المستخدمين',
           description: 'الحسابات، التسجيل، الأدوار وتعيين المحطات.',
           onTap: onOpenAdmin,
+        ),
+        _ActionCard(
+          icon: Icons.sensors_outlined,
+          title: 'إدارة الأجهزة والمعايرة',
+          description: 'جرد الأجهزة وربطها بالمحطات والمعايرة والصيانة.',
+          onTap: onOpenInstruments,
         ),
       ],
     );
