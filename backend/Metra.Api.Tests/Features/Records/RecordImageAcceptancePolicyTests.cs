@@ -66,6 +66,36 @@ public sealed class RecordImageAcceptancePolicyTests
         Assert.Equal("scanner_result_unknown", result.ReasonCode);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("scanner\\nforged")]
+    [InlineData("scanner\\tforged")]
+    [InlineData("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")]
+    public void Keeps_asset_quarantined_for_invalid_scanner_identity(string scannerName)
+    {
+        var invalidIdentity = CleanInspection with { ScannerName = scannerName };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, invalidIdentity, ValidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.KeepQuarantined, result.Action);
+        Assert.Equal("scanner_identity_missing", result.ReasonCode);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(20971521)]
+    public void Rejects_non_positive_or_oversized_integrity_length(long actualLength)
+    {
+        var invalidIntegrity = ValidIntegrity with { ActualLength = actualLength };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, CleanInspection, invalidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.Reject, result.Action);
+        Assert.Equal("image_integrity_policy_failed", result.ReasonCode);
+    }
+
     [Fact]
     public void Keeps_asset_quarantined_when_scanner_identity_or_evidence_is_missing()
     {
