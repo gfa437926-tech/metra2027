@@ -43,17 +43,12 @@ BEGIN
 
   IF EXISTS (
     SELECT 1 FROM iam.role_permissions rp
+    JOIN iam.roles r ON r.id = rp.role_id
     JOIN iam.permissions p ON p.id = rp.permission_id
-    WHERE rp.role_id IN (v_auditor_id, v_network_id)
-      AND (p.permission_code LIKE '%.write%' OR p.permission_code LIKE '%.manage%'
-        OR p.permission_code IN ('roles.assign','permissions.grant','memberships.manage'))
-  ) AND EXISTS (
-    SELECT 1 FROM iam.role_permissions rp
-    JOIN iam.permissions p ON p.id = rp.permission_id
-    WHERE rp.role_id = v_network_id
-      AND p.permission_code IN ('observations.create','stations.manage','forecasts.manage','alerts.manage')
+    WHERE r.role_code IN ('auditor', 'network_department_head')
+      AND p.permission_code !~ '(^|\\.)(read|read_all|read_station|read_own)$'
   ) THEN
-    RAISE EXCEPTION 'network_head_role_contains_unapproved_mutation_permissions';
+    RAISE EXCEPTION 'global_read_roles_must_remain_read_only';
   END IF;
 
   IF NOT EXISTS (
