@@ -30,7 +30,8 @@ Navigation is shared and adaptive for compact and wide screens, with RTL directi
 1. **Archive:** metadata definition for station, instrument, recorder family and capture period; paper register and the four mechanical families: Thermograph, Hygrograph, Barograph and Pluviograph.
 2. **Image review:** original image, derived display preparation, chart calibration, OCR/curve extraction review, human correction and approval surfaces.
 3. **Triple-source comparison:** paper value, mechanical-chart value and electronic observation aligned by station, variable, time and unit; discrepancy and reviewer decision surfaces.
-4. **Quality and approval:** source completeness, image quality, scale calibration, extraction confidence, review decisions, provenance and audit reporting.
+4. **Image vs ground-truth comparison:** original image and extraction candidate side-by-side with the independently approved reference value, provenance, timestamps, units, absolute/relative differences and tolerance decision.
+5. **Quality and approval:** source completeness, image quality, scale calibration, extraction confidence, review decisions, provenance and audit reporting.
 
 The typed capture form validates UUIDs, recorder family, ISO-8601 capture boundaries, timezone and chart type. Its current draft remains local-only.
 
