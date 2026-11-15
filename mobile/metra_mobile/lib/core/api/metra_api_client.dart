@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../api_config.dart';
+import 'service_readiness.dart';
 
 const metraApiBaseUrl = ApiConfig.baseUrl;
 
@@ -366,6 +367,9 @@ class MetraApiClient {
     int offset = 0,
     String? stationType,
   }) async {
+    if (MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi) {
+      throw const MetraApiException(503, 'station_directory_not_ready');
+    }
     if (limit < 1 || limit > 500 || offset < 0) {
       throw const MetraApiException(400, 'invalid_pagination');
     }
