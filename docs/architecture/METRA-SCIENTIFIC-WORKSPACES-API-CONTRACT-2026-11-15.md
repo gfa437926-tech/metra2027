@@ -8,6 +8,7 @@
 
 - Prefix: `/api/v1`.
 - IDs: UUID; timestamps: ISO-8601 UTC; station-local timestamps include `timezoneId` and the original local representation.
+- Archive query bounds must carry an explicit UTC designator (`Z`); unspecified/local timestamps are rejected rather than interpreted using the API host timezone.
 - All mutation requests accept `Idempotency-Key`; stale updates require `If-Match`/ETag or an explicit version.
 - Error envelope: `code`, `message`, `traceId`, optional field errors. Never expose SQL, storage keys, stack traces or secrets.
 - List endpoints use opaque cursor pagination; no unbounded result sets.
