@@ -38,10 +38,10 @@ public sealed class GreenfieldObservationValueMapperTests
         Assert.True(result.Succeeded);
         Assert.Empty(result.Issues);
         Assert.Equal(2, result.Values.Count);
-        Assert.Equal(21.5m, result.Values[0].ValueDecimal);
-        Assert.Equal(CelsiusId, result.Values[0].UnitId);
+        Assert.Equal(21.5m, result.Values[0].ValueDecimal!.Value);
+        Assert.Equal(CelsiusId, result.Values[0].UnitId!.Value);
         Assert.Null(result.Values[0].ValueInteger);
-        Assert.Equal(7L, result.Values[1].ValueInteger);
+        Assert.Equal(7L, result.Values[1].ValueInteger!.Value);
         Assert.Null(result.Values[1].UnitId);
     }
 
@@ -54,7 +54,7 @@ public sealed class GreenfieldObservationValueMapperTests
 
         Assert.True(result.Succeeded);
         Assert.Equal("clear sky", result.Values[0].ValueText);
-        Assert.True(result.Values[1].ValueBoolean);
+        Assert.True(result.Values[1].ValueBoolean == true);
         Assert.Null(result.Values[0].ValueDecimal);
         Assert.Null(result.Values[1].ValueInteger);
     }
