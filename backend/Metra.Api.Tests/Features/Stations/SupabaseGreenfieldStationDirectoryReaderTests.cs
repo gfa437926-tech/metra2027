@@ -66,18 +66,8 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     public async Task Rejects_multiple_current_locations_instead_of_multiplying_station()
     {
         var twoLocations = StationRow.Replace(
-            """" "horizontal_accuracy_m":4.5,
-        "valid_to":null
-      }]"""",
-            """" "horizontal_accuracy_m":4.5,
-        "valid_to":null
-      },{
-        "latitude":35.6,
-        "longitude":36.3,
-        "location_source":"survey",
-        "horizontal_accuracy_m":5,
-        "valid_to":null
-      }]"""");
+            "\"valid_to\":null\n      }]\n    }]",
+            "\"valid_to\":null\n      },{\n        \"latitude\":35.6,\n        \"longitude\":36.3,\n        \"location_source\":\"survey\",\n        \"horizontal_accuracy_m\":5,\n        \"valid_to\":null\n      }]\n    }]");
         var reader = CreateReader(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(twoLocations, Encoding.UTF8, "application/json")
