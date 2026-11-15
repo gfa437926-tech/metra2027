@@ -9,10 +9,14 @@ public sealed class GreenfieldObservationValueMapperTests
     private static readonly Guid TemperatureId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid WeatherCodeId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly Guid CelsiusId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    private static readonly Guid TextId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    private static readonly Guid BooleanId = Guid.Parse("66666666-6666-6666-6666-666666666666");
     private static readonly GreenfieldParameterDefinition[] Parameters =
     [
         new(TemperatureId, "air_temperature", "decimal", CelsiusId, 1, true),
-        new(WeatherCodeId, "present_weather_code", "integer", null, null, true)
+        new(WeatherCodeId, "present_weather_code", "integer", null, null, true),
+        new(TextId, "weather_note", "text", null, null, true),
+        new(BooleanId, "instrument_operational", "boolean", null, null, true)
     ];
     private static readonly GreenfieldUnitDefinition[] Units =
     [
@@ -42,6 +46,34 @@ public sealed class GreenfieldObservationValueMapperTests
         Assert.Null(result.Values[0].ValueInteger);
         Assert.Equal(7L, result.Values[1].ValueInteger);
         Assert.Null(result.Values[1].UnitId);
+    }
+
+
+    [Fact]
+    public void Maps_text_and_boolean_to_their_typed_columns()
+    {
+        var result = GreenfieldObservationValueMapper.Map(
+            Payload("""[
+                {"parameterCode":"weather_note","value":"clear sky"},
+                {"parameterCode":"instrument_operational","value":true}
+            ]"""), Parameters, Units);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal("clear sky", result.Values[0].ValueText);
+        Assert.True(result.Values[1].ValueBoolean);
+        Assert.Null(result.Values[0].ValueDecimal);
+        Assert.Null(result.Values[1].ValueInteger);
+    }
+
+    [Theory]
+    [InlineData("""[{"parameterCode":"instrument_operational","value":"true"}]""", "boolean_value_required")]
+    [InlineData("""[{"parameterCode":"weather_note","value":"bad\nvalue"}]""", "text_value_invalid")]
+    public void Rejects_invalid_boolean_and_control_character_text(string json, string expectedCode)
+    {
+        var result = GreenfieldObservationValueMapper.Map(Payload(json), Parameters, Units);
+
+        Assert.False(result.Succeeded);
+        Assert.Contains(result.Issues, issue => issue.Code == expectedCode);
     }
 
     [Fact]
