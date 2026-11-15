@@ -150,3 +150,9 @@
 - The state-store port must commit the expected-state compare-and-set and immutable audit event atomically. A failed storage-result check or state race triggers a quarantine-object rollback request; expiry cleanup is a distinct operation.
 - Tests cover denied access before state lookup, successful quarantine handoff, digest mismatch cleanup and compare-and-set conflict cleanup.
 - This closes the application orchestration contract only. The service is not registered or exposed, and there is no production object store, scanner, persistence adapter, endpoint, retry worker or deployment secret configuration. Production activation remains blocked on approved schema, real provider integration, cleanup/retention guarantees and integration/security testing.
+
+### Upload commit ambiguity and quarantine reconciliation
+- The upload asset-store contract returns one of `Committed`, `StateConflict` or `OutcomeUnknown`.
+- A confirmed state conflict permits quarantine rollback. `OutcomeUnknown` must preserve the object in private quarantine and return a reconciliation-required result; a provider timeout or lost response must never be misreported as a definite conflict.
+- A reconciler must compare the durable asset row, audit transaction and object metadata before deciding whether to retain, resume or clean up the staged object. No speculative deletion is allowed.
+- Unit tests verify that the unknown-commit path does not delete the quarantined object.
