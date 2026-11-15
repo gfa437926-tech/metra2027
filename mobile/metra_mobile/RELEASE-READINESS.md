@@ -8,6 +8,8 @@ This branch contains the native Flutter source for the METRA 2027 mobile client 
 - Records: paper and mechanical archive, image review/digitization workflow, Thermograph, Hygrograph, Barograph and Pluviograph, three-source comparison, quality review and approval.
 - Climate: CLIMATOL job preparation, time-series exploration, breakpoint candidates, reference-station review, homogenized-series versioning and monthly/seasonal/annual climate-report surfaces.
 - AI: dataset inventory, annotation workflow, station/time leakage-aware split policy, experiment preparation, evaluation metrics, model registry, approval and monitoring surfaces.
+- Instruments: inventory, station deployments, calibration, maintenance and lifecycle-status surfaces.
+- Shared navigation: 14 destinations with RTL adaptive navigation and scientific-workspace shortcuts from the home dashboard.
 - Shared: Arabic RTL, shared design system, adaptive mobile/tablet navigation.
 
 ## Important production boundary
@@ -20,7 +22,8 @@ This is a **Flutter UI release candidate**, not a production-connected meteorolo
 4. AI dataset ingestion, training orchestration, inference gateway, model registry persistence and deployment.
 5. Persistent image annotations, human approvals and three-source comparison API.
 6. Production archive RPC/service and fully wired report/export pipelines.
-7. Real staging/production identity-provider end-to-end verification.
+7. Instrument inventory/deployment/calibration/maintenance persistence and authorization services.
+8. Real staging/production identity-provider end-to-end verification.
 
 The UI must not fabricate scientific readings, OCR values, model metrics or homogenization outputs. Raw observations and original images must remain immutable. All derived values require provenance and human approval.
 
