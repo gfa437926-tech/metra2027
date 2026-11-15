@@ -42,34 +42,34 @@ DO $$
 DECLARE v_codes text[];
 BEGIN
   SELECT array_agg(item->>'station_code' ORDER BY item->>'station_code') INTO v_codes
-  FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000001',500,0,NULL) item;
+  FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000001',500,0,NULL) item;
   IF v_codes IS DISTINCT FROM ARRAY['STA-A']::text[] THEN RAISE EXCEPTION 'station_user_cross_station_isolation_failed: %',v_codes; END IF;
 
   SELECT array_agg(item->>'station_code' ORDER BY item->>'station_code') INTO v_codes
-  FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000002',500,0,NULL) item;
+  FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000002',500,0,NULL) item;
   IF v_codes IS DISTINCT FROM ARRAY['STA-A','STA-B','STA-C']::text[] THEN RAISE EXCEPTION 'auditor_global_read_or_approval_filter_failed: %',v_codes; END IF;
 
   SELECT array_agg(item->>'station_code' ORDER BY item->>'station_code') INTO v_codes
-  FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000003',500,0,NULL) item;
+  FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000003',500,0,NULL) item;
   IF v_codes IS DISTINCT FROM ARRAY['STA-A','STA-B','STA-C']::text[] THEN RAISE EXCEPTION 'network_head_global_read_failed: %',v_codes; END IF;
 
   SELECT array_agg(item->>'station_code' ORDER BY item->>'station_code') INTO v_codes
-  FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000004',500,0,NULL) item;
+  FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000004',500,0,NULL) item;
   IF v_codes IS NOT NULL THEN RAISE EXCEPTION 'suspended_profile_was_authorized'; END IF;
 
   SELECT array_agg(item->>'station_code' ORDER BY item->>'station_code') INTO v_codes
-  FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000005',500,0,NULL) item;
+  FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000005',500,0,NULL) item;
   IF v_codes IS NOT NULL THEN RAISE EXCEPTION 'expired_assignment_was_authorized'; END IF;
 
-  IF has_function_privilege('anon','catalog.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE')
-     OR has_function_privilege('authenticated','catalog.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE')
-     OR NOT has_function_privilege('service_role','catalog.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE') THEN
+  IF has_function_privilege('anon','public.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE')
+     OR has_function_privilege('authenticated','public.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE')
+     OR NOT has_function_privilege('service_role','public.get_station_directory_for_actor(uuid,integer,integer,text)','EXECUTE') THEN
     RAISE EXCEPTION 'station_directory_rpc_execute_acl_invalid';
   END IF;
 END $$;
 
 DO $$ BEGIN
-  PERFORM * FROM catalog.get_station_directory_for_actor('00000000-0000-0000-0000-000000000002',501,0,NULL);
+  PERFORM * FROM public.get_station_directory_for_actor('00000000-0000-0000-0000-000000000002',501,0,NULL);
   RAISE EXCEPTION 'invalid_limit_was_accepted';
 EXCEPTION WHEN invalid_parameter_value THEN NULL; END $$;
 
