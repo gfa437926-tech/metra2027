@@ -1,4 +1,4 @@
-using Metra.Api.Security;\nusing System.Net.Http.Headers;
+using Metra.Api.Security;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -166,6 +166,7 @@ public static class StationDirectoryEndpoints
         .WithTags("Stations")
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
         .WithName("GetGreenfieldStationDirectory");
-\n        return endpoints;
+
+        return endpoints;
     }
 }
