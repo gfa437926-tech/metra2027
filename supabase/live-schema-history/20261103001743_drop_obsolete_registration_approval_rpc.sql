@@ -1,0 +1,1 @@
+drop function private.decide_metra_registration(uuid,uuid,text,text,timestamptz);
