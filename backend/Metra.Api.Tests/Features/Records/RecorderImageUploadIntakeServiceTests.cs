@@ -145,6 +145,80 @@ public sealed class RecorderImageUploadIntakeServiceTests
         Assert.Equal(1, storage.DeleteCalls);
     }
 
+    [Fact]
+    public async Task Rejects_missing_actor_without_calling_any_dependency()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore();
+        var storage = new FakeStorage();
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+
+        var result = await service.UploadAsync(
+            null, Request(), new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("authenticated_actor_required", result.ErrorCode);
+        Assert.Equal(0, authorizer.Calls);
+        Assert.Equal(0, store.ReadCalls);
+        Assert.Equal(0, storage.WriteCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_asset_outside_awaiting_upload_state_before_reading_or_storing_bytes()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore
+        {
+            CurrentState = RecordImageAssetStatus.UploadedQuarantined
+        };
+        var storage = new FakeStorage();
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+        await using var source = new ThrowOnReadStream();
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), Request(), source, CancellationToken.None);
+
+        Assert.Equal("asset_not_awaiting_upload", result.ErrorCode);
+        Assert.Equal(1, authorizer.Calls);
+        Assert.Equal(1, store.ReadCalls);
+        Assert.Equal(0, storage.WriteCalls);
+    }
+
+    [Fact]
+    public async Task Rejects_invalid_correlation_token_before_authorization()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore();
+        var storage = new FakeStorage();
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+        var request = Request() with { CorrelationId = "bad correlation" };
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), request,
+            new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("upload_correlation_invalid", result.ErrorCode);
+        Assert.Equal(0, authorizer.Calls);
+        Assert.Equal(0, store.ReadCalls);
+        Assert.Equal(0, storage.WriteCalls);
+    }
+
+    private sealed class ThrowOnReadStream : Stream
+    {
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override int Read(byte[] buffer, int offset, int count) =>
+            throw new InvalidOperationException("The stream must not be read.");
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("The stream must not be read.");
+        public override void Flush() => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
     private sealed class FakeAuthorizer : IRecorderImageUploadAuthorizer
     {
         public bool Allowed { get; init; }
@@ -165,6 +239,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
     private sealed class FakeAssetStore : IRecorderImageAssetIntakeStore
     {
         public bool CommitResult { get; init; }
+        public RecordImageAssetStatus CurrentState { get; init; } = RecordImageAssetStatus.AwaitingUpload;
         public int ReadCalls { get; private set; }
         public int CommitCalls { get; private set; }
         public RecordImageAssetStatus? ExpectedState { get; private set; }
@@ -174,8 +249,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
             Guid assetId, CancellationToken cancellationToken)
         {
             ReadCalls++;
-            return Task.FromResult<RecordImageAssetStatus?>(
-                RecordImageAssetStatus.AwaitingUpload);
+            return Task.FromResult<RecordImageAssetStatus?>(CurrentState);
         }
 
         public Task<bool> TryRecordQuarantinedAsync(
