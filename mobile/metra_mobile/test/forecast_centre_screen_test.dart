@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -30,31 +27,6 @@ void main() {
     api.close();
   });
 
-  testWidgets('forecast centre reports a permission-specific load failure',
-      (tester) async {
-    final api = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'forecast-token',
-      client: MockClient((_) async => http.Response(
-            jsonEncode({'error': 'forbidden'}),
-            403,
-            headers: {'content-type': 'application/json'},
-          )),
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: ForecastCentreScreen(api: api)),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('تعذر تحميل دليل المحطات'), findsOneWidget);
-    expect(find.text('إعادة المحاولة'), findsOneWidget);
-
-    api.close();
-  });
-
   testWidgets('forecast centre retry remains fail-closed while greenfield API is gated', (tester) async {
     var requests = 0;
     final api = MetraApiClient(
@@ -71,10 +43,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('دليل المحطات غير مفعّل بعد'), findsOneWidget);
     await tester.tap(find.text('إعادة المحاولة'));
+    await tester.pump();
     await tester.pumpAndSettle();
     expect(find.text('دليل المحطات غير مفعّل بعد'), findsOneWidget);
     expect(requests, 0);
     api.close();
   });
 
+  testWidgets('forecast centre does not pretend to check permissions while the API is gated', (tester) async {
+    var requests = 0;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'forecast-token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response(
+          '{"error":"forbidden"}',
+          403,
+          headers: {'content-type': 'application/json'},
+        );
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ForecastCentreScreen(api: api))),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('دليل المحطات غير مفعّل بعد'), findsOneWidget);
+    expect(find.text('تعذر تحميل دليل المحطات'), findsNothing);
+    expect(requests, 0);
+    api.close();
+  });
 }
