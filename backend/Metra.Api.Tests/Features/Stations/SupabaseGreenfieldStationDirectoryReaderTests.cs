@@ -1,7 +1,6 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json.Nodes;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Metra.Api.Features.Stations;
 using Xunit;
@@ -10,50 +9,56 @@ namespace Metra.Api.Tests.Features.Stations;
 
 public sealed class SupabaseGreenfieldStationDirectoryReaderTests
 {
-    private const string StationRow = """
+    private static readonly Guid ActorId =
+        Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+    private const string StationRows = """
     [{
       "id":"11111111-1111-1111-1111-111111111111",
       "station_code":"NEW-001",
       "name_ar":"محطة تجريبية",
       "name_en":"Sample station",
       "wmo_identifier":"40001",
+      "station_type_code":"synoptic",
+      "station_type_name_ar":"رصدية",
+      "station_type_name_en":"Synoptic",
       "approval_status":"approved",
       "operational_status":"active",
+      "latitude":35.5,
+      "longitude":36.2,
       "elevation_m":512.4,
       "timezone_name":"Asia/Damascus",
-      "station_types":{"type_code":"synoptic","name_ar":"رصدية","name_en":"Synoptic"},
-      "station_locations":[{
-        "latitude":35.5,
-        "longitude":36.2,
-        "location_source":"official_record",
-        "horizontal_accuracy_m":4.5,
-        "valid_to":null
-      }]
+      "location_source":"official_record",
+      "horizontal_accuracy_m":4.5
     }]
     """;
 
     [Fact]
-    public async Task Reads_catalog_projection_with_callers_validated_jwt_and_publishable_key()
+    public async Task Calls_only_atomic_actor_bound_rpc_with_server_key_and_validated_actor_id()
     {
         HttpRequestMessage? captured = null;
         var reader = CreateReader(new StubHandler(request =>
         {
             captured = request;
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(StationRow, Encoding.UTF8, "application/json")
-            };
+            return Ok(StationRows);
         }));
 
-        var result = await reader.GetStationsAsync("caller-user-jwt", 25, 0, "synoptic", default);
+        var result = await reader.GetStationsAsync(ActorId, 25, 5, "synoptic", default);
 
         Assert.NotNull(captured);
+        Assert.Equal(HttpMethod.Post, captured.Method);
+        Assert.EndsWith("/rest/v1/rpc/get_station_directory_for_actor", captured.RequestUri!.AbsoluteUri);
         Assert.Equal("Bearer", captured.Headers.Authorization?.Scheme);
-        Assert.Equal("caller-user-jwt", captured.Headers.Authorization?.Parameter);
-        Assert.Contains(captured.Headers.GetValues("apikey"), value => value == "sb_publishable_test");
-        Assert.Contains(captured.Headers.GetValues("Accept-Profile"), value => value == "catalog");
-        Assert.Contains("/rest/v1/stations?", captured.RequestUri!.PathAndQuery);
-        Assert.Contains("station_types.type_code", captured.RequestUri.PathAndQuery);
+        Assert.Equal("sb_secret_server_test", captured.Headers.Authorization?.Parameter);
+        Assert.Contains(captured.Headers.GetValues("apikey"), value => value == "sb_secret_server_test");
+        Assert.Contains(captured.Headers.GetValues("Content-Profile"), value => value == "catalog");
+
+        using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        Assert.Equal(ActorId, body.RootElement.GetProperty("p_actor_user_id").GetGuid());
+        Assert.Equal(25, body.RootElement.GetProperty("p_limit").GetInt32());
+        Assert.Equal(5, body.RootElement.GetProperty("p_offset").GetInt32());
+        Assert.Equal("synoptic", body.RootElement.GetProperty("p_station_type_code").GetString());
+
         Assert.NotNull(result);
         Assert.True(result!.Succeeded);
         var station = Assert.Single(result.Stations);
@@ -64,85 +69,99 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     }
 
     [Fact]
-    public async Task Rejects_multiple_current_locations_instead_of_multiplying_station()
-    {
-        var root = JsonNode.Parse(StationRow)!.AsArray();
-        root[0]!["station_locations"]!.AsArray().Add(JsonNode.Parse("""
-        {
-          "latitude":35.6,
-          "longitude":36.3,
-          "location_source":"survey",
-          "horizontal_accuracy_m":5,
-          "valid_to":null
-        }
-        """));
-        var twoLocations = root.ToJsonString();
-        var reader = CreateReader(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(twoLocations, Encoding.UTF8, "application/json")
-        }));
-
-        var result = await reader.GetStationsAsync("caller-user-jwt", 25, 0, null, default);
-
-        Assert.NotNull(result);
-        Assert.False(result!.Succeeded);
-        Assert.Empty(result.Stations);
-    }
-
-    [Fact]
-    public async Task Does_not_call_supabase_until_greenfield_directory_feature_is_explicitly_enabled()
-    {
-        var calls = 0;
-        var values = new Dictionary<string, string?>
-        {
-            ["Supabase:Url"] = "https://example.supabase.co",
-            ["Supabase:PublishableKey"] = "sb_publishable_test",
-            ["Features:GreenfieldStationDirectoryEnabled"] = "false"
-        };
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
-        var reader = new SupabaseGreenfieldStationDirectoryReader(
-            new StubClientFactory(new HttpClient(new StubHandler(_ =>
-            {
-                calls++;
-                return new HttpResponseMessage(HttpStatusCode.OK)
-                {
-                    Content = new StringContent(StationRow, Encoding.UTF8, "application/json")
-                };
-            }))), configuration);
-
-        Assert.False(reader.IsConfigured);
-        Assert.Null(await reader.GetStationsAsync("caller-user-jwt", 25, 0, null, default));
-        Assert.Equal(0, calls);
-    }
-
-    [Fact]
-    public async Task Does_not_call_supabase_when_publishable_key_is_missing()
+    public async Task Does_not_call_supabase_until_feature_is_explicitly_enabled()
     {
         var calls = 0;
         var reader = CreateReader(new StubHandler(_ =>
         {
             calls++;
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(StationRow, Encoding.UTF8, "application/json")
-            };
-        }), includeKey: false);
+            return Ok(StationRows);
+        }), enabled: false);
 
         Assert.False(reader.IsConfigured);
-        Assert.Null(await reader.GetStationsAsync("caller-user-jwt", 25, 0, null, default));
+        Assert.Null(await reader.GetStationsAsync(ActorId, 25, 0, null, default));
         Assert.Equal(0, calls);
     }
 
+    [Fact]
+    public async Task Does_not_call_supabase_when_server_key_is_missing()
+    {
+        var calls = 0;
+        var reader = CreateReader(new StubHandler(_ =>
+        {
+            calls++;
+            return Ok(StationRows);
+        }), includeKey: false);
+
+        Assert.False(reader.IsConfigured);
+        Assert.Null(await reader.GetStationsAsync(ActorId, 25, 0, null, default));
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public async Task Rejects_publishable_key_in_server_key_configuration()
+    {
+        var calls = 0;
+        var reader = CreateReader(new StubHandler(_ =>
+        {
+            calls++;
+            return Ok(StationRows);
+        }), serviceKey: "sb_publishable_not_a_server_secret");
+
+        Assert.False(reader.IsConfigured);
+        Assert.Null(await reader.GetStationsAsync(ActorId, 25, 0, null, default));
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public async Task Rejects_empty_actor_before_network_call()
+    {
+        var calls = 0;
+        var reader = CreateReader(new StubHandler(_ =>
+        {
+            calls++;
+            return Ok(StationRows);
+        }));
+
+        Assert.Null(await reader.GetStationsAsync(Guid.Empty, 25, 0, null, default));
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public async Task Fails_closed_when_atomic_rpc_is_unavailable()
+    {
+        var reader = CreateReader(new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.Forbidden)));
+
+        Assert.Null(await reader.GetStationsAsync(ActorId, 25, 0, null, default));
+    }
+
+    [Fact]
+    public async Task Rejects_non_array_rpc_projection()
+    {
+        var reader = CreateReader(new StubHandler(_ => Ok("""{"items":[]}""")));
+
+        Assert.Null(await reader.GetStationsAsync(ActorId, 25, 0, null, default));
+    }
+
+    private static HttpResponseMessage Ok(string json) => new(HttpStatusCode.OK)
+    {
+        Content = new StringContent(json, Encoding.UTF8, "application/json")
+    };
+
     private static SupabaseGreenfieldStationDirectoryReader CreateReader(
-        HttpMessageHandler handler, bool includeKey = true)
+        HttpMessageHandler handler,
+        bool includeKey = true,
+        bool enabled = true,
+        string serviceKey = "sb_secret_server_test")
     {
         var values = new Dictionary<string, string?>
         {
             ["Supabase:Url"] = "https://example.supabase.co",
-            ["Features:GreenfieldStationDirectoryEnabled"] = "true"
+            ["Features:GreenfieldStationDirectoryEnabled"] = enabled.ToString().ToLowerInvariant()
         };
         if (includeKey)
-            values["Supabase:PublishableKey"] = "sb_publishable_test";
+            values["Supabase:ServiceRoleKey"] = serviceKey;
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(values)
