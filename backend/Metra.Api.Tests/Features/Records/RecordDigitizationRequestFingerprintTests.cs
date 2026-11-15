@@ -26,6 +26,17 @@ public sealed class RecordDigitizationRequestFingerprintTests
     }
 
     [Fact]
+    public void Idempotency_key_does_not_change_payload_fingerprint()
+    {
+        var original = Request();
+        var replay = original with { IdempotencyKey = "another-idem-key" };
+
+        Assert.True(RecordDigitizationRequestFingerprint.TryCompute(original, out var first));
+        Assert.True(RecordDigitizationRequestFingerprint.TryCompute(replay, out var second));
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
     public void Changes_fingerprint_when_capture_asset_or_profile_changes()
     {
         Assert.True(RecordDigitizationRequestFingerprint.TryCompute(Request(), out var baseline));
