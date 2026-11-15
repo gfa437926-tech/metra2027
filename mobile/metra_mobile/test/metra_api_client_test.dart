@@ -54,6 +54,46 @@ void main() {
     client.close();
   });
 
+
+  test('greenfield station directory fails closed and never calls the legacy API', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'greenfield-token',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getGreenfieldStationDirectory(),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 503)
+          .having((error) => error.code, 'code', 'station_directory_not_ready')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('greenfield station directory validates bounded page size before access', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'greenfield-token',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getGreenfieldStationDirectory(limit: 501),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.code, 'code', 'invalid_pagination')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
   test('station coordinates distinguish missing, valid and out-of-range values',
       () {
     StationDirectoryItem station(double? latitude, double? longitude) =>
