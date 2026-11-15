@@ -85,7 +85,7 @@ public sealed class RecordImageAcceptancePolicyTests
     [Fact]
     public void Keeps_asset_quarantined_for_invalid_scanner_version()
     {
-        var invalidVersion = CleanInspection with { ScannerVersion = "scanner\\nforged" };
+        var invalidVersion = CleanInspection with { ScannerVersion = "scanner\nforged" };
         var result = RecordImageAcceptancePolicy.Evaluate(
             RecordImageAssetStatus.Scanning, invalidVersion, ValidIntegrity);
 
