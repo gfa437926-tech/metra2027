@@ -102,3 +102,51 @@ Use caller JWT/RLS for ordinary user operations. Where a privileged server opera
 **Current decision: NOT GREENFIELD READY.**
 
 The UI catalogue and numerous request guards/domain policies exist, but the .NET persistence boundary is still legacy-shaped. Do not enable operational Flutter workflows, mark the API ready for the new schema, or claim production deployment until Phases A–D are completed. No DDL, grants, RLS policies, data writes, storage changes or production deployment were performed by this audit.
+
+## 7. Concrete live-schema column mapping notes
+
+A second read-only verbose table inspection confirmed the following actual columns. These are the live schema names, not proposed aliases.
+
+### Station directory projection
+
+- `catalog.stations`: `id`, `owner_organization_id`, `station_type_id`, `station_code`, `name_ar`, `name_en`, `wmo_identifier`, `approval_status`, `operational_status`, `elevation_m`, `timezone_name`, `opened_on`, `closed_on`.
+- `catalog.station_types`: `id`, `type_code`, `name_ar`, `name_en`, `is_active`.
+- `catalog.station_locations`: `station_id`, `latitude`, `longitude`, `elevation_m`, `timezone_name`, `location_source`, `source_reference`, `horizontal_accuracy_m`, `valid_from`, `valid_to`.
+- `catalog.station_identifiers`: `station_id`, `identifier_scheme`, `identifier_value`, `valid_from`, `valid_to`.
+
+Required transformation: join station type by `station_type_id`; select the location valid at the requested observation time (or current location for the directory); project identifier schemes explicitly. The old adapter's `station_type` string and `station_coordinates` nested relation are not direct matches. Do not infer approval from `operational_status`, or operational readiness from approval alone.
+
+### IAM and registration
+
+- `iam.user_profiles`: `user_id`, `email`, `display_name`, `given_name`, `family_name`, `father_name`, `phone_e164`, `preferred_locale`, `timezone_name`, `profile_state`.
+- `iam.memberships`: `user_id`, `organization_id`, `unit_id`, `membership_state`, `valid_from`, `valid_to`, `approved_at`, `approved_by`.
+- `iam.roles`: `role_code`, `is_assignable`, `is_requestable`, `role_state`; it is not the legacy `public.metra_role_catalogue`.
+- `iam.role_assignments`: `membership_id`, `organization_id`, `unit_id`, `station_id`, `role_id`, `scope_type`, `assignment_state`, validity interval.
+- `iam.permissions`: `permission_code`, `permission_domain`; `iam.role_permissions` maps roles to permissions.
+- `iam.permission_grants`: user, permission, organization/unit/station scope, `scope_type`, `grant_state`, validity interval, `granted_by`, reason.
+- `iam.registration_requests`: `applicant_user_id`, `organization_id`, `requested_unit_id`, `requested_station_id`, `requested_role_id`, `request_state`, `terms_version`, `idempotency_key`.
+- `iam.registration_decisions`: `request_id`, `stage`, `decision_sequence`, `reviewer_user_id`, `decision`, `reason`, `decided_at`.
+
+Required transformation: resolve role codes to `iam.roles.id`, and resolve organization/unit/station scope before creating a registration request. Registration decisions are staged and sequenced, not a single legacy status transition. Membership, role assignment and explicit permission grant are distinct records and must not be collapsed into one role field.
+
+### Scientific observations
+
+- `ref.observation_types`: `type_code`, `schema_version`, `cadence_code`, `is_active`.
+- `ref.parameters`: `parameter_code`, `value_kind`, `canonical_unit_id`, `precision_scale`, `definition_version`, `is_active`.
+- `ref.units`: `unit_code`, `symbol`, `dimension_code`, bilingual names and `is_active`.
+- `observations.submissions`: `station_id`, `author_user_id`, `observation_type_id`, `observed_at`, `timezone_name`, `submission_state`, `revision_number`, `idempotency_key`, `submitted_at`.
+- `observations.values`: `submission_id`, `parameter_id`, `value_kind`, typed value columns (`value_decimal`, `value_integer`, `value_text`, `value_boolean`), `unit_id`, `sequence_number`, `quality_state`.
+- `observations.revisions`: immutable revision snapshot and reason.
+- `observations.review_decisions`: reviewer, decision, reason and decision time.
+- `observations.attachments`: submission-to-file relation; `files.objects` stores private object metadata, SHA-256, classification and object lifecycle state.
+
+Required transformation: the existing API's generic JSON payload cannot be copied directly into a single greenfield column because the new schema is typed/EAV. A versioned observation schema must map each accepted parameter code to its reference parameter, value kind, canonical unit and validation rules, then atomically persist header, typed values, revision/audit and idempotency result. Reject unknown parameters, kind mismatch, unit-dimension mismatch and duplicate parameter/sequence keys. Keep the original validated payload only as a versioned revision snapshot if the approved retention model requires it.
+
+### Audit
+
+- `audit.events` is an append-oriented event record with `actor_user_id`, `action_code`, `entity_schema`, `entity_table`, `entity_id`, organization/station scope, `outcome`, `correlation_id` and structured metadata.
+- It is not a drop-in match for legacy station-specific audit RPC result rows. A new projection must filter by exact station/organization scope and expose only approved metadata keys.
+
+### Data readiness note
+
+The verbose schema inspection confirmed that operational tables are empty at inspection time, while reference catalogues have seeded rows. This means adapter contract tests must create isolated synthetic organizations, memberships, stations, assignments and observations in a disposable database; tests must not rely on production-like records already existing in the hosted project.
