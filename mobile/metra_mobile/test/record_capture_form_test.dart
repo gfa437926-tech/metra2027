@@ -49,8 +49,8 @@ void main() {
   });
 
   testWidgets('valid capture creates an explicitly local-only typed draft', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 1200));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
