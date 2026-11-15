@@ -1,6 +1,5 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Metra.Api.Domain.Stations;
 
 namespace Metra.Api.Features.Stations;
@@ -142,8 +141,6 @@ public sealed class SupabaseGreenfieldStationDirectoryReader(
                     var location = locations[0];
                     Copy(location, writer, "latitude");
                     Copy(location, writer, "longitude");
-                    Copy(location, writer, "elevation_m", "location_elevation_m");
-                    Copy(location, writer, "timezone_name", "location_timezone_name");
                     Copy(location, writer, "location_source");
                     Copy(location, writer, "horizontal_accuracy_m");
                 }
