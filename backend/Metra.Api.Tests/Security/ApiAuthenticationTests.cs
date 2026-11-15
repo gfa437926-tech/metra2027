@@ -38,6 +38,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             "SupabaseObservationQueueService",
             "SupabaseObservationArchiveService",
             "SupabaseStationDirectoryService",
+            "SupabaseGreenfieldStationDirectoryReader",
             "SupabaseStationCatalogueReviewService",
             "SupabaseRegistrationReviewService",
             "SupabaseRegistrationSubmissionService",
@@ -228,6 +229,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations")]
+    [InlineData("/api/v2/stations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
@@ -246,6 +248,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [Theory]
     [InlineData("/api/v1/stations")]
     [InlineData("/api/v1/stations?limit=500&offset=0")]
+    [InlineData("/api/v2/stations")]
     public async Task Station_directory_requires_authentication(string path)
     {
         using var response = await _client.GetAsync(path);
