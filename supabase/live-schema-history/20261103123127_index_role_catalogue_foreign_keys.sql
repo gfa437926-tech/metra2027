@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS authority_memberships_role_catalogue_idx ON public.authority_memberships (membership_role_code); CREATE INDEX IF NOT EXISTS station_assignments_role_catalogue_idx ON public.station_assignments (assignment_role_code);
