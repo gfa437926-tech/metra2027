@@ -21,8 +21,16 @@ public sealed class SupabaseStationDirectoryService(
 {
     private readonly string? _url = configuration["Supabase:Url"];
     private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
+    private readonly bool _legacyAdapterExplicitlyEnabled =
+        configuration.GetValue<bool>("Features:LegacyStationDirectoryEnabled");
 
+    // This adapter still targets the retired public.station_catalogue schema and
+    // uses service_role (BYPASSRLS). Keep it disabled by default. It may only be
+    // enabled in an explicitly isolated legacy compatibility environment; the
+    // greenfield station directory must use the reviewed catalog.* contract and
+    // a caller-scoped least-privilege identity.
     public bool IsConfigured =>
+        _legacyAdapterExplicitlyEnabled &&
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
