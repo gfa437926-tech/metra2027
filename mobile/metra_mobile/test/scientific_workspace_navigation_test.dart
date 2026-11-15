@@ -55,6 +55,7 @@ void main() {
     expect(find.textContaining('السجل الورقي'), findsOneWidget);
     expect(find.textContaining('المسجل الميكانيكي'), findsOneWidget);
     expect(find.textContaining('الرصد الإلكتروني'), findsOneWidget);
+    await tester.ensureVisible(find.text('الصورة والحقيقة'));
     await tester.tap(find.text('الصورة والحقيقة'));
     await tester.pumpAndSettle();
     expect(find.text('مطابقة الصورة مع البيانات المرجعية'), findsOneWidget);
@@ -103,12 +104,15 @@ void main() {
     ));
     expect(find.text('إدارة الأجهزة والمعايرة'), findsOneWidget);
     expect(find.text('تعريف جهاز أو أداة رصد'), findsOneWidget);
+    await tester.ensureVisible(find.text('التوزيع بالمحطات'));
     await tester.tap(find.text('التوزيع بالمحطات'));
     await tester.pumpAndSettle();
     expect(find.text('ربط الجهاز بمحطة'), findsOneWidget);
+    await tester.ensureVisible(find.text('المعايرة'));
     await tester.tap(find.text('المعايرة'));
     await tester.pumpAndSettle();
     expect(find.text('سجل المعايرة'), findsOneWidget);
+    await tester.ensureVisible(find.text('الصيانة'));
     await tester.tap(find.text('الصيانة'));
     await tester.pumpAndSettle();
     expect(find.text('طلبات الصيانة'), findsOneWidget);
