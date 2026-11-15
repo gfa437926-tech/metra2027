@@ -334,11 +334,11 @@ public sealed class RecorderImageUploadIntakeServiceTests
         }
 
         public Task<Stream> OpenQuarantinedReadAsync(
-            Guid assetId, CancellationToken cancellationToken) =>
+            Guid assetId, Guid uploadAttemptId, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
         public Task PromoteAcceptedAsync(
-            Guid assetId, string verifiedSha256,
+            Guid assetId, Guid uploadAttemptId, string verifiedSha256,
             CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
