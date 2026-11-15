@@ -46,7 +46,7 @@ flutter build ios \
 
 The native app includes dedicated RTL workspaces for:
 
-- **Records archive and image audit:** paper records and mechanical instruments (Thermograph, Hygrograph, Barograph, Pluviograph), image-review workflow, OCR/curve-digitization review surfaces, three-source comparison (paper / mechanical / electronic) and quality approval.
+- **Records archive and image audit:** paper records and mechanical instruments (Thermograph, Hygrograph, Barograph, Pluviograph), image-review workflow, OCR/curve-digitization review surfaces, three-source comparison (paper / mechanical / electronic), image-vs-ground-truth comparison and quality approval.
 - **Climate homogenization:** CLIMATOL job preparation, time-series exploration, breakpoint and reference-station review, corrected-series versioning and climatology report surfaces.
 - **AI lifecycle:** dataset and annotation management, leakage-aware train/validation/test preparation, experiment setup, evaluation, model registry, approval and monitoring.
 - **Instrument lifecycle:** instrument inventory, station deployments, calibration certificates, maintenance workflow and service status.
