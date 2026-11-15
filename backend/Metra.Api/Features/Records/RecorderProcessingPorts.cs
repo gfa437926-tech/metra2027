@@ -76,10 +76,14 @@ public static class RecordImageAcceptancePolicy
         return new(RecordImageAcceptanceAction.Accept, "image_security_checks_passed");
     }
 
-    private static bool IsSafeScannerIdentity(string value) =>
+    private static bool IsSafeScannerIdentity(string? value) =>
         !string.IsNullOrWhiteSpace(value) &&
         value.Length <= 100 &&
-        !value.Any(char.IsControl);
+        value.All(character =>
+            character is >= 'a' and <= 'z' or
+                >= 'A' and <= 'Z' or
+                >= '0' and <= '9' or
+                '.' or '_' or ':' or '-');
 }
 
 /// <summary>
