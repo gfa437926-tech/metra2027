@@ -142,3 +142,11 @@
 - Added fail-closed validation for required identifiers and bounded ASCII token metadata; control characters, free-form text and unbounded values are rejected.
 - Added unit tests for missing IDs, unsafe correlation values, noncanonical transition values and free-form reason text.
 - This remains a provider-neutral contract. No audit database table, provider registration or production write path is enabled by this change.
+
+
+### Recorder image upload orchestration (code contract)
+
+- `RecorderImageUploadIntakeService` now composes the existing upload primitives into a fail-closed application sequence: authenticate actor, authorize capture/asset/station scope, read current lifecycle state, bounded-read the stream, validate filename/content signature/media type/SHA-256, write only to private quarantine, validate the storage adapter's returned asset ID/length/hash/media type and digest equality, then conditionally record `AwaitingUpload → UploadedQuarantined`.
+- The state-store port must commit the expected-state compare-and-set and immutable audit event atomically. A failed storage-result check or state race triggers a quarantine-object rollback request; expiry cleanup is a distinct operation.
+- Tests cover denied access before state lookup, successful quarantine handoff, digest mismatch cleanup and compare-and-set conflict cleanup.
+- This closes the application orchestration contract only. The service is not registered or exposed, and there is no production object store, scanner, persistence adapter, endpoint, retry worker or deployment secret configuration. Production activation remains blocked on approved schema, real provider integration, cleanup/retention guarantees and integration/security testing.
