@@ -58,6 +58,10 @@ public static class RecordImageAcceptancePolicy
         if (inspection.Verdict == RecordImageScanVerdict.ThreatDetected)
             return new(RecordImageAcceptanceAction.Reject, "content_threat_detected");
 
+        // Unknown enum values must never fall through as a clean verdict.
+        if (inspection.Verdict != RecordImageScanVerdict.Clean)
+            return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_result_unknown");
+
         if (string.IsNullOrWhiteSpace(inspection.ScannerName) ||
             string.IsNullOrWhiteSpace(inspection.ScannerVersion))
             return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_identity_missing");
