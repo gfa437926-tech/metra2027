@@ -27,8 +27,8 @@ public static class RecordImageBoundedStreamReader
         var chunk = new byte[Math.Min(BufferSize, maximumBytes + 1)];
         while (true)
         {
-            var remainingIncludingOverflowByte = maximumBytes + 1 - (int)buffer.Length;
-            var requested = Math.Min(chunk.Length, remainingIncludingOverflowByte);
+            var remainingIncludingOverflowByte = (long)maximumBytes + 1 - buffer.Length;
+            var requested = (int)Math.Min(chunk.Length, remainingIncludingOverflowByte);
             var read = await source.ReadAsync(
                 chunk.AsMemory(0, requested), cancellationToken);
 
