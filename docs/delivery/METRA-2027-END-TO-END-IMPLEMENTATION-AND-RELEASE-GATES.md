@@ -156,3 +156,8 @@
 - A confirmed state conflict permits quarantine rollback. `OutcomeUnknown` must preserve the object in private quarantine and return a reconciliation-required result; a provider timeout or lost response must never be misreported as a definite conflict.
 - A reconciler must compare the durable asset row, audit transaction and object metadata before deciding whether to retain, resume or clean up the staged object. No speculative deletion is allowed.
 - Unit tests verify that the unknown-commit path does not delete the quarantined object.
+
+### Concurrent recorder upload isolation
+- Every upload receives a server-generated attempt identifier; the quarantine provider writes to an immutable object key scoped by both asset ID and attempt ID.
+- Returned metadata must echo the exact attempt ID. Cleanup deletes only that attempt object, never a shared asset-level quarantine key, preventing one concurrent request from overwriting or deleting another request's evidence.
+- The durable asset row records the committed attempt/object reference. Concurrency and replay tests must prove stale attempts cannot replace the winning upload.
