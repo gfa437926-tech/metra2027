@@ -14,7 +14,7 @@ The archive spans `20261102154652` through `20261114204951`.
 
 These files are a forensic/source-recovery snapshot, **not** the canonical Supabase CLI migration directory. Do not run `supabase db push`, `supabase migration up`, or otherwise apply this directory. Some historical migrations are context-dependent and include destructive operations against application-owned objects in the new project's `public` schema. Their presence here records what the live database says was applied; it is not approval to replay them.
 
-The repository's existing `supabase/migrations/` directory contains a different, incomplete set of five files. Some of those files do not byte-match the live SQL for their recorded version, and two filenames use timestamps that differ from the corresponding live migration version. Preserve both sets until a reviewed reconciliation determines the canonical history.
+The repository's active `supabase/migrations/` directory currently contains five files, all now byte-identical to their corresponding recovered live SQL statements. Two filenames were corrected to use the exact live migration version identifiers. This aligns the tracked subset, but it does not make the active directory complete: 81 applied migrations remain only in this archive. The full archive remains separate until a reviewed reconciliation determines the canonical history and a clean replay has been validated.
 
 ## Reconciliation procedure
 
