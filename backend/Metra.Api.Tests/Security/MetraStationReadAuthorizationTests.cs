@@ -137,6 +137,54 @@ public sealed class MetraStationReadAuthorizationTests
         Assert.False(decision.Allowed);
     }
 
+    [Fact]
+    public void Station_scope_cannot_use_global_read_permission_even_for_own_station()
+    {
+        var actor = Actor(Grant("observer", "station", StationA, "stations.read_all"));
+
+        var decision = MetraStationReadAuthorization.Evaluate(actor, StationA, "stations.read_all");
+
+        Assert.False(decision.Allowed);
+    }
+
+    [Fact]
+    public void Global_read_grant_with_station_identifier_is_rejected_as_ambiguous()
+    {
+        var grant = Grant("auditor", "global_read", StationA, "stations.read_all");
+        var actor = Actor(grant);
+
+        var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
+
+        Assert.False(decision.Allowed);
+        Assert.Equal(MetraAuthorizationOutcome.DeniedScopeMismatch, decision.Outcome);
+    }
+
+    [Fact]
+    public void Global_read_grant_with_organization_identifier_is_rejected_as_ambiguous()
+    {
+        var grant = Grant("network_department_head", "global_read", null, "stations.read_all") with
+        {
+            OrganizationId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
+        };
+        var actor = Actor(grant);
+
+        var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
+
+        Assert.False(decision.Allowed);
+        Assert.Equal(MetraAuthorizationOutcome.DeniedScopeMismatch, decision.Outcome);
+    }
+
+    [Fact]
+    public void Station_scope_accepts_only_station_read_permissions()
+    {
+        var actor = Actor(Grant("station_manager", "station", StationA, "observations.read_station"));
+
+        Assert.True(MetraStationReadAuthorization.Evaluate(
+            actor, StationA, "observations.read_station").Allowed);
+        Assert.False(MetraStationReadAuthorization.Evaluate(
+            actor, StationA, "observations.read_all").Allowed);
+    }
+
     private static MetraAuthorizationSnapshot Actor(params MetraAuthorizationGrant[] grants) =>
         new("validated-subject", true, true, grants);
 
