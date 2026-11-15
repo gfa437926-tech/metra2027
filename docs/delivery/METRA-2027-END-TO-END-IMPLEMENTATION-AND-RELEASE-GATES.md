@@ -136,3 +136,9 @@
 - Empty capture or accepted-asset identifiers are rejected before calling authorization, asset-state or outbox providers.
 - This preflight validates request shape only and does not reveal resource existence; authorized resource-state lookup remains ordered after station/capture/asset authorization.
 - Unit tests assert zero dependency calls for either malformed identifier.
+
+### Recorder audit attribution hardening
+- Recorder audit events now carry the validated actor subject, asset, optional capture/job IDs, correlation ID, transition and safe reason code.
+- Added fail-closed validation for required identifiers and bounded ASCII token metadata; control characters, free-form text and unbounded values are rejected.
+- Added unit tests for missing IDs, unsafe correlation values, noncanonical transition values and free-form reason text.
+- This remains a provider-neutral contract. No audit database table, provider registration or production write path is enabled by this change.
