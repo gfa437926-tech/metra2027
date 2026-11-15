@@ -34,6 +34,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
 
     await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
+    await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
     await tester.tap(find.byKey(const Key('prepare-capture-draft')));
     await tester.pumpAndSettle();
     expect(find.text('هذا المعرف مطلوب'), findsNWidgets(2));
@@ -60,7 +61,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('أُعدّت مسودة محلية فقط'), findsOneWidget);
-    expect(find.textContaining(stationId), findsOneWidget);
+    expect(find.textContaining('النوع: barograph · الفترة:'), findsOneWidget);
     expect(find.textContaining('لم تُرسل إلى الخادم'), findsOneWidget);
   });
 }
