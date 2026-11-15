@@ -12,3 +12,22 @@
 
 # Local deployment output
 /artifacts/
+
+# Local secrets and environment-specific configuration
+.env
+.env.*
+!.env.example
+!.env.template
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.template
+appsettings.*.local.json
+appsettings.*.secrets.json
+secrets/
+
+# Private keys and local certificates
+*.key
+*.pem
+*.p12
+*.pfx
