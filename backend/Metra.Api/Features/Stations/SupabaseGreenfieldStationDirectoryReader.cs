@@ -47,7 +47,7 @@ public sealed class SupabaseGreenfieldStationDirectoryReader(
 
         var select = "id,station_code,name_ar,name_en,wmo_identifier,approval_status," +
             "operational_status,elevation_m,timezone_name," +
-            "station_types(type_code,name_ar,name_en)," +
+            "station_types!inner(type_code,name_ar,name_en)," +
             "station_locations(latitude,longitude,elevation_m,timezone_name," +
             "location_source,horizontal_accuracy_m,valid_to)";
         var query = "select=" + Uri.EscapeDataString(select) +
