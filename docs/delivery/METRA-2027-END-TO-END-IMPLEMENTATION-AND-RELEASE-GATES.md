@@ -208,3 +208,5 @@
 - It explicitly records the station projection differences (no legacy `is_demo`, `local_station_code`, or `station_coordinates` fields) and the need to use validity-bounded `catalog.station_locations`.
 - This is documentation/design only. The old .NET adapters still reference absent legacy public objects; the new contracts are not deployed, no DDL/grants/data were changed, and no hosted migration is authorized.
 - Next engineering work must implement typed greenfield .NET adapters against the disposable canonical schema and replace routine service-role calls with an approved least-privilege caller identity before enabling operational Flutter workflows.
+
+- CI scope clarification: the current Path N isolated PostgreSQL build still applies the repository's legacy `public.metra_*` baseline, while transfer-pack end-to-end tests use synthetic fixtures. These checks do not certify replay of the normalized greenfield `iam/catalog/ref/observations` schema. A separate greenfield empty-database replay job is required after its canonical migration sequence is reviewed and approved.
