@@ -132,7 +132,7 @@ Required transformation: resolve role codes to `iam.roles.id`, and resolve organ
 ### Scientific observations
 
 - `ref.observation_types`: `type_code`, `schema_version`, `cadence_code`, `is_active`.
-- `ref.parameters`: `parameter_code`, `value_kind`, `canonical_unit_id`, `precision_scale`, `definition_version`, `is_active`.
+- `ref.parameters`: `parameter_code`, `value_kind` (database check allows `decimal`, `integer`, `text`, `boolean`), `canonical_unit_id`, `precision_scale` (nullable, otherwise 0–12), `definition_version`, `is_active`.
 - `ref.units`: `unit_code`, `symbol`, `dimension_code`, bilingual names and `is_active`.
 - `observations.submissions`: `station_id`, `author_user_id`, `observation_type_id`, `observed_at`, `timezone_name`, `submission_state`, `revision_number`, `idempotency_key`, `submitted_at`.
 - `observations.values`: `submission_id`, `parameter_id`, `value_kind`, typed value columns (`value_decimal`, `value_integer`, `value_text`, `value_boolean`), `unit_id`, `sequence_number`, `quality_state`.
@@ -160,3 +160,7 @@ Added a database-independent typed value mapper:
 The mapper accepts a server-loaded parameter/unit catalogue and a strict JSON array, then produces the normalized `observations.values` typed row shape. It enforces active parameter/unit definitions, supported typed value kinds, decimal scale, integer range/type, text bounds/control-character rejection, boolean type, sequence bounds, duplicate parameter/sequence rejection, and canonical-unit identity. It rejects alternate units rather than silently storing an unconverted magnitude because the inspected schema does not yet define a conversion graph.
 
 This is a pure domain component and test seam only. It is **not wired to an endpoint or database adapter**, does not resolve catalogue data, does not persist observations, and does not make observation submission live. The API adapter still needs an approved schema-versioned payload contract, catalogue repository, unit-conversion policy, authorization boundary, idempotent transaction and audit operation.
+
+### Mapper/schema alignment correction
+
+The live database check constraint on `ref.parameters.precision_scale` permits null or values from 0 through 12. The mapper and its catalogue validation now enforce that exact bound (not a generic .NET decimal maximum). This constraint was confirmed from the live schema metadata in a read-only inspection; no database mutation was required.
