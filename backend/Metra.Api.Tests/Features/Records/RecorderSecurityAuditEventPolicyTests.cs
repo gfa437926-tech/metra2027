@@ -47,7 +47,7 @@ public sealed class RecorderSecurityAuditEventPolicyTests
     [Theory]
     [InlineData("asset accepted")]
     [InlineData("asset\naccepted")]
-    [InlineData("x")]
+    [InlineData("")]
     public void Rejects_unsafe_or_noncanonical_transition_codes(string transition)
     {
         Assert.False(RecorderSecurityAuditEventPolicy.IsValid(
