@@ -46,7 +46,10 @@ BEGIN
     JOIN iam.roles r ON r.id = rp.role_id
     JOIN iam.permissions p ON p.id = rp.permission_id
     WHERE r.role_code IN ('auditor', 'network_department_head')
-      AND p.permission_code !~ '(^|\\.)(read|read_all|read_station|read_own)$'
+      AND p.permission_code NOT LIKE '%.read'
+      AND p.permission_code NOT LIKE '%.read_all'
+      AND p.permission_code NOT LIKE '%.read_station'
+      AND p.permission_code NOT LIKE '%.read_own'
   ) THEN
     RAISE EXCEPTION 'global_read_roles_must_remain_read_only';
   END IF;
