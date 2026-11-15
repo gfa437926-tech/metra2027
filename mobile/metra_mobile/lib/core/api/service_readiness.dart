@@ -9,15 +9,15 @@ class MetraServiceReadiness {
   /// Supabase Auth is used for session tokens; API calls use Bearer to .NET.
   static const authentication = MetraDataSourceMode.liveApi;
 
-  /// Station directory requires configured METRA_API_BASE_URL.
-  static const stationDirectory = MetraDataSourceMode.liveApi;
-
-  /// Client calls live .NET endpoints; unavailable backends surface 401/403/503.
-  static const stationAudit = MetraDataSourceMode.liveApi;
-  static const observationQueue = MetraDataSourceMode.liveApi;
-  static const stationUsers = MetraDataSourceMode.liveApi;
-  static const registrationRead = MetraDataSourceMode.liveApi;
-  static const authorityAccessRead = MetraDataSourceMode.liveApi;
+  /// The HTTP endpoints exist, but the current adapters still target absent
+  /// legacy public tables/RPCs. Keep these workflows gated until greenfield
+  /// persistence contracts and least-privilege integration tests are deployed.
+  static const stationDirectory = MetraDataSourceMode.gated;
+  static const stationAudit = MetraDataSourceMode.gated;
+  static const observationQueue = MetraDataSourceMode.gated;
+  static const stationUsers = MetraDataSourceMode.gated;
+  static const registrationRead = MetraDataSourceMode.gated;
+  static const authorityAccessRead = MetraDataSourceMode.gated;
 
   /// The .NET submission endpoint exists, but the scientific-contract feature gate
   /// is not approved and the required atomic RPC may not be deployed hosted.
@@ -33,6 +33,6 @@ class MetraServiceReadiness {
   static const climatol = MetraDataSourceMode.mock;
   static const forecastCentres = MetraDataSourceMode.mock;
 
-  /// Station operational audit via .NET audit-log (not observation provenance).
-  static const electronicAuditUi = MetraDataSourceMode.liveApi;
+  /// Station operational audit endpoint is not yet mapped to the greenfield audit schema.
+  static const electronicAuditUi = MetraDataSourceMode.gated;
 }
