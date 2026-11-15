@@ -162,3 +162,8 @@ The application service now computes the canonical request fingerprint after act
 - Scanner name and version are bounded to 100 characters and restricted to canonical ASCII tokens: letters, digits, dot, underscore, colon and hyphen.
 - Whitespace, path separators, Unicode lookalikes and control characters remain quarantined rather than being accepted as scanner provenance.
 - This is input-shape validation only; it does not authenticate a scanner binary or replace a trusted scanner deployment/attestation mechanism.
+
+
+### Scanner reason-code validation
+
+Optional scanner reason codes are treated as untrusted metadata. If present, they must use the same bounded canonical ASCII token grammar as scanner identity fields; invalid values keep the asset quarantined. The reason code is not used as a free-form log message. This check does not establish scanner trust or malware verdict authenticity.
