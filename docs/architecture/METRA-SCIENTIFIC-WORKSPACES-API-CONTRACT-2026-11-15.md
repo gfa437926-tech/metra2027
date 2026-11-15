@@ -195,3 +195,14 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 - It rejects unreadable streams, invalid limits, empty content and any stream exceeding the configured limit; oversized results never return partial bytes as accepted content.
 - Cancellation is propagated to the underlying asynchronous read. Tests cover non-seekable streams, exact-limit input, one-byte overflow, empty/unreadable streams, invalid limits and cancellation.
 - This primitive only performs bounded in-memory intake. It is not an HTTP upload endpoint, malware scanner, durable quarantine store or authorization boundary; callers must pass the resulting bytes through the existing signature, filename and digest validator before storage.
+
+
+### Authorized recorder image quarantine intake orchestration
+
+- Added `RecorderImageUploadIntakeService` to define the application-level order for an upload: server-derived actor → capture/asset/station-scope authorization → authoritative asset-state lookup → bounded stream read → filename/signature/MIME/SHA-256 validation → private quarantine write → adapter-result and stored-digest verification → conditional state update with append-only audit event.
+- Authorization is evaluated before reading asset state, preventing unauthorized callers from probing asset existence or lifecycle.
+- Only `AwaitingUpload → UploadedQuarantined` can be recorded by the intake store. The store contract requires the expected-state compare-and-set and audit insert to be atomic.
+- If storage metadata or digest verification fails, or the state compare-and-set loses a race, the service requests deletion of the just-written quarantined object. Expiry cleanup remains a separate lifecycle operation.
+- Added an explicit `DeleteQuarantinedAsync` rollback port distinct from scheduled expired-object cleanup.
+- Added service tests for authorization ordering, successful quarantine handoff with audit attribution, stored-digest mismatch cleanup and lifecycle compare-and-set conflict cleanup.
+- Runtime boundary: this service is not registered in dependency injection and has no HTTP endpoint, storage adapter, scanner, database provider or deployment configuration. Provider implementations must enforce private storage, bounded I/O/timeouts, atomic state+audit persistence, cleanup retries and expiry handling before production activation.
