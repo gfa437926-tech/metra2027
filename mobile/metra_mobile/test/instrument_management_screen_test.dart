@@ -41,12 +41,15 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: InstrumentManagementScreen()),
     ));
+    await tester.ensureVisible(find.text('التوزيع بالمحطات'));
     await tester.tap(find.text('التوزيع بالمحطات'));
     await tester.pumpAndSettle();
     expect(find.text('ربط الجهاز بمحطة'), findsOneWidget);
+    await tester.ensureVisible(find.text('المعايرة'));
     await tester.tap(find.text('المعايرة'));
     await tester.pumpAndSettle();
     expect(find.text('سجل المعايرة'), findsOneWidget);
+    await tester.ensureVisible(find.text('الصيانة'));
     await tester.tap(find.text('الصيانة'));
     await tester.pumpAndSettle();
     expect(find.text('طلبات الصيانة'), findsOneWidget);
