@@ -105,10 +105,12 @@ public interface IRecorderQuarantineStorage
 
     Task<Stream> OpenQuarantinedReadAsync(
         Guid assetId,
+        Guid uploadAttemptId,
         CancellationToken cancellationToken);
 
     Task PromoteAcceptedAsync(
         Guid assetId,
+        Guid uploadAttemptId,
         string verifiedSha256,
         CancellationToken cancellationToken);
 
