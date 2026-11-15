@@ -69,8 +69,8 @@ public sealed class RecordImageAcceptancePolicyTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("scanner\\nforged")]
-    [InlineData("scanner\\tforged")]
+    [InlineData("scanner\nforged")]
+    [InlineData("scanner\tforged")]
     [InlineData("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")]
     public void Keeps_asset_quarantined_for_invalid_scanner_identity(string scannerName)
     {
