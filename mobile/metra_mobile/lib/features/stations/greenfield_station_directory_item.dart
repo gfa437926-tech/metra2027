@@ -3,6 +3,25 @@
 /// This parser deliberately accepts only the flat stations.directory.v1 contract.
 /// It does not call an API or imply that the backend operation is enabled.
 class GreenfieldStationDirectoryItem {
+  static const _allowedProperties = <String>{
+    'id',
+    'station_code',
+    'name_ar',
+    'name_en',
+    'wmo_identifier',
+    'station_type_code',
+    'station_type_name_ar',
+    'station_type_name_en',
+    'approval_status',
+    'operational_status',
+    'latitude',
+    'longitude',
+    'elevation_m',
+    'timezone_name',
+    'location_source',
+    'horizontal_accuracy_m',
+  };
+
   const GreenfieldStationDirectoryItem({
     required this.id,
     required this.stationCode,
@@ -43,6 +62,9 @@ class GreenfieldStationDirectoryItem {
 
   factory GreenfieldStationDirectoryItem.fromJson(
       Map<String, dynamic> json) {
+    if (json.keys.any((key) => !_allowedProperties.contains(key))) {
+      throw const FormatException('unknown_station_directory_property');
+    }
     String requiredText(String key, {int maxLength = 160}) {
       final value = json[key];
       if (value is! String ||
@@ -136,7 +158,8 @@ class GreenfieldStationDirectoryItem {
       final item = GreenfieldStationDirectoryItem.fromJson(
         Map<String, dynamic>.from(row),
       );
-      if (!ids.add(item.id) || !codes.add(item.stationCode)) {
+      if (!ids.add(item.id.toLowerCase()) ||
+          !codes.add(item.stationCode.toLowerCase())) {
         throw const FormatException('duplicate_station_identity');
       }
       items.add(item);
