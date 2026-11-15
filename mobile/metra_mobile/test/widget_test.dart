@@ -22,66 +22,28 @@ void main() {
     expect(find.textContaining('service_role'), findsOneWidget);
   });
 
-  testWidgets('station directory displays classic and automatic records together', (tester) async {
+  testWidgets('station directory remains fail-closed until greenfield API is ready', (tester) async {
+    var requests = 0;
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-token',
-      client: MockClient((_) async => http.Response.bytes(utf8.encode(jsonEncode([
-        {
-          'id': '11111111-1111-4111-8111-111111111111',
-          'local_station_code': 'CL-01',
-          'name_ar': 'محطة كلاسيكية',
-          'name_en': 'Classic station',
-          'station_type': 'classic',
-          'operational_status': 'unverified',
-          'approval_status': 'pending',
-          'is_demo': false,
-          'elevation_m': 1150.0,
-          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7, 'coordinate_source': 'surveyed', 'accuracy_m': 3.2}],
-        },
-        {
-          'id': '22222222-2222-4222-8222-222222222222',
-          'local_station_code': 'AU-01',
-          'name_ar': 'محطة آلية',
-          'name_en': 'Automatic station',
-          'station_type': 'automatic',
-          'operational_status': 'active',
-          'approval_status': 'approved',
-          'is_demo': false,
-          'station_coordinates': [{'latitude': 25.1, 'longitude': 47.1}],
-        },
-      ])), 200)),
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
     );
-    String? selected;
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: StationDirectoryScreen(
-          api: api,
-          onStationSelected: (id) => selected = id,
-        ),
+        body: StationDirectoryScreen(api: api),
       ),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('القائمة'));
-    await tester.pumpAndSettle();
-    expect(find.text('محطة كلاسيكية'), findsOneWidget);
-    expect(find.text('محطة آلية'), findsOneWidget);
-    await tester.tap(find.byTooltip('تفاصيل المحطة').first);
-    await tester.pumpAndSettle();
-    expect(find.text('الارتفاع عن سطح البحر'), findsOneWidget);
-    expect(find.text('1150.0 م'), findsOneWidget);
-    expect(find.text('surveyed'), findsOneWidget);
-    expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
-    Navigator.of(tester.element(find.byType(StationDirectoryScreen))).pop();
-    await tester.pumpAndSettle();
-    final automaticStationTile = find.ancestor(
-      of: find.text('محطة آلية'),
-      matching: find.byType(ListTile),
-    );
-    await tester.tap(automaticStationTile);
-    expect(selected, '22222222-2222-4222-8222-222222222222');
+    expect(find.text('تعذر تحميل دليل المحطات'), findsOneWidget);
+    expect(find.textContaining('قاعدة البيانات الجديدة'), findsOneWidget);
+    expect(requests, 0);
     api.close();
   });
+
   testWidgets('login exposes password recovery and validates email before request', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: MetraLoginScreen()));
     expect(find.text('نسيت كلمة المرور؟'), findsOneWidget);
@@ -121,65 +83,26 @@ void main() {
   });
 
 
-  testWidgets('forecast centre compares station catalogue metadata without inventing live readings', (tester) async {
+  testWidgets('forecast centre stays visible but does not call legacy station API', (tester) async {
+    var requests = 0;
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-token',
-      client: MockClient((_) async => http.Response.bytes(utf8.encode(jsonEncode([
-        {
-          'id': '11111111-1111-4111-8111-111111111111',
-          'local_station_code': 'ST-01',
-          'name_ar': 'محطة الساحل',
-          'name_en': 'Coastal station',
-          'station_type': 'synoptic',
-          'operational_status': 'active',
-          'approval_status': 'approved',
-          'is_demo': false,
-          'elevation_m': 25.0,
-          'station_coordinates': [{'latitude': 35.5, 'longitude': 35.8, 'coordinate_source': 'surveyed', 'accuracy_m': 4.0}],
-        },
-        {
-          'id': '22222222-2222-4222-8222-222222222222',
-          'local_station_code': 'ST-02',
-          'name_ar': 'محطة الجبل',
-          'name_en': 'Mountain station',
-          'station_type': 'classic',
-          'operational_status': 'active',
-          'approval_status': 'approved',
-          'is_demo': false,
-          'elevation_m': 1200.0,
-          'station_coordinates': [{'latitude': 36.0, 'longitude': 36.2, 'coordinate_source': 'surveyed', 'accuracy_m': 5.0}],
-        },
-      ])), 200)),
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
     );
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: ForecastCentreScreen(api: api)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
+    expect(find.text('دليل المحطات غير مفعّل بعد'), findsOneWidget);
     expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
-    final firstChoice = find.byType(CheckboxListTile).at(0);
-    await tester.ensureVisible(firstChoice);
-    await tester.tap(firstChoice);
-    await tester.pumpAndSettle();
-    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile).at(0)).value, isTrue);
-    final secondChoice = find.byType(CheckboxListTile).at(1);
-    await tester.ensureVisible(secondChoice);
-    await tester.tap(secondChoice);
-    await tester.pumpAndSettle();
-    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile).at(1)).value, isTrue);
-    expect(find.text('المقارنة الجغرافية'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('1200.0 م'),
-      240,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('1200.0 م'), findsOneWidget);
-    expect(find.text('المسافة من المرجع'), findsWidgets);
+    expect(requests, 0);
     api.close();
   });
-
 
   testWidgets('records workspace exposes archive, image review and triple comparison', (tester) async {
     tester.view.physicalSize = const Size(1000, 900);
