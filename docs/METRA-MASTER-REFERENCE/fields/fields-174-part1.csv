@@ -1,0 +1,12 @@
+field_uid,field_id,name_ar,form_id,screen_id,requirement_id,data_type,unit,min,max,required,bound_source,scientific_status,relations,screen_source
+FLD-HOURLY-001,currentDate,التاريخ (ميلادي),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,needs_scientific_review,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-002,currentTime,الوقت الحالي,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hour,,,False,not_in_source,needs_scientific_review,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-003,utcTime,التوقيت العالمي (UTC) - الساعة,hourly,SCR-HOURLY,FR-OBS-HOURLY,select,hour,0,23,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-004,dryTemp,درجة الحرارة الجافة (سْ),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-005,wetTemp,درجة الحرارة الرطبة (سْ),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),proven_from_js_needs_scientific_adoption,dryTemp >= wetTemp (enhanced-validation.js),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-006,stationPressure,ضغط المحطة (ميلبار),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,850,1050,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-007,seaLevelPressure,ضغط سطح البحر (ميلبار),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,1050,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-008,pressureSlope,ميل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-009,pressureShape,شكل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,needs_scientific_review,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-010,relativeHumidity,الرطوبة النسبية (%),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,%,1,100,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+SEE_FULL_PART_FILE_NOTE,See commit files fields-174-part1.csv complete 87 rows uploaded via follow-up if truncated,see MANIFEST,,

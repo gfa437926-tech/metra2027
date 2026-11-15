@@ -1,2 +1,2 @@
-# SCR-INSTRUMENTS — الأجهزة
-instrument_management_screen.dart · UI sections · أعطال جزئية
+# SCR-INSTRUMENTS
+FR-FAULT-EQ · FR-INSTRUMENTS · 15 حقل FLD-FAULT_EQUIPMENT-* · UI sections · API-FAULT-* مقترح غير منفذ

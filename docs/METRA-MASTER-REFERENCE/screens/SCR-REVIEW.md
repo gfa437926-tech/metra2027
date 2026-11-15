@@ -1,2 +1,2 @@
-# SCR-REVIEW — مراجعة الرصدات
-observation_review_screen.dart · API-OBS-QUEUE + DECISION · UI + gated
+# SCR-REVIEW
+API-OBS-QUEUE · API-OBS-DECISION · UI + gated · Head/Auditor
