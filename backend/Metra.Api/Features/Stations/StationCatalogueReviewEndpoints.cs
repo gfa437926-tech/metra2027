@@ -59,8 +59,13 @@ public sealed class SupabaseStationCatalogueReviewService(IHttpClientFactory cli
 {
     private readonly string? _url = configuration["Supabase:Url"];
     private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
+    private readonly bool _legacyAdapterExplicitlyEnabled =
+        configuration.GetValue<bool>("Features:LegacyStationCatalogueReviewEnabled");
 
+    // This RPC belongs to the legacy schema and uses service_role (BYPASSRLS).
+    // Keep it unavailable unless an isolated legacy compatibility environment opts in.
     public bool IsConfigured =>
+        _legacyAdapterExplicitlyEnabled &&
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
