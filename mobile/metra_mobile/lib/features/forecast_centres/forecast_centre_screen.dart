@@ -30,7 +30,12 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
 
   void _reload() {
     setState(() {
-      _stationsFuture = widget.api.getAllStationDirectory();
+      // Defer the request by one microtask so FutureBuilder subscribes before
+      // an immediately-failing readiness gate can complete.
+      _stationsFuture = Future<List<StationDirectoryItem>>.delayed(
+        Duration.zero,
+        widget.api.getAllStationDirectory,
+      );
     });
   }
 
