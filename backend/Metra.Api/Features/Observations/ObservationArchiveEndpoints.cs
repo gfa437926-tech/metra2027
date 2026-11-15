@@ -158,7 +158,8 @@ public sealed class SupabaseObservationArchiveService(
         CancellationToken cancellationToken)
     {
         if (!IsConfigured || actorUserId == Guid.Empty || stationId == Guid.Empty ||
-            limit is < 1 or > 100 || cursor?.Length > 200)
+            limit is < 1 or > 100 || cursor?.Length > 200 ||
+            ObservationArchiveTimeRangeGuard.GetError(fromUtc, toUtc) is not null)
             return null;
 
         var result = await CallRpcAsync(
