@@ -34,7 +34,6 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
 
     await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
-    await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
     await tester.tap(find.byKey(const Key('prepare-capture-draft')));
     await tester.pumpAndSettle();
     expect(find.text('هذا المعرف مطلوب'), findsNWidgets(2));
@@ -42,6 +41,8 @@ void main() {
     await enterValidCapture(tester);
     await tester.enterText(find.byKey(const Key('capture-station-id')), 'not-a-uuid');
     await tester.enterText(find.byKey(const Key('capture-end')), '2025-12-31T00:00:00Z');
+    await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('prepare-capture-draft')));
     await tester.pumpAndSettle();
     expect(find.text('أدخل UUID صالحاً'), findsOneWidget);
