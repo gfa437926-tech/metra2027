@@ -43,14 +43,32 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return _state(
-            icon: Icons.cloud_off_outlined,
-            title: 'تعذر تحميل دليل المحطات',
-            message: 'تحقق من الاتصال وصلاحية الوصول، ثم أعد المحاولة.',
-            action: FilledButton.tonalIcon(
-              onPressed: _reload,
-              icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة'),
+          final error = snapshot.error;
+          final isNotReady = error is MetraApiException &&
+              error.code == 'station_directory_not_ready';
+          return Directionality(
+            textDirection: TextDirection.rtl,
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _intro(),
+                const SizedBox(height: 12),
+                _state(
+                  icon: Icons.cloud_off_outlined,
+                  title: isNotReady
+                      ? 'دليل المحطات غير مفعّل بعد'
+                      : 'تعذر تحميل دليل المحطات',
+                  message: isNotReady
+                      ? 'تم إيقاف الاتصال بالمصدر القديم حمايةً لبيانات METRA. ستظهر المقارنة بعد ربط عقد المحطات الجديد واختبار صلاحياته.'
+                      : 'تحقق من الاتصال وصلاحية الوصول، ثم أعد المحاولة.',
+                  action: FilledButton.tonalIcon(
+                    onPressed: _reload,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('إعادة المحاولة'),
+                  ),
+                ),
+                _liveUnavailable(),
+              ],
             ),
           );
         }
