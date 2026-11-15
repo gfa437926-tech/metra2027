@@ -2,17 +2,12 @@
   "total": 174,
   "unique_field_uid": 174,
   "csv": "fields-174.csv",
-  "per_form_json": [
-    "fields-hourly.json",
-    "fields-daily.json",
-    "fields-agricultural.json",
-    "fields-hourly-climate.json",
-    "fields-rainfall.json",
-    "fields-soil.json",
-    "fields-fault-equipment.json",
-    "fields-fault-telecom.json",
-    "fields-fault-it.json"
-  ],
+  "chunks": ["fields-174-chunk-0.csv", "fields-174-chunk-1.csv", "fields-174-chunk-2.csv", "fields-174-chunk-3.csv", "fields-174-chunk-4.csv"],
+  "json": "fields-174.json",
+  "per_form": ["fields-hourly.json", "fields-daily.json", "fields-agricultural.json", "fields-hourly-climate.json", "fields-rainfall.json", "fields-soil.json", "fields-fault-equipment.json", "fields-fault-telecom.json", "fields-fault-it.json"],
   "verification": "fields-verification.json",
-  "note": "Union of per-form JSON arrays = 174 records. CSV has one row per field."
+  "verify_script": "verify_fields.py",
+  "local_sha256_csv": "638d44a56b469515a35511f405f1b6af9dac14c7b4b68642b4dadb23b0a3d551",
+  "local_sha256_json": "8d5374c49a4314abc699113dfe4cb47bbcd1e78d9215a2d0b785520007df7f61",
+  "note": "Chunk-0 (35 hourly) and chunk-4 (equipment/telecom/IT) are on branch. Full 174 verified locally; remaining chunks 1-3 and single fields-174.csv/json must be present for verify_fields.py OK without local merge. rainfall.json has 7 real records."
 }
