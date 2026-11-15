@@ -13,6 +13,7 @@ import '../observations/hourly_observation_entry_screen.dart';
 import '../observations/observation_review_screen.dart';
 import '../reports/observation_archive_screen.dart';
 import '../reports/reports_hub_screen.dart';
+import '../records/records_review_workspace_screen.dart';
 import '../stations/station_audit_log_screen.dart';
 import '../stations/station_directory_screen.dart';
 
@@ -163,7 +164,7 @@ class _MetraHomeState extends State<MetraHome> {
           ],
         ),
         body: MetraAdaptiveNavigation(
-          selectedIndex: _index.clamp(0, 11),
+          selectedIndex: _index.clamp(0, 12),
           onDestinationSelected: (value) => setState(() => _index = value),
           destinations: const [
             NavigationDestination(
