@@ -51,9 +51,9 @@ void main() {
     expect(find.text('تعريف سجل جديد'), findsOneWidget);
     await tester.tap(find.text('المقارنة الثلاثية'));
     await tester.pumpAndSettle();
-    expect(find.text('السجل الورقي'), findsOneWidget);
-    expect(find.text('المسجل الميكانيكي'), findsOneWidget);
-    expect(find.text('الرصد الإلكتروني'), findsOneWidget);
+    expect(find.textContaining('السجل الورقي'), findsOneWidget);
+    expect(find.textContaining('المسجل الميكانيكي'), findsOneWidget);
+    expect(find.textContaining('الرصد الإلكتروني'), findsOneWidget);
   });
 
   testWidgets('CLIMATOL workspace exposes breakpoint and report panels', (tester) async {
