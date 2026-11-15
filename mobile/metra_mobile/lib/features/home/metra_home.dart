@@ -245,7 +245,7 @@ class _MetraHomeState extends State<MetraHome> {
               label: 'الأجهزة',
             ),
           ],
-          child: IndexedStack(index: _index.clamp(0, 12), children: pages),
+          child: IndexedStack(index: _index.clamp(0, 13), children: pages),
         ),
       ),
     );
