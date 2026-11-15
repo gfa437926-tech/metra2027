@@ -22,7 +22,7 @@ No role assignment is created. A separate trusted approval process must create a
 
 ## Isolated verification
 
-`database/isolated/11_test_station_global_read_roles.sql` verifies the role definition, both roles' explicit global-read permission sets, absence of network-head mutation privileges, and the existing global-scope constraint. The Backend CI Path N job applies the proposal only to its disposable PostgreSQL database and runs this test. It does not apply anything to hosted Supabase.
+`database/isolated/11_bootstrap_greenfield_iam_catalogue.sql` creates a deliberately minimal, disposable fixture matching the inspected IAM table/constraint contract; it is not presented as a full canonical replay. `database/isolated/11_test_station_global_read_roles.sql` verifies the role definition, both roles' explicit global-read permission sets, absence of mutation privileges, and the global-scope constraint. Backend CI applies the fixture, proposal and test only inside a disposable PostgreSQL job. It does not apply anything to hosted Supabase.
 
 ## .NET policy alignment
 
