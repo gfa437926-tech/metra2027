@@ -62,18 +62,24 @@ public static class RecordImageAcceptancePolicy
         if (inspection.Verdict != RecordImageScanVerdict.Clean)
             return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_result_unknown");
 
-        if (string.IsNullOrWhiteSpace(inspection.ScannerName) ||
-            string.IsNullOrWhiteSpace(inspection.ScannerVersion))
+        if (!IsSafeScannerIdentity(inspection.ScannerName) ||
+            !IsSafeScannerIdentity(inspection.ScannerVersion))
             return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_identity_missing");
 
         if (!integrity.Sha256Verified ||
             !integrity.ContentSignatureVerified ||
             !integrity.DimensionsWithinPolicy ||
-            integrity.ActualLength <= 0)
+            integrity.ActualLength <= 0 ||
+            integrity.ActualLength > RecordImageUploadValidator.MaximumBytes)
             return new(RecordImageAcceptanceAction.Reject, "image_integrity_policy_failed");
 
         return new(RecordImageAcceptanceAction.Accept, "image_security_checks_passed");
     }
+
+    private static bool IsSafeScannerIdentity(string value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Length <= 100 &&
+        !value.Any(char.IsControl);
 }
 
 /// <summary>
