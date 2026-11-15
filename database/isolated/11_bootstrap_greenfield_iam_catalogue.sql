@@ -100,6 +100,7 @@ CREATE TABLE iam.role_assignments (
          (scope_type='organization' AND organization_id IS NOT NULL AND unit_id IS NULL AND station_id IS NULL) OR
          (scope_type='unit' AND organization_id IS NOT NULL AND unit_id IS NOT NULL AND station_id IS NULL) OR
          (scope_type='station' AND organization_id IS NOT NULL AND unit_id IS NULL AND station_id IS NOT NULL)),
+  FOREIGN KEY (membership_id) REFERENCES iam.memberships(id) ON DELETE RESTRICT,
   FOREIGN KEY (membership_id, organization_id) REFERENCES iam.memberships(id, organization_id) ON DELETE RESTRICT,
   FOREIGN KEY (station_id, organization_id) REFERENCES catalog.stations(id, owner_organization_id) ON DELETE RESTRICT
 );
