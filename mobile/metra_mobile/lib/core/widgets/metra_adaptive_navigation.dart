@@ -45,13 +45,27 @@ class MetraAdaptiveNavigation extends StatelessWidget {
             );
           }
 
+          final minimumNavigationWidth = destinations.length * 80.0;
+          final navigationWidth = constraints.maxWidth > minimumNavigationWidth
+              ? constraints.maxWidth
+              : minimumNavigationWidth;
+
           return Column(
             children: [
               Expanded(child: child),
-              NavigationBar(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-                destinations: destinations,
+              SizedBox(
+                height: 84,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: navigationWidth,
+                    child: NavigationBar(
+                      selectedIndex: selectedIndex,
+                      onDestinationSelected: onDestinationSelected,
+                      destinations: destinations,
+                    ),
+                  ),
+                ),
               ),
             ],
           );

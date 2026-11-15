@@ -41,6 +41,17 @@ flutter build ios \
   --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
+
+## Scientific workspaces (Flutter)
+
+The native app includes dedicated RTL workspaces for:
+
+- **Records archive and image audit:** paper records and mechanical instruments (Thermograph, Hygrograph, Barograph, Pluviograph), image-review workflow, OCR/curve-digitization review surfaces, three-source comparison (paper / mechanical / electronic) and quality approval.
+- **Climate homogenization:** CLIMATOL job preparation, time-series exploration, breakpoint and reference-station review, corrected-series versioning and climatology report surfaces.
+- **AI lifecycle:** dataset and annotation management, leakage-aware train/validation/test preparation, experiment setup, evaluation, model registry, approval and monitoring.
+
+These scientific surfaces do not claim live OCR, curve extraction, CLIMATOL execution or model training until their secured server services are deployed. See [RELEASE-READINESS.md](RELEASE-READINESS.md) for the exact production blockers and build/release procedure.
+
 ## API, authentication and operational boundaries
 
 The API client is in `lib/core/api/metra_api_client.dart`. Configure the HTTPS API **origin** (without `/api/v1`) using `METRA_API_BASE_URL`. The client requires an access-token provider supplied by the authentication layer, sends a Bearer token, and never embeds a Supabase service-role key.
