@@ -51,7 +51,7 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
         Assert.Equal("Bearer", captured.Headers.Authorization?.Scheme);
         Assert.Equal("sb_secret_server_test", captured.Headers.Authorization?.Parameter);
         Assert.Contains(captured.Headers.GetValues("apikey"), value => value == "sb_secret_server_test");
-        Assert.Contains(captured.Headers.GetValues("Content-Profile"), value => value == "catalog");
+        Assert.False(captured.Headers.Contains("Content-Profile"));
 
         using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
         Assert.Equal(ActorId, body.RootElement.GetProperty("p_actor_user_id").GetGuid());
