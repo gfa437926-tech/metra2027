@@ -41,8 +41,8 @@ void main() {
   });
 
   testWidgets('records workspace switches between archive and source comparison', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 900));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
@@ -57,8 +57,8 @@ void main() {
   });
 
   testWidgets('CLIMATOL workspace exposes breakpoint and report panels', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 900));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
@@ -73,8 +73,8 @@ void main() {
   });
 
   testWidgets('AI workspace exposes dataset and model governance panels', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 900));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
