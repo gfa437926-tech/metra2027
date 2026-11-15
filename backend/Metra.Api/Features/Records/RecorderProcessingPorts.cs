@@ -66,6 +66,10 @@ public static class RecordImageAcceptancePolicy
             !IsSafeScannerIdentity(inspection.ScannerVersion))
             return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_identity_missing");
 
+        if (inspection.SafeReasonCode is not null &&
+            !IsSafeScannerIdentity(inspection.SafeReasonCode))
+            return new(RecordImageAcceptanceAction.KeepQuarantined, "scanner_reason_code_invalid");
+
         if (!integrity.Sha256Verified ||
             !integrity.ContentSignatureVerified ||
             !integrity.DimensionsWithinPolicy ||
