@@ -48,10 +48,11 @@ The other 41 application tables returned zero rows in the table metadata snapsho
 - Supabase reports **86 applied migration records**, each with one non-null SQL statement.
 - The inspected Git branch originally contained only **5 SQL files** under `supabase/migrations/`.
 - All 86 recorded SQL statements have now been recovered into `supabase/live-schema-history/` with their exact live version/name identifiers. This directory is a non-executable archive, not an active migration directory.
+- The five active-folder files have been aligned byte-for-byte with their corresponding recovered SQL statements; two filenames were corrected to use the exact live version identifiers.
 - The latest recorded Supabase migration is `20261114204951_metra_api_runtime_privileges` (version `20261114204951`); the exact recorded name is `metra_api_runtime_privileges`.
-- The repository's original five tracked migration files remain unchanged. Several do not byte-match the corresponding live statements, and two use filenames whose timestamp differs from the recorded live version.
+- The active `supabase/migrations/` directory still contains only **5 of the 86 applied migrations**. The other 81 remain in the non-executable archive.
 
-The source-recovery gap is reduced, but a deployable, reproducible schema is not yet certified. Do not promote the archive wholesale, reset the project, or apply additional DDL. Reconcile exact SQL, version mapping, execution order and destructive operations, then prove a curated canonical migration set against a disposable empty PostgreSQL database.
+The source-recovery gap is reduced, but a deployable, reproducible schema is not yet certified. Do not promote the archive wholesale, reset the project, or apply additional DDL. Reconcile execution order and destructive operations, then prove a curated canonical migration set against a disposable empty PostgreSQL database.
 
 ## 4. Security metadata snapshot
 
