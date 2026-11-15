@@ -128,3 +128,11 @@ Role names are illustrative; final permission codes must be agreed in the identi
 ## 9. Implementation boundary
 
 This contract does not imply that any route, worker, storage provider, OCR engine, CLIMATOL executable, AI framework or deployment exists. The next code slice should implement DTOs and application-service interfaces against the approved domain model, then a disposable PostgreSQL integration test. Provider-specific storage, identity and compute adapters are selected only after deployment requirements and credentials are explicitly configured.
+
+## Recorder digitization submission orchestration
+The application service sequence is: validated authenticated subject → capture/asset/station-scope authorization → authoritative accepted-asset status read → pure enqueue policy → transactional outbox submission. Authorization is intentionally performed before asset-state lookup to avoid disclosing unrelated resource existence.
+
+The outbox provider contract must atomically persist the idempotency claim and pending job/outbox message. It must compare a canonical fingerprint of the complete request for a repeated actor/key pair: an identical retry returns the existing job; a different payload returns an idempotency conflict. A separate dispatcher publishes committed outbox messages. A direct broker publish followed by a database write is not an acceptable implementation because it creates a dual-write loss/duplication window.
+
+No provider, DI registration, endpoint, database migration or broker integration is included yet. The service is provider-neutral and tested with isolated test doubles; production activation remains blocked on the approved schema and durable provider implementation.
+
