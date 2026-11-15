@@ -24,7 +24,7 @@ public static class RecordImageBoundedStreamReader
         await using var buffer = new MemoryStream(
             capacity: Math.Min(maximumBytes, BufferSize));
 
-        var chunk = new byte[Math.Min(BufferSize, maximumBytes + 1)];
+        var chunk = new byte[(int)Math.Min(BufferSize, (long)maximumBytes + 1)];
         while (true)
         {
             var remainingIncludingOverflowByte = (long)maximumBytes + 1 - buffer.Length;
