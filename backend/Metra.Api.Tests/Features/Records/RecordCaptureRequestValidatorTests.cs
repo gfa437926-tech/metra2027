@@ -55,16 +55,28 @@ public sealed class RecordCaptureRequestValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Rejects_missing_paper_timezone(string timezone) =>
+    [InlineData("invalid\\u0001zone")]
+    public void Rejects_missing_or_control_character_paper_timezone(string timezone) =>
         Assert.Equal("paper_timezone_invalid",
             RecordCaptureRequestValidator.Validate(ValidRequest(timezone: timezone)).ErrorCode);
+
+    [Fact]
+    public void Rejects_paper_timezone_longer_than_policy_limit() =>
+        Assert.Equal("paper_timezone_invalid",
+            RecordCaptureRequestValidator.Validate(ValidRequest(timezone: new string('x', 101))).ErrorCode);
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Rejects_missing_chart_type(string chartType) =>
+    [InlineData("weekly\\u0001chart")]
+    public void Rejects_missing_or_control_character_chart_type(string chartType) =>
         Assert.Equal("chart_type_invalid",
             RecordCaptureRequestValidator.Validate(ValidRequest(chartType: chartType)).ErrorCode);
+
+    [Fact]
+    public void Rejects_chart_type_longer_than_policy_limit() =>
+        Assert.Equal("chart_type_invalid",
+            RecordCaptureRequestValidator.Validate(ValidRequest(chartType: new string('x', 81))).ErrorCode);
 
     [Fact]
     public void Accepts_object_chart_scale_and_rejects_non_object_scale()
