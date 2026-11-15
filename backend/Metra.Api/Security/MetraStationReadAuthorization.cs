@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-
 namespace Metra.Api.Security;
 
 /// <summary>
@@ -57,6 +55,18 @@ public static class MetraStationReadAuthorization
         new HashSet<string>(StringComparer.Ordinal)
         { "auditor", "network_department_head" };
 
+    private static readonly IReadOnlySet<string> StationReadPermissions =
+        new HashSet<string>(StringComparer.Ordinal)
+        {
+            "stations.read_station",
+            "observations.read_station",
+            "audit.read_station",
+            "forecasts.read_station",
+            "alerts.read_station",
+            "recorder.read_station",
+            "instruments.read_station"
+        };
+
     private static readonly IReadOnlySet<string> GlobalReadPermissions =
         new HashSet<string>(StringComparer.Ordinal)
         {
@@ -98,11 +108,13 @@ public static class MetraStationReadAuthorization
         foreach (var grant in matchingPermissionGrants)
         {
             if (string.Equals(grant.ScopeType, "station", StringComparison.Ordinal) &&
-                grant.StationId == requestedStationId)
+                grant.StationId == requestedStationId &&
+                StationReadPermissions.Contains(requiredReadPermission))
                 return MetraAuthorizationDecision.Allow(MetraAuthorizationOutcome.AllowedStationScope);
 
             if (string.Equals(grant.ScopeType, "global_read", StringComparison.Ordinal) &&
-                GlobalReadRoles.Contains(grant.RoleCode) &&
+                grant.StationId is null && grant.OrganizationId is null &&
+                grant.RoleCode is not null && GlobalReadRoles.Contains(grant.RoleCode) &&
                 GlobalReadPermissions.Contains(requiredReadPermission))
                 return MetraAuthorizationDecision.Allow(MetraAuthorizationOutcome.AllowedGlobalRead);
         }
