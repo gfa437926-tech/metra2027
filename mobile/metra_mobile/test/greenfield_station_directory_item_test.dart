@@ -110,11 +110,26 @@ void main() {
     );
   });
 
+  test('rejects legacy and unknown fields instead of silently accepting another schema', () {
+    expect(
+      () => GreenfieldStationDirectoryItem.fromJson(
+        station()..['local_station_code'] = 'OLD-001',
+      ),
+      throwsFormatException,
+    );
+    expect(
+      () => GreenfieldStationDirectoryItem.fromJson(
+        station()..['is_demo'] = false,
+      ),
+      throwsFormatException,
+    );
+  });
+
   test('rejects duplicate station ids or codes in the complete response', () {
     expect(
       () => GreenfieldStationDirectoryItem.parseList([
         station(),
-        station(code: 'MET-002'),
+        station(code: 'met-001'),
       ]),
       throwsFormatException,
     );
