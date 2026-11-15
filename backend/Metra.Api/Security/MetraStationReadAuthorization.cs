@@ -58,9 +58,8 @@ public static class MetraStationReadAuthorization
     private static readonly IReadOnlySet<string> StationReadPermissions =
         new HashSet<string>(StringComparer.Ordinal)
         {
-            "stations.read_station",
+            "stations.read",
             "observations.read_station",
-            "audit.read_station",
             "forecasts.read_station",
             "alerts.read_station",
             "recorder.read_station",
@@ -112,7 +111,7 @@ public static class MetraStationReadAuthorization
                 StationReadPermissions.Contains(requiredReadPermission))
                 return MetraAuthorizationDecision.Allow(MetraAuthorizationOutcome.AllowedStationScope);
 
-            if (string.Equals(grant.ScopeType, "global_read", StringComparison.Ordinal) &&
+            if (string.Equals(grant.ScopeType, "global", StringComparison.Ordinal) &&
                 grant.StationId is null && grant.OrganizationId is null &&
                 grant.RoleCode is not null && GlobalReadRoles.Contains(grant.RoleCode) &&
                 GlobalReadPermissions.Contains(requiredReadPermission))
