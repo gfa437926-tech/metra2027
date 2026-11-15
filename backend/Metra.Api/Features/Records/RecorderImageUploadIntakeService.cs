@@ -136,7 +136,9 @@ public sealed class RecorderImageUploadIntakeService(
             request.AssetId, storedObject);
 
         if (!storageDecision.IsAccepted || storedObject is null ||
-            !string.Equals(storedObject.Sha256, validation.Sha256, StringComparison.Ordinal))
+            storedObject.Length != bounded.Content.LongLength ||
+            !string.Equals(storedObject.Sha256, validation.Sha256, StringComparison.Ordinal) ||
+            !string.Equals(storedObject.DetectedMediaType, validation.DetectedContentType, StringComparison.Ordinal))
         {
             await quarantineStorage.DeleteQuarantinedAsync(
                 request.AssetId, cancellationToken);
