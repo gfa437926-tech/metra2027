@@ -17,16 +17,23 @@ public static class QuarantinedRecorderObjectPolicy
 
     public static QuarantinedRecorderObjectDecision Evaluate(
         Guid expectedAssetId,
+        Guid expectedUploadAttemptId,
         QuarantinedRecorderObject? storedObject)
     {
         if (expectedAssetId == Guid.Empty)
             return QuarantinedRecorderObjectDecision.Reject("asset_id_required");
+
+        if (expectedUploadAttemptId == Guid.Empty)
+            return QuarantinedRecorderObjectDecision.Reject("upload_attempt_id_required");
 
         if (storedObject is null)
             return QuarantinedRecorderObjectDecision.Reject("storage_result_missing");
 
         if (storedObject.AssetId != expectedAssetId || storedObject.AssetId == Guid.Empty)
             return QuarantinedRecorderObjectDecision.Reject("storage_asset_id_mismatch");
+
+        if (storedObject.UploadAttemptId != expectedUploadAttemptId)
+            return QuarantinedRecorderObjectDecision.Reject("storage_upload_attempt_mismatch");
 
         if (storedObject.Length <= 0 ||
             storedObject.Length > RecordImageUploadValidator.MaximumBytes)
