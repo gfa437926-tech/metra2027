@@ -24,6 +24,7 @@ class StationDirectoryScreen extends StatefulWidget {
 
 class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   bool _showMap = true;
+  bool _directoryNotReady = false;
   late Future<List<GreenfieldStationDirectoryItem>> _stations;
 
   @override
@@ -33,10 +34,13 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   }
 
   void _load() {
-    if (MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi) {
-      _stations = Future.error(
-        const MetraApiException(503, 'station_directory_not_ready'),
-      );
+    _directoryNotReady =
+        MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi;
+    if (_directoryNotReady) {
+      // Keep the readiness gate as explicit UI state. A pre-failed Future can
+      // emit an unhandled asynchronous error before FutureBuilder subscribes,
+      // especially when the user taps Retry while the feature remains gated.
+      _stations = Future.value(const <GreenfieldStationDirectoryItem>[]);
       return;
     }
     _stations = widget.api.getGreenfieldStationDirectory();
@@ -72,6 +76,17 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
             child: FutureBuilder<List<GreenfieldStationDirectoryItem>>(
               future: _stations,
               builder: (context, snapshot) {
+                if (_directoryNotReady) {
+                  return _empty(
+                    Icons.cloud_off,
+                    'تعذر تحميل دليل المحطات',
+                    'دليل المحطات متوقف مؤقتاً حتى اكتمال ربط قاعدة البيانات الجديدة واختبارات الصلاحيات.',
+                    TextButton(
+                      onPressed: () => setState(_load),
+                      child: const Text('إعادة المحاولة'),
+                    ),
+                  );
+                }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -80,10 +95,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   return _empty(
                     Icons.cloud_off,
                     'تعذر تحميل دليل المحطات',
-                    error is MetraApiException &&
-                            error.code == 'station_directory_not_ready'
-                        ? 'دليل المحطات متوقف مؤقتاً حتى اكتمال ربط قاعدة البيانات الجديدة واختبارات الصلاحيات.'
-                        : 'تحقق من تسجيل الدخول والاتصال بواجهة API.',
+                    'تحقق من تسجيل الدخول والاتصال بواجهة API.',
                     TextButton(
                       onPressed: () => setState(_load),
                       child: const Text('إعادة المحاولة'),
