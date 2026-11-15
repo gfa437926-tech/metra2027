@@ -182,8 +182,8 @@ void main() {
 
 
   testWidgets('records workspace exposes archive, image review and triple comparison', (tester) async {
-    tester.view.physicalSize = const Size(1000, 900));
-    tester.view.devicePixelRatio = 1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
@@ -202,8 +202,8 @@ void main() {
   });
 
   testWidgets('CLIMATOL workspace exposes series, breakpoints and reports', (tester) async {
-    tester.view.physicalSize = const Size(1000, 900));
-    tester.view.devicePixelRatio = 1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
@@ -223,8 +223,8 @@ void main() {
   });
 
   testWidgets('AI workspace exposes dataset, training, model registry and governance', (tester) async {
-    tester.view.physicalSize = const Size(1000, 900));
-    tester.view.devicePixelRatio = 1);
+    tester.view.physicalSize = const Size(1000, 900);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(
