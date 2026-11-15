@@ -1,37 +1,23 @@
-# METRA Master Reference v3 — مواصفات تنفيذية
+# METRA 2027 — MASTER REFERENCE & COMPLETE FUNCTIONAL-TECHNICAL SPECIFICATION
 
-**Branch:** `docs/metra-master-reference-v3-2026-11-15`  
-**Based on:** PR #51 / `docs/metra-master-reference-v2-2026-11-15`  
-**Repos:** this file
+**الإصدار:** FINAL-DRAFT-2026-11-15  
+**الفرع:** `docs/metra-master-reference-final`  
+**أساس:** PR #52 / v3 + سجلات حقول كاملة
 
-## Integrity
-- Labels: **proven** vs **proposed** vs **needs scientific/admin approval**
-- No invented WMO codes or scientific limits beyond JS-extracted values (still need formal adoption)
-- No DB migrations, no secrets, no merge of #49/#50/#51
+## الغرض
+مرجع رسمي يفرّق بين: **موجود في الكود** · **جزئي** · **موثق فقط** · **مطلوب غير منفذ** · **مقترح**.
 
-## v3 additions
-| Area | Deliverable |
-|---|---|
-| Fields | 174 records, per-form tables, COMPLETE-FIELD-CATALOG-174.md |
-| Forms | 9 form specs linked to field tables |
-| Flutter screens | 16 files under screens/ |
-| API | api/ENDPOINTS-INVENTORY.md from Metra.Api Map* |
-| Roles | roles/ROLES-AND-PERMISSIONS-MATRIX.md |
-| Workflows | workflows/CORE-WORKFLOWS.md (+ mermaid) |
-| CLIMATOL | climatol/CLIMATOL-SPEC.md (NOT in legacy code) |
-| AI/Records | ai/AI-AND-RECORDS-SPEC.md |
-| Database | database/LOGICAL-DATA-MODEL.md (spec only) |
-| Testing | testing/TEST-MATRIX.md |
+## ابدأ من هنا
+1. [00-SYSTEM-OVERVIEW.md](00-SYSTEM-OVERVIEW.md)
+2. [01-FUNCTIONAL-REQUIREMENTS.md](01-FUNCTIONAL-REQUIREMENTS.md)
+3. [02-COMPLETE-FIELD-CATALOG.md](02-COMPLETE-FIELD-CATALOG.md) → [fields/00-FIELD-INDEX-174.md](fields/00-FIELD-INDEX-174.md)
+4. [screens/README.md](screens/README.md)
+5. [traceability/TRACEABILITY-MATRIX.md](traceability/TRACEABILITY-MATRIX.md)
+6. [decisions/OPEN-DECISIONS.md](decisions/OPEN-DECISIONS.md)
+7. [COMPLETENESS-REPORT.md](COMPLETENESS-REPORT.md)
 
-## Proven counts
-- 174 fields / 9 forms (re-extracted from metra-old HTML)
-- 15 hourly numeric bounds from enhanced-validation.js
-- Daily comparison bounds in daily_validation.js
-- Agri temperature message -20..60
-- Backend endpoints from C# sources; Flutter client methods aligned
+## الهيكل
+`fields/` · `screens/` · `roles/` · `workflows/` · `climatol/` · `artificial-intelligence/` · `records-comparison/` · `maintenance-telecom/` · `api/` · `database/` · `security/` · `testing/` · `deployment/` · `decisions/` · `traceability/`
 
-## Explicitly incomplete
-- English UI labels for fields (absent in legacy HTML)
-- Full Field ID binding of every daily validate* line
-- Runtime CI execution of all tests in this job
-- CLIMATOL algorithm selection; live OCR/AI; archive (503)
+## قيود
+لا تعديل metra-old · لا DB/migrations · لا أسرار · لا دمج تلقائي.
