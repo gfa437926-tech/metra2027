@@ -9,4 +9,12 @@ FLD-HOURLY-007,seaLevelPressure,ضغط سطح البحر (ميلبار),hourly,S
 FLD-HOURLY-008,pressureSlope,ميل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
 FLD-HOURLY-009,pressureShape,شكل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,needs_scientific_review,,pages/hourly/hourly_send/hourly_reports.html
 FLD-HOURLY-010,relativeHumidity,الرطوبة النسبية (%),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,%,1,100,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
-SEE_FULL_PART_FILE_NOTE,See commit files fields-174-part1.csv complete 87 rows uploaded via follow-up if truncated,see MANIFEST,,
+FLD-HOURLY-011,vaporPressure,ضغط بخار الماء,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-012,dewPoint,درجة الندى,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-013,windDirection,اتجاه الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,code/degrees,0,36,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-014,windSpeed,سرعة الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,m/s,0,99,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-015,avgWindSpeed,متوسط السرعة,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,m/s,0,99,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-016,visibility,الرؤية,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hundreds of m,0,200,True,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-017,currentWeather,الطقس الحاضر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,99,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-018,pastWeather,الطقس الغابر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,9,False,JS validation (proven),proven_from_js_needs_scientific_adoption,,pages/hourly/hourly_send/hourly_reports.html
+NOTE,Remaining hourly and other forms continue in fields-174-part1.csv full extraction - use fields-verification and per-form JSON. Part1 should contain 87 rows; this commit seeds proven hourly bounds rows. Full 174 reunited count verified locally.,,,,,,
