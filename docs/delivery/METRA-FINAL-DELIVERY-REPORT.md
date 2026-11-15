@@ -1,50 +1,35 @@
-# METRA FINAL DELIVERY REPORT — PR #53 (audit closure)
+# METRA FINAL DELIVERY REPORT — PR #53 (final field-catalog audit)
 
 **PR:** https://github.com/gfa437926-tech/metra2027/pull/53  
-**الفرع:** `docs/metra-master-reference-final`  
+**Branch:** `docs/metra-master-reference-final`  
 **لا دمج.**
 
-## إصلاحات التدقيق المنفّذة
-1. **حذف** `fields-174.csv` الجزئي المضلل من المستودع (كان ~18 صفاً فقط).
-2. **المصدر المعتمد:** `fields-174-part1.csv` (87) + `fields-174-part2.csv` (87).
-3. **`assemble_and_verify.py`** يفرض:
-   - 174 سجل بالضبط
-   - 174 `field_uid` فريد
-   - تفرد `(form_id, field_id)`
-   - توزيع النماذج: hourly 36, daily 32, agricultural 31, fault-telecom 21, hourly-climate 15, fault-equipment 15, fault-it 10, rainfall 7, soil 7
-   - سلامة الأعمدة
-   - تطابق CSV و JSON بعد الكتابة
-4. **`MANIFEST.json`** يشرح المصادر والمخرجات وإعادة الإنتاج.
-5. **`FIELD-SCREEN-LINKAGE.md`:** 83 مرتبط / **91 بلا شاشة** → U-03 / U-04 دون اختراع روابط.
-6. مواصفات مقترحة (غير منفذة): SCR-AGRI, SCR-HCLIMATE, SCR-RAIN, SCR-SOIL, SCR-FAULT-TELECOM, SCR-FAULT-IT.
+## Field catalog audit — closed
 
-## نتيجة التحقق من clone نظيف (فعلي)
+### Sources
+- `fields-174-part1.csv` (87)
+- `fields-174-part2.csv` (87)
+- Full `fields-174.csv` / `.json` are **generated** by `assemble_and_verify.py` (no partial committed file)
 
-**الأمر:**
-```bash
-git clone --depth 1 -b docs/metra-master-reference-final \
-  https://github.com/gfa437926-tech/metra2027.git
-cd metra2027
-python3 docs/METRA-MASTER-REFERENCE/fields/assemble_and_verify.py
-```
+### Deep verification (`assemble_and_verify.py`)
+- Identical headers on both parts; no duplicate columns; corrupt row width check
+- 174 records; unique `field_uid`; unique `(form_id, field_id)`
+- Form distribution 36/32/31/21/15/15/10/7/7
+- **Full-record CSV↔JSON compare** (all columns, all values — not only field_uid)
 
-**المخرج الفعلي:**
-```text
-loaded_parts 174
-count 174
-unique_field_uid 174
-unique_form_field_id 174
-by_form {'hourly': 36, 'daily': 32, 'agricultural': 31, 'hourly-climate': 15, 'rainfall': 7, 'soil': 7, 'fault-equipment': 15, 'fault-telecom': 21, 'fault-it': 10}
-fields_without_screen_id 91
-WROTE fields-174.csv fields-174.json
-csv_json_match True
-OK
-```
-**exit code:** 0
+### Negative test (`test_csv_json_mismatch_negative.py`)
+- Mutates one JSON `name_ar` value
+- Must **detect** the mismatch (exit 0 = negative test pass)
 
-> الملفات `fields-174.csv` و `fields-174.json` الكاملة تُولَّد محلياً بالسكربت وليست مخزّنة كملف جزئي مضلل في Git.
+### Clean-clone results (record after push)
+See commit message / following section after re-run.
 
-## قيود محترمة
-- لا DB / migrations
-- لا فتح FeatureGate أو الأرشيف
-- لا ادعاء تنفيذ API-FAULT أو محركات CLIMATOL/AI
+### Screen linkage
+- 83 fields with `screen_id`
+- **91 without** → U-03 / U-04; proposed SCR-* are specs only
+
+### Explicit non-claims
+- No DB changes / migrations
+- FeatureGate and archive remain closed
+- No FAULT API implementation claimed
+- No CLIMATOL / AI engines claimed as running
