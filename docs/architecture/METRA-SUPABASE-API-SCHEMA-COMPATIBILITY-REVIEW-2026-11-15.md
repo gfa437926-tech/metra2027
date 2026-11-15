@@ -55,3 +55,11 @@ The live database instead contains the normalized catalogue and observation tabl
 ## 5. Safety boundary
 
 No RPCs, tables, grants, policies or Data API settings were created or changed during this review. The legacy database was not accessed. Do not restore the old public schema from archived SQL into the new project; use the reviewed greenfield domain model as the source of truth.
+
+## 6. Greenfield operation mapping follow-up
+
+A source-controlled design blueprint now maps the current endpoint capabilities to the inspected normalized physical model and defines proposed versioned server-side operation contracts:
+
+`docs/architecture/METRA-GREENFIELD-API-PERSISTENCE-MAPPING-AND-RPC-CONTRACTS-2026-11-15.md`
+
+The blueprint is not executable SQL and does not create the absent functions. It also records the required JWT-derived actor boundary, station/organization scope, idempotency, optimistic concurrency, atomic audit and least-privilege runtime decision. The .NET adapter refactor and disposable-database integration tests remain outstanding.
