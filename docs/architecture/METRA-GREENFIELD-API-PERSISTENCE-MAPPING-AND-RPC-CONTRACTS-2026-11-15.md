@@ -114,3 +114,9 @@ The inspected 46-table model does not yet include recorder capture/image/trace l
 - [ ] Hosted migration and deployment separately approved; old database remains untouched.
 
 **Current status:** mapping blueprint added; no executable DDL, live database write, deployment, or legacy database access performed.
+
+## 8. CI evidence scope — do not over-interpret green checks
+
+The current workflow suite contains isolated PostgreSQL jobs for the repository's Path N baseline and transfer-pack fixtures. The Path N restore test explicitly builds `public.station_catalogue`, `public.metra_role_catalogue`, `public.metra_observations` and the corresponding legacy RPCs. The transfer-pack end-to-end tests use synthetic fixture schemas. These jobs are useful regression evidence for those paths, but they do **not** prove that the normalized live greenfield model in `iam`, `catalog`, `ref`, and `observations` can be recreated from source or that the current .NET API is compatible with it.
+
+A separate greenfield schema build job must be added only after the canonical greenfield migration sequence is reviewed and approved. It must start from an empty disposable PostgreSQL database, apply only the curated greenfield migrations, assert the expected normalized entities and constraints, and run the new .NET adapter integration/security tests under the selected least-privilege identity. Until then, a green CI result must not be reported as greenfield database readiness.
