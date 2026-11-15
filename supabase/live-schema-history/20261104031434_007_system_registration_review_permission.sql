@@ -1,0 +1,1 @@
+INSERT INTO public.metra_role_permissions (role_code, permission_code) VALUES ('system_admin', 'registrations.system.approve') ON CONFLICT (role_code, permission_code) DO NOTHING;
