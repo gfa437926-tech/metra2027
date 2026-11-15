@@ -41,3 +41,9 @@ Every create, upload, scan decision, preview, extraction, correction, approval, 
 
 ## Deployment gates
 No production rollout while critical/high security findings remain open, readiness probes fail, backups are unverified, scanner verdict is indeterminate, schema is unapproved, or release artifacts are unsigned.
+
+### Recorder acceptance invariants
+- A scan verdict is accepted only when it is the explicitly defined `Clean` value; unknown enum values and indeterminate results remain quarantined.
+- Scanner name and version must both be present, bounded to 100 characters, and free of control characters before an asset can pass the acceptance gate.
+- The server-side verified byte length must be positive and no greater than the configured 20 MiB upload limit. A clean scan does not override a failed hash, signature, decoded-dimension, or length check.
+- These checks are policy-level safeguards in addition to the upload validator. They do not replace private quarantine storage, authenticated authorization, malware scanning, or immutable audit persistence.
