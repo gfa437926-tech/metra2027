@@ -38,9 +38,18 @@ public interface IRecorderImageUploadAuthorizer
         CancellationToken cancellationToken);
 }
 
+public enum RecorderQuarantineCommitResult
+{
+    Committed,
+    StateConflict,
+    OutcomeUnknown
+}
+
 /// <summary>
 /// Reads and conditionally changes asset lifecycle state. The conditional update
-/// and append-only audit insert must be one datastore transaction.
+/// and append-only audit insert must be one datastore transaction. OutcomeUnknown
+/// means the caller cannot prove whether the transaction committed; the object
+/// must remain quarantined until reconciliation resolves the durable state.
 /// </summary>
 public interface IRecorderImageAssetIntakeStore
 {
@@ -48,7 +57,7 @@ public interface IRecorderImageAssetIntakeStore
         Guid assetId,
         CancellationToken cancellationToken);
 
-    Task<bool> TryRecordQuarantinedAsync(
+    Task<RecorderQuarantineCommitResult> TryRecordQuarantinedAsync(
         Guid assetId,
         RecordImageAssetStatus expectedState,
         QuarantinedRecorderObject storedObject,
@@ -146,21 +155,30 @@ public sealed class RecorderImageUploadIntakeService(
                 storageDecision.ErrorCode ?? "stored_object_integrity_mismatch");
         }
 
-        var committed = await assetStore.TryRecordQuarantinedAsync(
+        var commitResult = await assetStore.TryRecordQuarantinedAsync(
             request.AssetId,
             RecordImageAssetStatus.AwaitingUpload,
             storedObject,
             auditEvent,
             cancellationToken);
 
-        if (!committed)
+        if (commitResult == RecorderQuarantineCommitResult.StateConflict)
         {
-            // A failed compare-and-set must not leave an orphaned object available
-            // to downstream processing. Quarantine remains private even on cleanup failure.
+            // The provider has confirmed that no state/audit transaction committed.
             await quarantineStorage.DeleteQuarantinedAsync(
                 request.AssetId, cancellationToken);
             return RecorderImageUploadResult.Rejected("asset_state_conflict");
         }
+
+        if (commitResult == RecorderQuarantineCommitResult.OutcomeUnknown)
+        {
+            // Never delete an object when a commit may have succeeded. Keep it private
+            // and let a reconciler inspect the durable asset state before cleanup.
+            return RecorderImageUploadResult.Rejected("upload_commit_outcome_unknown");
+        }
+
+        if (commitResult != RecorderQuarantineCommitResult.Committed)
+            return RecorderImageUploadResult.Rejected("upload_commit_result_unknown");
 
         return RecorderImageUploadResult.Accepted(request.AssetId);
     }
