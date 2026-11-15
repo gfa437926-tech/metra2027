@@ -201,3 +201,10 @@
 - Each function uses `SUPABASE_SERVICE_ROLE_KEY` for its admin client and wildcard `Access-Control-Allow-Origin: *`. JWT verification is positive, but the service-role path bypasses RLS and wildcard CORS is too broad for final production configuration.
 - Treat deployed status as deployment metadata only, not proof of working data access. Do not deploy or disable functions without a reviewed replacement plan. Rebuild their data contracts against the normalized `iam`, `catalog`, and `observations` model, select a least-privilege identity, restrict CORS, and test the full workflow in isolation.
 - Review: `docs/architecture/METRA-SUPABASE-EDGE-FUNCTION-COMPATIBILITY-REVIEW-2026-11-15.md`.
+
+### Greenfield .NET persistence mapping — 2026-11-15
+- Added `docs/architecture/METRA-GREENFIELD-API-PERSISTENCE-MAPPING-AND-RPC-CONTRACTS-2026-11-15.md`, mapping station directory, IAM, registration, observation submission/review/archive, station users/assignments and audit operations to the inspected `iam`, `catalog`, `ref`, `observations`, `files` and `audit` schemas.
+- The blueprint specifies versioned logical server operations, actor-from-JWT enforcement, idempotency, optimistic concurrency, atomic audit, exact station/organization scope and isolated PostgreSQL acceptance tests.
+- It explicitly records the station projection differences (no legacy `is_demo`, `local_station_code`, or `station_coordinates` fields) and the need to use validity-bounded `catalog.station_locations`.
+- This is documentation/design only. The old .NET adapters still reference absent legacy public objects; the new contracts are not deployed, no DDL/grants/data were changed, and no hosted migration is authorized.
+- Next engineering work must implement typed greenfield .NET adapters against the disposable canonical schema and replace routine service-role calls with an approved least-privilege caller identity before enabling operational Flutter workflows.
