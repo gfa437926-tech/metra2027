@@ -9,6 +9,16 @@ Maintain isolated development, test, staging and production projects/accounts. N
 - Do not print tokens, upload URLs, object keys or raw scientific payloads in logs.
 - Rotate keys after suspected exposure; revoke old keys and verify readiness after rotation.
 
+## Station visibility and authorization
+
+- Ordinary users are scoped to their active, approved station assignment(s); changing a station ID in a request must never expand visibility.
+- Only an explicitly active global assignment for `auditor` or `network_department_head`, with the matching `*.read_all` permission, may read across all approved operational stations.
+- Global read does not grant create, update, approve, role assignment, membership administration or platform administration.
+- The greenfield station directory uses the atomic actor-bound RPC proposal documented in `docs/architecture/METRA-GREENFIELD-STATION-DIRECTORY-DOTNET-READER-2026-11-15.md`. The actor is derived from the validated JWT `sub`; clients never submit an actor UUID.
+- Keep `Features:GreenfieldStationDirectoryEnabled` disabled until the reviewed SQL proposals have been approved and applied to a non-production project, the runtime secret and PostgREST ACLs are verified, and cross-station isolation tests pass.
+- The associated SQL in `database/proposals/036_*` and `037_*` is proposal-only. CI applies it only to a disposable PostgreSQL fixture. Never run it against hosted Supabase without explicit approval.
+- The service-role key is used only by the server for the narrow directory RPC; never put it in Flutter, browser config, mobile bundles, source control, or logs.
+
 ## Recorder image pipeline
 1. Authorize the capture and station scope.
 2. Issue one-time, short-lived upload intent with byte cap and expected SHA-256.
