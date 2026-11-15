@@ -98,3 +98,11 @@ The current branch adds provider-neutral recorder quarantine/scanner ports and a
 - `docs/operations/METRA-SECURITY-AND-OPERATIONS-RUNBOOK.md`
 
 No production service, database migration, storage bucket, OCR engine, CLIMATOL runtime, AI training system, or signed mobile release is claimed by these UI and contract changes.
+
+## Supabase live-schema baseline (read-only inspection, 2026-11-15)
+
+The approved project reference currently points to a non-empty PostgreSQL 17.11 database, not an empty bootstrap target. The inspected application namespaces contain 46 tables and Supabase reports 86 applied migration records, while this branch tracks only five SQL files in `supabase/migrations/`. All 46 inspected application tables have RLS enabled; 21 have no policies and are reported as informational advisor findings, with no `anon` or `authenticated` SELECT/INSERT table grants observed in the read-only privilege check. The Performance Advisor reports 76 unused-index informational findings; do not drop these without representative workload evidence.
+
+This mismatch between live migration history and repository source is a release blocker. Before any schema extension or deployment, reconcile the complete 86-version SQL history with Git, verify the full grants/RPC/RLS/exposed-schema configuration, replay against a disposable empty database, and review/approve the scientific ERD. The current inspection made no database writes. See `docs/architecture/METRA-SUPABASE-READONLY-SCHEMA-BASELINE-2026-11-15.md`.
+
+The recorder, climate-homogeneity and AI model-governance domains are not present as dedicated application tables in the inspected live schema; the corresponding UI screens remain unavailable/local-only until their approved backend and schema work is delivered.
