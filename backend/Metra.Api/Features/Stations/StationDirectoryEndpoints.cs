@@ -139,7 +139,7 @@ public static class StationDirectoryEndpoints
                      character is '_' or '-')))
                 return Results.BadRequest(new { error = "invalid_station_type" });
 
-            if (!context.User.Identity?.IsAuthenticated ?? true)
+            if (context.User.Identity?.IsAuthenticated != true)
                 return Results.Unauthorized();
 
             if (!AuthenticationHeaderValue.TryParse(
