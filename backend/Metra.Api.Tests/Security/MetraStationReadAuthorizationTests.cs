@@ -26,7 +26,7 @@ public sealed class MetraStationReadAuthorizationTests
     [InlineData("network_department_head")]
     public void Approved_global_read_roles_can_read_any_station_with_explicit_global_permission(string role)
     {
-        var actor = Actor(Grant(role, "global_read", null, "stations.read_all"));
+        var actor = Actor(Grant(role, "global", null, "stations.read_all"));
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
 
@@ -37,7 +37,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Station_role_cannot_obtain_global_access_by_claiming_global_scope()
     {
-        var actor = Actor(Grant("observer", "global_read", null, "stations.read_all"));
+        var actor = Actor(Grant("observer", "global", null, "stations.read_all"));
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
 
@@ -48,7 +48,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Auditor_without_explicit_global_read_permission_is_denied()
     {
-        var actor = Actor(Grant("auditor", "global_read", null, "stations.read"));
+        var actor = Actor(Grant("auditor", "global", null, "stations.read"));
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
 
@@ -70,7 +70,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Global_read_scope_does_not_authorize_write_permissions()
     {
-        var actor = Actor(Grant("auditor", "global_read", null, "observations.write_all"));
+        var actor = Actor(Grant("auditor", "global", null, "observations.write_all"));
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "observations.write_all");
 
@@ -81,7 +81,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Inactive_profile_is_denied_even_when_grant_matches()
     {
-        var actor = Actor(Grant("auditor", "global_read", null, "stations.read_all")) with
+        var actor = Actor(Grant("auditor", "global", null, "stations.read_all")) with
         {
             ProfileIsActive = false
         };
@@ -95,7 +95,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Inactive_membership_is_denied_even_when_grant_matches()
     {
-        var actor = Actor(Grant("network_department_head", "global_read", null, "stations.read_all")) with
+        var actor = Actor(Grant("network_department_head", "global", null, "stations.read_all")) with
         {
             MembershipIsActive = false
         };
@@ -109,7 +109,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Expired_or_revoked_grant_is_not_accepted()
     {
-        var grant = Grant("auditor", "global_read", null, "stations.read_all") with
+        var grant = Grant("auditor", "global", null, "stations.read_all") with
         {
             IsActive = false
         };
@@ -130,7 +130,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Malformed_permission_is_denied()
     {
-        var actor = Actor(Grant("auditor", "global_read", null, "stations.read_all"));
+        var actor = Actor(Grant("auditor", "global", null, "stations.read_all"));
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all\n");
 
@@ -150,7 +150,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Global_read_grant_with_station_identifier_is_rejected_as_ambiguous()
     {
-        var grant = Grant("auditor", "global_read", StationA, "stations.read_all");
+        var grant = Grant("auditor", "global", StationA, "stations.read_all");
         var actor = Actor(grant);
 
         var decision = MetraStationReadAuthorization.Evaluate(actor, StationB, "stations.read_all");
@@ -162,7 +162,7 @@ public sealed class MetraStationReadAuthorizationTests
     [Fact]
     public void Global_read_grant_with_organization_identifier_is_rejected_as_ambiguous()
     {
-        var grant = Grant("network_department_head", "global_read", null, "stations.read_all") with
+        var grant = Grant("network_department_head", "global", null, "stations.read_all") with
         {
             OrganizationId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc")
         };
