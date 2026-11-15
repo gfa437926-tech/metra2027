@@ -45,6 +45,8 @@ public sealed class RecorderDigitizationSubmissionServiceTests
             Calls++;
             Assert.Equal(ActorId, actorSubjectId);
             Assert.Equal(Request(), submission);
+            Assert.True(RecordDigitizationRequestFingerprint.TryCompute(submission, out var expectedFingerprint));
+            Assert.Equal(expectedFingerprint, requestFingerprint);
             Assert.Matches("^[0-9a-f]{64}$", requestFingerprint);
             LastFingerprint = requestFingerprint;
             return Task.FromResult(result ?? new(
