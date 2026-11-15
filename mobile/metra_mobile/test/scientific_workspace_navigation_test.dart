@@ -64,9 +64,11 @@ void main() {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(body: ClimatolWorkspaceScreen()),
     ));
+    await tester.ensureVisible(find.text('الانقطاعات والمرجعيات'));
     await tester.tap(find.text('الانقطاعات والمرجعيات'));
     await tester.pumpAndSettle();
     expect(find.text('كشف نقاط الانقطاع'), findsOneWidget);
+    await tester.ensureVisible(find.text('المراجعة والتقارير'));
     await tester.tap(find.text('المراجعة والتقارير'));
     await tester.pumpAndSettle();
     expect(find.text('التقارير المناخية'), findsOneWidget);
@@ -81,6 +83,7 @@ void main() {
       home: Scaffold(body: AiWorkspaceScreen()),
     ));
     expect(find.text('مستودع مجموعات البيانات'), findsOneWidget);
+    await tester.ensureVisible(find.text('الاعتماد والمراقبة'));
     await tester.tap(find.text('الاعتماد والمراقبة'));
     await tester.pumpAndSettle();
     expect(find.text('بوابة اعتماد النموذج'), findsOneWidget);
