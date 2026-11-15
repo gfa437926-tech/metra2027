@@ -1,0 +1,1 @@
+ALTER TABLE metra_migration.legacy_users_staging ALTER COLUMN legacy_role DROP NOT NULL;
