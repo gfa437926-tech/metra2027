@@ -210,3 +210,5 @@
 - Next engineering work must implement typed greenfield .NET adapters against the disposable canonical schema and replace routine service-role calls with an approved least-privilege caller identity before enabling operational Flutter workflows.
 
 - CI scope clarification: the current Path N isolated PostgreSQL build still applies the repository's legacy `public.metra_*` baseline, while transfer-pack end-to-end tests use synthetic fixtures. These checks do not certify replay of the normalized greenfield `iam/catalog/ref/observations` schema. A separate greenfield empty-database replay job is required after its canonical migration sequence is reviewed and approved.
+
+- Flutter readiness was corrected so station directory, station audit, observation queue, station users, registration reads, authority access reads and electronic audit are explicitly `gated` rather than `liveApi` while their .NET adapters still target absent legacy schema objects. Authentication remains live; observation writes remain gated; archive/AI/CLIMATOL/forecast-centre services remain unavailable until implemented. Regression tests enforce these classifications.
