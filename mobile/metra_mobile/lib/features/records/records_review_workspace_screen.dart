@@ -44,6 +44,7 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
           ButtonSegment(value: 1, label: Text('مراجعة الصور'), icon: Icon(Icons.document_scanner_outlined)),
           ButtonSegment(value: 2, label: Text('المقارنة الثلاثية'), icon: Icon(Icons.compare_arrows)),
           ButtonSegment(value: 3, label: Text('الجودة والاعتماد'), icon: Icon(Icons.fact_check_outlined)),
+          ButtonSegment(value: 4, label: Text('الصورة والحقيقة'), icon: Icon(Icons.compare_outlined)),
         ],
         selected: {_section}, onSelectionChanged: (v) => setState(() => _section = v.first),
       )),
@@ -52,6 +53,7 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
       if (_section == 1) _imageReview(),
       if (_section == 2) _comparison(),
       if (_section == 3) _quality(),
+      if (_section == 4) _imageTruthComparison(),
     ],
   );
 
@@ -182,6 +184,62 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
     const MetraStatusBanner(tone: MetraBannerTone.info, message: 'تُطابق المصادر حسب المحطة والعنصر والطابع الزمني والوحدة. أي اختلاف يُحال للمراجعة ولا يغير الرصد الأصلي تلقائياً.'),
   ]);
 
+  Widget _imageTruthComparison() => Column(children: [
+    const MetraSectionCard(
+      title: 'مطابقة الصورة مع البيانات المرجعية',
+      child: Text(
+        'مساحة مستقلة لمقارنة القراءة المستخرجة من صورة السجل مع القيمة الحقيقية المعتمدة أو القراءة الإلكترونية المرجعية، مع إبقاء الملف الأصلي والقيمة المرجعية دون تعديل.',
+        style: TextStyle(color: metraMuted, height: 1.5),
+      ),
+    ),
+    const SizedBox(height: 12),
+    const MetraSectionCard(
+      title: 'مصدر الصورة والقراءة المستخرجة',
+      child: MetraEmptyState(
+        icon: Icons.image_search_outlined,
+        title: 'لم يتم تحميل صورة أو نتيجة استخراج',
+        message: 'سيظهر هنا الملف الأصلي وبصمة SHA-256 وموضع القراءة على الصورة وقيمة OCR أو نقطة المنحنى والوحدة ودرجة الثقة وإصدار أداة الاستخراج.',
+      ),
+    ),
+    const SizedBox(height: 12),
+    const MetraSectionCard(
+      title: 'مصدر الحقيقة الأرضية',
+      child: MetraEmptyState(
+        icon: Icons.fact_check_outlined,
+        title: 'لم تُحدد قيمة مرجعية معتمدة',
+        message: 'تُربط القيمة المرجعية بمصدرها الأصلي: رصد إلكتروني معتمد أو سجل يدوي تمت مراجعته، مع المحطة والعنصر والتوقيت والوحدة وهوية الاعتماد.',
+      ),
+    ),
+    const SizedBox(height: 12),
+    const MetraSectionCard(
+      title: 'جدول المقارنة والتحقق',
+      child: Column(children: [
+        _ComparisonHeader(),
+        SizedBox(height: 8),
+        MetraEmptyState(
+          icon: Icons.compare_arrows,
+          title: 'بانتظار بيانات قابلة للمطابقة',
+          message: 'بعد ربط المصدرين ستظهر القراءة المستخرجة والقيمة المرجعية والفرق المطلق والنسبي وحدود التسامح وقرار المراجع لكل توقيت.',
+        ),
+      ]),
+    ),
+    const SizedBox(height: 12),
+    const MetraSectionCard(
+      title: 'مقاييس جودة الاستخراج',
+      child: Wrap(spacing: 8, runSpacing: 8, children: [
+        Chip(label: Text('MAE — بانتظار البيانات')),
+        Chip(label: Text('RMSE — بانتظار البيانات')),
+        Chip(label: Text('CER / WER — بانتظار البيانات')),
+        Chip(label: Text('نسبة المطابقة — بانتظار البيانات')),
+      ]),
+    ),
+    const SizedBox(height: 10),
+    const MetraStatusBanner(
+      tone: MetraBannerTone.warning,
+      message: 'لا تُحسب أي نسبة دقة أو فرق قبل توفر عينات معتمدة ومطابقة زمنياً ووحداتياً. لا تُستخدم الحقيقة الأرضية لتعديل الصورة أو الرصد الأصلي.',
+    ),
+  ]);
+
   Widget _quality() => Column(children: [
     const MetraSectionCard(title: 'قائمة تدقيق الصورة والقراءة', child: Column(children: [
       _WorkflowStep('✓', 'اكتمال بيانات المصدر', 'المحطة والتاريخ والجهاز والعنصر ورقم الصفحة.'),
@@ -213,6 +271,15 @@ class _WorkflowStep extends StatelessWidget {
     CircleAvatar(radius: 13, backgroundColor: metraBlue.withValues(alpha: .1), child: Text(number, style: const TextStyle(color: metraBlue, fontSize: 11))),
     const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w800)), const SizedBox(height: 3), Text(description, style: const TextStyle(color: metraMuted))])),
   ]));
+}
+class _ComparisonHeader extends StatelessWidget {
+  const _ComparisonHeader();
+  @override
+  Widget build(BuildContext context) => const Row(children: [
+    Expanded(child: Text('العنصر', style: TextStyle(fontWeight: FontWeight.w800, color: metraNavy))),
+    Expanded(child: Text('قراءة الصورة', style: TextStyle(fontWeight: FontWeight.w800, color: metraNavy))),
+    Expanded(child: Text('الحقيقة المرجعية', style: TextStyle(fontWeight: FontWeight.w800, color: metraNavy))),
+  ]);
 }
 class _SourceCard extends StatelessWidget {
   const _SourceCard({required this.number, required this.title, required this.subtitle});
