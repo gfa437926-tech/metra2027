@@ -155,3 +155,10 @@ Outbox adapters can use `RecordDigitizationRequestFingerprint.TryCompute` to der
 ### Outbox fingerprint handoff
 
 The application service now computes the canonical request fingerprint after actor/resource authorization and accepted-state validation, then passes it explicitly to `IRecorderDigitizationOutbox.TryCreateAsync`. A durable provider must independently verify that the supplied digest matches the canonical submission payload, then persist and compare it atomically with the actor-scoped idempotency-key claim and job/outbox insertion. The service does not treat a locally computed digest as proof of persistence or uniqueness; those guarantees belong to the provider transaction.
+
+
+## Scanner identity canonicalization hardening
+
+- Scanner name and version are bounded to 100 characters and restricted to canonical ASCII tokens: letters, digits, dot, underscore, colon and hyphen.
+- Whitespace, path separators, Unicode lookalikes and control characters remain quarantined rather than being accepted as scanner provenance.
+- This is input-shape validation only; it does not authenticate a scanner binary or replace a trusted scanner deployment/attestation mechanism.
