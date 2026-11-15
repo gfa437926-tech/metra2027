@@ -156,6 +156,36 @@ public sealed record RecorderSecurityAuditEvent(
     string ReasonCode);
 
 /// <summary>
+/// Shared fail-closed shape validation for recorder audit events. Persistence
+/// adapters should call this before writing and enforce equivalent database bounds.
+/// </summary>
+public static class RecorderSecurityAuditEventPolicy
+{
+    public static bool IsValid(RecorderSecurityAuditEvent? auditEvent)
+    {
+        if (auditEvent is null ||
+            auditEvent.ActorSubjectId == Guid.Empty ||
+            auditEvent.AssetId == Guid.Empty ||
+            auditEvent.CaptureId == Guid.Empty ||
+            auditEvent.JobId == Guid.Empty)
+            return false;
+
+        return IsSafeToken(auditEvent.CorrelationId, 128) &&
+            IsSafeToken(auditEvent.Transition, 64) &&
+            IsSafeToken(auditEvent.ReasonCode, 64);
+    }
+
+    private static bool IsSafeToken(string? value, int maximumLength) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Length <= maximumLength &&
+        value.All(character =>
+            character is >= 'a' and <= 'z' or
+                >= 'A' and <= 'Z' or
+                >= '0' and <= '9' or
+                '.' or '_' or ':' or '-');
+}
+
+/// <summary>
 /// Append-only audit port for security-sensitive recorder transitions.
 /// Implementations must persist actor, resource, operation and correlation context
 /// atomically with the associated state transition where applicable. They must
