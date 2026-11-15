@@ -49,6 +49,7 @@ The native app includes dedicated RTL workspaces for:
 - **Records archive and image audit:** paper records and mechanical instruments (Thermograph, Hygrograph, Barograph, Pluviograph), image-review workflow, OCR/curve-digitization review surfaces, three-source comparison (paper / mechanical / electronic) and quality approval.
 - **Climate homogenization:** CLIMATOL job preparation, time-series exploration, breakpoint and reference-station review, corrected-series versioning and climatology report surfaces.
 - **AI lifecycle:** dataset and annotation management, leakage-aware train/validation/test preparation, experiment setup, evaluation, model registry, approval and monitoring.
+- **Instrument lifecycle:** instrument inventory, station deployments, calibration certificates, maintenance workflow and service status.
 
 These scientific surfaces do not claim live OCR, curve extraction, CLIMATOL execution or model training until their secured server services are deployed. See [RELEASE-READINESS.md](RELEASE-READINESS.md) for the exact production blockers and build/release procedure.
 
