@@ -39,7 +39,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
     public async Task Valid_upload_is_written_to_quarantine_and_atomically_recorded()
     {
         var authorizer = new FakeAuthorizer { Allowed = true };
-        var store = new FakeAssetStore { CommitResult = true };
+        var store = new FakeAssetStore { CommitResult = RecorderQuarantineCommitResult.Committed };
         var storage = new FakeStorage
         {
             StoredObject = new(AssetId, PngBytes.Length,
@@ -129,7 +129,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
     public async Task Removes_quarantine_object_when_asset_compare_and_set_conflicts()
     {
         var authorizer = new FakeAuthorizer { Allowed = true };
-        var store = new FakeAssetStore { CommitResult = false };
+        var store = new FakeAssetStore { CommitResult = RecorderQuarantineCommitResult.StateConflict };
         var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
         var storage = new FakeStorage
         {
@@ -143,6 +143,30 @@ public sealed class RecorderImageUploadIntakeServiceTests
 
         Assert.Equal("asset_state_conflict", result.ErrorCode);
         Assert.Equal(1, storage.DeleteCalls);
+    }
+
+    [Fact]
+    public async Task Preserves_private_quarantine_when_commit_outcome_is_unknown()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore
+        {
+            CommitResult = RecorderQuarantineCommitResult.OutcomeUnknown
+        };
+        var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
+        var storage = new FakeStorage
+        {
+            StoredObject = new(AssetId, PngBytes.Length, hash, "image/png")
+        };
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), Request(),
+            new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("upload_commit_outcome_unknown", result.ErrorCode);
+        Assert.Equal(1, store.CommitCalls);
+        Assert.Equal(0, storage.DeleteCalls);
     }
 
     [Fact]
@@ -238,7 +262,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
 
     private sealed class FakeAssetStore : IRecorderImageAssetIntakeStore
     {
-        public bool CommitResult { get; init; }
+        public RecorderQuarantineCommitResult CommitResult { get; init; }
         public RecordImageAssetStatus CurrentState { get; init; } = RecordImageAssetStatus.AwaitingUpload;
         public int ReadCalls { get; private set; }
         public int CommitCalls { get; private set; }
@@ -252,7 +276,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
             return Task.FromResult<RecordImageAssetStatus?>(CurrentState);
         }
 
-        public Task<bool> TryRecordQuarantinedAsync(
+        public Task<RecorderQuarantineCommitResult> TryRecordQuarantinedAsync(
             Guid assetId, RecordImageAssetStatus expectedState,
             QuarantinedRecorderObject storedObject,
             RecorderSecurityAuditEvent auditEvent,
