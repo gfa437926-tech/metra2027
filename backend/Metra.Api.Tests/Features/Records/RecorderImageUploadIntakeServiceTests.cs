@@ -84,6 +84,48 @@ public sealed class RecorderImageUploadIntakeServiceTests
     }
 
     [Fact]
+    public async Task Removes_quarantine_object_when_stored_length_differs_from_received_bytes()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore();
+        var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
+        var storage = new FakeStorage
+        {
+            StoredObject = new(AssetId, PngBytes.Length + 1, hash, "image/png")
+        };
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), Request(),
+            new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("stored_object_integrity_mismatch", result.ErrorCode);
+        Assert.Equal(1, storage.DeleteCalls);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
+    public async Task Removes_quarantine_object_when_detected_media_type_differs_from_validated_bytes()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore();
+        var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
+        var storage = new FakeStorage
+        {
+            StoredObject = new(AssetId, PngBytes.Length, hash, "image/jpeg")
+        };
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), Request(),
+            new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("stored_object_integrity_mismatch", result.ErrorCode);
+        Assert.Equal(1, storage.DeleteCalls);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Removes_quarantine_object_when_asset_compare_and_set_conflicts()
     {
         var authorizer = new FakeAuthorizer { Allowed = true };
