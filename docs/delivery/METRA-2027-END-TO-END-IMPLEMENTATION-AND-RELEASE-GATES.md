@@ -179,3 +179,11 @@
 
 - Follow-up reconciliation aligned all five tracked active migration files byte-for-byte with the corresponding recovered live statements and corrected the two mismatched version prefixes. The active folder still contains only five of the 86 applied migrations; the other 81 remain archived outside the CLI migration path.
 - Added `scripts/verify_live_schema_history.py` and a Backend CI step to enforce the 86-file archive inventory, version range, unique IDs, non-empty SQL, and exact parity for every active-folder migration against the recovered source. This integrity check does not execute SQL or prove clean replay.
+
+### Supabase runtime identity production gate
+- Read-only role inspection confirms that `service_role` has `BYPASSRLS=true` and can SELECT all 46 inspected application tables. Several .NET Supabase services currently authenticate PostgREST calls with the server-only `Supabase:ServiceRoleKey`.
+- The database's `metra_api_runtime` role is `NOLOGIN`, `NOBYPASSRLS`, has limited table grants, and currently has no EXECUTE grants on inspected application functions. It is not yet a working API identity.
+- `anon` and `authenticated` have no table CRUD grants and no function EXECUTE grants in the inspected application domain schemas; all 46 tables have RLS enabled. Twenty-one no-policy advisor findings are informational under this deny-by-default grant state.
+- Hosted Data API exposed-schema settings were not established by the read-only database session and must be checked separately.
+- Before production, approve and implement a least-privilege API runtime identity (or a documented, tightly bounded RPC gateway exception), grant only approved RPC execution, and prove cross-authority/station and lifecycle denial tests using that exact identity. Do not grant the runtime role service_role membership or BYPASSRLS merely to make the API work.
+- Security review: `docs/security/METRA-SUPABASE-RUNTIME-IDENTITY-REVIEW-2026-11-15.md`.
