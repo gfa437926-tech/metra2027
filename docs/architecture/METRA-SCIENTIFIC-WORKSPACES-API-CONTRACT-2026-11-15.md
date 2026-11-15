@@ -151,3 +151,7 @@ The provider-neutral upload validator accepts only a safe ASCII leaf filename co
 ### Canonical digitization request fingerprint
 
 Outbox adapters can use `RecordDigitizationRequestFingerprint.TryCompute` to derive a deterministic lowercase SHA-256 digest from the canonical capture ID, accepted asset ID and validated algorithm profile. The idempotency key and actor are not included in the payload digest; they scope the idempotency claim separately. Reusing the same actor/key with a different fingerprint must return an idempotency conflict, while the same fingerprint must replay the existing job. This helper performs no persistence and does not replace the required atomic transaction in the outbox provider.
+
+### Outbox fingerprint handoff
+
+The application service now computes the canonical request fingerprint after actor/resource authorization and accepted-state validation, then passes it explicitly to `IRecorderDigitizationOutbox.TryCreateAsync`. A durable provider must persist and compare this digest atomically with the actor-scoped idempotency-key claim and job/outbox insertion. The service does not treat a locally computed digest as proof of persistence or uniqueness; those guarantees belong to the provider transaction.
