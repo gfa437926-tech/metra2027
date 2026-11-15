@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'record_capture_request.dart';
 import '../../core/widgets/metra_ui.dart';
 
 /// Field workspace for paper and mechanical records, image digitization,
@@ -11,13 +12,22 @@ class RecordsReviewWorkspaceScreen extends StatefulWidget {
 
 class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScreen> {
   int _section = 0;
-  String? _recordType;
+  MetraRecorderKind? _recordType;
   String _draftStatus = '';
+  RecordCaptureRequest? _localDraft;
   final _station = TextEditingController();
-  final _period = TextEditingController();
+  final _instrument = TextEditingController();
+  final _start = TextEditingController();
+  final _end = TextEditingController();
+  final _timeZone = TextEditingController(text: 'Asia/Damascus');
+  final _chartType = TextEditingController(text: 'daily');
+  final _formKey = GlobalKey<FormState>();
 
   @override
-  void dispose() { _station.dispose(); _period.dispose(); super.dispose(); }
+  void dispose() {
+    _station.dispose(); _instrument.dispose(); _start.dispose(); _end.dispose();
+    _timeZone.dispose(); _chartType.dispose(); super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -46,18 +56,62 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
   );
 
   Widget _archive() => Column(children: [
-    MetraSectionCard(title: 'تعريف سجل جديد', child: Column(children: [
-      TextField(controller: _station, decoration: const InputDecoration(labelText: 'معرف المحطة')),
-      const SizedBox(height: 10),
-      DropdownButtonFormField<String>(initialValue: _recordType, decoration: const InputDecoration(labelText: 'نوع السجل أو الجهاز'), items: const [
-        'سجل ورقي','Thermograph','Hygrograph','Barograph','Pluviograph',
-      ].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(), onChanged: (v) => setState(() => _recordType = v)),
-      const SizedBox(height: 10),
-      TextField(controller: _period, decoration: const InputDecoration(labelText: 'الفترة أو التاريخ المسجل')),
-      const SizedBox(height: 12),
-      FilledButton.icon(onPressed: () => setState(() => _draftStatus = 'تم تجهيز تعريف محلي فقط. رفع الملف غير متاح قبل ربط التخزين الخاص.'), icon: const Icon(Icons.save_outlined), label: const Text('إعداد تعريف السجل')),
-      if (_draftStatus.isNotEmpty) ...[const SizedBox(height: 8), MetraStatusBanner(tone: MetraBannerTone.info, message: _draftStatus)],
-    ])),
+    MetraSectionCard(title: 'تعريف سجل جديد', child: Form(
+      key: _formKey,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        TextFormField(key: const Key('capture-station-id'), controller: _station, decoration: const InputDecoration(labelText: 'معرف المحطة (UUID)'), validator: _requiredUuid),
+        const SizedBox(height: 10),
+        TextFormField(key: const Key('capture-instrument-id'), controller: _instrument, decoration: const InputDecoration(labelText: 'معرف الجهاز (UUID)'), validator: _requiredUuid),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<MetraRecorderKind>(
+          key: const Key('capture-recorder-kind'), initialValue: _recordType,
+          decoration: const InputDecoration(labelText: 'نوع المسجل'),
+          items: const [
+            DropdownMenuItem(value: MetraRecorderKind.thermograph, child: Text('Thermograph')),
+            DropdownMenuItem(value: MetraRecorderKind.hygrograph, child: Text('Hygrograph')),
+            DropdownMenuItem(value: MetraRecorderKind.barograph, child: Text('Barograph')),
+            DropdownMenuItem(value: MetraRecorderKind.pluviograph, child: Text('Pluviograph')),
+          ],
+          onChanged: (value) => setState(() => _recordType = value),
+          validator: (value) => value == null ? 'اختر نوع المسجل' : null,
+        ),
+        const SizedBox(height: 10),
+        TextFormField(key: const Key('capture-start'), controller: _start, decoration: const InputDecoration(labelText: 'بداية التسجيل (ISO 8601)'), validator: _validDate),
+        const SizedBox(height: 10),
+        TextFormField(
+          key: const Key('capture-end'), controller: _end,
+          decoration: const InputDecoration(labelText: 'نهاية التسجيل (ISO 8601)'),
+          validator: (value) {
+            final error = _validDate(value);
+            if (error != null) return error;
+            final start = DateTime.tryParse(_start.text.trim());
+            final end = DateTime.tryParse((value ?? '').trim());
+            return start != null && end != null && !end.isAfter(start) ? 'يجب أن تكون النهاية بعد البداية' : null;
+          },
+        ),
+        const SizedBox(height: 10),
+        TextFormField(key: const Key('capture-timezone'), controller: _timeZone, decoration: const InputDecoration(labelText: 'المنطقة الزمنية للورق'), validator: (value) {
+          final text = value?.trim() ?? '';
+          if (text.isEmpty) return 'المنطقة الزمنية مطلوبة';
+          if (text.length > 100 || text.contains(RegExp(r'[\x00-\x1F]'))) return 'قيمة المنطقة الزمنية غير صالحة';
+          return null;
+        }),
+        const SizedBox(height: 10),
+        TextFormField(key: const Key('capture-chart-type'), controller: _chartType, decoration: const InputDecoration(labelText: 'نوع المخطط'), validator: (value) {
+          final text = value?.trim() ?? '';
+          if (text.isEmpty) return 'نوع المخطط مطلوب';
+          if (text.length > 80 || text.contains(RegExp(r'[\x00-\x1F]'))) return 'قيمة نوع المخطط غير صالحة';
+          return null;
+        }),
+        const SizedBox(height: 12),
+        FilledButton.icon(key: const Key('prepare-capture-draft'), onPressed: _prepareLocalDraft, icon: const Icon(Icons.save_outlined), label: const Text('إعداد مسودة السجل')),
+        if (_draftStatus.isNotEmpty) ...[const SizedBox(height: 8), MetraStatusBanner(tone: MetraBannerTone.info, message: _draftStatus)],
+        if (_localDraft != null) ...[
+          const SizedBox(height: 8),
+          Text('النوع: ' + _localDraft!.recorderKind.name + ' · الفترة: ' + _localDraft!.captureStart.toUtc().toIso8601String() + ' — ' + _localDraft!.captureEnd.toUtc().toIso8601String(), style: const TextStyle(color: metraMuted, fontSize: 12)),
+        ],
+      ]),
+    )),
     const SizedBox(height: 12),
     const MetraSectionCard(title: 'أنواع الأرشيف', child: Column(children: [
       _RecordTypeRow(Icons.menu_book_outlined, 'السجلات الورقية', 'دفاتر الرصد والنماذج اليدوية'),
@@ -67,8 +121,38 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
       _RecordTypeRow(Icons.grain_outlined, 'Pluviograph', 'مخططات الهطول المطري'),
     ])),
     const SizedBox(height: 12),
-    const MetraSectionCard(title: 'بيانات الأرشفة الإلزامية', child: Text('المحطة · الجهاز · العنصر المناخي · وقت البداية والنهاية · رقم الصفحة · الراصد أو مصدر السجل · بصمة الملف · إصدار المعالجة · حالة المراجعة', style: TextStyle(color: metraMuted, height: 1.6))),
+    const MetraSectionCard(title: 'حدود الحفظ الحالية', child: Text('تُنشأ المسودة في ذاكرة الشاشة فقط. لا يوجد اتصال بخدمة إنشاء السجلات أو رفع الصور أو التخزين حتى الآن. لا تُعد هذه المسودة سجلاً محفوظاً على الخادم.', style: TextStyle(color: metraMuted, height: 1.6))),
   ]);
+
+  String? _requiredUuid(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return 'هذا المعرف مطلوب';
+    final uuid = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$');
+    return uuid.hasMatch(text) ? null : 'أدخل UUID صالحاً';
+  }
+
+  String? _validDate(String? value) {
+    final text = value?.trim() ?? '';
+    if (text.isEmpty) return 'التاريخ والوقت مطلوبان';
+    return DateTime.tryParse(text) == null ? 'أدخل تاريخاً بصيغة ISO 8601' : null;
+  }
+
+  void _prepareLocalDraft() {
+    if (!_formKey.currentState!.validate()) {
+      setState(() { _localDraft = null; _draftStatus = 'تحقق من الحقول المطلوبة وصحة الفترة الزمنية قبل إعداد المسودة.'; });
+      return;
+    }
+    final request = RecordCaptureRequest(
+      stationId: _station.text.trim(), instrumentId: _instrument.text.trim(),
+      recorderKind: _recordType!, captureStart: DateTime.parse(_start.text.trim()),
+      captureEnd: DateTime.parse(_end.text.trim()), paperTimeZoneId: _timeZone.text.trim(),
+      chartType: _chartType.text.trim(),
+    );
+    setState(() {
+      _localDraft = request;
+      _draftStatus = 'أُعدّت مسودة محلية فقط للمحطة ' + request.stationId + '. لم تُرسل إلى الخادم ولم يُرفع أي ملف.';
+    });
+  }
 
   Widget _imageReview() => Column(children: [
     const MetraSectionCard(title: 'مسار معالجة الصورة', child: Column(children: [
