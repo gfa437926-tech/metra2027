@@ -93,19 +93,23 @@ class _RecordsReviewWorkspaceScreenState extends State<RecordsReviewWorkspaceScr
         TextFormField(key: const Key('capture-timezone'), controller: _timeZone, decoration: const InputDecoration(labelText: 'المنطقة الزمنية للورق'), validator: (value) {
           final text = value?.trim() ?? '';
           if (text.isEmpty) return 'المنطقة الزمنية مطلوبة';
-          if (text.length > 100 || text.contains(RegExp(r'[\\x00-\\x1F]'))) return 'قيمة المنطقة الزمنية غير صالحة';
+          if (text.length > 100 || text.contains(RegExp(r'[\x00-\x1F]'))) return 'قيمة المنطقة الزمنية غير صالحة';
           return null;
         }),
         const SizedBox(height: 10),
         TextFormField(key: const Key('capture-chart-type'), controller: _chartType, decoration: const InputDecoration(labelText: 'نوع المخطط'), validator: (value) {
           final text = value?.trim() ?? '';
           if (text.isEmpty) return 'نوع المخطط مطلوب';
-          if (text.length > 80 || text.contains(RegExp(r'[\\x00-\\x1F]'))) return 'قيمة نوع المخطط غير صالحة';
+          if (text.length > 80 || text.contains(RegExp(r'[\x00-\x1F]'))) return 'قيمة نوع المخطط غير صالحة';
           return null;
         }),
         const SizedBox(height: 12),
         FilledButton.icon(key: const Key('prepare-capture-draft'), onPressed: _prepareLocalDraft, icon: const Icon(Icons.save_outlined), label: const Text('إعداد مسودة السجل')),
         if (_draftStatus.isNotEmpty) ...[const SizedBox(height: 8), MetraStatusBanner(tone: MetraBannerTone.info, message: _draftStatus)],
+        if (_localDraft != null) ...[
+          const SizedBox(height: 8),
+          Text('النوع: ' + _localDraft!.recorderKind.name + ' · الفترة: ' + _localDraft!.captureStart.toUtc().toIso8601String() + ' — ' + _localDraft!.captureEnd.toUtc().toIso8601String(), style: const TextStyle(color: metraMuted, fontSize: 12)),
+        ],
       ]),
     )),
     const SizedBox(height: 12),
