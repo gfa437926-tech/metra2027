@@ -96,7 +96,9 @@ public static class MetraStationReadAuthorization
             return MetraAuthorizationDecision.Deny(MetraAuthorizationOutcome.DeniedInvalidStation);
 
         if (string.IsNullOrWhiteSpace(requiredReadPermission) ||
-            !IsCanonicalPermission(requiredReadPermission))
+            !IsCanonicalPermission(requiredReadPermission) ||
+            (!StationReadPermissions.Contains(requiredReadPermission) &&
+             !GlobalReadPermissions.Contains(requiredReadPermission)))
             return MetraAuthorizationDecision.Deny(MetraAuthorizationOutcome.DeniedPermissionMissing);
 
         var grants = actor.Grants ?? Array.Empty<MetraAuthorizationGrant>();
