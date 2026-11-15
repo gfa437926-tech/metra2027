@@ -8,7 +8,7 @@
 
 - `GET /api/v2/stations` is protected by the ASP.NET JWT authentication fallback policy.
 - The endpoint derives the actor UUID only from the already validated JWT `sub` claim. It does not accept a user ID, role, station ID or scope from query/body data.
-- `SupabaseGreenfieldStationDirectoryReader` calls only `catalog.get_station_directory_for_actor` by POST. It does not query catalogue tables directly.
+- `SupabaseGreenfieldStationDirectoryReader` calls only the `public.get_station_directory_for_actor` PostgREST RPC wrapper by POST. The wrapper invokes the internal `catalog.get_station_directory_for_actor` SECURITY DEFINER function; the adapter does not query catalogue tables directly and does not require the `catalog` schema to be exposed by PostgREST.
 - The server-side `Supabase:ServiceRoleKey` is used only as the credential for this one server-only RPC. The key is never returned to a client, stored in Flutter, or used for direct table reads by this adapter.
 - The RPC is proposal-only and grants EXECUTE to `service_role` while revoking PUBLIC, `anon`, and `authenticated`. It is a `SECURITY DEFINER` function with a fixed `search_path`.
 - The RPC checks the active profile, approved active membership, active organization, active role, active and time-valid role assignment, explicit role permission and station state in the same database statement. Authorization facts and the station/type rows are locked for the duration of the read.
