@@ -7,15 +7,22 @@ void main() {
   const instrumentId = '22222222-2222-4222-8222-222222222222';
 
   Future<void> enterValidCapture(WidgetTester tester) async {
+    await tester.ensureVisible(find.byKey(const Key('capture-station-id')));
     await tester.enterText(find.byKey(const Key('capture-station-id')), stationId);
+    await tester.ensureVisible(find.byKey(const Key('capture-instrument-id')));
     await tester.enterText(find.byKey(const Key('capture-instrument-id')), instrumentId);
+    await tester.ensureVisible(find.byKey(const Key('capture-recorder-kind')));
     await tester.tap(find.byKey(const Key('capture-recorder-kind')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Barograph').last);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('capture-start')));
     await tester.enterText(find.byKey(const Key('capture-start')), '2026-01-01T00:00:00Z');
+    await tester.ensureVisible(find.byKey(const Key('capture-end')));
     await tester.enterText(find.byKey(const Key('capture-end')), '2026-01-02T00:00:00Z');
+    await tester.ensureVisible(find.byKey(const Key('capture-timezone')));
     await tester.enterText(find.byKey(const Key('capture-timezone')), 'Asia/Damascus');
+    await tester.ensureVisible(find.byKey(const Key('capture-chart-type')));
     await tester.enterText(find.byKey(const Key('capture-chart-type')), 'daily');
   }
 
@@ -26,6 +33,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
 
+    await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
     await tester.tap(find.byKey(const Key('prepare-capture-draft')));
     await tester.pumpAndSettle();
     expect(find.text('هذا المعرف مطلوب'), findsNWidgets(2));
