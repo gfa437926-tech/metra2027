@@ -27,8 +27,8 @@ void main() {
   }
 
   testWidgets('capture form validates required UUID and positive time interval', (tester) async {
-    tester.view.physicalSize = const Size(1000, 1100));
-    tester.view.devicePixelRatio = 1);
+    tester.view.physicalSize = const Size(1000, 1100);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
