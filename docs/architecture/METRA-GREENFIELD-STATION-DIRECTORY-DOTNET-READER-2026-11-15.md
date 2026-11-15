@@ -1,31 +1,43 @@
 # Greenfield station directory .NET reader
 
-**Status:** implemented in the API source; hosted access remains fail-closed pending the approved Data API/runtime access review.  
+**Status:** Atomic actor-scoped RPC adapter and .NET client implemented; hosted RPC and feature flag remain disabled pending schema review/approval.  
 **Route:** `GET /api/v2/stations`  
-**Physical source:** `catalog.stations`, `catalog.station_types`, `catalog.station_locations`.
+**Physical source:** `catalog.stations`, `catalog.station_types`, `catalog.station_locations`; authorization from `iam.*`.
 
-## Implementation
+## Current implementation
 
-- `SupabaseGreenfieldStationDirectoryReader` reads only the normalized `catalog` schema through PostgREST.
-- The API forwards the already validated caller's Supabase bearer JWT and uses only `Supabase:PublishableKey` as the `apikey` header. It never uses `service_role` for this directory path.
-- The request selects the station's canonical code/names/WMO identifier/status, joins an active station type, and embeds only locations where `valid_to IS NULL`.
-- The response is flattened into the strict `stations.directory.v1` DTO and passed through `GreenfieldStationDirectoryMapper`.
-- Approved stations with operational state `active` or `temporarily_closed` are the only records requested. Station type codes are filtered safely, pages are bounded to 500, and results are ordered by unique `station_code`.
-- Zero current locations are represented as absent coordinates. More than one current location fails the whole page; join multiplication is never silently accepted.
-- The legacy `/api/v1/stations` adapter remains separately disabled by default. No fallback to `public.station_catalogue` is performed.
+- `GET /api/v2/stations` is protected by the ASP.NET JWT authentication fallback policy.
+- The endpoint derives the actor UUID only from the already validated JWT `sub` claim. It does not accept a user ID, role, station ID or scope from query/body data.
+- `SupabaseGreenfieldStationDirectoryReader` calls only `catalog.get_station_directory_for_actor` by POST. It does not query catalogue tables directly.
+- The server-side `Supabase:ServiceRoleKey` is used only as the credential for this one server-only RPC. The key is never returned to a client, stored in Flutter, or used for direct table reads by this adapter.
+- The RPC is proposal-only and grants EXECUTE to `service_role` while revoking PUBLIC, `anon`, and `authenticated`. It is a `SECURITY DEFINER` function with a fixed `search_path`.
+- The RPC checks the active profile, approved active membership, active organization, active role, active and time-valid role assignment, explicit role permission and station state in the same database statement. Authorization facts and the station/type rows are locked for the duration of the read.
+- A station-scoped assignment must match the exact station and owner organization and carry `stations.read`. A global assignment is accepted only for `auditor` or `network_department_head` and only with `stations.read_all`.
+- Only approved stations with operational status `active` or `temporarily_closed` and an active station type are returned. The station user receives only assigned station(s); global readers receive all eligible stations.
+- The SQL returns the strict flat `stations.directory.v1` projection, which is validated by `GreenfieldStationDirectoryMapper`. Page size is bounded to 500, offset is nonnegative, and station type code is validated on both API and database sides.
+- The legacy `/api/v1/stations` adapter remains separately disabled by default. There is no fallback to `public.station_catalogue`.
 
 ## Required configuration
 
 - `Supabase:Url`
-- `Supabase:PublishableKey` (publishable/legacy anon key only; never a service-role or secret key)
+- `Supabase:ServiceRoleKey` (server secret only; do not expose in clients or logs)
 - `Features:GreenfieldStationDirectoryEnabled=true` (explicit opt-in; defaults to disabled)
 
-The caller JWT is taken from the incoming request only after ASP.NET authentication has validated it. The endpoint returns 401 without an authenticated principal/bearer token and 503 if the reader is not explicitly enabled/configured or the PostgREST result cannot be validated. Unit tests prove the route performs zero HTTP calls while the feature flag is off.
+The endpoint returns 401 if the validated subject is not a UUID. It returns 503 when the adapter is not explicitly enabled/configured or the atomic RPC fails/returns an invalid projection. Unit tests verify the service calls only the RPC, sends the validated actor ID and bounded query values, rejects a publishable key in the server-key setting, and performs zero HTTP calls while disabled.
 
-## Current integration blocker — deliberately not bypassed
+## SQL proposals and isolated verification
 
-Read-only inspection of project `tbdnklyxjvbrilvnwgmq` confirms the catalog tables exist and have RLS enabled; `catalog.stations` currently has zero rows. A focused SQL inspection found SELECT policies on `catalog.stations`, `catalog.station_types`, and `catalog.station_locations` for `metra_api_runtime` with `USING (true)`, and that role has SELECT grants on those three tables plus `catalog` schema USAGE. However, `metra_api_runtime` is `NOLOGIN`, has no application-function EXECUTE grants, and is not the API's runtime identity. The `authenticated` and `anon` roles have no `catalog` schema USAGE and no table grants on these objects. Therefore the caller-JWT PostgREST adapter added here cannot currently read `catalog` and will fail closed; it is an explicit versioned adapter contract, not a claim of live connectivity. The safe next step is to approve and implement a narrowly scoped server-side gateway or a dedicated least-privilege login/runtime identity, with actor/station scope checks and negative integration tests. Do not simply grant `authenticated` access or elevate the API to `service_role`.
+- `database/proposals/036_global_station_read_roles_and_permissions.sql` adds explicit global read permissions and the non-assignable system role `network_department_head`; it does not create user assignments.
+- `database/proposals/037_atomic_greenfield_station_directory_read.sql` defines the actor-bound directory RPC.
+- `database/isolated/11_bootstrap_greenfield_iam_catalogue.sql` creates a minimal disposable fixture matching the inspected IAM/catalogue contract. It is not represented as a canonical replay of the full live schema.
+- `database/isolated/11_test_station_global_read_roles.sql` checks global role definitions and read-only permission sets.
+- `database/isolated/12_test_atomic_greenfield_station_directory.sql` checks own-station isolation, auditor/network-head global reads, approval/operational filtering, suspended profile and expired assignment denial, and RPC execute ACL.
+- Backend CI Path N applies these proposals only to a disposable PostgreSQL job. It does not apply them to hosted Supabase.
 
-Do not solve this by switching to `service_role`, adding blanket policies, granting broad CRUD, or enabling an unreviewed schema. The next safe gate is to approve the catalog read scope (global published catalogue vs organization-scoped stations), exposed-schema decision, and exact RLS/grant design; then test anonymous, cross-organization, pending/rejected, inactive station type, and duplicate-current-location cases against a disposable PostgreSQL/Supabase environment. Only after those tests and explicit approval may hosted grants/policies or configuration be changed.
+## Hosted integration boundary
 
-No hosted SQL, grants, RLS policies, seeds, keys, storage, legacy database, or deployment settings were changed.
+Read-only inspection of project `tbdnklyxjvbrilvnwgmq` found that the actual IAM assignment scope values are `global`, `organization`, `unit`, and `station`; `auditor` exists, but `network_department_head` and explicit `*.read_all` permissions do not. Profiles, memberships, role assignments and station catalogue rows are currently empty. Existing catalogue RLS is not a direct caller-JWT read path for this adapter.
+
+The new reader is therefore deliberately feature-gated off. Do not enable it until the SQL proposal has passed isolated CI, the owner has reviewed the exact SQL/privileges, the hosted schema change has been explicitly approved, and a non-production integration test confirms the function owner and ACLs. No blanket table grants or authenticated direct catalogue access are required.
+
+No hosted SQL, grants, RLS policies, seed data, role assignments, keys, storage, legacy database, or deployment settings were changed.
