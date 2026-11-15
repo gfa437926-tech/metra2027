@@ -72,6 +72,7 @@ public static class GreenfieldObservationValueMapper
         foreach (var parameter in parameters)
         {
             if (parameter.Id == Guid.Empty || string.IsNullOrWhiteSpace(parameter.Code) ||
+                parameter.PrecisionScale is < 0 or > 12 ||
                 !parameterIndex.TryAdd(parameter.Code, parameter))
                 return Failure("parameter_catalogue_invalid");
         }
@@ -267,7 +268,7 @@ public static class GreenfieldObservationValueMapper
                     error = "decimal_value_required";
                     return false;
                 }
-                if (parameter.PrecisionScale is < 0 or > 18 ||
+                if (parameter.PrecisionScale is < 0 or > 12 ||
                     parameter.PrecisionScale is int scale && DecimalScale(number) > scale)
                 {
                     error = "decimal_precision_exceeded";
