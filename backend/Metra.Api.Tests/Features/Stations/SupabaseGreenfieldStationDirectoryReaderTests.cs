@@ -36,24 +36,32 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     [Fact]
     public async Task Calls_only_atomic_actor_bound_rpc_with_server_key_and_validated_actor_id()
     {
-        HttpRequestMessage? captured = null;
+        HttpMethod? capturedMethod = null;
+        string? capturedUri = null;
+        string? capturedAuthorization = null;
+        string? capturedApiKey = null;
+        bool capturedProfileHeader = false;
+        string? capturedBody = null;
         var reader = CreateReader(new StubHandler(request =>
         {
-            captured = request;
+            capturedMethod = request.Method;
+            capturedUri = request.RequestUri!.AbsoluteUri;
+            capturedAuthorization = request.Headers.Authorization?.Parameter;
+            capturedApiKey = request.Headers.GetValues("apikey").Single();
+            capturedProfileHeader = request.Headers.Contains("Content-Profile");
+            capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return Ok(StationRows);
         }));
 
         var result = await reader.GetStationsAsync(ActorId, 25, 5, "synoptic", default);
 
-        Assert.NotNull(captured);
-        Assert.Equal(HttpMethod.Post, captured.Method);
-        Assert.EndsWith("/rest/v1/rpc/get_station_directory_for_actor", captured.RequestUri!.AbsoluteUri);
-        Assert.Equal("Bearer", captured.Headers.Authorization?.Scheme);
-        Assert.Equal("sb_secret_server_test", captured.Headers.Authorization?.Parameter);
-        Assert.Contains(captured.Headers.GetValues("apikey"), value => value == "sb_secret_server_test");
-        Assert.False(captured.Headers.Contains("Content-Profile"));
+        Assert.Equal(HttpMethod.Post, capturedMethod);
+        Assert.EndsWith("/rest/v1/rpc/get_station_directory_for_actor", capturedUri);
+        Assert.Equal("sb_secret_server_test", capturedAuthorization);
+        Assert.Equal("sb_secret_server_test", capturedApiKey);
+        Assert.False(capturedProfileHeader);
 
-        using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        using var body = JsonDocument.Parse(capturedBody!);
         Assert.Equal(ActorId, body.RootElement.GetProperty("p_actor_user_id").GetGuid());
         Assert.Equal(25, body.RootElement.GetProperty("p_limit").GetInt32());
         Assert.Equal(5, body.RootElement.GetProperty("p_offset").GetInt32());
