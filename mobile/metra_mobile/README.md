@@ -80,3 +80,10 @@ The app deliberately shows explicit unavailable/connection states instead of sam
 
 ## Station map
 The station directory defaults to a geographic map with separate symbols for classic and automatic stations, plus a list view and type filters. It fetches the paginated station catalogue (up to the API client's explicit 10,000-row safety ceiling), plots only validated catalogue coordinates, and reports records without coordinates rather than fabricating positions. Map tiles use OpenStreetMap; production deployments must follow the tile provider's usage policy and attribution requirements.
+
+
+### Recorder security boundary
+
+- Fail-closed image acceptance requires a clean scanner verdict, scanner identity/version, verified SHA-256, verified content signature, allowed image dimensions and positive byte length.
+- An indeterminate scan remains quarantined; provider-neutral storage/scanner ports are not registered until the deployment and data-governance decisions are approved.
+- See the implementation/release gates and security operations runbook in the repository docs.
