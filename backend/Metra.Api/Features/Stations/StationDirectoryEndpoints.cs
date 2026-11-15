@@ -1,5 +1,6 @@
 using Metra.Api.Security;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Metra.Api.Features.Stations;
@@ -142,10 +143,10 @@ public static class StationDirectoryEndpoints
             if (context.User.Identity?.IsAuthenticated != true)
                 return Results.Unauthorized();
 
-            if (!AuthenticationHeaderValue.TryParse(
-                    context.Request.Headers.Authorization, out var authorization) ||
-                !string.Equals(authorization.Scheme, "Bearer", StringComparison.OrdinalIgnoreCase) ||
-                string.IsNullOrWhiteSpace(authorization.Parameter))
+            // ASP.NET has already validated the JWT signature, issuer, audience and lifetime.
+            // Derive the actor only from the validated sub claim; never accept a client actor ID.
+            if (!Guid.TryParse(context.User.FindFirstValue("sub"), out var actorUserId) ||
+                actorUserId == Guid.Empty)
                 return Results.Unauthorized();
 
             if (!directory.IsConfigured)
@@ -154,7 +155,7 @@ public static class StationDirectoryEndpoints
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
             var result = await directory.GetStationsAsync(
-                authorization.Parameter, take, skip, stationType, cancellationToken);
+                actorUserId, take, skip, stationType, cancellationToken);
             if (result is null || !result.Succeeded)
                 return Results.Problem(
                     title: "Greenfield station directory read failed",
