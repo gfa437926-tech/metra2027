@@ -213,3 +213,7 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 
 - The upload state-store commit result is explicit: `Committed`, `StateConflict`, or `OutcomeUnknown`. Quarantine rollback is allowed only after a confirmed state conflict or a failed pre-commit storage-integrity check. On an unknown commit outcome, the object remains private and is reconciled against durable asset state; it must not be deleted speculatively.
 - Provider implementations must distinguish a confirmed compare-and-set miss from transport/transaction ambiguity. Exceptions or timeouts after commit submission must not be translated into a definite conflict.
+
+- Each intake invocation generates a server-side `uploadAttemptId`. Quarantine storage writes, returned object metadata, validation and rollback are bound to both `assetId` and this attempt ID. The storage adapter must use an immutable attempt-scoped object key; it must never overwrite another concurrent upload attempt for the same asset.
+- Rollback deletes only the exact attempt object, never every quarantined object associated with the asset. The persisted asset record must retain the committed attempt/object reference so retries and reconciliation cannot confuse concurrent uploads.
+- Tests reject storage metadata carrying a different attempt ID and assert rollback is scoped to a non-empty attempt identifier.
