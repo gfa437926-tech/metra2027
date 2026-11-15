@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Configuration;
 using Metra.Api.Features.Stations;
 using Xunit;
@@ -65,9 +66,17 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     [Fact]
     public async Task Rejects_multiple_current_locations_instead_of_multiplying_station()
     {
-        var twoLocations = StationRow.Replace(
-            "\"valid_to\":null\n      }]\n    }]",
-            "\"valid_to\":null\n      },{\n        \"latitude\":35.6,\n        \"longitude\":36.3,\n        \"location_source\":\"survey\",\n        \"horizontal_accuracy_m\":5,\n        \"valid_to\":null\n      }]\n    }]");
+        var root = JsonNode.Parse(StationRow)!.AsArray();
+        root[0]!["station_locations"]!.AsArray().Add(JsonNode.Parse("""
+        {
+          "latitude":35.6,
+          "longitude":36.3,
+          "location_source":"survey",
+          "horizontal_accuracy_m":5,
+          "valid_to":null
+        }
+        """));
+        var twoLocations = root.ToJsonString();
         var reader = CreateReader(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(twoLocations, Encoding.UTF8, "application/json")
