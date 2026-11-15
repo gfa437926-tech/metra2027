@@ -97,8 +97,33 @@ $function$;
 
 REVOKE ALL ON FUNCTION catalog.get_station_directory_for_actor(uuid, integer, integer, text)
   FROM PUBLIC, anon, authenticated;
+GRANT USAGE ON SCHEMA catalog TO service_role;
 GRANT EXECUTE ON FUNCTION catalog.get_station_directory_for_actor(uuid, integer, integer, text)
+  TO service_role;
+
+-- Public-schema RPC wrapper avoids requiring catalog to be exposed as a PostgREST API schema.
+CREATE OR REPLACE FUNCTION public.get_station_directory_for_actor(
+  p_actor_user_id uuid,
+  p_limit integer DEFAULT 250,
+  p_offset integer DEFAULT 0,
+  p_station_type_code text DEFAULT NULL
+)
+RETURNS SETOF jsonb
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = pg_catalog, public
+AS $wrapper$
+  SELECT * FROM catalog.get_station_directory_for_actor(
+    p_actor_user_id, p_limit, p_offset, p_station_type_code
+  );
+$wrapper$;
+
+REVOKE ALL ON FUNCTION public.get_station_directory_for_actor(uuid, integer, integer, text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_station_directory_for_actor(uuid, integer, integer, text)
   TO service_role;
 
 COMMENT ON FUNCTION catalog.get_station_directory_for_actor(uuid, integer, integer, text) IS
   'Atomic station directory projection. Station assignments see only their station; auditor/network_department_head require active global assignment and stations.read_all. Service-role only; actor UUID must come from validated JWT sub.';
+COMMENT ON FUNCTION public.get_station_directory_for_actor(uuid, integer, integer, text) IS
+  'PostgREST public-schema wrapper for the service-role-only atomic greenfield station directory projection.';
