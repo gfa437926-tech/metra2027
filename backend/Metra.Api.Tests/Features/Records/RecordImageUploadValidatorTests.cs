@@ -47,6 +47,16 @@ public sealed class RecordImageUploadValidatorTests
         Assert.Equal("invalid_file_name", Validate(fileName: name).ErrorCode);
     }
 
+    [Theory]
+    [InlineData("scan\\nforged.png")]
+    [InlineData("scan\tforged.png")]
+    [InlineData("مسجل.png")]
+    [InlineData("scan image.png")]
+    public void Rejects_control_characters_unicode_and_ambiguous_file_names(string name)
+    {
+        Assert.Equal("invalid_file_name", Validate(fileName: name).ErrorCode);
+    }
+
     [Fact]
     public void Rejects_declared_type_that_does_not_match_file_signature()
     {
