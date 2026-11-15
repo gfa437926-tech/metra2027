@@ -1,7 +1,9 @@
 {
   "total_records": 174,
   "unique_field_uid": 174,
-  "unique_form_field_id": 174,
+  "part1_rows": 87,
+  "part2_rows": 87,
+  "assemble_and_verify": "OK",
   "duplicates_field_uid": [],
   "by_form": {
     "hourly": 36,
@@ -14,9 +16,6 @@
     "fault-telecom": 21,
     "fault-it": 10
   },
-  "sha256_csv_full": "638d44a56b469515a35511f405f1b6af9dac14c7b4b68642b4dadb23b0a3d551",
-  "sha256_json_full": "8d5374c49a4314abc699113dfe4cb47bbcd1e78d9215a2d0b785520007df7f61",
   "verification_passed": true,
-  "auto_verify_trace_ok": true,
-  "fr_fields_missing_screen": ["FR-FAULT-IT", "FR-FAULT-TEL", "FR-OBS-AGRI", "FR-OBS-HCLIMATE", "FR-OBS-RAIN", "FR-OBS-SOIL"]
+  "verified_on": "clean clone docs/metra-master-reference-final 2026-11-15"
 }
