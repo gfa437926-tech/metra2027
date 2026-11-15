@@ -9,7 +9,7 @@
 The evaluator accepts a server-resolved authorization snapshot, a requested station UUID, and one exact read permission. It denies by default unless the profile and membership are active and an active grant supplies the requested permission.
 
 - `station` scope allows access only when the grant station UUID exactly matches the requested station.
-- `global_read` scope is accepted only for `auditor` or `network_department_head` and only for an explicit global-read permission in the allow-list.
+- `global` scope is accepted only for `auditor` or `network_department_head` and only for an explicit global-read permission in the allow-list.
 - Global-read permissions are limited to station directory, observations, audit, forecasts, alerts, recorder and instrument read projections.
 - Write permissions, malformed permission identifiers, empty station IDs, missing identity, inactive profile/membership and inactive grants are denied.
 - The evaluator does not infer authority from user-supplied station IDs, role claims, request bodies or role names alone.
