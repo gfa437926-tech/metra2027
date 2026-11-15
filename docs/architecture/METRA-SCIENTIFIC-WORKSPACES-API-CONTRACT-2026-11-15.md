@@ -217,3 +217,5 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 - Each intake invocation generates a server-side `uploadAttemptId`. Quarantine storage writes, returned object metadata, validation and rollback are bound to both `assetId` and this attempt ID. The storage adapter must use an immutable attempt-scoped object key; it must never overwrite another concurrent upload attempt for the same asset.
 - Rollback deletes only the exact attempt object, never every quarantined object associated with the asset. The persisted asset record must retain the committed attempt/object reference so retries and reconciliation cannot confuse concurrent uploads.
 - Tests reject storage metadata carrying a different attempt ID and assert rollback is scoped to a non-empty attempt identifier.
+
+- The attempt identifier is required for every object-specific quarantine operation, including write, open/read, promotion and rollback deletion. Asset-level expiry cleanup is a separate enumerated lifecycle operation and must not be callable as an ordinary upload rollback.
