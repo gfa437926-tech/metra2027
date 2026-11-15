@@ -181,3 +181,10 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 - Extended acceptance-policy tests so SHA-256 verification, content-signature verification and dimension-policy verification each fail independently when absent.
 - Added a regression case for an unknown asset-state enum value paired with otherwise valid scanner and integrity evidence.
 - These tests protect the fail-closed policy contract; they do not replace provider integration tests or a real scanner/storage security assessment.
+
+### Quarantine storage adapter result validation
+
+- Added `QuarantinedRecorderObjectPolicy` as a mandatory application-boundary check for metadata returned by a quarantine-storage adapter.
+- It verifies the returned asset ID matches the requested asset, the stored length is positive and no greater than the 20 MiB limit, the SHA-256 is exactly 64 lowercase hexadecimal characters, and the detected media type is one of JPEG, PNG or TIFF.
+- Added tests for missing/mismatched IDs, missing adapter results, invalid and oversized lengths, the exact maximum-size boundary, malformed/noncanonical hashes and unsupported/noncanonical media types.
+- This validates adapter-reported metadata only. The adapter must still calculate the digest from stored bytes, independently detect the media type, and enforce private quarantine semantics; this policy does not itself write, read, scan or promote files.
