@@ -55,7 +55,7 @@ public sealed class RecordCaptureRequestValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("invalid\\u0001zone")]
+    [InlineData("invalid\u0001zone")]
     public void Rejects_missing_or_control_character_paper_timezone(string timezone) =>
         Assert.Equal("paper_timezone_invalid",
             RecordCaptureRequestValidator.Validate(ValidRequest(timezone: timezone)).ErrorCode);
@@ -68,7 +68,7 @@ public sealed class RecordCaptureRequestValidatorTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("weekly\\u0001chart")]
+    [InlineData("weekly\u0001chart")]
     public void Rejects_missing_or_control_character_chart_type(string chartType) =>
         Assert.Equal("chart_type_invalid",
             RecordCaptureRequestValidator.Validate(ValidRequest(chartType: chartType)).ErrorCode);
