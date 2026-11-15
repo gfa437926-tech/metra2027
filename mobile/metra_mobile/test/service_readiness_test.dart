@@ -8,13 +8,14 @@ void main() {
     expect(MetraServiceReadiness.observationArchive, MetraDataSourceMode.mock);
   });
 
-  test('non-scientific reads use live API contracts while unavailable services fail closed', () {
-    expect(MetraServiceReadiness.stationDirectory, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.stationUsers, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.registrationRead, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.authorityAccessRead, MetraDataSourceMode.liveApi);
-    expect(MetraServiceReadiness.electronicAuditUi, MetraDataSourceMode.liveApi);
+  test('schema-incompatible API workflows remain gated despite existing HTTP endpoints', () {
+    expect(MetraServiceReadiness.stationDirectory, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.stationAudit, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.observationQueue, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.stationUsers, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.registrationRead, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.authorityAccessRead, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.electronicAuditUi, MetraDataSourceMode.gated);
+    expect(MetraServiceReadiness.authentication, MetraDataSourceMode.liveApi);
   });
 }
