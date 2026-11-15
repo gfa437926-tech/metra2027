@@ -91,7 +91,6 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  final error = snapshot.error;
                   return _empty(
                     Icons.cloud_off,
                     'تعذر تحميل دليل المحطات',
