@@ -78,3 +78,23 @@ A production release may be marked ready only after all of the following pass:
 - [ ] Security, privacy, retention, backup and operational monitoring reviews are complete.
 
 Until those gates are met, use this branch for UI review and controlled development/testing only.
+
+
+## Next implementation gates (2026-11-15)
+
+- [ ] Scientific ERD and data dictionary review/approval before executable migrations.
+- [ ] .NET recorder application services and station/authority scoped authorization.
+- [ ] Private quarantine storage, one-use upload intents, server-side integrity verification and malware scanning.
+- [ ] OCR and chart-digitization workers with benchmarked outputs and human review.
+- [ ] Provenance-preserving paper/mechanical/electronic and image/ground-truth comparison APIs.
+- [ ] CLIMATOL processing runtime with immutable source/adjustment versions and independent approval.
+- [ ] AI dataset snapshots, station/time leakage controls, training/evaluation and model release governance.
+- [ ] Flutter repositories and staging integration tests for all role-based workflows.
+- [ ] Separate environment deployment, observability, backup/restore and incident response verification.
+- [ ] Android/iOS runners, signing, device matrix and release acceptance.
+
+The current branch adds provider-neutral recorder quarantine/scanner ports and a fail-closed acceptance policy, but these ports are not registered or connected to storage/scanner providers. See:
+- `docs/delivery/METRA-2027-END-TO-END-IMPLEMENTATION-AND-RELEASE-GATES.md`
+- `docs/operations/METRA-SECURITY-AND-OPERATIONS-RUNBOOK.md`
+
+No production service, database migration, storage bucket, OCR engine, CLIMATOL runtime, AI training system, or signed mobile release is claimed by these UI and contract changes.
