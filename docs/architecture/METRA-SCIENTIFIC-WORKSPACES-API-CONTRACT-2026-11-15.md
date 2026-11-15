@@ -175,3 +175,9 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 - Missing evidence, unknown verdicts, threats and invalid scanner metadata cannot be converted into an accepted transition by supplying the requested target state alone.
 - Other legal lifecycle transitions continue to use the lifecycle rules without requiring scan evidence; invalid and terminal transitions remain rejected.
 - Persistence adapters must use this combined policy before committing acceptance. This is a pure application contract and test coverage only: it does not create a storage/scanner provider, authenticate scanner binaries, persist state, or register runtime endpoints.
+
+### Independent integrity-gate regression coverage
+
+- Extended acceptance-policy tests so SHA-256 verification, content-signature verification and dimension-policy verification each fail independently when absent.
+- Added a regression case for an unknown asset-state enum value paired with otherwise valid scanner and integrity evidence.
+- These tests protect the fail-closed policy contract; they do not replace provider integration tests or a real scanner/storage security assessment.
