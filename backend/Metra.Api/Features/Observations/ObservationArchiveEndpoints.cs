@@ -270,10 +270,7 @@ public sealed class SupabaseObservationArchiveService(
         }
     }
 
-    private static DateTime? NormalizeUtc(DateTime? value) =>
-        value is null ? null : value.Value.Kind == DateTimeKind.Utc
-            ? value.Value
-            : value.Value.ToUniversalTime();
+    private static DateTime? NormalizeUtc(DateTime? value) => value;
 
     private static ObservationArchiveItemDto? MapItem(JsonElement item)
     {
@@ -366,8 +363,9 @@ public static class ObservationArchiveEndpoints
                     return Results.BadRequest(new { code = "invalid_archive_limit", maximum = 100 });
                 if (cursor?.Length > 200)
                     return Results.BadRequest(new { code = "invalid_archive_cursor" });
-                if (fromUtc.HasValue && toUtc.HasValue && fromUtc.Value >= toUtc.Value)
-                    return Results.BadRequest(new { code = "invalid_archive_date_range" });
+                var timeRangeError = ObservationArchiveTimeRangeGuard.GetError(fromUtc, toUtc);
+                if (timeRangeError is not null)
+                    return Results.BadRequest(new { code = timeRangeError });
 
                 var type = string.IsNullOrWhiteSpace(observationType) ? null : observationType.Trim();
                 if (type is not null && !AllowedTypes.Contains(type))
@@ -453,5 +451,25 @@ public static class ObservationArchiveEndpoints
             .WithSummary("Get one station-scoped historical observation");
 
         return endpoints;
+    }
+}
+
+
+/// <summary>
+/// Query timestamps must be explicit UTC instants. Treating an unspecified or
+/// local DateTime as UTC (or converting it using the API host timezone) can
+/// silently shift the requested meteorological archive window.
+/// </summary>
+public static class ObservationArchiveTimeRangeGuard
+{
+    public static string? GetError(DateTime? fromUtc, DateTime? toUtc)
+    {
+        if (fromUtc.HasValue && fromUtc.Value.Kind != DateTimeKind.Utc)
+            return "archive_from_must_be_utc";
+        if (toUtc.HasValue && toUtc.Value.Kind != DateTimeKind.Utc)
+            return "archive_to_must_be_utc";
+        if (fromUtc.HasValue && toUtc.HasValue && fromUtc.Value >= toUtc.Value)
+            return "invalid_archive_date_range";
+        return null;
     }
 }
