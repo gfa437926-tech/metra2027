@@ -106,3 +106,6 @@ The approved project reference currently points to a non-empty PostgreSQL 17.11 
 This mismatch between live migration history and repository source is a release blocker. Before any schema extension or deployment, reconcile the complete 86-version SQL history with Git, verify the full grants/RPC/RLS/exposed-schema configuration, replay against a disposable empty database, and review/approve the scientific ERD. The current inspection made no database writes. See `docs/architecture/METRA-SUPABASE-READONLY-SCHEMA-BASELINE-2026-11-15.md`.
 
 The recorder, climate-homogeneity and AI model-governance domains are not present as dedicated application tables in the inspected live schema; the corresponding UI screens remain unavailable/local-only until their approved backend and schema work is delivered.
+
+### Migration source recovery update (2026-11-15)
+All 86 SQL statements were recovered read-only from the live Supabase migration history into `supabase/live-schema-history/`. This archive is intentionally outside the active CLI migration folder and must not be applied wholesale. The five original active-folder migration files remain unchanged pending exact comparison and version reconciliation. A clean, curated replay on a disposable PostgreSQL database is still mandatory before production schema certification.
