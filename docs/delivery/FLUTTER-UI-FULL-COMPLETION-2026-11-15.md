@@ -1,7 +1,7 @@
 # METRA 2027 — اكتمال واجهات Flutter (2026-11-15)
 
-**الفرع:** `work/flutter-full-interface-completion-2026-11-15`
-**الأساس:** `work/metra-all-workspaces-ui-2026-11-15`
+**الفرع:** `work/flutter-full-interface-completion-2026-11-15`  
+**الأساس:** `work/metra-all-workspaces-ui-2026-11-15`  
 **التطبيق:** `mobile/metra_mobile/` فقط — بدون مشروع Flutter جديد.
 
 ## الواجهات الرئيسية الـ14 (منفّذة ومربوطة بالتنقل)
@@ -37,3 +37,12 @@
 - AI / CLIMATOL / الأجهزة / المسجلات: واجهات كاملة مع مسودات محلية وempty states حتى توفر API.
 - الرصد الساعي/اليومي/المراجعة/الأرشيف/المستخدمون: مسارات API موجودة؛ الكتابة العلمية تبقى gated حسب إعداد الخادم.
 - Angular مؤجّل؛ لا `flutter create`.
+
+## التشغيل
+
+```bash
+cd mobile/metra_mobile
+flutter pub get
+flutter analyze --no-fatal-infos
+flutter test --concurrency=1
+```
