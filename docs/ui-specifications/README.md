@@ -32,6 +32,11 @@
 | السجلات المصورة والرقمنة | [records-digitization](records/records-digitization.md) |
 | الذكاء الاصطناعي | [ai-workspace](ai/ai-workspace.md) |
 
+## مواصفات إضافية
+- [الجرد الشامل لجميع الشاشات](METRA-COMPLETE-SCREEN-INVENTORY.md)
+- [المصادقة والتسجيل واستعادة الحساب](identity-access.md)
+- [الإعدادات والحساب](settings.md)
+
 ## ملفات المصدر الحالية ذات الصلة
 - Flutter: `mobile/metra_mobile/lib/features/**`
 - نظام التصميم: `mobile/metra_mobile/lib/core/widgets/metra_ui.dart`
