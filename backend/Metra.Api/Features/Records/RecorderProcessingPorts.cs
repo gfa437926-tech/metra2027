@@ -141,14 +141,30 @@ public interface IRecorderDigitizationQueue
 }
 
 /// <summary>
+/// Immutable audit facts for a security-sensitive recorder operation.
+/// Actor identity is sourced from validated server authentication context;
+/// correlation identifiers are generated or validated at the API boundary.
+/// The event intentionally excludes image bytes, secrets and free-form user text.
+/// </summary>
+public sealed record RecorderSecurityAuditEvent(
+    Guid ActorSubjectId,
+    Guid AssetId,
+    Guid? CaptureId,
+    Guid? JobId,
+    string CorrelationId,
+    string Transition,
+    string ReasonCode);
+
+/// <summary>
 /// Append-only audit port for security-sensitive recorder transitions.
-/// The actor and authority must be derived from validated server identity/context.
+/// Implementations must persist actor, resource, operation and correlation context
+/// atomically with the associated state transition where applicable. They must
+/// reject empty actor/resource IDs and unbounded or control-character metadata.
+/// Audit records must not be updateable through application-facing APIs.
 /// </summary>
 public interface IRecorderSecurityAuditWriter
 {
-    Task WriteTransitionAsync(
-        Guid assetId,
-        string transition,
-        string reasonCode,
+    Task WriteAsync(
+        RecorderSecurityAuditEvent auditEvent,
         CancellationToken cancellationToken);
 }
