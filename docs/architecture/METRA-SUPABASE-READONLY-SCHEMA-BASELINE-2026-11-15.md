@@ -45,12 +45,13 @@ The other 41 application tables returned zero rows in the table metadata snapsho
 
 ## 3. Migration history and source-control drift
 
-- Supabase reports **86 applied migration records**.
-- The inspected Git branch contains only **5 SQL files** under `supabase/migrations/`.
+- Supabase reports **86 applied migration records**, each with one non-null SQL statement.
+- The inspected Git branch originally contained only **5 SQL files** under `supabase/migrations/`.
+- All 86 recorded SQL statements have now been recovered into `supabase/live-schema-history/` with their exact live version/name identifiers. This directory is a non-executable archive, not an active migration directory.
 - The latest recorded Supabase migration is `20261114204951_metra_api_runtime_privileges` (version `20261114204951`); the exact recorded name is `metra_api_runtime_privileges`.
-- The repository's latest tracked migration is `20261103220500_harden_observation_decision_null_validation.sql`.
+- The repository's original five tracked migration files remain unchanged. Several do not byte-match the corresponding live statements, and two use filenames whose timestamp differs from the recorded live version.
 
-This is a material migration-history/source-control mismatch. A deployable, reproducible schema cannot be certified from the five tracked SQL files alone. Do not create a new baseline migration, reset the project, replay guessed SQL, or apply additional DDL until the 86-version history and live schema have been reconciled into a reviewed, reproducible source of truth.
+The source-recovery gap is reduced, but a deployable, reproducible schema is not yet certified. Do not promote the archive wholesale, reset the project, or apply additional DDL. Reconcile exact SQL, version mapping, execution order and destructive operations, then prove a curated canonical migration set against a disposable empty PostgreSQL database.
 
 ## 4. Security metadata snapshot
 
