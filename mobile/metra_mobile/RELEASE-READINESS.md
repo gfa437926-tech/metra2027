@@ -115,3 +115,6 @@ A read-only role review found that the .NET API's current Supabase service integ
 
 ### Live API/schema compatibility blocker (2026-11-15)
 Read-only checks confirm that the current .NET API still calls legacy `public.station_catalogue` and `public.metra_*` RPCs that are absent from the live greenfield database. The new tables are under `catalog` and `observations`. The API must be migrated to reviewed new-schema contracts and tested against the disposable schema before any operational Flutter workflows can be enabled. Do not restore the old public schema as a shortcut. See `docs/architecture/METRA-SUPABASE-API-SCHEMA-COMPATIBILITY-REVIEW-2026-11-15.md`.
+
+### Edge Function compatibility blocker
+The five currently deployed Supabase Edge Functions are active and JWT-verified, but their source still calls old public tables/RPCs absent from the live normalized schema. They also use the service-role admin client and wildcard CORS. Do not treat these endpoints as operational until their contracts are rebuilt against the new `iam`, `catalog`, and `observations` schemas, least-privilege identity is selected, and CORS is restricted. See `docs/architecture/METRA-SUPABASE-EDGE-FUNCTION-COMPATIBILITY-REVIEW-2026-11-15.md`.
