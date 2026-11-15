@@ -167,3 +167,11 @@ The application service now computes the canonical request fingerprint after act
 ### Scanner reason-code validation
 
 Optional scanner reason codes are treated as untrusted metadata. If present, they must use the same bounded canonical ASCII token grammar as scanner identity fields; invalid values keep the asset quarantined. The reason code is not used as a free-form log message. This check does not establish scanner trust or malware verdict authenticity.
+
+### Mandatory evidence gate for asset acceptance transitions
+
+- The application now exposes `RecordImageAssetTransitionPolicy`, which combines the lifecycle transition check with `RecordImageAcceptancePolicy` whenever a caller requests `Scanning -> Accepted`.
+- The acceptance transition is rejected unless the scanner verdict is explicitly `Clean`, scanner identity and optional reason metadata are canonical, and the integrity evidence confirms SHA-256, content signature, dimensions and a positive bounded byte length.
+- Missing evidence, unknown verdicts, threats and invalid scanner metadata cannot be converted into an accepted transition by supplying the requested target state alone.
+- Other legal lifecycle transitions continue to use the lifecycle rules without requiring scan evidence; invalid and terminal transitions remain rejected.
+- Persistence adapters must use this combined policy before committing acceptance. This is a pure application contract and test coverage only: it does not create a storage/scanner provider, authenticate scanner binaries, persist state, or register runtime endpoints.
