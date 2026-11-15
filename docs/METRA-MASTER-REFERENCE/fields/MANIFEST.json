@@ -1,23 +1,44 @@
 {
-  "total": 174,
-  "unique_field_uid": 174,
-  "parts": ["fields-174-part1.csv", "fields-174-part2.csv"],
+  "catalog_total": 174,
+  "source_of_truth": ["fields-174-part1.csv", "fields-174-part2.csv"],
+  "source_row_counts": {
+    "fields-174-part1.csv": 87,
+    "fields-174-part2.csv": 87
+  },
   "assemble_script": "assemble_and_verify.py",
-  "generated_full": ["fields-174.csv", "fields-174.json"],
-  "note": "Run: python3 assemble_and_verify.py from this directory. Produces full CSV+JSON with 174 unique field_uid. Verified on clean clone 2026-11-15: OK",
+  "generated_outputs": ["fields-174.csv", "fields-174.json"],
+  "reproduction": [
+    "cd docs/METRA-MASTER-REFERENCE/fields",
+    "python3 assemble_and_verify.py"
+  ],
+  "checks_enforced_by_script": [
+    "exactly 174 records",
+    "174 unique field_uid",
+    "174 unique (form_id, field_id)",
+    "form distribution 36/32/31/21/15/15/10/7/7",
+    "required columns present",
+    "CSV and JSON field_uid sequences match after write"
+  ],
   "by_form": {
     "hourly": 36,
     "daily": 32,
     "agricultural": 31,
-    "hourly-climate": 15,
-    "rainfall": 7,
-    "soil": 7,
-    "fault-equipment": 15,
     "fault-telecom": 21,
-    "fault-it": 10
+    "hourly-climate": 15,
+    "fault-equipment": 15,
+    "fault-it": 10,
+    "rainfall": 7,
+    "soil": 7
   },
-  "verification_clean_clone": {
-    "command": "python3 docs/METRA-MASTER-REFERENCE/fields/assemble_and_verify.py",
-    "result": "count 174 unique 174 OK"
+  "screen_linkage": {
+    "with_screen_id": 83,
+    "without_screen_id": 91,
+    "doc": "../traceability/FIELD-SCREEN-LINKAGE.md",
+    "note": "91 fields remain without screen_id until U-03/U-04; proposed SCR-* are documentation only"
+  },
+  "policy": {
+    "partial_fields_174_csv_forbidden": true,
+    "fields_174_csv_is_generated_full_catalog": true,
+    "do_not_invent_screen_links": true
   }
 }
