@@ -143,3 +143,7 @@ The application service rejects empty capture and accepted-asset identifiers bef
 ### Recorder security audit event contract
 
 Recorder security audit writes use an immutable `RecorderSecurityAuditEvent` containing the authenticated actor subject, asset, optional capture and job identifiers, a bounded correlation identifier, transition and safe reason code. The actor must come from validated server authentication context and must never be accepted from request-body data. Audit events must exclude image bytes, credentials, tokens and free-form user text. Provider implementations must reject empty actor/resource identifiers and unsafe or unbounded metadata, append records only, and persist audit evidence atomically with the related state transition whenever both are committed in the same datastore transaction. No audit provider or database schema is activated by this contract-only change.
+
+### Recorder upload filename normalization boundary
+
+The provider-neutral upload validator accepts only a safe ASCII leaf filename composed of letters, digits, dot, underscore and hyphen, within the existing length bound. It rejects path separators, control characters, whitespace, and non-ASCII/confusable characters before extension/media-type checks. Storage adapters should generate opaque object keys and must not use the submitted filename as a storage path or public object identifier.
