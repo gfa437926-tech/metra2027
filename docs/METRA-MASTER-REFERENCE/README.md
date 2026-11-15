@@ -1,33 +1,37 @@
-# METRA Master Reference v2 — الدليل المرجعي التنفيذي
+# METRA Master Reference v3 — مواصفات تنفيذية
 
-**الفرع:** `docs/metra-master-reference-v2-2026-11-15`  
-**التاريخ:** 2026-11-15  
-**المستودعات المفحوصة:**
-- قديم (قراءة فقط): https://github.com/gfa437926-tech/metra-old
-- جديد: https://github.com/gfa437926-tech/metra2027
+**Branch:** `docs/metra-master-reference-v3-2026-11-15`  
+**Based on:** PR #51 / `docs/metra-master-reference-v2-2026-11-15`  
+**Repos:** this file
 
-## تحذير نزاهة
-هذا الدليل يفصل بين: (1) مثبت من المصدر (2) واجهة فقط في Flutter (3) مقترح/يحتاج اعتماداً.
+## Integrity
+- Labels: **proven** vs **proposed** vs **needs scientific/admin approval**
+- No invented WMO codes or scientific limits beyond JS-extracted values (still need formal adoption)
+- No DB migrations, no secrets, no merge of #49/#50/#51
 
-## ما ثبت بالفحص في هذه الجولة
-| مقياس | قيمة مثبتة |
+## v3 additions
+| Area | Deliverable |
 |---|---|
-| شاشات HTML في Old بها نماذج | 21 |
-| حقول مستخرجة في 9 نماذج إدخال رئيسية | 174 |
-| حقول عبر كل صفحات HTML (بعد/قبل إزالة تكرار) | ~287 |
-| ملفات forms/ التفصيلية | 9 |
-| حدود رقمية مثبتة من enhanced-validation.js (ساعي) | 15 حقلاً |
-| مقارنات حدود في daily_validation.js | حرارة/هطول/ثلج/تبخر/سطوع/رطوبة/وقت |
-| وجهات Flutter على فرع الواجهات | 14 |
-| PR مفتوحة لم تُدمج | #49, #50 |
+| Fields | 174 records, per-form tables, COMPLETE-FIELD-CATALOG-174.md |
+| Forms | 9 form specs linked to field tables |
+| Flutter screens | 16 files under screens/ |
+| API | api/ENDPOINTS-INVENTORY.md from Metra.Api Map* |
+| Roles | roles/ROLES-AND-PERMISSIONS-MATRIX.md |
+| Workflows | workflows/CORE-WORKFLOWS.md (+ mermaid) |
+| CLIMATOL | climatol/CLIMATOL-SPEC.md (NOT in legacy code) |
+| AI/Records | ai/AI-AND-RECORDS-SPEC.md |
+| Database | database/LOGICAL-DATA-MODEL.md (spec only) |
+| Testing | testing/TEST-MATRIX.md |
 
-## نقطة الدخول
-1. `legacy-analysis/LEGACY-FUNCTION-INVENTORY.md`
-2. `forms/` (كل نموذج)
-3. `fields/EXTRACTED-FIELD-CATALOG.md`
-4. `scientific/DATA-DICTIONARY-PROVEN-BOUNDS.md`
-5. `traceability/LEGACY-TO-2027-MATRIX.md`
-6. `15-UNRESOLVED-QUESTIONS-AND-CONFLICTS.md`
+## Proven counts
+- 174 fields / 9 forms (re-extracted from metra-old HTML)
+- 15 hourly numeric bounds from enhanced-validation.js
+- Daily comparison bounds in daily_validation.js
+- Agri temperature message -20..60
+- Backend endpoints from C# sources; Flutter client methods aligned
 
-## قيود
-لا تعديل metra-old · لا migrations · لا أسرار · لا دمج تلقائي
+## Explicitly incomplete
+- English UI labels for fields (absent in legacy HTML)
+- Full Field ID binding of every daily validate* line
+- Runtime CI execution of all tests in this job
+- CLIMATOL algorithm selection; live OCR/AI; archive (503)
