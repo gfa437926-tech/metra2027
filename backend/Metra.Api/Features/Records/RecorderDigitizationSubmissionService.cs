@@ -94,6 +94,11 @@ public sealed class RecorderDigitizationSubmissionService(
         if (submission is null)
             return RecorderDigitizationSubmissionResult.Rejected("digitization_request_required");
 
+        // Reject malformed identifiers before dependency calls. This is a shape
+        // check only; no resource existence or lifecycle state is disclosed.
+        if (submission.CaptureId == Guid.Empty || submission.AcceptedAssetId == Guid.Empty)
+            return RecorderDigitizationSubmissionResult.Rejected("digitization_resource_required");
+
         // Authorization precedes resource-state reads to avoid disclosing whether
         // an unrelated capture or asset exists.
         var authorized = await authorizer.CanDigitizeCaptureAssetAsync(
