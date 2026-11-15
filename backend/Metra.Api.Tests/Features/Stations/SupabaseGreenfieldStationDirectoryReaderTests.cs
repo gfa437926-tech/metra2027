@@ -112,7 +112,8 @@ public sealed class SupabaseGreenfieldStationDirectoryReaderTests
     {
         var values = new Dictionary<string, string?>
         {
-            ["Supabase:Url"] = "https://example.supabase.co"
+            ["Supabase:Url"] = "https://example.supabase.co",
+            ["Features:GreenfieldStationDirectoryEnabled"] = "true"
         };
         if (includeKey)
             values["Supabase:PublishableKey"] = "sb_publishable_test";
