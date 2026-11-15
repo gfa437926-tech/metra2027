@@ -139,6 +139,8 @@ class _MetraHomeState extends State<MetraHome> {
           );
         },
       ),
+      // 12 Records archive, image review and triple-source comparison
+      const RecordsReviewWorkspaceScreen(),
     ];
 
     return Directionality(
@@ -227,8 +229,13 @@ class _MetraHomeState extends State<MetraHome> {
               selectedIcon: Icon(Icons.settings),
               label: 'إعدادات',
             ),
+            NavigationDestination(
+              icon: Icon(Icons.document_scanner_outlined),
+              selectedIcon: Icon(Icons.document_scanner),
+              label: 'السجلات',
+            ),
           ],
-          child: IndexedStack(index: _index.clamp(0, 11), children: pages),
+          child: IndexedStack(index: _index.clamp(0, 12), children: pages),
         ),
       ),
     );
