@@ -188,3 +188,10 @@ Optional scanner reason codes are treated as untrusted metadata. If present, the
 - It verifies the returned asset ID matches the requested asset, the stored length is positive and no greater than the 20 MiB limit, the SHA-256 is exactly 64 lowercase hexadecimal characters, and the detected media type is one of JPEG, PNG or TIFF.
 - Added tests for missing/mismatched IDs, missing adapter results, invalid and oversized lengths, the exact maximum-size boundary, malformed/noncanonical hashes and unsupported/noncanonical media types.
 - This validates adapter-reported metadata only. The adapter must still calculate the digest from stored bytes, independently detect the media type, and enforce private quarantine semantics; this policy does not itself write, read, scan or promote files.
+
+### Bounded streaming intake primitive
+
+- Added `RecordImageBoundedStreamReader` to consume non-seekable upload streams without trusting a declared content length or buffering beyond the configured maximum plus one detection byte.
+- It rejects unreadable streams, invalid limits, empty content and any stream exceeding the configured limit; oversized results never return partial bytes as accepted content.
+- Cancellation is propagated to the underlying asynchronous read. Tests cover non-seekable streams, exact-limit input, one-byte overflow, empty/unreadable streams, invalid limits and cancellation.
+- This primitive only performs bounded in-memory intake. It is not an HTTP upload endpoint, malware scanner, durable quarantine store or authorization boundary; callers must pass the resulting bytes through the existing signature, filename and digest validator before storage.
