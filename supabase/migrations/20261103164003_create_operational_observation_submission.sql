@@ -1,3 +1,4 @@
+
 create table if not exists public.metra_observations (
   id uuid primary key default gen_random_uuid(),
   station_id uuid not null references public.station_catalogue(id),
@@ -16,9 +17,14 @@ create table if not exists public.metra_observations (
   updated_at timestamptz not null default now(),
   unique (station_id, created_by, idempotency_key)
 );
-comment on table public.metra_observations is 'Operational user-entered METRA observations. Separate from immutable legacy import envelopes in metra_observation_records.';
-create index if not exists metra_observations_station_status_observed_idx on public.metra_observations (station_id, status, observed_at desc);
-create index if not exists metra_observations_creator_created_idx on public.metra_observations (created_by, created_at desc);
+
+comment on table public.metra_observations is
+  'Operational user-entered METRA observations. Separate from immutable legacy import envelopes in metra_observation_records.';
+
+create index if not exists metra_observations_station_status_observed_idx
+  on public.metra_observations (station_id, status, observed_at desc);
+create index if not exists metra_observations_creator_created_idx
+  on public.metra_observations (created_by, created_at desc);
 
 create table if not exists public.metra_observation_audit_events (
   id bigint generated always as identity primary key,
@@ -31,35 +37,50 @@ create table if not exists public.metra_observation_audit_events (
   note text check (note is null or length(note) <= 2000),
   occurred_at timestamptz not null default now()
 );
-create index if not exists metra_observation_audit_observation_time_idx on public.metra_observation_audit_events (observation_id, occurred_at desc);
+
+create index if not exists metra_observation_audit_observation_time_idx
+  on public.metra_observation_audit_events (observation_id, occurred_at desc);
 
 alter table public.metra_observations enable row level security;
 alter table public.metra_observations force row level security;
 alter table public.metra_observation_audit_events enable row level security;
 alter table public.metra_observation_audit_events force row level security;
+
 revoke all on public.metra_observations from public, anon, authenticated, metra_api_runtime;
 revoke all on public.metra_observation_audit_events from public, anon, authenticated, metra_api_runtime;
 grant select, insert on public.metra_observations to service_role;
 grant select, insert on public.metra_observation_audit_events to service_role;
 
 create or replace function public.reject_metra_observation_audit_mutation()
-returns trigger language plpgsql set search_path = pg_catalog, public as $$
+returns trigger
+language plpgsql
+set search_path = pg_catalog, public
+as $$
 begin
-  raise exception 'METRA observation audit events are append-only' using errcode = '55000';
+  raise exception 'METRA observation audit events are append-only'
+    using errcode = '55000';
 end;
 $$;
+
 revoke all on function public.reject_metra_observation_audit_mutation() from public, anon, authenticated, service_role;
 create trigger metra_observation_audit_immutable
 before update or delete on public.metra_observation_audit_events
 for each row execute function public.reject_metra_observation_audit_mutation();
 
 create or replace function public.metra_submit_observation(
-  p_user_id uuid, p_station_id uuid, p_idempotency_key text,
-  p_observation_type text, p_observed_at timestamptz, p_payload jsonb,
+  p_user_id uuid,
+  p_station_id uuid,
+  p_idempotency_key text,
+  p_observation_type text,
+  p_observed_at timestamptz,
+  p_payload jsonb,
   p_submit boolean default false
 )
-returns jsonb language plpgsql security definer
-set search_path = pg_catalog, public as $$
+returns jsonb
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
 declare
   v_observation public.metra_observations%rowtype;
   v_initial_status text;
@@ -77,6 +98,7 @@ begin
      or pg_column_size(p_payload) > 65536 then
     raise exception 'invalid_observation_payload' using errcode = '22023';
   end if;
+
   if not public.metra_user_has_station_permission(p_user_id, p_station_id, 'observation.create') then
     raise exception 'station_observation_create_forbidden' using errcode = '42501';
   end if;
@@ -84,6 +106,7 @@ begin
      not public.metra_user_has_station_permission(p_user_id, p_station_id, 'observation.submit') then
     raise exception 'station_observation_submit_forbidden' using errcode = '42501';
   end if;
+
   v_initial_status := case when coalesce(p_submit, false) then 'submitted' else 'draft' end;
 
   insert into public.metra_observations (
@@ -98,16 +121,26 @@ begin
   returning * into v_observation;
 
   if v_observation.id is null then
-    select * into v_observation from public.metra_observations
-     where station_id = p_station_id and created_by = p_user_id
-       and idempotency_key = p_idempotency_key for update;
+    select * into v_observation
+      from public.metra_observations
+     where station_id = p_station_id
+       and created_by = p_user_id
+       and idempotency_key = p_idempotency_key
+     for update;
+
     if v_observation.observation_type <> p_observation_type
        or v_observation.observed_at <> p_observed_at
        or v_observation.payload <> p_payload
        or v_observation.initial_status <> v_initial_status then
-      raise exception 'idempotency_key_reused_with_different_request' using errcode = '23505';
+      raise exception 'idempotency_key_reused_with_different_request'
+        using errcode = '23505';
     end if;
-    return jsonb_build_object('id', v_observation.id, 'status', v_observation.status, 'replayed', true);
+
+    return jsonb_build_object(
+      'id', v_observation.id,
+      'status', v_observation.status,
+      'replayed', true
+    );
   end if;
 
   insert into public.metra_observation_audit_events (
@@ -117,7 +150,12 @@ begin
     case when v_initial_status = 'submitted' then 'submitted' else 'created_draft' end,
     null, v_initial_status
   );
-  return jsonb_build_object('id', v_observation.id, 'status', v_observation.status, 'replayed', false);
+
+  return jsonb_build_object(
+    'id', v_observation.id,
+    'status', v_observation.status,
+    'replayed', false
+  );
 end;
 $$;
 
