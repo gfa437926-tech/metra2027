@@ -132,3 +132,7 @@
 - The pure policy rejects missing requests, unknown asset states, unaccepted assets, missing resource IDs, unsafe profile names and malformed idempotency keys.
 - This policy does not itself resolve actor permissions, verify capture-to-asset ownership, persist idempotency records, enforce uniqueness/concurrency, or enqueue work. Those responsibilities remain mandatory in the application service and durable provider implementation; the port must not be wired to a fake in-memory queue.
 
+### Digitization orchestration preflight hardening
+- Empty capture or accepted-asset identifiers are rejected before calling authorization, asset-state or outbox providers.
+- This preflight validates request shape only and does not reveal resource existence; authorized resource-state lookup remains ordered after station/capture/asset authorization.
+- Unit tests assert zero dependency calls for either malformed identifier.
