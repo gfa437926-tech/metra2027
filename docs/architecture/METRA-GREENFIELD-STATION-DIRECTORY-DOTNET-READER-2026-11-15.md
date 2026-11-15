@@ -17,7 +17,8 @@
 ## Required configuration
 
 - `Supabase:Url`
-- `Supabase:PublishableKey` (publishable/legacy anon key only; never a service-role or secret key)\n- `Features:GreenfieldStationDirectoryEnabled=true` (explicit opt-in; defaults to disabled)
+- `Supabase:PublishableKey` (publishable/legacy anon key only; never a service-role or secret key)
+- `Features:GreenfieldStationDirectoryEnabled=true` (explicit opt-in; defaults to disabled)
 
 The caller JWT is taken from the incoming request only after ASP.NET authentication has validated it. The endpoint returns 401 without an authenticated principal/bearer token and 503 if the reader is not explicitly enabled/configured or the PostgREST result cannot be validated. Unit tests prove the route performs zero HTTP calls while the feature flag is off.
 
