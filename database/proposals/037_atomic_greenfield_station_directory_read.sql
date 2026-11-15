@@ -85,12 +85,13 @@ BEGIN
     ORDER BY ra.id
     LIMIT 1
     FOR SHARE OF up, m, org, ra, r, rp, perm
-  ) authorization ON authorization.is_authorized
+  ) station_authz ON station_authz.is_authorized
   WHERE s.approval_status = 'approved'
     AND s.operational_status IN ('active','temporarily_closed')
     AND (p_station_type_code IS NULL OR st.type_code = p_station_type_code)
   ORDER BY s.station_code
-  LIMIT p_limit OFFSET p_offset;
+  LIMIT p_limit OFFSET p_offset
+  FOR SHARE OF s, st;
 END;
 $function$;
 
