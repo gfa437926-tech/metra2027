@@ -53,7 +53,6 @@ public sealed class SupabaseGreenfieldStationDirectoryReader(
             HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/get_station_directory_for_actor");
         request.Headers.TryAddWithoutValidation("apikey", _serviceRoleKey);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _serviceRoleKey);
-        request.Headers.TryAddWithoutValidation("Content-Profile", "catalog");
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Content = JsonContent.Create(new
         {
