@@ -25,7 +25,8 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionS
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationArchiveService));
-AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));\nAddBoundedSupabaseClient(builder.Services, nameof(SupabaseGreenfieldStationDirectoryReader));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseGreenfieldStationDirectoryReader));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationReviewService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationSubmissionService));
@@ -38,7 +39,8 @@ builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthoriz
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
 builder.Services.AddScoped<IObservationDecisionService, SupabaseObservationDecisionService>();
 builder.Services.AddScoped<IObservationQueueService, SupabaseObservationQueueService>();
-builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();\nbuilder.Services.AddScoped<IGreenfieldStationDirectoryReader, SupabaseGreenfieldStationDirectoryReader>();
+builder.Services.AddScoped<IStationDirectoryService, SupabaseStationDirectoryService>();
+builder.Services.AddScoped<IGreenfieldStationDirectoryReader, SupabaseGreenfieldStationDirectoryReader>();
 builder.Services.AddScoped<IStationAssignmentService, SupabaseStationAssignmentService>();
 builder.Services.AddScoped<IAuthorityAccessService, SupabaseAuthorityAccessService>();
 builder.Services.AddScoped<IStationUserDirectoryService, SupabaseStationUserDirectoryService>();
