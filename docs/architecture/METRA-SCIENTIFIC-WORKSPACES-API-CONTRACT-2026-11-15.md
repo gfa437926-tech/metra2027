@@ -1,0 +1,129 @@
+# METRA 2027 — Scientific Workspaces API Contract (proposal)
+
+**Status:** API design proposal; no routes are exposed by this document.  
+**Transport:** HTTPS JSON for control-plane operations; private object-storage transfer for large files; asynchronous jobs for OCR, chart digitization, homogenization and AI.  
+**Authority:** .NET API authenticates the caller and evaluates authority/station/resource scope on every request. Actor IDs supplied by clients are ignored.
+
+## 1. API conventions
+
+- Prefix: `/api/v1`.
+- IDs: UUID; timestamps: ISO-8601 UTC; station-local timestamps include `timezoneId` and the original local representation.
+- All mutation requests accept `Idempotency-Key`; stale updates require `If-Match`/ETag or an explicit version.
+- Error envelope: `code`, `message`, `traceId`, optional field errors. Never expose SQL, storage keys, stack traces or secrets.
+- List endpoints use opaque cursor pagination; no unbounded result sets.
+- Large operations return `202 Accepted` with a job ID and status URL.
+- Files are uploaded to a quarantine flow using short-lived, single-purpose transfer authorization. The API never returns a permanent public object URL.
+- Job status and result access are separately authorized; possession of a UUID is not authorization.
+- Audit event creation is server-side and cannot be disabled by clients.
+
+## 2. Recorder digitization
+
+| Method & route | Purpose | Main authorization |
+|---|---|---|
+| POST `/recorder-captures` | Create a capture metadata record | station recorder.write |
+| POST `/recorder-captures/{id}/upload-intents` | Issue a one-use quarantine upload intent | capture scoped write |
+| POST `/recorder-captures/{id}/complete-upload` | Verify upload, hash and scan state | capture scoped write |
+| GET `/recorder-captures/{id}` | Read capture metadata and processing state | station recorder.read |
+| GET `/recorder-captures/{id}/assets` | List private asset metadata | capture scoped read |
+| POST `/recorder-captures/{id}/digitization-jobs` | Queue OCR/trace extraction | recorder.digitize |
+| GET `/digitization-jobs/{jobId}` | Poll job status | job owner or scoped reviewer |
+| GET `/digitization-jobs/{jobId}/candidates` | Read candidate values and geometry | capture scoped review |
+| POST `/extracted-values/{id}/decisions` | Accept/reject/correct candidate | recorder.review |
+
+Upload-intent response contains an opaque transfer token, expiry, maximum size and required checksum header. It does not contain a durable public URL. The server verifies actual object size, content signature, SHA-256, scan result and decoded image properties before marking an asset reviewable.
+
+## 3. Triple-source comparison
+
+| Method & route | Purpose |
+|---|---|
+| POST `/source-comparisons` | Create comparison request for station/variable/time window |
+| GET `/source-comparisons/{id}` | Read aligned sources and method metadata |
+| GET `/source-comparisons/{id}/discrepancies` | List mismatches with tolerances |
+| POST `/source-discrepancies/{id}/decisions` | Record reviewer resolution |
+
+A comparison can include paper/mechanical trace values, manually transcribed values and electronic observations. Each displayed value must identify source ID, time, unit, quality flag, algorithm/version and review status. Missing sources remain missing; the service must not fabricate a third value.
+
+## 4. CLIMATOL / climate homogenization
+
+| Method & route | Purpose |
+|---|---|
+| GET `/climate-series` | List authorized station-variable series |
+| POST `/homogeneity-runs` | Start a reproducible analysis job |
+| GET `/homogeneity-runs/{id}` | Read run state, configuration and provenance |
+| GET `/homogeneity-runs/{id}/breakpoints` | Read detected breakpoint candidates |
+| POST `/breakpoints/{id}/decisions` | Accept/reject/defer a candidate |
+| POST `/adjustment-versions` | Generate a new immutable adjusted-series version |
+| POST `/adjustment-versions/{id}/approval` | Approve publication under dual-control policy |
+| GET `/climate-products` | List authorized climate products |
+| POST `/climate-products` | Generate a climate product from pinned inputs |
+
+A run request pins target series, reference series, period, software image/version, method, parameters and input snapshot. A run cannot change the source series. Adjustment outputs are separate versions and require review. Publishing a climate product is a distinct permission from running analysis.
+
+## 5. AI governance
+
+| Method & route | Purpose |
+|---|---|
+| POST `/ai/datasets` | Define a dataset |
+| POST `/ai/datasets/{id}/builds` | Build immutable sample snapshot |
+| GET `/ai/dataset-builds/{id}` | Inspect split manifest and leakage report |
+| POST `/ai/samples/{id}/annotations` | Create versioned annotation |
+| POST `/ai/experiments` | Queue training against a pinned dataset build |
+| GET `/ai/experiments/{id}` | Read progress, logs and metrics |
+| GET `/ai/models` | List model versions |
+| POST `/ai/models/{id}/evaluations` | Evaluate against a pinned holdout snapshot |
+| POST `/ai/models/{id}/approval` | Approve or reject model release |
+| POST `/ai/inference-jobs` | Queue inference for an approved model |
+| GET `/ai/inference-jobs/{id}` | Read inference status and result reference |
+
+Dataset build must produce a manifest with station/time split policy, sample hashes, exclusions and leakage checks. Training cannot use the test split. A model is not deployable based only on training metrics; it requires independent evaluation and approval. Inference output is a candidate and never auto-approves a meteorological observation.
+
+## 6. Job state model
+
+```text
+queued -> validating -> running -> succeeded
+                         |       -> failed
+                         |       -> cancelled
+```
+
+- Every attempt has a distinct attempt number, worker image digest, start/end times and bounded log artifact.
+- Retry creates a new attempt under the same logical job; completed attempt records remain immutable.
+- Cancellation is cooperative and audited.
+- A job status endpoint returns only safe metadata, not raw internal exception messages.
+- Workers use least-privilege service identities and scoped, expiring input/output access.
+
+## 7. Authorization matrix (minimum)
+
+| Capability | Station observer | Station reviewer | Climate scientist | AI curator | Authority admin |
+|---|---:|---:|---:|---:|---:|
+| Read own station observations | Yes | Yes | Granted scope | Dataset scope | Granted scope |
+| Create recorder capture | Yes | Yes | No by default | No | Granted scope |
+| Review extracted values | No | Yes | No by default | No | Granted scope |
+| Run homogenization | No | No | Yes | No | Granted scope |
+| Approve adjusted climate series | No | No | Separate approver | No | Separate approver |
+| Curate AI dataset | No | No | Scoped read | Yes | Granted scope |
+| Train/evaluate model | No | No | No by default | Yes | Granted scope |
+| Approve model release | No | No | No | Separate approver | Separate approver |
+
+Role names are illustrative; final permission codes must be agreed in the identity/authorization design. Sensitive scientific approvals should use dual control where configured.
+
+## 8. Required integration tests
+
+1. Unauthenticated request returns 401.
+2. User from authority A cannot read or mutate authority B resources.
+3. Station assignment to A does not permit access to station B.
+4. Expired/revoked memberships and grants deny access immediately.
+5. Replayed idempotency key does not create duplicate captures/jobs/decisions.
+6. Expired upload intent cannot be reused; a token cannot access another capture.
+7. Forged MIME, mismatched signature, oversized content and checksum mismatch are rejected.
+8. Quarantined or malware-positive assets cannot be previewed or digitized.
+9. Candidate OCR/trace values never become approved observations without reviewer decision.
+10. Comparison outputs preserve all source IDs and units.
+11. Homogenization run pins immutable input snapshot and software/config version.
+12. A breakpoint candidate alone cannot modify or publish the source series.
+13. AI test samples cannot be used for training; station/time leakage is detected.
+14. Unapproved model cannot run production inference.
+15. Every decision and privileged read/write emits an immutable audit event.
+
+## 9. Implementation boundary
+
+This contract does not imply that any route, worker, storage provider, OCR engine, CLIMATOL executable, AI framework or deployment exists. The next code slice should implement DTOs and application-service interfaces against the approved domain model, then a disposable PostgreSQL integration test. Provider-specific storage, identity and compute adapters are selected only after deployment requirements and credentials are explicitly configured.
