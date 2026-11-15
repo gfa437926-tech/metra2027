@@ -11,6 +11,9 @@ on:
       - "database/baseline/**"
       - "database/proposals/**"
       - "database/seeds/**"
+      - "supabase/migrations/**"
+      - "supabase/live-schema-history/**"
+      - "scripts/verify_live_schema_history.py"
       - "docs/security/**"
       - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
@@ -24,6 +27,9 @@ on:
       - "database/baseline/**"
       - "database/proposals/**"
       - "database/seeds/**"
+      - "supabase/migrations/**"
+      - "supabase/live-schema-history/**"
+      - "scripts/verify_live_schema_history.py"
       - "docs/security/**"
       - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
@@ -39,6 +45,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Verify recovered Supabase migration history archive
+        run: python3 scripts/verify_live_schema_history.py
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -150,6 +158,11 @@ jobs:
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/034_atomic_observation_write_authorization.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/20261114010000_unify_observation_decision_event_type.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/10_test_observation_decision_event_type.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/11_bootstrap_greenfield_iam_catalogue.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/036_global_station_read_roles_and_permissions.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/11_test_station_global_read_roles.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/037_atomic_greenfield_station_directory_read.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/12_test_atomic_greenfield_station_directory.sql
 
   grant-uniqueness-isolation:
     name: Isolated grant uniqueness (Path N + partial indexes)

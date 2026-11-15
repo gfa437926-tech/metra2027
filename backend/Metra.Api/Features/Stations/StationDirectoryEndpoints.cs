@@ -1,5 +1,6 @@
 using Metra.Api.Security;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace Metra.Api.Features.Stations;
@@ -21,8 +22,16 @@ public sealed class SupabaseStationDirectoryService(
 {
     private readonly string? _url = configuration["Supabase:Url"];
     private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
+    private readonly bool _legacyAdapterExplicitlyEnabled =
+        configuration.GetValue<bool>("Features:LegacyStationDirectoryEnabled");
 
+    // This adapter still targets the retired public.station_catalogue schema and
+    // uses service_role (BYPASSRLS). Keep it disabled by default. It may only be
+    // enabled in an explicitly isolated legacy compatibility environment; the
+    // greenfield station directory must use the reviewed catalog.* contract and
+    // a caller-scoped least-privilege identity.
     public bool IsConfigured =>
+        _legacyAdapterExplicitlyEnabled &&
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
@@ -110,6 +119,54 @@ public static class StationDirectoryEndpoints
         .WithTags("Stations")
         .RequireRateLimiting(MetraRateLimiting.PolicyRead)
             .WithName("GetStationDirectory");
+
+        
+        endpoints.MapGet("/api/v2/stations", async (
+            HttpContext context,
+            int? limit,
+            int? offset,
+            string? stationType,
+            IGreenfieldStationDirectoryReader directory,
+            CancellationToken cancellationToken) =>
+        {
+            var take = limit ?? 250;
+            var skip = offset ?? 0;
+            if (take is < 1 or > 500 || skip < 0)
+                return Results.BadRequest(new { error = "invalid_pagination", maxLimit = 500 });
+
+            if (stationType is not null &&
+                (stationType.Length is 0 or > 64 ||
+                 !stationType.All(character => char.IsAsciiLetterOrDigit(character) ||
+                     character is '_' or '-')))
+                return Results.BadRequest(new { error = "invalid_station_type" });
+
+            if (context.User.Identity?.IsAuthenticated != true)
+                return Results.Unauthorized();
+
+            // ASP.NET has already validated the JWT signature, issuer, audience and lifetime.
+            // Derive the actor only from the validated sub claim; never accept a client actor ID.
+            if (!Guid.TryParse(context.User.FindFirstValue("sub"), out var actorUserId) ||
+                actorUserId == Guid.Empty)
+                return Results.Unauthorized();
+
+            if (!directory.IsConfigured)
+                return Results.Problem(
+                    title: "Greenfield station directory unavailable",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            var result = await directory.GetStationsAsync(
+                actorUserId, take, skip, stationType, cancellationToken);
+            if (result is null || !result.Succeeded)
+                return Results.Problem(
+                    title: "Greenfield station directory read failed",
+                    detail: "The caller-scoped catalog projection is unavailable or invalid.",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            return Results.Ok(result.Stations);
+        })
+        .WithTags("Stations")
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+        .WithName("GetGreenfieldStationDirectory");
 
         return endpoints;
     }

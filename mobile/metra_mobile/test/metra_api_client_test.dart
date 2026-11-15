@@ -34,38 +34,63 @@ void main() {
     client.close();
   });
 
-  test('station directory parses coordinate and approval state', () async {
-    late http.Request captured;
+  test('station directory fails closed until greenfield persistence is approved', () async {
+    var requests = 0;
     final client = MetraApiClient(
-        baseUrl: 'https://api.example.test',
-        accessTokenProvider: () async => 'directory-token',
-        client: MockClient((request) async {
-          captured = request;
-          return http.Response.bytes(
-              utf8.encode(jsonEncode([
-                {
-                  'id': stationId,
-                  'local_station_code': 'ST-001',
-                  'name_ar': 'محطة اختبار',
-                  'name_en': 'Test station',
-                  'station_type': 'classic',
-                  'operational_status': 'unverified',
-                  'approval_status': 'pending',
-                  'is_demo': false,
-                  'station_coordinates': [
-                    {'latitude': 24.7, 'longitude': 46.7}
-                  ]
-                }
-              ])),
-              200);
-        }));
-    final rows = await client.getStationDirectory(stationType: 'classic');
-    expect(captured.url.path, '/api/v1/stations');
-    expect(captured.url.queryParameters['stationType'], 'classic');
-    expect(captured.headers['authorization'], 'Bearer directory-token');
-    expect(rows.single.nameArabic, 'محطة اختبار');
-    expect(rows.single.hasCoordinates, isTrue);
-    expect(rows.single.approvalStatus, 'pending');
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getStationDirectory(stationType: 'classic'),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 503)
+          .having((error) => error.code, 'code', 'station_directory_not_ready')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+
+  test('greenfield station directory fails closed and never calls the legacy API', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'greenfield-token',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getGreenfieldStationDirectory(),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.statusCode, 'statusCode', 503)
+          .having((error) => error.code, 'code', 'station_directory_not_ready')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('greenfield station directory validates bounded page size before access', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'greenfield-token',
+      client: MockClient((request) async {
+        requests++;
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getGreenfieldStationDirectory(limit: 501),
+      throwsA(isA<MetraApiException>()
+          .having((error) => error.code, 'code', 'invalid_pagination')),
+    );
+    expect(requests, 0);
     client.close();
   });
 
@@ -87,41 +112,6 @@ void main() {
     expect(station(null, 46.7).hasValidCoordinates, isFalse);
     expect(station(91, 46.7).hasValidCoordinates, isFalse);
     expect(station(24.7, -181).hasValidCoordinates, isFalse);
-  });
-
-  test(
-      'station directory fetches every page instead of silently hiding stations',
-      () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'directory-token',
-      client: MockClient((request) async {
-        requests++;
-        final offset = int.parse(request.url.queryParameters['offset']!);
-        final count = offset == 0 ? 500 : 1;
-        final rows = List.generate(count, (index) {
-          final n = offset + index;
-          return {
-            'id': 'station-$n',
-            'local_station_code': 'ST-$n',
-            'name_ar': 'Station $n',
-            'name_en': 'Station $n',
-            'station_type': 'classic',
-            'operational_status': 'unverified',
-            'approval_status': 'pending',
-            'is_demo': false,
-            'station_coordinates': <Map<String, dynamic>>[],
-          };
-        });
-        return http.Response(jsonEncode(rows), 200);
-      }),
-    );
-    final rows = await client.getAllStationDirectory(stationType: 'classic');
-    expect(requests, 2);
-    expect(rows, hasLength(501));
-    expect(rows.last.localCode, 'ST-500');
-    client.close();
   });
 
   test('station audit log uses the read-only station-scoped API contract',

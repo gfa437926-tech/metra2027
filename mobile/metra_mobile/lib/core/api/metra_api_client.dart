@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../api_config.dart';
+import '../../features/stations/greenfield_station_directory_item.dart';
+import 'service_readiness.dart';
 
 const metraApiBaseUrl = ApiConfig.baseUrl;
 
@@ -361,11 +363,30 @@ class MetraApiClient {
   final http.Client _client;
   bool get isConfigured => ApiConfig.isValidUrl(_baseUri?.toString() ?? '');
 
+  /// Reads the normalized greenfield directory contract. The readiness gate
+  /// prevents accidental fallback to the retired public.station_catalogue API.
+  Future<List<GreenfieldStationDirectoryItem>> getGreenfieldStationDirectory({
+    int limit = 500,
+  }) async {
+    if (limit < 1 || limit > 500) {
+      throw const MetraApiException(400, 'invalid_pagination');
+    }
+    if (MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi) {
+      throw const MetraApiException(503, 'station_directory_not_ready');
+    }
+    final response = await _send('GET', '/api/v2/stations?limit=$limit');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    return GreenfieldStationDirectoryItem.parseList(decoded);
+  }
+
   Future<List<StationDirectoryItem>> getStationDirectory({
     int limit = 250,
     int offset = 0,
     String? stationType,
   }) async {
+    if (MetraServiceReadiness.stationDirectory != MetraDataSourceMode.liveApi) {
+      throw const MetraApiException(503, 'station_directory_not_ready');
+    }
     if (limit < 1 || limit > 500 || offset < 0) {
       throw const MetraApiException(400, 'invalid_pagination');
     }

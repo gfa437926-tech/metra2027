@@ -5,15 +5,16 @@ import 'package:metra_mobile/core/widgets/metra_adaptive_navigation.dart';
 import 'package:metra_mobile/features/ai/ai_workspace_screen.dart';
 import 'package:metra_mobile/features/climatol/climatol_workspace_screen.dart';
 import 'package:metra_mobile/features/records/records_review_workspace_screen.dart';
+import 'package:metra_mobile/features/instruments/instrument_management_screen.dart';
 
 void main() {
-  testWidgets('compact navigation scrolls through all 13 destinations', (tester) async {
+  testWidgets('compact navigation scrolls through all 14 destinations', (tester) async {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(400, 850);
     final destinations = List.generate(
-      13,
+      14,
       (index) => NavigationDestination(
         icon: const Icon(Icons.circle_outlined),
         selectedIcon: const Icon(Icons.circle),
@@ -54,6 +55,11 @@ void main() {
     expect(find.textContaining('السجل الورقي'), findsOneWidget);
     expect(find.textContaining('المسجل الميكانيكي'), findsOneWidget);
     expect(find.textContaining('الرصد الإلكتروني'), findsOneWidget);
+    await tester.ensureVisible(find.text('الصورة والحقيقة'));
+    await tester.tap(find.text('الصورة والحقيقة'));
+    await tester.pumpAndSettle();
+    expect(find.text('مطابقة الصورة مع البيانات المرجعية'), findsOneWidget);
+    expect(find.text('مصدر الحقيقة الأرضية'), findsOneWidget);
   });
 
   testWidgets('CLIMATOL workspace exposes breakpoint and report panels', (tester) async {
@@ -88,4 +94,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('بوابة اعتماد النموذج'), findsOneWidget);
   });
+  testWidgets('instrument workspace exposes inventory, deployment, calibration and maintenance', (tester) async {
+    tester.view.physicalSize = const Size(1000, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: InstrumentManagementScreen()),
+    ));
+    expect(find.text('إدارة الأجهزة والمعايرة'), findsOneWidget);
+    expect(find.text('تعريف جهاز أو أداة رصد'), findsOneWidget);
+    await tester.ensureVisible(find.text('التوزيع بالمحطات'));
+    await tester.tap(find.text('التوزيع بالمحطات'));
+    await tester.pumpAndSettle();
+    expect(find.text('ربط الجهاز بمحطة'), findsOneWidget);
+    await tester.ensureVisible(find.text('المعايرة'));
+    await tester.tap(find.text('المعايرة'));
+    await tester.pumpAndSettle();
+    expect(find.text('سجل المعايرة'), findsOneWidget);
+    await tester.ensureVisible(find.text('الصيانة'));
+    await tester.tap(find.text('الصيانة'));
+    await tester.pumpAndSettle();
+    expect(find.text('طلبات الصيانة'), findsOneWidget);
+  });
+
 }

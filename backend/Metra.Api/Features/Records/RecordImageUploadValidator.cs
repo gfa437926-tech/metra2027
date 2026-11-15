@@ -30,7 +30,12 @@ public static class RecordImageUploadValidator
             fileName.Length > 180 ||
             fileName.Contains('/') ||
             fileName.Contains('\\') ||
-            fileName is "." or "..")
+            fileName is "." or ".." ||
+            !fileName.All(character =>
+                character is >= 'a' and <= 'z' or
+                    >= 'A' and <= 'Z' or
+                    >= '0' and <= '9' or
+                    '.' or '_' or '-'))
             return RecordImageValidationResult.Invalid("invalid_file_name");
 
         if (content.Length == 0)

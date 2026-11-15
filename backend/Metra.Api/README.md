@@ -1,5 +1,7 @@
 # METRA API — Authentication and deployment
 
+> **Greenfield integration warning (2026-11-15): NOT READY FOR THE NEW NORMALIZED DATABASE.** The current API persistence adapters still target legacy `public.*` tables and RPCs (including `station_catalogue`, `metra_role_catalogue` and `metra_observation_records`). They have not been mapped to the new `iam`, `catalog`, `ref`, `observations`, `files` and `audit` schemas. A successful build or legacy `/api/v1/ready` response does not prove greenfield compatibility. Do not deploy these adapters as the production API for the new schema. See `docs/architecture/METRA-DOTNET-GREENFIELD-INTEGRATION-GAP-AUDIT-2026-11-15.md`.
+
 ## Supabase access tokens
 
 The API validates Supabase Auth access tokens using ASP.NET Core JWT Bearer authentication.
@@ -50,8 +52,8 @@ Do not put the Supabase service-role/secret key or JWT signing secret in Angular
 ## Health and readiness
 
 - `GET /api/v1/health` is an anonymous liveness endpoint. It confirms that the process is responding.
-- `GET /api/v1/ready` is an anonymous readiness endpoint. It returns 200 only when the server-side Supabase URL and service-role integration are configured for authorization, observation submission and decisions, review queue, station directory, station catalogue review, registration review and submission, station user directory, station assignment management, and station audit; otherwise it returns 503.
-- Readiness performs a bounded server-side PostgREST round trip against the station catalogue. It verifies basic connectivity and credentials, but does not prove that every workflow migration or every RPC is operational.
+- `GET /api/v1/ready` is an anonymous **legacy-contract readiness** endpoint. It returns 200 only when the current legacy adapter probes succeed; otherwise it returns 503.
+- Readiness performs bounded PostgREST/RPC probes against legacy table and function names. It does not verify the normalized greenfield schema, its RLS policies, its runtime grants, or greenfield .NET adapters. It must not be used as a greenfield production deployment gate.
 
 ## Signing-key prerequisite
 
@@ -70,9 +72,11 @@ and include a `{stationId:guid}` route parameter. The filter reads the authentic
 Supabase JWT `sub` claim and never accepts a user ID, role, or station scope from
 the request body as proof of authority.
 
-The API calls the narrowly scoped
+The current legacy API calls the narrowly scoped
 `public.metra_user_has_station_permission(uuid, uuid, text)` RPC using the
-server-only Supabase service-role key. The RPC requires an active METRA account,
+server-only Supabase service-role key. This legacy pattern is not the approved
+greenfield database access model: service-role requests bypass ordinary RLS and
+must not be copied to new adapters without a separate security review. The RPC requires an active METRA account,
 an approved and current authority membership, an approved and current assignment
 to the exact station, an active catalogue role, an approved explicit permission
 grant, an active authority and country, and an approved active non-demo station.
@@ -214,3 +218,9 @@ change. No station assignment operation creates or changes permission grants.
 
 Authority membership and individual permission-grant management remain
 separate controlled operations and are not exposed by these endpoints.
+
+## Runtime identity security gate (2026-11-15)
+
+The live Supabase project currently has a non-login `metra_api_runtime` role with no application-function EXECUTE grants. The API integrations in this source still use `Supabase:ServiceRoleKey` for PostgREST requests; that key is server-only, but its `service_role` identity has `BYPASSRLS`. Do not expose this key to clients or logs. Before production, replace this broad identity with a reviewed least-privilege execution model (or a narrowly scoped, explicitly approved RPC gateway), and run cross-authority/station authorization tests under the exact deployed identity. Do not simply grant `metra_api_runtime` membership in `service_role` or enable `BYPASSRLS`.
+
+See `docs/security/METRA-SUPABASE-RUNTIME-IDENTITY-REVIEW-2026-11-15.md` for the read-only findings and release requirements.

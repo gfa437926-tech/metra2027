@@ -27,8 +27,8 @@ void main() {
   }
 
   testWidgets('capture form validates required UUID and positive time interval', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 1100));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 1100);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
@@ -41,6 +41,8 @@ void main() {
     await enterValidCapture(tester);
     await tester.enterText(find.byKey(const Key('capture-station-id')), 'not-a-uuid');
     await tester.enterText(find.byKey(const Key('capture-end')), '2025-12-31T00:00:00Z');
+    await tester.ensureVisible(find.byKey(const Key('prepare-capture-draft')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('prepare-capture-draft')));
     await tester.pumpAndSettle();
     expect(find.text('أدخل UUID صالحاً'), findsOneWidget);
@@ -49,8 +51,8 @@ void main() {
   });
 
   testWidgets('valid capture creates an explicitly local-only typed draft', (tester) async {
-    await tester.view.setPhysicalSize(const Size(1000, 1200));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(1000, 1200);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: RecordsReviewWorkspaceScreen())));
@@ -60,7 +62,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('أُعدّت مسودة محلية فقط'), findsOneWidget);
-    expect(find.textContaining(stationId), findsOneWidget);
+    expect(find.textContaining('النوع: barograph · الفترة:'), findsOneWidget);
     expect(find.textContaining('لم تُرسل إلى الخادم'), findsOneWidget);
   });
 }

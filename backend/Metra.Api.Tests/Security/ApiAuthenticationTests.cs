@@ -38,6 +38,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             "SupabaseObservationQueueService",
             "SupabaseObservationArchiveService",
             "SupabaseStationDirectoryService",
+            "SupabaseGreenfieldStationDirectoryReader",
             "SupabaseStationCatalogueReviewService",
             "SupabaseRegistrationReviewService",
             "SupabaseRegistrationSubmissionService",
@@ -126,7 +127,11 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["Supabase:Url"] = "https://tbdnklyxjvbrilvnwgmq.supabase.co",
-                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder"
+                    ["Supabase:ServiceRoleKey"] = "test-only-placeholder",
+                    // This readiness fixture explicitly exercises the isolated legacy-compatibility path.
+                    // Production greenfield deployments must leave both flags disabled.
+                    ["Features:LegacyStationDirectoryEnabled"] = "true",
+                    ["Features:LegacyStationCatalogueReviewEnabled"] = "true"
                 }));
             builder.ConfigureTestServices(services =>
             {
@@ -224,12 +229,13 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [InlineData("/api/v1/observations/hourly/validate")]
     [InlineData("/api/v1/observations/phenomena/validate")]
     [InlineData("/api/v1/stations")]
+    [InlineData("/api/v2/stations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/observations/22222222-2222-2222-2222-222222222222/decision")]
     [InlineData("/api/v1/stations/11111111-1111-1111-1111-111111111111/audit-log")]
     public async Task Malformed_bearer_token_is_rejected_for_observation_and_station_endpoints(string path)
     {
-        using var request = new HttpRequestMessage(path.StartsWith("/api/v1/stations", StringComparison.Ordinal) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
+        using var request = new HttpRequestMessage((path.StartsWith("/api/v1/stations", StringComparison.Ordinal) || path.StartsWith("/api/v2/stations", StringComparison.Ordinal)) && !path.EndsWith("/decision", StringComparison.Ordinal) ? HttpMethod.Get : HttpMethod.Post, path);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "not-a-jwt");
         if (request.Method == HttpMethod.Post) request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
@@ -242,6 +248,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     [Theory]
     [InlineData("/api/v1/stations")]
     [InlineData("/api/v1/stations?limit=500&offset=0")]
+    [InlineData("/api/v2/stations")]
     public async Task Station_directory_requires_authentication(string path)
     {
         using var response = await _client.GetAsync(path);
