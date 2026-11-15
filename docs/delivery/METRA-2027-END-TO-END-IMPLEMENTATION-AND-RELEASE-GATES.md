@@ -194,3 +194,10 @@
 - Current .NET adapters still call the old public table/RPC names. Their compile/unit CI does not prove live database compatibility; station directory, station authorization and observation workflows remain unready until the API is mapped to the new schema and matching approved server-side contracts exist.
 - Do not restore the old `public.metra_*` schema as a shortcut. Review the greenfield ERD, design new versioned persistence/RPC contracts, bind actor identity to the validated JWT, then test in an isolated disposable database before any hosted migration.
 - Detailed evidence: `docs/architecture/METRA-SUPABASE-API-SCHEMA-COMPATIBILITY-REVIEW-2026-11-15.md`.
+
+### Deployed Supabase Edge Function schema mismatch
+- Read-only source inspection found five active Edge Functions (`station-directory`, `registration`, `registration-approvals`, `observations`, `station-review`), all with `verify_jwt=true` and explicit `auth.getUser` checks.
+- All five still query old public tables such as `station_catalogue`, `metra_account_states`, `metra_observations`, and old registration/permission tables; they also call old RPCs that are absent from the live schema.
+- Each function uses `SUPABASE_SERVICE_ROLE_KEY` for its admin client and wildcard `Access-Control-Allow-Origin: *`. JWT verification is positive, but the service-role path bypasses RLS and wildcard CORS is too broad for final production configuration.
+- Treat deployed status as deployment metadata only, not proof of working data access. Do not deploy or disable functions without a reviewed replacement plan. Rebuild their data contracts against the normalized `iam`, `catalog`, and `observations` model, select a least-privilege identity, restrict CORS, and test the full workflow in isolation.
+- Review: `docs/architecture/METRA-SUPABASE-EDGE-FUNCTION-COMPATIBILITY-REVIEW-2026-11-15.md`.
