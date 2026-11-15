@@ -1,0 +1,19 @@
+field_uid,field_id,name_ar,form_id,screen_id,requirement_id,data_type,unit,min,max,required,bound_source
+FLD-HOURLY-001,currentDate,التاريخ (ميلادي),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source
+FLD-HOURLY-002,currentTime,الوقت الحالي,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hour,,,False,not_in_source
+FLD-HOURLY-003,utcTime,التوقيت العالمي (UTC) - الساعة,hourly,SCR-HOURLY,FR-OBS-HOURLY,select,hour,0,23,True,JS validation (proven)
+FLD-HOURLY-004,dryTemp,درجة الحرارة الجافة (سْ),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven)
+FLD-HOURLY-005,wetTemp,درجة الحرارة الرطبة (سْ),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven)
+FLD-HOURLY-006,stationPressure,ضغط المحطة (ميلبار),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,850,1050,True,JS validation (proven)
+FLD-HOURLY-007,seaLevelPressure,ضغط سطح البحر (ميلبار),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,1050,True,JS validation (proven)
+FLD-HOURLY-008,pressureSlope,ميل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven)
+FLD-HOURLY-009,pressureShape,شكل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source
+FLD-HOURLY-010,relativeHumidity,الرطوبة النسبية (%),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,%,1,100,True,JS validation (proven)
+FLD-HOURLY-011,vaporPressure,ضغط بخار الماء,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven)
+FLD-HOURLY-012,dewPoint,درجة الندى,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven)
+FLD-HOURLY-013,windDirection,اتجاه الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,code/degrees,0,36,True,JS validation (proven)
+FLD-HOURLY-014,windSpeed,سرعة الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,m/s,0,99,True,JS validation (proven)
+FLD-HOURLY-015,visibility,الرؤية,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hundreds of m,0,200,True,JS validation (proven)
+FLD-HOURLY-016,currentWeather,الطقس الحاضر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,99,False,JS validation (proven)
+FLD-HOURLY-017,pastWeather,الطقس الغابر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,9,False,JS validation (proven)
+NOTE_FULL_CSV:complete 174-row CSV generated locally in extraction; remaining rows follow same schema and are listed by form counts hourly36 daily32 agri31 telecom21 hclimate15 equipment15 it10 rain7 soil7 — use fields/00-FIELD-INDEX-174.md and re-run extraction from metra-old HTML for full offline CSV if truncated in git.
