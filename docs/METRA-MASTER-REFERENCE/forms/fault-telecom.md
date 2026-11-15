@@ -1,5 +1,2 @@
 # Telecom Faults
-
-Source: metra-old/pages/fix/fix-tel.html
-Extracted unique fields after dedup: ~21 (raw HTML elements higher).
-Flutter: no clear dedicated screen — gap U-04.
+HTML: fix-tel.html (~21 unique fields). Flutter: gap U-04.
