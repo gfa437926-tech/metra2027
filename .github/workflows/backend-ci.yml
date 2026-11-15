@@ -161,6 +161,8 @@ jobs:
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/11_bootstrap_greenfield_iam_catalogue.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/036_global_station_read_roles_and_permissions.sql
           psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/11_test_station_global_read_roles.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/proposals/037_atomic_greenfield_station_directory_read.sql
+          psql "$PATH_N_DATABASE_URL" -v ON_ERROR_STOP=1 -f database/isolated/12_test_atomic_greenfield_station_directory.sql
 
   grant-uniqueness-isolation:
     name: Isolated grant uniqueness (Path N + partial indexes)
