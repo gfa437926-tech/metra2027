@@ -1,0 +1,1 @@
+ALTER TABLE metra_migration.legacy_users_staging ENABLE ROW LEVEL SECURITY;
