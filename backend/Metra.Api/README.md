@@ -214,3 +214,9 @@ change. No station assignment operation creates or changes permission grants.
 
 Authority membership and individual permission-grant management remain
 separate controlled operations and are not exposed by these endpoints.
+
+## Runtime identity security gate (2026-11-15)
+
+The live Supabase project currently has a non-login `metra_api_runtime` role with no application-function EXECUTE grants. The API integrations in this source still use `Supabase:ServiceRoleKey` for PostgREST requests; that key is server-only, but its `service_role` identity has `BYPASSRLS`. Do not expose this key to clients or logs. Before production, replace this broad identity with a reviewed least-privilege execution model (or a narrowly scoped, explicitly approved RPC gateway), and run cross-authority/station authorization tests under the exact deployed identity. Do not simply grant `metra_api_runtime` membership in `service_role` or enable `BYPASSRLS`.
+
+See `docs/security/METRA-SUPABASE-RUNTIME-IDENTITY-REVIEW-2026-11-15.md` for the read-only findings and release requirements.
