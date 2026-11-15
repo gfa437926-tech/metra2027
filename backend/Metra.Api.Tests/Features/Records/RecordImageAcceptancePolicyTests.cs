@@ -82,6 +82,30 @@ public sealed class RecordImageAcceptancePolicyTests
         Assert.Equal("scanner_identity_missing", result.ReasonCode);
     }
 
+    [Fact]
+    public void Keeps_asset_quarantined_for_invalid_scanner_version()
+    {
+        var invalidVersion = CleanInspection with { ScannerVersion = "scanner\\nforged" };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, invalidVersion, ValidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.KeepQuarantined, result.Action);
+        Assert.Equal("scanner_identity_missing", result.ReasonCode);
+    }
+
+    [Fact]
+    public void Accepts_asset_at_the_configured_maximum_length()
+    {
+        var maximumLength = ValidIntegrity with
+        {
+            ActualLength = RecordImageUploadValidator.MaximumBytes
+        };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, CleanInspection, maximumLength);
+
+        Assert.Equal(RecordImageAcceptanceAction.Accept, result.Action);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
