@@ -125,3 +125,10 @@
 - Real representative and independently labelled scientific datasets.
 - Provider selection and provisioned compute for OCR, CLIMATOL and AI.
 - Native Flutter build/signing and device-level acceptance.
+
+## Recorder digitization enqueue gate (code contract)
+- A queue submission is permitted only for an authenticated actor whose server-derived authority includes `recorder.digitize`, and only for a capture/asset pair with non-empty identifiers and an asset already in the `Accepted` state.
+- Algorithm profile identifiers are bounded, canonical lowercase slugs; idempotency keys are bounded opaque tokens restricted to a safe ASCII character set.
+- The pure policy rejects missing requests, unknown asset states, unaccepted assets, missing resource IDs, unsafe profile names and malformed idempotency keys.
+- This policy does not itself resolve actor permissions, verify capture-to-asset ownership, persist idempotency records, enforce uniqueness/concurrency, or enqueue work. Those responsibilities remain mandatory in the application service and durable provider implementation; the port must not be wired to a fake in-memory queue.
+
