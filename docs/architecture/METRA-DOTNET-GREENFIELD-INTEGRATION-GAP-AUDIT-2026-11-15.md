@@ -150,3 +150,13 @@ Required transformation: the existing API's generic JSON payload cannot be copie
 ### Data readiness note
 
 The verbose schema inspection confirmed that operational tables are empty at inspection time, while reference catalogues have seeded rows. This means adapter contract tests must create isolated synthetic organizations, memberships, stations, assignments and observations in a disposable database; tests must not rely on production-like records already existing in the hosted project.
+
+## 8. First executable greenfield domain component
+
+Added a database-independent typed value mapper:
+- `backend/Metra.Api/Domain/Observations/GreenfieldObservationValueMapper.cs`
+- `backend/Metra.Api.Tests/Domain/GreenfieldObservationValueMapperTests.cs`
+
+The mapper accepts a server-loaded parameter/unit catalogue and a strict JSON array, then produces the normalized `observations.values` typed row shape. It enforces active parameter/unit definitions, supported typed value kinds, decimal scale, integer range/type, text bounds/control-character rejection, boolean type, sequence bounds, duplicate parameter/sequence rejection, and canonical-unit identity. It rejects alternate units rather than silently storing an unconverted magnitude because the inspected schema does not yet define a conversion graph.
+
+This is a pure domain component and test seam only. It is **not wired to an endpoint or database adapter**, does not resolve catalogue data, does not persist observations, and does not make observation submission live. The API adapter still needs an approved schema-versioned payload contract, catalogue repository, unit-conversion policy, authorization boundary, idempotent transaction and audit operation.
