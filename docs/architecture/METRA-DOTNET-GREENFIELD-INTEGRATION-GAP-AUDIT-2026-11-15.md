@@ -173,3 +173,11 @@ The live database check constraint on `ref.parameters.precision_scale` permits n
 - Added regression tests for the default-off behavior and the explicit compatibility opt-in.
 - The opt-in is intended only for a deliberately isolated legacy compatibility environment; it must not be enabled against the new greenfield project. The correct production implementation remains a typed `catalog.*` projection through the approved caller-scoped least-privilege boundary.
 - No database schema, grants, RLS policies, records, credentials or deployment settings were changed by this code update. The new behavior must pass exact-head Backend CI before it is treated as validated.
+
+
+### Station catalogue review containment
+
+- The existing `SupabaseStationCatalogueReviewService` invokes the legacy `decide_station_catalogue_review` RPC using the server `service_role` credential. It is not a greenfield `catalog.*` review adapter and the supplied actor UUID does not, by itself, make a privileged RPC caller-scoped.
+- The service now requires the separate `Features:LegacyStationCatalogueReviewEnabled=true` compatibility flag. Credentials alone no longer make the legacy review RPC available.
+- Regression tests cover both default-off behavior and explicit opt-in. Do not enable this flag against the greenfield project; implement the reviewed catalog/IAM authorization contract before enabling station review in production.
+- This containment change does not alter the hosted database or existing records.
