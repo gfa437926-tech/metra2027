@@ -10,7 +10,6 @@ CREATE OR REPLACE FUNCTION catalog.get_station_directory_for_actor(
 )
 RETURNS SETOF jsonb
 LANGUAGE plpgsql
-STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog
 AS $function$
@@ -66,8 +65,10 @@ BEGIN
     WHERE up.user_id = p_actor_user_id
       AND up.profile_state = 'active'
       AND m.membership_state = 'active'
+      AND m.approved_at IS NOT NULL AND m.approved_by IS NOT NULL
       AND m.valid_from <= v_now AND (m.valid_to IS NULL OR m.valid_to > v_now)
       AND ra.assignment_state = 'active'
+      AND ra.assigned_by IS NOT NULL
       AND ra.valid_from <= v_now AND (ra.valid_to IS NULL OR ra.valid_to > v_now)
       AND (
         (ra.scope_type = 'station'
