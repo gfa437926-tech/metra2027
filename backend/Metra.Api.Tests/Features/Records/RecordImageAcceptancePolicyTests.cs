@@ -56,6 +56,17 @@ public sealed class RecordImageAcceptancePolicyTests
     }
 
     [Fact]
+    public void Keeps_asset_quarantined_for_unknown_scan_verdict()
+    {
+        var unknownVerdict = CleanInspection with { Verdict = (RecordImageScanVerdict)999 };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, unknownVerdict, ValidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.KeepQuarantined, result.Action);
+        Assert.Equal("scanner_result_unknown", result.ReasonCode);
+    }
+
+    [Fact]
     public void Keeps_asset_quarantined_when_scanner_identity_or_evidence_is_missing()
     {
         var missingVersion = CleanInspection with { ScannerVersion = "" };
