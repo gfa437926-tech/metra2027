@@ -176,3 +176,6 @@
 - The recovered files are intentionally stored outside `supabase/migrations/` and are **not executable migration inputs**. Do not run them wholesale: the archive includes historical context-dependent and destructive migrations.
 - The original five Git migration files remain unchanged. Exact comparisons identified divergence in three files and timestamp/name mapping differences in two. The archive provides the authoritative raw statements for reconciliation.
 - Remaining blocker: curate and validate a canonical replay sequence against a disposable empty PostgreSQL database, compare the resulting schema with the live project, and approve the ERD before any new hosted DDL.
+
+- Follow-up reconciliation aligned all five tracked active migration files byte-for-byte with the corresponding recovered live statements and corrected the two mismatched version prefixes. The active folder still contains only five of the 86 applied migrations; the other 81 remain archived outside the CLI migration path.
+- Added `scripts/verify_live_schema_history.py` and a Backend CI step to enforce the 86-file archive inventory, version range, unique IDs, non-empty SQL, and exact parity for every active-folder migration against the recovered source. This integrity check does not execute SQL or prove clean replay.
