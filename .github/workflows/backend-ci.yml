@@ -11,6 +11,9 @@ on:
       - "database/baseline/**"
       - "database/proposals/**"
       - "database/seeds/**"
+      - "supabase/migrations/**"
+      - "supabase/live-schema-history/**"
+      - "scripts/verify_live_schema_history.py"
       - "docs/security/**"
       - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
@@ -24,6 +27,9 @@ on:
       - "database/baseline/**"
       - "database/proposals/**"
       - "database/seeds/**"
+      - "supabase/migrations/**"
+      - "supabase/live-schema-history/**"
+      - "scripts/verify_live_schema_history.py"
       - "docs/security/**"
       - "docs/delivery/**"
       - ".github/workflows/backend-ci.yml"
@@ -39,6 +45,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Verify recovered Supabase migration history archive
+        run: python3 scripts/verify_live_schema_history.py
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
