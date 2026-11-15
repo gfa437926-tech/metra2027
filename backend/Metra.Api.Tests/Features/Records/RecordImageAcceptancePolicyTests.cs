@@ -108,6 +108,35 @@ public sealed class RecordImageAcceptancePolicyTests
         Assert.Equal("scanner_identity_missing", result.ReasonCode);
     }
 
+    [Theory]
+    [InlineData("scanner reason")]
+    [InlineData("scanner/reason")]
+    [InlineData("reason\\injected")]
+    [InlineData("invalid\\nreason")]
+    public void Keeps_asset_quarantined_for_unsafe_scanner_reason_code(string reasonCode)
+    {
+        var inspection = CleanInspection with { SafeReasonCode = reasonCode };
+        var result = RecordImageAcceptancePolicy.Evaluate(
+            RecordImageAssetStatus.Scanning, inspection, ValidIntegrity);
+
+        Assert.Equal(RecordImageAcceptanceAction.KeepQuarantined, result.Action);
+        Assert.Equal("scanner_reason_code_invalid", result.ReasonCode);
+    }
+
+    [Fact]
+    public void Allows_absent_or_canonical_scanner_reason_code()
+    {
+        var absent = CleanInspection with { SafeReasonCode = null };
+        var canonical = CleanInspection with { SafeReasonCode = "signature_verified" };
+
+        Assert.Equal(RecordImageAcceptanceAction.Accept,
+            RecordImageAcceptancePolicy.Evaluate(
+                RecordImageAssetStatus.Scanning, absent, ValidIntegrity).Action);
+        Assert.Equal(RecordImageAcceptanceAction.Accept,
+            RecordImageAcceptancePolicy.Evaluate(
+                RecordImageAssetStatus.Scanning, canonical, ValidIntegrity).Action);
+    }
+
     [Fact]
     public void Accepts_asset_at_the_configured_maximum_length()
     {
