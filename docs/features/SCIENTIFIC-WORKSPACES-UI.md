@@ -38,9 +38,16 @@ OCR must preserve image coordinates and confidence for each token. Curve digitiz
 ### AI training lab
 Dataset versioning, annotation queue, leakage-safe splits, reproducible training jobs, evaluation metrics, model registry, approval gates, staged deployment, drift monitoring, and retraining review. No trained model is claimed until a real dataset and reproducible evaluation exist.
 
+
+### Flutter workspace coverage
+
+The mobile application now exposes the records workspace as an internal four-part flow: archive, image review/digitization, triple-source comparison, and quality/approval. The CLIMATOL workspace includes homogenization setup, time-series exploration, breakpoint/reference-station review, approval, and climate reports. The AI workspace includes dataset/annotation, leakage-safe split preparation, experiment setup, evaluation, model registry, approval, deployment, and monitoring surfaces.
+
+These mobile screens prepare local UI state only. They do not upload files, run extractors, execute climate jobs, train models, or persist approvals until the secured .NET services are integrated.
+
 ## Integration boundary / current status
 
-This change adds the navigable Angular workspace UI and workflow affordances only. The R Climatol worker remains in its separate draft PR/branch and is not silently merged here. OCR, image storage, model training, comparison APIs, and production persistence are not connected by this UI-only change. The UI intentionally displays this limitation. No hosted database is modified and no migration is applied.
+This change adds the navigable Angular and Flutter workspace UI and workflow affordances only. The R Climatol worker remains in its separate draft PR/branch and is not silently merged here. OCR, image storage, model training, comparison APIs, and production persistence are not connected by this UI-only change. The UI intentionally displays this limitation. No hosted database is modified and no migration is applied.
 
 ## Acceptance checklist
 
@@ -54,4 +61,5 @@ This change adds the navigable Angular workspace UI and workflow affordances onl
 - [ ] .NET Climatol adapter and job orchestration.
 - [ ] AI training/evaluation/model registry services.
 - [ ] Angular component tests and end-to-end permission tests.
-- [ ] Flutter field capture/review screens and integration.
+- [x] Flutter CLIMATOL, AI lifecycle, records archive, image review, comparison, and quality UI surfaces.
+- [ ] Flutter field capture, secured upload, and backend integration.
