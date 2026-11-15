@@ -1,3 +1,4 @@
+
 create policy metra_observations_deny_client_access
 on public.metra_observations
 for all to anon, authenticated
