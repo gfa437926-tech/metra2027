@@ -136,3 +136,6 @@ The outbox provider contract must atomically persist the idempotency claim and p
 
 No provider, DI registration, endpoint, database migration or broker integration is included yet. The service is provider-neutral and tested with isolated test doubles; production activation remains blocked on the approved schema and durable provider implementation.
 
+### Digitization request shape validation
+
+The application service rejects empty capture and accepted-asset identifiers before invoking authorization or persistence dependencies. This is limited to syntactic identifier validation and does not query resource state; authorization still precedes all asset existence and lifecycle reads. Regression tests assert that malformed identifiers cause no authorizer, asset-reader or outbox calls.
