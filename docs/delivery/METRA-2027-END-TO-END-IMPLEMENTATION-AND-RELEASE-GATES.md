@@ -170,3 +170,9 @@
 - Required order: recover the exact 86 migration SQL sources; reconcile Git and live schema objects; verify grants, RLS, RPC and Data API exposure; replay against a disposable empty database; obtain approval of the scientific ERD; only then consider any new migration.
 - No hosted SQL writes, migrations, seeds or legacy-database changes were made during this inspection.
 - Evidence and table inventory: `docs/architecture/METRA-SUPABASE-READONLY-SCHEMA-BASELINE-2026-11-15.md`.
+
+### Live migration SQL recovery status
+- Recovered all 86 non-null SQL statements from `supabase_migrations.schema_migrations` into `supabase/live-schema-history/`, using each exact recorded version and name. Every record contained exactly one statement.
+- The recovered files are intentionally stored outside `supabase/migrations/` and are **not executable migration inputs**. Do not run them wholesale: the archive includes historical context-dependent and destructive migrations.
+- The original five Git migration files remain unchanged. Exact comparisons identified divergence in three files and timestamp/name mapping differences in two. The archive provides the authoritative raw statements for reconciliation.
+- Remaining blocker: curate and validate a canonical replay sequence against a disposable empty PostgreSQL database, compare the resulting schema with the live project, and approve the ERD before any new hosted DDL.
