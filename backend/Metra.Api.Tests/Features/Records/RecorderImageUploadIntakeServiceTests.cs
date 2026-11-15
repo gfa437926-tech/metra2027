@@ -42,7 +42,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var store = new FakeAssetStore { CommitResult = RecorderQuarantineCommitResult.Committed };
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length,
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length,
                 Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant(),
                 "image/png")
         };
@@ -69,7 +69,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var store = new FakeAssetStore();
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length, new string('a', 64), "image/png")
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length, new string('a', 64), "image/png")
         };
         var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
 
@@ -91,7 +91,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length + 1, hash, "image/png")
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length + 1, hash, "image/png")
         };
         var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
 
@@ -112,7 +112,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length, hash, "image/jpeg")
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length, hash, "image/jpeg")
         };
         var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
 
@@ -126,6 +126,28 @@ public sealed class RecorderImageUploadIntakeServiceTests
     }
 
     [Fact]
+    public async Task Removes_only_the_current_attempt_when_storage_returns_another_attempt_id()
+    {
+        var authorizer = new FakeAuthorizer { Allowed = true };
+        var store = new FakeAssetStore();
+        var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
+        var storage = new FakeStorage
+        {
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length, hash, "image/png"),
+            ReturnWrongUploadAttemptId = true
+        };
+        var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
+
+        var result = await service.UploadAsync(
+            new RecorderImageUploadActor(ActorId), Request(),
+            new MemoryStream(PngBytes), CancellationToken.None);
+
+        Assert.Equal("storage_upload_attempt_mismatch", result.ErrorCode);
+        Assert.Equal(1, storage.DeleteCalls);
+        Assert.Equal(0, store.CommitCalls);
+    }
+
+    [Fact]
     public async Task Removes_quarantine_object_when_asset_compare_and_set_conflicts()
     {
         var authorizer = new FakeAuthorizer { Allowed = true };
@@ -133,7 +155,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length, hash, "image/png")
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length, hash, "image/png")
         };
         var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
 
@@ -156,7 +178,7 @@ public sealed class RecorderImageUploadIntakeServiceTests
         var hash = Convert.ToHexString(SHA256.HashData(PngBytes)).ToLowerInvariant();
         var storage = new FakeStorage
         {
-            StoredObject = new(AssetId, PngBytes.Length, hash, "image/png")
+            StoredObject = new(AssetId, Guid.Empty, PngBytes.Length, hash, "image/png")
         };
         var service = new RecorderImageUploadIntakeService(authorizer, store, storage);
 
@@ -292,17 +314,23 @@ public sealed class RecorderImageUploadIntakeServiceTests
     private sealed class FakeStorage : IRecorderQuarantineStorage
     {
         public QuarantinedRecorderObject? StoredObject { get; init; }
+        public bool ReturnWrongUploadAttemptId { get; init; }
         public int WriteCalls { get; private set; }
         public int DeleteCalls { get; private set; }
 
         public Task<QuarantinedRecorderObject> WriteQuarantinedAsync(
-            Guid assetId, Stream content, long maximumBytes,
+            Guid assetId, Guid uploadAttemptId, Stream content, long maximumBytes,
             CancellationToken cancellationToken)
         {
             WriteCalls++;
             Assert.Equal(AssetId, assetId);
+            Assert.NotEqual(Guid.Empty, uploadAttemptId);
             Assert.Equal(RecordImageUploadValidator.MaximumBytes, maximumBytes);
-            return Task.FromResult(StoredObject!);
+            var stored = StoredObject! with
+            {
+                UploadAttemptId = ReturnWrongUploadAttemptId ? Guid.NewGuid() : uploadAttemptId
+            };
+            return Task.FromResult(stored);
         }
 
         public Task<Stream> OpenQuarantinedReadAsync(
@@ -315,9 +343,10 @@ public sealed class RecorderImageUploadIntakeServiceTests
             throw new NotSupportedException();
 
         public Task DeleteQuarantinedAsync(
-            Guid assetId, CancellationToken cancellationToken)
+            Guid assetId, Guid uploadAttemptId, CancellationToken cancellationToken)
         {
             DeleteCalls++;
+            Assert.NotEqual(Guid.Empty, uploadAttemptId);
             return Task.CompletedTask;
         }
 
