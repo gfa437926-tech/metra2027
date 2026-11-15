@@ -9,6 +9,9 @@ import 'package:metra_mobile/core/auth/metra_auth.dart';
 import 'package:metra_mobile/features/stations/station_directory_screen.dart';
 import 'package:metra_mobile/features/forecast_centres/forecast_centre_screen.dart';
 import 'package:metra_mobile/core/widgets/metra_adaptive_navigation.dart';
+import 'package:metra_mobile/features/records/records_review_workspace_screen.dart';
+import 'package:metra_mobile/features/climatol/climatol_workspace_screen.dart';
+import 'package:metra_mobile/features/ai/ai_workspace_screen.dart';
 
 void main() {
   testWidgets('configuration screen explains missing secure environment values', (tester) async {
@@ -175,6 +178,69 @@ void main() {
     expect(find.text('1200.0 م'), findsOneWidget);
     expect(find.text('المسافة من المرجع'), findsWidgets);
     api.close();
+  });
+
+
+  testWidgets('records workspace exposes archive, image review and triple comparison', (tester) async {
+    await tester.view.setPhysicalSize(const Size(1000, 900));
+    await tester.view.setDevicePixelRatio(1);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: RecordsReviewWorkspaceScreen()),
+    ));
+    expect(find.text('أرشيف السجلات وتدقيق الصور'), findsOneWidget);
+    expect(find.text('تعريف سجل جديد'), findsOneWidget);
+    await tester.tap(find.text('مراجعة الصور'));
+    await tester.pumpAndSettle();
+    expect(find.text('مسار معالجة الصورة'), findsOneWidget);
+    await tester.tap(find.text('المقارنة الثلاثية'));
+    await tester.pumpAndSettle();
+    expect(find.text('السجل الورقي'), findsOneWidget);
+    expect(find.text('المسجل الميكانيكي'), findsOneWidget);
+    expect(find.text('الرصد الإلكتروني'), findsOneWidget);
+  });
+
+  testWidgets('CLIMATOL workspace exposes series, breakpoints and reports', (tester) async {
+    await tester.view.setPhysicalSize(const Size(1000, 900));
+    await tester.view.setDevicePixelRatio(1);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: ClimatolWorkspaceScreen()),
+    ));
+    expect(find.text('التجانس المناخي وCLIMATOL'), findsOneWidget);
+    expect(find.text('إعداد مهمة جديدة'), findsOneWidget);
+    await tester.tap(find.text('السلاسل الزمنية'));
+    await tester.pumpAndSettle();
+    expect(find.text('مستكشف السلاسل الزمنية'), findsOneWidget);
+    await tester.tap(find.text('الانقطاعات والمرجعيات'));
+    await tester.pumpAndSettle();
+    expect(find.text('كشف نقاط الانقطاع'), findsOneWidget);
+    await tester.tap(find.text('المراجعة والتقارير'));
+    await tester.pumpAndSettle();
+    expect(find.text('التقارير المناخية'), findsOneWidget);
+  });
+
+  testWidgets('AI workspace exposes dataset, training, model registry and governance', (tester) async {
+    await tester.view.setPhysicalSize(const Size(1000, 900));
+    await tester.view.setDevicePixelRatio(1);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(
+      home: Scaffold(body: AiWorkspaceScreen()),
+    ));
+    expect(find.text('مختبر الذكاء الاصطناعي'), findsOneWidget);
+    expect(find.text('مستودع مجموعات البيانات'), findsOneWidget);
+    await tester.tap(find.text('التقسيم والتدريب'));
+    await tester.pumpAndSettle();
+    expect(find.text('إعداد تجربة تدريب'), findsOneWidget);
+    await tester.tap(find.text('التقييم والنماذج'));
+    await tester.pumpAndSettle();
+    expect(find.text('سجل النماذج والإصدارات'), findsOneWidget);
+    await tester.tap(find.text('الاعتماد والمراقبة'));
+    await tester.pumpAndSettle();
+    expect(find.text('بوابة اعتماد النموذج'), findsOneWidget);
   });
 
 }
