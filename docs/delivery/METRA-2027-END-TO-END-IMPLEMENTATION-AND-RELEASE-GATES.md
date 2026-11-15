@@ -187,3 +187,10 @@
 - Hosted Data API exposed-schema settings were not established by the read-only database session and must be checked separately.
 - Before production, approve and implement a least-privilege API runtime identity (or a documented, tightly bounded RPC gateway exception), grant only approved RPC execution, and prove cross-authority/station and lifecycle denial tests using that exact identity. Do not grant the runtime role service_role membership or BYPASSRLS merely to make the API work.
 - Security review: `docs/security/METRA-SUPABASE-RUNTIME-IDENTITY-REVIEW-2026-11-15.md`.
+
+### Live .NET API / Supabase schema compatibility blocker
+- Read-only catalogue checks show the current .NET API's expected `public.station_catalogue`, `public.station_coordinates`, `public.metra_observations`, station-permission RPC, observation-submit/review RPCs and station-audit RPC are absent.
+- The live database instead contains `catalog.stations`, `catalog.station_locations` and `observations.submissions` in the normalized greenfield schema. The expected public METRA RPCs are not present in the current function catalogue.
+- Current .NET adapters still call the old public table/RPC names. Their compile/unit CI does not prove live database compatibility; station directory, station authorization and observation workflows remain unready until the API is mapped to the new schema and matching approved server-side contracts exist.
+- Do not restore the old `public.metra_*` schema as a shortcut. Review the greenfield ERD, design new versioned persistence/RPC contracts, bind actor identity to the validated JWT, then test in an isolated disposable database before any hosted migration.
+- Detailed evidence: `docs/architecture/METRA-SUPABASE-API-SCHEMA-COMPATIBILITY-REVIEW-2026-11-15.md`.
