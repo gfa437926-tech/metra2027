@@ -58,6 +58,7 @@ class _MetraHomeState extends State<MetraHome> {
         onOpenAi: () => _open(8),
         onOpenClimatol: () => _open(9),
         onOpenAdmin: () => _open(10),
+        onOpenRecords: () => _open(12),
         onOpenInstruments: () => _open(13),
       ),
       // 1 Stations
@@ -263,6 +264,7 @@ class _HomeOverview extends StatelessWidget {
     required this.onOpenAi,
     required this.onOpenClimatol,
     required this.onOpenAdmin,
+    required this.onOpenRecords,
     required this.onOpenInstruments,
     this.userEmail,
   });
@@ -277,6 +279,7 @@ class _HomeOverview extends StatelessWidget {
   final VoidCallback onOpenAi;
   final VoidCallback onOpenClimatol;
   final VoidCallback onOpenAdmin;
+  final VoidCallback onOpenRecords;
   final VoidCallback onOpenInstruments;
   final String? userEmail;
 
@@ -403,6 +406,12 @@ class _HomeOverview extends StatelessWidget {
           title: 'إدارة المستخدمين',
           description: 'الحسابات، التسجيل، الأدوار وتعيين المحطات.',
           onTap: onOpenAdmin,
+        ),
+        _ActionCard(
+          icon: Icons.document_scanner_outlined,
+          title: 'أرشيف السجلات وتدقيق الصور',
+          description: 'السجلات الورقية والمسجلات الميكانيكية والمقارنة الثلاثية.',
+          onTap: onOpenRecords,
         ),
         _ActionCard(
           icon: Icons.sensors_outlined,
