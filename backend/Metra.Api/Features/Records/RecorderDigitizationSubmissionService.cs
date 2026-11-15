@@ -71,6 +71,7 @@ public interface IRecorderDigitizationOutbox
     Task<RecorderDigitizationOutboxWriteResult> TryCreateAsync(
         Guid actorSubjectId,
         RecorderDigitizationSubmission submission,
+        string requestFingerprint,
         CancellationToken cancellationToken);
 }
 
@@ -129,9 +130,13 @@ public sealed class RecorderDigitizationSubmissionService(
         if (!policy.IsAllowed)
             return RecorderDigitizationSubmissionResult.Rejected(policy.ErrorCode!);
 
+        if (!RecordDigitizationRequestFingerprint.TryCompute(submission, out var requestFingerprint))
+            return RecorderDigitizationSubmissionResult.Rejected("digitization_request_invalid");
+
         var write = await outbox.TryCreateAsync(
             actor.SubjectId,
             submission,
+            requestFingerprint!,
             cancellationToken);
 
         return write.Status switch
