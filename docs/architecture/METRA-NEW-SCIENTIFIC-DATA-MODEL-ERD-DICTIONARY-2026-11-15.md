@@ -340,3 +340,11 @@ This proposal must be reviewed before any executable migration is generated. Rec
 10. Implement dataset snapshots, leakage-safe AI training/evaluation and governed model registry.
 
 **No production DDL, Supabase migration, data seed, or hosted write is authorized by this document.**
+
+## 16. Live physical-schema comparison snapshot (2026-11-15)
+
+A read-only inspection of the current Supabase project found 46 application tables across `iam`, `catalog`, `ref`, `files`, `observations`, `weather`, `alerts`, `operations`, `integration`, and `audit`. The deployed physical dictionary, including columns, defaults, checks, primary keys, foreign keys, RLS state and metadata row counts, is captured in:
+
+`docs/architecture/METRA-LIVE-SUPABASE-PHYSICAL-DICTIONARY-2026-11-15.md`
+
+This logical ERD remains a proposal for the complete scientific platform. The live schema does not yet contain the recorder capture/image/trace, climate homogenization/adjustment, or AI dataset/experiment/model-registry tables described in this proposal. Review the live physical snapshot against this logical target and the recovered live migration history before preparing any new migration. No DDL approval is implied by either document.
