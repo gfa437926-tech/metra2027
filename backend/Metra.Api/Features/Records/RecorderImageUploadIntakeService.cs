@@ -134,15 +134,17 @@ public sealed class RecorderImageUploadIntakeService(
             return RecorderImageUploadResult.Rejected(
                 validation.ErrorCode ?? "upload_validation_failed");
 
+        var uploadAttemptId = Guid.NewGuid();
         await using var content = new MemoryStream(bounded.Content, writable: false);
         var storedObject = await quarantineStorage.WriteQuarantinedAsync(
             request.AssetId,
+            uploadAttemptId,
             content,
             RecordImageUploadValidator.MaximumBytes,
             cancellationToken);
 
         var storageDecision = QuarantinedRecorderObjectPolicy.Evaluate(
-            request.AssetId, storedObject);
+            request.AssetId, uploadAttemptId, storedObject);
 
         if (!storageDecision.IsAccepted || storedObject is null ||
             storedObject.Length != bounded.Content.LongLength ||
@@ -150,7 +152,7 @@ public sealed class RecorderImageUploadIntakeService(
             !string.Equals(storedObject.DetectedMediaType, validation.DetectedContentType, StringComparison.Ordinal))
         {
             await quarantineStorage.DeleteQuarantinedAsync(
-                request.AssetId, cancellationToken);
+                request.AssetId, uploadAttemptId, cancellationToken);
             return RecorderImageUploadResult.Rejected(
                 storageDecision.ErrorCode ?? "stored_object_integrity_mismatch");
         }
@@ -166,7 +168,7 @@ public sealed class RecorderImageUploadIntakeService(
         {
             // The provider has confirmed that no state/audit transaction committed.
             await quarantineStorage.DeleteQuarantinedAsync(
-                request.AssetId, cancellationToken);
+                request.AssetId, uploadAttemptId, cancellationToken);
             return RecorderImageUploadResult.Rejected("asset_state_conflict");
         }
 
