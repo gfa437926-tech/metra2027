@@ -8,13 +8,16 @@ public sealed class QuarantinedRecorderObjectPolicyTests
     private static readonly Guid AssetId =
         Guid.Parse("1d17d0d8-7d7a-4a1d-a2c3-4f2d6e9b8c10");
 
+    private static readonly Guid UploadAttemptId =
+        Guid.Parse("2c17d0d8-7d7a-4a1d-a2c3-4f2d6e9b8c11");
+
     private static QuarantinedRecorderObject ValidObject(string mediaType = "image/jpeg") =>
-        new(AssetId, 1024, new string('a', 64), mediaType);
+        new(AssetId, UploadAttemptId, 1024, new string('a', 64), mediaType);
 
     [Fact]
     public void Accepts_matching_bounded_object_with_canonical_metadata()
     {
-        var result = QuarantinedRecorderObjectPolicy.Evaluate(AssetId, ValidObject());
+        var result = QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, ValidObject());
 
         Assert.True(result.IsAccepted);
         Assert.Null(result.ErrorCode);
@@ -24,9 +27,9 @@ public sealed class QuarantinedRecorderObjectPolicyTests
     public void Rejects_missing_or_empty_expected_asset_identifier()
     {
         Assert.Equal("asset_id_required",
-            QuarantinedRecorderObjectPolicy.Evaluate(Guid.Empty, ValidObject()).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(Guid.Empty, UploadAttemptId, ValidObject()).ErrorCode);
         Assert.Equal("storage_result_missing",
-            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, null).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, null).ErrorCode);
     }
 
     [Fact]
@@ -35,7 +38,23 @@ public sealed class QuarantinedRecorderObjectPolicyTests
         var result = ValidObject() with { AssetId = Guid.NewGuid() };
 
         Assert.Equal("storage_asset_id_mismatch",
-            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, result).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).ErrorCode);
+    }
+
+    [Fact]
+    public void Rejects_object_from_a_different_upload_attempt()
+    {
+        var result = ValidObject() with { UploadAttemptId = Guid.NewGuid() };
+
+        Assert.Equal("storage_upload_attempt_mismatch",
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).ErrorCode);
+    }
+
+    [Fact]
+    public void Rejects_empty_expected_upload_attempt_identifier()
+    {
+        Assert.Equal("upload_attempt_id_required",
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, Guid.Empty, ValidObject()).ErrorCode);
     }
 
     [Theory]
@@ -47,7 +66,7 @@ public sealed class QuarantinedRecorderObjectPolicyTests
         var result = ValidObject() with { Length = length };
 
         Assert.Equal("stored_object_length_invalid",
-            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, result).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).ErrorCode);
     }
 
     [Fact]
@@ -58,7 +77,7 @@ public sealed class QuarantinedRecorderObjectPolicyTests
             Length = RecordImageUploadValidator.MaximumBytes
         };
 
-        Assert.True(QuarantinedRecorderObjectPolicy.Evaluate(AssetId, result).IsAccepted);
+        Assert.True(QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).IsAccepted);
     }
 
     [Theory]
@@ -71,7 +90,7 @@ public sealed class QuarantinedRecorderObjectPolicyTests
         var result = ValidObject() with { Sha256 = sha256 };
 
         Assert.Equal("stored_object_sha256_invalid",
-            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, result).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).ErrorCode);
     }
 
     [Theory]
@@ -84,7 +103,7 @@ public sealed class QuarantinedRecorderObjectPolicyTests
         var result = ValidObject(mediaType);
 
         Assert.Equal("stored_object_media_type_invalid",
-            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, result).ErrorCode);
+            QuarantinedRecorderObjectPolicy.Evaluate(AssetId, UploadAttemptId, result).ErrorCode);
     }
 
     [Theory]
@@ -94,6 +113,6 @@ public sealed class QuarantinedRecorderObjectPolicyTests
     public void Accepts_supported_detected_image_media_types(string mediaType)
     {
         Assert.True(QuarantinedRecorderObjectPolicy.Evaluate(
-            AssetId, ValidObject(mediaType)).IsAccepted);
+            AssetId, UploadAttemptId, ValidObject(mediaType)).IsAccepted);
     }
 }
