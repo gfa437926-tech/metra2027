@@ -1,6 +1,6 @@
--- Disposable IAM/catalogue fixture for testing proposal 036 only.
--- This is intentionally a minimal contract fixture, not a canonical schema replay.
--- Run only against an isolated PostgreSQL database; never against hosted Supabase.
+-- Disposable IAM/catalogue fixture for testing proposals 036 and 037 only.
+-- Minimal contract fixture based on inspected live greenfield schema; not a canonical replay.
+-- Run only against isolated PostgreSQL; never against hosted Supabase.
 CREATE SCHEMA IF NOT EXISTS iam;
 CREATE SCHEMA IF NOT EXISTS catalog;
 
@@ -8,7 +8,10 @@ CREATE TABLE iam.user_profiles (
   user_id uuid PRIMARY KEY,
   profile_state text NOT NULL DEFAULT 'active' CHECK (profile_state IN ('active','suspended','closed'))
 );
-CREATE TABLE iam.organizations (id uuid PRIMARY KEY);
+CREATE TABLE iam.organizations (
+  id uuid PRIMARY KEY,
+  organization_state text NOT NULL DEFAULT 'active' CHECK (organization_state IN ('pending','active','suspended','retired'))
+);
 CREATE TABLE iam.memberships (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES iam.user_profiles(user_id) ON DELETE RESTRICT,
@@ -16,6 +19,8 @@ CREATE TABLE iam.memberships (
   membership_state text NOT NULL DEFAULT 'pending' CHECK (membership_state IN ('pending','active','suspended','ended','rejected')),
   valid_from timestamptz NOT NULL DEFAULT now(),
   valid_to timestamptz,
+  approved_at timestamptz,
+  approved_by uuid REFERENCES iam.user_profiles(user_id),
   CHECK (valid_to IS NULL OR valid_to > valid_from),
   UNIQUE (id, organization_id)
 );
@@ -47,10 +52,36 @@ CREATE TABLE iam.role_permissions (
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (role_id, permission_id)
 );
+CREATE TABLE catalog.station_types (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  type_code text NOT NULL UNIQUE,
+  name_ar text NOT NULL,
+  name_en text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true
+);
 CREATE TABLE catalog.stations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_organization_id uuid NOT NULL,
+  owner_organization_id uuid NOT NULL REFERENCES iam.organizations(id),
+  station_type_id uuid NOT NULL REFERENCES catalog.station_types(id),
+  station_code text NOT NULL UNIQUE,
+  name_ar text NOT NULL,
+  name_en text NOT NULL,
+  wmo_identifier text,
+  approval_status text NOT NULL DEFAULT 'pending' CHECK (approval_status IN ('pending','approved','rejected','changes_requested','suspended')),
+  operational_status text NOT NULL DEFAULT 'planned' CHECK (operational_status IN ('planned','active','temporarily_closed','inactive','decommissioned')),
+  elevation_m numeric(9,2),
+  timezone_name text,
   UNIQUE (id, owner_organization_id)
+);
+CREATE TABLE catalog.station_locations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  station_id uuid NOT NULL REFERENCES catalog.stations(id),
+  latitude numeric(9,6) NOT NULL,
+  longitude numeric(9,6) NOT NULL,
+  location_source text NOT NULL,
+  horizontal_accuracy_m numeric(10,2),
+  valid_from timestamptz NOT NULL DEFAULT now(),
+  valid_to timestamptz
 );
 CREATE TABLE iam.role_assignments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,6 +94,7 @@ CREATE TABLE iam.role_assignments (
   assignment_state text NOT NULL DEFAULT 'pending' CHECK (assignment_state IN ('pending','active','suspended','revoked','expired')),
   valid_from timestamptz NOT NULL DEFAULT now(),
   valid_to timestamptz,
+  assigned_by uuid REFERENCES iam.user_profiles(user_id),
   CHECK (valid_to IS NULL OR valid_to > valid_from),
   CHECK ((scope_type='global' AND organization_id IS NULL AND unit_id IS NULL AND station_id IS NULL) OR
          (scope_type='organization' AND organization_id IS NOT NULL AND unit_id IS NULL AND station_id IS NULL) OR
@@ -73,7 +105,8 @@ CREATE TABLE iam.role_assignments (
 );
 
 INSERT INTO iam.roles (role_code,name_ar,name_en,is_system_role,is_assignable,is_requestable)
-VALUES ('auditor','مدقق','Auditor',true,true,false);
+VALUES ('auditor','مدقق','Auditor',true,true,false),
+       ('station_manager','رئيس محطة','Station Manager',true,true,false);
 INSERT INTO iam.permissions (permission_code,name_ar,name_en,permission_domain) VALUES
  ('alerts.read','قراءة التنبيهات','Read alerts','alerts'),
  ('audit.read','قراءة التدقيق','Read audit','audit'),
@@ -82,5 +115,6 @@ INSERT INTO iam.permissions (permission_code,name_ar,name_en,permission_domain) 
  ('stations.read','قراءة المحطات','Read stations','stations');
 INSERT INTO iam.role_permissions (role_id,permission_id)
 SELECT r.id,p.id FROM iam.roles r CROSS JOIN iam.permissions p
-WHERE r.role_code='auditor' AND p.permission_code IN
- ('alerts.read','audit.read','forecasts.read','observations.read_station','stations.read');
+WHERE (r.role_code='auditor' AND p.permission_code IN
+ ('alerts.read','audit.read','forecasts.read','observations.read_station','stations.read'))
+   OR (r.role_code='station_manager' AND p.permission_code='stations.read');
