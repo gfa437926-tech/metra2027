@@ -98,6 +98,7 @@ public interface IRecorderQuarantineStorage
 {
     Task<QuarantinedRecorderObject> WriteQuarantinedAsync(
         Guid assetId,
+        Guid uploadAttemptId,
         Stream content,
         long maximumBytes,
         CancellationToken cancellationToken);
@@ -113,6 +114,7 @@ public interface IRecorderQuarantineStorage
 
     Task DeleteQuarantinedAsync(
         Guid assetId,
+        Guid uploadAttemptId,
         CancellationToken cancellationToken);
 
     Task DeleteExpiredQuarantineAsync(
@@ -122,6 +124,7 @@ public interface IRecorderQuarantineStorage
 
 public sealed record QuarantinedRecorderObject(
     Guid AssetId,
+    Guid UploadAttemptId,
     long Length,
     string Sha256,
     string DetectedMediaType);
