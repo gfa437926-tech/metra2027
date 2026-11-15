@@ -42,6 +42,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     Expanded(child: FutureBuilder<List<StationDirectoryItem>>(future: _stations, builder: (context, snapshot) {
       if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
       if (snapshot.hasError) {
+        final error = snapshot.error;
         return _empty(Icons.cloud_off, 'تعذر تحميل دليل المحطات',
           error is MetraApiException && error.code == 'station_directory_not_ready'
             ? 'دليل المحطات متوقف مؤقتاً حتى اكتمال ربط قاعدة البيانات الجديدة واختبارات الصلاحيات.'
