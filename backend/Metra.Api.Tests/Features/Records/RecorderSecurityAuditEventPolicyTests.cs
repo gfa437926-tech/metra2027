@@ -21,6 +21,14 @@ public sealed class RecorderSecurityAuditEventPolicyTests
     }
 
     [Fact]
+    public void Allows_absent_optional_capture_and_job_context()
+    {
+        var auditEvent = ValidEvent() with { CaptureId = null, JobId = null };
+
+        Assert.True(RecorderSecurityAuditEventPolicy.IsValid(auditEvent));
+    }
+
+    [Fact]
     public void Rejects_missing_event_or_empty_required_identifiers()
     {
         Assert.False(RecorderSecurityAuditEventPolicy.IsValid(null));
