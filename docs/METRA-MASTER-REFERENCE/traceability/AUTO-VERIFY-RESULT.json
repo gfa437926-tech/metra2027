@@ -1,0 +1,10 @@
+{
+  "field_count": 174,
+  "field_uid_unique": true,
+  "screens_documented": 16,
+  "trace_rows": 25,
+  "fr_fields_missing_screen": ["FR-FAULT-IT", "FR-FAULT-TEL", "FR-OBS-AGRI", "FR-OBS-HCLIMATE", "FR-OBS-RAIN", "FR-OBS-SOIL"],
+  "issues": [],
+  "ok": true,
+  "note": "Missing screens are intentional gaps U-03/U-04, not broken links"
+}

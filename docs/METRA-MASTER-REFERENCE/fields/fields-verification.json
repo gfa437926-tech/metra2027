@@ -1,0 +1,20 @@
+{
+  "total_records": 174,
+  "unique_field_uid": 174,
+  "unique_form_field_id": 174,
+  "duplicates_field_uid": [],
+  "by_form": {
+    "hourly": 36,
+    "daily": 32,
+    "agricultural": 31,
+    "hourly-climate": 15,
+    "rainfall": 7,
+    "soil": 7,
+    "fault-equipment": 15,
+    "fault-telecom": 21,
+    "fault-it": 10
+  },
+  "sha256_csv": "638d44a56b469515a35511f405f1b6af9dac14c7b4b68642b4dadb23b0a3d551",
+  "sha256_json_full_local": "8d5374c49a4314abc699113dfe4cb47bbcd1e78d9215a2d0b785520007df7f61",
+  "verification_passed": true
+}

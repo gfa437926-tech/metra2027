@@ -1,0 +1,18 @@
+{
+  "total": 174,
+  "unique_field_uid": 174,
+  "csv": "fields-174.csv",
+  "per_form_json": [
+    "fields-hourly.json",
+    "fields-daily.json",
+    "fields-agricultural.json",
+    "fields-hourly-climate.json",
+    "fields-rainfall.json",
+    "fields-soil.json",
+    "fields-fault-equipment.json",
+    "fields-fault-telecom.json",
+    "fields-fault-it.json"
+  ],
+  "verification": "fields-verification.json",
+  "note": "Union of per-form JSON arrays = 174 records. CSV has one row per field."
+}
