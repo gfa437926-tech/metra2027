@@ -39,11 +39,14 @@ public sealed class RecorderDigitizationSubmissionServiceTests
     private sealed class Outbox(RecorderDigitizationOutboxWriteResult? result = null) : IRecorderDigitizationOutbox
     {
         public int Calls { get; private set; }
-        public Task<RecorderDigitizationOutboxWriteResult> TryCreateAsync(Guid actorSubjectId, RecorderDigitizationSubmission submission, CancellationToken cancellationToken)
+        public string? LastFingerprint { get; private set; }
+        public Task<RecorderDigitizationOutboxWriteResult> TryCreateAsync(Guid actorSubjectId, RecorderDigitizationSubmission submission, string requestFingerprint, CancellationToken cancellationToken)
         {
             Calls++;
             Assert.Equal(ActorId, actorSubjectId);
             Assert.Equal(Request(), submission);
+            Assert.Matches("^[0-9a-f]{64}$", requestFingerprint);
+            LastFingerprint = requestFingerprint;
             return Task.FromResult(result ?? new(
                 RecorderDigitizationOutboxWriteStatus.Created, Guid.NewGuid()));
         }
@@ -127,6 +130,7 @@ public sealed class RecorderDigitizationSubmissionServiceTests
         Assert.Equal(expectedJobId, result.JobId);
         Assert.False(result.WasPreviouslySubmitted);
         Assert.Equal(1, outbox.Calls);
+        Assert.NotNull(outbox.LastFingerprint);
     }
 
     [Fact]
