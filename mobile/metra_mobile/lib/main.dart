@@ -24,6 +24,7 @@ class MetraApp extends StatelessWidget {
     theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: _blue),
       scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    locale: const Locale('ar'),
     supportedLocales: const [Locale('ar'), Locale('en')],
     // Required temporarily because flutter_map still uses SDK Material types.
     // ignore: deprecated_member_use
