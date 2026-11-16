@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/auth/metra_auth.dart';
 
