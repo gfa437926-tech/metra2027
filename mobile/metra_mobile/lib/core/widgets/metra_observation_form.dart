@@ -1,4 +1,4 @@
-import 'package:flutter/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 enum MetraFieldKind {
   text,
