@@ -41,7 +41,7 @@ jobs:
           requireHttpsOrigin('METRA_SUPABASE_URL', process.env.METRA_SUPABASE_URL);
           const key = (process.env.METRA_SUPABASE_PUBLISHABLE_KEY || '').trim();
           if (!key) throw new Error('METRA_SUPABASE_PUBLISHABLE_KEY is required.');
-          if (/service[_-]?role/i.test(key)) throw new Error('A service-role key must never be used in Flutter.');
+          if (/^sb_secret_/i.test(key) || /service[_-]?role/i.test(key)) throw new Error('A service-role key must never be used in Flutter.');
           if (key.split('.').length === 3) {
             try {
               const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8'));
