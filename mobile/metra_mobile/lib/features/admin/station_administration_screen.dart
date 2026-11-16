@@ -54,14 +54,23 @@ class _StationAdministrationScreenState
       record['last_name'],
     ].where((part) => part != null && part.toString().trim().isNotEmpty);
     final joined = parts.join(' ');
-    return joined.isEmpty ? _firstValue(record, ['email', 'user_id', 'id']) : joined;
+    return joined.isEmpty
+        ? _firstValue(record, ['email', 'user_id', 'id'])
+        : joined;
+  }
+
+  String _errorMessage(Object? error) {
+    if (error is MetraApiException) return error.displayMessage;
+    return 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.';
   }
 
   Future<void> _decide(Map<String, dynamic> record, String decision) async {
     final requestId = _firstValue(record, ['id', 'request_id']);
     if (requestId == '—') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرّف طلب التسجيل غير موجود في الاستجابة.')),
+        const SnackBar(
+          content: Text('معرّف طلب التسجيل غير موجود في الاستجابة.'),
+        ),
       );
       return;
     }
@@ -70,13 +79,16 @@ class _StationAdministrationScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(decision == 'approve' ? 'اعتماد طلب التسجيل' : 'رفض طلب التسجيل'),
+        title: Text(
+          decision == 'approve' ? 'اعتماد طلب التسجيل' : 'رفض طلب التسجيل',
+        ),
         content: TextField(
           controller: noteController,
           minLines: 2,
           maxLines: 4,
           decoration: InputDecoration(
-            labelText: decision == 'reject' ? 'سبب الرفض (إلزامي)' : 'ملاحظة (اختيارية)',
+            labelText:
+                decision == 'reject' ? 'سبب الرفض (إلزامي)' : 'ملاحظة (اختيارية)',
             border: const OutlineInputBorder(),
           ),
         ),
@@ -110,7 +122,9 @@ class _StationAdministrationScreenState
         stationId: widget.stationId,
         requestId: requestId,
         decision: decision,
-        note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+        note: noteController.text.trim().isEmpty
+            ? null
+            : noteController.text.trim(),
       );
       if (!mounted) return;
       setState(_refresh);
@@ -119,18 +133,15 @@ class _StationAdministrationScreenState
       );
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = switch (error.statusCode) {
-        403 => 'لا تملك صلاحية مراجعة طلبات هذه المحطة.',
-        404 => 'الطلب غير موجود أو لا يتبع هذه المحطة.',
-        409 => 'تغيرت حالة الطلب؛ حدّث القائمة.',
-        503 => 'خدمة مراجعة التسجيل غير متاحة حالياً.',
-        _ => 'تعذر تنفيذ قرار المراجعة.',
-      };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.displayMessage)),
+      );
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر الاتصال بخدمة مراجعة التسجيل.')),
+          const SnackBar(
+            content: Text('تعذر الاتصال بخدمة مراجعة التسجيل.'),
+          ),
         );
       }
     } finally {
@@ -151,16 +162,18 @@ class _StationAdministrationScreenState
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          final error = snapshot.error;
-          final message = error is MetraApiException && error.statusCode == 403
-              ? 'لا تملك صلاحية عرض هذه البيانات.'
-              : error is MetraApiException && error.statusCode == 503
-                  ? 'الخدمة غير متاحة أو لم تُضبط بعد على الخادم.'
-                  : 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.';
           return ListView(
             children: [
               const SizedBox(height: 48),
-              Center(child: Text(message, textAlign: TextAlign.center)),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    _errorMessage(snapshot.error),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ],
           );
         }
@@ -188,7 +201,10 @@ class _StationAdministrationScreenState
                     _firstValue(record, ['actor_user_id', 'actor_name']),
                   ].where((value) => value != '—').join(' • ')
                 : [
-                    _firstValue(record, ['role_code', 'requested_role_code', 'role']),
+                    _firstValue(
+                      record,
+                      ['role_code', 'requested_role_code', 'role'],
+                    ),
                     _firstValue(record, ['status', 'request_status']),
                     _firstValue(record, ['phone', 'email']),
                   ].where((value) => value != '—').join(' • ');
@@ -199,10 +215,16 @@ class _StationAdministrationScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     if (subtitle.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(color: Color(0xFF64748B)),
+                      ),
                     ],
                     if (registrationQueue) ...[
                       const SizedBox(height: 10),
@@ -232,7 +254,11 @@ class _StationAdministrationScreenState
 
   Future<void> _handleRefresh() async {
     setState(_refresh);
-    await Future.wait([_users, _requests, _audit].map((future) => future.catchError((_) => <Map<String, dynamic>>[])));
+    await Future.wait(
+      [_users, _requests, _audit].map(
+        (future) => future.catchError((_) => <Map<String, dynamic>>[]),
+      ),
+    );
   }
 
   @override
