@@ -1,0 +1,157 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:metra_mobile/core/api/metra_api_client.dart';
+import 'package:metra_mobile/features/observations/daily_observation_screen.dart';
+import 'package:metra_mobile/features/observations/hourly_observation_screen.dart';
+
+void main() {
+  const stationId = '11111111-1111-4111-8111-111111111111';
+
+  testWidgets('hourly screen shows title and submit control', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('{}', 200)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('الساعي'), findsWidgets);
+    expect(find.textContaining('إرسال'), findsWidgets);
+    api.close();
+  });
+
+  testWidgets('daily screen shows title and submit control', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('{}', 200)),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DailyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
+
+    expect(find.textContaining('اليومي'), findsWidgets);
+    expect(find.textContaining('إرسال'), findsWidgets);
+    api.close();
+  });
+
+  test('client converts local observedAt offset to UTC ISO for hourly submit', () async {
+    late http.Request captured;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await api.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'hourly-utc-key',
+      observationType: 'hourly',
+      observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
+      payload: const {'utcTime': '12'},
+      submit: true,
+    );
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
+    expect(body['observationType'], 'hourly');
+    expect(body['idempotencyKey'], 'hourly-utc-key');
+    api.close();
+  });
+
+  test('client converts local observedAt offset to UTC ISO for daily submit', () async {
+    late http.Request captured;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      }),
+    );
+
+    await api.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'daily-utc-key',
+      observationType: 'daily',
+      observedAt: DateTime.parse('2026-11-16T03:00:00+03:00'),
+      payload: const {'currentDate': '2026-11-16'},
+      submit: true,
+    );
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['observedAt'], '2026-11-16T00:00:00.000Z');
+    expect(body['observationType'], 'daily');
+    api.close();
+  });
+
+  test('403 on hourly submit yields Arabic displayMessage without status code leak pattern', () async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('forbidden', 403)),
+    );
+
+    try {
+      await api.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'k403',
+        observationType: 'hourly',
+        observedAt: DateTime.utc(2026, 11, 16),
+        payload: const {'utcTime': '00'},
+      );
+      fail('expected MetraApiException');
+    } on MetraApiException catch (error) {
+      expect(error.statusCode, 403);
+      expect(error.displayMessage, isNot(contains('403')));
+      expect(error.displayMessage, isNot(contains('forbidden')));
+      expect(
+        error.displayMessage,
+        anyOf(contains('صلاحية'), contains('جلسة'), contains('الدخول')),
+      );
+    }
+    api.close();
+  });
+
+  test('409 conflict maps to Arabic operator message for daily', () async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('{}', 409)),
+    );
+
+    try {
+      await api.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'k409',
+        observationType: 'daily',
+        observedAt: DateTime.utc(2026, 11, 16),
+        payload: const {'currentDate': '2026-11-16'},
+      );
+      fail('expected MetraApiException');
+    } on MetraApiException catch (error) {
+      expect(error.statusCode, 409);
+      expect(error.displayMessage, anyOf(contains('تعارض'), contains('مسبقاً'), contains('مُرسلة')));
+    }
+    api.close();
+  });
+}
