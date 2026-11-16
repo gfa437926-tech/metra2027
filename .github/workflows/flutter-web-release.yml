@@ -41,13 +41,22 @@ jobs:
           requireHttpsOrigin('METRA_SUPABASE_URL', process.env.METRA_SUPABASE_URL);
           const key = (process.env.METRA_SUPABASE_PUBLISHABLE_KEY || '').trim();
           if (!key) throw new Error('METRA_SUPABASE_PUBLISHABLE_KEY is required.');
-          if (/^sb_secret_/i.test(key) || /service[_-]?role/i.test(key)) throw new Error('A service-role key must never be used in Flutter.');
-          if (key.split('.').length === 3) {
+          if (key.startsWith('sb_secret_') || /service[_-]?role/i.test(key)) {
+            throw new Error('A service-role/secret key must never be used in Flutter.');
+          }
+          if (!key.startsWith('sb_publishable_')) {
+            const segments = key.split('.');
+            if (segments.length !== 3) {
+              throw new Error('Use a Supabase publishable key or a legacy anon JWT key.');
+            }
+            let payload;
             try {
-              const payload = JSON.parse(Buffer.from(key.split('.')[1], 'base64url').toString('utf8'));
-              if (payload.role === 'service_role') throw new Error('A service-role key must never be used in Flutter.');
-            } catch (error) {
-              if (String(error.message).includes('service-role')) throw error;
+              payload = JSON.parse(Buffer.from(segments[1], 'base64url').toString('utf8'));
+            } catch {
+              throw new Error('The Supabase client key is not a valid publishable or anon key.');
+            }
+            if (payload.role !== 'anon') {
+              throw new Error('The Supabase JWT client key must have the anon role.');
             }
           }
           console.log('Production configuration is present and passed structural checks.');
