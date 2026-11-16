@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
 
@@ -70,7 +70,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             children: [
               _intro(),
               const SizedBox(height: 12),
@@ -133,7 +133,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
   Widget _intro() => const Card(
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -152,7 +152,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
       );
 
   Widget _liveUnavailable() => const Card(
-        color: const Color(0xFFFFF7E8),
+        color: Color(0xFFFFF7E8),
         elevation: 0,
         child: Padding(
           padding: const EdgeInsets.all(16),
