@@ -1,11 +1,10 @@
 import 'package:material_ui/material_ui.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../api_config.dart';
 import '../../core/auth/metra_auth.dart';
 
 /// Account and client configuration. Never displays secrets or service-role keys.
-class SystemSettingsScreen extends StatefulWidget {
+class SystemSettingsScreen extends StatelessWidget {
   const SystemSettingsScreen({
     super.key,
     required this.userEmail,
@@ -15,31 +14,8 @@ class SystemSettingsScreen extends StatefulWidget {
   final String? userEmail;
   final Future<void> Function()? onSignOut;
 
-  @override
-  State<SystemSettingsScreen> createState() => _SystemSettingsScreenState();
-}
-
-class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
-  String _versionLabel = '…';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVersion();
-  }
-
-  Future<void> _loadVersion() async {
-    try {
-      final info = await PackageInfo.fromPlatform();
-      if (!mounted) return;
-      setState(() {
-        _versionLabel = '${info.version}+${info.buildNumber}';
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _versionLabel = '0.1.0');
-    }
-  }
+  /// Keep in sync with pubspec.yaml version until a platform package is approved.
+  static const appVersionLabel = '0.1.0+1';
 
   @override
   Widget build(BuildContext context) {
@@ -56,30 +32,30 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.person_outline)),
               title: const Text('الحساب الحالي'),
-              subtitle: Text(widget.userEmail ?? 'بيانات الحساب غير متاحة'),
+              subtitle: Text(userEmail ?? 'بيانات الحساب غير متاحة'),
             ),
           ),
           const SizedBox(height: 12),
-          Card(
+          const Card(
             elevation: 0,
             child: Column(
               children: [
-                const ListTile(
+                ListTile(
                   leading: Icon(Icons.language),
                   title: Text('لغة الواجهة'),
                   subtitle: Text('العربية'),
                 ),
-                const Divider(height: 1),
-                const ListTile(
+                Divider(height: 1),
+                ListTile(
                   leading: Icon(Icons.format_textdirection_r_to_l),
                   title: Text('اتجاه الواجهة'),
                   subtitle: Text('من اليمين إلى اليسار (RTL)'),
                 ),
-                const Divider(height: 1),
+                Divider(height: 1),
                 ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('إصدار التطبيق'),
-                  subtitle: Text(_versionLabel),
+                  leading: Icon(Icons.info_outline),
+                  title: Text('إصدار التطبيق'),
+                  subtitle: Text(appVersionLabel),
                 ),
               ],
             ),
@@ -132,9 +108,8 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton.icon(
-            onPressed: widget.onSignOut == null
-                ? null
-                : () async => widget.onSignOut!(),
+            onPressed:
+                onSignOut == null ? null : () async => onSignOut!(),
             icon: const Icon(Icons.logout),
             label: const Text('تسجيل الخروج'),
           ),
