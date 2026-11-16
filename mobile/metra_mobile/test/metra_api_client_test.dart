@@ -148,6 +148,63 @@ void main() {
     client.close();
   });
 
+  test('rejects blank or padded station IDs before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    for (final id in ['', ' $stationId']) {
+      await expectLater(
+        client.submitObservation(
+          stationId: id,
+          idempotencyKey: 'request-1',
+          observationType: 'hourly',
+          observedAt: DateTime.utc(2026, 11, 16),
+          payload: const {'temperature': 20},
+        ),
+        throwsA(isA<MetraApiException>().having(
+          (error) => error.code, 'code', 'invalid_station_id')),
+      );
+    }
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('submits supported observation with bearer token and UTC timestamp', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'submit-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      }),
+    );
+    await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'stable-request-1',
+      observationType: 'hourly',
+      observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
+      payload: const {'dryTemp': 22},
+      submit: true,
+    );
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+    expect(captured.headers['authorization'], 'Bearer submit-token');
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['idempotencyKey'], 'stable-request-1');
+    expect(body['observationType'], 'hourly');
+    expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
+    expect(body['payload'], {'dryTemp': 22});
+    expect(body['submit'], isTrue);
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
