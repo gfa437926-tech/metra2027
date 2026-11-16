@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using Metra.Api.Security;
+using Metra.Api.Security;\nusing Metra.Api.Features.Observations;
 
 namespace Metra.Api.Features.Observations;
 
@@ -113,6 +113,12 @@ public static class ObservationSubmissionEndpoints
                 var validationError = ObservationSubmissionRequestGuard.GetError(request);
                 if (validationError is not null)
                     return Results.BadRequest(new { error = validationError });
+
+                // Persistence is fail-closed: validate the exact payload again on
+                // the server instead of trusting the client's separate validate call.
+                var domainIssues = ObservationSubmissionDomainValidator.Validate(request!);
+                if (domainIssues.Count > 0)
+                    return Results.UnprocessableEntity(new ValidationResponse(false, domainIssues));
 
                 if (!submission.IsConfigured)
                     return Results.Problem(
