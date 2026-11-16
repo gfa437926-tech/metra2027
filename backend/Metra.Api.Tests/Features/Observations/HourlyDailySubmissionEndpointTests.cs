@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using Metra.Api.Features.Observations;
 using Metra.Api.Security;
@@ -137,8 +136,8 @@ public sealed class HourlyDailySubmissionEndpointTests : IClassFixture<WebApplic
         Assert.Equal(StationId, call.StationId);
         Assert.Equal("key-hourly-ok", call.Request.IdempotencyKey);
         Assert.Equal("hourly", call.Request.ObservationType);
-        Assert.True(call.Request.ObservedAt?.Offset == TimeSpan.Zero ||
-                    call.Request.ObservedAt?.ToUniversalTime().Offset == TimeSpan.Zero);
+        Assert.NotNull(call.Request.ObservedAt);
+        Assert.Equal(TimeSpan.Zero, call.Request.ObservedAt!.Value.Offset);
     }
 
     [Fact]
@@ -160,7 +159,6 @@ public sealed class HourlyDailySubmissionEndpointTests : IClassFixture<WebApplic
     public async Task Repeated_identical_idempotency_key_is_forwarded_to_service_each_time()
     {
         // API layer does not dedupe; idempotency is the RPC's responsibility.
-        // This test documents that the same key is passed through unchanged.
         var submission = new RecordingSubmissionService();
         using var client = CreateClient(allowPermission: true, submission: submission);
 
@@ -196,10 +194,8 @@ public sealed class HourlyDailySubmissionEndpointTests : IClassFixture<WebApplic
     [Fact]
     public async Task Permission_check_uses_route_station_id_not_client_body_station()
     {
-        // Body cannot override route station; authorization is evaluated on route stationId.
         var auth = new ConfigurableAuthorizationService();
         auth.Allowed[(UserId, OtherStationId, "observation.create")] = true;
-        // StationId (route) is NOT allowed.
         var submission = new RecordingSubmissionService();
         using var client = CreateClient(auth, submission);
 
@@ -332,12 +328,16 @@ public sealed class HourlyDailySubmissionEndpointTests : IClassFixture<WebApplic
         public bool IsConfigured => true;
 
         public Task<bool> HasStationPermissionAsync(
-            Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken) =>
+            Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default) =>
             Task.FromResult(Allowed.TryGetValue((userId, stationId, permissionCode), out var ok) && ok);
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
-            Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken) =>
+            Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default) =>
             HasStationPermissionAsync(userId, stationId, permissionCode, cancellationToken);
+
+        public Task<bool> HasAuthorityPermissionAsync(
+            Guid userId, Guid authorityId, string permissionCode, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 
     private sealed class RecordingSubmissionService : IObservationSubmissionService
