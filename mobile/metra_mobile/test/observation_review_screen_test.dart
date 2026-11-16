@@ -67,6 +67,35 @@ void main() {
     api.close();
   });
 
+  testWidgets('renders a recoverable error when refreshing the review queue fails', (tester) async {
+    var calls = 0;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((_) async {
+        calls++;
+        return calls == 1
+            ? http.Response('[]', 200)
+            : http.Response('{"error":"unavailable"}', 503);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('تحديث'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.'),
+      findsOneWidget,
+    );
+    api.close();
+  });
+
   testWidgets('shows an empty state for an empty server queue', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
