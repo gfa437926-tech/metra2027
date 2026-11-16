@@ -228,7 +228,7 @@ class MetraApiClient {
       final fraction = parts.length == 2 ? parts.last : '0';
       if (fraction.length != 1 || int.tryParse(fraction) == null) return raw;
       final sign = negative ? '-' : ((explicitPositiveSign || positive) ? '+' : '');
-      return sign + whole.toString().padLeft(width, '0') + '.' + fraction;
+      return <String>[sign, whole.toString().padLeft(width, '0'), '.', fraction].join();
     }
 
     if (type == 'hourly') {
