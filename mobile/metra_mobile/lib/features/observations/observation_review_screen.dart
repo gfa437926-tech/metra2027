@@ -22,8 +22,15 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _queue = widget.api.getReviewQueue(widget.stationId));
-    await _queue;
+    final next = widget.api.getReviewQueue(widget.stationId);
+    setState(() => _queue = next);
+    // FutureBuilder renders request errors; swallowing here prevents an
+    // unhandled async error from pull-to-refresh or the toolbar callback.
+    try {
+      await next;
+    } catch (_) {
+      // The failed future remains in _queue and is rendered by FutureBuilder.
+    }
   }
 
   @override
