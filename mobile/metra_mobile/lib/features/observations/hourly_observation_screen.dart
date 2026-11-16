@@ -39,6 +39,8 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         return;
       }
 
+      // Keep the same idempotency key and observedAt for retries of the
+      // same payload so the server can deduplicate.
       final fingerprint = jsonEncode(values);
       if (_pendingPayloadFingerprint != fingerprint ||
           _pendingIdempotencyKey == null) {
@@ -48,6 +50,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
           widget.stationId,
           DateTime.now().toUtc().microsecondsSinceEpoch.toString(),
         ].join('-');
+        // Always capture observation time in UTC at first attempt.
         _pendingObservedAt = DateTime.now().toUtc();
       }
 
@@ -66,13 +69,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         const SnackBar(content: Text('أُرسلت الرصدة الساعية إلى الخادم')),
       );
     } on MetraApiException catch (error) {
-      final message = switch (error.statusCode) {
-        503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
-        401 => 'يلزم تسجيل الدخول من جديد.',
-        403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => <String>['فشل الإرسال (', error.statusCode.toString(), ').'].join(),
-      };
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      messenger.showSnackBar(SnackBar(content: Text(error.displayMessage)));
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(
