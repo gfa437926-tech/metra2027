@@ -1,4 +1,4 @@
-import 'package:flutter/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
