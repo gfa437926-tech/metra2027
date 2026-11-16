@@ -19,27 +19,21 @@ void main() {
     WidgetTester tester, {
     required Size size,
     required List<MetraObservationField> fields,
-    Future<void> Function(Map<String, Object?> values)? onSubmit,
   }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    var submitted = false;
     await tester.pumpWidget(
       MaterialApp(
         home: MetraObservationForm(
           title: 'نموذج اختبار',
           fields: fields,
           submitLabel: 'حفظ وإرسال',
-          onSubmit: (values) async {
-            submitted = true;
-            if (onSubmit != null) await onSubmit(values);
-          },
+          onSubmit: (_) async {},
         ),
       ),
     );
     await tester.pumpAndSettle();
-    expect(submitted, isFalse);
   }
 
   testWidgets('submit is built and visible on a small phone viewport', (tester) async {
@@ -88,10 +82,31 @@ void main() {
     expect(submit, findsOneWidget);
     expect(find.text('حفظ وإرسال'), findsOneWidget);
 
-    // First field label may be off-stage after scroll, but submit stays.
     final submitRect = tester.getRect(submit);
     expect(submitRect.bottom, lessThanOrEqualTo(700));
     expect(submitRect.height, greaterThan(0));
+  });
+
+  testWidgets('last field can be scrolled into view without overlapping submit', (tester) async {
+    const fieldCount = 30;
+    await pumpForm(
+      tester,
+      size: const Size(390, 700),
+      fields: longCatalogue(fieldCount),
+    );
+
+    final lastLabel = find.text('حقل رقم ${fieldCount - 1}');
+    await tester.scrollUntilVisible(lastLabel, 120, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+
+    expect(lastLabel, findsOneWidget);
+    final submit = find.byKey(const Key('metra-observation-submit'));
+    expect(submit, findsOneWidget);
+
+    final lastRect = tester.getRect(lastLabel);
+    final submitRect = tester.getRect(submit);
+    // Submit bar stays below the scrolled field content area.
+    expect(lastRect.bottom, lessThanOrEqualTo(submitRect.top + 1));
   });
 
   testWidgets('empty form does not invoke onSubmit callback', (tester) async {
