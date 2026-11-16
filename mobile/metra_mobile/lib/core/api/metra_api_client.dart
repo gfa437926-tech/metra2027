@@ -5,9 +5,53 @@ import '../../api_config.dart';
 const metraApiBaseUrl = ApiConfig.baseUrl;
 
 class MetraApiException implements Exception {
-  const MetraApiException(this.statusCode, this.code);
+  const MetraApiException(this.statusCode, this.code, {this.userMessage});
   final int statusCode;
   final String code;
+  final String? userMessage;
+
+  String get displayMessage {
+    if (userMessage != null && userMessage!.trim().isNotEmpty) {
+      return userMessage!.trim();
+    }
+    return switch (code) {
+      'api_not_configured' =>
+        'عنوان خدمة METRA غير مضبوط. راجع إعدادات الاتصال.',
+      'authentication_required' =>
+        'انتهت الجلسة أو يلزم تسجيل الدخول مجدداً.',
+      'invalid_pagination' => 'معاملات التصفح غير صالحة.',
+      'invalid_station_type' => 'نوع المحطة غير مدعوم.',
+      'invalid_station_id' => 'معرف المحطة غير صالح.',
+      'invalid_observation_id' => 'معرف الرصدة غير صالح.',
+      'invalid_limit' => 'حد النتائج غير صالح.',
+      'invalid_observation_decision' => 'قرار المراجعة غير مدعوم.',
+      'decision_note_required' => 'يجب إدخال سبب الإرجاع للتصحيح.',
+      'invalid_decision_note' => 'نص الملاحظة غير صالح.',
+      'invalid_registration_decision' => 'قرار التسجيل غير مدعوم.',
+      'registration_rejection_reason_required' =>
+        'يجب إدخال سبب رفض طلب التسجيل.',
+      'invalid_registration_note' => 'نص ملاحظة التسجيل غير صالح.',
+      'unsupported_observation_validation' =>
+        'نوع الرصد غير مدعوم للتحقق حالياً.',
+      'unsupported_observation_type' => 'نوع الرصد غير مدعوم للإرسال حالياً.',
+      'invalid_idempotency_key' => 'مفتاح منع التكرار غير صالح.',
+      'station_directory_limit_exceeded' =>
+        'تجاوز دليل المحطات الحد الأقصى المسموح.',
+      'network_unavailable' =>
+        'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.',
+      'timeout' => 'انتهت مهلة الاتصال بالخادم. أعد المحاولة لاحقاً.',
+      'request_failed' when statusCode == 401 || statusCode == 403 =>
+        'انتهت صلاحية الجلسة أو لا تملك صلاحية تنفيذ هذه العملية.',
+      'request_failed' when statusCode == 404 => 'المورد المطلوب غير موجود.',
+      'request_failed' when statusCode == 409 =>
+        'تعارض في الطلب. قد تكون الرصدة مُرسلة مسبقاً.',
+      'request_failed' when statusCode >= 500 =>
+        'حدث خطأ في الخادم. حاول لاحقاً أو أبلغ الدعم.',
+      'request_failed' => 'تعذر إتمام الطلب. تحقق من الاتصال وأعد المحاولة.',
+      _ => 'تعذر إتمام العملية. أعد المحاولة أو تواصل مع الدعم.',
+    };
+  }
+
   @override
   String toString() => 'MetraApiException($statusCode, $code)';
 }
@@ -25,9 +69,14 @@ class MetraObservationValidation {
 }
 
 class ObservationQueueItem {
-  const ObservationQueueItem({required this.id, required this.stationId,
-    required this.observationType, required this.observedAt,
-    required this.status, this.payload = const {}});
+  const ObservationQueueItem({
+    required this.id,
+    required this.stationId,
+    required this.observationType,
+    required this.observedAt,
+    required this.status,
+    this.payload = const {},
+  });
   final String id;
   final String stationId;
   final String observationType;
@@ -40,23 +89,42 @@ class ObservationQueueItem {
     final stationId = json['station_id'];
     final type = json['observation_type'];
     final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
-    if (id is! String || stationId is! String || type is! String || observedAt == null) {
+    if (id is! String ||
+        stationId is! String ||
+        type is! String ||
+        observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
     final rawPayload = json['payload'];
-    return ObservationQueueItem(id: id, stationId: stationId,
-      observationType: type, observedAt: observedAt,
+    return ObservationQueueItem(
+      id: id,
+      stationId: stationId,
+      observationType: type,
+      observedAt: observedAt,
       status: json['status'] is String ? json['status'] as String : 'submitted',
-      payload: rawPayload is Map<String, dynamic> ? rawPayload : const {});
+      payload:
+          rawPayload is Map<String, dynamic> ? rawPayload : const <String, dynamic>{},
+    );
   }
 }
 
 class StationDirectoryItem {
-  const StationDirectoryItem({required this.id, required this.localCode,
-    required this.nameArabic, required this.nameEnglish, required this.stationType,
-    required this.operationalStatus, required this.approvalStatus, required this.isDemo,
-    this.latitude, this.longitude, this.wmoStationId, this.elevationM,
-    this.coordinateSource, this.coordinateAccuracyM});
+  const StationDirectoryItem({
+    required this.id,
+    required this.localCode,
+    required this.nameArabic,
+    required this.nameEnglish,
+    required this.stationType,
+    required this.operationalStatus,
+    required this.approvalStatus,
+    required this.isDemo,
+    this.latitude,
+    this.longitude,
+    this.wmoStationId,
+    this.elevationM,
+    this.coordinateSource,
+    this.coordinateAccuracyM,
+  });
   final String id, localCode, nameArabic, nameEnglish, stationType;
   final String operationalStatus, approvalStatus;
   final bool isDemo;
@@ -66,14 +134,28 @@ class StationDirectoryItem {
   final String? coordinateSource;
   final double? coordinateAccuracyM;
   bool get hasCoordinates => latitude != null && longitude != null;
-  bool get hasValidCoordinates => hasCoordinates &&
-      latitude! >= -90 && latitude! <= 90 &&
-      longitude! >= -180 && longitude! <= 180;
+  bool get hasValidCoordinates =>
+      hasCoordinates &&
+      latitude! >= -90 &&
+      latitude! <= 90 &&
+      longitude! >= -180 &&
+      longitude! <= 180;
   factory StationDirectoryItem.fromJson(Map<String, dynamic> json) {
-    for (final key in ['id','local_station_code','name_ar','name_en','station_type','operational_status','approval_status']) {
-      if (json[key] is! String) throw const FormatException('invalid_station_directory_item');
+    for (final key in [
+      'id',
+      'local_station_code',
+      'name_ar',
+      'name_en',
+      'station_type',
+      'operational_status',
+      'approval_status'
+    ]) {
+      if (json[key] is! String) {
+        throw const FormatException('invalid_station_directory_item');
+      }
     }
-    double? number(dynamic value) => value is num ? value.toDouble() : double.tryParse('$value');
+    double? number(dynamic value) =>
+        value is num ? value.toDouble() : double.tryParse('$value');
     double? lat, lon;
     Map<String, dynamic>? point;
     final coords = json['station_coordinates'];
@@ -82,26 +164,36 @@ class StationDirectoryItem {
       lat = number(point['latitude']);
       lon = number(point['longitude']);
     }
-    return StationDirectoryItem(id: json['id'] as String,
+    return StationDirectoryItem(
+      id: json['id'] as String,
       localCode: json['local_station_code'] as String,
-      nameArabic: json['name_ar'] as String, nameEnglish: json['name_en'] as String,
+      nameArabic: json['name_ar'] as String,
+      nameEnglish: json['name_en'] as String,
       stationType: json['station_type'] as String,
       operationalStatus: json['operational_status'] as String,
-      approvalStatus: json['approval_status'] as String, isDemo: json['is_demo'] == true,
-      latitude: lat, longitude: lon, wmoStationId: json['wmo_station_id'] as String?,
+      approvalStatus: json['approval_status'] as String,
+      isDemo: json['is_demo'] == true,
+      latitude: lat,
+      longitude: lon,
+      wmoStationId: json['wmo_station_id'] as String?,
       elevationM: number(json['elevation_m']),
       coordinateSource: point?['coordinate_source'] is String
-          ? point!['coordinate_source'] as String : null,
-      coordinateAccuracyM: point == null ? null : number(point['accuracy_m']));
+          ? point!['coordinate_source'] as String
+          : null,
+      coordinateAccuracyM: point == null ? null : number(point['accuracy_m']),
+    );
   }
 }
 
-
 /// API wrapper. Supply a current Supabase access token from the auth layer.
+/// Time contract: observation timestamps are sent as UTC ISO-8601.
 class MetraApiClient {
-  MetraApiClient({required this.accessTokenProvider,
-    String baseUrl = metraApiBaseUrl, http.Client? client})
-      : _baseUri = Uri.tryParse(baseUrl.trim()), _client = client ?? http.Client();
+  MetraApiClient({
+    required this.accessTokenProvider,
+    String baseUrl = metraApiBaseUrl,
+    http.Client? client,
+  })  : _baseUri = Uri.tryParse(baseUrl.trim()),
+        _client = client ?? http.Client();
 
   final Future<String?> Function() accessTokenProvider;
   final Uri? _baseUri;
@@ -109,20 +201,29 @@ class MetraApiClient {
   bool get isConfigured => ApiConfig.isValidUrl(_baseUri?.toString() ?? '');
 
   Future<List<StationDirectoryItem>> getStationDirectory({
-    int limit = 250, int offset = 0, String? stationType,
+    int limit = 250,
+    int offset = 0,
+    String? stationType,
   }) async {
     if (limit < 1 || limit > 500 || offset < 0) {
       throw const MetraApiException(400, 'invalid_pagination');
     }
-    if (stationType != null && !const {'classic', 'automatic', 'synoptic'}.contains(stationType)) {
+    if (stationType != null &&
+        !const {'classic', 'automatic', 'synoptic'}.contains(stationType)) {
       throw const MetraApiException(400, 'invalid_station_type');
     }
     final filter = stationType == null ? '' : '&stationType=$stationType';
-    final response = await _send('GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
+    final response =
+        await _send('GET', '/api/v1/stations?limit=$limit&offset=$offset$filter');
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) throw const FormatException('invalid_station_directory');
-    return decoded.map((item) => StationDirectoryItem.fromJson(
-      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+    if (decoded is! List) {
+      throw const FormatException('invalid_station_directory');
+    }
+    return decoded
+        .map((item) => StationDirectoryItem.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ))
+        .toList(growable: false);
   }
 
   Future<List<StationDirectoryItem>> getAllStationDirectory({
@@ -143,15 +244,27 @@ class MetraApiClient {
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
   }
 
-  Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
+  Future<List<ObservationQueueItem>> getReviewQueue(
+    String stationId, {
+    int limit = 50,
+  }) async {
     _requirePathIdentifier(stationId, 'invalid_station_id');
-    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
-    final response = await _send('GET',
-      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
+    if (limit < 1 || limit > 100) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final response = await _send(
+      'GET',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit',
+    );
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) throw const FormatException('invalid_observation_queue');
-    return decoded.map((item) => ObservationQueueItem.fromJson(
-      Map<String, dynamic>.from(item as Map))).toList(growable: false);
+    if (decoded is! List) {
+      throw const FormatException('invalid_observation_queue');
+    }
+    return decoded
+        .map((item) => ObservationQueueItem.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ))
+        .toList(growable: false);
   }
 
   Future<void> decideObservation({
@@ -179,24 +292,54 @@ class MetraApiClient {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getStationUsers(String stationId, {int limit = 250}) {
+  Future<List<Map<String, dynamic>>> getStationUsers(
+    String stationId, {
+    int limit = 250,
+  }) {
     _requirePathIdentifier(stationId, 'invalid_station_id');
-    if (limit < 1 || limit > 500) throw const MetraApiException(400, 'invalid_limit');
-    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/users?limit=', limit.toString()].join();
+    if (limit < 1 || limit > 500) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/users?limit=',
+      limit.toString(),
+    ].join();
     return _getJsonRecords(path, 'invalid_station_user_directory');
   }
 
-  Future<List<Map<String, dynamic>>> getStationRegistrationRequests(String stationId, {int limit = 50}) {
+  Future<List<Map<String, dynamic>>> getStationRegistrationRequests(
+    String stationId, {
+    int limit = 50,
+  }) {
     _requirePathIdentifier(stationId, 'invalid_station_id');
-    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
-    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/registration-requests?limit=', limit.toString()].join();
+    if (limit < 1 || limit > 100) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/registration-requests?limit=',
+      limit.toString(),
+    ].join();
     return _getJsonRecords(path, 'invalid_station_registration_queue');
   }
 
-  Future<List<Map<String, dynamic>>> getStationAuditLog(String stationId, {int limit = 100}) {
+  Future<List<Map<String, dynamic>>> getStationAuditLog(
+    String stationId, {
+    int limit = 100,
+  }) {
     _requirePathIdentifier(stationId, 'invalid_station_id');
-    if (limit < 1 || limit > 250) throw const MetraApiException(400, 'invalid_limit');
-    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/audit-log?limit=', limit.toString()].join();
+    if (limit < 1 || limit > 250) {
+      throw const MetraApiException(400, 'invalid_limit');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/audit-log?limit=',
+      limit.toString(),
+    ].join();
     return _getJsonRecords(path, 'invalid_station_audit_log');
   }
 
@@ -217,11 +360,20 @@ class MetraApiClient {
     if (note != null && (note.length > 2000 || note != note.trim())) {
       throw const MetraApiException(400, 'invalid_registration_note');
     }
-    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/registration-requests/', Uri.encodeComponent(requestId), '/decision'].join();
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/registration-requests/',
+      Uri.encodeComponent(requestId),
+      '/decision',
+    ].join();
     await _send('POST', path, body: {'decision': decision, 'note': note});
   }
 
-  Future<List<Map<String, dynamic>>> _getJsonRecords(String path, String errorCode) async {
+  Future<List<Map<String, dynamic>>> _getJsonRecords(
+    String path,
+    String errorCode,
+  ) async {
     final response = await _send('GET', path);
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw FormatException(errorCode);
@@ -230,10 +382,15 @@ class MetraApiClient {
         .map((item) => Map<String, dynamic>.from(item))
         .toList(growable: false);
   }
+
   Future<MetraObservationValidation> validateObservation({
     required String observationType,
     required Map<String, Object?> values,
   }) async {
+    if (observationType == 'phenomenon') {
+      return _validatePhenomenon(values);
+    }
+
     final route = switch (observationType) {
       'hourly' => '/api/v1/observations/hourly/validate',
       'daily' => '/api/v1/observations/daily/validate',
@@ -244,16 +401,54 @@ class MetraApiClient {
         entry.key: _formatValidationValue(observationType, entry.key, entry.value),
     };
     final response = await _send('POST', route, body: {'values': normalized});
+    return _parseValidationResponse(response);
+  }
+
+  /// Phenomenon validate endpoint expects WeatherPhenomenonRequest fields.
+  Future<MetraObservationValidation> _validatePhenomenon(
+    Map<String, Object?> values,
+  ) async {
+    String? asString(Object? value) {
+      if (value == null) return null;
+      if (value is bool) return value ? 'true' : 'false';
+      final text = value.toString().trim();
+      return text.isEmpty ? null : text;
+    }
+
+    final body = <String, String?>{
+      'phenomenonType':
+          asString(values['phenomenonType'] ?? values['phenomenon_type']),
+      'phenomenonDate':
+          asString(values['phenomenonDate'] ?? values['phenomenon_date']),
+      'startTime': asString(values['startTime'] ?? values['start_time']),
+      'endTime': asString(values['endTime'] ?? values['end_time']),
+      'generalNotes':
+          asString(values['generalNotes'] ?? values['general_notes']),
+    };
+    final response = await _send(
+      'POST',
+      '/api/v1/observations/phenomena/validate',
+      body: body,
+    );
+    return _parseValidationResponse(response);
+  }
+
+  MetraObservationValidation _parseValidationResponse(http.Response response) {
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! Map<String, dynamic>) {
       throw const FormatException('invalid_observation_validation_response');
     }
     final rawIssues = decoded['issues'];
     final issues = rawIssues is List
-        ? rawIssues.whereType<Map>().map((item) => MetraValidationIssue(
-              field: item['field']?.toString() ?? '',
-              message: item['message']?.toString() ?? 'قيمة غير صالحة',
-            )).toList(growable: false)
+        ? rawIssues
+            .whereType<Map>()
+            .map(
+              (item) => MetraValidationIssue(
+                field: item['field']?.toString() ?? '',
+                message: item['message']?.toString() ?? 'قيمة غير صالحة',
+              ),
+            )
+            .toList(growable: false)
         : const <MetraValidationIssue>[];
     return MetraObservationValidation(
       isValid: decoded['isValid'] == true,
@@ -281,44 +476,99 @@ class MetraApiClient {
       if (whole == null) return raw;
       final fraction = parts.length == 2 ? parts.last : '0';
       if (fraction.length != 1 || int.tryParse(fraction) == null) return raw;
-      final sign = negative ? '-' : ((explicitPositiveSign || positive) ? '+' : '');
-      return <String>[sign, whole.toString().padLeft(width, '0'), '.', fraction].join();
+      final sign =
+          negative ? '-' : ((explicitPositiveSign || positive) ? '+' : '');
+      return <String>[sign, whole.toString().padLeft(width, '0'), '.', fraction]
+          .join();
     }
 
     if (type == 'hourly') {
-      if (const {'dryTemp', 'wetTemp', 'dewPoint'}.contains(field)) return decimal(2, explicitPositiveSign: true);
-      if (const {'stationPressure', 'seaLevelPressure'}.contains(field)) return decimal(4);
-      if (field == 'relativeHumidity' || field == 'visibility') return integer(3);
-      if (const {'windDirection', 'avgWindDirection', 'windSpeed', 'avgWindSpeed'}.contains(field)) return integer(2);
+      if (const {'dryTemp', 'wetTemp', 'dewPoint'}.contains(field)) {
+        return decimal(2, explicitPositiveSign: true);
+      }
+      if (const {'stationPressure', 'seaLevelPressure'}.contains(field)) {
+        return decimal(4);
+      }
+      if (field == 'relativeHumidity' || field == 'visibility') {
+        return integer(3);
+      }
+      if (const {
+        'windDirection',
+        'avgWindDirection',
+        'windSpeed',
+        'avgWindSpeed',
+      }.contains(field)) {
+        return integer(2);
+      }
       if (field == 'currentWeather') return integer(2);
-      if (const {'pastWeather', 'totalCloudCover', 'cloud1Amount', 'cloud2Amount', 'cloud3Amount', 'cloud4Amount', 'cover12', 'cover123', 'pressureShape'}.contains(field)) return integer(1);
+      if (const {
+        'pastWeather',
+        'totalCloudCover',
+        'cloud1Amount',
+        'cloud2Amount',
+        'cloud3Amount',
+        'cloud4Amount',
+        'cover12',
+        'cover123',
+        'pressureShape',
+      }.contains(field)) {
+        return integer(1);
+      }
       if (field == 'pressureSlope') return decimal(1);
-      if (field == 'vaporPressure' || field == 'vaporPressureDiff') return decimal(2);
+      if (field == 'vaporPressure' || field == 'vaporPressureDiff') {
+        return decimal(2);
+      }
       if (field == 'precipitationAmount') return decimal(3);
     }
 
     if (type == 'daily') {
       if (field == 'minTemp' || field == 'maxTemp') return decimal(2);
       if (field == 'precipitation') return decimal(3);
-      if (field == 'snowThickness' || field == 'sunshinePercentage' || field == 'maxHumidity') return integer(3);
-      if (field == 'evaporation' || field == 'sunshineDuration' || field == 'maxGustTime' || field == 'maxHumidityTime' || field == 'minHumidityTime') return decimal(2);
-      if (field == 'maxGustSpeed' || field == 'maxGustDirection' || field == 'minHumidity') return integer(2);
+      if (field == 'snowThickness' ||
+          field == 'sunshinePercentage' ||
+          field == 'maxHumidity') {
+        return integer(3);
+      }
+      if (field == 'evaporation' ||
+          field == 'sunshineDuration' ||
+          field == 'maxGustTime' ||
+          field == 'maxHumidityTime' ||
+          field == 'minHumidityTime') {
+        return decimal(2);
+      }
+      if (field == 'maxGustSpeed' ||
+          field == 'maxGustDirection' ||
+          field == 'minHumidity') {
+        return integer(2);
+      }
     }
     return raw;
   }
-  Future<void> submitObservation({required String stationId,
-    required String idempotencyKey, required String observationType,
-    required DateTime observedAt, required Map<String, dynamic> payload,
-    bool submit = false}) async {
+
+  Future<void> submitObservation({
+    required String stationId,
+    required String idempotencyKey,
+    required String observationType,
+    required DateTime observedAt,
+    required Map<String, dynamic> payload,
+    bool submit = false,
+  }) async {
     _requirePathIdentifier(stationId, 'invalid_station_id');
     _requirePathIdentifier(idempotencyKey, 'invalid_idempotency_key');
-    if (!const {'hourly', 'daily'}.contains(observationType)) {
+    if (!const {'hourly', 'daily', 'phenomenon'}.contains(observationType)) {
       throw const MetraApiException(400, 'unsupported_observation_type');
     }
-    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
-      body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
+    await _send(
+      'POST',
+      '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
+      body: {
+        'idempotencyKey': idempotencyKey,
+        'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
-        'payload': payload, 'submit': submit});
+        'payload': payload,
+        'submit': submit,
+      },
+    );
   }
 
   void _requirePathIdentifier(String value, String errorCode) {
@@ -330,21 +580,30 @@ class MetraApiClient {
     }
   }
 
-  Future<http.Response> _send(String method, String path,
-      {Map<String, dynamic>? body}) async {
-    if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');
+  Future<http.Response> _send(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    if (!isConfigured) {
+      throw const MetraApiException(503, 'api_not_configured');
+    }
     final token = await accessTokenProvider();
     if (token == null || token.trim().isEmpty) {
       throw const MetraApiException(401, 'authentication_required');
     }
     final uri = _baseUri!.resolve(path);
-    final request = http.Request(method, uri)..headers.addAll({
-      'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+    final request = http.Request(method, uri)
+      ..headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
     }
-    final response = await http.Response.fromStream(await _client.send(request));
+    final response =
+        await http.Response.fromStream(await _client.send(request));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw MetraApiException(response.statusCode, 'request_failed');
     }
