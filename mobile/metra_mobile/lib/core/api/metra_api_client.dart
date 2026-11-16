@@ -311,9 +311,7 @@ class MetraApiClient {
     required DateTime observedAt, required Map<String, dynamic> payload,
     bool submit = false}) async {
     _requirePathIdentifier(stationId, 'invalid_station_id');
-    if (idempotencyKey.trim().isEmpty || idempotencyKey != idempotencyKey.trim()) {
-      throw const MetraApiException(400, 'invalid_idempotency_key');
-    }
+    _requirePathIdentifier(idempotencyKey, 'invalid_idempotency_key');
     if (!const {'hourly', 'daily'}.contains(observationType)) {
       throw const MetraApiException(400, 'unsupported_observation_type');
     }
