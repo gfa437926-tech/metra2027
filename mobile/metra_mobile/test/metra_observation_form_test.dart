@@ -90,6 +90,28 @@ void main() {
     expect(submitted, isFalse);
   });
 
+  testWidgets('ignores stale initial values not in approved choices', (tester) async {
+    const choiceFields = [
+      MetraObservationField(
+        id: 'visibility',
+        label: 'مدى الرؤية',
+        kind: MetraFieldKind.choice,
+        required: true,
+        choices: ['clear', 'reduced'],
+      ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار الرصد',
+        fields: choiceFields,
+        initialValues: const {'visibility': 'obsolete-value'},
+        onSubmit: (_) async {},
+      ),
+    ));
+    expect(tester.takeException(), isNull);
+    expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+  });
+
   testWidgets('submits validated values with numeric types', (tester) async {
     Map<String, Object?>? submitted;
     await tester.pumpWidget(MaterialApp(
