@@ -5,6 +5,7 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
+/// Hourly observation entry bound to the approved .NET validation/submit API.
 class HourlyObservationScreen extends StatefulWidget {
   const HourlyObservationScreen({
     super.key,
@@ -16,7 +17,8 @@ class HourlyObservationScreen extends StatefulWidget {
   final String stationId;
 
   @override
-  State<HourlyObservationScreen> createState() => _HourlyObservationScreenState();
+  State<HourlyObservationScreen> createState() =>
+      _HourlyObservationScreenState();
 }
 
 class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
@@ -66,13 +68,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         const SnackBar(content: Text('أُرسلت الرصدة الساعية إلى الخادم')),
       );
     } on MetraApiException catch (error) {
-      final message = switch (error.statusCode) {
-        503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
-        401 => 'يلزم تسجيل الدخول من جديد.',
-        403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => <String>['فشل الإرسال (', error.statusCode.toString(), ').'].join(),
-      };
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      messenger.showSnackBar(SnackBar(content: Text(error.displayMessage)));
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(
