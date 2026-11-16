@@ -46,7 +46,7 @@ public sealed class StationDirectoryVisibilityTests
 
         Assert.True(allowed);
         Assert.Equal(5, authorization.StationPermissionCalls.Count);
-        Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
+        Assert.Equal(new[] { "stations.catalogue.review", "registrations.system.approve" }, authorization.AuthorityPermissionCalls);
     }
 
     [Fact]
@@ -79,8 +79,8 @@ public sealed class StationDirectoryVisibilityTests
     }
 
     [Theory]
-    [InlineData(true, false)]
-    [InlineData(false, true)]
+    [InlineData(false, false)]
+    [InlineData(true, true)]
     public async Task Missing_authorization_configuration_or_empty_identity_fails_closed(
         bool configured,
         bool emptyUser)
