@@ -7,6 +7,10 @@ enum MetraFieldKind {
   choice,
   boolean,
   date,
+  time,
+  datetime,
+  phone,
+  file,
   multiline,
 }
 
@@ -121,6 +125,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   }
 
   Object? _typedValue(MetraObservationField field) {
+    if (field.kind == MetraFieldKind.file) return null;
     if (field.kind == MetraFieldKind.boolean) {
       return _booleans[field.id] ?? false;
     }
@@ -160,6 +165,18 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   }
 
   Widget _buildField(MetraObservationField field) {
+    if (field.kind == MetraFieldKind.file) {
+      return InputDecorator(
+        decoration: InputDecoration(
+          labelText: field.label,
+          helperText: 'رفع الملفات غير متصل حتى اعتماد خدمة التخزين.',
+          border: const OutlineInputBorder(),
+        ),
+        child: const Row(
+          children: [Icon(Icons.attach_file), SizedBox(width: 8), Text('غير متاح حالياً')],
+        ),
+      );
+    }
     if (field.kind == MetraFieldKind.boolean) {
       return FormField<bool>(
         initialValue: _booleans[field.id] ?? false,
@@ -225,7 +242,8 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         MetraFieldKind.integer => TextInputType.number,
         MetraFieldKind.decimal =>
           const TextInputType.numberWithOptions(decimal: true, signed: true),
-        MetraFieldKind.date => TextInputType.datetime,
+        MetraFieldKind.date || MetraFieldKind.time || MetraFieldKind.datetime => TextInputType.datetime,
+        MetraFieldKind.phone => TextInputType.phone,
         MetraFieldKind.multiline => TextInputType.multiline,
         _ => TextInputType.text,
       },
@@ -235,6 +253,9 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       decoration: InputDecoration(
         labelText: field.label,
         suffixText: field.unit,
+        helperText: field.kind == MetraFieldKind.choice && field.choices.isEmpty
+            ? 'خيارات القائمة الرسمية غير متاحة؛ أدخل الرمز المعتمد فقط.'
+            : null,
         border: const OutlineInputBorder(),
       ),
       validator: (value) => _validate(field, value),
