@@ -5,6 +5,7 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
+/// Daily observation entry bound to the approved .NET validation/submit API.
 class DailyObservationScreen extends StatefulWidget {
   const DailyObservationScreen({
     super.key,
@@ -66,13 +67,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
         const SnackBar(content: Text('أُرسلت الرصدة اليومية إلى الخادم')),
       );
     } on MetraApiException catch (error) {
-      final message = switch (error.statusCode) {
-        503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
-        401 => 'يلزم تسجيل الدخول من جديد.',
-        403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => <String>['فشل الإرسال (', error.statusCode.toString(), ').'].join(),
-      };
-      messenger.showSnackBar(SnackBar(content: Text(message)));
+      messenger.showSnackBar(SnackBar(content: Text(error.displayMessage)));
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(
