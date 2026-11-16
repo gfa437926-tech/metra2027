@@ -74,6 +74,24 @@ public sealed class SupabaseStationAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task Authority_permission_uses_the_authority_scope_rpc()
+    {
+        var service = CreateService(request =>
+        {
+            Assert.Equal(
+                "/rest/v1/rpc/metra_user_has_authority_permission",
+                request.RequestUri!.AbsolutePath);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
+            };
+        });
+
+        Assert.True(await service.HasAuthorityPermissionAsync(
+            Guid.NewGuid(), Guid.NewGuid(), "stations.catalogue.review"));
+    }
+
+    [Fact]
     public async Task Authority_permission_fails_closed_for_empty_identity_or_station()
     {
         var service = CreateService(_ => throw new InvalidOperationException("RPC must not be called"));
