@@ -87,13 +87,12 @@ public sealed class StationDirectoryVisibilityTests
         var authorization = new FakeAuthorization(stationPermission: _ => true);
 
         var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
-            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+            authorization, Guid.NewGuid(), Guid.NewGuid(),
+            "stations.catalogue.review", CancellationToken.None);
 
         Assert.False(allowed);
         Assert.Empty(authorization.StationPermissionCalls);
-        Assert.Equal(
-            new[] { "stations.catalogue.review", "registrations.system.approve" },
-            authorization.AuthorityPermissionCalls);
+        Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
     }
 
     [Fact]
@@ -127,7 +126,7 @@ public sealed class StationDirectoryVisibilityTests
     }
 
     [Fact]
-    public async Task User_without_any_station_or_authority_permission_sees_no_station()
+    public async Task User_without_station_permission_sees_no_station()
     {
         var authorization = new FakeAuthorization(stationPermission: _ => false);
 
