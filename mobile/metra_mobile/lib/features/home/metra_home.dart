@@ -6,6 +6,7 @@ import '../observations/observation_workspace_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
 import '../admin/station_administration_screen.dart';
+import '../workspaces/metra_workspaces.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -50,45 +51,18 @@ class _MetraHomeState extends State<MetraHome> {
               api: widget.api,
               stationId: _selectedStationId!,
             ),
-      const MetraWorkspaceShell(
-        title: 'CLIMATOL والتجانس المناخي',
-        state: MetraServiceState.specificationOnly,
-        body: MetraPlaceholderBody(lines: [
-          'اختيار المحطة والعنصر والفترة الزمنية.',
-          'فحص جودة السلاسل وكشف الشذوذ والانقطاعات.',
-          'اختبارات التجانس ومخرجات التحليل.',
-          'المحرك الإحصائي غير مدمج في هذا البناء.',
-        ]),
-      ),
-      const MetraWorkspaceShell(
-        title: 'السجلات المصورة والذكاء الاصطناعي',
-        state: MetraServiceState.specificationOnly,
-        body: MetraPlaceholderBody(lines: [
-          'رفع وربط صور السجلات بالمحطة والتاريخ.',
-          'مراجعة نتائج الاستخراج (OCR) عند توفر النموذج.',
-          'مقارنة الصورة / المستخرج / المدخل اليدوي / المرجع.',
-          'لا يوجد نموذج مدرّب أو استدلال إنتاجي في هذا البناء.',
-        ]),
-      ),
-      const MetraWorkspaceShell(
-        title: 'الأجهزة والصيانة والشبكات',
-        state: MetraServiceState.specificationOnly,
-        body: MetraPlaceholderBody(lines: [
-          'سجل الأجهزة والأعطال وطلبات الصيانة.',
-          'حالة الاتصال بالمحطات ومؤشرات الشبكة.',
-          'API-FAULT غير منفّذ في الخادم بعد؛ الواجهة جاهزة للربط لاحقاً.',
-        ]),
-      ),
-      const MetraWorkspaceShell(
-        title: 'التقارير والإحصائيات',
-        state: MetraServiceState.gated,
-        stateMessage:
-            'التقارير التشغيلية تنتظر مصدراً موثقاً للرصدات المعتمدة. لا تُعرض أرقام تجريبية كإحصاء رسمي.',
-        body: MetraPlaceholderBody(lines: [
-          'تصفية حسب المحطة والفترة والعنصر عند الربط.',
-          'تصدير وطباعة عند توفر العقود المعتمدة.',
-        ]),
-      ),
+      _selectedStationId == null
+          ? _needStation('CLIMATOL والتجانس المناخي')
+          : ClimatolWorkspaceScreen(stationId: _selectedStationId!),
+      _selectedStationId == null
+          ? _needStation('السجلات المصورة والذكاء الاصطناعي')
+          : RecordsAiWorkspaceScreen(stationId: _selectedStationId!),
+      _selectedStationId == null
+          ? _needStation('الأجهزة والصيانة والشبكات')
+          : OperationsWorkspaceScreen(stationId: _selectedStationId!),
+      _selectedStationId == null
+          ? _needStation('التقارير والإحصائيات')
+          : ReportsWorkspaceScreen(stationId: _selectedStationId!),
       _selectedStationId == null
           ? _needStation('إدارة المحطة')
           : StationAdministrationScreen(api: widget.api, stationId: _selectedStationId!),
