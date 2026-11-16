@@ -176,6 +176,52 @@ class MetraApiClient {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getStationUsers(String stationId, {int limit = 250}) {
+    if (limit < 1 || limit > 500) throw const MetraApiException(400, 'invalid_limit');
+    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/users?limit=', limit.toString()].join();
+    return _getJsonRecords(path, 'invalid_station_user_directory');
+  }
+
+  Future<List<Map<String, dynamic>>> getStationRegistrationRequests(String stationId, {int limit = 50}) {
+    if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
+    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/registration-requests?limit=', limit.toString()].join();
+    return _getJsonRecords(path, 'invalid_station_registration_queue');
+  }
+
+  Future<List<Map<String, dynamic>>> getStationAuditLog(String stationId, {int limit = 100}) {
+    if (limit < 1 || limit > 250) throw const MetraApiException(400, 'invalid_limit');
+    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/audit-log?limit=', limit.toString()].join();
+    return _getJsonRecords(path, 'invalid_station_audit_log');
+  }
+
+  Future<void> decideStationRegistrationRequest({
+    required String stationId,
+    required String requestId,
+    required String decision,
+    String? note,
+  }) async {
+    if (decision != 'approve' && decision != 'reject') {
+      throw const MetraApiException(400, 'invalid_registration_decision');
+    }
+    if (decision == 'reject' && (note == null || note.trim().isEmpty)) {
+      throw const MetraApiException(400, 'registration_rejection_reason_required');
+    }
+    if (note != null && (note.length > 2000 || note != note.trim())) {
+      throw const MetraApiException(400, 'invalid_registration_note');
+    }
+    final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/registration-requests/', Uri.encodeComponent(requestId), '/decision'].join();
+    await _send('POST', path, body: {'decision': decision, 'note': note});
+  }
+
+  Future<List<Map<String, dynamic>>> _getJsonRecords(String path, String errorCode) async {
+    final response = await _send('GET', path);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! List) throw FormatException(errorCode);
+    return decoded
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
   Future<MetraObservationValidation> validateObservation({
     required String observationType,
     required Map<String, Object?> values,
