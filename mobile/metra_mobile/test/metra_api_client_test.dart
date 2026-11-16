@@ -205,6 +205,44 @@ void main() {
     client.close();
   });
 
+  test('rejects malformed station and record identifiers before requests', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await expectLater(
+      client.getReviewQueue('station id'),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_station_id')),
+    );
+    await expectLater(
+      client.decideObservation(
+        stationId: stationId,
+        observationId: ' ',
+        decision: 'approve',
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_observation_id')),
+    );
+    await expectLater(
+      client.decideStationRegistrationRequest(
+        stationId: stationId,
+        requestId: 'request\\n1',
+        decision: 'approve',
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_registration_request_id')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
