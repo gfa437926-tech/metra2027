@@ -1,4 +1,4 @@
-import 'package:flutter/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
 import 'package:metra_mobile/core/widgets/metra_observation_form.dart';
