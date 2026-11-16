@@ -97,12 +97,12 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            _ServiceNotice(
+            const _ServiceNotice(
               title: 'محرك التحليل غير متصل',
               message: 'هذه واجهة إعداد التحليل فقط. لا يتم تشغيل اختبار أو إصدار نتيجة من دون محرك CLIMATOL وخدمة API موثقة.',
             ),
             const SizedBox(height: 12),
-            Text('المحطة: ' + widget.stationId, style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text('المحطة: ${widget.stationId}', style: const TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 12),
             TextField(
               controller: _element,
@@ -119,7 +119,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
                 if (date != null && mounted) setState(() => _start = date);
               },
               icon: const Icon(Icons.calendar_today),
-              label: Text('بداية الفترة: ' + _dateLabel(_start)),
+              label: Text('بداية الفترة: ${_dateLabel(_start)}'),
             ),
             OutlinedButton.icon(
               onPressed: () async {
@@ -127,7 +127,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
                 if (date != null && mounted) setState(() => _end = date);
               },
               icon: const Icon(Icons.event),
-              label: Text('نهاية الفترة: ' + _dateLabel(_end)),
+              label: Text('نهاية الفترة: ${_dateLabel(_end)}'),
             ),
             const SizedBox(height: 12),
             const _MetricCard(label: 'السجلات المتاحة للتحليل', value: '—', icon: Icons.storage_outlined),
@@ -187,12 +187,12 @@ class _ArchiveTab extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ServiceNotice(
+          const _ServiceNotice(
             title: 'خدمة الأرشفة غير متصلة',
             message: 'لا توجد خدمة تخزين/رفع ملفات معتمدة في API الحالي. لا يتم رفع الصور أو حفظها محلياً.',
           ),
           const SizedBox(height: 12),
-          Text('المحطة: ' + stationId),
+          Text('المحطة: ${stationId}'),
           const SizedBox(height: 12),
           const TextField(
             decoration: InputDecoration(
@@ -223,12 +223,12 @@ class _AiTab extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ServiceNotice(
+          const _ServiceNotice(
             title: 'لا يوجد نموذج إنتاجي متصل',
             message: 'تجهيز مجموعات البيانات والتدريب والاستدلال يتطلب خدمة AI/OCR وإدارة ملفات وإصدارات نماذج.',
           ),
           const SizedBox(height: 12),
-          Text('نطاق العمل: ' + stationId),
+          Text('نطاق العمل: ${stationId}'),
           const SizedBox(height: 12),
           const _MetricCard(label: 'مجموعات البيانات', value: '—', icon: Icons.storage),
           const _MetricCard(label: 'إصدارات النماذج', value: '—', icon: Icons.psychology_outlined),
@@ -256,12 +256,12 @@ class _ComparisonTab extends StatelessWidget {
   Widget build(BuildContext context) => ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ServiceNotice(
+          const _ServiceNotice(
             title: 'المقارنة تنتظر محرك الاستخراج والبيانات المرجعية',
             message: 'تعرض هذه الواجهة مسار المراجعة المطلوب، لكنها لا تحسب نسب تطابق أو فروقات من بيانات غير متاحة.',
           ),
           const SizedBox(height: 12),
-          Text('المحطة: ' + stationId),
+          Text('المحطة: ${stationId}'),
           const SizedBox(height: 12),
           const Row(
             children: [
@@ -276,9 +276,9 @@ class _ComparisonTab extends StatelessWidget {
           const SizedBox(height: 12),
           const Text('جدول الفروقات', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          const Table(
-            border: TableBorder.all(color: Color(0xFFE2E8F0)),
-            children: [
+          Table(
+            border: TableBorder.all(color: const Color(0xFFE2E8F0)),
+            children: const [
               TableRow(children: [
                 Padding(padding: EdgeInsets.all(8), child: Text('الحقل')),
                 Padding(padding: EdgeInsets.all(8), child: Text('المستخرج')),
@@ -388,7 +388,7 @@ class _OperationsTab extends StatelessWidget {
         children: [
           _ServiceNotice(title: 'الوحدة غير متصلة بالخادم', message: message),
           const SizedBox(height: 12),
-          Text('المحطة: ' + stationId),
+          Text('المحطة: ${stationId}'),
           const SizedBox(height: 12),
           _MetricCard(label: 'السجلات', value: '—', icon: icon),
           const _MetricCard(label: 'البلاغات المفتوحة', value: '—', icon: Icons.report_problem_outlined),
@@ -397,7 +397,7 @@ class _OperationsTab extends StatelessWidget {
           FilledButton.icon(
             onPressed: null,
             icon: const Icon(Icons.add),
-            label: Text('إضافة سجل — ' + title),
+            label: Text('إضافة سجل — ${title}'),
           ),
         ],
       );
@@ -425,7 +425,7 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
               message: 'لن تظهر أرقام أو رسوم إحصائية رسمية قبل ربط بيانات الرصد المعتمدة وخدمات التقارير.',
             ),
             const SizedBox(height: 12),
-            Text('المحطة: ' + widget.stationId),
+            Text('المحطة: ${widget.stationId}'),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: _reportType,
