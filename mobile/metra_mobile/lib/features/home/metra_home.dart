@@ -234,12 +234,10 @@ class _InformationPage extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.message,
-    this.action,
   });
   final IconData icon;
   final String title;
   final String message;
-  final Widget? action;
   @override
   Widget build(BuildContext context) => Center(
         child: SingleChildScrollView(
@@ -250,7 +248,6 @@ class _InformationPage extends StatelessWidget {
               icon: icon,
               title: title,
               description: message,
-              action: action,
             ),
           ),
         ),
@@ -262,12 +259,10 @@ class _StatusCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.description,
-    this.action,
   });
   final IconData icon;
   final String title;
   final String description;
-  final Widget? action;
   @override
   Widget build(BuildContext context) => Card(
         elevation: 0,
@@ -287,7 +282,6 @@ class _StatusCard extends StatelessWidget {
               Text(description,
                   style:
                       const TextStyle(color: Color(0xFF64748B), height: 1.6)),
-              if (action != null) ...[const SizedBox(height: 16), action!],
             ],
           ),
         ),
