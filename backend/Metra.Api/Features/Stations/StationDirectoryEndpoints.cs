@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
@@ -151,7 +150,7 @@ public static class StationDirectoryEndpoints
             {
                 var page = await directory.GetStationsAsync(
                     PageSize, pageOffset, stationType, cancellationToken);
-                if (page is not { ValueKind: JsonValueKind.Array })
+                if (page is null || page.Value.ValueKind != JsonValueKind.Array)
                     return Results.Problem(
                         title: "Station directory read failed",
                         statusCode: StatusCodes.Status503ServiceUnavailable);
