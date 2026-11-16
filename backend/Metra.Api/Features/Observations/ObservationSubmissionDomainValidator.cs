@@ -29,7 +29,7 @@ public static class ObservationSubmissionDomainValidator
     public static IReadOnlyList<ValidationIssue> Validate(ObservationSubmissionRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.Payload is not { ValueKind: JsonValueKind.Object } payload)
+        if (request.Payload is not JsonElement payload || payload.ValueKind != JsonValueKind.Object)
             return [new("payload", "يجب أن تكون حمولة الرصد كائناً مسطحاً.")];
 
         if (request.ObservationType == "phenomenon")
@@ -98,7 +98,7 @@ public static class ObservationSubmissionDomainValidator
             }
             : field switch
             {
-                "relativeHumidity" or "visibility" => field == "visibility" ? 3 : 3,
+                "relativeHumidity" or "visibility" => 3,
                 "windDirection" or "avgWindDirection" or "windSpeed" or "avgWindSpeed" or "currentWeather" => 2,
                 "pastWeather" or "totalCloudCover" or "cloud1Amount" or "cloud2Amount" or "cloud3Amount" or "cloud4Amount" or "cover12" or "cover123" or "pressureShape" => 1,
                 _ => 0
@@ -131,10 +131,14 @@ public static class ObservationSubmissionDomainValidator
 
         var negative = number < 0;
         var absolute = Math.Abs(number);
-        var formatted = absolute.ToString("0.0", CultureInfo.InvariantCulture);
+        var formatted = absolute.ToString(CultureInfo.InvariantCulture);
         var parts = formatted.Split('.');
+        if (parts.Length > 2 || (parts.Length == 2 && parts[1].Length != 1))
+            return value;
+
+        var fraction = parts.Length == 2 ? parts[1] : "0";
         var sign = negative ? "-" :
-            type == "hourly" && field is "dryTemp" or "wetTemp" or "dewPoint" ? "+" : string.Empty;
-        return sign + parts[0].PadLeft(decimalWidth, '0') + "." + parts[1];
+            type == "hourly" && field is ("dryTemp" or "wetTemp" or "dewPoint") ? "+" : string.Empty;
+        return sign + parts[0].PadLeft(decimalWidth, '0') + "." + fraction;
     }
 }
