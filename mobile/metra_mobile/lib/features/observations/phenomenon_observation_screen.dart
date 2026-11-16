@@ -2,12 +2,10 @@ import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
-import '../../core/catalog/observation_field_catalogs.dart';
+import '../../core/catalog/phenomenon_field_catalog.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
-/// Weather phenomenon report screen bound to the approved domain contract:
-/// phenomenonType, phenomenonDate (yyyy-MM-dd), startTime/endTime (HH:mm:ss UTC),
-/// generalNotes, responsibilityAgreement.
+/// Weather phenomenon report bound to WeatherPhenomenonValidator contract.
 class PhenomenonObservationScreen extends StatefulWidget {
   const PhenomenonObservationScreen({
     super.key,
@@ -30,14 +28,28 @@ class _PhenomenonObservationScreenState
   DateTime? _pendingObservedAt;
   bool _submitting = false;
 
+  /// Form time pickers yield HH:mm; domain contract requires HH:mm:ss UTC.
+  Map<String, Object?> _normalize(Map<String, Object?> values) {
+    final next = Map<String, Object?>.from(values);
+    for (final key in ['startTime', 'endTime']) {
+      final raw = next[key]?.toString().trim();
+      if (raw == null || raw.isEmpty) continue;
+      if (RegExp(r'^\d{2}:\d{2}$').hasMatch(raw)) {
+        next[key] = '$raw:00';
+      }
+    }
+    return next;
+  }
+
   Future<void> _submit(Map<String, Object?> values) async {
     if (_submitting) return;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _submitting = true);
+    final normalized = _normalize(values);
     try {
       final validation = await widget.api.validateObservation(
         observationType: 'phenomenon',
-        values: values,
+        values: normalized,
       );
       if (!validation.isValid) {
         final message = validation.issues.isEmpty
@@ -47,7 +59,7 @@ class _PhenomenonObservationScreenState
         return;
       }
 
-      final fingerprint = jsonEncode(values);
+      final fingerprint = jsonEncode(normalized);
       if (_pendingPayloadFingerprint != fingerprint ||
           _pendingIdempotencyKey == null) {
         _pendingPayloadFingerprint = fingerprint;
@@ -64,7 +76,7 @@ class _PhenomenonObservationScreenState
         idempotencyKey: _pendingIdempotencyKey!,
         observationType: 'phenomenon',
         observedAt: _pendingObservedAt!,
-        payload: values,
+        payload: normalized,
         submit: true,
       );
       _pendingPayloadFingerprint = null;
@@ -90,7 +102,7 @@ class _PhenomenonObservationScreenState
   Widget build(BuildContext context) {
     return MetraObservationForm(
       title: 'بلاغ ظاهرة جوية',
-      fields: ObservationFieldCatalogs.phenomenon,
+      fields: PhenomenonFieldCatalog.fields,
       onSubmit: _submit,
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
