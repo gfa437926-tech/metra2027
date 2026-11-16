@@ -140,6 +140,21 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         public Task<JsonElement?> GetStationsAsync(
             int limit, int offset, string? stationType, CancellationToken cancellationToken) =>
             Task.FromResult(stations);
+
+        public Task<IReadOnlyList<Guid>?> GetAssignedStationIdsAsync(
+            Guid userId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Guid>?>(Array.Empty<Guid>());
+
+        public Task<IReadOnlyList<Guid>?> GetAuthorityIdsAsync(
+            Guid userId, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Guid>?>(Array.Empty<Guid>());
+
+        public Task<JsonElement?> GetStationsByScopeAsync(
+            IReadOnlyCollection<Guid> stationIds,
+            IReadOnlyCollection<Guid> authorityIds,
+            string? stationType,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<JsonElement?>(JsonDocument.Parse("[]").RootElement.Clone());
     }
 
     [Theory]
