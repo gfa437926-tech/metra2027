@@ -6,6 +6,7 @@ on:
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"
+      - "backend/**"
       - ".github/workflows/client-ci.yml"
       - ".github/workflows/deploy-pages.yml"
   pull_request:
@@ -64,4 +65,29 @@ jobs:
             mobile/metra_mobile/build/web/
             mobile/metra_mobile/pubspec.lock
           if-no-files-found: error
+          retention-days: 14
+
+  backend:
+    name: .NET API build and tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Restore API
+        run: dotnet restore backend/Metra.Api/Metra.Api.csproj
+      - name: Build API
+        run: dotnet build backend/Metra.Api/Metra.Api.csproj --configuration Release --no-restore
+      - name: Restore API tests
+        run: dotnet restore backend/Metra.Api.Tests/Metra.Api.Tests.csproj
+      - name: Run API tests
+        run: dotnet test backend/Metra.Api.Tests/Metra.Api.Tests.csproj --configuration Release --no-restore --logger "trx;LogFileName=metra-api-tests.trx"
+      - name: Upload API test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: metra-dotnet-api-test-results
+          path: backend/Metra.Api.Tests/TestResults/*.trx
+          if-no-files-found: ignore
           retention-days: 14
