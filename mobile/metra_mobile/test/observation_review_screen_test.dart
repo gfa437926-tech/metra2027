@@ -60,7 +60,9 @@ void main() {
       home: ObservationReviewScreen(api: api, stationId: stationId),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('اعتماد'));
+    await tester.tap(find.text('اعتماد').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اعتماد').last);
     await tester.pumpAndSettle();
 
     expect(find.text('ليست لديك صلاحية تنفيذ هذا القرار'), findsOneWidget);
