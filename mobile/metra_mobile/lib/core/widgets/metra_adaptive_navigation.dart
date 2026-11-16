@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material_ui.dart';
 
 /// One shared navigation surface that adapts to compact and wide layouts.
 /// Authorization and destination visibility must be supplied by a
