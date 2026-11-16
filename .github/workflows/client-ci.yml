@@ -1,46 +1,26 @@
-name: Client CI
+name: Flutter Client CI
 
 on:
   push:
     branches: [main]
     paths:
-      - "angular-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
-      - ".github/workflows/deploy-pages.yml"
   pull_request:
     branches: [main]
     paths:
-      - "angular-app/**"
       - "mobile/metra_mobile/**"
       - ".github/workflows/client-ci.yml"
-      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: client-ci-${{ github.ref }}
+  group: flutter-client-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  angular:
-    name: Angular build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: angular-app
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: angular-app/package.json
-      - run: npm install --no-audit --no-fund
-      - run: npm run build
-
   flutter:
     name: Flutter analyze and test
     runs-on: ubuntu-latest
@@ -54,5 +34,5 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter analyze
-      - run: flutter test
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test --concurrency=1

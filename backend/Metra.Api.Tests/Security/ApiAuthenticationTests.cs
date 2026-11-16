@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Metra.Api.Features.Stations;
+using Metra.Api.Features.Observations;
 using Metra.Api.Features.Users;
 using System.Text.Json;
 using Xunit;
@@ -19,8 +20,10 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
 
     public ApiAuthenticationTests(WebApplicationFactory<Program> factory)
     {
-        _factory = factory;
-        _client = factory.CreateClient();
+        // Disable rate limiting for auth/readiness suite so sequential health probes do not 429.
+        _factory = factory.WithWebHostBuilder(builder =>
+            builder.UseSetting("RateLimiting:Disabled", "true"));
+        _client = _factory.CreateClient();
     }
 
     [Fact]
@@ -33,6 +36,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
             "SupabaseObservationSubmissionService",
             "SupabaseObservationDecisionService",
             "SupabaseObservationQueueService",
+            "SupabaseObservationArchiveService",
             "SupabaseStationDirectoryService",
             "SupabaseStationCatalogueReviewService",
             "SupabaseRegistrationReviewService",
@@ -89,7 +93,19 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     [Fact]
-    public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_probe_succeeds()
+    public async Task Readiness_endpoint_fails_when_archive_rpc_probe_fails()
+    {
+        using var configuredFactory = CreateConfiguredReadinessFactory(
+            JsonDocument.Parse("[]").RootElement.Clone(), archiveProbeSucceeds: false);
+        using var client = configuredFactory.CreateClient();
+
+        using var response = await client.GetAsync("/api/v1/ready");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Readiness_endpoint_succeeds_only_after_station_catalogue_and_archive_probes_succeed()
     {
         using var configuredFactory = CreateConfiguredReadinessFactory(JsonDocument.Parse("[]").RootElement.Clone());
         using var client = configuredFactory.CreateClient();
@@ -102,7 +118,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
     }
 
     private WebApplicationFactory<Program> CreateConfiguredReadinessFactory(
-        JsonElement? stations, bool auditConfigured = true)
+        JsonElement? stations, bool auditConfigured = true, bool archiveProbeSucceeds = true)
     {
         return _factory.WithWebHostBuilder(builder =>
         {
@@ -120,8 +136,55 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
                 services.RemoveAll<IStationAuditService>();
                 services.AddSingleton<IStationAuditService>(
                     new ReadinessStationAuditStub(auditConfigured));
+                services.RemoveAll<IObservationArchiveService>();
+                services.AddSingleton<IObservationArchiveService>(
+                    new ReadinessObservationArchiveStub(archiveProbeSucceeds));
+
+                services.RemoveAll<IObservationSubmissionService>();
+                services.AddSingleton<IObservationSubmissionService>(
+                    new ReadinessObservationSubmissionStub());
+                services.RemoveAll<IObservationDecisionService>();
+                services.AddSingleton<IObservationDecisionService>(
+                    new ReadinessObservationDecisionStub());
             });
         });
+    }
+
+    private sealed class ReadinessObservationSubmissionStub : IObservationSubmissionService
+    {
+        public bool IsConfigured => true;
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<ObservationSubmissionOutcome> SubmitAsync(
+            Guid userId, Guid stationId, ObservationSubmissionRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ObservationSubmissionOutcome(true, false, HttpStatusCode.ServiceUnavailable, null));
+    }
+
+    private sealed class ReadinessObservationDecisionStub : IObservationDecisionService
+    {
+        public bool IsConfigured => true;
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) => Task.FromResult(true);
+        public Task<ObservationDecisionOutcome> DecideAsync(
+            Guid userId, Guid stationId, Guid observationId, ObservationDecisionRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new ObservationDecisionOutcome(true, false, HttpStatusCode.ServiceUnavailable, null));
+    }
+
+    private sealed class ReadinessObservationArchiveStub(bool probeSucceeds) : IObservationArchiveService
+    {
+        public bool IsConfigured => true;
+
+        public Task<bool> ProbeAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(probeSucceeds);
+
+        public Task<ObservationArchiveListResult?> ListAsync(
+            Guid actorUserId, Guid stationId, DateTime? fromUtc, DateTime? toUtc,
+            string? observationType, int limit, string? cursor, CancellationToken cancellationToken) =>
+            Task.FromResult<ObservationArchiveListResult?>(null);
+
+        public Task<ObservationArchiveItemDto?> GetAsync(
+            Guid actorUserId, Guid stationId, Guid observationId, CancellationToken cancellationToken) =>
+            Task.FromResult<ObservationArchiveItemDto?>(null);
     }
 
     private sealed class ReadinessStationAuditStub(bool isConfigured) : IStationAuditService
@@ -129,7 +192,7 @@ public sealed class ApiAuthenticationTests : IClassFixture<WebApplicationFactory
         public bool IsConfigured => isConfigured;
 
         public Task<JsonElement?> GetAuditAsync(
-            Guid stationId, int limit, CancellationToken cancellationToken) =>
+            Guid actorUserId, Guid stationId, int limit, CancellationToken cancellationToken) =>
             Task.FromResult<JsonElement?>(JsonDocument.Parse("[]").RootElement.Clone());
     }
 

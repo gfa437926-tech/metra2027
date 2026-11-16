@@ -51,13 +51,13 @@ public sealed class HourlyObservationValidatorTests
     [InlineData("09")]
     [InlineData("15")]
     [InlineData("21")]
-    public void Requires_pressure_characteristics_and_past_weather_at_three_hour_times(string hour)
+    public void Requires_pressure_characteristics_but_not_past_weather_at_three_hour_times(string hour)
     {
         var issues = HourlyObservationValidator.Validate(ValidReport(hour));
 
         Assert.Contains(issues, issue => issue.Field == "pressureSlope");
         Assert.Contains(issues, issue => issue.Field == "pressureShape");
-        Assert.Contains(issues, issue => issue.Field == "pastWeather");
+        Assert.DoesNotContain(issues, issue => issue.Field == "pastWeather");
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public sealed class HourlyObservationValidatorTests
         Assert.Contains(issues, issue => issue.Field == "precipitationAmount");
         Assert.Contains(issues, issue => issue.Field == "pressureSlope");
         Assert.Contains(issues, issue => issue.Field == "pressureShape");
-        Assert.Contains(issues, issue => issue.Field == "pastWeather");
+        Assert.DoesNotContain(issues, issue => issue.Field == "pastWeather");
     }
 
     [Fact]
@@ -97,6 +97,16 @@ public sealed class HourlyObservationValidatorTests
 
         Assert.DoesNotContain(issues, issue => issue.Field == "dryTemp");
         Assert.DoesNotContain(issues, issue => issue.Field == "totalCloudCover");
+    }
+
+    [Fact]
+    public void Accepts_hourly_temperature_without_explicit_positive_sign()
+    {
+        var values = ValidReport();
+        values["dryTemp"] = "25.0";
+        values["wetTemp"] = "20.0";
+        values["dewPoint"] = "18.5";
+        Assert.Empty(HourlyObservationValidator.Validate(values));
     }
 
     [Fact]

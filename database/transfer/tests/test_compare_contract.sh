@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# Static contract test: the comparison runner must execute every declared
+# acceptance check and must fail closed when any comparison differs.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+RUNNER="$ROOT/database/transfer/scripts/05_compare.sh"
+SQL="$ROOT/database/transfer/sql"
+
+require_file() {
+  [[ -s "$1" ]] || { echo "FAIL: missing or empty file: $1" >&2; exit 1; }
+}
+
+require_contains() {
+  local file="$1"
+  local needle="$2"
+  grep -Fq -- "$needle" "$file" || {
+    echo "FAIL: expected '$needle' in $file" >&2
+    exit 1
+  }
+}
+
+for file in \
+  "$RUNNER" \
+  "$SQL/compare_rowcounts.sql" \
+  "$SQL/compare_data_hashes.sql" \
+  "$SQL/compare_auth_fk_counts.sql" \
+  "$SQL/compare_sequence_state.sql" \
+  "$SQL/compare_objects.sql" \
+  "$SQL/compare_acl_inventory_acceptance.sql" \
+  "$SQL/compare_extensions.sql" \
+  "$SQL/station_catalogue_provenance.sql" \
+  "$SQL/compare_excluded_data.sql" \
+  "$SQL/assert_empty_application_tables.sql" \
+  "$ROOT/database/transfer/tests/assert_target_default_acl.sql" \
+  "$ROOT/database/transfer/tests/assert_target_function_search_path.sql"; do
+  require_file "$file"
+done
+
+# Every source/target comparison must be executed by the orchestrator.
+for artifact in \
+  rowcounts \
+  data_hashes \
+  auth_fk_counts \
+  sequence_state \
+  objects \
+  acl \
+  extensions \
+  station_catalogue; do
+  require_contains "$RUNNER" "\$OUT/\${side}_${artifact}.txt"
+done
+
+# Verify the target-only acceptance checks are actually run.
+require_contains "$RUNNER" 'assert_target_default_acl.sql'
+require_contains "$RUNNER" "-f \"\$ROOT/tests/assert_target_default_acl.sql\""
+if grep -Fq -- "-f \"\$ROOT/sql/assert_target_default_acl.sql\"" "$RUNNER"; then
+  echo "FAIL: target default ACL assertion path must resolve under tests/." >&2
+  exit 1
+fi
+require_contains "$RUNNER" 'assert_target_function_search_path.sql'
+require_contains "$RUNNER" 'compare_excluded_data.sql'
+require_contains "$RUNNER" 'target_excluded_observation_rows.txt'
+
+# The deliberately excluded observation-history table must not enter either
+# the ordinary row-count or content-hash comparison scope.
+require_contains "$SQL/compare_rowcounts.sql" "schemaname IN ('public','private')"
+require_contains "$SQL/compare_rowcounts.sql" "tablename='metra_observation_records'"
+require_contains "$SQL/compare_data_hashes.sql" "schemaname IN ('public','private')"
+require_contains "$SQL/compare_data_hashes.sql" "tablename='metra_observation_records'"
+require_contains "$SQL/compare_excluded_data.sql" 'FROM public.metra_observation_records'
+
+# Auth UUID values are deliberately not hashed as application payload; their
+# cardinalities are checked independently.
+require_contains "$SQL/compare_data_hashes.sql" "con.confrelid='auth.users'::regclass"
+require_contains "$SQL/compare_auth_fk_counts.sql" "con.confrelid='auth.users'::regclass"
+
+# Extension acceptance requires every source extension/version/schema entry
+# to exist on target. Additional target extensions are intentionally allowed.
+require_contains "$RUNNER" 'comm -23'
+require_contains "$RUNNER" 'missing_extensions.diff'
+
+# All result statuses must participate in the final PASS gate.
+for status in \
+  rows_status \
+  data_hash_status \
+  auth_fk_status \
+  sequence_status \
+  objects_status \
+  acl_status \
+  extension_status \
+  excluded_data_status \
+  station_catalogue_status; do
+  require_contains "$RUNNER" "$status"
+done
+
+
+# The workflow must execute the runtime guards, not merely keep them in-tree.
+WORKFLOW="$ROOT/.github/workflows/transfer-auth-remap.yml"
+require_file "$WORKFLOW"
+require_contains "$WORKFLOW" '"database/baseline/**"'
+require_contains "$WORKFLOW" '"database/migrations/**"'
+require_contains "$WORKFLOW" '"database/seeds/**"'
+require_contains "$WORKFLOW" '"supabase/migrations/**"'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_empty_target_guard.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_observation_guard.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_runner_preflight.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_excluded_dump_patterns.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_compare_end_to_end.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_rls_acl_matrix.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_restore_acl_rls.sh'
+require_contains "$WORKFLOW" 'bash database/transfer/tests/test_restore_actual_schema_acl_rls.sh'
+require_file "$ROOT/database/transfer/tests/test_compare_end_to_end.sh"
+require_file "$ROOT/database/transfer/tests/test_rls_acl_matrix.sh"
+require_file "$ROOT/database/transfer/tests/test_restore_acl_rls.sh"
+require_file "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh"
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'database/baseline/path_n_apply.sh'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'PATH_N_APPLY_OBSERVATIONS=1'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'source.schema.normalized.sql'
+require_contains "$ROOT/database/transfer/tests/test_restore_actual_schema_acl_rls.sh" 'RLS flags or policy definitions changed during full schema restore'
+require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'station_coordinates exists in some hosted snapshots but is not defined by'
+require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'to_regprocedure(function_signature) IS NOT NULL'
+require_contains "$ROOT/database/transfer/sql/apply_runtime_grants.sql" 'optional_runtime_functions'
+require_contains "$ROOT/database/transfer/tests/assert_runtime_grants.sql" 'optional private runtime EXECUTE'
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "20261103164003_create_operational_observation_submission.sql"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observations lost ENABLE/FORCE RLS"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "metra_observation_audit_events lost ENABLE/FORCE RLS"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operational observation tables unexpectedly gained direct-client RLS policies"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "operational observation RPC execute ACL is not service_role-only"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "restored no-policy RLS accepted client INSERT"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "client role received direct privileges"
+require_contains "$ROOT/database/transfer/tests/test_restore_acl_rls.sh" "has_table_privilege('authenticated','public.metra_observation_audit_events','DELETE')"
+require_file "$ROOT/database/transfer/tests/compare_fixture.sql"
+require_file "$ROOT/database/transfer/tests/test_excluded_dump_patterns.sh"
+require_file "$ROOT/database/transfer/tests/test_compare_runner_preflight.sh"
+
+# The empty-target runtime fixture must cover both application schemas.
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "CREATE TABLE public.\$fixture"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "CREATE TABLE private.\$fixture"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "public.\$fixture is not empty"
+require_contains "$ROOT/database/transfer/tests/test_empty_target_guard.sh" "private.\$fixture is not empty"
+
+# The excluded-history runtime fixture must exercise both empty and populated states.
+require_contains "$ROOT/database/transfer/tests/test_excluded_observation_guard.sh" 'empty_count'
+require_contains "$ROOT/database/transfer/tests/test_excluded_observation_guard.sh" 'populated_count'
+
+echo "PASS: transfer comparison runner covers all declared acceptance checks and fails closed on mismatches."

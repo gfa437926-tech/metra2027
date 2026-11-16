@@ -10,5 +10,6 @@
 .vs/
 .idea/
 
-# Local deployment output
+# Local deployment and database transfer output
 /artifacts/
+/database/transfer/artifacts/

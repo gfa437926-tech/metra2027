@@ -1,3 +1,4 @@
+using Metra.Api.Security;
 using Metra.Api.Domain.Observations;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,8 @@ public static class ObservationValidationEndpoints
             if (error is not null) return Results.BadRequest(new { error });
             var issues = DailyObservationValidator.Validate(request!.Values!);
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
-        }).WithName("ValidateDailyObservation");
+        }).RequireRateLimiting(MetraRateLimiting.PolicyWrite)
+            .WithName("ValidateDailyObservation");
 
         group.MapPost("/hourly/validate", ([FromBody] ObservationValidationRequest? request) =>
         {
@@ -23,13 +25,15 @@ public static class ObservationValidationEndpoints
             if (error is not null) return Results.BadRequest(new { error });
             var issues = HourlyObservationValidator.Validate(request!.Values!);
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
-        }).WithName("ValidateHourlyObservation");
+        }).RequireRateLimiting(MetraRateLimiting.PolicyWrite)
+            .WithName("ValidateHourlyObservation");
 
         group.MapPost("/phenomena/validate", ([FromBody] WeatherPhenomenonRequest? request) =>
         {
             var issues = WeatherPhenomenonValidator.Validate(request);
             return Results.Ok(new ValidationResponse(issues.Count == 0, issues));
-        }).WithName("ValidateWeatherPhenomenon");
+        }).RequireRateLimiting(MetraRateLimiting.PolicyWrite)
+            .WithName("ValidateWeatherPhenomenon");
 
         return endpoints;
     }

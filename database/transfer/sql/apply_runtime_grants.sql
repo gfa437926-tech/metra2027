@@ -1,0 +1,120 @@
+-- Reapply reviewed target ACLs excluded by pg_dump --no-privileges.
+-- The source inventory is retained for audit; target defaults intentionally
+-- tighten source defaults so future objects are not implicitly exposed to clients.
+
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE ALL PRIVILEGES ON TABLES FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE ALL PRIVILEGES ON SEQUENCES FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT ALL PRIVILEGES ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA private
+  REVOKE ALL PRIVILEGES ON TABLES FROM PUBLIC, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA private
+  REVOKE ALL PRIVILEGES ON SEQUENCES FROM PUBLIC, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA private
+  REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA private
+  GRANT EXECUTE ON FUNCTIONS TO metra_api_runtime;
+
+-- Schema access: client roles have public USAGE only; private is restricted.
+REVOKE CREATE ON SCHEMA public FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+REVOKE CREATE ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+GRANT USAGE ON SCHEMA public TO PUBLIC, anon, authenticated, service_role, metra_api_runtime, postgres;
+GRANT CREATE, USAGE ON SCHEMA public TO pg_database_owner;
+GRANT USAGE ON SCHEMA private TO metra_api_runtime;
+
+-- Existing table ACLs are narrower than Supabase default ACLs; reset then reapply.
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
+REVOKE ALL PRIVILEGES ON TABLE
+  public.authority_access_audit_events,
+  public.authority_memberships,
+  public.permission_grants
+FROM service_role;
+GRANT SELECT ON TABLE
+  public.authority_access_audit_events,
+  public.authority_memberships,
+  public.permission_grants
+TO service_role;
+
+GRANT SELECT ON TABLE
+  public.meteorological_authorities,
+  public.metra_account_states,
+  public.metra_role_catalogue,
+  public.metra_user_profiles,
+  public.permission_grants,
+  public.registration_audit_events,
+  public.registration_requests,
+  public.station_assignments,
+  public.station_catalogue
+TO metra_api_runtime;
+
+-- station_coordinates exists in some hosted snapshots but is not defined by
+-- the checked-in baseline/migration pack; grant it only when it is present.
+DO $optional_station_coordinates$
+BEGIN
+  IF to_regclass('public.station_coordinates') IS NOT NULL THEN
+    GRANT SELECT ON TABLE public.station_coordinates TO metra_api_runtime;
+  END IF;
+END
+$optional_station_coordinates$;
+
+-- Client roles receive no sequence access; only the server-side service role does.
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public
+  FROM PUBLIC, anon, authenticated, metra_api_runtime;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+-- Reset existing function ACLs because Supabase defaults are broader than
+-- several source-specific RPC/trigger ACLs.
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA private
+  FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime;
+
+-- Revoke direct execution and pin search_path for every audit-trigger function
+-- present in this schema pack. Equipment/support trigger functions are optional
+-- in the checked-in baseline and are handled only when their definitions exist.
+DO $audit_trigger_acl$
+DECLARE
+  function_signature text;
+BEGIN
+  FOREACH function_signature IN ARRAY ARRAY[
+    'public.reject_append_only_audit_mutation()',
+    'public.reject_metra_observation_audit_mutation()',
+    'public.reject_metra_equipment_fault_audit_mutation()',
+    'public.reject_metra_support_incident_audit_mutation()',
+    'private.reject_authority_access_audit_mutation()'
+  ] LOOP
+    IF to_regprocedure(function_signature) IS NOT NULL THEN
+      EXECUTE format(
+        'REVOKE EXECUTE ON FUNCTION %s FROM PUBLIC, anon, authenticated, service_role, metra_api_runtime',
+        function_signature
+      );
+      EXECUTE format('ALTER FUNCTION %s SET search_path = pg_catalog', function_signature);
+    END IF;
+  END LOOP;
+END
+$audit_trigger_acl$;
+-- Older hosted snapshots may expose these private registration helpers;
+-- the current checked-in migration pack exposes station-bound public RPCs
+-- instead, so do not fail a restore when the optional private signatures are absent.
+DO $optional_runtime_functions$
+BEGIN
+  IF to_regprocedure('private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone)') IS NOT NULL THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION private.decide_metra_registration(uuid,text,uuid,text,text,timestamp with time zone) TO metra_api_runtime';
+  END IF;
+  IF to_regprocedure('private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamp with time zone,text)') IS NOT NULL THEN
+    EXECUTE 'GRANT EXECUTE ON FUNCTION private.submit_metra_registration(uuid,text,text,text,text,text,uuid,text,timestamp with time zone,text) TO metra_api_runtime';
+  END IF;
+END
+$optional_runtime_functions$;
