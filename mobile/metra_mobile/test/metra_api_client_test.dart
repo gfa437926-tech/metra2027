@@ -233,7 +233,7 @@ void main() {
     await expectLater(
       client.decideStationRegistrationRequest(
         stationId: stationId,
-        requestId: 'request\\n1',
+        requestId: 'request\n1',
         decision: 'approve',
       ),
       throwsA(isA<MetraApiException>().having(
