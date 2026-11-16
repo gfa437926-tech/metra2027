@@ -35,6 +35,38 @@ void main() {
     api.close();
   });
 
+  testWidgets('shows a permission message when a review decision is forbidden', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode([
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'station_id': stationId,
+              'observation_type': 'daily',
+              'observed_at': '2026-11-03T12:00:00Z',
+              'status': 'submitted',
+              'payload': {}
+            }
+          ]), 200);
+        }
+        return http.Response('{"error":"forbidden"}', 403);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اعتماد'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ليست لديك صلاحية تنفيذ هذا القرار'), findsOneWidget);
+    api.close();
+  });
+
   testWidgets('shows an empty state for an empty server queue', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
