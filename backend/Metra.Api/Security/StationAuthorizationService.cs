@@ -7,7 +7,8 @@ public interface IStationAuthorizationService
 {
     bool IsConfigured { get; }
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
-    Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);\n    Task<bool> HasAuthorityPermissionAsync(Guid userId, Guid authorityId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasAuthorityPermissionAsync(Guid userId, Guid authorityId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
