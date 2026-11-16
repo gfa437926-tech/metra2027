@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
-import '../../core/widgets/metra_workspace_shell.dart';
 import '../observations/observation_workspace_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
