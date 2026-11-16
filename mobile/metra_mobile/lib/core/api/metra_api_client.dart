@@ -302,6 +302,15 @@ class MetraApiClient {
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
     bool submit = false}) async {
+    if (stationId.trim().isEmpty || stationId != stationId.trim()) {
+      throw const MetraApiException(400, 'invalid_station_id');
+    }
+    if (idempotencyKey.trim().isEmpty || idempotencyKey != idempotencyKey.trim()) {
+      throw const MetraApiException(400, 'invalid_idempotency_key');
+    }
+    if (!const {'hourly', 'daily'}.contains(observationType)) {
+      throw const MetraApiException(400, 'unsupported_observation_type');
+    }
     await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
       body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
