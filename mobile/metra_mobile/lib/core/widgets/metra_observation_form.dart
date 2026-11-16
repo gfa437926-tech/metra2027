@@ -52,6 +52,10 @@ class MetraObservationForm extends StatefulWidget {
     required this.onSubmit,
     this.initialValues = const {},
     this.submitLabel = 'حفظ وإرسال',
+    this.onValuesChanged,
+    this.draftBanner,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
   });
 
   final String title;
@@ -59,6 +63,16 @@ class MetraObservationForm extends StatefulWidget {
   final Map<String, Object?> initialValues;
   final Future<void> Function(Map<String, Object?> values) onSubmit;
   final String submitLabel;
+
+  /// Fired whenever the user changes a value (for local draft save).
+  final void Function(Map<String, Object?> values)? onValuesChanged;
+
+  /// Optional banner above fields (e.g. local draft restored notice).
+  final Widget? draftBanner;
+
+  /// Optional secondary action (e.g. discard local draft).
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   @override
   State<MetraObservationForm> createState() => _MetraObservationFormState();
@@ -85,9 +99,11 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       } else if (field.kind == MetraFieldKind.boolean) {
         _booleans[field.id] = initial == true;
       } else {
-        _controllers[field.id] = TextEditingController(
+        final controller = TextEditingController(
           text: initial?.toString() ?? '',
         );
+        controller.addListener(_notifyValuesChanged);
+        _controllers[field.id] = controller;
       }
     }
   }
@@ -95,9 +111,22 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   @override
   void dispose() {
     for (final controller in _controllers.values) {
+      controller.removeListener(_notifyValuesChanged);
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Map<String, Object?> _collectValues() {
+    final values = <String, Object?>{};
+    for (final field in widget.fields) {
+      values[field.id] = _typedValue(field);
+    }
+    return values;
+  }
+
+  void _notifyValuesChanged() {
+    widget.onValuesChanged?.call(_collectValues());
   }
 
   String? _validate(MetraObservationField field, String? raw) {
@@ -193,6 +222,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
             twoDigits(date.day),
           ].join('-');
         });
+        _notifyValuesChanged();
         return;
       }
       final time = await showTimePicker(
@@ -209,6 +239,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           time.minute,
         ).toIso8601String();
       });
+      _notifyValuesChanged();
       return;
     }
 
@@ -226,6 +257,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         controller.text =
             <String>[twoDigits(time.hour), twoDigits(time.minute)].join(':');
       });
+      _notifyValuesChanged();
     }
   }
 
@@ -265,6 +297,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
                       final next = value ?? false;
                       _booleans[field.id] = next;
                       state.didChange(next);
+                      _notifyValuesChanged();
                     },
             ),
             if (state.hasError)
@@ -302,7 +335,10 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
             field.required && value == null ? 'يرجى اختيار قيمة' : null,
         onChanged: _saving
             ? null
-            : (value) => setState(() => _choices[field.id] = value),
+            : (value) {
+                setState(() => _choices[field.id] = value);
+                _notifyValuesChanged();
+              },
       );
     }
 
@@ -351,6 +387,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
             // leave the action off-stage / unbuilt.
             child: Column(
               children: [
+                if (widget.draftBanner != null) widget.draftBanner!,
                 Expanded(
                   child: ListView(
                     padding: const EdgeInsets.all(16),
@@ -364,22 +401,40 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
                 ),
                 SafeArea(
                   minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      key: const Key('metra-observation-submit'),
-                      onPressed: _saving ? null : _submit,
-                      icon: _saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send),
-                      label: Text(
-                        _saving ? 'جارٍ الحفظ...' : widget.submitLabel,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          key: const Key('metra-observation-submit'),
+                          onPressed: _saving ? null : _submit,
+                          icon: _saving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.send),
+                          label: Text(
+                            _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (widget.secondaryActionLabel != null &&
+                          widget.onSecondaryAction != null) ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            key: const Key('metra-observation-discard-draft'),
+                            onPressed: _saving ? null : widget.onSecondaryAction,
+                            icon: const Icon(Icons.delete_outline),
+                            label: Text(widget.secondaryActionLabel!),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
