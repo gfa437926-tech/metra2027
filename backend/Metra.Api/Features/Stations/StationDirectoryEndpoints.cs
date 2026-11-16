@@ -62,12 +62,13 @@ public sealed class SupabaseStationDirectoryService(
         if (!IsConfigured || userId == Guid.Empty)
             return null;
 
-        var now = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var now = DateTimeOffset.UtcNow;
+        var encodedNow = Uri.EscapeDataString(now.ToString("O"));
         var query = "station_assignments?select=station_id" +
                     "&user_id=eq." + userId +
                     "&approval_status=eq.approved" +
-                    "&valid_from=lte." + now +
-                    "&or=" + Uri.EscapeDataString($"(valid_to.is.null,valid_to.gt.{DateTimeOffset.UtcNow:O})") +
+                    "&valid_from=lte." + encodedNow +
+                    "&or=" + Uri.EscapeDataString($"(valid_to.is.null,valid_to.gt.{now:O})") +
                     "&limit=" + (MaximumAssignments + 1);
         var rows = await GetRowsAsync(query, cancellationToken);
         if (rows is null || rows.Value.ValueKind != JsonValueKind.Array ||
@@ -123,14 +124,13 @@ public sealed class SupabaseStationDirectoryService(
         var scopeFilter = filters.Count == 1
             ? filters[0]
             : "or=" + Uri.EscapeDataString("(" + string.Join(",", filters) + ")");
-        var prefix = filters.Count == 1 ? "&" : "&";
         var rows = new List<JsonElement>();
 
         for (var offset = 0; offset < MaximumCatalogueRows; offset += PageSize)
         {
             var query = BuildStationSelect() +
                         "&is_demo=eq.false&station_coordinates.valid_to=is.null&" +
-                        (filters.Count == 1 ? scopeFilter : scopeFilter) +
+                        scopeFilter +
                         "&order=name_ar.asc&limit=" + PageSize + "&offset=" + offset;
             if (!string.IsNullOrWhiteSpace(stationType))
                 query += "&station_type=eq." + Uri.EscapeDataString(stationType);
