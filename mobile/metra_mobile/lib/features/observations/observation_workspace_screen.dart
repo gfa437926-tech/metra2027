@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
@@ -26,7 +26,7 @@ class ObservationWorkspaceScreen extends StatelessWidget {
         length: 3,
         child: Column(
           children: [
-            Material(
+            const Material(
               color: Colors.white,
               child: TabBar(
                 labelColor: _navy,
