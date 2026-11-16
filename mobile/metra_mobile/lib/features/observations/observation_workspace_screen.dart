@@ -1,16 +1,17 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../../core/api/metra_api_client.dart';
+import '../../core/catalog/observation_field_catalogs.dart';
+import 'catalog_observation_screen.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
-import 'phenomenon_observation_screen.dart';
 import 'observation_review_screen.dart';
-import 'catalog_observation_screen.dart';
-import '../../core/catalog/observation_field_catalogs.dart';
+import 'phenomenon_observation_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
 
-/// Single observation destination: entry forms + review without nested sidebars.
+/// Observation workspace: approved server-backed forms + local-only catalogues.
 class ObservationWorkspaceScreen extends StatelessWidget {
   const ObservationWorkspaceScreen({
     super.key,
@@ -23,10 +24,10 @@ class ObservationWorkspaceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: DefaultTabController(
-        length: 11,
+    return DefaultTabController(
+      length: 11,
+      child: Directionality(
+        textDirection: TextDirection.rtl,
         child: Column(
           children: [
             const Material(
@@ -59,30 +60,37 @@ class ObservationWorkspaceScreen extends StatelessWidget {
                   const CatalogObservationScreen(
                     title: 'الرصد الزراعي',
                     fields: ObservationFieldCatalogs.agricultural,
+                    formCode: 'agricultural',
                   ),
                   const CatalogObservationScreen(
                     title: 'الرصد المناخي الساعي',
                     fields: ObservationFieldCatalogs.hourlyclimate,
+                    formCode: 'hourlyclimate',
                   ),
                   const CatalogObservationScreen(
                     title: 'رصد الأمطار',
                     fields: ObservationFieldCatalogs.rainfall,
+                    formCode: 'rainfall',
                   ),
                   const CatalogObservationScreen(
                     title: 'رصد التربة',
                     fields: ObservationFieldCatalogs.soil,
+                    formCode: 'soil',
                   ),
                   const CatalogObservationScreen(
                     title: 'أعطال الأجهزة',
                     fields: ObservationFieldCatalogs.faultequipment,
+                    formCode: 'faultequipment',
                   ),
                   const CatalogObservationScreen(
                     title: 'أعطال الاتصالات',
                     fields: ObservationFieldCatalogs.faulttelecom,
+                    formCode: 'faulttelecom',
                   ),
                   const CatalogObservationScreen(
                     title: 'بلاغات تقنية المعلومات',
                     fields: ObservationFieldCatalogs.faultit,
+                    formCode: 'faultit',
                   ),
                   ObservationReviewScreen(api: api, stationId: stationId),
                 ],
