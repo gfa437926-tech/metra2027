@@ -5,7 +5,7 @@ import '../observations/observation_workspace_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
 import '../admin/station_administration_screen.dart';
-import '../workspaces/metra_workspaces.dart';
+import '../workspaces/metra_workspaces.dart' hide SystemSettingsScreen;
 import '../settings/system_settings_screen.dart';
 
 const _navy = Color(0xFF061B4A);
