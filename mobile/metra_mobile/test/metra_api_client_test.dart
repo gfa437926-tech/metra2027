@@ -96,6 +96,58 @@ void main() {
     client.close();
   });
 
+  test('rejects unsupported observation types before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    await expectLater(
+      client.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'request-1',
+        observationType: 'agricultural',
+        observedAt: DateTime.utc(2026, 11, 16),
+        payload: const {'temperature': 20},
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'unsupported_observation_type')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('rejects blank or padded idempotency keys before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    for (final key in ['', ' request-1 ']) {
+      await expectLater(
+        client.submitObservation(
+          stationId: stationId,
+          idempotencyKey: key,
+          observationType: 'hourly',
+          observedAt: DateTime.utc(2026, 11, 16),
+          payload: const {'temperature': 20},
+        ),
+        throwsA(isA<MetraApiException>().having(
+          (error) => error.code, 'code', 'invalid_idempotency_key')),
+      );
+    }
+    expect(requests, 0);
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
