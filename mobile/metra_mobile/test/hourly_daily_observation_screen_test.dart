@@ -11,27 +11,28 @@ import 'package:metra_mobile/features/observations/hourly_observation_screen.dar
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
 
-  testWidgets('hourly screen shows title and submit control', (tester) async {
+  testWidgets('hourly screen shows title and configured submit label', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'token',
       client: MockClient((_) async => http.Response('{}', 200)),
     );
 
+    // MetraObservationForm builds its own Scaffold; do not nest another one.
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: HourlyObservationScreen(api: api, stationId: stationId),
-        ),
+        home: HourlyObservationScreen(api: api, stationId: stationId),
       ),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.textContaining('الساعي'), findsWidgets);
-    expect(find.textContaining('إرسال'), findsWidgets);
+    expect(find.text('الرصد الساعي'), findsOneWidget);
+    expect(find.text('التحقق وإرسال الرصد الساعي'), findsOneWidget);
+    expect(find.byType(FilledButton), findsWidgets);
     api.close();
   });
 
-  testWidgets('daily screen shows title and submit control', (tester) async {
+  testWidgets('daily screen shows title and configured submit label', (tester) async {
     final api = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'token',
@@ -40,14 +41,14 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(
-          body: DailyObservationScreen(api: api, stationId: stationId),
-        ),
+        home: DailyObservationScreen(api: api, stationId: stationId),
       ),
     );
+    await tester.pumpAndSettle();
 
-    expect(find.textContaining('اليومي'), findsWidgets);
-    expect(find.textContaining('إرسال'), findsWidgets);
+    expect(find.text('الرصد اليومي'), findsOneWidget);
+    expect(find.text('التحقق وإرسال الرصد اليومي'), findsOneWidget);
+    expect(find.byType(FilledButton), findsWidgets);
     api.close();
   });
 
@@ -150,7 +151,10 @@ void main() {
       fail('expected MetraApiException');
     } on MetraApiException catch (error) {
       expect(error.statusCode, 409);
-      expect(error.displayMessage, anyOf(contains('تعارض'), contains('مسبقاً'), contains('مُرسلة')));
+      expect(
+        error.displayMessage,
+        anyOf(contains('تعارض'), contains('مسبقاً'), contains('مُرسلة')),
+      );
     }
     api.close();
   });
