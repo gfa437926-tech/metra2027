@@ -131,7 +131,7 @@ void main() {
         return http.Response('{}', 200);
       }),
     );
-    for (final key in ['', ' request-1 ']) {
+    for (final key in ['', ' request-1 ', 'request 1']) {
       await expectLater(
         client.submitObservation(
           stationId: stationId,
