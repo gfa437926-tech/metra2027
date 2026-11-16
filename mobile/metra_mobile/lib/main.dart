@@ -25,6 +25,8 @@ class MetraApp extends StatelessWidget {
       scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     supportedLocales: const [Locale('ar'), Locale('en')],
+    // Required temporarily because flutter_map still uses SDK Material types.
+    // ignore: deprecated_member_use
     builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
         ? const MetraAuthGate()
