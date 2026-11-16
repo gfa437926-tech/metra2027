@@ -1,5 +1,8 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text.Json;
+using Metra.Api.Security;
 
 namespace Metra.Api.Features.Stations;
 
@@ -11,8 +14,8 @@ public interface IStationDirectoryService
 }
 
 /// <summary>
-/// Read-only authenticated directory projection. Only non-demo catalogue records
-/// are returned; operational membership and write permissions remain server-side.
+/// Read-only catalogue projection. The service-role key is server-only; callers
+/// must apply station/authority authorization before returning any catalogue rows.
 /// </summary>
 public sealed class SupabaseStationDirectoryService(
     IHttpClientFactory clients,
@@ -71,8 +74,46 @@ public sealed class SupabaseStationDirectoryService(
     }
 }
 
+public static class StationDirectoryVisibility
+{
+    // These are existing permission codes already enforced by the API/RPC contract.
+    // A station is visible only if at least one current station permission succeeds,
+    // or the user has the approved owner-authority catalogue-review permission.
+    private static readonly string[] StationReadPermissions =
+    [
+        "observation.create",
+        "observation.review",
+        "observation.approve",
+        "observation.return_for_correction",
+        "users.station.manage"
+    ];
+
+    public static async Task<bool> CanViewAsync(
+        IStationAuthorizationService authorization,
+        Guid userId,
+        Guid stationId,
+        CancellationToken cancellationToken)
+    {
+        if (!authorization.IsConfigured || userId == Guid.Empty || stationId == Guid.Empty)
+            return false;
+
+        foreach (var permission in StationReadPermissions)
+        {
+            if (await authorization.HasStationPermissionAsync(
+                    userId, stationId, permission, cancellationToken))
+                return true;
+        }
+
+        return await authorization.HasStationOwnerAuthorityPermissionAsync(
+            userId, stationId, "stations.catalogue.review", cancellationToken);
+    }
+}
+
 public static class StationDirectoryEndpoints
 {
+    private const int PageSize = 500;
+    private const int MaximumCatalogueRows = 10_000;
+
     public static IEndpointRouteBuilder MapStationDirectoryEndpoints(
         this IEndpointRouteBuilder endpoints)
     {
@@ -80,7 +121,9 @@ public static class StationDirectoryEndpoints
             int? limit,
             int? offset,
             string? stationType,
+            HttpContext http,
             IStationDirectoryService directory,
+            IStationAuthorizationService authorization,
             CancellationToken cancellationToken) =>
         {
             var take = limit ?? 250;
@@ -92,19 +135,62 @@ public static class StationDirectoryEndpoints
                 stationType is not ("classic" or "automatic" or "synoptic"))
                 return Results.BadRequest(new { error = "invalid_station_type" });
 
-            if (!directory.IsConfigured)
+            if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId) || userId == Guid.Empty)
+                return Results.Unauthorized();
+
+            if (!directory.IsConfigured || !authorization.IsConfigured)
                 return Results.Problem(
-                    title: "Station directory unavailable",
+                    title: "Station directory or authorization service unavailable",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            var stations = await directory.GetStationsAsync(
-                take, skip, stationType, cancellationToken);
-            if (stations is null)
-                return Results.Problem(
-                    title: "Station directory read failed",
-                    statusCode: StatusCodes.Status503ServiceUnavailable);
+            // Fetch the catalogue in bounded pages before applying user-specific
+            // filtering. Filtering after PostgREST pagination would otherwise hide
+            // a user's assigned station when unrelated rows precede it.
+            var catalogue = new List<JsonElement>();
+            for (var pageOffset = 0; pageOffset < MaximumCatalogueRows; pageOffset += PageSize)
+            {
+                var page = await directory.GetStationsAsync(
+                    PageSize, pageOffset, stationType, cancellationToken);
+                if (page is not { ValueKind: JsonValueKind.Array })
+                    return Results.Problem(
+                        title: "Station directory read failed",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            return Results.Ok(stations.Value);
+                var pageRows = page.Value.EnumerateArray().Select(row => row.Clone()).ToArray();
+                catalogue.AddRange(pageRows);
+                if (pageRows.Length < PageSize)
+                    break;
+
+                if (catalogue.Count >= MaximumCatalogueRows)
+                    return Results.Problem(
+                        title: "Station catalogue exceeds the safe directory limit",
+                        statusCode: StatusCodes.Status503ServiceUnavailable);
+            }
+
+            var visible = new bool[catalogue.Count];
+            await Parallel.ForEachAsync(
+                Enumerable.Range(0, catalogue.Count),
+                new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = 8,
+                    CancellationToken = cancellationToken
+                },
+                async (index, token) =>
+                {
+                    var row = catalogue[index];
+                    if (!row.TryGetProperty("id", out var idValue) ||
+                        idValue.ValueKind != JsonValueKind.String ||
+                        !Guid.TryParse(idValue.GetString(), out var stationId) ||
+                        stationId == Guid.Empty)
+                        return;
+
+                    visible[index] = await StationDirectoryVisibility.CanViewAsync(
+                        authorization, userId, stationId, token);
+                });
+
+            var authorizedRows = catalogue.Where((_, index) => visible[index]).ToArray();
+            var result = authorizedRows.Skip(skip).Take(take).ToArray();
+            return Results.Ok(result);
         })
         .WithTags("Stations")
         .WithName("GetStationDirectory");
