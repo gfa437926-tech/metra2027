@@ -1,0 +1,35 @@
+field_uid,field_id,name_ar,form_id,screen_id,requirement_id,data_type,unit,min,max,required,bound_source,scientific_status,relations,screen_source
+FLD-FAULT_EQUIPMENT-013,includeDetails,هذا العطل عاجل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,n/a_or_review,,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-014,includeContact,تضمين تفاصيل العطل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,n/a_or_review,,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-015,includeStatus,تضمين معلومات الاتصال,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,n/a_or_review,,pages/fix/fix.html
+FLD-FAULT_TELECOM-001,phoneType,نوع الهاتف,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-002,phoneBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-003,problemType,نوع العطل,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-004,description,وصف العطل,fault-telecom,,FR-FAULT-TEL,textarea,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-005,urgent,عاجل,fault-telecom,,FR-FAULT-TEL,checkbox,,,,False,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-006,towerType,نوع البرج,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-007,towerHeight,ارتفاع البرج,fault-telecom,,FR-FAULT-TEL,number,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-008,satelliteType,نوع النظام,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-009,satelliteBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-010,faxType,نوع الفاكس,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-011,faxBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-012,computerType,نوع الكمبيوتر,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-013,computerBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-014,laptopType,نوع اللابتوب,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-015,laptopBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-016,printerType,نوع الطابعة,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-017,printerBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-018,networkType,نوع الشبكة,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-019,networkBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-020,wifiType,نوع الشبكة,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,n/a_or_review,,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-021,wifiBrand,العلامة التجارية,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/fix-tel.html
+FLD-FAULT_IT-001,reporterName,اسم مقدم البلاغ,fault-it,,FR-FAULT-IT,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/it.html
+FLD-FAULT_IT-002,reporterPosition,الصفة الوظيفية,fault-it,,FR-FAULT-IT,text,,,,True,not_in_source,needs_scientific_review,,pages/fix/it.html
+FLD-FAULT_IT-003,reporterPhone,رقم الهاتف,fault-it,,FR-FAULT-IT,tel,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-004,bulletinType,نوع النشرة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-005,problemField,الحقل الذي به المشكلة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-006,problemType,نوع المشكلة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-007,problemDescription,وصف المشكلة,fault-it,,FR-FAULT-IT,textarea,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-008,problemUrgency,درجة الأهمية,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-009,filterStatus,تصفية الحالة,fault-it,,FR-FAULT-IT,select,,,,False,not_in_source,n/a_or_review,,pages/fix/it.html
+FLD-FAULT_IT-010,filterUrgency,تصفية الأهمية,fault-it,,FR-FAULT-IT,select,,,,False,not_in_source,n/a_or_review,,pages/fix/it.html

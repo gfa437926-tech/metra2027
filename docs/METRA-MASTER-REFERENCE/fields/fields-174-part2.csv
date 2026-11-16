@@ -1,0 +1,88 @@
+field_uid,field_id,name_ar,form_id,screen_id,requirement_id,data_type,unit,min,max,required,bound_source,screen_source
+FLD-AGRICULTURAL-020,avgSoilTemp10cm,تربة 10سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-021,avgSoilTemp20cm,تربة 20سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-022,avgSoilTemp50cm,تربة 50سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-023,fieldSoilTemp5cm,تربة حقل 5سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-024,fieldSoilTemp10cm,تربة حقل 10سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-025,logEvaporation,تبخر السجل,agricultural,,FR-OBS-AGRI,text,mm,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-026,dew,ندى,agricultural,,FR-OBS-AGRI,select,°C,,,True,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-027,fog,ضباب,agricultural,,FR-OBS-AGRI,select,,,,True,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-028,hail,برد,agricultural,,FR-OBS-AGRI,select,,,,True,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-029,sandstorm,عاصفة رملية,agricultural,,FR-OBS-AGRI,select,,,,True,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-030,observerNotes,ملاحظات,agricultural,,FR-OBS-AGRI,textarea,,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-031,responsibilityAgreement,إقرار,agricultural,,FR-OBS-AGRI,checkbox,,,,True,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-HOURLY_CLIMATE-001,utcTime,UTC,hourly-climate,,FR-OBS-HCLIMATE,select,hour,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-002,dryTemp,حرارة جافة,hourly-climate,,FR-OBS-HCLIMATE,text,°C,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-003,wetTemp,حرارة رطبة,hourly-climate,,FR-OBS-HCLIMATE,text,°C,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-004,stationPressure,ضغط محطة,hourly-climate,,FR-OBS-HCLIMATE,text,mbar,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-005,seaLevelPressure,ضغط بحر,hourly-climate,,FR-OBS-HCLIMATE,text,mbar,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-006,relativeHumidity,رطوبة,hourly-climate,,FR-OBS-HCLIMATE,text,%,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-007,dewPoint,ندى,hourly-climate,,FR-OBS-HCLIMATE,text,°C,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-008,windDirection,اتجاه,hourly-climate,,FR-OBS-HCLIMATE,text,,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-009,windSpeed,سرعة,hourly-climate,,FR-OBS-HCLIMATE,text,m/s,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-010,visibility,رؤية,hourly-climate,,FR-OBS-HCLIMATE,text,,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-011,cloudCover,غطاء سحب,hourly-climate,,FR-OBS-HCLIMATE,text,,,,False,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-012,weatherCode,رمز طقس,hourly-climate,,FR-OBS-HCLIMATE,text,,,,False,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-013,observerNotes,ملاحظات,hourly-climate,,FR-OBS-HCLIMATE,textarea,,,,False,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-014,responsibilityAgreement,إقرار,hourly-climate,,FR-OBS-HCLIMATE,checkbox,,,,True,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-HOURLY_CLIMATE-015,observationDate,تاريخ,hourly-climate,,FR-OBS-HCLIMATE,text,,,,False,not_in_source,pages/h_climate/h_climate_send/h_climate_send.html
+FLD-RAINFALL-001,currentDate,تاريخ إرسال,rainfall,,FR-OBS-RAIN,text,,,,False,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-002,localTime,وقت محلي,rainfall,,FR-OBS-RAIN,time,hour,,,False,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-003,utcTime,UTC,rainfall,,FR-OBS-RAIN,text,hour,,,False,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-004,rainAmount,هطول مم,rainfall,,FR-OBS-RAIN,text,mm,,,False,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-005,snowDepth,ثلج سم,rainfall,,FR-OBS-RAIN,text,cm,,,False,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-006,observationDate,تاريخ رصد,rainfall,,FR-OBS-RAIN,date,,,,True,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-RAINFALL-007,responsibilityAgreement,إقرار,rainfall,,FR-OBS-RAIN,checkbox,,,,True,not_in_source,pages/rain/rain_send/rainfall_reports.html
+FLD-SOIL-001,observationDate,تاريخ,soil,,FR-OBS-SOIL,date,,,,True,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-002,depth5,عمق5,soil,,FR-OBS-SOIL,text,°C,,,False,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-003,depth10,عمق10,soil,,FR-OBS-SOIL,text,°C,,,False,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-004,depth20,عمق20,soil,,FR-OBS-SOIL,text,°C,,,False,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-005,depth50,عمق50,soil,,FR-OBS-SOIL,text,°C,,,False,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-006,observerNotes,ملاحظات,soil,,FR-OBS-SOIL,textarea,,,,False,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-SOIL-007,responsibilityAgreement,إقرار,soil,,FR-OBS-SOIL,checkbox,,,,True,not_in_source,pages/soil/soil_send/soil-send.html
+FLD-FAULT_EQUIPMENT-001,failureType,نوع العطل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,select,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-002,failureDescription,وصف,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,textarea,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-003,failureSeverity,شدة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,select,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-004,failureImage,صورة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,file,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-005,urgentRepair,عاجل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-006,manualMeasurementType,نوع مقياس,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,text,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-007,manualMeasurementProblem,مشكلة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,select,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-008,manualMeasurementDescription,وصف قياس,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,textarea,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-009,manualMeasurementDate,وقت,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,datetime-local,hour,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-010,manualMeasurementSeverity,شدة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,select,,,,True,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-011,manualMeasurementImage,صورة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,file,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-012,manualMeasurementUrgent,عاجل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-013,includeDetails,تفاصيل,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-014,includeContact,اتصال,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_EQUIPMENT-015,includeStatus,حالة,fault-equipment,SCR-INSTRUMENTS,FR-FAULT-EQ,checkbox,,,,False,not_in_source,pages/fix/fix.html
+FLD-FAULT_TELECOM-001,phoneType,هاتف,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-002,phoneBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-003,problemType,نوع عطل,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-004,description,وصف,fault-telecom,,FR-FAULT-TEL,textarea,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-005,urgent,عاجل,fault-telecom,,FR-FAULT-TEL,checkbox,,,,False,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-006,towerType,برج,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-007,towerHeight,ارتفاع برج,fault-telecom,,FR-FAULT-TEL,number,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-008,satelliteType,قمر,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-009,satelliteBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-010,faxType,فاكس,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-011,faxBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-012,computerType,حاسوب,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-013,computerBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-014,laptopType,لابتوب,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-015,laptopBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-016,printerType,طابعة,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-017,printerBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-018,networkType,شبكة,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-019,networkBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-020,wifiType,واي فاي,fault-telecom,,FR-FAULT-TEL,select,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_TELECOM-021,wifiBrand,علامة,fault-telecom,,FR-FAULT-TEL,text,,,,True,not_in_source,pages/fix/fix-tel.html
+FLD-FAULT_IT-001,reporterName,مقدم البلاغ,fault-it,,FR-FAULT-IT,text,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-002,reporterPosition,صفة,fault-it,,FR-FAULT-IT,text,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-003,reporterPhone,هاتف,fault-it,,FR-FAULT-IT,tel,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-004,bulletinType,نشرة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-005,problemField,حقل مشكلة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-006,problemType,نوع مشكلة,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-007,problemDescription,وصف,fault-it,,FR-FAULT-IT,textarea,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-008,problemUrgency,أهمية,fault-it,,FR-FAULT-IT,select,,,,True,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-009,filterStatus,تصفية حالة,fault-it,,FR-FAULT-IT,select,,,,False,not_in_source,pages/fix/it.html
+FLD-FAULT_IT-010,filterUrgency,تصفية أهمية,fault-it,,FR-FAULT-IT,select,,,,False,not_in_source,pages/fix/it.html

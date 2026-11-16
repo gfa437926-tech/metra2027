@@ -1,0 +1,88 @@
+field_uid,field_id,name_ar,form_id,screen_id,requirement_id,data_type,unit,min,max,required,bound_source,screen_source
+FLD-HOURLY-001,currentDate,التاريخ (ميلادي),hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-002,currentTime,الوقت الحالي,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hour,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-003,utcTime,التوقيت العالمي UTC,hourly,SCR-HOURLY,FR-OBS-HOURLY,select,hour,0,23,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-004,dryTemp,درجة الحرارة الجافة,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-005,wetTemp,درجة الحرارة الرطبة,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-006,stationPressure,ضغط المحطة,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,850,1050,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-007,seaLevelPressure,ضغط سطح البحر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,1050,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-008,pressureSlope,ميل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-009,pressureShape,شكل الضغط,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-010,relativeHumidity,الرطوبة النسبية,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,%,1,100,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-011,vaporPressure,ضغط بخار الماء,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mbar,0,99,False,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-012,dewPoint,درجة الندى,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,°C,-20,50,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-013,vaporPressureDiff,فرق ضغط بخار,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-014,windDirection,اتجاه الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,code/degrees,0,36,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-015,windSpeed,سرعة الرياح,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,m/s,0,99,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-016,avgWindDirection,متوسط الاتجاه,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-017,avgWindSpeed,متوسط السرعة,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,m/s,0,99,False,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-018,visibility,الرؤية,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,hundreds of m,0,200,True,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-019,currentWeather,الطقس الحاضر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,99,False,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-020,pastWeather,الطقس الغابر,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,0,9,False,JS validation (proven),pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-021,precipitationAmount,كمية الهطول,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,mm,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-022,totalCloudCover,التغطية الكلية,hourly,SCR-HOURLY,FR-OBS-HOURLY,select,,,,True,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-023,cloud1Amount,كمية سحب1,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-024,cloud1Type,نوع سحب1,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-025,cloud1Height,ارتفاع سحب1,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-026,cloud2Amount,كمية سحب2,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-027,cloud2Type,نوع سحب2,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-028,cloud2Height,ارتفاع سحب2,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-029,cloud3Amount,كمية سحب3,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-030,cloud3Type,نوع سحب3,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-031,cloud3Height,ارتفاع سحب3,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-032,cloud4Amount,كمية سحب4,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-033,cover12,مجموع1+2,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,True,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-034,cover123,مجموع1+2+3,hourly,SCR-HOURLY,FR-OBS-HOURLY,text,,,,True,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-035,observerNotes,ملاحظات,hourly,SCR-HOURLY,FR-OBS-HOURLY,textarea,,,,False,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-HOURLY-036,responsibilityAgreement,إقرار,hourly,SCR-HOURLY,FR-OBS-HOURLY,checkbox,,,,True,not_in_source,pages/hourly/hourly_send/hourly_reports.html
+FLD-DAILY-001,currentDate,التاريخ,daily,SCR-DAILY,FR-OBS-DAILY,date,,,,True,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-002,report24h,تقرير24h,daily,SCR-DAILY,FR-OBS-DAILY,radio,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-003,report06UTC,06UTC,daily,SCR-DAILY,FR-OBS-DAILY,radio,hour,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-004,report18UTC,18UTC,daily,SCR-DAILY,FR-OBS-DAILY,radio,hour,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-005,minTemp,صغرى,daily,SCR-DAILY,FR-OBS-DAILY,text,°C,-20.0,50.0,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-006,maxTemp,عظمى,daily,SCR-DAILY,FR-OBS-DAILY,text,°C,-20.0,50.0,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-007,precipitation,هطول,daily,SCR-DAILY,FR-OBS-DAILY,text,mm,0.0,999.9,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-008,snowThickness,ثلج,daily,SCR-DAILY,FR-OBS-DAILY,text,cm,0,999,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-009,precipitationTrace,أثر,daily,SCR-DAILY,FR-OBS-DAILY,text,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-010,thunderstorm,رعد,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-011,hail,برد,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-012,snow,ثلج,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-013,rain,مطر,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-014,frost,صقيع,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-015,fog,ضباب,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-016,mist,شابورة,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-017,dustStorm,عاصفة غبار,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-018,blowingDust,غبار مثار,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-019,haze,ضباب دخاني,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-020,stormyWind,ريح عاصفة,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-021,evaporation,تبخر,daily,SCR-DAILY,FR-OBS-DAILY,text,mm,0.0,99.9,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-022,sunshineDuration,سطوع,daily,SCR-DAILY,FR-OBS-DAILY,text,hour,0.0,24.0,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-023,sunshinePercentage,نسبة سطوع,daily,SCR-DAILY,FR-OBS-DAILY,text,%,0,100,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-024,maxGustSpeed,نفحة,daily,SCR-DAILY,FR-OBS-DAILY,text,m/s,,,True,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-025,maxGustDirection,اتجاه نفحة,daily,SCR-DAILY,FR-OBS-DAILY,text,code/degrees,0,36,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-026,maxGustTime,وقت نفحة,daily,SCR-DAILY,FR-OBS-DAILY,text,hour,0.0,23.9,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-027,maxHumidity,رطوبة عظمى,daily,SCR-DAILY,FR-OBS-DAILY,text,%,0,100,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-028,maxHumidityTime,وقت رطوبة عظمى,daily,SCR-DAILY,FR-OBS-DAILY,text,hour,,,True,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-029,minHumidity,رطوبة صغرى,daily,SCR-DAILY,FR-OBS-DAILY,text,%,0,100,True,JS validation (proven),pages/daily/daily_send/daily.html
+FLD-DAILY-030,minHumidityTime,وقت رطوبة صغرى,daily,SCR-DAILY,FR-OBS-DAILY,text,hour,,,True,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-031,observerNotes,ملاحظات,daily,SCR-DAILY,FR-OBS-DAILY,textarea,,,,False,not_in_source,pages/daily/daily_send/daily.html
+FLD-DAILY-032,responsibilityAgreement,إقرار,daily,SCR-DAILY,FR-OBS-DAILY,checkbox,,,,True,not_in_source,pages/daily/daily_send/daily.html
+FLD-AGRICULTURAL-001,currentDate,التاريخ,agricultural,,FR-OBS-AGRI,text,,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-002,stationName,المحطة,agricultural,,FR-OBS-AGRI,text,,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-003,avgTemp,معدل الحرارة,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-004,maxTemp,عظمى,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-005,minTemp,صغرى,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-006,soilTemp,حرارة تربة,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-007,dewPoint,ندى,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-008,avgHumidity,رطوبة معدل,agricultural,,FR-OBS-AGRI,text,%,0,100,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-009,minHumidity,رطوبة صغرى,agricultural,,FR-OBS-AGRI,text,%,0,100,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-010,avgEsE,es-e معدل,agricultural,,FR-OBS-AGRI,text,,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-011,minEsE,es-e صغرى,agricultural,,FR-OBS-AGRI,text,,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-012,sunshineHours,سطوع,agricultural,,FR-OBS-AGRI,text,hour,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-013,totalCloudCover,تغطية كلية,agricultural,,FR-OBS-AGRI,text,,0,8,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-014,lowCloudCover,غيوم منخفضة,agricultural,,FR-OBS-AGRI,text,,0,8,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-015,precipitation,هطول,agricultural,,FR-OBS-AGRI,text,mm,0.0,999.9,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-016,maxWindSpeed,سرعة رياح,agricultural,,FR-OBS-AGRI,text,m/s,0,36,False,JS validation (proven),pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-017,classAEvaporation,تبخر CLASS-A,agricultural,,FR-OBS-AGRI,text,mm,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-018,avgWindSpeed2m,رياح 2م,agricultural,,FR-OBS-AGRI,text,m/s,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
+FLD-AGRICULTURAL-019,avgSoilTemp5cm,تربة 5سم,agricultural,,FR-OBS-AGRI,text,°C,,,False,not_in_source,pages/arg/send-argicultural/agricultural_reports.html
