@@ -8,7 +8,7 @@ on:
       - "mobile/metra_mobile/**"
       - "backend/**"
       - ".github/workflows/client-ci.yml"
-      - ".github/workflows/deploy-pages.yml"\n      - ".github/workflows/flutter-web-release.yml"
+      - ".github/workflows/deploy-pages.yml"\n      - ".github/workflows/flutter-web-release.yml"\n      - ".github/workflows/flutter-web-release.yml"
   pull_request:
     branches: [main]
     paths:
