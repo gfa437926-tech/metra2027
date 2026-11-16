@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
-class DailyObservationScreen extends StatelessWidget {
+class DailyObservationScreen extends StatefulWidget {
   const DailyObservationScreen({
     super.key,
     required this.api,
@@ -13,34 +15,68 @@ class DailyObservationScreen extends StatelessWidget {
   final MetraApiClient api;
   final String stationId;
 
-  Future<void> _submit(BuildContext context, Map<String, Object?> values) async {
+  @override
+  State<DailyObservationScreen> createState() => _DailyObservationScreenState();
+}
+
+class _DailyObservationScreenState extends State<DailyObservationScreen> {
+  String? _pendingPayloadFingerprint;
+  String? _pendingIdempotencyKey;
+  DateTime? _pendingObservedAt;
+
+  Future<void> _submit(Map<String, Object?> values) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final key =
-          'daily-${stationId}-${DateTime.now().toUtc().millisecondsSinceEpoch}';
-      await api.submitObservation(
-        stationId: stationId,
-        idempotencyKey: key,
+      final validation = await widget.api.validateObservation(
         observationType: 'daily',
-        observedAt: DateTime.now().toUtc(),
+        values: values,
+      );
+      if (!validation.isValid) {
+        final message = validation.issues.isEmpty
+            ? 'رفض الخادم بيانات الرصد اليومي.'
+            : validation.issues.first.message;
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+        return;
+      }
+
+      final fingerprint = jsonEncode(values);
+      if (_pendingPayloadFingerprint != fingerprint ||
+          _pendingIdempotencyKey == null) {
+        _pendingPayloadFingerprint = fingerprint;
+        _pendingIdempotencyKey = 'daily-' +
+            widget.stationId +
+            '-' +
+            DateTime.now().toUtc().microsecondsSinceEpoch.toString();
+        _pendingObservedAt = DateTime.now().toUtc();
+      }
+
+      await widget.api.submitObservation(
+        stationId: widget.stationId,
+        idempotencyKey: _pendingIdempotencyKey!,
+        observationType: 'daily',
+        observedAt: _pendingObservedAt!,
         payload: values,
         submit: true,
       );
+      _pendingPayloadFingerprint = null;
+      _pendingIdempotencyKey = null;
+      _pendingObservedAt = null;
       messenger.showSnackBar(
         const SnackBar(content: Text('أُرسلت الرصدة اليومية إلى الخادم')),
       );
-    } on MetraApiException catch (e) {
-      final msg = switch (e.statusCode) {
+    } on MetraApiException catch (error) {
+      final message = switch (error.statusCode) {
         503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
         401 => 'يلزم تسجيل الدخول من جديد.',
         403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => 'فشل الإرسال ($e.statusCode).',
+        _ => 'فشل الإرسال (' + error.statusCode.toString() + ').',
       };
-      messenger.showSnackBar(SnackBar(content: Text(msg)));
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       messenger.showSnackBar(
         const SnackBar(
-            content: Text('تعذر الإرسال. تحقق من الاتصال وأعد المحاولة.')),
+          content: Text('تعذر الإرسال. تحقق من الاتصال وأعد المحاولة.'),
+        ),
       );
     }
   }
@@ -50,8 +86,8 @@ class DailyObservationScreen extends StatelessWidget {
     return MetraObservationForm(
       title: 'الرصد اليومي',
       fields: ObservationFieldCatalogs.daily,
-      onSubmit: (values) => _submit(context, values),
-      submitLabel: 'إرسال الرصد اليومي',
+      onSubmit: _submit,
+      submitLabel: 'التحقق وإرسال الرصد اليومي',
     );
   }
 }
