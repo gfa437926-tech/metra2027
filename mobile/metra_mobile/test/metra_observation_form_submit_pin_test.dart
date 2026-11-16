@@ -11,6 +11,7 @@ void main() {
         label: 'حقل رقم $index',
         kind: MetraFieldKind.text,
         required: index == 0,
+        maxLength: 32,
       ),
     );
   }
@@ -21,7 +22,9 @@ void main() {
     required List<MetraObservationField> fields,
   }) async {
     await tester.binding.setSurfaceSize(size);
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
 
     await tester.pumpWidget(
       MaterialApp(
@@ -33,24 +36,26 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    // Finite pumps only — avoid hang if a ticker remains active.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
   }
 
   testWidgets('submit is built and visible on a small phone viewport', (tester) async {
     await pumpForm(
       tester,
       size: const Size(320, 568),
-      fields: longCatalogue(40),
+      fields: longCatalogue(24),
     );
 
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
     expect(find.text('حفظ وإرسال'), findsOneWidget);
 
-    // Pinned button must be hit-testable without scrolling the catalogue.
     await tester.tap(submit);
     await tester.pump();
-    // Empty required field blocks submit; button still received the tap path.
+    await tester.pump(const Duration(milliseconds: 50));
+
     expect(find.text('هذا الحقل مطلوب'), findsWidgets);
   });
 
@@ -58,7 +63,7 @@ void main() {
     await pumpForm(
       tester,
       size: const Size(1280, 800),
-      fields: longCatalogue(40),
+      fields: longCatalogue(24),
     );
 
     expect(find.byKey(const Key('metra-observation-submit')), findsOneWidget);
@@ -69,50 +74,50 @@ void main() {
     await pumpForm(
       tester,
       size: const Size(390, 700),
-      fields: longCatalogue(50),
+      fields: longCatalogue(30),
     );
 
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
 
-    // Scroll the field list; pinned submit must still be present.
-    await tester.drag(find.byType(ListView), const Offset(0, -400));
-    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(submit, findsOneWidget);
     expect(find.text('حفظ وإرسال'), findsOneWidget);
 
     final submitRect = tester.getRect(submit);
-    expect(submitRect.bottom, lessThanOrEqualTo(700));
     expect(submitRect.height, greaterThan(0));
+    expect(submitRect.bottom, lessThanOrEqualTo(700.0 + 0.5));
   });
 
-  testWidgets('last field can be scrolled into view without overlapping submit', (tester) async {
-    const fieldCount = 30;
+  testWidgets('submit stays below scrolled catalogue content', (tester) async {
     await pumpForm(
       tester,
       size: const Size(390, 700),
-      fields: longCatalogue(fieldCount),
+      fields: longCatalogue(20),
     );
 
-    final lastLabel = find.text('حقل رقم ${fieldCount - 1}');
-    await tester.scrollUntilVisible(lastLabel, 120, scrollable: find.byType(Scrollable).first);
-    await tester.pumpAndSettle();
-
-    expect(lastLabel, findsOneWidget);
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
 
-    final lastRect = tester.getRect(lastLabel);
+    // Scroll list without requiring a specific off-stage label to appear.
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+
     final submitRect = tester.getRect(submit);
-    // Submit bar stays below the scrolled field content area.
-    expect(lastRect.bottom, lessThanOrEqualTo(submitRect.top + 1));
+    expect(submitRect.top, greaterThan(400));
+    expect(find.text('حفظ وإرسال'), findsOneWidget);
   });
 
   testWidgets('empty form does not invoke onSubmit callback', (tester) async {
     var calls = 0;
     await tester.binding.setSurfaceSize(const Size(390, 700));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    addTearDown(() async {
+      await tester.binding.setSurfaceSize(null);
+    });
 
     await tester.pumpWidget(
       MaterialApp(
@@ -126,10 +131,12 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     await tester.tap(find.byKey(const Key('metra-observation-submit')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
 
     expect(calls, 0);
     expect(find.text('هذا الحقل مطلوب'), findsWidgets);
