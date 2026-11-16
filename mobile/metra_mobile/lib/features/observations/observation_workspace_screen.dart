@@ -3,6 +3,8 @@ import '../../core/api/metra_api_client.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
 import 'observation_review_screen.dart';
+import 'catalog_observation_screen.dart';
+import '../../core/catalog/observation_field_catalogs.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -23,17 +25,25 @@ class ObservationWorkspaceScreen extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: DefaultTabController(
-        length: 3,
+        length: 10,
         child: Column(
           children: [
             const Material(
               color: Colors.white,
               child: const TabBar(
+                isScrollable: true,
                 labelColor: _navy,
                 indicatorColor: _blue,
                 tabs: const [
                   Tab(text: 'رصد ساعي'),
                   Tab(text: 'رصد يومي'),
+                  Tab(text: 'زراعي'),
+                  Tab(text: 'مناخي ساعي'),
+                  Tab(text: 'أمطار'),
+                  Tab(text: 'تربة'),
+                  Tab(text: 'أعطال أجهزة'),
+                  Tab(text: 'اتصالات'),
+                  Tab(text: 'تقنية المعلومات'),
                   Tab(text: 'مراجعة'),
                 ],
               ),
@@ -43,6 +53,13 @@ class ObservationWorkspaceScreen extends StatelessWidget {
                 children: [
                   HourlyObservationScreen(api: api, stationId: stationId),
                   DailyObservationScreen(api: api, stationId: stationId),
+                  CatalogObservationScreen(title: 'الرصد الزراعي', fields: ObservationFieldCatalogs.agricultural),
+                  CatalogObservationScreen(title: 'الرصد المناخي الساعي', fields: ObservationFieldCatalogs.hourlyclimate),
+                  CatalogObservationScreen(title: 'رصد الأمطار', fields: ObservationFieldCatalogs.rainfall),
+                  CatalogObservationScreen(title: 'رصد التربة', fields: ObservationFieldCatalogs.soil),
+                  CatalogObservationScreen(title: 'أعطال الأجهزة', fields: ObservationFieldCatalogs.faultequipment),
+                  CatalogObservationScreen(title: 'أعطال الاتصالات', fields: ObservationFieldCatalogs.faulttelecom),
+                  CatalogObservationScreen(title: 'بلاغات تقنية المعلومات', fields: ObservationFieldCatalogs.faultit),
                   ObservationReviewScreen(api: api, stationId: stationId),
                 ],
               ),
