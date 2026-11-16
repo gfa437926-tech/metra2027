@@ -6,6 +6,7 @@ import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
 import '../admin/station_administration_screen.dart';
 import '../workspaces/metra_workspaces.dart';
+import '../settings/system_settings_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -68,7 +69,7 @@ class _MetraHomeState extends State<MetraHome> {
       SystemSettingsScreen(
         userEmail: widget.userEmail,
         onSignOut: widget.onSignOut,
-      )
+      ),
     ];
 
     return Directionality(
@@ -77,7 +78,7 @@ class _MetraHomeState extends State<MetraHome> {
         appBar: AppBar(
           backgroundColor: _navy,
           foregroundColor: Colors.white,
-          title: const Text('METRA 2027'),
+          title: const Text('METRA 2027 — منظومة الأرصاد'),
           actions: [
             Padding(
               padding: const EdgeInsetsDirectional.only(end: 16),
@@ -159,74 +160,109 @@ class _MetraHomeState extends State<MetraHome> {
 
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview({
+    required this.stationId,
     required this.onOpenStations,
     required this.onOpenObservations,
-    this.stationId,
   });
+
+  final String? stationId;
   final VoidCallback onOpenStations;
   final VoidCallback onOpenObservations;
-  final String? stationId;
 
   @override
-  Widget build(BuildContext context) => ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: const LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [Color(0xFF061746), Color(0xFF0754B5)],
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'لوحة التشغيل',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: _navy,
+                fontWeight: FontWeight.bold,
               ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          stationId == null
+              ? 'ابدأ باختيار محطة من الدليل. تُفرض صلاحيات الرصد والمراجعة على الخادم.'
+              : 'المحطة النشطة: $stationId',
+          style: const TextStyle(color: Color(0xFF475569), height: 1.5),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _QuickActionCard(
+              icon: Icons.map_outlined,
+              title: 'دليل المحطات',
+              subtitle: 'اختيار محطة العمل',
+              onTap: onOpenStations,
             ),
+            _QuickActionCard(
+              icon: Icons.fact_check_outlined,
+              title: 'وحدة الرصد',
+              subtitle: stationId == null ? 'يتطلب اختيار محطة' : 'ساعي · يومي · ظاهرة',
+              onTap: onOpenObservations,
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        const Card(
+          elevation: 0,
+          child: Padding(
+            padding: EdgeInsets.all(14),
+            child: Text(
+              'النماذج المتصلة بالخادم حالياً: الرصد الساعي، الرصد اليومي، الظواهر الجوية، ومراجعة الأرصاد. '
+              'بقية النماذج متاحة للتحقق المحلي فقط حتى اعتماد عقود API.',
+              style: TextStyle(height: 1.55, color: Color(0xFF334155)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      child: Card(
+        elevation: 0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.cloud_outlined, color: Colors.white, size: 38),
-                const SizedBox(height: 16),
-                const Text(
-                  'ذكاء الأرصاد يبدأ من بيانات موثوقة',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  stationId == null
-                      ? 'اختر محطة من الدليل لبدء الرصد والمراجعة'
-                      : 'المحطة النشطة: $stationId',
-                  style: const TextStyle(color: Color(0xFFD6E8FF)),
-                ),
+                Icon(icon, color: _blue),
+                const SizedBox(height: 10),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
               ],
             ),
           ),
-          const SizedBox(height: 18),
-          const _StatusCard(
-            icon: Icons.cloud_off_outlined,
-            title: 'الطقس المباشر غير متصل',
-            description:
-                'لن تُعرض درجات حرارة أو رياح تجريبية على أنها قياسات فعلية.',
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.map_outlined,
-            title: 'استعراض المحطات',
-            description: 'الدليل المعتمد من واجهة المحطات على الخادم.',
-            onTap: onOpenStations,
-          ),
-          const SizedBox(height: 12),
-          _ActionCard(
-            icon: Icons.edit_note_outlined,
-            title: 'إدخال ومراجعة الرصد',
-            description:
-                'نماذج ساعي/يومي من كتالوج الحقول المعتمد، مع إرسال عبر API الحالي.',
-            onTap: onOpenObservations,
-          ),
-        ],
-      );
+        ),
+      ),
+    );
+  }
 }
 
 class _InformationPage extends StatelessWidget {
@@ -235,85 +271,27 @@ class _InformationPage extends StatelessWidget {
     required this.title,
     required this.message,
   });
+
   final IconData icon;
   final String title;
   final String message;
-  @override
-  Widget build(BuildContext context) => Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: _StatusCard(
-              icon: icon,
-              title: title,
-              description: message,
-            ),
-          ),
-        ),
-      );
-}
 
-class _StatusCard extends StatelessWidget {
-  const _StatusCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-  final IconData icon;
-  final String title;
-  final String description;
   @override
-  Widget build(BuildContext context) => Card(
-        elevation: 0,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, color: _blue, size: 30),
-              const SizedBox(height: 12),
-              Text(title,
-                  style: const TextStyle(
-                      color: _navy, fontSize: 17, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(description,
-                  style:
-                      const TextStyle(color: Color(0xFF64748B), height: 1.6)),
-            ],
-          ),
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: _blue),
+            const SizedBox(height: 12),
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const SizedBox(height: 8),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(height: 1.5)),
+          ],
         ),
-      );
-}
-
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) => Card(
-        elevation: 0,
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          leading: Icon(icon, color: _blue, size: 28),
-          title: Text(title,
-              style:
-                  const TextStyle(color: _navy, fontWeight: FontWeight.bold)),
-          subtitle: Text(description),
-          trailing: const Icon(Icons.chevron_left),
-          onTap: onTap,
-        ),
-      );
+      ),
+    );
+  }
 }
