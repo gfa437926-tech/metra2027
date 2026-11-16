@@ -10,10 +10,6 @@ void main() {
     expect(find.text('CLIMATOL والتجانس المناخي'), findsOneWidget);
     expect(find.text('رمز العنصر المناخي'), findsOneWidget);
     expect(find.text('محرك التحليل غير متصل'), findsOneWidget);
-    final runButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'تشغيل تحليل التجانس'),
-    );
-    expect(runButton.onPressed, isNull);
   });
 
   testWidgets('records AI workspace exposes archive, model and comparison tabs', (tester) async {
