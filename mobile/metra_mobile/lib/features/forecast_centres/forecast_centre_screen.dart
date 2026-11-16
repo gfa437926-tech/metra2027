@@ -70,7 +70,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
         return Directionality(
           textDirection: TextDirection.rtl,
           child: ListView(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             children: [
               _intro(),
               const SizedBox(height: 12),
@@ -155,7 +155,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
         color: Color(0xFFFFF7E8),
         elevation: 0,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
