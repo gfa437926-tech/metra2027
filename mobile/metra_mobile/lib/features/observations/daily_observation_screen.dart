@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/widgets/metra_observation_form.dart';
@@ -43,10 +43,11 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
       if (_pendingPayloadFingerprint != fingerprint ||
           _pendingIdempotencyKey == null) {
         _pendingPayloadFingerprint = fingerprint;
-        _pendingIdempotencyKey = 'daily-' +
-            widget.stationId +
-            '-' +
-            DateTime.now().toUtc().microsecondsSinceEpoch.toString();
+        _pendingIdempotencyKey = <String>[
+          'daily',
+          widget.stationId,
+          DateTime.now().toUtc().microsecondsSinceEpoch.toString(),
+        ].join('-');
         _pendingObservedAt = DateTime.now().toUtc();
       }
 
@@ -69,7 +70,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
         503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
         401 => 'يلزم تسجيل الدخول من جديد.',
         403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => 'فشل الإرسال (' + error.statusCode.toString() + ').',
+        _ => <String>['فشل الإرسال (', error.statusCode.toString(), ').'].join(),
       };
       messenger.showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
