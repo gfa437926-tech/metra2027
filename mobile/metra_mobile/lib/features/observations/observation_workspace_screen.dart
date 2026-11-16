@@ -28,7 +28,7 @@ class ObservationWorkspaceScreen extends StatelessWidget {
           children: [
             const Material(
               color: Colors.white,
-              child: TabBar(
+              child: const TabBar(
                 labelColor: _navy,
                 indicatorColor: _blue,
                 tabs: const [
