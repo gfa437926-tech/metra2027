@@ -66,6 +66,36 @@ public sealed class StationDirectoryVisibilityTests
     }
 
     [Fact]
+    public async Task Authority_scope_is_checked_once_against_the_authority_permission_rpc()
+    {
+        var authorization = new FakeAuthorization(
+            stationPermission: _ => false,
+            authorityPermission: code => code == "stations.catalogue.review");
+
+        var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.True(allowed);
+        Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
+        Assert.Empty(authorization.StationPermissionCalls);
+    }
+
+    [Fact]
+    public async Task Authority_scope_fails_closed_without_a_valid_authority_permission()
+    {
+        var authorization = new FakeAuthorization(stationPermission: _ => true);
+
+        var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.False(allowed);
+        Assert.Empty(authorization.StationPermissionCalls);
+        Assert.Equal(
+            new[] { "stations.catalogue.review", "registrations.system.approve" },
+            authorization.AuthorityPermissionCalls);
+    }
+
+    [Fact]
     public async Task User_without_any_station_or_authority_permission_sees_no_station()
     {
         var authorization = new FakeAuthorization(stationPermission: _ => false);
@@ -120,6 +150,14 @@ public sealed class StationDirectoryVisibilityTests
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
             Guid userId, Guid stationId, string permissionCode,
+            CancellationToken cancellationToken = default)
+        {
+            AuthorityPermissionCalls.Add(permissionCode);
+            return Task.FromResult(authorityPermission?.Invoke(permissionCode) ?? false);
+        }
+
+        public Task<bool> HasAuthorityPermissionAsync(
+            Guid userId, Guid authorityId, string permissionCode,
             CancellationToken cancellationToken = default)
         {
             AuthorityPermissionCalls.Add(permissionCode);
