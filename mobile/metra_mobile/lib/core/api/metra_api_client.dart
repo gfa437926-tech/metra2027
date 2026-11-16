@@ -144,6 +144,7 @@ class MetraApiClient {
   }
 
   Future<List<ObservationQueueItem>> getReviewQueue(String stationId, {int limit = 50}) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final response = await _send('GET',
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit');
@@ -159,6 +160,8 @@ class MetraApiClient {
     required String decision,
     String? note,
   }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    _requirePathIdentifier(observationId, 'invalid_observation_id');
     if (decision != 'approve' && decision != 'return_for_correction') {
       throw const MetraApiException(400, 'invalid_observation_decision');
     }
@@ -177,18 +180,21 @@ class MetraApiClient {
   }
 
   Future<List<Map<String, dynamic>>> getStationUsers(String stationId, {int limit = 250}) {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
     if (limit < 1 || limit > 500) throw const MetraApiException(400, 'invalid_limit');
     final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/users?limit=', limit.toString()].join();
     return _getJsonRecords(path, 'invalid_station_user_directory');
   }
 
   Future<List<Map<String, dynamic>>> getStationRegistrationRequests(String stationId, {int limit = 50}) {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
     if (limit < 1 || limit > 100) throw const MetraApiException(400, 'invalid_limit');
     final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/registration-requests?limit=', limit.toString()].join();
     return _getJsonRecords(path, 'invalid_station_registration_queue');
   }
 
   Future<List<Map<String, dynamic>>> getStationAuditLog(String stationId, {int limit = 100}) {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
     if (limit < 1 || limit > 250) throw const MetraApiException(400, 'invalid_limit');
     final path = <String>['/api/v1/stations/', Uri.encodeComponent(stationId), '/audit-log?limit=', limit.toString()].join();
     return _getJsonRecords(path, 'invalid_station_audit_log');
@@ -200,6 +206,8 @@ class MetraApiClient {
     required String decision,
     String? note,
   }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    _requirePathIdentifier(requestId, 'invalid_registration_request_id');
     if (decision != 'approve' && decision != 'reject') {
       throw const MetraApiException(400, 'invalid_registration_decision');
     }
@@ -302,9 +310,7 @@ class MetraApiClient {
     required String idempotencyKey, required String observationType,
     required DateTime observedAt, required Map<String, dynamic> payload,
     bool submit = false}) async {
-    if (stationId.trim().isEmpty || stationId != stationId.trim()) {
-      throw const MetraApiException(400, 'invalid_station_id');
-    }
+    _requirePathIdentifier(stationId, 'invalid_station_id');
     if (idempotencyKey.trim().isEmpty || idempotencyKey != idempotencyKey.trim()) {
       throw const MetraApiException(400, 'invalid_idempotency_key');
     }
@@ -315,6 +321,15 @@ class MetraApiClient {
       body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
         'observedAt': observedAt.toUtc().toIso8601String(),
         'payload': payload, 'submit': submit});
+  }
+
+  void _requirePathIdentifier(String value, String errorCode) {
+    if (value.trim().isEmpty ||
+        value != value.trim() ||
+        value.contains(RegExp(r'\s')) ||
+        value.contains(RegExp(r'[\x00-\x1F\x7F]'))) {
+      throw MetraApiException(400, errorCode);
+    }
   }
 
   Future<http.Response> _send(String method, String path,
