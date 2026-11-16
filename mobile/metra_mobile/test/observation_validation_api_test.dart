@@ -64,14 +64,15 @@ void main() {
       accessTokenProvider: () async => 'validation-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(
-          jsonEncode({
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
             'isValid': false,
             'issues': [
               {'field': 'minTemp', 'message': 'تنسيق غير صالح'}
             ]
-          }),
+          })),
           200,
+          headers: {'content-type': 'application/json'},
         );
       }),
     );
