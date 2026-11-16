@@ -50,6 +50,22 @@ public sealed class StationDirectoryVisibilityTests
     }
 
     [Fact]
+    public async Task Authorized_system_auditor_can_see_owner_authority_stations()
+    {
+        var authorization = new FakeAuthorization(
+            stationPermission: _ => false,
+            authorityPermission: code => code == "registrations.system.approve");
+
+        var allowed = await StationDirectoryVisibility.CanViewAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.True(allowed);
+        Assert.Equal(
+            new[] { "stations.catalogue.review", "registrations.system.approve" },
+            authorization.AuthorityPermissionCalls);
+    }
+
+    [Fact]
     public async Task User_without_any_station_or_authority_permission_sees_no_station()
     {
         var authorization = new FakeAuthorization(stationPermission: _ => false);
