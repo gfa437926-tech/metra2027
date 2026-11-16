@@ -164,6 +164,54 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     }
   }
 
+  Future<void> _pickFieldValue(MetraObservationField field) async {
+    final controller = _controllers[field.id];
+    if (controller == null) return;
+    String twoDigits(int value) => value.toString().padLeft(2, '0');
+    final current = DateTime.tryParse(controller.text) ?? DateTime.now();
+
+    if (field.kind == MetraFieldKind.date || field.kind == MetraFieldKind.datetime) {
+      final date = await showDatePicker(
+        context: context,
+        initialDate: current,
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+      );
+      if (date == null || !mounted) return;
+      if (field.kind == MetraFieldKind.date) {
+        setState(() {
+          controller.text = <String>[
+            date.year.toString().padLeft(4, '0'),
+            twoDigits(date.month),
+            twoDigits(date.day),
+          ].join('-');
+        });
+        return;
+      }
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(current),
+      );
+      if (time == null || !mounted) return;
+      setState(() {
+        controller.text = DateTime(date.year, date.month, date.day, time.hour, time.minute).toIso8601String();
+      });
+      return;
+    }
+
+    if (field.kind == MetraFieldKind.time) {
+      final parts = controller.text.split(':');
+      final initial = TimeOfDay(
+        hour: int.tryParse(parts.first) ?? current.hour,
+        minute: parts.length > 1 ? int.tryParse(parts[1]) ?? current.minute : current.minute,
+      );
+      final time = await showTimePicker(context: context, initialTime: initial);
+      if (time == null || !mounted) return;
+      setState(() {
+        controller.text = <String>[twoDigits(time.hour), twoDigits(time.minute)].join(':');
+      });
+    }
+  }
   Widget _buildField(MetraObservationField field) {
     if (field.kind == MetraFieldKind.file) {
       return InputDecorator(
@@ -236,8 +284,12 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       );
     }
 
+    final usesPicker = field.kind == MetraFieldKind.date ||
+        field.kind == MetraFieldKind.time || field.kind == MetraFieldKind.datetime;
     return TextFormField(
       controller: _controllers[field.id],
+      readOnly: usesPicker,
+      onTap: usesPicker ? () => _pickFieldValue(field) : null,
       keyboardType: switch (field.kind) {
         MetraFieldKind.integer => TextInputType.number,
         MetraFieldKind.decimal =>
