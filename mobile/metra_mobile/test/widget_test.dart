@@ -150,9 +150,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
     expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
-    await tester.tap(find.byType(CheckboxListTile).at(0));
+    final firstStationChoice = find.byType(CheckboxListTile).at(0);
+    await tester.ensureVisible(firstStationChoice);
+    await tester.tap(firstStationChoice);
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(CheckboxListTile).at(1));
+    final secondStationChoice = find.byType(CheckboxListTile).at(1);
+    await tester.ensureVisible(secondStationChoice);
+    await tester.tap(secondStationChoice);
     await tester.pumpAndSettle();
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
     expect(find.text('1200.0 م'), findsOneWidget);
