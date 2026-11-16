@@ -46,7 +46,7 @@ public sealed class StationDirectoryVisibilityTests
 
         Assert.True(allowed);
         Assert.Equal(5, authorization.StationPermissionCalls.Count);
-        Assert.Equal(new[] { "stations.catalogue.review", "registrations.system.approve" }, authorization.AuthorityPermissionCalls);
+        Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public sealed class StationDirectoryVisibilityTests
 
         Assert.False(allowed);
         Assert.Equal(5, authorization.StationPermissionCalls.Count);
-        Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
+        Assert.Equal(new[] { "stations.catalogue.review", "registrations.system.approve" }, authorization.AuthorityPermissionCalls);
     }
 
     [Theory]
