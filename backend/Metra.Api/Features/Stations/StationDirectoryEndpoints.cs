@@ -10,16 +10,29 @@ public interface IStationDirectoryService
     bool IsConfigured { get; }
     Task<JsonElement?> GetStationsAsync(
         int limit, int offset, string? stationType, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Guid>?> GetAssignedStationIdsAsync(
+        Guid userId, CancellationToken cancellationToken);
+    Task<IReadOnlyList<Guid>?> GetAuthorityIdsAsync(
+        Guid userId, CancellationToken cancellationToken);
+    Task<JsonElement?> GetStationsByScopeAsync(
+        IReadOnlyCollection<Guid> stationIds,
+        IReadOnlyCollection<Guid> authorityIds,
+        string? stationType,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
-/// Read-only catalogue projection. The service-role key is server-only; callers
-/// must apply station/authority authorization before returning any catalogue rows.
+/// Read-only catalogue projection. The service-role key is server-only. The
+/// scoped query accepts only station and authority IDs obtained from the
+/// authenticated user's active assignment/membership read models.
 /// </summary>
 public sealed class SupabaseStationDirectoryService(
     IHttpClientFactory clients,
     IConfiguration configuration) : IStationDirectoryService
 {
+    private const int PageSize = 500;
+    private const int MaximumCatalogueRows = 10_000;
+    private const int MaximumAssignments = 1_000;
     private readonly string? _url = configuration["Supabase:Url"];
     private readonly string? _key = configuration["Supabase:ServiceRoleKey"];
 
@@ -28,22 +41,123 @@ public sealed class SupabaseStationDirectoryService(
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_key);
 
-    public async Task<JsonElement?> GetStationsAsync(
+    public Task<JsonElement?> GetStationsAsync(
         int limit, int offset, string? stationType, CancellationToken cancellationToken)
     {
-        if (!IsConfigured || limit is < 1 or > 500 || offset < 0)
+        if (limit is < 1 or > PageSize || offset < 0)
+            return Task.FromResult<JsonElement?>(null);
+
+        var filter = BuildStationSelect();
+        filter += "&is_demo=eq.false&station_coordinates.valid_to=is.null";
+        filter += "&order=name_ar.asc&limit=" + limit + "&offset=" + offset;
+        if (!string.IsNullOrWhiteSpace(stationType))
+            filter += "&station_type=eq." + Uri.EscapeDataString(stationType);
+
+        return GetRowsAsync("station_catalogue?" + filter, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Guid>?> GetAssignedStationIdsAsync(
+        Guid userId, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || userId == Guid.Empty)
             return null;
 
-        var query =
-            "select=id,local_station_code,wmo_station_id,name_ar,name_en,station_type," +
-            "operational_status,approval_status,is_demo,elevation_m,station_coordinates(latitude,longitude,coordinate_source,accuracy_m)" +
-            "&is_demo=eq.false&station_coordinates.valid_to=is.null" +
-            "&order=name_ar.asc&limit=" + limit + "&offset=" + offset;
-        if (!string.IsNullOrWhiteSpace(stationType))
-            query += "&station_type=eq." + Uri.EscapeDataString(stationType);
+        var now = Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"));
+        var query = "station_assignments?select=station_id" +
+                    "&user_id=eq." + userId +
+                    "&approval_status=eq.approved" +
+                    "&valid_from=lte." + now +
+                    "&or=" + Uri.EscapeDataString($"(valid_to.is.null,valid_to.gt.{DateTimeOffset.UtcNow:O})") +
+                    "&limit=" + (MaximumAssignments + 1);
+        var rows = await GetRowsAsync(query, cancellationToken);
+        if (rows is null || rows.Value.ValueKind != JsonValueKind.Array ||
+            rows.Value.GetArrayLength() > MaximumAssignments)
+            return null;
+
+        return ReadGuidColumn(rows.Value, "station_id");
+    }
+
+    public async Task<IReadOnlyList<Guid>?> GetAuthorityIdsAsync(
+        Guid userId, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || userId == Guid.Empty)
+            return null;
+
+        var now = DateTimeOffset.UtcNow;
+        var encodedNow = Uri.EscapeDataString(now.ToString("O"));
+        var query = "authority_memberships?select=authority_id" +
+                    "&user_id=eq." + userId +
+                    "&approval_status=eq.approved" +
+                    "&valid_from=lte." + encodedNow +
+                    "&or=" + Uri.EscapeDataString($"(valid_to.is.null,valid_to.gt.{now:O})") +
+                    "&limit=" + (MaximumAssignments + 1);
+        var rows = await GetRowsAsync(query, cancellationToken);
+        if (rows is null || rows.Value.ValueKind != JsonValueKind.Array ||
+            rows.Value.GetArrayLength() > MaximumAssignments)
+            return null;
+
+        return ReadGuidColumn(rows.Value, "authority_id");
+    }
+
+    public async Task<JsonElement?> GetStationsByScopeAsync(
+        IReadOnlyCollection<Guid> stationIds,
+        IReadOnlyCollection<Guid> authorityIds,
+        string? stationType,
+        CancellationToken cancellationToken)
+    {
+        if (!IsConfigured || stationIds.Count > MaximumAssignments ||
+            authorityIds.Count > MaximumAssignments)
+            return null;
+
+        var ids = stationIds.Where(id => id != Guid.Empty).Distinct().ToArray();
+        var authorities = authorityIds.Where(id => id != Guid.Empty).Distinct().ToArray();
+        if (ids.Length == 0 && authorities.Length == 0)
+            return JsonDocument.Parse("[]").RootElement.Clone();
+
+        var filters = new List<string>();
+        if (ids.Length > 0)
+            filters.Add("id.in.(" + string.Join(",", ids) + ")");
+        if (authorities.Length > 0)
+            filters.Add("owner_authority_id.in.(" + string.Join(",", authorities) + ")");
+
+        var scopeFilter = filters.Count == 1
+            ? filters[0]
+            : "or=" + Uri.EscapeDataString("(" + string.Join(",", filters) + ")");
+        var prefix = filters.Count == 1 ? "&" : "&";
+        var rows = new List<JsonElement>();
+
+        for (var offset = 0; offset < MaximumCatalogueRows; offset += PageSize)
+        {
+            var query = BuildStationSelect() +
+                        "&is_demo=eq.false&station_coordinates.valid_to=is.null&" +
+                        (filters.Count == 1 ? scopeFilter : scopeFilter) +
+                        "&order=name_ar.asc&limit=" + PageSize + "&offset=" + offset;
+            if (!string.IsNullOrWhiteSpace(stationType))
+                query += "&station_type=eq." + Uri.EscapeDataString(stationType);
+
+            var page = await GetRowsAsync("station_catalogue?" + query, cancellationToken);
+            if (page is null || page.Value.ValueKind != JsonValueKind.Array)
+                return null;
+
+            var pageRows = page.Value.EnumerateArray().Select(row => row.Clone()).ToArray();
+            rows.AddRange(pageRows);
+            if (pageRows.Length < PageSize)
+                return ToJsonArray(rows);
+
+            if (rows.Count >= MaximumCatalogueRows)
+                return null;
+        }
+
+        return ToJsonArray(rows);
+    }
+
+    private async Task<JsonElement?> GetRowsAsync(string path, CancellationToken cancellationToken)
+    {
+        if (!IsConfigured)
+            return null;
 
         using var request = new HttpRequestMessage(
-            HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/station_catalogue?{query}");
+            HttpMethod.Get, $"{_url!.TrimEnd('/')}/rest/v1/{path}");
         request.Headers.TryAddWithoutValidation("apikey", _key);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _key);
         request.Headers.TryAddWithoutValidation("Prefer", "count=exact");
@@ -71,13 +185,45 @@ public sealed class SupabaseStationDirectoryService(
             return null;
         }
     }
+
+    private static string BuildStationSelect() =>
+        "select=id,owner_authority_id,local_station_code,wmo_station_id,name_ar,name_en,station_type," +
+        "operational_status,approval_status,is_demo,elevation_m,station_coordinates(latitude,longitude,coordinate_source,accuracy_m)";
+
+    private static IReadOnlyList<Guid> ReadGuidColumn(JsonElement rows, string property)
+    {
+        var ids = new HashSet<Guid>();
+        foreach (var row in rows.EnumerateArray())
+        {
+            if (row.ValueKind == JsonValueKind.Object &&
+                row.TryGetProperty(property, out var value) &&
+                value.ValueKind == JsonValueKind.String &&
+                Guid.TryParse(value.GetString(), out var id) &&
+                id != Guid.Empty)
+                ids.Add(id);
+        }
+
+        return ids.ToArray();
+    }
+
+    private static JsonElement ToJsonArray(IReadOnlyCollection<JsonElement> rows)
+    {
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartArray();
+            foreach (var row in rows)
+                row.WriteTo(writer);
+            writer.WriteEndArray();
+        }
+
+        using var document = JsonDocument.Parse(stream.ToArray());
+        return document.RootElement.Clone();
+    }
 }
 
 public static class StationDirectoryVisibility
 {
-    // These are existing permission codes already enforced by the API/RPC contract.
-    // A station is visible only if at least one current station permission succeeds,
-    // or the user has the approved owner-authority catalogue-review permission.
     private static readonly string[] StationReadPermissions =
     [
         "observation.create",
@@ -118,12 +264,30 @@ public static class StationDirectoryVisibility
 
         return false;
     }
+
+    public static async Task<bool> CanViewAuthorityAsync(
+        IStationAuthorizationService authorization,
+        Guid userId,
+        Guid authorityId,
+        CancellationToken cancellationToken)
+    {
+        if (!authorization.IsConfigured || userId == Guid.Empty || authorityId == Guid.Empty)
+            return false;
+
+        foreach (var permission in AuthorityReadPermissions)
+        {
+            if (await authorization.HasAuthorityPermissionAsync(
+                    userId, authorityId, permission, cancellationToken))
+                return true;
+        }
+
+        return false;
+    }
 }
 
 public static class StationDirectoryEndpoints
 {
-    private const int PageSize = 500;
-    private const int MaximumCatalogueRows = 10_000;
+    private const int MaximumCandidates = 10_000;
 
     public static IEndpointRouteBuilder MapStationDirectoryEndpoints(
         this IEndpointRouteBuilder endpoints)
@@ -154,33 +318,43 @@ public static class StationDirectoryEndpoints
                     title: "Station directory or authorization service unavailable",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            // Fetch the catalogue in bounded pages before applying user-specific
-            // filtering. Filtering after PostgREST pagination would otherwise hide
-            // a user's assigned station when unrelated rows precede it.
-            var catalogue = new List<JsonElement>();
-            for (var pageOffset = 0; pageOffset < MaximumCatalogueRows; pageOffset += PageSize)
+            var assignedStationIds = await directory.GetAssignedStationIdsAsync(userId, cancellationToken);
+            var membershipAuthorityIds = await directory.GetAuthorityIdsAsync(userId, cancellationToken);
+            if (assignedStationIds is null || membershipAuthorityIds is null)
+                return Results.Problem(
+                    title: "Station scope could not be resolved",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            var authorizedAuthorityIds = new HashSet<Guid>();
+            foreach (var authorityId in membershipAuthorityIds)
             {
-                var page = await directory.GetStationsAsync(
-                    PageSize, pageOffset, stationType, cancellationToken);
-                if (page is null || page.Value.ValueKind != JsonValueKind.Array)
-                    return Results.Problem(
-                        title: "Station directory read failed",
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
-
-                var pageRows = page.Value.EnumerateArray().Select(row => row.Clone()).ToArray();
-                catalogue.AddRange(pageRows);
-                if (pageRows.Length < PageSize)
-                    break;
-
-                if (catalogue.Count >= MaximumCatalogueRows)
-                    return Results.Problem(
-                        title: "Station catalogue exceeds the safe directory limit",
-                        statusCode: StatusCodes.Status503ServiceUnavailable);
+                if (await StationDirectoryVisibility.CanViewAuthorityAsync(
+                        authorization, userId, authorityId, cancellationToken))
+                    authorizedAuthorityIds.Add(authorityId);
             }
 
-            var visible = new bool[catalogue.Count];
+            var candidateStations = await directory.GetStationsByScopeAsync(
+                assignedStationIds,
+                authorizedAuthorityIds,
+                stationType,
+                cancellationToken);
+            if (candidateStations is null || candidateStations.Value.ValueKind != JsonValueKind.Array)
+                return Results.Problem(
+                    title: "Station directory read failed",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            var rows = candidateStations.Value.EnumerateArray()
+                .Select(row => row.Clone())
+                .Take(MaximumCandidates + 1)
+                .ToArray();
+            if (rows.Length > MaximumCandidates)
+                return Results.Problem(
+                    title: "Authorized station scope exceeds the safe directory limit",
+                    statusCode: StatusCodes.Status503ServiceUnavailable);
+
+            var visible = new bool[rows.Length];
             await Parallel.ForEachAsync(
-                Enumerable.Range(0, catalogue.Count),
+                Enumerable.Range(0, rows.Length),
                 new ParallelOptions
                 {
                     MaxDegreeOfParallelism = 8,
@@ -188,19 +362,30 @@ public static class StationDirectoryEndpoints
                 },
                 async (index, token) =>
                 {
-                    var row = catalogue[index];
+                    var row = rows[index];
                     if (!row.TryGetProperty("id", out var idValue) ||
                         idValue.ValueKind != JsonValueKind.String ||
                         !Guid.TryParse(idValue.GetString(), out var stationId) ||
                         stationId == Guid.Empty)
                         return;
 
+                    if (row.TryGetProperty("owner_authority_id", out var authorityValue) &&
+                        authorityValue.ValueKind == JsonValueKind.String &&
+                        Guid.TryParse(authorityValue.GetString(), out var authorityId) &&
+                        authorizedAuthorityIds.Contains(authorityId))
+                    {
+                        visible[index] = true;
+                        return;
+                    }
+
                     visible[index] = await StationDirectoryVisibility.CanViewAsync(
                         authorization, userId, stationId, token);
                 });
 
-            var authorizedRows = catalogue.Where((_, index) => visible[index]).ToArray();
-            var result = authorizedRows.Skip(skip).Take(take).ToArray();
+            var result = rows.Where((_, index) => visible[index])
+                .Skip(skip)
+                .Take(take)
+                .ToArray();
             return Results.Ok(result);
         })
         .WithTags("Stations")
