@@ -164,7 +164,6 @@ class _HomeOverview extends StatelessWidget {
     required this.onOpenStations,
     required this.onOpenObservations,
   });
-
   final String? stationId;
   final VoidCallback onOpenStations;
   final VoidCallback onOpenObservations;
@@ -174,13 +173,11 @@ class _HomeOverview extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          'لوحة التشغيل',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: _navy,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
+        Text('لوحة التشغيل',
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(color: _navy, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Text(
           stationId == null
@@ -193,74 +190,29 @@ class _HomeOverview extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _QuickActionCard(
+            _ActionCard(
               icon: Icons.map_outlined,
               title: 'دليل المحطات',
               subtitle: 'اختيار محطة العمل',
               onTap: onOpenStations,
             ),
-            _QuickActionCard(
+            _ActionCard(
               icon: Icons.fact_check_outlined,
               title: 'وحدة الرصد',
-              subtitle: stationId == null ? 'يتطلب اختيار محطة' : 'ساعي · يومي · ظاهرة',
+              subtitle:
+                  stationId == null ? 'يتطلب اختيار محطة' : 'ساعي · يومي · ظاهرة',
               onTap: onOpenObservations,
             ),
           ],
         ),
         const SizedBox(height: 16),
-        const Card(
-          elevation: 0,
-          child: Padding(
-            padding: EdgeInsets.all(14),
-            child: Text(
-              'النماذج المتصلة بالخادم حالياً: الرصد الساعي، الرصد اليومي، الظواهر الجوية، ومراجعة الأرصاد. '
-              'بقية النماذج متاحة للتحقق المحلي فقط حتى اعتماد عقود API.',
-              style: TextStyle(height: 1.55, color: Color(0xFF334155)),
-            ),
-          ),
+        const _StatusCard(
+          title: 'حالة الربط المعتمدة',
+          body:
+              'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد. '
+              'بقية النماذج للتحقق المحلي فقط حتى اعتماد عقود API.',
         ),
       ],
-    );
-  }
-}
-
-class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      child: Card(
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: _blue),
-                const SizedBox(height: 10),
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), fontSize: 12)),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -271,27 +223,89 @@ class _InformationPage extends StatelessWidget {
     required this.title,
     required this.message,
   });
-
   final IconData icon;
   final String title;
   final String message;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 48, color: _blue),
-            const SizedBox(height: 12),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(height: 8),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(height: 1.5)),
-          ],
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 48, color: _blue),
+              const SizedBox(height: 12),
+              Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              const SizedBox(height: 8),
+              Text(message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(height: 1.5)),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({required this.title, required this.body});
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) => Card(
+        elevation: 0,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              Text(body, style: const TextStyle(height: 1.55, color: Color(0xFF334155))),
+            ],
+          ),
+        ),
+      );
+}
+
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 220,
+        child: Card(
+          elevation: 0,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(icon, color: _blue),
+                  const SizedBox(height: 10),
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          color: Color(0xFF64748B), fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
 }
