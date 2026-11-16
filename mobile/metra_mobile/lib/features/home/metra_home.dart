@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 import '../../core/widgets/metra_workspace_shell.dart';
