@@ -12,6 +12,18 @@ class MetraApiException implements Exception {
   String toString() => 'MetraApiException($statusCode, $code)';
 }
 
+class MetraValidationIssue {
+  const MetraValidationIssue({required this.field, required this.message});
+  final String field;
+  final String message;
+}
+
+class MetraObservationValidation {
+  const MetraObservationValidation({required this.isValid, required this.issues});
+  final bool isValid;
+  final List<MetraValidationIssue> issues;
+}
+
 class ObservationQueueItem {
   const ObservationQueueItem({required this.id, required this.stationId,
     required this.observationType, required this.observedAt,
@@ -162,6 +174,181 @@ class MetraApiClient {
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}/decision',
       body: {'decision': decision, 'note': note},
     );
+  }
+
+  Future<MetraObservationValidation> validateObservation({
+    required String observationType,
+    required Map<String, Object?> values,
+  }) async {
+    final route = switch (observationType) {
+      'hourly' => '/api/v1/observations/hourly/validate',
+      'daily' => '/api/v1/observations/daily/validate',
+      _ => throw const MetraApiException(400, 'unsupported_observation_validation'),
+    };
+    final normalized = <String, String?>{
+      for (final entry in values.entries)
+        entry.key: _formatValidationValue(observationType, entry.key, entry.value),
+    };
+    final response = await _send('POST', route, body: {'values': normalized});
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('invalid_observation_validation_response');
+    }
+    final rawIssues = decoded['issues'];
+    final issues = rawIssues is List
+        ? rawIssues.whereType<Map>().map((item) => MetraValidationIssue(
+              field: item['field']?.toString() ?? '',
+              message: item['message']?.toString() ?? 'قيمة غير صالحة',
+            )).toList(growable: false)
+        : const <MetraValidationIssue>[];
+    return MetraObservationValidation(
+      isValid: decoded['isValid'] == true,
+      issues: issues,
+    );
+  }
+
+  String? _formatValidationValue(
+    String observationType,
+    String field,
+    Object? value,
+  ) {
+    if (value == null) return null;
+    final raw = value.toString().trim();
+    if (raw.isEmpty || raw == '#') return raw;
+
+    String paddedInteger(int width) {
+      final parsed = int.tryParse(raw);
+      return parsed == null ? raw : parsed.toString().padLeft(width, '0');
+    }
+
+    String paddedDecimal(int width, {bool explicitPositiveSign = false}) {
+      final negative = raw.startsWith('-');
+      final positive = raw.startsWith('+');
+      final unsigned = raw.replaceFirst(RegExp(r'^[+-]'), '');
+      final parts = unsigned.split('.');
+      if (parts.length > 2 ||
+          !RegExp(r'^\d+
+    required String idempotencyKey, required String observationType,
+    required DateTime observedAt, required Map<String, dynamic> payload,
+    bool submit = false}) async {
+    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
+      body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
+        'observedAt': observedAt.toUtc().toIso8601String(),
+        'payload': payload, 'submit': submit});
+  }
+
+  Future<http.Response> _send(String method, String path,
+      {Map<String, dynamic>? body}) async {
+    if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');
+    final token = await accessTokenProvider();
+    if (token == null || token.trim().isEmpty) {
+      throw const MetraApiException(401, 'authentication_required');
+    }
+    final uri = _baseUri!.resolve(path);
+    final request = http.Request(method, uri)..headers.addAll({
+      'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+    if (body != null) {
+      request.headers['Content-Type'] = 'application/json';
+      request.body = jsonEncode(body);
+    }
+    final response = await http.Response.fromStream(await _client.send(request));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MetraApiException(response.statusCode, 'request_failed');
+    }
+    return response;
+  }
+
+  void close() => _client.close();
+}
+).hasMatch(parts.first) ||
+          (parts.length == 2 && !RegExp(r'^\d
+    required String idempotencyKey, required String observationType,
+    required DateTime observedAt, required Map<String, dynamic> payload,
+    bool submit = false}) async {
+    await _send('POST', '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations',
+      body: {'idempotencyKey': idempotencyKey, 'observationType': observationType,
+        'observedAt': observedAt.toUtc().toIso8601String(),
+        'payload': payload, 'submit': submit});
+  }
+
+  Future<http.Response> _send(String method, String path,
+      {Map<String, dynamic>? body}) async {
+    if (!isConfigured) throw const MetraApiException(503, 'api_not_configured');
+    final token = await accessTokenProvider();
+    if (token == null || token.trim().isEmpty) {
+      throw const MetraApiException(401, 'authentication_required');
+    }
+    final uri = _baseUri!.resolve(path);
+    final request = http.Request(method, uri)..headers.addAll({
+      'Accept': 'application/json', 'Authorization': 'Bearer $token'});
+    if (body != null) {
+      request.headers['Content-Type'] = 'application/json';
+      request.body = jsonEncode(body);
+    }
+    final response = await http.Response.fromStream(await _client.send(request));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw MetraApiException(response.statusCode, 'request_failed');
+    }
+    return response;
+  }
+
+  void close() => _client.close();
+}
+).hasMatch(parts.last))) {
+        return raw;
+      }
+      final fraction = parts.length == 2 ? parts.last : '0';
+      final sign = negative
+          ? '-'
+          : (explicitPositiveSign && !positive ? '+' : (positive ? '+' : ''));
+      return '$sign${parts.first.padLeft(width, '0')}.$fraction';
+    }
+
+    if (observationType == 'hourly') {
+      if (const {'dryTemp', 'wetTemp', 'dewPoint'}.contains(field)) {
+        return paddedDecimal(2, explicitPositiveSign: true);
+      }
+      if (const {'stationPressure', 'seaLevelPressure'}.contains(field)) {
+        return paddedDecimal(4);
+      }
+      if (const {'relativeHumidity', 'visibility'}.contains(field)) {
+        return paddedInteger(field == 'visibility' ? 3 : 3);
+      }
+      if (const {'windDirection', 'avgWindDirection', 'windSpeed', 'avgWindSpeed'}.contains(field)) {
+        return paddedInteger(2);
+      }
+      if (field == 'currentWeather') return paddedInteger(2);
+      if (field == 'pastWeather' || field == 'totalCloudCover' ||
+          field == 'cloud1Amount' || field == 'cloud2Amount' ||
+          field == 'cloud3Amount' || field == 'cloud4Amount' ||
+          field == 'cover12' || field == 'cover123' || field == 'pressureShape') {
+        return paddedInteger(1);
+      }
+      if (field == 'pressureSlope' || field == 'vaporPressure' ||
+          field == 'vaporPressureDiff') {
+        return paddedDecimal(field == 'pressureSlope' ? 1 : 2);
+      }
+      if (field == 'precipitationAmount') return paddedDecimal(3);
+    }
+
+    if (observationType == 'daily') {
+      if (field == 'minTemp' || field == 'maxTemp') return paddedDecimal(2);
+      if (field == 'precipitation') return paddedDecimal(3);
+      if (field == 'snowThickness' || field == 'sunshinePercentage') {
+        return paddedInteger(3);
+      }
+      if (field == 'evaporation' || field == 'sunshineDuration' ||
+          field == 'maxGustTime' || field == 'maxHumidityTime' ||
+          field == 'minHumidityTime') {
+        return paddedDecimal(2);
+      }
+      if (field == 'maxGustSpeed' || field == 'maxGustDirection' ||
+          field == 'minHumidity') {
+        return paddedInteger(2);
+      }
+      if (field == 'maxHumidity') return paddedInteger(3);
+    }
+    return raw;
   }
 
   Future<void> submitObservation({required String stationId,
