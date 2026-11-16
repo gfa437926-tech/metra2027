@@ -201,7 +201,13 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       );
       if (time == null || !mounted) return;
       setState(() {
-        controller.text = DateTime(date.year, date.month, date.day, time.hour, time.minute).toIso8601String();
+        controller.text = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ).toIso8601String();
       });
       return;
     }
@@ -210,15 +216,19 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       final parts = controller.text.split(':');
       final initial = TimeOfDay(
         hour: int.tryParse(parts.first) ?? current.hour,
-        minute: parts.length > 1 ? int.tryParse(parts[1]) ?? current.minute : current.minute,
+        minute: parts.length > 1
+            ? int.tryParse(parts[1]) ?? current.minute
+            : current.minute,
       );
       final time = await showTimePicker(context: context, initialTime: initial);
       if (time == null || !mounted) return;
       setState(() {
-        controller.text = <String>[twoDigits(time.hour), twoDigits(time.minute)].join(':');
+        controller.text =
+            <String>[twoDigits(time.hour), twoDigits(time.minute)].join(':');
       });
     }
   }
+
   Widget _buildField(MetraObservationField field) {
     if (field.kind == MetraFieldKind.file) {
       return InputDecorator(
@@ -228,7 +238,11 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           border: const OutlineInputBorder(),
         ),
         child: const Row(
-          children: [Icon(Icons.attach_file), SizedBox(width: 8), Text('غير متاح حالياً')],
+          children: [
+            Icon(Icons.attach_file),
+            SizedBox(width: 8),
+            Text('غير متاح حالياً'),
+          ],
         ),
       );
     }
@@ -277,14 +291,15 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           border: const OutlineInputBorder(),
         ),
         items: field.choices
-            .map((choice) => DropdownMenuItem(
-                  value: choice,
-                  child: Text(choice),
-                ))
+            .map(
+              (choice) => DropdownMenuItem(
+                value: choice,
+                child: Text(choice),
+              ),
+            )
             .toList(),
-        validator: (value) => field.required && value == null
-            ? 'يرجى اختيار قيمة'
-            : null,
+        validator: (value) =>
+            field.required && value == null ? 'يرجى اختيار قيمة' : null,
         onChanged: _saving
             ? null
             : (value) => setState(() => _choices[field.id] = value),
@@ -292,7 +307,8 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     }
 
     final usesPicker = field.kind == MetraFieldKind.date ||
-        field.kind == MetraFieldKind.time || field.kind == MetraFieldKind.datetime;
+        field.kind == MetraFieldKind.time ||
+        field.kind == MetraFieldKind.datetime;
     return TextFormField(
       controller: _controllers[field.id],
       readOnly: usesPicker,
@@ -301,7 +317,10 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         MetraFieldKind.integer => TextInputType.number,
         MetraFieldKind.decimal =>
           const TextInputType.numberWithOptions(decimal: true, signed: true),
-        MetraFieldKind.date || MetraFieldKind.time || MetraFieldKind.datetime => TextInputType.datetime,
+        MetraFieldKind.date ||
+        MetraFieldKind.time ||
+        MetraFieldKind.datetime =>
+          TextInputType.datetime,
         MetraFieldKind.phone => TextInputType.phone,
         MetraFieldKind.multiline => TextInputType.multiline,
         _ => TextInputType.text,
@@ -328,24 +347,40 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           appBar: AppBar(title: Text(widget.title)),
           body: Form(
             key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
+            // Submit stays outside the lazy ListView so long catalogues do not
+            // leave the action off-stage / unbuilt.
+            child: Column(
               children: [
-                for (final field in widget.fields) ...[
-                  _buildField(field),
-                  const SizedBox(height: 14),
-                ],
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _submit,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send),
-                  label: Text(_saving ? 'جارٍ الحفظ...' : widget.submitLabel),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      for (final field in widget.fields) ...[
+                        _buildField(field),
+                        const SizedBox(height: 14),
+                      ],
+                    ],
+                  ),
+                ),
+                SafeArea(
+                  minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('metra-observation-submit'),
+                      onPressed: _saving ? null : _submit,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                        _saving ? 'جارٍ الحفظ...' : widget.submitLabel,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
