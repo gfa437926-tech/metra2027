@@ -2,7 +2,7 @@ name: Client CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'implementation/**']
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"
