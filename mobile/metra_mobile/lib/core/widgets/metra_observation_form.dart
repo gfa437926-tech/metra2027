@@ -77,7 +77,11 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     for (final field in widget.fields) {
       final initial = widget.initialValues[field.id];
       if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
-        _choices[field.id] = initial?.toString();
+        final candidate = initial?.toString();
+        _choices[field.id] =
+            candidate != null && field.choices.contains(candidate)
+                ? candidate
+                : null;
       } else if (field.kind == MetraFieldKind.boolean) {
         _booleans[field.id] = initial == true;
       } else {
