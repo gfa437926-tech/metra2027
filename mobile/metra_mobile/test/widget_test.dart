@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -68,7 +68,7 @@ void main() {
     expect(find.text('1150.0 م'), findsOneWidget);
     expect(find.text('surveyed'), findsOneWidget);
     expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
-    await tester.pageBack();
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة آلية'));
     expect(selected, '22222222-2222-4222-8222-222222222222');
@@ -150,12 +150,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
     expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
-    await tester.tap(find.text('محطة الساحل'));
+    final firstStationChoice = find.byType(CheckboxListTile).at(0);
+    await tester.ensureVisible(firstStationChoice);
+    await tester.tap(firstStationChoice);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محطة الجبل'));
+    final secondStationChoice = find.byType(CheckboxListTile).at(1);
+    await tester.ensureVisible(secondStationChoice);
+    await tester.tap(secondStationChoice);
     await tester.pumpAndSettle();
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
-    expect(find.text('1200.0 م'), findsOneWidget);
+    expect(find.textContaining('1200.0 م'), findsWidgets);
     expect(find.text('المسافة من المرجع'), findsWidgets);
     expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
     api.close();

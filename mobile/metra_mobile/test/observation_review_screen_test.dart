@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -32,6 +32,69 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('shows a permission message when a review decision is forbidden', (tester) async {
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode([
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'station_id': stationId,
+              'observation_type': 'daily',
+              'observed_at': '2026-11-03T12:00:00Z',
+              'status': 'submitted',
+              'payload': {}
+            }
+          ]), 200);
+        }
+        return http.Response('{"error":"forbidden"}', 403);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اعتماد').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اعتماد').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('ليست لديك صلاحية تنفيذ هذا القرار'), findsOneWidget);
+    api.close();
+  });
+
+  testWidgets('renders a recoverable error when refreshing the review queue fails', (tester) async {
+    var calls = 0;
+    final api = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'access-token',
+      client: MockClient((_) async {
+        calls++;
+        return calls == 1
+            ? http.Response('[]', 200)
+            : http.Response('{"error":"unavailable"}', 503);
+      }),
+    );
+
+    await tester.pumpWidget(MaterialApp(
+      home: ObservationReviewScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('تحديث'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.'),
+      findsOneWidget,
+    );
     api.close();
   });
 

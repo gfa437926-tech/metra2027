@@ -96,6 +96,153 @@ void main() {
     client.close();
   });
 
+  test('rejects unsupported observation types before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    await expectLater(
+      client.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'request-1',
+        observationType: 'agricultural',
+        observedAt: DateTime.utc(2026, 11, 16),
+        payload: const {'temperature': 20},
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'unsupported_observation_type')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('rejects blank or padded idempotency keys before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    for (final key in ['', ' request-1 ', 'request 1']) {
+      await expectLater(
+        client.submitObservation(
+          stationId: stationId,
+          idempotencyKey: key,
+          observationType: 'hourly',
+          observedAt: DateTime.utc(2026, 11, 16),
+          payload: const {'temperature': 20},
+        ),
+        throwsA(isA<MetraApiException>().having(
+          (error) => error.code, 'code', 'invalid_idempotency_key')),
+      );
+    }
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('rejects blank or padded station IDs before making a request', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+    for (final id in ['', ' $stationId']) {
+      await expectLater(
+        client.submitObservation(
+          stationId: id,
+          idempotencyKey: 'request-1',
+          observationType: 'hourly',
+          observedAt: DateTime.utc(2026, 11, 16),
+          payload: const {'temperature': 20},
+        ),
+        throwsA(isA<MetraApiException>().having(
+          (error) => error.code, 'code', 'invalid_station_id')),
+      );
+    }
+    expect(requests, 0);
+    client.close();
+  });
+
+  test('submits supported observation with bearer token and UTC timestamp', () async {
+    late http.Request captured;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'submit-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      }),
+    );
+    await client.submitObservation(
+      stationId: stationId,
+      idempotencyKey: 'stable-request-1',
+      observationType: 'hourly',
+      observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
+      payload: const {'dryTemp': 22},
+      submit: true,
+    );
+    expect(captured.method, 'POST');
+    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+    expect(captured.headers['authorization'], 'Bearer submit-token');
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['idempotencyKey'], 'stable-request-1');
+    expect(body['observationType'], 'hourly');
+    expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
+    expect(body['payload'], {'dryTemp': 22});
+    expect(body['submit'], isTrue);
+    client.close();
+  });
+
+  test('rejects malformed station and record identifiers before requests', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        requests++;
+        return http.Response('{}', 200);
+      }),
+    );
+
+    await expectLater(
+      client.getReviewQueue('station id'),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_station_id')),
+    );
+    await expectLater(
+      client.decideObservation(
+        stationId: stationId,
+        observationId: ' ',
+        decision: 'approve',
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_observation_id')),
+    );
+    await expectLater(
+      client.decideStationRegistrationRequest(
+        stationId: stationId,
+        requestId: 'request\n1',
+        decision: 'approve',
+      ),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'invalid_registration_request_id')),
+    );
+    expect(requests, 0);
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,

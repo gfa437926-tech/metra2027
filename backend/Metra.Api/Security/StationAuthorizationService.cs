@@ -8,6 +8,7 @@ public interface IStationAuthorizationService
     bool IsConfigured { get; }
     Task<bool> HasStationPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
     Task<bool> HasStationOwnerAuthorityPermissionAsync(Guid userId, Guid stationId, string permissionCode, CancellationToken cancellationToken = default);
+    Task<bool> HasAuthorityPermissionAsync(Guid userId, Guid authorityId, string permissionCode, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -38,6 +39,12 @@ public sealed class SupabaseStationAuthorizationService(
         HasPermissionAsync(
             "metra_user_has_station_owner_authority_permission", userId, stationId, permissionCode, cancellationToken);
 
+    public Task<bool> HasAuthorityPermissionAsync(
+        Guid userId, Guid authorityId, string permissionCode,
+        CancellationToken cancellationToken = default) =>
+        HasPermissionAsync(
+            "metra_user_has_authority_permission", userId, authorityId, permissionCode, cancellationToken);
+
     private async Task<bool> HasPermissionAsync(
         string rpcName, Guid userId, Guid stationId, string permissionCode,
         CancellationToken cancellationToken)
@@ -53,12 +60,19 @@ public sealed class SupabaseStationAuthorizationService(
         request.Headers.TryAddWithoutValidation("apikey", _serviceKey);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
-        request.Content = JsonContent.Create(new
-        {
-            p_user_id = userId,
-            p_station_id = stationId,
-            p_permission_code = permissionCode
-        });
+        request.Content = rpcName == "metra_user_has_authority_permission"
+            ? JsonContent.Create(new
+            {
+                p_user_id = userId,
+                p_authority_id = stationId,
+                p_permission_code = permissionCode
+            })
+            : JsonContent.Create(new
+            {
+                p_user_id = userId,
+                p_station_id = stationId,
+                p_permission_code = permissionCode
+            });
 
         try
         {

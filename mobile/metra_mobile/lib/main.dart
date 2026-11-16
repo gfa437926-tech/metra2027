@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/auth/metra_auth.dart';
 
@@ -23,6 +23,12 @@ class MetraApp extends StatelessWidget {
     title: 'METRA 2027', debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: _blue),
       scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    locale: const Locale('ar'),
+    supportedLocales: const [Locale('ar'), Locale('en')],
+    // Required temporarily because flutter_map still uses SDK Material types.
+    // ignore: deprecated_member_use
+    builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
         ? const MetraAuthGate()
         : const MetraConfigurationScreen());

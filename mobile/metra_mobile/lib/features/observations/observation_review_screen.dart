@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
@@ -13,6 +13,7 @@ class ObservationReviewScreen extends StatefulWidget {
 
 class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   late Future<List<ObservationQueueItem>> _queue;
+  final Set<String> _processingIds = <String>{};
 
   @override
   void initState() {
@@ -21,8 +22,17 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   }
 
   Future<void> _refresh() async {
-    setState(() => _queue = widget.api.getReviewQueue(widget.stationId));
-    await _queue;
+    final next = widget.api.getReviewQueue(widget.stationId);
+    setState(() {
+      _queue = next;
+    });
+    // FutureBuilder renders request errors; swallowing here prevents an
+    // unhandled async error from pull-to-refresh or the toolbar callback.
+    try {
+      await next;
+    } catch (_) {
+      // The failed future remains in _queue and is rendered by FutureBuilder.
+    }
   }
 
   @override
@@ -77,13 +87,17 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                     child: Row(children: [
                       Expanded(child: OutlinedButton.icon(
-                        onPressed: () => _decide(item, 'return_for_correction'),
+                        onPressed: _processingIds.contains(item.id)
+                            ? null
+                            : () => _decide(item, 'return_for_correction'),
                         icon: const Icon(Icons.replay),
                         label: const Text('إرجاع للتصحيح'),
                       )),
                       const SizedBox(width: 8),
                       Expanded(child: FilledButton.icon(
-                        onPressed: () => _decide(item, 'approve'),
+                        onPressed: _processingIds.contains(item.id)
+                            ? null
+                            : () => _decide(item, 'approve'),
                         icon: const Icon(Icons.check),
                         label: const Text('اعتماد'),
                       )),
@@ -152,6 +166,8 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       if (confirmed != true) return;
     }
 
+    if (!mounted || _processingIds.contains(item.id)) return;
+    setState(() => _processingIds.add(item.id));
     try {
       await widget.api.decideObservation(
         stationId: widget.stationId,
@@ -174,6 +190,13 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حدث خطأ غير متوقع أثناء تنفيذ قرار المراجعة.')),
+      );
+    } finally {
+      if (mounted) setState(() => _processingIds.remove(item.id));
     }
   }
 
