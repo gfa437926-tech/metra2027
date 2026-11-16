@@ -1,5 +1,6 @@
 using Metra.Api.Features.Stations;
 using Metra.Api.Security;
+using System.Text.Json;
 using Xunit;
 
 namespace Metra.Api.Tests.Features.Stations;
@@ -41,11 +42,12 @@ public sealed class StationDirectoryVisibilityTests
             stationPermission: _ => false,
             authorityPermission: code => code == "stations.catalogue.review");
 
-        var allowed = await StationDirectoryVisibility.CanViewAsync(
-            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+        var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(),
+            "stations.catalogue.review", CancellationToken.None);
 
         Assert.True(allowed);
-        Assert.Equal(5, authorization.StationPermissionCalls.Count);
+        Assert.Empty(authorization.StationPermissionCalls);
         Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
     }
 
@@ -56,13 +58,12 @@ public sealed class StationDirectoryVisibilityTests
             stationPermission: _ => false,
             authorityPermission: code => code == "registrations.system.approve");
 
-        var allowed = await StationDirectoryVisibility.CanViewAsync(
-            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+        var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
+            authorization, Guid.NewGuid(), Guid.NewGuid(),
+            "registrations.system.approve", CancellationToken.None);
 
         Assert.True(allowed);
-        Assert.Equal(
-            new[] { "stations.catalogue.review", "registrations.system.approve" },
-            authorization.AuthorityPermissionCalls);
+        Assert.Equal(new[] { "registrations.system.approve" }, authorization.AuthorityPermissionCalls);
     }
 
     [Fact]
@@ -73,7 +74,7 @@ public sealed class StationDirectoryVisibilityTests
             authorityPermission: code => code == "stations.catalogue.review");
 
         var allowed = await StationDirectoryVisibility.CanViewAuthorityAsync(
-            authorization, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+            authorization, Guid.NewGuid(), Guid.NewGuid(), "stations.catalogue.review", CancellationToken.None);
 
         Assert.True(allowed);
         Assert.Equal(new[] { "stations.catalogue.review" }, authorization.AuthorityPermissionCalls);
@@ -96,6 +97,36 @@ public sealed class StationDirectoryVisibilityTests
     }
 
     [Fact]
+    public void Catalogue_reviewer_can_see_pending_stations_within_authority_scope()
+    {
+        using var document = JsonDocument.Parse("""
+            {"owner_authority_id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","approval_status":"pending","operational_status":"inactive"}
+            """);
+        var authorityId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+
+        Assert.True(StationDirectoryVisibility.IsVisibleThroughAuthorityScope(
+            document.RootElement, new HashSet<Guid> { authorityId }, new HashSet<Guid>()));
+    }
+
+    [Fact]
+    public void System_registration_reviewer_sees_only_approved_active_stations()
+    {
+        var authorityId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        using var approved = JsonDocument.Parse("""
+            {"owner_authority_id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","approval_status":"approved","operational_status":"active"}
+            """);
+        using var pending = JsonDocument.Parse("""
+            {"owner_authority_id":"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb","approval_status":"pending","operational_status":"active"}
+            """);
+        var registrationScope = new HashSet<Guid> { authorityId };
+
+        Assert.True(StationDirectoryVisibility.IsVisibleThroughAuthorityScope(
+            approved.RootElement, new HashSet<Guid>(), registrationScope));
+        Assert.False(StationDirectoryVisibility.IsVisibleThroughAuthorityScope(
+            pending.RootElement, new HashSet<Guid>(), registrationScope));
+    }
+
+    [Fact]
     public async Task User_without_any_station_or_authority_permission_sees_no_station()
     {
         var authorization = new FakeAuthorization(stationPermission: _ => false);
@@ -105,7 +136,7 @@ public sealed class StationDirectoryVisibilityTests
 
         Assert.False(allowed);
         Assert.Equal(5, authorization.StationPermissionCalls.Count);
-        Assert.Equal(new[] { "stations.catalogue.review", "registrations.system.approve" }, authorization.AuthorityPermissionCalls);
+        Assert.Empty(authorization.AuthorityPermissionCalls);
     }
 
     [Theory]
