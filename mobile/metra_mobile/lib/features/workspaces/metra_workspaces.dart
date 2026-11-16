@@ -192,7 +192,7 @@ class _ArchiveTab extends StatelessWidget {
             message: 'لا توجد خدمة تخزين/رفع ملفات معتمدة في API الحالي. لا يتم رفع الصور أو حفظها محلياً.',
           ),
           const SizedBox(height: 12),
-          Text('المحطة: ${stationId}'),
+          Text('المحطة: $stationId'),
           const SizedBox(height: 12),
           const TextField(
             decoration: InputDecoration(
@@ -228,7 +228,7 @@ class _AiTab extends StatelessWidget {
             message: 'تجهيز مجموعات البيانات والتدريب والاستدلال يتطلب خدمة AI/OCR وإدارة ملفات وإصدارات نماذج.',
           ),
           const SizedBox(height: 12),
-          Text('نطاق العمل: ${stationId}'),
+          Text('نطاق العمل: $stationId'),
           const SizedBox(height: 12),
           const _MetricCard(label: 'مجموعات البيانات', value: '—', icon: Icons.storage),
           const _MetricCard(label: 'إصدارات النماذج', value: '—', icon: Icons.psychology_outlined),
@@ -261,7 +261,7 @@ class _ComparisonTab extends StatelessWidget {
             message: 'تعرض هذه الواجهة مسار المراجعة المطلوب، لكنها لا تحسب نسب تطابق أو فروقات من بيانات غير متاحة.',
           ),
           const SizedBox(height: 12),
-          Text('المحطة: ${stationId}'),
+          Text('المحطة: $stationId'),
           const SizedBox(height: 12),
           const Row(
             children: [
@@ -388,7 +388,7 @@ class _OperationsTab extends StatelessWidget {
         children: [
           _ServiceNotice(title: 'الوحدة غير متصلة بالخادم', message: message),
           const SizedBox(height: 12),
-          Text('المحطة: ${stationId}'),
+          Text('المحطة: $stationId'),
           const SizedBox(height: 12),
           _MetricCard(label: 'السجلات', value: '—', icon: icon),
           const _MetricCard(label: 'البلاغات المفتوحة', value: '—', icon: Icons.report_problem_outlined),
@@ -397,7 +397,7 @@ class _OperationsTab extends StatelessWidget {
           FilledButton.icon(
             onPressed: null,
             icon: const Icon(Icons.add),
-            label: Text('إضافة سجل — ${title}'),
+            label: Text('إضافة سجل — $title'),
           ),
         ],
       );
