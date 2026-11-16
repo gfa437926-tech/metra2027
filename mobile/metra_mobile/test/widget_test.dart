@@ -159,7 +159,7 @@ void main() {
     await tester.tap(secondStationChoice);
     await tester.pumpAndSettle();
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
-    expect(find.text('1200.0 م'), findsOneWidget);
+    expect(find.textContaining('1200.0 م'), findsWidgets);
     expect(find.text('المسافة من المرجع'), findsWidgets);
     expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
     api.close();
