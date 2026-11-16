@@ -56,6 +56,23 @@ void main() {
     expect(submitted, isFalse);
   });
 
+  testWidgets('rejects non-finite decimal values such as NaN', (tester) async {
+    var submitted = false;
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار الرصد',
+        fields: fields,
+        onSubmit: (_) async => submitted = true,
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField).at(0), '18');
+    await tester.enterText(find.byType(TextFormField).at(1), 'NaN');
+    await tester.tap(find.text('حفظ وإرسال'));
+    await tester.pumpAndSettle();
+    expect(find.text('أدخل رقماً منتهياً وصالحاً'), findsOneWidget);
+    expect(submitted, isFalse);
+  });
+
   testWidgets('submits validated values with numeric types', (tester) async {
     Map<String, Object?>? submitted;
     await tester.pumpWidget(MaterialApp(
