@@ -87,6 +87,12 @@ public static class StationDirectoryVisibility
         "users.station.manage"
     ];
 
+    private static readonly string[] AuthorityReadPermissions =
+    [
+        "stations.catalogue.review",
+        "registrations.system.approve"
+    ];
+
     public static async Task<bool> CanViewAsync(
         IStationAuthorizationService authorization,
         Guid userId,
@@ -103,8 +109,14 @@ public static class StationDirectoryVisibility
                 return true;
         }
 
-        return await authorization.HasStationOwnerAuthorityPermissionAsync(
-            userId, stationId, "stations.catalogue.review", cancellationToken);
+        foreach (var permission in AuthorityReadPermissions)
+        {
+            if (await authorization.HasStationOwnerAuthorityPermissionAsync(
+                    userId, stationId, permission, cancellationToken))
+                return true;
+        }
+
+        return false;
     }
 }
 
