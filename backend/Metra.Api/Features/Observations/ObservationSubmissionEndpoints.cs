@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using Metra.Api.Security;\nusing Metra.Api.Features.Observations;
+using Metra.Api.Security;
 
 namespace Metra.Api.Features.Observations;
 
