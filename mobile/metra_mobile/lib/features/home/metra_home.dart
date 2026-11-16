@@ -5,6 +5,7 @@ import '../../core/widgets/metra_workspace_shell.dart';
 import '../observations/observation_workspace_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
+import '../admin/station_administration_screen.dart';
 
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
@@ -88,6 +89,9 @@ class _MetraHomeState extends State<MetraHome> {
           'تصدير وطباعة عند توفر العقود المعتمدة.',
         ]),
       ),
+      _selectedStationId == null
+          ? _needStation('إدارة المحطة')
+          : StationAdministrationScreen(api: widget.api, stationId: _selectedStationId!),
       _InformationPage(
         icon: Icons.settings_outlined,
         title: 'إعدادات الحساب',
@@ -170,6 +174,11 @@ class _MetraHomeState extends State<MetraHome> {
               icon: Icon(Icons.analytics_outlined),
               selectedIcon: Icon(Icons.analytics),
               label: 'تقارير',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.admin_panel_settings_outlined),
+              selectedIcon: Icon(Icons.admin_panel_settings),
+              label: 'إدارة',
             ),
             NavigationDestination(
               icon: Icon(Icons.settings_outlined),
