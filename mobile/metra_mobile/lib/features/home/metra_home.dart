@@ -65,19 +65,10 @@ class _MetraHomeState extends State<MetraHome> {
       _selectedStationId == null
           ? _needStation('إدارة المحطة')
           : StationAdministrationScreen(api: widget.api, stationId: _selectedStationId!),
-      _InformationPage(
-        icon: Icons.settings_outlined,
-        title: 'إعدادات الحساب',
-        message:
-            'الحساب: ${widget.userEmail ?? 'مستخدم مسجل'}\nالجلسة تُحفظ وتُجدد عبر Supabase Auth. لا تُخزَّن مفاتيح service-role في التطبيق.',
-        action: widget.onSignOut == null
-            ? null
-            : FilledButton.tonalIcon(
-                onPressed: widget.onSignOut,
-                icon: const Icon(Icons.logout),
-                label: const Text('تسجيل الخروج'),
-              ),
-      ),
+      SystemSettingsScreen(
+        userEmail: widget.userEmail,
+        onSignOut: widget.onSignOut,
+      )
     ];
 
     return Directionality(
