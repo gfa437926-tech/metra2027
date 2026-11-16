@@ -106,6 +106,9 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           ? int.tryParse(value)
           : num.tryParse(value);
       if (parsed == null) return 'أدخل قيمة رقمية صحيحة';
+      if (parsed is double && !parsed.isFinite) {
+        return 'أدخل رقماً منتهياً وصالحاً';
+      }
       if (field.kind == MetraFieldKind.integer &&
           !RegExp(r'^-?\d+$').hasMatch(value)) {
         return 'أدخل عدداً صحيحاً دون كسور';
