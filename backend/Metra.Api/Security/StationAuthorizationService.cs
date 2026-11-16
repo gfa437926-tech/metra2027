@@ -59,12 +59,19 @@ public sealed class SupabaseStationAuthorizationService(
         request.Headers.TryAddWithoutValidation("apikey", _serviceKey);
         request.Headers.Authorization =
             new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
-        request.Content = JsonContent.Create(new
-        {
-            p_user_id = userId,
-            p_station_id = stationId,
-            p_permission_code = permissionCode
-        });
+        request.Content = rpcName == "metra_user_has_authority_permission"
+            ? JsonContent.Create(new
+            {
+                p_user_id = userId,
+                p_authority_id = stationId,
+                p_permission_code = permissionCode
+            })
+            : JsonContent.Create(new
+            {
+                p_user_id = userId,
+                p_station_id = stationId,
+                p_permission_code = permissionCode
+            });
 
         try
         {
