@@ -233,12 +233,6 @@ public static class StationDirectoryVisibility
         "users.station.manage"
     ];
 
-    private static readonly string[] AuthorityReadPermissions =
-    [
-        "stations.catalogue.review",
-        "registrations.system.approve"
-    ];
-
     public static async Task<bool> CanViewAsync(
         IStationAuthorizationService authorization,
         Guid userId,
@@ -255,13 +249,6 @@ public static class StationDirectoryVisibility
                 return true;
         }
 
-        foreach (var permission in AuthorityReadPermissions)
-        {
-            if (await authorization.HasStationOwnerAuthorityPermissionAsync(
-                    userId, stationId, permission, cancellationToken))
-                return true;
-        }
-
         return false;
     }
 
@@ -269,19 +256,39 @@ public static class StationDirectoryVisibility
         IStationAuthorizationService authorization,
         Guid userId,
         Guid authorityId,
+        string permissionCode,
         CancellationToken cancellationToken)
     {
-        if (!authorization.IsConfigured || userId == Guid.Empty || authorityId == Guid.Empty)
+        if (!authorization.IsConfigured || userId == Guid.Empty || authorityId == Guid.Empty ||
+            permissionCode is not ("stations.catalogue.review" or "registrations.system.approve"))
             return false;
 
-        foreach (var permission in AuthorityReadPermissions)
-        {
-            if (await authorization.HasAuthorityPermissionAsync(
-                    userId, authorityId, permission, cancellationToken))
-                return true;
-        }
+        return await authorization.HasAuthorityPermissionAsync(
+            userId, authorityId, permissionCode, cancellationToken);
+    }
 
-        return false;
+    public static bool IsVisibleThroughAuthorityScope(
+        JsonElement station,
+        IReadOnlySet<Guid> catalogueAuthorityIds,
+        IReadOnlySet<Guid> registrationAuthorityIds)
+    {
+        if (!station.TryGetProperty("owner_authority_id", out var authorityValue) ||
+            authorityValue.ValueKind != JsonValueKind.String ||
+            !Guid.TryParse(authorityValue.GetString(), out var authorityId))
+            return false;
+
+        if (catalogueAuthorityIds.Contains(authorityId))
+            return true;
+
+        if (!registrationAuthorityIds.Contains(authorityId))
+            return false;
+
+        return station.TryGetProperty("approval_status", out var approval) &&
+               approval.ValueKind == JsonValueKind.String &&
+               approval.GetString() == "approved" &&
+               station.TryGetProperty("operational_status", out var operational) &&
+               operational.ValueKind == JsonValueKind.String &&
+               operational.GetString() == "active";
     }
 }
 
@@ -325,14 +332,25 @@ public static class StationDirectoryEndpoints
                     title: "Station scope could not be resolved",
                     statusCode: StatusCodes.Status503ServiceUnavailable);
 
-            var authorizedAuthorityIds = new HashSet<Guid>();
+            var catalogueAuthorityIds = new HashSet<Guid>();
+            var registrationAuthorityIds = new HashSet<Guid>();
             foreach (var authorityId in membershipAuthorityIds)
             {
                 if (await StationDirectoryVisibility.CanViewAuthorityAsync(
-                        authorization, userId, authorityId, cancellationToken))
-                    authorizedAuthorityIds.Add(authorityId);
+                        authorization, userId, authorityId,
+                        "stations.catalogue.review", cancellationToken))
+                    catalogueAuthorityIds.Add(authorityId);
+
+                if (await StationDirectoryVisibility.CanViewAuthorityAsync(
+                        authorization, userId, authorityId,
+                        "registrations.system.approve", cancellationToken))
+                    registrationAuthorityIds.Add(authorityId);
             }
 
+            var authorizedAuthorityIds = catalogueAuthorityIds
+                .Concat(registrationAuthorityIds)
+                .Distinct()
+                .ToArray();
             var candidateStations = await directory.GetStationsByScopeAsync(
                 assignedStationIds,
                 authorizedAuthorityIds,
@@ -369,10 +387,8 @@ public static class StationDirectoryEndpoints
                         stationId == Guid.Empty)
                         return;
 
-                    if (row.TryGetProperty("owner_authority_id", out var authorityValue) &&
-                        authorityValue.ValueKind == JsonValueKind.String &&
-                        Guid.TryParse(authorityValue.GetString(), out var authorityId) &&
-                        authorizedAuthorityIds.Contains(authorityId))
+                    if (StationDirectoryVisibility.IsVisibleThroughAuthorityScope(
+                            row, catalogueAuthorityIds, registrationAuthorityIds))
                     {
                         visible[index] = true;
                         return;
