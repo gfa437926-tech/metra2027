@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/widgets/metra_observation_form.dart';
@@ -34,7 +34,7 @@ class DailyObservationScreen extends StatelessWidget {
         503 => 'الإرسال غير متاح حالياً (بوابة أو خدمة مغلقة على الخادم).',
         401 => 'يلزم تسجيل الدخول من جديد.',
         403 => 'لا تملك صلاحية الإرسال لهذه المحطة.',
-        _ => 'فشل الإرسال (${e.statusCode}).',
+        _ => 'فشل الإرسال ($e.statusCode).',
       };
       messenger.showSnackBar(SnackBar(content: Text(msg)));
     } catch (_) {
