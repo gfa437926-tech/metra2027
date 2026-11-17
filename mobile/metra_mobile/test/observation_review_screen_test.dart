@@ -91,10 +91,9 @@ void main() {
     await tester.tap(find.byTooltip('تحديث'));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.'),
-      findsOneWidget,
-    );
+    // queueLoadMessage maps 5xx via forApiException (operator-safe Arabic).
+    expect(find.textContaining('الخادم'), findsOneWidget);
+    expect(find.text('إعادة المحاولة'), findsOneWidget);
     api.close();
   });
 
