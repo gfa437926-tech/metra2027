@@ -83,6 +83,10 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   final Map<String, bool> _booleans = {};
   bool _saving = false;
 
+  static final RegExp _dateYmd = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+  static final RegExp _timeHm = RegExp(r'^\d{2}:\d{2}$');
+  static final RegExp _timeHms = RegExp(r'^\d{2}:\d{2}:\d{2}$');
+
   @override
   void initState() {
     super.initState();
@@ -127,6 +131,39 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     widget.onValuesChanged?.call(_collectValues());
   }
 
+  bool _isValidCalendarDate(String value) {
+    if (!_dateYmd.hasMatch(value)) return false;
+    final parts = value.split('-');
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) return false;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    try {
+      final parsed = DateTime(year, month, day);
+      return parsed.year == year && parsed.month == month && parsed.day == day;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _isValidClockTime(String value) {
+    final normalized =
+        _timeHm.hasMatch(value) ? '$value:00' : value;
+    if (!_timeHms.hasMatch(normalized)) return false;
+    final parts = normalized.split(':');
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    final second = int.tryParse(parts[2]);
+    if (hour == null || minute == null || second == null) return false;
+    return hour >= 0 &&
+        hour <= 23 &&
+        minute >= 0 &&
+        minute <= 59 &&
+        second >= 0 &&
+        second <= 59;
+  }
+
   String? _validate(MetraObservationField field, String? raw) {
     final value = (raw ?? '').trim();
     if (value.isEmpty) return field.required ? 'هذا الحقل مطلوب' : null;
@@ -149,6 +186,22 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       }
       if (field.maximum != null && parsed > field.maximum!) {
         return 'القيمة أكبر من الحد الأعلى (${field.maximum})';
+      }
+    }
+
+    if (field.kind == MetraFieldKind.date && !_isValidCalendarDate(value)) {
+      return 'التاريخ يجب أن يكون بالتنسيق yyyy-MM-dd';
+    }
+
+    if (field.kind == MetraFieldKind.time && !_isValidClockTime(value)) {
+      return 'الوقت يجب أن يكون بالتنسيق HH:mm أو HH:mm:ss';
+    }
+
+    if (field.kind == MetraFieldKind.datetime) {
+      // Accept ISO-like local stamps; server paths normalize to UTC separately.
+      final parsed = DateTime.tryParse(value);
+      if (parsed == null) {
+        return 'أدخل تاريخاً ووقتاً صالحين';
       }
     }
 
@@ -256,12 +309,21 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
               ? TextInputType.multiline
               : field.kind == MetraFieldKind.phone
                   ? TextInputType.phone
-                  : TextInputType.text,
+                  : field.kind == MetraFieldKind.date ||
+                          field.kind == MetraFieldKind.time ||
+                          field.kind == MetraFieldKind.datetime
+                      ? TextInputType.datetime
+                      : TextInputType.text,
       maxLines: field.kind == MetraFieldKind.multiline ? 4 : 1,
       maxLength: field.maxLength,
       decoration: InputDecoration(
         labelText: field.label,
         suffixText: field.unit,
+        hintText: field.kind == MetraFieldKind.date
+            ? 'yyyy-MM-dd'
+            : field.kind == MetraFieldKind.time
+                ? (field.unit ?? 'HH:mm:ss')
+                : null,
         border: const OutlineInputBorder(),
       ),
       validator: (raw) => _validate(field, raw),
