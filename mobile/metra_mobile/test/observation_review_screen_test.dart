@@ -32,6 +32,13 @@ void main() {
         client: MockClient(handler),
       );
 
+  /// Dialog confirm button is the last FilledButton labelled اعتماد when open.
+  Future<void> confirmApprove(WidgetTester tester) async {
+    final dialogApprove = find.widgetWithText(FilledButton, 'اعتماد').last;
+    expect(dialogApprove, findsOneWidget);
+    await tester.tap(dialogApprove);
+  }
+
   testWidgets('renders queue returned by the API', (tester) async {
     final api = apiWith(
       (_) async => http.Response(jsonEncode([queueItem()]), 200),
@@ -140,7 +147,7 @@ void main() {
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
     expect(find.text('اعتماد النشرة'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FilledButton, 'اعتماد'));
+    await confirmApprove(tester);
     await tester.pumpAndSettle();
 
     expect(decideCalls, 1);
@@ -198,7 +205,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'اعتماد'));
+    await confirmApprove(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('ليست لديك صلاحية تنفيذ هذا القرار'), findsOneWidget);
@@ -221,7 +228,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'اعتماد'));
+    await confirmApprove(tester);
     await tester.pumpAndSettle();
 
     expect(find.textContaining('مسبقاً'), findsOneWidget);
@@ -248,9 +255,10 @@ void main() {
 
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'اعتماد'));
+    await confirmApprove(tester);
     await tester.pump();
 
+    // Second attempt while processing should be ignored by UI guard.
     await tester.tap(find.text('اعتماد'), warnIfMissed: false);
     await tester.pump();
     expect(decideCalls, 1);
