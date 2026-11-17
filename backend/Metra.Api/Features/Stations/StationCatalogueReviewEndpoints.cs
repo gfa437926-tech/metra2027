@@ -123,7 +123,8 @@ public static class StationCatalogueReviewEndpoints
         })
         .RequireStationOwnerAuthorityPermission("stations.catalogue.review")
         .WithTags("Stations")
-        .WithName("ReviewStationCatalogue");
+        .RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("ReviewStationCatalogue");
 
         return endpoints;
     }

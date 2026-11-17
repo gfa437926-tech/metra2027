@@ -24,6 +24,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuthorizationSe
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationSubmissionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationDecisionService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationQueueService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseObservationArchiveService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationDirectoryService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationCatalogueReviewService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseRegistrationReviewService));
@@ -45,7 +46,11 @@ builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
+builder.Services.AddScoped<IObservationArchiveService, SupabaseObservationArchiveService>();
 builder.Services.AddOpenApi();
+var rateLimitingDisabled = builder.Configuration.GetValue("RateLimiting:Disabled", false);
+if (!rateLimitingDisabled)
+    builder.Services.AddMetraRateLimiting();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -62,9 +67,12 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = audience,
             ValidateLifetime = true,
+            RequireExpirationTime = true,
             ValidateIssuerSigningKey = true,
             NameClaimType = "sub",
-            ClockSkew = TimeSpan.FromSeconds(60)
+            ClockSkew = TimeSpan.FromSeconds(60),
+            // Supabase Auth issues asymmetric JWTs (RS256/ES256). Reject none/HS by omission.
+            ValidAlgorithms = ["RS256", "ES256"]
         };
     });
 
@@ -93,10 +101,26 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors("MetraClients");
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    context.Response.Headers.TryAdd("Referrer-Policy", "no-referrer");
+    context.Response.Headers.TryAdd("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+    await next();
+});
+
+// Authenticate first so per-user rate-limit partitions can read the validated JWT subject.
 app.UseAuthentication();
+if (!rateLimitingDisabled)
+    app.UseRateLimiter();
 app.UseAuthorization();
 
-if (app.Environment.IsDevelopment())
+// OpenAPI document: Development always; other environments only when OpenApi:Enabled=true.
+// Do not enable anonymously on public production without an edge auth layer.
+var openApiEnabled = app.Environment.IsDevelopment()
+    || app.Configuration.GetValue("OpenApi:Enabled", false);
+if (openApiEnabled)
 {
     app.MapOpenApi();
 }
@@ -105,6 +129,7 @@ app.MapObservationValidationEndpoints();
 app.MapObservationSubmissionEndpoints();
 app.MapObservationDecisionEndpoints();
 app.MapObservationQueueEndpoints();
+app.MapObservationArchiveEndpoints();
 app.MapStationDirectoryEndpoints();
 app.MapStationCatalogueReviewEndpoints();
 app.MapRegistrationReviewEndpoints();
@@ -121,15 +146,17 @@ app.MapGet("/api/v1/health", () => Results.Ok(new
     version = "v1"
 }))
 .AllowAnonymous()
+.RequireRateLimiting(MetraRateLimiting.PolicyAnonymousProbe)
 .WithName("GetApiHealth");
 
-// Readiness is separate from liveness: it verifies server configuration and a
-// bounded, server-authenticated Supabase catalogue request without exposing secrets.
+// Readiness is separate from liveness: it verifies server configuration, a
+// bounded catalogue request, and both protected archive RPC entry points without exposing secrets.
 app.MapGet("/api/v1/ready", async (
     IStationAuthorizationService authorization,
     IObservationSubmissionService submission,
     IObservationDecisionService decision,
     IObservationQueueService queue,
+    IObservationArchiveService archive,
     IStationDirectoryService directory,
     IStationCatalogueReviewService stationReview,
     IRegistrationReviewService registrationReview,
@@ -144,6 +171,7 @@ app.MapGet("/api/v1/ready", async (
         submission.IsConfigured &&
         decision.IsConfigured &&
         queue.IsConfigured &&
+        archive.IsConfigured &&
         directory.IsConfigured &&
         stationReview.IsConfigured &&
         registrationReview.IsConfigured &&
@@ -162,13 +190,18 @@ app.MapGet("/api/v1/ready", async (
     // non-empty environment variables. A schema, credential, or network
     // failure must keep the instance out of service.
     var probe = await directory.GetStationsAsync(1, 0, null, cancellationToken);
-    return probe is not null
+    var archiveProbe = probe is not null && await archive.ProbeAsync(cancellationToken);
+    var submissionRpcProbe = archiveProbe && await submission.ProbeAsync(cancellationToken);
+    var decisionRpcProbe = submissionRpcProbe && await decision.ProbeAsync(cancellationToken);
+    return probe is not null && archiveProbe && submissionRpcProbe && decisionRpcProbe
         ? Results.Ok(new { status = "ready", service = "metra-api" })
         : Results.Problem(
             title: "Supabase readiness probe failed",
+            detail: "One or more required database RPC contracts are missing or not executable.",
             statusCode: StatusCodes.Status503ServiceUnavailable);
 })
 .AllowAnonymous()
+.RequireRateLimiting(MetraRateLimiting.PolicyAnonymousProbe)
 .WithName("GetApiReadiness");
 
 app.Run();

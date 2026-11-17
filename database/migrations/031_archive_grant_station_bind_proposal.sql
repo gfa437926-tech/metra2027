@@ -1,0 +1,27 @@
+-- PROPOSAL ONLY — Stage D security finding R4.
+-- DO NOT APPLY TO HOSTED SUPABASE without explicit approval.
+--
+-- Finding: metra_user_has_station_permission (003 / later replacements)
+-- joins permission_grants on (user_id, permission_code) but does NOT require
+-- permission_grants.station_id = p_station_id.
+--
+-- For most permissions, station isolation is provided by station_assignments.
+-- For observation.archive.read the approved policy requires an EXPLICIT
+-- per-station grant: grant on station A must not authorize station B even
+-- when the user is assigned to both stations under the same authority.
+--
+-- Required predicate addition for archive (and optionally all grants that
+-- carry station_id):
+--   AND (permission.station_id IS NULL AND p_permission_code <> 'observation.archive.read'
+--        OR permission.station_id = p_station_id)
+-- Prefer strict form for archive:
+--   AND permission.station_id = p_station_id
+-- when p_permission_code = 'observation.archive.read'
+--
+-- Isolated verification already implements strict station_id equality in
+-- database/isolated/00_bootstrap_minimal_schema.sql and tests passed.
+--
+-- Also ensure permission_grants.station_id is NOT NULL for archive grants
+-- and is written to permission grant audit on grant/revoke.
+
+SELECT '031_archive_grant_station_bind_proposal_not_applied' AS status;

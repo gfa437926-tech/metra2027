@@ -1,3 +1,4 @@
+using Metra.Api.Security;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
@@ -107,7 +108,8 @@ public static class StationDirectoryEndpoints
             return Results.Ok(stations.Value);
         })
         .WithTags("Stations")
-        .WithName("GetStationDirectory");
+        .RequireRateLimiting(MetraRateLimiting.PolicyRead)
+            .WithName("GetStationDirectory");
 
         return endpoints;
     }

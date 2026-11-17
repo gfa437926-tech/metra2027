@@ -22,6 +22,7 @@ public sealed record ObservationSubmissionOutcome(
 public interface IObservationSubmissionService
 {
     bool IsConfigured { get; }
+    Task<bool> ProbeAsync(CancellationToken cancellationToken);
     Task<ObservationSubmissionOutcome> SubmitAsync(
         Guid userId, Guid stationId, ObservationSubmissionRequest request,
         CancellationToken cancellationToken);
@@ -42,6 +43,40 @@ public sealed class SupabaseObservationSubmissionService(
         Uri.TryCreate(_url, UriKind.Absolute, out var uri) &&
         uri.Scheme == Uri.UriSchemeHttps &&
         !string.IsNullOrWhiteSpace(_serviceKey);
+
+    /// <summary>
+    /// Confirms the write RPC is installed and executable without creating data.
+    /// Null required identifiers must be rejected by the database contract.
+    /// </summary>
+    public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return false;
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_submit_observation");
+        message.Headers.TryAddWithoutValidation("apikey", _serviceKey);
+        message.Headers.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _serviceKey);
+        message.Content = JsonContent.Create(new
+        {
+            p_user_id = (Guid?)null,
+            p_station_id = (Guid?)null,
+            p_idempotency_key = "readiness-probe",
+            p_observation_type = "hourly",
+            p_observed_at = (DateTimeOffset?)null,
+            p_payload = (object?)new { },
+            p_submit = false
+        });
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationSubmissionService))
+                .SendAsync(message, cancellationToken);
+            if (response.StatusCode != HttpStatusCode.BadRequest) return false;
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return body.Contains("user_id_and_station_id_required", StringComparison.Ordinal);
+        }
+        catch (HttpRequestException) { return false; }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return false; }
+    }
 
     public async Task<ObservationSubmissionOutcome> SubmitAsync(
         Guid userId, Guid stationId, ObservationSubmissionRequest request,
@@ -71,7 +106,10 @@ public sealed class SupabaseObservationSubmissionService(
         {
             using var response = await client.SendAsync(message, cancellationToken);
             if (!response.IsSuccessStatusCode)
-                return new(true, false, response.StatusCode, null);
+            {
+                var mappedStatus = await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response, cancellationToken);
+                return new(true, false, mappedStatus, null);
+            }
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(
                 cancellationToken: cancellationToken);
@@ -105,6 +143,7 @@ public static class ObservationSubmissionEndpoints
                 ObservationSubmissionRequest? request,
                 HttpContext http,
                 IObservationSubmissionService submission,
+                IConfiguration configuration,
                 CancellationToken cancellationToken) =>
             {
                 if (!Guid.TryParse(http.User.FindFirstValue("sub"), out var userId))
@@ -113,6 +152,18 @@ public static class ObservationSubmissionEndpoints
                 var validationError = ObservationSubmissionRequestGuard.GetError(request);
                 if (validationError is not null)
                     return Results.BadRequest(new { error = validationError });
+
+                var payloadIssues = ObservationSubmissionPayloadValidator.Validate(request!);
+                if (payloadIssues.Count > 0)
+                {
+                    var errors = payloadIssues.GroupBy(issue => issue.Field, StringComparer.Ordinal)
+                        .ToDictionary(group => group.Key, group => group.Select(issue => issue.Message).ToArray(), StringComparer.Ordinal);
+                    return Results.ValidationProblem(errors, statusCode: StatusCodes.Status422UnprocessableEntity);
+                }
+
+                if (!ObservationSubmissionFeatureGate.IsEnabled(
+                    configuration[ObservationSubmissionFeatureGate.ConfigurationKey]))
+                    return Results.Conflict(new { code = "scientific_contract_not_approved" });
 
                 if (!submission.IsConfigured)
                     return Results.Problem(
@@ -138,8 +189,9 @@ public static class ObservationSubmissionEndpoints
 
                 return Results.Ok(result.Data);
             })
-            .RequireStationPermission("observation.create")
+            .RequireAuthorization()
             .WithTags("Observations")
+            .RequireRateLimiting(MetraRateLimiting.PolicyWrite)
             .WithName("SubmitStationObservation");
 
         return endpoints;
@@ -174,6 +226,7 @@ public sealed record ObservationDecisionOutcome(bool IsConfigured, bool Succeede
 public interface IObservationDecisionService
 {
     bool IsConfigured { get; }
+    Task<bool> ProbeAsync(CancellationToken cancellationToken);
     Task<ObservationDecisionOutcome> DecideAsync(Guid userId, Guid stationId, Guid observationId, ObservationDecisionRequest request, CancellationToken cancellationToken);
 }
 public sealed class SupabaseObservationDecisionService(IHttpClientFactory clients, IConfiguration configuration) : IObservationDecisionService
@@ -181,6 +234,34 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
     private readonly string? _url=configuration["Supabase:Url"];
     private readonly string? _key=configuration["Supabase:ServiceRoleKey"];
     public bool IsConfigured => Uri.TryCreate(_url,UriKind.Absolute,out var uri) && uri.Scheme==Uri.UriSchemeHttps && !string.IsNullOrWhiteSpace(_key);
+    /// <summary>Checks the decision RPC contract without changing observation state.</summary>
+    public async Task<bool> ProbeAsync(CancellationToken cancellationToken)
+    {
+        if (!IsConfigured) return false;
+        using var message = new HttpRequestMessage(
+            HttpMethod.Post, $"{_url!.TrimEnd('/')}/rest/v1/rpc/metra_decide_observation");
+        message.Headers.TryAddWithoutValidation("apikey", _key);
+        message.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _key);
+        message.Content = JsonContent.Create(new
+        {
+            p_user_id = (Guid?)null,
+            p_station_id = (Guid?)null,
+            p_observation_id = (Guid?)null,
+            p_decision = "approve",
+            p_note = (string?)null
+        });
+        try
+        {
+            using var response = await clients.CreateClient(nameof(SupabaseObservationDecisionService))
+                .SendAsync(message, cancellationToken);
+            if (response.StatusCode != HttpStatusCode.BadRequest) return false;
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            return body.Contains("user_station_observation_required", StringComparison.Ordinal);
+        }
+        catch (HttpRequestException) { return false; }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested) { return false; }
+    }
+
     public async Task<ObservationDecisionOutcome> DecideAsync(Guid userId,Guid stationId,Guid observationId,ObservationDecisionRequest request,CancellationToken cancellationToken)
     {
         if(!IsConfigured) return new(false,false,null,null);
@@ -190,7 +271,10 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
         message.Content=JsonContent.Create(new { p_user_id=userId,p_station_id=stationId,p_observation_id=observationId,p_decision=request.Decision,p_note=request.Note });
         try {
           using var response=await clients.CreateClient(nameof(SupabaseObservationDecisionService)).SendAsync(message,cancellationToken);
-          if(!response.IsSuccessStatusCode) return new(true,false,response.StatusCode,null);
+          if(!response.IsSuccessStatusCode) {
+            var mappedStatus=await SupabaseRpcErrorHandling.MapDatabaseErrorStatusAsync(response,cancellationToken);
+            return new(true,false,mappedStatus,null);
+          }
           var data=await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken:cancellationToken);
           return new(true,true,response.StatusCode,data);
         } catch(JsonException) {
@@ -205,29 +289,28 @@ public static class ObservationDecisionEndpoints
  public static IEndpointRouteBuilder MapObservationDecisionEndpoints(this IEndpointRouteBuilder endpoints)
  {
   endpoints.MapPost("/api/v1/stations/{stationId:guid}/observations/{observationId:guid}/decision",
-   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,IStationAuthorizationService authorization,CancellationToken ct)=>{
+   async(Guid stationId,Guid observationId,ObservationDecisionRequest? request,HttpContext http,IObservationDecisionService service,IConfiguration configuration,CancellationToken ct)=>{
     if(!Guid.TryParse(http.User.FindFirstValue("sub"),out var userId)) return Results.Unauthorized();
     var validationError = ObservationDecisionRequestGuard.GetError(request);
     if (validationError is not null)
       return Results.BadRequest(new { error = validationError });
-    if (!authorization.IsConfigured)
-      return Results.Problem(title: "Authorization service unavailable", statusCode: 503);
-    var requiredPermission = request!.Decision == "approve"
-      ? "observation.approve"
-      : "observation.return_for_correction";
-    var allowed = await authorization.HasStationPermissionAsync(userId, stationId, requiredPermission, ct);
-    if (!allowed) return Results.Forbid();
+    if (!ObservationDecisionFeatureGate.IsEnabled(
+        configuration[ObservationDecisionFeatureGate.ConfigurationKey]))
+      return Results.Conflict(new { code = "atomic_decision_authorization_not_approved" });
     if(!service.IsConfigured) return Results.Problem(title: "Observation service unavailable", statusCode: 503);
     var result=await service.DecideAsync(userId,stationId,observationId,request!,ct);
     if(!result.Succeeded) {
       if(result.StatusCode==HttpStatusCode.Forbidden) return Results.Forbid();
       if(result.StatusCode==HttpStatusCode.NotFound) return Results.NotFound();
-      if(result.StatusCode==HttpStatusCode.BadRequest || result.StatusCode==HttpStatusCode.Conflict)
-        return Results.Conflict(new {error="observation_decision_rejected"});
+      if(result.StatusCode==HttpStatusCode.BadRequest)
+        return Results.BadRequest(new {error="observation_decision_rejected"});
+      if(result.StatusCode==HttpStatusCode.Conflict)
+        return Results.Conflict(new {error="observation_decision_conflict"});
       return Results.Problem(title: "Observation decision unavailable", statusCode: 503);
     }
     return Results.Ok(result.Data);
-   }).WithTags("Observations").WithName("DecideStationObservation");
+   }).RequireAuthorization().WithTags("Observations").RequireRateLimiting(MetraRateLimiting.PolicySensitive)
+            .WithName("DecideStationObservation");
   return endpoints;
  }
 }
@@ -247,4 +330,32 @@ public static class ObservationDecisionRequestGuard
             return "invalid_decision_note";
         return null;
     }
+}
+
+
+/// <summary>
+/// Fail-closed release gate: scientific observation writes remain disabled until
+/// the meteorological owner approves the field contract and the deployment
+/// explicitly sets ObservationSubmission:ScientificContractApproved=true.
+/// </summary>
+public static class ObservationSubmissionFeatureGate
+{
+    public const string ConfigurationKey = "ObservationSubmission:ScientificContractApproved";
+
+    public static bool IsEnabled(string? configuredValue) =>
+        bool.TryParse(configuredValue, out var enabled) && enabled;
+}
+
+
+/// <summary>
+/// Fail-closed release gate for review decisions. The atomic authorization RPC
+/// must be deployed and verified in an isolated staging environment before the
+/// API can issue approval or return-for-correction writes.
+/// </summary>
+public static class ObservationDecisionFeatureGate
+{
+    public const string ConfigurationKey = "ObservationDecision:AtomicAuthorizationApproved";
+
+    public static bool IsEnabled(string? configuredValue) =>
+        bool.TryParse(configuredValue, out var enabled) && enabled;
 }

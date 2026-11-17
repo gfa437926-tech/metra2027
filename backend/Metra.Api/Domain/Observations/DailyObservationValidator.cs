@@ -91,7 +91,24 @@ public static class DailyObservationValidator
             issues.Add(new("maxTemp", "درجة الحرارة العظمى يجب أن تكون أكبر من أو تساوي درجة الحرارة الصغرى."));
         }
 
+        ValidateHumidityRelationship(values, issues);
         return issues;
+    }
+
+    private static void ValidateHumidityRelationship(
+        IReadOnlyDictionary<string, string?> values, List<ValidationIssue> issues)
+    {
+        var maximum = GetValue(values, "maxHumidity");
+        var minimum = GetValue(values, "minHumidity");
+        if (maximum is null || minimum is null || maximum == "#" || minimum == "#")
+            return;
+
+        if (decimal.TryParse(maximum, NumberStyles.None, CultureInfo.InvariantCulture, out var maxValue) &&
+            decimal.TryParse(minimum, NumberStyles.None, CultureInfo.InvariantCulture, out var minValue) &&
+            minValue > maxValue)
+        {
+            issues.Add(new("minHumidity", "الرطوبة الصغرى لا يجوز أن تتجاوز الرطوبة العظمى."));
+        }
     }
 
     private static string? GetValue(IReadOnlyDictionary<string, string?> values, string key)

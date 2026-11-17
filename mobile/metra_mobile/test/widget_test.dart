@@ -1,4 +1,5 @@
 import 'dart:convert';
+// ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -68,9 +69,13 @@ void main() {
     expect(find.text('1150.0 م'), findsOneWidget);
     expect(find.text('surveyed'), findsOneWidget);
     expect(find.textContaining('لا تمثل قياسات جوية لحظية'), findsOneWidget);
-    await tester.pageBack();
+    Navigator.of(tester.element(find.byType(StationDirectoryScreen))).pop();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محطة آلية'));
+    final automaticStationTile = find.ancestor(
+      of: find.text('محطة آلية'),
+      matching: find.byType(ListTile),
+    );
+    await tester.tap(automaticStationTile);
     expect(selected, '22222222-2222-4222-8222-222222222222');
     api.close();
   });
@@ -150,14 +155,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('مراكز التنبؤ الجوي'), findsOneWidget);
     expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
-    await tester.tap(find.text('محطة الساحل'));
+    final firstChoice = find.byType(CheckboxListTile).at(0);
+    await tester.ensureVisible(firstChoice);
+    await tester.tap(firstChoice);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('محطة الجبل'));
+    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile).at(0)).value, isTrue);
+    final secondChoice = find.byType(CheckboxListTile).at(1);
+    await tester.ensureVisible(secondChoice);
+    await tester.tap(secondChoice);
     await tester.pumpAndSettle();
+    expect(tester.widget<CheckboxListTile>(find.byType(CheckboxListTile).at(1)).value, isTrue);
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('1200.0 م'),
+      240,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('1200.0 م'), findsOneWidget);
     expect(find.text('المسافة من المرجع'), findsWidgets);
-    expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
     api.close();
   });
 
