@@ -12,15 +12,16 @@ class MetraErrorPresenter {
       return forApiException(error);
     }
     final text = error.toString().toLowerCase();
+    // Check timeout before generic connection keywords (e.g. "connection timed out").
+    if (text.contains('timeout') || text.contains('timed out')) {
+      return 'انتهت مهلة الاتصال بالخادم. أعد المحاولة لاحقاً.';
+    }
     if (text.contains('socket') ||
         text.contains('network') ||
         text.contains('failed host lookup') ||
         text.contains('connection refused') ||
         text.contains('connection')) {
       return 'تعذر الاتصال بالخادم. تحقق من الشبكة ثم أعد المحاولة.';
-    }
-    if (text.contains('timeout') || text.contains('timed out')) {
-      return 'انتهت مهلة الاتصال بالخادم. أعد المحاولة لاحقاً.';
     }
     return 'تعذر إتمام العملية. أعد المحاولة أو تواصل مع الدعم.';
   }
