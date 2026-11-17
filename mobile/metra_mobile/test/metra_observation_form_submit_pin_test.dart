@@ -80,7 +80,9 @@ void main() {
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -300));
+    // Form body is SingleChildScrollView (not ListView) so all required fields
+    // stay mounted for validation while remaining scrollable.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
@@ -102,8 +104,8 @@ void main() {
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
 
-    // Scroll list without requiring a specific off-stage label to appear.
-    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    // Scroll body without requiring a specific off-stage label to appear.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -500));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
