@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
+import '../../core/catalog_integration/catalog_form_type.dart';
 import 'catalog_observation_screen.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
@@ -57,40 +58,54 @@ class ObservationWorkspaceScreen extends StatelessWidget {
                   HourlyObservationScreen(api: api, stationId: stationId),
                   DailyObservationScreen(api: api, stationId: stationId),
                   PhenomenonObservationScreen(api: api, stationId: stationId),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'الرصد الزراعي',
                     fields: ObservationFieldCatalogs.agricultural,
                     formCode: 'agricultural',
+                    stationId: stationId,
+                    formType: CatalogFormType.agricultural,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'الرصد المناخي الساعي',
                     fields: ObservationFieldCatalogs.hourlyclimate,
                     formCode: 'hourlyclimate',
+                    stationId: stationId,
+                    formType: CatalogFormType.hourlyClimate,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'رصد الأمطار',
                     fields: ObservationFieldCatalogs.rainfall,
                     formCode: 'rainfall',
+                    stationId: stationId,
+                    formType: CatalogFormType.rainfall,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'رصد التربة',
                     fields: ObservationFieldCatalogs.soil,
                     formCode: 'soil',
+                    stationId: stationId,
+                    formType: CatalogFormType.soil,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'أعطال الأجهزة',
                     fields: ObservationFieldCatalogs.faultequipment,
                     formCode: 'faultequipment',
+                    stationId: stationId,
+                    formType: CatalogFormType.faultEquipment,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'أعطال الاتصالات',
                     fields: ObservationFieldCatalogs.faulttelecom,
                     formCode: 'faulttelecom',
+                    stationId: stationId,
+                    formType: CatalogFormType.faultTelecom,
                   ),
-                  const CatalogObservationScreen(
+                  CatalogObservationScreen(
                     title: 'بلاغات تقنية المعلومات',
                     fields: ObservationFieldCatalogs.faultit,
                     formCode: 'faultit',
+                    stationId: stationId,
+                    formType: CatalogFormType.faultIt,
                   ),
                   ObservationReviewScreen(api: api, stationId: stationId),
                 ],
