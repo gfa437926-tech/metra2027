@@ -66,8 +66,9 @@ public sealed class AccessContextServiceTests
     public async Task Single_station_permissions_come_from_rpc_not_role_name()
     {
         var stationId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var authorization = new FakeAuthorization(stationPermission: code =>
-            code is "observation.create" or "observation.submit");
+        var authorization = new FakeAuthorization(
+            stationPermission: (id, code) =>
+                id == stationId && code is "observation.create" or "observation.submit");
 
         var service = CreateService(request =>
         {
@@ -81,9 +82,6 @@ public sealed class AccessContextServiceTests
                 return JsonOk(body);
             }
 
-            if (path.Contains("authority_memberships"))
-                return JsonOk("[]");
-
             return JsonOk("[]");
         }, authorization);
 
@@ -96,7 +94,6 @@ public sealed class AccessContextServiceTests
         Assert.Equal(
             new[] { "observation.create", "observation.submit" },
             context.Stations[0].Permissions);
-        // Role name alone must not grant review.
         Assert.DoesNotContain("observation.review", context.Stations[0].Permissions);
     }
 
@@ -157,7 +154,7 @@ public sealed class AccessContextServiceTests
             }
 
             return JsonOk("[]");
-        }, new FakeAuthorization(stationPermission: _ => false));
+        }, new FakeAuthorization());
 
         var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
 
@@ -170,7 +167,7 @@ public sealed class AccessContextServiceTests
     {
         var service = CreateService(
             _ => new HttpResponseMessage(HttpStatusCode.ServiceUnavailable),
-            new FakeAuthorization(stationPermission: _ => true));
+            new FakeAuthorization(stationPermission: (_, _) => true));
 
         Assert.Null(await service.BuildAsync(Guid.NewGuid(), CancellationToken.None));
     }
@@ -199,37 +196,17 @@ public sealed class AccessContextServiceTests
             Content = new StringContent(json, Encoding.UTF8, "application/json")
         };
 
-    private sealed class FakeAuthorization : IStationAuthorizationService
+    private sealed class FakeAuthorization(
+        Func<Guid, string, bool>? stationPermission = null,
+        Func<string, bool>? authorityPermission = null,
+        bool isConfigured = true) : IStationAuthorizationService
     {
-        private readonly Func<Guid, string, bool> _stationPermission;
-        private readonly Func<string, bool> _authorityPermission;
-
-        public FakeAuthorization(
-            Func<string, bool>? stationPermission = null,
-            Func<Guid, string, bool>? stationPermissionWithId = null,
-            Func<string, bool>? authorityPermission = null,
-            bool isConfigured = true)
-        {
-            IsConfigured = isConfigured;
-            _stationPermission = stationPermissionWithId ??
-                ((_, code) => stationPermission?.Invoke(code) ?? false);
-            _authorityPermission = authorityPermission ?? (_ => false);
-        }
-
-        // Convenience overload used by tests via optional named args above.
-        public FakeAuthorization(
-            Func<Guid, string, bool> stationPermission,
-            Func<string, bool>? authorityPermission = null)
-            : this(stationPermissionWithId: stationPermission, authorityPermission: authorityPermission)
-        {
-        }
-
-        public bool IsConfigured { get; }
+        public bool IsConfigured { get; } = isConfigured;
 
         public Task<bool> HasStationPermissionAsync(
             Guid userId, Guid stationId, string permissionCode,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(_stationPermission(stationId, permissionCode));
+            Task.FromResult(stationPermission?.Invoke(stationId, permissionCode) ?? false);
 
         public Task<bool> HasStationOwnerAuthorityPermissionAsync(
             Guid userId, Guid stationId, string permissionCode,
@@ -239,7 +216,7 @@ public sealed class AccessContextServiceTests
         public Task<bool> HasAuthorityPermissionAsync(
             Guid userId, Guid authorityId, string permissionCode,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(_authorityPermission(permissionCode));
+            Task.FromResult(authorityPermission?.Invoke(permissionCode) ?? false);
     }
 
     private sealed class StubHttpClientFactory(
