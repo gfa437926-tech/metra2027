@@ -2,8 +2,6 @@
 ///
 /// Production data must come only from GET /api/v1/me/access-context.
 /// Never invent roles, stations, or permission codes from client claims.
-///
-/// See docs/api-contracts/PROPOSED-ACCESS-CONTEXT.md.
 class MetraAccessContext {
   const MetraAccessContext._({
     required this.isResolved,
@@ -13,7 +11,6 @@ class MetraAccessContext {
     required this.stationRoles,
   });
 
-  /// No server context available yet — fail closed.
   factory MetraAccessContext.unresolved() => const MetraAccessContext._(
         isResolved: false,
         userId: null,
@@ -22,7 +19,6 @@ class MetraAccessContext {
         stationRoles: {},
       );
 
-  /// Built only from a successful access-context API response (or unit fixtures).
   factory MetraAccessContext.resolved({
     required String userId,
     String? accountState,
@@ -55,19 +51,16 @@ class MetraAccessContext {
     );
   }
 
-  /// True only when populated from the server contract.
   final bool isResolved;
-
   final String? userId;
   final String? accountState;
-
-  /// stationId → permission codes granted on that station.
   final Map<String, Set<String>> stationPermissions;
-
-  /// stationId → assignment role_code when returned by the server.
   final Map<String, String> stationRoles;
 
-  /// Fail-closed: returns false when unresolved or station/permission unknown.
+  /// accountState is informational only; never treat "unknown" as active.
+  bool get hasKnownActiveAccount =>
+      isResolved && accountState != null && accountState == 'active';
+
   bool hasStationPermission(String stationId, String permissionCode) {
     if (!isResolved) return false;
     final station = stationId.trim();
@@ -80,7 +73,8 @@ class MetraAccessContext {
 
   bool canEnterObservations(String stationId) =>
       hasStationPermission(stationId, 'observation.create') ||
-      hasStationPermission(stationId, 'observation.submit');
+      hasStationPermission(stationId, 'observation.submit') ||
+      hasStationPermission(stationId, 'observation.edit_own_draft');
 
   bool canReviewObservations(String stationId) =>
       hasStationPermission(stationId, 'observation.review') ||
@@ -92,18 +86,17 @@ class MetraAccessContext {
       hasStationPermission(stationId, 'users.station.manage') ||
       hasStationPermission(stationId, 'registrations.station.approve');
 
-  /// Any station where observation entry is allowed.
+  bool canAccessObservationWorkspace(String stationId) =>
+      canEnterObservations(stationId) || canReviewObservations(stationId);
+
   bool get canAccessAnyObservationWorkspace {
     if (!isResolved) return false;
     for (final stationId in stationPermissions.keys) {
-      if (canEnterObservations(stationId) || canReviewObservations(stationId)) {
-        return true;
-      }
+      if (canAccessObservationWorkspace(stationId)) return true;
     }
     return false;
   }
 
-  /// Any station where administration is allowed.
   bool get canAccessAnyStationAdministration {
     if (!isResolved) return false;
     for (final stationId in stationPermissions.keys) {
@@ -111,9 +104,47 @@ class MetraAccessContext {
     }
     return false;
   }
+
+  /// Destination visibility from permission codes only (no role names).
+  ///
+  /// - Always for signed-in users: home, stations, settings
+  /// - Placeholders without backend contracts stay visible (informational only)
+  /// - observations / admin require at least one station with matching codes
+  /// - When context is unresolved: operational destinations are hidden (fail-closed)
+  bool isDestinationVisible(MetraDestinationId id) {
+    switch (id) {
+      case MetraDestinationId.home:
+      case MetraDestinationId.stations:
+      case MetraDestinationId.settings:
+        return true;
+      case MetraDestinationId.forecast:
+      case MetraDestinationId.climatol:
+      case MetraDestinationId.recordsAi:
+      case MetraDestinationId.operations:
+      case MetraDestinationId.reports:
+        // No permission codes exist yet; screens show explicit offline notices.
+        return true;
+      case MetraDestinationId.observations:
+        return canAccessAnyObservationWorkspace;
+      case MetraDestinationId.admin:
+        return canAccessAnyStationAdministration;
+    }
+  }
 }
 
-/// Shared Arabic copy for permission-denied UI.
+enum MetraDestinationId {
+  home,
+  stations,
+  forecast,
+  observations,
+  climatol,
+  recordsAi,
+  operations,
+  reports,
+  admin,
+  settings,
+}
+
 class MetraPermissionDeniedMessages {
   const MetraPermissionDeniedMessages._();
 
@@ -134,4 +165,7 @@ class MetraPermissionDeniedMessages {
       'حتى يتوفر سياق موثوق.';
 
   static const contextLoading = 'جارٍ تحميل صلاحيات الحساب…';
+
+  static const destinationHidden =
+      'هذه الوجهة غير متاحة لحسابك حسب صلاحيات الخادم.';
 }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text.Json;
@@ -38,11 +39,9 @@ public sealed class SupabaseAccessContextService(
     IStationAuthorizationService authorization) : IAccessContextService
 {
     private const int MaximumAssignments = 100;
+    private const int StationParallelism = 4;
+    private const int PermissionParallelism = 3;
 
-    /// <summary>
-    /// Station permission codes known to existing authorization paths.
-    /// Probed individually via metra_user_has_station_permission.
-    /// </summary>
     private static readonly string[] StationPermissionCodes =
     [
         "observation.create",
@@ -56,9 +55,6 @@ public sealed class SupabaseAccessContextService(
         "users.station.manage"
     ];
 
-    /// <summary>
-    /// Authority permission codes used by existing directory/review paths.
-    /// </summary>
     private static readonly string[] AuthorityPermissionCodes =
     [
         "stations.catalogue.review",
@@ -85,44 +81,82 @@ public sealed class SupabaseAccessContextService(
         if (assignments is null || memberships is null)
             return null;
 
-        var stations = new List<AccessContextStation>();
-        foreach (var (stationId, roleCode) in assignments)
-        {
-            var granted = new List<string>();
-            foreach (var code in StationPermissionCodes)
+        var stationsBag = new ConcurrentBag<AccessContextStation>();
+        await Parallel.ForEachAsync(
+            assignments,
+            new ParallelOptions
             {
-                if (await authorization.HasStationPermissionAsync(
-                        userId, stationId, code, cancellationToken))
-                    granted.Add(code);
-            }
-
-            // Include station only when at least one operational permission is confirmed.
-            if (granted.Count > 0)
-                stations.Add(new AccessContextStation(stationId, roleCode, granted));
-        }
-
-        var authorities = new List<AccessContextAuthority>();
-        foreach (var (authorityId, roleCode) in memberships)
-        {
-            var granted = new List<string>();
-            foreach (var code in AuthorityPermissionCodes)
+                MaxDegreeOfParallelism = StationParallelism,
+                CancellationToken = cancellationToken
+            },
+            async (assignment, token) =>
             {
-                if (await authorization.HasAuthorityPermissionAsync(
-                        userId, authorityId, code, cancellationToken))
+                var granted = await ProbePermissionsAsync(
+                    StationPermissionCodes,
+                    code => authorization.HasStationPermissionAsync(
+                        userId, assignment.Id, code, token),
+                    token);
+                if (granted.Count > 0)
+                {
+                    stationsBag.Add(new AccessContextStation(
+                        assignment.Id, assignment.RoleCode, granted));
+                }
+            });
+
+        var authoritiesBag = new ConcurrentBag<AccessContextAuthority>();
+        await Parallel.ForEachAsync(
+            memberships,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = StationParallelism,
+                CancellationToken = cancellationToken
+            },
+            async (membership, token) =>
+            {
+                var granted = await ProbePermissionsAsync(
+                    AuthorityPermissionCodes,
+                    code => authorization.HasAuthorityPermissionAsync(
+                        userId, membership.Id, code, token),
+                    token);
+                if (granted.Count > 0)
+                {
+                    authoritiesBag.Add(new AccessContextAuthority(
+                        membership.Id, membership.RoleCode, granted));
+                }
+            });
+
+        var stations = stationsBag
+            .OrderBy(s => s.StationId)
+            .ToArray();
+        var authorities = authoritiesBag
+            .OrderBy(a => a.AuthorityId)
+            .ToArray();
+
+        // accountState stays unknown until a dedicated read path exists.
+        return new AccessContextResponse(userId, "unknown", stations, authorities);
+    }
+
+    private static async Task<IReadOnlyList<string>> ProbePermissionsAsync(
+        IReadOnlyList<string> codes,
+        Func<string, Task<bool>> probe,
+        CancellationToken cancellationToken)
+    {
+        var granted = new ConcurrentBag<string>();
+        await Parallel.ForEachAsync(
+            codes,
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = PermissionParallelism,
+                CancellationToken = cancellationToken
+            },
+            async (code, token) =>
+            {
+                if (await probe(code))
                     granted.Add(code);
-            }
+            });
 
-            if (granted.Count > 0)
-                authorities.Add(new AccessContextAuthority(authorityId, roleCode, granted));
-        }
-
-        // Account state is not exposed by a dedicated client-safe read model yet.
-        // Permission RPCs already require an active account server-side; we do not invent state.
-        return new AccessContextResponse(
-            userId,
-            "unknown",
-            stations,
-            authorities);
+        // Stable order matching the probe catalogue.
+        return codes.Where(granted.Contains).ToArray();
     }
 
     private async Task<IReadOnlyList<(Guid Id, string? RoleCode)>?> ReadAssignmentsAsync(
