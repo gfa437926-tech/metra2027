@@ -39,7 +39,7 @@ class CatalogObservationScreen extends StatelessWidget {
                     children: [
                       const Text(
                         'تحقق محلي فقط — لا حفظ على الخادم',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Color(0xFF9A6700),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
