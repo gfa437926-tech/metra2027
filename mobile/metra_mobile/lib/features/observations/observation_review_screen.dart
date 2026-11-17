@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/errors/metra_error_presenter.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 class ObservationReviewScreen extends StatefulWidget {
@@ -182,18 +183,13 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       await _refresh();
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = error.statusCode == 403
-          ? 'ليست لديك صلاحية تنفيذ هذا القرار'
-          : error.statusCode == 409
-              ? 'تمت معالجة النشرة مسبقاً أو تغيرت حالتها'
-              : 'تعذر تنفيذ القرار. حاول مجدداً';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
+        SnackBar(content: Text(MetraErrorPresenter.reviewDecisionMessage(error))),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('حدث خطأ غير متوقع أثناء تنفيذ قرار المراجعة.')),
+        SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
       );
     } finally {
       if (mounted) setState(() => _processingIds.remove(item.id));
