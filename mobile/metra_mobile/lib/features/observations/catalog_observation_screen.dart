@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/catalog_integration/catalog_observation_repository.dart';
-import '../../core/catalog_integration/catalog_submission_state.dart';
 import '../../core/catalog_integration/local_catalog_observation_repository.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
