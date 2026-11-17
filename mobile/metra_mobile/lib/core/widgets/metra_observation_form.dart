@@ -233,7 +233,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     }
     if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
       return DropdownButtonFormField<String>(
-        value: _choices[field.id],
+        initialValue: _choices[field.id],
         decoration: InputDecoration(
           labelText: field.label,
           border: const OutlineInputBorder(),
