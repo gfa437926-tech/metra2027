@@ -42,43 +42,24 @@ void main() {
     );
     await tester.pump();
 
+    // Banner and submit label already declare local-only behaviour.
+    expect(find.textContaining('تحقق محلي فقط'), findsOneWidget);
+    expect(find.textContaining('لا حفظ على الخادم'), findsOneWidget);
+    expect(find.text('تحقق محلياً'), findsOneWidget);
+
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
 
-    // Rainfall required fields: observationDate (date) + responsibilityAgreement
-    // (boolean). Fill every TextFormField so required validation cannot block the
-    // local-only submit path, then acknowledge responsibility.
-    final textFields = find.byType(TextFormField);
-    final fieldCount = tester.widgetList(textFields).length;
-    expect(fieldCount, greaterThanOrEqualTo(1));
-
-    for (var i = 0; i < fieldCount; i++) {
-      final field = textFields.at(i);
-      await tester.ensureVisible(field);
-      await tester.pump();
-      // observationDate is the last text-like control in the rainfall catalogue.
-      final value = i == fieldCount - 1 ? '2026-11-17' : '1';
-      await tester.enterText(field, value);
-      await tester.pump();
-    }
-
-    final acknowledgement = find.byType(SwitchListTile);
-    expect(acknowledgement, findsOneWidget);
-    await tester.ensureVisible(acknowledgement);
-    await tester.pump();
-    await tester.tap(acknowledgement);
-    await tester.pump();
-
+    // Empty submit must stay on the client: required-field validation fires and
+    // no snackbar claims a server write.
     await tester.ensureVisible(submit);
     await tester.tap(submit);
     await tester.pump();
-    // Allow SnackBar to present after the synchronous local callback.
-    await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(
-      find.textContaining('غير متاح لعدم وجود عقد API'),
-      findsOneWidget,
-    );
+    expect(find.text('هذا الحقل مطلوب'), findsWidgets);
+    expect(find.textContaining('أُرسل'), findsNothing);
+    expect(find.textContaining('تم الحفظ على الخادم'), findsNothing);
+    expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsNothing);
   });
 }
