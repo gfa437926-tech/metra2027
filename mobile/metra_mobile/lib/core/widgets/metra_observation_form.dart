@@ -140,7 +140,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         return 'أدخل رقماً منتهياً وصالحاً';
       }
       if (field.kind == MetraFieldKind.integer &&
-          !RegExp(r'^-?\\d+$').hasMatch(value)) {
+          !RegExp(r'^-?\d+$').hasMatch(value)) {
         return 'أدخل عدداً صحيحاً دون كسور';
       }
       if (field.minimum != null && parsed < field.minimum!) {
