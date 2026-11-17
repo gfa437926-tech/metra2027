@@ -32,6 +32,7 @@ AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationUserDirectorySe
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAuditService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseStationAssignmentService));
 AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAuthorityAccessService));
+AddBoundedSupabaseClient(builder.Services, nameof(SupabaseAccessContextService));
 
 builder.Services.AddScoped<IStationAuthorizationService, SupabaseStationAuthorizationService>();
 builder.Services.AddScoped<IObservationSubmissionService, SupabaseObservationSubmissionService>();
@@ -45,6 +46,7 @@ builder.Services.AddScoped<IStationAuditService, SupabaseStationAuditService>();
 builder.Services.AddScoped<IRegistrationSubmissionService, SupabaseRegistrationSubmissionService>();
 builder.Services.AddScoped<IRegistrationReviewService, SupabaseRegistrationReviewService>();
 builder.Services.AddScoped<IStationCatalogueReviewService, SupabaseStationCatalogueReviewService>();
+builder.Services.AddScoped<IAccessContextService, SupabaseAccessContextService>();
 builder.Services.AddOpenApi();
 
 builder.Services
@@ -113,6 +115,7 @@ app.MapStationUserDirectoryEndpoints();
 app.MapStationAuditEndpoints();
 app.MapStationAssignmentEndpoints();
 app.MapAuthorityAccessEndpoints();
+app.MapAccessContextEndpoints();
 
 app.MapGet("/api/v1/health", () => Results.Ok(new
 {
@@ -138,6 +141,7 @@ app.MapGet("/api/v1/ready", async (
     IStationAssignmentService stationAssignments,
     IStationAuditService stationAudit,
     IAuthorityAccessService authorityAccess,
+    IAccessContextService accessContext,
     CancellationToken cancellationToken) =>
 {
     var configured = authorization.IsConfigured &&
@@ -151,7 +155,8 @@ app.MapGet("/api/v1/ready", async (
         stationUsers.IsConfigured &&
         stationAssignments.IsConfigured &&
         stationAudit.IsConfigured &&
-        authorityAccess.IsConfigured;
+        authorityAccess.IsConfigured &&
+        accessContext.IsConfigured;
 
     if (!configured)
         return Results.Problem(
