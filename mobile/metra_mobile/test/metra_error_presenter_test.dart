@@ -3,11 +3,59 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/errors/metra_error_presenter.dart';
 
 void main() {
-  test('maps MetraApiException via displayMessage', () {
+  test('maps MetraApiException network code via displayMessage path', () {
     const error = MetraApiException(503, 'network_unavailable');
+    expect(MetraErrorPresenter.messageFor(error), contains('الاتصال'));
+  });
+
+  test('status mapping for 400 401 403 404 409 422 429 500', () {
     expect(
-      MetraErrorPresenter.messageFor(error),
-      contains('الاتصال'),
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(400, 'request_failed'),
+      ),
+      contains('غير صالحة'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(401, 'request_failed'),
+      ),
+      contains('الدخول'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(403, 'request_failed'),
+      ),
+      contains('صلاحية'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(404, 'request_failed'),
+      ),
+      contains('غير موجود'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(409, 'request_failed'),
+      ),
+      contains('تعارض'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(422, 'request_failed'),
+      ),
+      contains('غير صالحة'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(429, 'request_failed'),
+      ),
+      contains('حد الطلبات'),
+    );
+    expect(
+      MetraErrorPresenter.forApiException(
+        const MetraApiException(500, 'request_failed'),
+      ),
+      contains('الخادم'),
     );
   });
 
@@ -29,6 +77,21 @@ void main() {
         const MetraApiException(409, 'request_failed'),
       ),
       contains('مسبقاً'),
+    );
+  });
+
+  test('submit and queue load messages stay operator-safe', () {
+    expect(
+      MetraErrorPresenter.submitMessage(
+        const MetraApiException(403, 'request_failed'),
+      ),
+      contains('إرسال'),
+    );
+    expect(
+      MetraErrorPresenter.queueLoadMessage(
+        const MetraApiException(403, 'request_failed'),
+      ),
+      contains('مراجعة'),
     );
   });
 
