@@ -43,10 +43,31 @@ void main() {
 
     final submit = find.byKey(const Key('metra-observation-submit'));
     expect(submit, findsOneWidget);
+
+    // A valid rainfall submission requires the observation date and the
+    // responsibility acknowledgement before the local-only callback runs.
+    final scrollable = find.byType(Scrollable).first;
+    final observationDate = find.byType(TextFormField).at(5);
+    await tester.scrollUntilVisible(
+      observationDate,
+      250,
+      scrollable: scrollable,
+    );
+    await tester.enterText(observationDate, '2026-11-17');
+
+    final acknowledgement = find.byType(SwitchListTile);
+    await tester.scrollUntilVisible(
+      acknowledgement,
+      250,
+      scrollable: scrollable,
+    );
+    await tester.tap(acknowledgement);
+    await tester.pump();
+
     await tester.tap(submit);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsWidgets);
+    expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsOneWidget);
   });
 }
