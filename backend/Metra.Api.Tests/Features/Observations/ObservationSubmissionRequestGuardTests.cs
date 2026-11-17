@@ -42,6 +42,12 @@ public sealed class ObservationSubmissionRequestGuardTests
             ObservationSubmissionRequestGuard.GetError(ValidRequest(payload: "[1,2,3]")));
 
     [Fact]
+    public void Rejects_observation_time_with_non_utc_offset()
+        => Assert.Equal("observation_time_must_be_utc",
+            ObservationSubmissionRequestGuard.GetError(
+                ValidRequest(observedAt: DateTimeOffset.Parse("2026-11-03T15:00:00+03:00"))));
+
+    [Fact]
     public void Rejects_missing_observation_time()
     {
         using var document = JsonDocument.Parse("{\"tmax\":31.2}");
