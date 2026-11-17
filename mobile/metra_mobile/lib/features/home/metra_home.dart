@@ -14,11 +14,34 @@ import '../settings/system_settings_screen.dart';
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
 
+class _NavItem {
+  const _NavItem({
+    required this.id,
+    required this.destination,
+    required this.builder,
+  });
+
+  final MetraDestinationId id;
+  final NavigationDestination destination;
+  final Widget Function() builder;
+}
+
 class MetraHome extends StatefulWidget {
-  const MetraHome({super.key, required this.api, this.onSignOut, this.userEmail});
+  const MetraHome({
+    super.key,
+    required this.api,
+    this.onSignOut,
+    this.userEmail,
+    this.accessContextOverride,
+  });
+
   final MetraApiClient api;
   final Future<void> Function()? onSignOut;
   final String? userEmail;
+
+  /// Test-only: skip network load and use a fixed context.
+  final MetraAccessContext? accessContextOverride;
+
   @override
   State<MetraHome> createState() => _MetraHomeState();
 }
@@ -33,7 +56,12 @@ class _MetraHomeState extends State<MetraHome> {
   @override
   void initState() {
     super.initState();
-    _loadAccessContext();
+    if (widget.accessContextOverride != null) {
+      _access = widget.accessContextOverride!;
+      _loadingAccess = false;
+    } else {
+      _loadAccessContext();
+    }
   }
 
   Future<void> _loadAccessContext() async {
@@ -47,6 +75,7 @@ class _MetraHomeState extends State<MetraHome> {
       setState(() {
         _access = context;
         _loadingAccess = false;
+        _index = 0;
       });
     } catch (error) {
       if (!mounted) return;
@@ -54,6 +83,7 @@ class _MetraHomeState extends State<MetraHome> {
         _access = MetraAccessContext.unresolved();
         _loadingAccess = false;
         _accessError = MetraErrorPresenter.messageFor(error);
+        _index = 0;
       });
     }
   }
@@ -80,8 +110,7 @@ class _MetraHomeState extends State<MetraHome> {
     }
     if (_selectedStationId == null) return _needStation('وحدة الرصد');
     final stationId = _selectedStationId!;
-    if (!_access.canEnterObservations(stationId) &&
-        !_access.canReviewObservations(stationId)) {
+    if (!_access.canAccessObservationWorkspace(stationId)) {
       return const MetraPermissionDeniedPage(
         title: 'غير مصرح',
         message: MetraPermissionDeniedMessages.observations,
@@ -114,43 +143,158 @@ class _MetraHomeState extends State<MetraHome> {
     return StationAdministrationScreen(api: widget.api, stationId: stationId);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final pages = <Widget>[
-      _HomeOverview(
-        stationId: _selectedStationId,
-        access: _access,
-        loadingAccess: _loadingAccess,
-        accessError: _accessError,
-        onRetryAccess: _loadAccessContext,
-        onOpenStations: () => setState(() => _index = 1),
-        onOpenObservations: () => setState(() => _index = 3),
+  List<_NavItem> _buildNavItems() {
+    // Visibility uses permission codes only. Placeholders stay visible because
+    // they have no backend permission contract and show offline notices.
+    final accessForNav =
+        _loadingAccess ? MetraAccessContext.unresolved() : _access;
+
+    final all = <_NavItem>[
+      _NavItem(
+        id: MetraDestinationId.home,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: 'الرئيسية',
+        ),
+        builder: () => _HomeOverview(
+          stationId: _selectedStationId,
+          access: _access,
+          loadingAccess: _loadingAccess,
+          accessError: _accessError,
+          onRetryAccess: _loadAccessContext,
+          showObservationsShortcut: accessForNav.canAccessAnyObservationWorkspace,
+          onOpenStations: () => _selectDestination(MetraDestinationId.stations),
+          onOpenObservations: () =>
+              _selectDestination(MetraDestinationId.observations),
+        ),
       ),
-      StationDirectoryScreen(
-        api: widget.api,
-        selectedStationId: _selectedStationId,
-        onStationSelected: (id) => setState(() => _selectedStationId = id),
+      _NavItem(
+        id: MetraDestinationId.stations,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.map_outlined),
+          selectedIcon: Icon(Icons.map),
+          label: 'المحطات',
+        ),
+        builder: () => StationDirectoryScreen(
+          api: widget.api,
+          selectedStationId: _selectedStationId,
+          onStationSelected: (id) => setState(() {
+            _selectedStationId = id;
+            // Keep current index; page gates re-evaluate for the new station.
+          }),
+        ),
       ),
-      ForecastCentreScreen(api: widget.api),
-      _gateObservation(),
-      _selectedStationId == null
-          ? _needStation('CLIMATOL والتجانس المناخي')
-          : ClimatolWorkspaceScreen(stationId: _selectedStationId!),
-      _selectedStationId == null
-          ? _needStation('السجلات المصورة والذكاء الاصطناعي')
-          : RecordsAiWorkspaceScreen(stationId: _selectedStationId!),
-      _selectedStationId == null
-          ? _needStation('الأجهزة والصيانة والشبكات')
-          : OperationsWorkspaceScreen(stationId: _selectedStationId!),
-      _selectedStationId == null
-          ? _needStation('التقارير والإحصائيات')
-          : ReportsWorkspaceScreen(stationId: _selectedStationId!),
-      _gateAdmin(),
-      SystemSettingsScreen(
-        userEmail: widget.userEmail,
-        onSignOut: widget.onSignOut,
+      _NavItem(
+        id: MetraDestinationId.forecast,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.query_stats_outlined),
+          selectedIcon: Icon(Icons.query_stats),
+          label: 'التنبؤ',
+        ),
+        builder: () => ForecastCentreScreen(api: widget.api),
+      ),
+      _NavItem(
+        id: MetraDestinationId.observations,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.fact_check_outlined),
+          selectedIcon: Icon(Icons.fact_check),
+          label: 'الرصد',
+        ),
+        builder: _gateObservation,
+      ),
+      _NavItem(
+        id: MetraDestinationId.climatol,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.science_outlined),
+          selectedIcon: Icon(Icons.science),
+          label: 'CLIMATOL',
+        ),
+        builder: () => _selectedStationId == null
+            ? _needStation('CLIMATOL والتجانس المناخي')
+            : ClimatolWorkspaceScreen(stationId: _selectedStationId!),
+      ),
+      _NavItem(
+        id: MetraDestinationId.recordsAi,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.image_search_outlined),
+          selectedIcon: Icon(Icons.image_search),
+          label: 'سجلات/AI',
+        ),
+        builder: () => _selectedStationId == null
+            ? _needStation('السجلات المصورة والذكاء الاصطناعي')
+            : RecordsAiWorkspaceScreen(stationId: _selectedStationId!),
+      ),
+      _NavItem(
+        id: MetraDestinationId.operations,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.build_outlined),
+          selectedIcon: Icon(Icons.build),
+          label: 'أجهزة',
+        ),
+        builder: () => _selectedStationId == null
+            ? _needStation('الأجهزة والصيانة والشبكات')
+            : OperationsWorkspaceScreen(stationId: _selectedStationId!),
+      ),
+      _NavItem(
+        id: MetraDestinationId.reports,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.analytics_outlined),
+          selectedIcon: Icon(Icons.analytics),
+          label: 'تقارير',
+        ),
+        builder: () => _selectedStationId == null
+            ? _needStation('التقارير والإحصائيات')
+            : ReportsWorkspaceScreen(stationId: _selectedStationId!),
+      ),
+      _NavItem(
+        id: MetraDestinationId.admin,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.admin_panel_settings_outlined),
+          selectedIcon: Icon(Icons.admin_panel_settings),
+          label: 'إدارة',
+        ),
+        builder: _gateAdmin,
+      ),
+      _NavItem(
+        id: MetraDestinationId.settings,
+        destination: const NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: 'إعدادات',
+        ),
+        builder: () => SystemSettingsScreen(
+          userEmail: widget.userEmail,
+          onSignOut: widget.onSignOut,
+        ),
       ),
     ];
+
+    return all
+        .where((item) => accessForNav.isDestinationVisible(item.id))
+        .toList(growable: false);
+  }
+
+  void _selectDestination(MetraDestinationId id) {
+    final items = _buildNavItems();
+    final index = items.indexWhere((item) => item.id == id);
+    if (index < 0) return;
+    setState(() => _index = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = _buildNavItems();
+    final safeIndex = _index.clamp(0, items.isEmpty ? 0 : items.length - 1);
+    if (safeIndex != _index) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _index = safeIndex);
+      });
+    }
+
+    final pages = items.map((item) => item.builder()).toList(growable: false);
+    final destinations =
+        items.map((item) => item.destination).toList(growable: false);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -177,61 +321,10 @@ class _MetraHomeState extends State<MetraHome> {
           ],
         ),
         body: MetraAdaptiveNavigation(
-          selectedIndex: _index,
+          selectedIndex: safeIndex,
           onDestinationSelected: (value) => setState(() => _index = value),
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'الرئيسية',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.map_outlined),
-              selectedIcon: Icon(Icons.map),
-              label: 'المحطات',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.query_stats_outlined),
-              selectedIcon: Icon(Icons.query_stats),
-              label: 'التنبؤ',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.fact_check_outlined),
-              selectedIcon: Icon(Icons.fact_check),
-              label: 'الرصد',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.science_outlined),
-              selectedIcon: Icon(Icons.science),
-              label: 'CLIMATOL',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.image_search_outlined),
-              selectedIcon: Icon(Icons.image_search),
-              label: 'سجلات/AI',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.build_outlined),
-              selectedIcon: Icon(Icons.build),
-              label: 'أجهزة',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.analytics_outlined),
-              selectedIcon: Icon(Icons.analytics),
-              label: 'تقارير',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.admin_panel_settings_outlined),
-              selectedIcon: Icon(Icons.admin_panel_settings),
-              label: 'إدارة',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings_outlined),
-              selectedIcon: Icon(Icons.settings),
-              label: 'إعدادات',
-            ),
-          ],
-          child: IndexedStack(index: _index, children: pages),
+          destinations: destinations,
+          child: IndexedStack(index: safeIndex, children: pages),
         ),
       ),
     );
@@ -245,23 +338,25 @@ class _HomeOverview extends StatelessWidget {
     required this.loadingAccess,
     required this.accessError,
     required this.onRetryAccess,
+    required this.showObservationsShortcut,
     required this.onOpenStations,
     required this.onOpenObservations,
   });
+
   final String? stationId;
   final MetraAccessContext access;
   final bool loadingAccess;
   final String? accessError;
   final VoidCallback onRetryAccess;
+  final bool showObservationsShortcut;
   final VoidCallback onOpenStations;
   final VoidCallback onOpenObservations;
 
   @override
   Widget build(BuildContext context) {
-    final canObs = stationId != null &&
+    final canObsOnStation = stationId != null &&
         access.isResolved &&
-        (access.canEnterObservations(stationId!) ||
-            access.canReviewObservations(stationId!));
+        access.canAccessObservationWorkspace(stationId!);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -329,14 +424,17 @@ class _HomeOverview extends StatelessWidget {
               subtitle: 'اختيار محطة العمل',
               onTap: onOpenStations,
             ),
-            _ActionCard(
-              icon: Icons.fact_check_outlined,
-              title: 'وحدة الرصد',
-              subtitle: stationId == null
-                  ? 'يتطلب اختيار محطة'
-                  : (canObs ? 'ساعي · يومي · ظاهرة' : 'غير مصرح لهذه المحطة'),
-              onTap: onOpenObservations,
-            ),
+            if (showObservationsShortcut)
+              _ActionCard(
+                icon: Icons.fact_check_outlined,
+                title: 'وحدة الرصد',
+                subtitle: stationId == null
+                    ? 'يتطلب اختيار محطة'
+                    : (canObsOnStation
+                        ? 'ساعي · يومي · ظاهرة'
+                        : 'غير مصرح لهذه المحطة'),
+                onTap: onOpenObservations,
+              ),
           ],
         ),
         const SizedBox(height: 16),
@@ -344,6 +442,7 @@ class _HomeOverview extends StatelessWidget {
           title: 'حالة الربط المعتمدة',
           body:
               'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد وAccess Context. '
+              'عناصر التنقل التشغيلية تُخفى عند غياب صلاحيات الخادم. '
               'بقية النماذج للتحقق المحلي فقط حتى اعتماد عقود API.',
         ),
       ],

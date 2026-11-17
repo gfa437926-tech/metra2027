@@ -11,6 +11,15 @@ void main() {
       expect(context.stationPermissions, isEmpty);
       expect(context.canAccessAnyObservationWorkspace, isFalse);
       expect(context.canAccessAnyStationAdministration, isFalse);
+      expect(context.hasKnownActiveAccount, isFalse);
+    });
+
+    test('hides operational destinations while unresolved', () {
+      expect(context.isDestinationVisible(MetraDestinationId.observations), isFalse);
+      expect(context.isDestinationVisible(MetraDestinationId.admin), isFalse);
+      expect(context.isDestinationVisible(MetraDestinationId.home), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.stations), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.settings), isTrue);
     });
 
     test('denies every station permission while unresolved', () {
@@ -24,7 +33,7 @@ void main() {
     });
   });
 
-  group('MetraAccessContext.resolved role fixtures', () {
+  group('MetraAccessContext.resolved permission fixtures', () {
     final observer = MetraAccessContext.resolved(
       userId: 'user-observer',
       accountState: 'unknown',
@@ -68,6 +77,9 @@ void main() {
       expect(observer.canEnterObservations('station-b'), isFalse);
       expect(observer.canAccessAnyObservationWorkspace, isTrue);
       expect(observer.canAccessAnyStationAdministration, isFalse);
+      expect(observer.isDestinationVisible(MetraDestinationId.observations), isTrue);
+      expect(observer.isDestinationVisible(MetraDestinationId.admin), isFalse);
+      expect(observer.hasKnownActiveAccount, isFalse);
     });
 
     test('station_head may review and administer on assigned station', () {
@@ -75,6 +87,11 @@ void main() {
       expect(stationHead.canReviewObservations('station-a'), isTrue);
       expect(stationHead.canAdministerStation('station-a'), isTrue);
       expect(stationHead.canAccessAnyStationAdministration, isTrue);
+      expect(stationHead.isDestinationVisible(MetraDestinationId.admin), isTrue);
+      expect(
+        stationHead.isDestinationVisible(MetraDestinationId.observations),
+        isTrue,
+      );
     });
 
     test('permissions differ across stations', () {
@@ -83,6 +100,18 @@ void main() {
       expect(multi.canReviewObservations('station-b'), isTrue);
       expect(multi.canAdministerStation('station-b'), isTrue);
       expect(multi.canAdministerStation('station-a'), isFalse);
+    });
+
+    test('edit_own_draft alone allows observation workspace entry', () {
+      final draftOnly = MetraAccessContext.resolved(
+        userId: 'draft',
+        stationPermissions: {
+          'station-a': {'observation.edit_own_draft'},
+        },
+      );
+      expect(draftOnly.canEnterObservations('station-a'), isTrue);
+      expect(draftOnly.canAccessObservationWorkspace('station-a'), isTrue);
+      expect(draftOnly.isDestinationVisible(MetraDestinationId.observations), isTrue);
     });
 
     test('empty identifiers never grant access', () {
