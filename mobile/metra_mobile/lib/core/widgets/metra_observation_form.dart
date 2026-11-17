@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 enum MetraFieldKind {
   text,
+  phone,
   multiline,
   integer,
   decimal,
@@ -253,7 +254,9 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           ? const TextInputType.numberWithOptions(decimal: true, signed: true)
           : field.kind == MetraFieldKind.multiline
               ? TextInputType.multiline
-              : TextInputType.text,
+              : field.kind == MetraFieldKind.phone
+                  ? TextInputType.phone
+                  : TextInputType.text,
       maxLines: field.kind == MetraFieldKind.multiline ? 4 : 1,
       maxLength: field.maxLength,
       decoration: InputDecoration(
