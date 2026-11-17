@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
@@ -163,5 +165,40 @@ void main() {
     expect([minTemp.minimum, minTemp.maximum], [-20, 50]);
     expect([maxTemp.minimum, maxTemp.maximum], [-20, 50]);
     expect([maxHumidity.minimum, maxHumidity.maximum], [0, 100]);
+  });
+
+  testWidgets('concurrent submit disables button and invokes onSubmit once', (tester) async {
+    final gate = Completer<void>();
+    var submitCount = 0;
+    const fields = [
+      MetraObservationField(
+        id: 'note',
+        label: 'ملاحظة',
+        kind: MetraFieldKind.text,
+        required: true,
+      ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار التزامن',
+        fields: fields,
+        submitLabel: 'إرسال الاختبار',
+        onSubmit: (_) async {
+          submitCount++;
+          await gate.future;
+        },
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField), 'قيمة');
+    await tester.tap(find.text('إرسال الاختبار'));
+    await tester.pump();
+    expect(find.text('جارٍ الإرسال...'), findsOneWidget);
+    await tester.tap(find.text('جارٍ الإرسال...'), warnIfMissed: false);
+    await tester.pump();
+    expect(submitCount, 1);
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('إرسال الاختبار'), findsOneWidget);
+    expect(submitCount, 1);
   });
 }
