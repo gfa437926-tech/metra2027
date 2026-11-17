@@ -1,45 +1,33 @@
-# مقترح عقد Access Context — غير منفَّذ
+# عقد Access Context — منفَّذ
 
-**الحالة:** مقترح للموافقة فقط. لا يوجد endpoint ولا RPC ولا جدول جديد في هذا المستند.
+**الحالة:** منفَّذ على API وFlutter باستخدام الآليات الحالية فقط (بدون RPC/schema/RLS جديد).
 
-## لماذا مطلوب؟
-
-الفرض الحالي للصلاحيات على الخادم يعمل عبر:
-
-- JWT `sub` → هوية الممثل
-- تعيين محطة معتمد + منحة فردية سارية
-- RPC مثل `metra_user_has_station_permission` و`metra_user_has_authority_permission`
-
-ذلك كافٍ لرفض العمليات (401/403) لكنه **لا يوفّر** للعميل قائمة موثوقة من:
-
-- الأدوار المعتمدة
-- المحطات المعيَّنة
-- رموز الصلاحيات السارية
-
-بدون هذا العقد لا يمكن إخفاء وجهات التنقل أو حجب الشاشات مسبقاً دون تخمين.
-
-## ما هو موجود فعلياً (لا يكفي كسياق وصول)
-
-| المصدر | ماذا يعيد | لماذا لا يكفي |
-|---|---|---|
-| `GET /api/v1/stations` | محطات مرئية بعد فلترة الخادم | لا أدوار ولا permission codes |
-| `GET /api/v1/stations/{id}/users` | مستخدمو المحطة (لمن يملك `users.station.view`) | ليس سياق المستخدم الحالي |
-| `GET /api/v1/authorities/{id}/permission-options` | خيارات صلاحيات لسلطة واحدة | يتطلب `authorityId` مسبقاً؛ ليس تجميعاً عالمياً |
-| `RequireStationPermission` / RPC | قرار boolean داخلي | لا يُعاد للعميل |
-
-## مقترح عقد (يحتاج موافقة صريحة قبل التنفيذ)
+## Endpoint
 
 ```
 GET /api/v1/me/access-context
 Authorization: Bearer <access_token>
 ```
 
-استجابة مقترحة (شكل فقط — غير ملزم):
+الممثل من JWT `sub` فقط.
+
+## مصادر البيانات (موجودة مسبقاً)
+
+| المصدر | الاستخدام |
+|---|---|
+| PostgREST `station_assignments` | محطات معتمدة سارية + `role_code` |
+| PostgREST `authority_memberships` | سلطات معتمدة سارية + `role_code` |
+| RPC `metra_user_has_station_permission` | فحص كل رمز صلاحية محطة على حدة |
+| RPC `metra_user_has_authority_permission` | فحص صلاحيات السلطة المعروفة |
+
+**لا تُستنتج الصلاحيات من اسم الدور.** الدور يُعرض كمعلومة تعيين فقط.
+
+## شكل الاستجابة
 
 ```json
 {
   "userId": "uuid",
-  "accountState": "active",
+  "accountState": "unknown",
   "stations": [
     {
       "stationId": "uuid",
@@ -57,24 +45,17 @@ Authorization: Bearer <access_token>
 }
 ```
 
-قواعد إلزامية إن اعتُمد:
+`accountState` يبقى `unknown` حتى يتوفر مسار قراءة حالة الحساب دون migration/RPC جديد.
 
-1. الممثل من JWT فقط — لا `userId` من الجسم.
-2. المحطات/السلطات من تعيينات وعضويات معتمدة وسارية فقط.
-3. الصلاحيات من منح فردية معتمدة وغير ملغاة وضمن نافذة الصلاحية.
-4. لا bypass لـ `system_admin` على عمليات الرصد.
-5. RPC قابل للتنفيذ فقط بـ `service_role` من ASP.NET.
+## رموز الصلاحيات التي تُفحص
 
-## ما لن يُنفَّذ قبل الموافقة
+محطة: observation.create, observation.edit_own_draft, observation.submit, observation.review, observation.return_for_correction, observation.approve, registrations.station.approve, users.station.view, users.station.manage
 
-- لا `GET /api/v1/me/*` جديد
-- لا RPC جديد
-- لا migration / RLS
-- لا إخفاء وجهات Flutter اعتماداً على أدوار ثابتة أو JWT claims غير موثّقة
+سلطة: stations.catalogue.review, registrations.system.approve
 
-## سلوك Flutter الحالي (آمن)
+## سلوك Flutter
 
-- التنقل ثابت
-- الخادم يرفض العمليات غير المصرح بها
-- `MetraErrorPresenter` يعرض رسائل عربية لـ 401/403
-- طبقة `MetraAccessContext` في العميل **مغلقة** (`isResolved = false`) حتى يتوفر العقد
+- تحميل السياق بعد الدخول
+- فشل التحميل → fail-closed (لا شاشات رصد/إدارة تشغيلية)
+- منع فتح الرصد/الإدارة لمحطة بلا صلاحية مؤكدة
+- رسائل عربية عبر `MetraPermissionDeniedPage` / `MetraPermissionDeniedMessages`

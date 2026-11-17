@@ -1,6 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/auth/metra_access_context.dart';
+import '../../core/errors/metra_error_presenter.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
+import '../../core/widgets/metra_permission_denied_page.dart';
 import '../observations/observation_workspace_screen.dart';
 import '../stations/station_directory_screen.dart';
 import '../forecast_centres/forecast_centre_screen.dart';
@@ -23,6 +26,37 @@ class MetraHome extends StatefulWidget {
 class _MetraHomeState extends State<MetraHome> {
   int _index = 0;
   String? _selectedStationId;
+  MetraAccessContext _access = MetraAccessContext.unresolved();
+  bool _loadingAccess = true;
+  String? _accessError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccessContext();
+  }
+
+  Future<void> _loadAccessContext() async {
+    setState(() {
+      _loadingAccess = true;
+      _accessError = null;
+    });
+    try {
+      final context = await widget.api.getAccessContext();
+      if (!mounted) return;
+      setState(() {
+        _access = context;
+        _loadingAccess = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _access = MetraAccessContext.unresolved();
+        _loadingAccess = false;
+        _accessError = MetraErrorPresenter.messageFor(error);
+      });
+    }
+  }
 
   Widget _needStation(String title) => _InformationPage(
         icon: Icons.location_on_outlined,
@@ -31,11 +65,64 @@ class _MetraHomeState extends State<MetraHome> {
             'اختر محطة أولاً من دليل المحطات. يفرض الخادم صلاحيات حسابك على المحطة والعمليات.',
       );
 
+  Widget _gateObservation() {
+    if (_loadingAccess) {
+      return const MetraPermissionDeniedPage(
+        title: 'الصلاحيات',
+        message: MetraPermissionDeniedMessages.contextLoading,
+      );
+    }
+    if (!_access.isResolved) {
+      return MetraPermissionDeniedPage(
+        title: 'الصلاحيات غير متاحة',
+        message: _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
+      );
+    }
+    if (_selectedStationId == null) return _needStation('وحدة الرصد');
+    final stationId = _selectedStationId!;
+    if (!_access.canEnterObservations(stationId) &&
+        !_access.canReviewObservations(stationId)) {
+      return const MetraPermissionDeniedPage(
+        title: 'غير مصرح',
+        message: MetraPermissionDeniedMessages.observations,
+      );
+    }
+    return ObservationWorkspaceScreen(api: widget.api, stationId: stationId);
+  }
+
+  Widget _gateAdmin() {
+    if (_loadingAccess) {
+      return const MetraPermissionDeniedPage(
+        title: 'الصلاحيات',
+        message: MetraPermissionDeniedMessages.contextLoading,
+      );
+    }
+    if (!_access.isResolved) {
+      return MetraPermissionDeniedPage(
+        title: 'الصلاحيات غير متاحة',
+        message: _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
+      );
+    }
+    if (_selectedStationId == null) return _needStation('إدارة المحطة');
+    final stationId = _selectedStationId!;
+    if (!_access.canAdministerStation(stationId)) {
+      return const MetraPermissionDeniedPage(
+        title: 'غير مصرح',
+        message: MetraPermissionDeniedMessages.administration,
+      );
+    }
+    return StationAdministrationScreen(api: widget.api, stationId: stationId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
       _HomeOverview(
         stationId: _selectedStationId,
+        access: _access,
+        loadingAccess: _loadingAccess,
+        accessError: _accessError,
+        onRetryAccess: _loadAccessContext,
         onOpenStations: () => setState(() => _index = 1),
         onOpenObservations: () => setState(() => _index = 3),
       ),
@@ -45,12 +132,7 @@ class _MetraHomeState extends State<MetraHome> {
         onStationSelected: (id) => setState(() => _selectedStationId = id),
       ),
       ForecastCentreScreen(api: widget.api),
-      _selectedStationId == null
-          ? _needStation('وحدة الرصد')
-          : ObservationWorkspaceScreen(
-              api: widget.api,
-              stationId: _selectedStationId!,
-            ),
+      _gateObservation(),
       _selectedStationId == null
           ? _needStation('CLIMATOL والتجانس المناخي')
           : ClimatolWorkspaceScreen(stationId: _selectedStationId!),
@@ -63,9 +145,7 @@ class _MetraHomeState extends State<MetraHome> {
       _selectedStationId == null
           ? _needStation('التقارير والإحصائيات')
           : ReportsWorkspaceScreen(stationId: _selectedStationId!),
-      _selectedStationId == null
-          ? _needStation('إدارة المحطة')
-          : StationAdministrationScreen(api: widget.api, stationId: _selectedStationId!),
+      _gateAdmin(),
       SystemSettingsScreen(
         userEmail: widget.userEmail,
         onSignOut: widget.onSignOut,
@@ -161,15 +241,28 @@ class _MetraHomeState extends State<MetraHome> {
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview({
     required this.stationId,
+    required this.access,
+    required this.loadingAccess,
+    required this.accessError,
+    required this.onRetryAccess,
     required this.onOpenStations,
     required this.onOpenObservations,
   });
   final String? stationId;
+  final MetraAccessContext access;
+  final bool loadingAccess;
+  final String? accessError;
+  final VoidCallback onRetryAccess;
   final VoidCallback onOpenStations;
   final VoidCallback onOpenObservations;
 
   @override
   Widget build(BuildContext context) {
+    final canObs = stationId != null &&
+        access.isResolved &&
+        (access.canEnterObservations(stationId!) ||
+            access.canReviewObservations(stationId!));
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -185,6 +278,46 @@ class _HomeOverview extends StatelessWidget {
               : 'المحطة النشطة: $stationId',
           style: const TextStyle(color: Color(0xFF475569), height: 1.5),
         ),
+        const SizedBox(height: 12),
+        if (loadingAccess)
+          const Card(
+            elevation: 0,
+            child: ListTile(
+              leading: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              title: Text(MetraPermissionDeniedMessages.contextLoading),
+            ),
+          )
+        else if (!access.isResolved)
+          Card(
+            elevation: 0,
+            color: const Color(0xFFFFF7E8),
+            child: ListTile(
+              leading: const Icon(Icons.warning_amber_outlined),
+              title: const Text('سياق الصلاحيات غير متاح'),
+              subtitle: Text(
+                accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
+              ),
+              trailing: TextButton(
+                onPressed: onRetryAccess,
+                child: const Text('إعادة'),
+              ),
+            ),
+          )
+        else
+          Card(
+            elevation: 0,
+            child: ListTile(
+              leading: const Icon(Icons.verified_user_outlined, color: _blue),
+              title: const Text('سياق الصلاحيات محمّل من الخادم'),
+              subtitle: Text(
+                'محطات بصلاحيات مؤكدة: ${access.stationPermissions.length}',
+              ),
+            ),
+          ),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
@@ -199,8 +332,9 @@ class _HomeOverview extends StatelessWidget {
             _ActionCard(
               icon: Icons.fact_check_outlined,
               title: 'وحدة الرصد',
-              subtitle:
-                  stationId == null ? 'يتطلب اختيار محطة' : 'ساعي · يومي · ظاهرة',
+              subtitle: stationId == null
+                  ? 'يتطلب اختيار محطة'
+                  : (canObs ? 'ساعي · يومي · ظاهرة' : 'غير مصرح لهذه المحطة'),
               onTap: onOpenObservations,
             ),
           ],
@@ -209,7 +343,7 @@ class _HomeOverview extends StatelessWidget {
         const _StatusCard(
           title: 'حالة الربط المعتمدة',
           body:
-              'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد. '
+              'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد وAccess Context. '
               'بقية النماذج للتحقق المحلي فقط حتى اعتماد عقود API.',
         ),
       ],
