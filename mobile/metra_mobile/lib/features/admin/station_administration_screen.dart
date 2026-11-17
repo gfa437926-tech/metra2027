@@ -32,11 +32,19 @@ class _StationAdministrationScreenState
     _refresh();
   }
 
+  /// Keeps the original error on the Future for FutureBuilder while preventing
+  /// an unhandled async error when a TabBarView child is not yet mounted.
+  Future<T> _observed<T>(Future<T> future) {
+    future.then((_) {}, onError: (_) {});
+    return future;
+  }
+
   void _refresh() {
-    _users = widget.api.getStationUsers(widget.stationId);
-    _requests = widget.api.getStationRegistrationRequests(widget.stationId);
-    _audit = widget.api.getStationAuditLog(widget.stationId);
-    _observations = widget.api.getReviewQueue(widget.stationId);
+    _users = _observed(widget.api.getStationUsers(widget.stationId));
+    _requests =
+        _observed(widget.api.getStationRegistrationRequests(widget.stationId));
+    _audit = _observed(widget.api.getStationAuditLog(widget.stationId));
+    _observations = _observed(widget.api.getReviewQueue(widget.stationId));
   }
 
   String _firstValue(Map<String, dynamic> record, List<String> keys) {
@@ -71,56 +79,63 @@ class _StationAdministrationScreenState
     }
 
     final noteController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(decision == 'approve' ? 'اعتماد طلب التسجيل' : 'رفض طلب التسجيل'),
-        content: TextField(
-          controller: noteController,
-          minLines: 2,
-          maxLines: 4,
-          decoration: InputDecoration(
-            labelText: decision == 'reject' ? 'سبب الرفض (إلزامي)' : 'ملاحظة (اختيارية)',
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () {
-              if (decision == 'reject' && noteController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(content: Text('أدخل سبب الرفض.')),
-                );
-                return;
-              }
-              Navigator.pop(dialogContext, true);
-            },
-            child: const Text('تأكيد'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) {
-      noteController.dispose();
-      return;
+    bool confirmed = false;
+    try {
+      confirmed = await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              title: Text(
+                  decision == 'approve' ? 'اعتماد طلب التسجيل' : 'رفض طلب التسجيل'),
+              content: TextField(
+                controller: noteController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: decision == 'reject'
+                      ? 'سبب الرفض (إلزامي)'
+                      : 'ملاحظة (اختيارية)',
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('إلغاء'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    if (decision == 'reject' &&
+                        noteController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(content: Text('أدخل سبب الرفض.')),
+                      );
+                      return;
+                    }
+                    Navigator.pop(dialogContext, true);
+                  },
+                  child: const Text('تأكيد'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+    } finally {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        noteController.dispose();
+      });
     }
+    if (!confirmed || !mounted) return;
 
-    if (_processingRequestIds.contains(requestId)) {
-      noteController.dispose();
-      return;
-    }
+    if (_processingRequestIds.contains(requestId)) return;
     setState(() => _processingRequestIds.add(requestId));
 
+    final note = noteController.text.trim();
     try {
       await widget.api.decideStationRegistrationRequest(
         stationId: widget.stationId,
         requestId: requestId,
         decision: decision,
-        note: noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+        note: note.isEmpty ? null : note,
       );
       if (!mounted) return;
       setState(_refresh);
@@ -130,7 +145,9 @@ class _StationAdministrationScreenState
     } on MetraApiException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(MetraErrorPresenter.registrationDecisionMessage(error))),
+        SnackBar(
+            content:
+                Text(MetraErrorPresenter.registrationDecisionMessage(error))),
       );
     } catch (error) {
       if (mounted) {
@@ -139,7 +156,6 @@ class _StationAdministrationScreenState
         );
       }
     } finally {
-      noteController.dispose();
       if (mounted) {
         setState(() => _processingRequestIds.remove(requestId));
       }
@@ -194,7 +210,8 @@ class _StationAdministrationScreenState
                     _firstValue(record, ['actor_user_id', 'actor_name']),
                   ].where((value) => value != '—').join(' • ')
                 : [
-                    _firstValue(record, ['role_code', 'requested_role_code', 'role']),
+                    _firstValue(
+                        record, ['role_code', 'requested_role_code', 'role']),
                     _firstValue(record, ['status', 'request_status']),
                     _firstValue(record, ['phone', 'email']),
                   ].where((value) => value != '—').join(' • ');
@@ -208,7 +225,8 @@ class _StationAdministrationScreenState
                     Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
                     if (subtitle.isNotEmpty) ...[
                       const SizedBox(height: 6),
-                      Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
+                      Text(subtitle,
+                          style: const TextStyle(color: Color(0xFF64748B))),
                     ],
                     if (registrationQueue) ...[
                       const SizedBox(height: 10),
@@ -270,7 +288,8 @@ class _StationAdministrationScreenState
           return ListView(
             children: const [
               SizedBox(height: 48),
-              Center(child: Text('لا توجد أرصاد في طابور المراجعة لهذه المحطة.')),
+              Center(
+                  child: Text('لا توجد أرصاد في طابور المراجعة لهذه المحطة.')),
             ],
           );
         }
