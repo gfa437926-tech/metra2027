@@ -116,7 +116,11 @@ class _MetraHomeState extends State<MetraHome> {
         message: MetraPermissionDeniedMessages.observations,
       );
     }
-    return ObservationWorkspaceScreen(api: widget.api, stationId: stationId);
+    return ObservationWorkspaceScreen(
+      api: widget.api,
+      stationId: stationId,
+      accessContext: _access,
+    );
   }
 
   Widget _gateAdmin() {
@@ -181,6 +185,9 @@ class _MetraHomeState extends State<MetraHome> {
         builder: () => StationDirectoryScreen(
           api: widget.api,
           selectedStationId: _selectedStationId,
+          accessContext: _loadingAccess
+              ? MetraAccessContext.unresolved()
+              : _access,
           onStationSelected: (id) => setState(() {
             _selectedStationId = id;
             // Keep current index; page gates re-evaluate for the new station.
