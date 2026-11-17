@@ -22,6 +22,10 @@ void main() {
     expect(find.textContaining('اتصال واجهة البرمجة'), findsOneWidget);
     expect(find.textContaining('مصادقة Supabase'), findsOneWidget);
     expect(find.textContaining('حماية الجلسة'), findsOneWidget);
+
+    // ListView builds children lazily; scroll to the sign-out action first.
+    await tester.drag(find.byType(ListView), const Offset(0, -1000));
+    await tester.pumpAndSettle();
     expect(find.text('تسجيل الخروج'), findsOneWidget);
   });
 
@@ -37,8 +41,12 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('بيانات الحساب غير متاحة'), findsOneWidget);
-    // Sign-out disabled when callback is null.
-    final logout = tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'تسجيل الخروج'));
+    // Sign-out is below the fold in the lazy ListView.
+    await tester.drag(find.byType(ListView), const Offset(0, -1000));
+    await tester.pumpAndSettle();
+    final logout = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'تسجيل الخروج'),
+    );
     expect(logout.onPressed, isNull);
   });
 }
