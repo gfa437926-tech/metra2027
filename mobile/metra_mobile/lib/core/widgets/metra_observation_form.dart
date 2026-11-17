@@ -2,37 +2,34 @@ import 'package:material_ui/material_ui.dart';
 
 enum MetraFieldKind {
   text,
+  multiline,
   integer,
   decimal,
-  choice,
   boolean,
   date,
   time,
   datetime,
-  phone,
+  choice,
   file,
-  multiline,
 }
 
-/// A field definition must come from an approved METRA form catalogue.
-/// Bounds are enforced only when their source is documented.
 class MetraObservationField {
   const MetraObservationField({
+    this.catalogId,
     required this.id,
     required this.label,
-    this.catalogId,
     this.kind = MetraFieldKind.text,
     this.required = false,
     this.unit,
     this.minimum,
     this.maximum,
-    this.maxLength = 500,
+    this.maxLength = 256,
     this.choices = const [],
-  }) : assert(minimum == null || maximum == null || minimum <= maximum);
+  });
 
+  final String? catalogId;
   final String id;
   final String label;
-  final String? catalogId;
   final MetraFieldKind kind;
   final bool required;
   final String? unit;
@@ -143,7 +140,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         return 'أدخل رقماً منتهياً وصالحاً';
       }
       if (field.kind == MetraFieldKind.integer &&
-          !RegExp(r'^-?\d+$').hasMatch(value)) {
+          !RegExp(r'^-?\\d+$').hasMatch(value)) {
         return 'أدخل عدداً صحيحاً دون كسور';
       }
       if (field.minimum != null && parsed < field.minimum!) {
@@ -191,12 +188,12 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
 
   Widget _buildField(MetraObservationField field) {
     if (field.kind == MetraFieldKind.file) {
-      return InputDecorator(
+      return const InputDecorator(
         decoration: InputDecoration(
-          labelText: field.label,
-          border: const OutlineInputBorder(),
+          labelText: 'مرفق',
+          border: OutlineInputBorder(),
         ),
-        child: const Row(
+        child: Row(
           children: [
             Icon(Icons.attach_file),
             SizedBox(width: 8),
@@ -276,20 +273,26 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           appBar: AppBar(title: Text(widget.title)),
           body: Form(
             key: _formKey,
-            // Submit stays outside the lazy ListView so long catalogues do not
+            // Submit stays outside the scrollable body so long catalogues do not
             // leave the action off-stage / unbuilt.
             child: Column(
               children: [
                 if (widget.draftBanner != null) widget.draftBanner!,
                 Expanded(
-                  child: ListView(
+                  // SingleChildScrollView + Column keeps every FormField mounted
+                  // so required validators run even when the control is off-screen.
+                  // A lazy ListView would skip unbuilt required fields on submit.
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    children: [
-                      for (final field in widget.fields) ...[
-                        _buildField(field),
-                        const SizedBox(height: 14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (final field in widget.fields) ...[
+                          _buildField(field),
+                          const SizedBox(height: 14),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
                 SafeArea(
