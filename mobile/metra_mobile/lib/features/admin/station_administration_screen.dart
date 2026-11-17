@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../../core/errors/metra_error_presenter.dart';
 
 class StationAdministrationScreen extends StatefulWidget {
   const StationAdministrationScreen({
@@ -23,6 +24,7 @@ class _StationAdministrationScreenState
   late Future<List<Map<String, dynamic>>> _requests;
   late Future<List<Map<String, dynamic>>> _audit;
   late Future<List<ObservationQueueItem>> _observations;
+  final Set<String> _processingRequestIds = <String>{};
 
   @override
   void initState() {
@@ -107,6 +109,12 @@ class _StationAdministrationScreenState
       return;
     }
 
+    if (_processingRequestIds.contains(requestId)) {
+      noteController.dispose();
+      return;
+    }
+    setState(() => _processingRequestIds.add(requestId));
+
     try {
       await widget.api.decideStationRegistrationRequest(
         stationId: widget.stationId,
@@ -121,22 +129,20 @@ class _StationAdministrationScreenState
       );
     } on MetraApiException catch (error) {
       if (!mounted) return;
-      final message = switch (error.statusCode) {
-        403 => 'لا تملك صلاحية مراجعة طلبات هذه المحطة.',
-        404 => 'الطلب غير موجود أو لا يتبع هذه المحطة.',
-        409 => 'تغيرت حالة الطلب؛ حدّث القائمة.',
-        503 => 'خدمة مراجعة التسجيل غير متاحة حالياً.',
-        _ => 'تعذر تنفيذ قرار المراجعة.',
-      };
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(MetraErrorPresenter.registrationDecisionMessage(error))),
+      );
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر الاتصال بخدمة مراجعة التسجيل.')),
+          SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
         );
       }
     } finally {
       noteController.dispose();
+      if (mounted) {
+        setState(() => _processingRequestIds.remove(requestId));
+      }
     }
   }
 
@@ -154,11 +160,9 @@ class _StationAdministrationScreenState
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
-          final message = error is MetraApiException && error.statusCode == 403
-              ? 'لا تملك صلاحية عرض هذه البيانات.'
-              : error is MetraApiException && error.statusCode == 503
-                  ? 'الخدمة غير متاحة أو لم تُضبط بعد على الخادم.'
-                  : 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.';
+          final message = error == null
+              ? 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.'
+              : MetraErrorPresenter.messageFor(error);
           return ListView(
             children: [
               const SizedBox(height: 48),
@@ -208,18 +212,28 @@ class _StationAdministrationScreenState
                     ],
                     if (registrationQueue) ...[
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          FilledButton.tonal(
-                            onPressed: () => _decide(record, 'approve'),
-                            child: const Text('اعتماد'),
-                          ),
-                          OutlinedButton(
-                            onPressed: () => _decide(record, 'reject'),
-                            child: const Text('رفض'),
-                          ),
-                        ],
+                      Builder(
+                        builder: (context) {
+                          final rid = _firstValue(record, ['id', 'request_id']);
+                          final busy = _processingRequestIds.contains(rid);
+                          return Wrap(
+                            spacing: 8,
+                            children: [
+                              FilledButton.tonal(
+                                onPressed: busy
+                                    ? null
+                                    : () => _decide(record, 'approve'),
+                                child: Text(busy ? 'جارٍ...' : 'اعتماد'),
+                              ),
+                              OutlinedButton(
+                                onPressed: busy
+                                    ? null
+                                    : () => _decide(record, 'reject'),
+                                child: const Text('رفض'),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ],
@@ -241,9 +255,9 @@ class _StationAdministrationScreenState
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
-          final message = error is MetraApiException && error.statusCode == 403
-              ? 'لا تملك صلاحية مراجعة أرصاد هذه المحطة.'
-              : 'تعذر تحميل أرصاد المراجعة.';
+          final message = error == null
+              ? 'تعذر تحميل أرصاد المراجعة.'
+              : MetraErrorPresenter.queueLoadMessage(error);
           return ListView(
             children: [
               const SizedBox(height: 48),
