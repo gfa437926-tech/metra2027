@@ -28,6 +28,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
   String? _pendingPayloadFingerprint;
   String? _pendingIdempotencyKey;
   DateTime? _pendingObservedAt;
+  bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
 
@@ -89,7 +90,9 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
   }
 
   Future<void> _submit(Map<String, Object?> values) async {
+    if (_submitting) return;
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _submitting = true);
     try {
       final validation = await widget.api.validateObservation(
         observationType: _formType,
@@ -148,6 +151,8 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
       );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -165,7 +170,9 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
           _draft != null && !_draft!.isEmpty ? 'تجاهل المسودة المحلية' : null,
       onSecondaryAction:
           _draft != null && !_draft!.isEmpty ? _discardDraft : null,
-      submitLabel: 'التحقق وإرسال الرصد اليومي',
+      submitLabel: _submitting
+          ? 'جارٍ الإرسال...'
+          : 'التحقق وإرسال الرصد اليومي',
     );
   }
 }
