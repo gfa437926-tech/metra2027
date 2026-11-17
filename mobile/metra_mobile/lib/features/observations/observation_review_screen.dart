@@ -49,11 +49,9 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
-          final message = error is MetraApiException && error.statusCode == 401
-              ? 'يرجى تسجيل الدخول أولاً'
-              : error is MetraApiException && error.statusCode == 403
-                  ? 'ليس لديك صلاحية مراجعة نشرات هذه المحطة'
-                  : 'تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.';
+          final message = error == null
+              ? 'تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.'
+              : MetraErrorPresenter.queueLoadMessage(error);
           return Center(child: Padding(padding: const EdgeInsets.all(24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.cloud_off_outlined, size: 42),
