@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/errors/metra_error_presenter.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
@@ -18,18 +19,16 @@ class HourlyObservationScreen extends StatefulWidget {
   final String stationId;
 
   @override
-  State<HourlyObservationScreen> createState() =>
-      _HourlyObservationScreenState();
+  State<HourlyObservationScreen> createState() => _HourlyObservationScreenState();
 }
 
 class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   static const _formType = 'hourly';
-
-  String? _pendingPayloadFingerprint;
-  String? _pendingIdempotencyKey;
-  DateTime? _pendingObservedAt;
   ObservationDraft? _draft;
   int _formGeneration = 0;
+  String? _pendingIdempotencyKey;
+  String? _pendingPayloadFingerprint;
+  DateTime? _pendingObservedAt;
 
   @override
   void initState() {
@@ -43,12 +42,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       formType: _formType,
       values: values,
     );
-    if (mounted) {
-      setState(() {
-        _draft =
-            ObservationDraftStore.instance.get(widget.stationId, _formType);
-      });
-    }
+    _draft = ObservationDraftStore.instance.get(widget.stationId, _formType);
   }
 
   void _discardDraft() {
@@ -56,6 +50,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     setState(() {
       _draft = null;
       _formGeneration++;
+      _pendingIdempotencyKey = null;
+      _pendingPayloadFingerprint = null;
+      _pendingObservedAt = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('تم تجاهل المسودة المحلية')),
@@ -63,23 +60,21 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   }
 
   Widget? _draftBanner() {
-    if (_draft == null || _draft!.isEmpty) return null;
-    final local = _draft!.savedAt.toLocal();
-    final stamp =
-        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    final draft = _draft;
+    if (draft == null || draft.isEmpty) return null;
+    final stamp = draft.savedAt.toLocal().toString().split('.').first;
     return Material(
-      color: const Color(0xFFE8F4FF),
+      color: const Color(0xFFE8F1FF),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         child: Row(
           children: [
-            const Icon(Icons.edit_note, color: Color(0xFF087CF0)),
-            const SizedBox(width: 10),
+            const Icon(Icons.history, color: Color(0xFF0B3D91)),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 'مسودة محلية فقط — لم تُرسل إلى الخادم · حُفظت $stamp',
-                style: const TextStyle(fontSize: 12, height: 1.4),
+                style: const TextStyle(fontSize: 12, height: 1.35),
               ),
             ),
           ],
@@ -141,12 +136,12 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         ),
       );
     } on MetraApiException catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(error.displayMessage)));
-    } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('تعذر الإرسال. تحقق من الاتصال وأعد المحاولة.'),
-        ),
+        SnackBar(content: Text(MetraErrorPresenter.submitMessage(error))),
+      );
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
       );
     }
   }
