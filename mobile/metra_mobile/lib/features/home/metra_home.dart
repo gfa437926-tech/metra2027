@@ -164,9 +164,11 @@ class _MetraHomeState extends State<MetraHome> {
           accessError: _accessError,
           onRetryAccess: _loadAccessContext,
           showObservationsShortcut: accessForNav.canAccessAnyObservationWorkspace,
+          showAdminShortcut: accessForNav.canAccessAnyStationAdministration,
           onOpenStations: () => _selectDestination(MetraDestinationId.stations),
           onOpenObservations: () =>
               _selectDestination(MetraDestinationId.observations),
+          onOpenAdmin: () => _selectDestination(MetraDestinationId.admin),
         ),
       ),
       _NavItem(
@@ -339,8 +341,10 @@ class _HomeOverview extends StatelessWidget {
     required this.accessError,
     required this.onRetryAccess,
     required this.showObservationsShortcut,
+    required this.showAdminShortcut,
     required this.onOpenStations,
     required this.onOpenObservations,
+    required this.onOpenAdmin,
   });
 
   final String? stationId;
@@ -349,14 +353,19 @@ class _HomeOverview extends StatelessWidget {
   final String? accessError;
   final VoidCallback onRetryAccess;
   final bool showObservationsShortcut;
+  final bool showAdminShortcut;
   final VoidCallback onOpenStations;
   final VoidCallback onOpenObservations;
+  final VoidCallback onOpenAdmin;
 
   @override
   Widget build(BuildContext context) {
     final canObsOnStation = stationId != null &&
         access.isResolved &&
         access.canAccessObservationWorkspace(stationId!);
+    final canAdminOnStation = stationId != null &&
+        access.isResolved &&
+        access.canAdministerStation(stationId!);
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -434,6 +443,17 @@ class _HomeOverview extends StatelessWidget {
                         ? 'ساعي · يومي · ظاهرة'
                         : 'غير مصرح لهذه المحطة'),
                 onTap: onOpenObservations,
+              ),
+            if (showAdminShortcut)
+              _ActionCard(
+                icon: Icons.admin_panel_settings_outlined,
+                title: 'إدارة المحطة',
+                subtitle: stationId == null
+                    ? 'يتطلب اختيار محطة'
+                    : (canAdminOnStation
+                        ? 'مستخدمون · تسجيلات'
+                        : 'غير مصرح لهذه المحطة'),
+                onTap: onOpenAdmin,
               ),
           ],
         ),

@@ -138,4 +138,69 @@ void main() {
     expect(find.text('CLIMATOL'), findsWidgets);
     expect(find.text('تقارير'), findsWidgets);
   });
+
+  testWidgets('observer home shows observations shortcut and hides admin shortcut', (tester) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'u7',
+      stationPermissions: {
+        'station-a': {
+          'observation.create',
+          'observation.submit',
+          'observation.edit_own_draft',
+        },
+      },
+    );
+    await _pumpHome(tester, access: access);
+
+    expect(find.text('وحدة الرصد'), findsOneWidget);
+    expect(find.text('إدارة المحطة'), findsNothing);
+  });
+
+  testWidgets('station_head home shows both observation and admin shortcuts', (tester) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'u8',
+      stationPermissions: {
+        'station-a': {
+          'observation.review',
+          'users.station.view',
+          'users.station.manage',
+          'registrations.station.approve',
+        },
+      },
+    );
+    await _pumpHome(tester, access: access);
+
+    expect(find.text('وحدة الرصد'), findsOneWidget);
+    expect(find.text('إدارة المحطة'), findsOneWidget);
+  });
+
+  testWidgets('edit_own_draft alone grants observation workspace access', (tester) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'u9',
+      stationPermissions: {
+        'station-a': {'observation.edit_own_draft'},
+      },
+    );
+    await _pumpHome(tester, access: access);
+
+    expect(find.text('الرصد'), findsWidgets);
+    expect(find.text('إدارة'), findsNothing);
+  });
+
+  testWidgets('user with only admin codes sees admin nav and shortcut', (tester) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'u10',
+      stationPermissions: {
+        'station-a': {
+          'users.station.view',
+          'registrations.station.approve',
+        },
+      },
+    );
+    await _pumpHome(tester, access: access);
+
+    expect(find.text('الرصد'), findsNothing);
+    expect(find.text('إدارة'), findsWidgets);
+    expect(find.text('إدارة المحطة'), findsOneWidget);
+  });
 }
