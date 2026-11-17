@@ -95,6 +95,38 @@ void main() {
     );
   });
 
+  test('registration decision messages for 403 409 503', () {
+    expect(
+      MetraErrorPresenter.registrationDecisionMessage(
+        const MetraApiException(403, 'request_failed'),
+      ),
+      contains('صلاحية'),
+    );
+    expect(
+      MetraErrorPresenter.registrationDecisionMessage(
+        const MetraApiException(409, 'request_failed'),
+      ),
+      contains('مسبقاً'),
+    );
+    expect(
+      MetraErrorPresenter.registrationDecisionMessage(
+        const MetraApiException(503, 'request_failed'),
+      ),
+      contains('غير متاحة'),
+    );
+  });
+
+  test('timeout and connection refused map to network guidance', () {
+    expect(
+      MetraErrorPresenter.messageFor(Exception('Connection timed out')),
+      contains('مهلة'),
+    );
+    expect(
+      MetraErrorPresenter.messageFor(Exception('Connection refused')),
+      contains('الاتصال'),
+    );
+  });
+
   test('does not leak exception type names for unknown errors', () {
     final message = MetraErrorPresenter.messageFor(StateError('secret-token'));
     expect(message.toLowerCase(), isNot(contains('stateerror')));
