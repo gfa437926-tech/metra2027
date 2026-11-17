@@ -37,10 +37,10 @@ class CatalogObservationScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'تحقق محلي فقط — لا حفظ على الخادم',
-                        style: TextStyle(
-                          color: const Color(0xFF9A6700),
+                        style: const TextStyle(
+                          color: Color(0xFF9A6700),
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),
