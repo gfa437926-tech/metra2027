@@ -19,16 +19,19 @@ class HourlyObservationScreen extends StatefulWidget {
   final String stationId;
 
   @override
-  State<HourlyObservationScreen> createState() => _HourlyObservationScreenState();
+  State<HourlyObservationScreen> createState() =>
+      _HourlyObservationScreenState();
 }
 
 class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   static const _formType = 'hourly';
+
+  String? _pendingPayloadFingerprint;
+  String? _pendingIdempotencyKey;
+  DateTime? _pendingObservedAt;
+  bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
-  String? _pendingIdempotencyKey;
-  String? _pendingPayloadFingerprint;
-  DateTime? _pendingObservedAt;
 
   @override
   void initState() {
@@ -42,7 +45,12 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       formType: _formType,
       values: values,
     );
-    _draft = ObservationDraftStore.instance.get(widget.stationId, _formType);
+    if (mounted) {
+      setState(() {
+        _draft =
+            ObservationDraftStore.instance.get(widget.stationId, _formType);
+      });
+    }
   }
 
   void _discardDraft() {
@@ -50,9 +58,6 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     setState(() {
       _draft = null;
       _formGeneration++;
-      _pendingIdempotencyKey = null;
-      _pendingPayloadFingerprint = null;
-      _pendingObservedAt = null;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('تم تجاهل المسودة المحلية')),
@@ -60,21 +65,23 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   }
 
   Widget? _draftBanner() {
-    final draft = _draft;
-    if (draft == null || draft.isEmpty) return null;
-    final stamp = draft.savedAt.toLocal().toString().split('.').first;
+    if (_draft == null || _draft!.isEmpty) return null;
+    final local = _draft!.savedAt.toLocal();
+    final stamp =
+        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
+        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
     return Material(
-      color: const Color(0xFFE8F1FF),
+      color: const Color(0xFFE8F4FF),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         child: Row(
           children: [
-            const Icon(Icons.history, color: Color(0xFF0B3D91)),
-            const SizedBox(width: 8),
+            const Icon(Icons.edit_note, color: Color(0xFF087CF0)),
+            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 'مسودة محلية فقط — لم تُرسل إلى الخادم · حُفظت $stamp',
-                style: const TextStyle(fontSize: 12, height: 1.35),
+                style: const TextStyle(fontSize: 12, height: 1.4),
               ),
             ),
           ],
@@ -84,7 +91,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   }
 
   Future<void> _submit(Map<String, Object?> values) async {
+    if (_submitting) return;
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _submitting = true);
     try {
       final validation = await widget.api.validateObservation(
         observationType: _formType,
@@ -143,6 +152,8 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
       );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -160,7 +171,9 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
           _draft != null && !_draft!.isEmpty ? 'تجاهل المسودة المحلية' : null,
       onSecondaryAction:
           _draft != null && !_draft!.isEmpty ? _discardDraft : null,
-      submitLabel: 'التحقق وإرسال الرصد الساعي',
+      submitLabel: _submitting
+          ? 'جارٍ الإرسال...'
+          : 'التحقق وإرسال الرصد الساعي',
     );
   }
 }
