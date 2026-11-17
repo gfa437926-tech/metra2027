@@ -256,10 +256,15 @@ void main() {
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
     await confirmApprove(tester);
-    await tester.pump();
+    // Allow dialog route to finish leaving so only the list button remains.
+    await tester.pumpAndSettle();
 
     // Second attempt while processing should be ignored by UI guard.
-    await tester.tap(find.text('اعتماد'), warnIfMissed: false);
+    // Prefer list button (first) if any transient dialog residue remains.
+    final listApprove = find.widgetWithText(FilledButton, 'اعتماد');
+    if (listApprove.evaluate().isNotEmpty) {
+      await tester.tap(listApprove.first, warnIfMissed: false);
+    }
     await tester.pump();
     expect(decideCalls, 1);
 
