@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
+import '../../core/errors/metra_error_presenter.dart';
 import '../../core/catalog/phenomenon_field_catalog.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
@@ -159,12 +160,12 @@ class _PhenomenonObservationScreenState
         ),
       );
     } on MetraApiException catch (error) {
-      messenger.showSnackBar(SnackBar(content: Text(error.displayMessage)));
-    } catch (_) {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('تعذر الإرسال. تحقق من الاتصال وأعد المحاولة.'),
-        ),
+        SnackBar(content: Text(MetraErrorPresenter.submitMessage(error))),
+      );
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
