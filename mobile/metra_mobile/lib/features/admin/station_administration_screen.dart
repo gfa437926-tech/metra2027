@@ -25,11 +25,24 @@ class _StationAdministrationScreenState
   late Future<List<Map<String, dynamic>>> _audit;
   late Future<List<ObservationQueueItem>> _observations;
   final Set<String> _processingRequestIds = <String>{};
+  final TextEditingController _userFilterController = TextEditingController();
+  String _userFilterQuery = '';
 
   @override
   void initState() {
     super.initState();
+    _userFilterController.addListener(() {
+      final next = _userFilterController.text.trim();
+      if (next == _userFilterQuery) return;
+      setState(() => _userFilterQuery = next);
+    });
     _refresh();
+  }
+
+  @override
+  void dispose() {
+    _userFilterController.dispose();
+    super.dispose();
   }
 
   /// Keeps the original error on the Future for FutureBuilder while preventing
@@ -67,6 +80,17 @@ class _StationAdministrationScreenState
     ].where((part) => part != null && part.toString().trim().isNotEmpty);
     final joined = parts.join(' ');
     return joined.isEmpty ? _firstValue(record, ['email', 'user_id', 'id']) : joined;
+  }
+
+  bool _matchesUserFilter(Map<String, dynamic> record) {
+    if (_userFilterQuery.isEmpty) return true;
+    final haystack = [
+      _personName(record),
+      _firstValue(record, ['role_code', 'requested_role_code', 'role']),
+      _firstValue(record, ['status', 'request_status', 'account_status']),
+      _firstValue(record, ['phone', 'email', 'user_id', 'id']),
+    ].join(' ').toLowerCase();
+    return haystack.contains(_userFilterQuery.toLowerCase());
   }
 
   Future<void> _decide(Map<String, dynamic> record, String decision) async {
@@ -160,6 +184,98 @@ class _StationAdministrationScreenState
         setState(() => _processingRequestIds.remove(requestId));
       }
     }
+  }
+
+  Widget _usersTab(Future<List<Map<String, dynamic>>> future) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          final message = error == null
+              ? 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.'
+              : MetraErrorPresenter.messageFor(error);
+          return ListView(
+            children: [
+              const SizedBox(height: 48),
+              Center(child: Text(message, textAlign: TextAlign.center)),
+            ],
+          );
+        }
+        final all = snapshot.data ?? const <Map<String, dynamic>>[];
+        if (all.isEmpty) {
+          return ListView(
+            children: const [
+              SizedBox(height: 48),
+              Center(child: Text('لا توجد حسابات ظاهرة لهذه المحطة.')),
+            ],
+          );
+        }
+        final records = all.where(_matchesUserFilter).toList(growable: false);
+        return ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            TextField(
+              controller: _userFilterController,
+              decoration: InputDecoration(
+                labelText: 'بحث ضمن مستخدمي المحطة',
+                hintText: 'الاسم أو الدور أو الحالة أو الهاتف',
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
+                suffixIcon: _userFilterQuery.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _userFilterController.clear();
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              records.isEmpty
+                  ? 'لا نتائج مطابقة للبحث الحالي.'
+                  : 'المعروض: ${records.length} من ${all.length}',
+              style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            for (var index = 0; index < records.length; index++) ...[
+              if (index > 0) const SizedBox(height: 8),
+              _userCard(records[index]),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _userCard(Map<String, dynamic> record) {
+    final title = _personName(record);
+    final subtitle = [
+      _firstValue(record, ['role_code', 'requested_role_code', 'role']),
+      _firstValue(record, ['status', 'request_status', 'account_status']),
+      _firstValue(record, ['phone', 'email']),
+    ].where((value) => value != '—').join(' • ');
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _recordsTab(
@@ -347,12 +463,7 @@ class _StationAdministrationScreenState
                 onRefresh: _handleRefresh,
                 child: TabBarView(
                   children: [
-                    _recordsTab(
-                      _users,
-                      emptyMessage: 'لا توجد حسابات ظاهرة لهذه المحطة.',
-                      registrationQueue: false,
-                      audit: false,
-                    ),
+                    _usersTab(_users),
                     _recordsTab(
                       _requests,
                       emptyMessage: 'لا توجد طلبات تسجيل معلقة.',
