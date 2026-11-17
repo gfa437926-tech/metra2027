@@ -114,35 +114,42 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     String? note;
     if (decision == 'return_for_correction') {
       final controller = TextEditingController();
-      note = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('سبب الإرجاع'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            maxLength: 2000,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              hintText: 'اكتب الملاحظات المطلوبة لاستكمال النشرة',
+      try {
+        note = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('سبب الإرجاع'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 2000,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'اكتب الملاحظات المطلوبة لاستكمال النشرة',
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final value = controller.text.trim();
+                  if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+                },
+                child: const Text('تأكيد الإرجاع'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: () {
-                final value = controller.text.trim();
-                if (value.isNotEmpty) Navigator.pop(dialogContext, value);
-              },
-              child: const Text('تأكيد الإرجاع'),
-            ),
-          ],
-        ),
-      );
-      controller.dispose();
+        );
+      } finally {
+        // Dispose after the dialog route has finished tearing down so the
+        // TextField does not observe a disposed controller during exit animation.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          controller.dispose();
+        });
+      }
       if (note == null || note.isEmpty) return;
     } else {
       final confirmed = await showDialog<bool>(
