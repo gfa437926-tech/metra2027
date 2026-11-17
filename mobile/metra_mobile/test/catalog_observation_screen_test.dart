@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
-import 'package:metra_mobile/core/widgets/metra_observation_form.dart';
 import 'package:metra_mobile/features/observations/catalog_observation_screen.dart';
 
 void main() {
@@ -30,7 +29,7 @@ void main() {
 
   testWidgets('local validate does not claim server persistence', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: CatalogObservationScreen(
             title: 'رصد الأمطار',
