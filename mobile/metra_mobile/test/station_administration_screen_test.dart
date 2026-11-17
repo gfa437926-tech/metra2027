@@ -26,6 +26,13 @@ void main() {
         client: MockClient(handler),
       );
 
+  /// http.Response(String) encodes latin1; Arabic JSON must use utf8 body bytes.
+  http.Response jsonOk(Object body) => http.Response.bytes(
+        utf8.encode(jsonEncode(body)),
+        200,
+        headers: const {'content-type': 'application/json; charset=utf-8'},
+      );
+
   http.Response emptyList() => http.Response('[]', 200);
 
   testWidgets('renders four admin tabs in RTL shell', (tester) async {
@@ -47,7 +54,7 @@ void main() {
       (tester) async {
     final api = apiWith((request) async {
       if (request.url.path.contains('registration-requests')) {
-        return http.Response(jsonEncode([registrationRequest()]), 200);
+        return jsonOk([registrationRequest()]);
       }
       return emptyList();
     });
@@ -115,7 +122,7 @@ void main() {
         return http.Response('{}', 200);
       }
       if (request.url.path.contains('registration-requests')) {
-        return http.Response(jsonEncode([registrationRequest()]), 200);
+        return jsonOk([registrationRequest()]);
       }
       return emptyList();
     });
@@ -130,7 +137,7 @@ void main() {
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
     expect(find.text('اعتماد طلب التسجيل'), findsOneWidget);
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pumpAndSettle();
     expect(decisionBodies, hasLength(1));
     expect(decisionBodies.single, contains('approve'));
@@ -148,7 +155,7 @@ void main() {
         return http.Response('{}', 200);
       }
       if (request.url.path.contains('registration-requests')) {
-        return http.Response(jsonEncode([registrationRequest()]), 200);
+        return jsonOk([registrationRequest()]);
       }
       return emptyList();
     });
@@ -162,13 +169,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('رفض'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pumpAndSettle();
     expect(decisionBodies, isEmpty);
     expect(find.textContaining('سبب الرفض'), findsWidgets);
 
     await tester.enterText(find.byType(TextField), 'بيانات غير مكتملة');
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pumpAndSettle();
     expect(decisionBodies, hasLength(1));
     expect(decisionBodies.single, contains('reject'));
@@ -183,7 +190,7 @@ void main() {
         return http.Response('forbidden', 403);
       }
       if (request.url.path.contains('registration-requests')) {
-        return http.Response(jsonEncode([registrationRequest()]), 200);
+        return jsonOk([registrationRequest()]);
       }
       return emptyList();
     });
@@ -197,7 +204,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pumpAndSettle();
     expect(find.textContaining('صلاحية'), findsOneWidget);
     expect(find.text('مراقب تجريبي'), findsOneWidget);
@@ -215,7 +222,7 @@ void main() {
         return http.Response('{}', 200);
       }
       if (request.url.path.contains('registration-requests')) {
-        return http.Response(jsonEncode([registrationRequest()]), 200);
+        return jsonOk([registrationRequest()]);
       }
       return emptyList();
     });
@@ -229,7 +236,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('تأكيد'));
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pump();
 
     expect(find.text('جارٍ...'), findsOneWidget);
