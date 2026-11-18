@@ -4,6 +4,7 @@ import '../widgets/metra_observation_form.dart';
 import 'catalog_form_type.dart';
 import 'catalog_observation_repository.dart';
 import 'catalog_submission_state.dart';
+import 'rainfall_soil_local_rules.dart';
 
 /// Local-only catalogue repository.
 ///
