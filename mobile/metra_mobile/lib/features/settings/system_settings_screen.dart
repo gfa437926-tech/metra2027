@@ -2,6 +2,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../api_config.dart';
 import '../../core/auth/metra_auth.dart';
+import '../account/account_hub_screen.dart';
+import '../notifications/notifications_center_screen.dart';
 
 /// Account and client configuration. Never displays secrets or service-role keys.
 ///
@@ -116,6 +118,47 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               ],
             ),
           ),
+
+          const SizedBox(height: 12),
+          Card(
+            elevation: 0,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.manage_accounts_outlined),
+                  title: const Text('الحساب الشخصي وكلمة المرور'),
+                  trailing: const Icon(Icons.chevron_left),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(title: const Text('الحساب الشخصي')),
+                          body: AccountHubScreen(userEmail: widget.userEmail),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: const Text('مركز الإشعارات'),
+                  trailing: const Icon(Icons.chevron_left),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Scaffold(
+                          appBar: AppBar(title: const Text('الإشعارات')),
+                          body: const NotificationsCenterScreen(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+
           const SizedBox(height: 12),
           Card(
             elevation: 0,
