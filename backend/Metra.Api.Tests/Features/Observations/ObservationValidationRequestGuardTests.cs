@@ -48,4 +48,26 @@ public sealed class ObservationValidationRequestGuardTests
         Assert.NotNull(nameError);
         Assert.NotNull(valueError);
     }
+
+    [Fact]
+    public void Rejects_blank_field_name()
+    {
+        var error = ObservationValidationRequestGuard.GetError(
+            new Dictionary<string, string?> { ["   "] = "v" });
+
+        Assert.NotNull(error);
+        Assert.Contains("اسم", error);
+    }
+
+    [Fact]
+    public void Accepts_observer_notes_at_catalogue_aligned_length()
+    {
+        // Flutter catalogue default maxLength is 256; guard must not reject valid notes.
+        var values = new Dictionary<string, string?>
+        {
+            ["observerNotes"] = new string('م', ObservationValidationRequestGuard.MaximumValueLength)
+        };
+
+        Assert.Null(ObservationValidationRequestGuard.GetError(values));
+    }
 }
