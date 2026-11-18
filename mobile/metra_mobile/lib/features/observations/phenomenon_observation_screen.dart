@@ -37,7 +37,26 @@ class _PhenomenonObservationScreenState
   @override
   void initState() {
     super.initState();
+    _loadDraftForStation();
+  }
+
+  @override
+  void didUpdateWidget(covariant PhenomenonObservationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stationId != widget.stationId) {
+      _pendingPayloadFingerprint = null;
+      _pendingIdempotencyKey = null;
+      _pendingObservedAt = null;
+      _submitting = false;
+      _loadDraftForStation(resetForm: true);
+    }
+  }
+
+  void _loadDraftForStation({bool resetForm = false}) {
     _draft = ObservationDraftStore.instance.get(widget.stationId, _formType);
+    if (resetForm) {
+      _formGeneration++;
+    }
   }
 
   /// Form time pickers yield HH:mm; domain contract requires HH:mm:ss UTC.
@@ -175,7 +194,7 @@ class _PhenomenonObservationScreenState
   @override
   Widget build(BuildContext context) {
     return MetraObservationForm(
-      key: ValueKey('phenomenon-form-$_formGeneration'),
+      key: ValueKey('phenomenon-form-${widget.stationId}-$_formGeneration'),
       title: 'بلاغ ظاهرة جوية',
       fields: PhenomenonFieldCatalog.fields,
       initialValues: _draft?.values ?? const {},
@@ -189,6 +208,7 @@ class _PhenomenonObservationScreenState
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
           : 'التحقق وإرسال بلاغ الظاهرة',
+      embedded: true,
     );
   }
 }

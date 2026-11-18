@@ -35,7 +35,26 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
   @override
   void initState() {
     super.initState();
+    _loadDraftForStation();
+  }
+
+  @override
+  void didUpdateWidget(covariant DailyObservationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stationId != widget.stationId) {
+      _pendingPayloadFingerprint = null;
+      _pendingIdempotencyKey = null;
+      _pendingObservedAt = null;
+      _submitting = false;
+      _loadDraftForStation(resetForm: true);
+    }
+  }
+
+  void _loadDraftForStation({bool resetForm = false}) {
     _draft = ObservationDraftStore.instance.get(widget.stationId, _formType);
+    if (resetForm) {
+      _formGeneration++;
+    }
   }
 
   void _persistDraft(Map<String, Object?> values) {
@@ -159,7 +178,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
   @override
   Widget build(BuildContext context) {
     return MetraObservationForm(
-      key: ValueKey('daily-form-$_formGeneration'),
+      key: ValueKey('daily-form-${widget.stationId}-$_formGeneration'),
       title: 'الرصد اليومي',
       fields: ObservationFieldCatalogs.daily,
       initialValues: _draft?.values ?? const {},
@@ -173,6 +192,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
           : 'التحقق وإرسال الرصد اليومي',
+      embedded: true,
     );
   }
 }

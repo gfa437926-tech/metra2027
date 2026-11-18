@@ -209,4 +209,75 @@ void main() {
     }
     api.close();
   });
+
+  testWidgets('hourly reloads station-scoped draft when stationId changes',
+      (tester) async {
+    const otherStation = '22222222-2222-4222-8222-222222222222';
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'hourly',
+      values: const {'dryBulbTemperature': 21},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: otherStation,
+      formType: 'hourly',
+      values: const {'dryBulbTemperature': 33},
+    );
+
+    final api = apiWith((_) async => http.Response('{}', 200));
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('مسودة محلية فقط'), findsOneWidget);
+
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(api: api, stationId: otherStation),
+    ));
+    await tester.pumpAndSettle();
+    // Draft for the new station is restored; values are station-isolated.
+    expect(find.text('مسودة محلية فقط'), findsOneWidget);
+    expect(find.text('33'), findsWidgets);
+    api.close();
+  });
+
+  testWidgets('hourly submit button disables while request is in flight',
+      (tester) async {
+    var validateCalls = 0;
+    final api = apiWith((request) async {
+      if (request.url.path.contains('/validate')) {
+        validateCalls++;
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        return http.Response(
+          '{"isValid":false,"issues":[{"field":"x","message":"حقل غير صالح"}]}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }
+      return http.Response('{}', 200);
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: HourlyObservationScreen(api: api, stationId: stationId),
+    ));
+    await tester.pumpAndSettle();
+
+    // Fill required agreement so client-side form validation can pass.
+    final switches = find.byType(SwitchListTile);
+    if (switches.evaluate().isNotEmpty) {
+      await tester.ensureVisible(switches.last);
+      await tester.tap(switches.last);
+      await tester.pump();
+    }
+
+    final submit = find.text('التحقق وإرسال الرصد الساعي');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    // While in-flight the label switches to the loading state.
+    expect(find.text('جارٍ الإرسال...'), findsWidgets);
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+    expect(validateCalls, greaterThanOrEqualTo(1));
+    api.close();
+  });
 }

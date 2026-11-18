@@ -54,6 +54,7 @@ class MetraObservationForm extends StatefulWidget {
     this.draftBanner,
     this.secondaryActionLabel,
     this.onSecondaryAction,
+    this.embedded = false,
   });
 
   final String title;
@@ -71,6 +72,10 @@ class MetraObservationForm extends StatefulWidget {
   /// Optional secondary action (e.g. discard local draft).
   final String? secondaryActionLabel;
   final VoidCallback? onSecondaryAction;
+
+  /// When true (workspace tabs), skip nested [Scaffold]/[AppBar] and render
+  /// an in-body title so the parent shell remains the only chrome.
+  final bool embedded;
 
   @override
   State<MetraObservationForm> createState() => _MetraObservationFormState();
@@ -331,76 +336,103 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: AppBar(title: Text(widget.title)),
-          body: Form(
-            key: _formKey,
-            // Submit stays outside the scrollable body so long catalogues do not
-            // leave the action off-stage / unbuilt.
-            child: Column(
-              children: [
-                if (widget.draftBanner != null) widget.draftBanner!,
-                Expanded(
-                  // SingleChildScrollView + Column keeps every FormField mounted
-                  // so required validators run even when the control is off-screen.
-                  // A lazy ListView would skip unbuilt required fields on submit.
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (final field in widget.fields) ...[
-                          _buildField(field),
-                          const SizedBox(height: 14),
-                        ],
-                      ],
+  Widget _formBody() {
+    return Form(
+      key: _formKey,
+      // Submit stays outside the scrollable body so long catalogues do not
+      // leave the action off-stage / unbuilt.
+      child: Column(
+        children: [
+          if (widget.embedded)
+            Material(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF061B4A),
                     ),
                   ),
                 ),
-                SafeArea(
-                  minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          key: const Key('metra-observation-submit'),
-                          onPressed: _saving ? null : _submit,
-                          icon: _saving
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Icon(Icons.send),
-                          label: Text(
-                            _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
-                          ),
-                        ),
-                      ),
-                      if (widget.secondaryActionLabel != null &&
-                          widget.onSecondaryAction != null) ...[
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            key: const Key('metra-observation-discard-draft'),
-                            onPressed: _saving ? null : widget.onSecondaryAction,
-                            icon: const Icon(Icons.delete_outline),
-                            label: Text(widget.secondaryActionLabel!),
-                          ),
-                        ),
-                      ],
-                    ],
+              ),
+            ),
+          if (widget.draftBanner != null) widget.draftBanner!,
+          Expanded(
+            // SingleChildScrollView + Column keeps every FormField mounted
+            // so required validators run even when the control is off-screen.
+            // A lazy ListView would skip unbuilt required fields on submit.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final field in widget.fields) ...[
+                    _buildField(field),
+                    const SizedBox(height: 14),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('metra-observation-submit'),
+                    onPressed: _saving ? null : _submit,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(
+                      _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
+                    ),
                   ),
                 ),
+                if (widget.secondaryActionLabel != null &&
+                    widget.onSecondaryAction != null) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const Key('metra-observation-discard-draft'),
+                      onPressed: _saving ? null : widget.onSecondaryAction,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(widget.secondaryActionLabel!),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-        ),
-      );
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final body = _formBody();
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: widget.embedded
+          ? body
+          : Scaffold(
+              appBar: AppBar(title: Text(widget.title)),
+              body: body,
+            ),
+    );
+  }
 }

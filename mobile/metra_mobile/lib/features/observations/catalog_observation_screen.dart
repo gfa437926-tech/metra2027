@@ -119,6 +119,7 @@ class CatalogObservationScreen extends StatelessWidget {
             fields: fields,
             submitLabel: 'تحقق محلياً',
             onSubmit: (values) => _onSubmit(context, values),
+            embedded: true,
           ),
         ),
       ],
