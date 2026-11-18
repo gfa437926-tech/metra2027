@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../../core/widgets/metra_async_state.dart';
 
 /// Catalogue-based geographic comparison for forecast-centre staff.
 /// Live telemetry is intentionally not synthesized here: it needs a separate,
@@ -39,26 +40,24 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
       future: _stationsFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل دليل المحطات للمقارنة…',
+          );
         }
         if (snapshot.hasError) {
-          return _state(
-            icon: Icons.cloud_off_outlined,
+          return MetraAsyncStatePanel.error(
             title: 'تعذر تحميل دليل المحطات',
-            message: 'تحقق من الاتصال وصلاحية الوصول، ثم أعد المحاولة.',
-            action: FilledButton.tonalIcon(
-              onPressed: _reload,
-              icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة'),
-            ),
+            subtitle: 'تحقق من الاتصال وصلاحية الوصول، ثم أعد المحاولة.',
+            onRetry: _reload,
           );
         }
         final stations = snapshot.data ?? const <StationDirectoryItem>[];
         if (stations.isEmpty) {
-          return _state(
+          return MetraAsyncStatePanel.empty(
             icon: Icons.location_searching,
             title: 'لا توجد محطات متاحة للمقارنة',
-            message: 'لم يُرجع دليل المحطات أي سجلات ضمن نطاق صلاحيات الحساب.',
+            subtitle:
+                'لم يُرجع دليل المحطات أي سجلات ضمن نطاق صلاحيات الحساب.',
             action: TextButton(onPressed: _reload, child: const Text('تحديث')),
           );
         }

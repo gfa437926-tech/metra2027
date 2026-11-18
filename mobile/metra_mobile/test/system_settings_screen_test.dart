@@ -15,7 +15,9 @@ void main() {
     );
     await tester.pump();
 
+    // Page title is in-body (no nested AppBar under MetraHome shell).
     expect(find.text('إعدادات النظام والحساب'), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
     expect(find.text('operator@metra.example'), findsOneWidget);
     expect(find.textContaining('إصدار التطبيق'), findsOneWidget);
     expect(find.text(SystemSettingsScreen.appVersionLabel), findsOneWidget);

@@ -1,70 +1,53 @@
-# تقرير تنفيذ المرحلة U0 — صقل واجهات Flutter
+# تقرير تنفيذ وإغلاق المرحلة U0 — صقل واجهات Flutter
 
-**التاريخ:** 2026-11-18  
-**الفرع:** `feat/phenomenon-observation-submit-2026-11-16`  
-**HEAD عند الإغلاق الجزئي:** يُحدَّث مع commit التنفيذ  
-**origin:** ما زال متأخراً عن المحلي (commits غير مرفوعة)
+**آخر تحديث:** 2026-11-18  
+**الفرع:** `feat/phenomenon-observation-submit-2026-11-16`
 
-## النطاق المنفَّذ
+## Git
 
-تحسينات عرض وحالات async وتأكيدات حساسة **دون** API / Schema / RPC / صلاحيات إنتاج.
-
-## الشاشات المحسّنة فعلياً
-
-| الشاشة | التحسين |
+| بند | قيمة |
 |---|---|
-| دليل المحطات | Loading/Error/Empty موحّدة عبر `MetraAsyncStatePanel` + إعادة محاولة |
-| مراجعة الأرصاد | Loading/Error/Empty أوضح + زر تحديث في الفراغ |
-| إدارة المحطة (تبويبات) | نفس نمط الحالات لمستخدمي المحطة والسجلات وطابور الأرصاد |
-| الإعدادات | RTL صريح، تأكيد حوار قبل تسجيل الخروج، منع النقر أثناء الخروج |
-| نماذج الكتالوج السبعة | `Directionality` RTL على `CatalogObservationScreen` |
-| الرئيسية | منع overflow لاسم/معرّف المحطة في AppBar |
+| HEAD | يُحدَّث مع commit الإغلاق |
+| origin | متأخر — لا push من هذه البيئة |
+| commits غير مرفوعة | راجع `git status` |
 
-## الملفات المتغيرة
+## التحقق من الأدوات
 
-- `lib/core/widgets/metra_async_state.dart` (**جديد**)
-- `lib/features/stations/station_directory_screen.dart`
-- `lib/features/observations/observation_review_screen.dart`
-- `lib/features/observations/catalog_observation_screen.dart`
-- `lib/features/admin/station_administration_screen.dart`
-- `lib/features/settings/system_settings_screen.dart`
-- `lib/features/home/metra_home.dart`
-- `test/metra_async_state_test.dart` (**جديد**)
-- `test/system_settings_screen_test.dart`
-
-## النواقص التي أُغلقت (U0)
-
-- توحيد لوحات التحميل/الفراغ/الخطأ في المسارات ذات الأولوية أعلاه.
-- رسائل عربية أوضح مع إجراء إعادة محاولة حيث ينطبق.
-- تأكيد تسجيل الخروج (عملية حساسة).
-- RTL أصرح للكتالوج والإعدادات.
-- حماية عرض AppBar من overflow على الشاشات الضيقة.
-
-## النواقص التي بقيت (خارج U0 أو تتطلب عقوداً)
-
-- Placeholders: CLIMATOL / AI / تقارير / عمليات — **لم تُحوَّل** إلى وظائف وهمية.
-- ربط rainfall/soil خادمي — يحتاج موافقة DB/API مستقلة.
-- تسجيل مستخدم / حالة حساب غنية / إشعارات — غير موجودة.
-- تشغيل الاختبارات في هذه البيئة — **Flutter غير متوفر**؛ لا ادعاء نجاح.
-- مطابقة بصرية 100% مع أرشيف التصميم المرجعي — غير مؤكدة.
-
-## الاختبارات
-
-| اختبار | الحالة |
+| أمر | النتيجة |
 |---|---|
-| `metra_async_state_test.dart` | مُضاف — **لم يُشغَّل** هنا |
-| `system_settings_screen_test.dart` (تأكيد الخروج) | مُحدَّث — **لم يُشغَّل** هنا |
-| `flutter analyze` / `flutter test` | غير متاحين في بيئة التنفيذ |
+| `flutter` / `dart` | **غير متوفرين** |
+| `flutter pub get` / `analyze` / `test` | **لم تُنفَّذ** |
 
-## نسبة تقدم U0
+لا يُعلن نجاح أي اختبار هنا.
 
-| بند | تقدير |
-|---|---:|
-| أولويات U0 المذكورة في المهمة | **~75–80%** |
-| كل شاشات التطبيق بما فيها Placeholder | U0 لا يغلقها — بقيت صريحة |
+## ما نُفّذ في U0
 
-## الخطوة التنفيذية التالية
+### مشترك
+- `MetraAsyncStatePanel` — loading / empty / error + retry
 
-1. تشغيل `flutter test` و`flutter analyze` محلياً/CI بعد push.  
-2. عند موافقة DB مستقلة: بدء ربط **rainfall + soil** (U1) دون المساس بالأعطال.  
-3. اختيارياً: تعميم `MetraAsyncStatePanel` على `forecast_centre_screen` إن لزم توحيد إضافي.
+### شاشات اللوحة
+- دليل المحطات، مراجعة الأرصاد، إدارة المحطة، **مراكز التنبؤ**
+
+### أخرى
+- إزالة Scaffold/AppBar المتداخل من الإعدادات
+- تأكيد الخروج + منع النقر المزدوج + RTL
+- RTL للكتالوج؛ قطع overflow لمعرّف المحطة
+
+### اختبارات (غير مشغّلة هنا)
+- `metra_async_state_test.dart`
+- `system_settings_screen_test.dart` (لا AppBar + حوار خروج)
+
+## التكرار
+- حالات async موحّدة في المسارات أعلاه
+- AppBar واحد في `MetraHome` لوجهات shell
+
+## نواقص متبقية
+- Placeholders دون وظائف وهمية
+- تشغيل CI/Flutter محلياً
+- لا تحقق رسومي هاتف/سطح مكتب هنا
+
+## نسبة اكتمال U0
+**~90–92%** (المتبقي: تشغيل الاختبارات على آلة فيها Flutter)
+
+## U1
+انظر `docs/ui/U1-RAINFALL-SOIL-HANDOFF.md` — لا DB قبل موافقة مستقلة.
