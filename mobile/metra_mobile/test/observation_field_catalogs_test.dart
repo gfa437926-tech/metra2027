@@ -94,4 +94,29 @@ void main() {
     expect(climateIds.contains('stationPressure'), isTrue);
     expect(hourlyIds.contains('dryTemp'), isTrue);
   });
+
+  test('rainfall and soil quantity fields are decimal without undocumented bounds',
+      () {
+    MetraObservationField f(List<MetraObservationField> list, String id) =>
+        list.firstWhere((e) => e.id == id);
+
+    final rain = f(ObservationFieldCatalogs.rainfall, 'rainAmount');
+    expect(rain.kind, MetraFieldKind.decimal);
+    expect(rain.unit, 'mm');
+    expect(rain.minimum, isNull);
+    expect(rain.maximum, isNull);
+
+    final snow = f(ObservationFieldCatalogs.rainfall, 'snowDepth');
+    expect(snow.kind, MetraFieldKind.decimal);
+    expect(snow.unit, 'cm');
+    expect(snow.minimum, isNull);
+
+    for (final id in ['depth5', 'depth10', 'depth20', 'depth50']) {
+      final depth = f(ObservationFieldCatalogs.soil, id);
+      expect(depth.kind, MetraFieldKind.decimal, reason: id);
+      expect(depth.unit, '°C');
+      expect(depth.minimum, isNull, reason: id);
+      expect(depth.maximum, isNull, reason: id);
+    }
+  });
 }

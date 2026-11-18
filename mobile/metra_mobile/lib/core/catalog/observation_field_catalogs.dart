@@ -135,18 +135,18 @@ class ObservationFieldCatalogs {
     MetraObservationField(catalogId: 'FLD-RAINFALL-001', id: 'currentDate', label: 'تاريخ إرسال', kind: MetraFieldKind.text),
     MetraObservationField(catalogId: 'FLD-RAINFALL-002', id: 'localTime', label: 'وقت محلي', kind: MetraFieldKind.time, unit: 'hour'),
     MetraObservationField(catalogId: 'FLD-RAINFALL-003', id: 'utcTime', label: 'UTC', kind: MetraFieldKind.text, unit: 'hour'),
-    MetraObservationField(catalogId: 'FLD-RAINFALL-004', id: 'rainAmount', label: 'هطول مم', kind: MetraFieldKind.text, unit: 'mm'),
-    MetraObservationField(catalogId: 'FLD-RAINFALL-005', id: 'snowDepth', label: 'ثلج سم', kind: MetraFieldKind.text, unit: 'cm'),
+    MetraObservationField(catalogId: 'FLD-RAINFALL-004', id: 'rainAmount', label: 'هطول مم', kind: MetraFieldKind.decimal, unit: 'mm'),
+    MetraObservationField(catalogId: 'FLD-RAINFALL-005', id: 'snowDepth', label: 'ثلج سم', kind: MetraFieldKind.decimal, unit: 'cm'),
     MetraObservationField(catalogId: 'FLD-RAINFALL-006', id: 'observationDate', label: 'تاريخ رصد', kind: MetraFieldKind.date, required: true),
     MetraObservationField(catalogId: 'FLD-RAINFALL-007', id: 'responsibilityAgreement', label: 'إقرار', kind: MetraFieldKind.boolean, required: true),
   ];
 
   static const List<MetraObservationField> soil = [
     MetraObservationField(catalogId: 'FLD-SOIL-001', id: 'observationDate', label: 'تاريخ', kind: MetraFieldKind.date, required: true),
-    MetraObservationField(catalogId: 'FLD-SOIL-002', id: 'depth5', label: 'عمق5', kind: MetraFieldKind.text, unit: '°C'),
-    MetraObservationField(catalogId: 'FLD-SOIL-003', id: 'depth10', label: 'عمق10', kind: MetraFieldKind.text, unit: '°C'),
-    MetraObservationField(catalogId: 'FLD-SOIL-004', id: 'depth20', label: 'عمق20', kind: MetraFieldKind.text, unit: '°C'),
-    MetraObservationField(catalogId: 'FLD-SOIL-005', id: 'depth50', label: 'عمق50', kind: MetraFieldKind.text, unit: '°C'),
+    MetraObservationField(catalogId: 'FLD-SOIL-002', id: 'depth5', label: 'عمق5', kind: MetraFieldKind.decimal, unit: '°C'),
+    MetraObservationField(catalogId: 'FLD-SOIL-003', id: 'depth10', label: 'عمق10', kind: MetraFieldKind.decimal, unit: '°C'),
+    MetraObservationField(catalogId: 'FLD-SOIL-004', id: 'depth20', label: 'عمق20', kind: MetraFieldKind.decimal, unit: '°C'),
+    MetraObservationField(catalogId: 'FLD-SOIL-005', id: 'depth50', label: 'عمق50', kind: MetraFieldKind.decimal, unit: '°C'),
     MetraObservationField(catalogId: 'FLD-SOIL-006', id: 'observerNotes', label: 'ملاحظات', kind: MetraFieldKind.multiline),
     MetraObservationField(catalogId: 'FLD-SOIL-007', id: 'responsibilityAgreement', label: 'إقرار', kind: MetraFieldKind.boolean, required: true),
   ];

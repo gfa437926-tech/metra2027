@@ -71,4 +71,35 @@ void main() {
       expect(repo.fieldsFor(type), isNotEmpty, reason: type.code);
     }
   });
+
+  test('rainfall rejects non-numeric rainAmount after decimal kind', () async {
+    final result = await repo.submitLocal(
+      type: CatalogFormType.rainfall,
+      stationId: 'station-a',
+      values: {
+        'observationDate': '2026-11-17',
+        'responsibilityAgreement': true,
+        'rainAmount': 'abc',
+      },
+    );
+    expect(result.phase, CatalogSubmissionPhase.failed);
+    expect(result.validationErrors.containsKey('rainAmount'), isTrue);
+    expect(result.claimsServerPersistence, isFalse);
+  });
+
+  test('soil accepts finite depth decimals and awaits API contract', () async {
+    final result = await repo.submitLocal(
+      type: CatalogFormType.soil,
+      stationId: 'station-a',
+      values: {
+        'observationDate': '2026-11-17',
+        'responsibilityAgreement': true,
+        'depth5': '18.5',
+        'depth10': '17',
+      },
+    );
+    expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
+    expect(result.claimsServerPersistence, isFalse);
+    expect(drafts.get('station-a', 'soil'), isNotNull);
+  });
 }
