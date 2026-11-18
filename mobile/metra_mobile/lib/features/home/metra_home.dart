@@ -314,15 +314,21 @@ class _MetraHomeState extends State<MetraHome> {
           title: const Text('METRA 2027 — منظومة الأرصاد'),
           actions: [
             Padding(
-              padding: const EdgeInsetsDirectional.only(end: 16),
+              padding: const EdgeInsetsDirectional.only(end: 12),
               child: Center(
-                child: Text(
-                  _selectedStationId == null
-                      ? 'منصة الأرصاد'
-                      : 'محطة: $_selectedStationId',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.78),
-                    fontSize: 12,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    _selectedStationId == null
+                        ? 'منصة الأرصاد'
+                        : 'محطة: $_selectedStationId',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.78),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),

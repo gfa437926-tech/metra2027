@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
+import '../../core/widgets/metra_async_state.dart';
 
 /// Station catalogue (map + list). Operational work still requires a selected
 /// station and server-side permission checks on every mutation.
@@ -136,28 +137,33 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
             future: _stations,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return MetraAsyncStatePanel.loading(
+                  message: 'جاري تحميل دليل المحطات…',
+                );
               }
               if (snapshot.hasError) {
-                return _empty(
-                  Icons.cloud_off,
-                  'تعذر تحميل دليل المحطات',
-                  'تحقق من تسجيل الدخول والاتصال بواجهة API.',
-                  TextButton(
-                    onPressed: () => setState(_load),
-                    child: const Text('إعادة المحاولة'),
-                  ),
+                return MetraAsyncStatePanel.error(
+                  title: 'تعذر تحميل دليل المحطات',
+                  subtitle:
+                      'تحقق من تسجيل الدخول والاتصال بالشبكة وواجهة API ثم أعد المحاولة.',
+                  onRetry: () => setState(_load),
                 );
               }
               final allRows = snapshot.data ?? const <StationDirectoryItem>[];
               final rows = _applyFilters(allRows);
               if (rows.isEmpty) {
-                return _empty(
-                  Icons.location_off,
-                  _mineOnly ? 'لا توجد محطات مصرّح بها' : 'لا توجد محطات',
-                  _mineOnly
+                return MetraAsyncStatePanel.empty(
+                  icon: Icons.location_off,
+                  title: _mineOnly
+                      ? 'لا توجد محطات مصرّح بها'
+                      : 'لا توجد محطات',
+                  subtitle: _mineOnly
                       ? 'لا يملك حسابك صلاحيات تشغيلية على أي محطة ضمن الفلتر الحالي.'
-                      : 'لا توجد سجلات مطابقة.',
+                      : 'لا توجد سجلات مطابقة للنوع المحدد.',
+                  action: TextButton(
+                    onPressed: () => setState(_load),
+                    child: const Text('تحديث'),
+                  ),
                 );
               }
               final located =

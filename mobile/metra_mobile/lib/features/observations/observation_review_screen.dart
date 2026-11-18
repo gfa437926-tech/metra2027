@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
+import '../../core/widgets/metra_async_state.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 /// Authorization is enforced on the server for queue load and every decision.
@@ -106,37 +107,33 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
               future: _queue,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return MetraAsyncStatePanel.loading(
+                    message: 'جاري تحميل طابور المراجعة…',
+                  );
                 }
                 if (snapshot.hasError) {
                   final error = snapshot.error;
                   final message = error == null
                       ? 'تعذر تحميل النشرات. تحقق من الاتصال والإعدادات ثم أعد المحاولة.'
                       : MetraErrorPresenter.queueLoadMessage(error);
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.cloud_off_outlined, size: 42),
-                          const SizedBox(height: 12),
-                          Text(message, textAlign: TextAlign.center),
-                          const SizedBox(height: 12),
-                          FilledButton.icon(
-                            onPressed: _refresh,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('إعادة المحاولة'),
-                          ),
-                        ],
-                      ),
-                    ),
+                  return MetraAsyncStatePanel.error(
+                    title: 'تعذر تحميل النشرات',
+                    subtitle: message,
+                    onRetry: _refresh,
                   );
                 }
                 final rows = snapshot.data ?? const <ObservationQueueItem>[];
                 if (rows.isEmpty) {
-                  return const Center(
-                    child: Text('لا توجد نشرات بانتظار المراجعة'),
+                  return MetraAsyncStatePanel.empty(
+                    icon: Icons.fact_check_outlined,
+                    title: 'لا توجد نشرات بانتظار المراجعة',
+                    subtitle:
+                        'عند إرسال تقارير من الراصدين ستظهر هنا لاتخاذ قرار الاعتماد أو الإرجاع.',
+                    action: TextButton.icon(
+                      onPressed: _refresh,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('تحديث'),
+                    ),
                   );
                 }
                 return RefreshIndicator(

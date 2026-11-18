@@ -49,4 +49,28 @@ void main() {
     );
     expect(logout.onPressed, isNull);
   });
+
+  testWidgets('sign out asks for confirmation before calling callback',
+      (tester) async {
+    var signedOut = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SystemSettingsScreen(
+          userEmail: 'operator@metra.example',
+          onSignOut: () async {
+            signedOut = true;
+          },
+        ),
+      ),
+    );
+    await tester.drag(find.byType(ListView), const Offset(0, -1000));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('تسجيل الخروج'));
+    await tester.pumpAndSettle();
+    expect(find.text('تأكيد تسجيل الخروج'), findsOneWidget);
+    expect(signedOut, isFalse);
+    await tester.tap(find.widgetWithText(FilledButton, 'تسجيل الخروج').last);
+    await tester.pumpAndSettle();
+    expect(signedOut, isTrue);
+  });
 }

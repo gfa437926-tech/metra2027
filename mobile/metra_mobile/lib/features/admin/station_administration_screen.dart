@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
+import '../../core/widgets/metra_async_state.dart';
 
 class StationAdministrationScreen extends StatefulWidget {
   const StationAdministrationScreen({
@@ -191,27 +192,31 @@ class _StationAdministrationScreenState
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل مستخدمي المحطة…',
+          );
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
           final message = error == null
-              ? 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.'
+              ? 'تعذر تحميل البيانات. تحقق من الاتصال ثم أعد المحاولة.'
               : MetraErrorPresenter.messageFor(error);
-          return ListView(
-            children: [
-              const SizedBox(height: 48),
-              Center(child: Text(message, textAlign: TextAlign.center)),
-            ],
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل مستخدمي المحطة',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
           );
         }
         final all = snapshot.data ?? const <Map<String, dynamic>>[];
         if (all.isEmpty) {
-          return ListView(
-            children: const [
-              SizedBox(height: 48),
-              Center(child: Text('لا توجد حسابات ظاهرة لهذه المحطة.')),
-            ],
+          return MetraAsyncStatePanel.empty(
+            icon: Icons.group_off_outlined,
+            title: 'لا توجد حسابات ظاهرة لهذه المحطة',
+            subtitle: 'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
+            action: TextButton(
+              onPressed: () => setState(_refresh),
+              child: const Text('تحديث'),
+            ),
           );
         }
         final records = all.where(_matchesUserFilter).toList(growable: false);
@@ -288,27 +293,30 @@ class _StationAdministrationScreenState
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل السجلات…',
+          );
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
           final message = error == null
-              ? 'تعذر تحميل البيانات. اسحب للأسفل لإعادة المحاولة.'
+              ? 'تعذر تحميل البيانات. تحقق من الاتصال ثم أعد المحاولة.'
               : MetraErrorPresenter.messageFor(error);
-          return ListView(
-            children: [
-              const SizedBox(height: 48),
-              Center(child: Text(message, textAlign: TextAlign.center)),
-            ],
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل السجلات',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
           );
         }
         final records = snapshot.data ?? const <Map<String, dynamic>>[];
         if (records.isEmpty) {
-          return ListView(
-            children: [
-              const SizedBox(height: 48),
-              Center(child: Text(emptyMessage)),
-            ],
+          return MetraAsyncStatePanel.empty(
+            title: emptyMessage,
+            subtitle: 'اسحب للتحديث أو أعد فتح الشاشة بعد توفر بيانات جديدة.',
+            action: TextButton(
+              onPressed: () => setState(_refresh),
+              child: const Text('تحديث'),
+            ),
           );
         }
         return ListView.separated(
@@ -385,28 +393,31 @@ class _StationAdministrationScreenState
       future: _observations,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل أرصاد المراجعة…',
+          );
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
           final message = error == null
               ? 'تعذر تحميل أرصاد المراجعة.'
               : MetraErrorPresenter.queueLoadMessage(error);
-          return ListView(
-            children: [
-              const SizedBox(height: 48),
-              Center(child: Text(message, textAlign: TextAlign.center)),
-            ],
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل أرصاد المراجعة',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
           );
         }
         final items = snapshot.data ?? const <ObservationQueueItem>[];
         if (items.isEmpty) {
-          return ListView(
-            children: const [
-              SizedBox(height: 48),
-              Center(
-                  child: Text('لا توجد أرصاد في طابور المراجعة لهذه المحطة.')),
-            ],
+          return MetraAsyncStatePanel.empty(
+            icon: Icons.fact_check_outlined,
+            title: 'لا توجد أرصاد في طابور المراجعة',
+            subtitle: 'لا توجد عناصر بانتظار القرار لهذه المحطة حالياً.',
+            action: TextButton(
+              onPressed: () => setState(_refresh),
+              child: const Text('تحديث'),
+            ),
           );
         }
         return ListView.separated(
