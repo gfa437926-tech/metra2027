@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../api_config.dart';
 import '../../core/auth/metra_auth.dart';
+import '../../core/api/metra_api_client.dart';
 import '../account/account_hub_screen.dart';
 import '../notifications/notifications_center_screen.dart';
 
@@ -13,10 +14,12 @@ class SystemSettingsScreen extends StatefulWidget {
     super.key,
     required this.userEmail,
     required this.onSignOut,
+    this.api,
   });
 
   final String? userEmail;
   final Future<void> Function()? onSignOut;
+  final MetraApiClient? api;
 
   /// Keep in sync with pubspec.yaml version until a platform package is approved.
   static const appVersionLabel = '0.1.0+1';
@@ -133,7 +136,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       MaterialPageRoute<void>(
                         builder: (_) => Scaffold(
                           appBar: AppBar(title: const Text('الحساب الشخصي')),
-                          body: AccountHubScreen(userEmail: widget.userEmail),
+                          body: AccountHubScreen(userEmail: widget.userEmail, api: widget.api),
                         ),
                       ),
                     );

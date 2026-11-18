@@ -619,6 +619,71 @@ class MetraApiClient {
     );
   }
 
+
+  /// Requestable roles for registration (authenticated).
+  Future<List<Map<String, dynamic>>> getRegistrationRoles() async {
+    final response = await _send('GET', '/api/v1/registration-roles');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is List) {
+      return decoded
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
+    }
+    if (decoded is Map) {
+      final rows = decoded['roles'] ?? decoded['data'];
+      if (rows is List) {
+        return rows
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(growable: false);
+      }
+    }
+    return const [];
+  }
+
+  /// Current user's registration status payload (shape depends on RPC).
+  Future<Map<String, dynamic>> getMyRegistrationStatus() async {
+    final response = await _send('GET', '/api/v1/account/registration-status');
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+      return Map<String, dynamic>.from(decoded.first as Map);
+    }
+    return <String, dynamic>{'raw': decoded};
+  }
+
+  /// Submit station registration request — fields match server contract only.
+  Future<Map<String, dynamic>> submitRegistrationRequest({
+    required String firstName,
+    required String fatherName,
+    required String lastName,
+    required String phone,
+    required String roleCode,
+    required String stationId,
+    required String idempotencyKey,
+    String termsVersion = 'metra-terms-2026-11',
+  }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    final response = await _send(
+      'POST',
+      '/api/v1/registration-requests',
+      body: {
+        'firstName': firstName,
+        'fatherName': fatherName,
+        'lastName': lastName,
+        'phone': phone,
+        'roleCode': roleCode,
+        'stationId': stationId,
+        'termsVersion': termsVersion,
+        'idempotencyKey': idempotencyKey,
+      },
+    );
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is Map) return Map<String, dynamic>.from(decoded);
+    return <String, dynamic>{'status': 'submitted'};
+  }
+
   void _requirePathIdentifier(String value, String errorCode) {
     if (value.trim().isEmpty ||
         value != value.trim() ||

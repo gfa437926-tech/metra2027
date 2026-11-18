@@ -23,6 +23,7 @@ class ObservationReviewScreen extends StatefulWidget {
 class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   late Future<List<ObservationQueueItem>> _queue;
   final Set<String> _processingIds = <String>{};
+  String _typeFilter = 'all';
 
   @override
   void initState() {
@@ -102,6 +103,30 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
               ),
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final entry in [
+                    ('all', 'الكل'),
+                    ('hourly', 'ساعي'),
+                    ('daily', 'يومي'),
+                    ('phenomenon', 'ظاهرة'),
+                  ])
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 8),
+                      child: FilterChip(
+                        label: Text(entry.$2),
+                        selected: _typeFilter == entry.$1,
+                        onSelected: (_) => setState(() => _typeFilter = entry.$1),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
           Expanded(
             child: FutureBuilder<List<ObservationQueueItem>>(
               future: _queue,
@@ -122,7 +147,12 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                     onRetry: _refresh,
                   );
                 }
-                final rows = snapshot.data ?? const <ObservationQueueItem>[];
+                var rows = snapshot.data ?? const <ObservationQueueItem>[];
+                if (_typeFilter != 'all') {
+                  rows = rows
+                      .where((r) => r.observationType == _typeFilter)
+                      .toList(growable: false);
+                }
                 if (rows.isEmpty) {
                   return MetraAsyncStatePanel.empty(
                     icon: Icons.fact_check_outlined,
@@ -161,6 +191,26 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              if (item.payload.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                                  child: Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: Text(
+                                      item.payload.entries
+                                          .take(8)
+                                          .map((e) => '${e.key}: ${e.value}')
+                                          .join(' · '),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                                 child: Row(

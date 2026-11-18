@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/api/metra_api_client.dart';
 import '../../core/theme/metra_theme.dart';
+import 'registration_request_screen.dart';
 
 /// Account hub: profile summary, password change, registration status notes.
 /// Does not invent admin user management APIs.
@@ -9,10 +11,12 @@ class AccountHubScreen extends StatefulWidget {
   const AccountHubScreen({
     super.key,
     required this.userEmail,
+    this.api,
     this.onOpenNotifications,
   });
 
   final String? userEmail;
+  final MetraApiClient? api;
   final VoidCallback? onOpenNotifications;
 
   @override
@@ -129,6 +133,39 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
               ),
             ),
           ),
+          if (widget.api != null) ...[
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(Icons.app_registration),
+              title: const Text('طلب تسجيل على محطة'),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('طلب تسجيل')),
+                      body: RegistrationRequestScreen(api: widget.api!),
+                    ),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.pending_actions_outlined),
+              title: const Text('حالة طلب التسجيل'),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('حالة التسجيل')),
+                      body: RegistrationStatusScreen(api: widget.api!),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
           if (widget.onOpenNotifications != null) ...[
             const SizedBox(height: 8),
             ListTile(

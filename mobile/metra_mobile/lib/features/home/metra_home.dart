@@ -275,6 +275,7 @@ class _MetraHomeState extends State<MetraHome> {
         builder: () => SystemSettingsScreen(
           userEmail: widget.userEmail,
           onSignOut: widget.onSignOut,
+          api: widget.api,
         ),
       ),
     ];
