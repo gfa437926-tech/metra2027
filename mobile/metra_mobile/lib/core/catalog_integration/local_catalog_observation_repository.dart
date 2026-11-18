@@ -46,7 +46,16 @@ class LocalCatalogObservationRepository implements CatalogObservationRepository 
     final fields = fieldsFor(type);
     final errors = <String, String>{};
 
+    // Domain-specific local rules first (rainfall/soil): do not treat blank
+    // optional amounts as zero; require date + agreement.
+    if (type == CatalogFormType.rainfall) {
+      errors.addAll(RainfallSoilLocalRules.validateRainfall(values));
+    } else if (type == CatalogFormType.soil) {
+      errors.addAll(RainfallSoilLocalRules.validateSoil(values));
+    }
+
     for (final field in fields) {
+      if (errors.containsKey(field.id)) continue;
       final raw = values[field.id];
       if (field.kind == MetraFieldKind.boolean) {
         if (field.required && raw != true) {
