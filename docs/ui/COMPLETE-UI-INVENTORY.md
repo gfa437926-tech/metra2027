@@ -160,3 +160,7 @@
 | حالة التسجيل | نفس الملف | واجهة + API |
 | مركز إشعارات (محدث) | `notifications_center_screen.dart` | هيكل كامل بلا تغذية |
 | مراجعة (فلتر+حمولة) | `observation_review_screen.dart` | محسّن |
+
+---
+
+**Phase 3:** انظر `docs/ui/PHASE-3-FLUTTER-UI-CLOSEOUT.md` (جرد 30 وحدة، ~90% واجهات، بلا ادعاء 100%).
