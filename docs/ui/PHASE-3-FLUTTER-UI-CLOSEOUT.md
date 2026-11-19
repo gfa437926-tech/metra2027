@@ -143,3 +143,50 @@
 - بقية الحزمة / `flutter build web --release` → **لم تكتمل** بسبب قيود الذاكرة/زوال ملفات SDK المؤقتة
 
 ### لا يُدّعى نجاح analyze أو full test أو web release.
+
+---
+
+## تحقق إعادة التثبيت — 2026-11-19 (جلسة لاحقة)
+
+### Git (مُتحقَّق بأوامر فعلية)
+| بند | القيمة |
+|---|---|
+| الفرع | `feat/phenomenon-observation-submit-2026-11-16` |
+| HEAD المحلي | `423a433abaf4b89354f5795a664ca44395ea8419` |
+| SHA مرحلة 3 المطلوب | `07120ffd4d852867e186dfd054ff749bfb91ec8e` — موجود وهو والد HEAD مباشرة |
+| commits غير مرفوعة | **20** (`git rev-list --count origin/...HEAD`) |
+| working tree | نظيفة عدا `?? .flutter-plugins-dependencies` (مولَّد محلياً) |
+
+### Push
+```
+fatal: could not read Username for 'https://github.com': No such device or address
+```
+**لم يُرفع أي commit.** لا Force Push. لا token في البيئة.
+
+أوامر الدفع للمالك (من جهاز مصادق):
+```bash
+cd metra2027
+git fetch origin
+git checkout feat/phenomenon-observation-submit-2026-11-16
+git log --oneline origin/feat/phenomenon-observation-submit-2026-11-16..HEAD
+git push origin feat/phenomenon-observation-submit-2026-11-16
+git rev-parse HEAD
+git ls-remote origin refs/heads/feat/phenomenon-observation-submit-2026-11-16
+```
+
+### Flutter
+| بند | نتيجة فعلية |
+|---|---|
+| SDK | Flutter **3.50.0** / Dart **3.14.0** |
+| ذاكرة البيئة | ~**1.2 GiB** بدون swap |
+| `flutter pub get` | **نجح** |
+| `flutter test test/metra_access_context_test.dart` | **All tests passed (8/8)** — أكثر من مرة |
+| `flutter test` (دفعة أكبر) | **تعطل المترجم** (`TestCompiler` / `Dart compiler exited unexpectedly`) — ضغط ذاكرة |
+| `flutter analyze` | **غير ناجح** سابقاً (analysis server -9) |
+| `flutter build web --release` | **لم يُنجز بنجاح** في هذه البيئة |
+
+**لا يُعلن نجاح analyze أو full test أو web release.**
+
+### خلاصة إغلاق المرحلة 3
+- كود الواجهات + وثائق Phase 3 محلياً عند SHA أعلاه.
+- الإغلاق «المختبري الكامل» (analyze + full test + web) يحتاج آلة ≥4–8 GiB ودفع المالك للفرع.
