@@ -124,3 +124,22 @@
 ## 8. قيود محترمة
 
 لا SQL/M1/M2/push/merge/force، PR 54/55 Draft، لا endpoints مخترعة، لا E2E/Staging.
+
+---
+
+## تحقق بيئة 2026-11-19 — تثبيت commits + اختبارات
+
+### Git push
+- الأمر: `git push origin feat/phenomenon-observation-submit-2026-11-16` (بدون force)
+- **النتيجة: فشل** — `could not read Username for 'https://github.com': No such device or address`
+- لا يوجد `GITHUB_TOKEN` / credentials في بيئة الوكيل
+- **الحالة المحلية:** 19 commits عند `07120ffd4d852867e186dfd054ff749bfb91ec8e` ما زالت محفوظة وغير مرفوعة
+
+### Flutter SDK (مؤقت في البيئة)
+- ثُبّت Flutter 3.50.0 / Dart 3.14.0
+- `flutter pub get` → **نجح**
+- `flutter analyze` → **انهار** (analysis server exit -9 / OOM؛ الذاكرة ≈ 1.2 GiB)
+- `flutter test test/metra_access_context_test.dart` → **All tests passed! (8/8)** تنفيذ فعلي
+- بقية الحزمة / `flutter build web --release` → **لم تكتمل** بسبب قيود الذاكرة/زوال ملفات SDK المؤقتة
+
+### لا يُدّعى نجاح analyze أو full test أو web release.
