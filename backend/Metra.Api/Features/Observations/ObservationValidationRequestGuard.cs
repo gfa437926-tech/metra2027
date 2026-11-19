@@ -1,10 +1,19 @@
 namespace Metra.Api.Features.Observations;
 
-/// <summary>Guards untrusted validation payloads before domain validation.</summary>
+/// <summary>
+/// Guards untrusted validation payloads before domain validation.
+/// Structural only: no database reads, no station/user disclosure.
+/// Authentication is enforced by the API fallback JWT policy (not anonymous).
+/// Bounds limit abuse (large/repeated payloads) without inventing rate-limit infra.
+/// </summary>
 public static class ObservationValidationRequestGuard
 {
     public const int MaximumFields = 100;
-    public const int MaximumValueLength = 64;
+    /// <summary>
+    /// Aligns with Flutter catalogue default maxLength (256) so observer notes
+    /// can be validated end-to-end. Upper bound remains field-count × this value.
+    /// </summary>
+    public const int MaximumValueLength = 256;
     public const int MaximumFieldNameLength = 64;
 
     public static string? GetError(Dictionary<string, string?>? values)

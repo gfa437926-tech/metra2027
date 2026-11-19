@@ -1,0 +1,131 @@
+import '../catalog/observation_field_catalogs.dart';
+import '../drafts/observation_draft_store.dart';
+import '../widgets/metra_observation_form.dart';
+import 'catalog_form_type.dart';
+import 'catalog_observation_repository.dart';
+import 'catalog_submission_state.dart';
+import 'rainfall_soil_local_rules.dart';
+
+/// Local-only catalogue repository.
+///
+/// - Validates required fields and basic numeric shapes.
+/// - Persists session drafts via [ObservationDraftStore] (no secrets).
+/// - Never calls the network and never invents API routes.
+class LocalCatalogObservationRepository implements CatalogObservationRepository {
+  LocalCatalogObservationRepository({ObservationDraftStore? draftStore})
+      : _drafts = draftStore ?? ObservationDraftStore.instance;
+
+  final ObservationDraftStore _drafts;
+
+  @override
+  List<MetraObservationField> fieldsFor(CatalogFormType type) {
+    return switch (type) {
+      CatalogFormType.agricultural => ObservationFieldCatalogs.agricultural,
+      CatalogFormType.hourlyClimate => ObservationFieldCatalogs.hourlyclimate,
+      CatalogFormType.rainfall => ObservationFieldCatalogs.rainfall,
+      CatalogFormType.soil => ObservationFieldCatalogs.soil,
+      CatalogFormType.faultEquipment => ObservationFieldCatalogs.faultequipment,
+      CatalogFormType.faultTelecom => ObservationFieldCatalogs.faulttelecom,
+      CatalogFormType.faultIt => ObservationFieldCatalogs.faultit,
+    };
+  }
+
+  @override
+  Future<CatalogSubmissionResult> submitLocal({
+    required CatalogFormType type,
+    required String stationId,
+    required Map<String, Object?> values,
+  }) async {
+    final trimmedStation = stationId.trim();
+    if (trimmedStation.isEmpty) {
+      return const CatalogSubmissionResult(
+        phase: CatalogSubmissionPhase.failed,
+        messageAr: 'معرف المحطة غير صالح.',
+      );
+    }
+
+    final fields = fieldsFor(type);
+    final errors = <String, String>{};
+
+    // Domain-specific local rules first (rainfall/soil): do not treat blank
+    // optional amounts as zero; require date + agreement.
+    if (type == CatalogFormType.rainfall) {
+      errors.addAll(RainfallSoilLocalRules.validateRainfall(values));
+    } else if (type == CatalogFormType.soil) {
+      errors.addAll(RainfallSoilLocalRules.validateSoil(values));
+    }
+
+    for (final field in fields) {
+      if (errors.containsKey(field.id)) continue;
+      final raw = values[field.id];
+      if (field.kind == MetraFieldKind.boolean) {
+        if (field.required && raw != true) {
+          errors[field.id] = 'هذا الحقل مطلوب';
+        }
+        continue;
+      }
+      if (field.kind == MetraFieldKind.choice) {
+        final text = raw?.toString().trim() ?? '';
+        if (field.required && text.isEmpty) {
+          errors[field.id] = 'هذا الحقل مطلوب';
+        } else if (text.isNotEmpty &&
+            field.choices.isNotEmpty &&
+            !field.choices.contains(text)) {
+          errors[field.id] = 'قيمة غير معتمدة في القائمة';
+        }
+        continue;
+      }
+
+      final text = raw?.toString().trim() ?? '';
+      if (field.required && text.isEmpty) {
+        errors[field.id] = 'هذا الحقل مطلوب';
+        continue;
+      }
+      if (text.isEmpty) continue;
+
+      if (field.kind == MetraFieldKind.integer) {
+        final parsed = int.tryParse(text);
+        if (parsed == null) {
+          errors[field.id] = 'أدخل قيمة رقمية صحيحة';
+        } else if (field.minimum != null && parsed < field.minimum!) {
+          errors[field.id] = 'القيمة أقل من الحد الأدنى (${field.minimum})';
+        } else if (field.maximum != null && parsed > field.maximum!) {
+          errors[field.id] = 'القيمة أكبر من الحد الأعلى (${field.maximum})';
+        }
+      } else if (field.kind == MetraFieldKind.decimal) {
+        final parsed = num.tryParse(text);
+        if (parsed == null || !parsed.isFinite) {
+          errors[field.id] = 'أدخل رقماً منتهياً وصالحاً';
+        } else if (field.minimum != null && parsed < field.minimum!) {
+          errors[field.id] = 'القيمة أقل من الحد الأدنى (${field.minimum})';
+        } else if (field.maximum != null && parsed > field.maximum!) {
+          errors[field.id] = 'القيمة أكبر من الحد الأعلى (${field.maximum})';
+        }
+      }
+    }
+
+    if (errors.isNotEmpty) {
+      return CatalogSubmissionResult(
+        phase: CatalogSubmissionPhase.failed,
+        messageAr: 'تحقق من الحقول المطلوبة قبل المتابعة.',
+        values: values,
+        validationErrors: errors,
+      );
+    }
+
+    // Keep a session draft so operator input is not lost while waiting for a
+    // future approved API contract. Never claim server persistence.
+    _drafts.save(
+      stationId: trimmedStation,
+      formType: type.code,
+      values: values,
+    );
+
+    return CatalogSubmissionResult(
+      phase: CatalogSubmissionPhase.awaitingApiContract,
+      messageAr:
+          'اكتمل التحقق المحلي لـ«${type.arabicTitle}». ${type.pendingContractNotice}',
+      values: Map<String, Object?>.from(values),
+    );
+  }
+}

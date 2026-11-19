@@ -93,4 +93,39 @@ public sealed class ObservationAuthorizationPolicyTests
 
         Assert.True(result.IsAuthorized);
     }
+
+    [Fact]
+    public void Create_permission_alone_does_not_authorize_submit()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.Create]),
+            Resource(),
+            ObservationPermission.Submit);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("permission_denied", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Submit_requires_ownership_of_the_observation()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.Submit]),
+            Resource(owner: "other-user"),
+            ObservationPermission.Submit);
+
+        Assert.False(result.IsAuthorized);
+        Assert.Equal("not_observation_owner", result.ErrorCode);
+    }
+
+    [Fact]
+    public void Edit_own_draft_allowed_for_owner_with_permission()
+    {
+        var result = ObservationAuthorizationPolicy.Authorize(
+            Actor(permissions: [ObservationPermission.EditOwnDraft]),
+            Resource(owner: "user-1"),
+            ObservationPermission.EditOwnDraft);
+
+        Assert.True(result.IsAuthorized);
+    }
 }

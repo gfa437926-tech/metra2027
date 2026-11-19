@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:material_ui/material_ui.dart';
+import '../theme/metra_theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/metra_api_client.dart';
@@ -141,12 +142,12 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Icons.cloud_outlined, size: 48),
+                        const Icon(Icons.cloud_outlined, size: 48, color: MetraColors.blue),
                         const SizedBox(height: 12),
                         const Text(
                           'METRA 2027',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: MetraColors.navy),
                         ),
                         const SizedBox(height: 8),
                         const Text(

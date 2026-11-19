@@ -2,7 +2,7 @@ name: Client CI
 
 on:
   push:
-    branches: [main, 'implementation/**']
+    branches: [main, 'implementation/**', 'feat/**', 'fix/**', 'test/**']
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"
@@ -11,7 +11,7 @@ on:
       - ".github/workflows/deploy-pages.yml"
       - ".github/workflows/flutter-web-release.yml"
   pull_request:
-    branches: [main]
+    branches: [main, 'implementation/**']
     paths:
       - "angular-app/**"
       - "mobile/metra_mobile/**"

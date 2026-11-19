@@ -2,37 +2,35 @@ import 'package:material_ui/material_ui.dart';
 
 enum MetraFieldKind {
   text,
+  phone,
+  multiline,
   integer,
   decimal,
-  choice,
   boolean,
   date,
   time,
   datetime,
-  phone,
+  choice,
   file,
-  multiline,
 }
 
-/// A field definition must come from an approved METRA form catalogue.
-/// Bounds are enforced only when their source is documented.
 class MetraObservationField {
   const MetraObservationField({
+    this.catalogId,
     required this.id,
     required this.label,
-    this.catalogId,
     this.kind = MetraFieldKind.text,
     this.required = false,
     this.unit,
     this.minimum,
     this.maximum,
-    this.maxLength = 500,
+    this.maxLength = 256,
     this.choices = const [],
-  }) : assert(minimum == null || maximum == null || minimum <= maximum);
+  });
 
+  final String? catalogId;
   final String id;
   final String label;
-  final String? catalogId;
   final MetraFieldKind kind;
   final bool required;
   final String? unit;
@@ -52,6 +50,11 @@ class MetraObservationForm extends StatefulWidget {
     required this.onSubmit,
     this.initialValues = const {},
     this.submitLabel = 'حفظ وإرسال',
+    this.onValuesChanged,
+    this.draftBanner,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
+    this.embedded = false,
   });
 
   final String title;
@@ -59,6 +62,20 @@ class MetraObservationForm extends StatefulWidget {
   final Map<String, Object?> initialValues;
   final Future<void> Function(Map<String, Object?> values) onSubmit;
   final String submitLabel;
+
+  /// Fired whenever the user changes a value (for local draft save).
+  final void Function(Map<String, Object?> values)? onValuesChanged;
+
+  /// Optional banner above fields (e.g. local draft restored notice).
+  final Widget? draftBanner;
+
+  /// Optional secondary action (e.g. discard local draft).
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
+
+  /// When true (workspace tabs), skip nested [Scaffold]/[AppBar] and render
+  /// an in-body title so the parent shell remains the only chrome.
+  final bool embedded;
 
   @override
   State<MetraObservationForm> createState() => _MetraObservationFormState();
@@ -70,6 +87,10 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   final Map<String, String?> _choices = {};
   final Map<String, bool> _booleans = {};
   bool _saving = false;
+
+  static final RegExp _dateYmd = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+  static final RegExp _timeHm = RegExp(r'^\d{2}:\d{2}$');
+  static final RegExp _timeHms = RegExp(r'^\d{2}:\d{2}:\d{2}$');
 
   @override
   void initState() {
@@ -85,9 +106,11 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       } else if (field.kind == MetraFieldKind.boolean) {
         _booleans[field.id] = initial == true;
       } else {
-        _controllers[field.id] = TextEditingController(
+        final controller = TextEditingController(
           text: initial?.toString() ?? '',
         );
+        controller.addListener(_notifyValuesChanged);
+        _controllers[field.id] = controller;
       }
     }
   }
@@ -95,9 +118,55 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   @override
   void dispose() {
     for (final controller in _controllers.values) {
+      controller.removeListener(_notifyValuesChanged);
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Map<String, Object?> _collectValues() {
+    final values = <String, Object?>{};
+    for (final field in widget.fields) {
+      values[field.id] = _typedValue(field);
+    }
+    return values;
+  }
+
+  void _notifyValuesChanged() {
+    widget.onValuesChanged?.call(_collectValues());
+  }
+
+  bool _isValidCalendarDate(String value) {
+    if (!_dateYmd.hasMatch(value)) return false;
+    final parts = value.split('-');
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) return false;
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    try {
+      final parsed = DateTime(year, month, day);
+      return parsed.year == year && parsed.month == month && parsed.day == day;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  bool _isValidClockTime(String value) {
+    final normalized =
+        _timeHm.hasMatch(value) ? '$value:00' : value;
+    if (!_timeHms.hasMatch(normalized)) return false;
+    final parts = normalized.split(':');
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    final second = int.tryParse(parts[2]);
+    if (hour == null || minute == null || second == null) return false;
+    return hour >= 0 &&
+        hour <= 23 &&
+        minute >= 0 &&
+        minute <= 59 &&
+        second >= 0 &&
+        second <= 59;
   }
 
   String? _validate(MetraObservationField field, String? raw) {
@@ -110,7 +179,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           ? int.tryParse(value)
           : num.tryParse(value);
       if (parsed == null) return 'أدخل قيمة رقمية صحيحة';
-      if (parsed is double && !parsed.isFinite) {
+      if (!parsed.isFinite) {
         return 'أدخل رقماً منتهياً وصالحاً';
       }
       if (field.kind == MetraFieldKind.integer &&
@@ -122,6 +191,22 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
       }
       if (field.maximum != null && parsed > field.maximum!) {
         return 'القيمة أكبر من الحد الأعلى (${field.maximum})';
+      }
+    }
+
+    if (field.kind == MetraFieldKind.date && !_isValidCalendarDate(value)) {
+      return 'التاريخ يجب أن يكون بالتنسيق yyyy-MM-dd';
+    }
+
+    if (field.kind == MetraFieldKind.time && !_isValidClockTime(value)) {
+      return 'الوقت يجب أن يكون بالتنسيق HH:mm أو HH:mm:ss';
+    }
+
+    if (field.kind == MetraFieldKind.datetime) {
+      // Accept ISO-like local stamps; server paths normalize to UTC separately.
+      final parsed = DateTime.tryParse(value);
+      if (parsed == null) {
+        return 'أدخل تاريخاً ووقتاً صالحين';
       }
     }
 
@@ -150,17 +235,6 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     if (_saving || !_formKey.currentState!.validate()) return;
     final values = <String, Object?>{};
     for (final field in widget.fields) {
-      if (field.kind == MetraFieldKind.boolean &&
-          field.required &&
-          !(_booleans[field.id] ?? false)) {
-        return;
-      }
-      if (field.kind == MetraFieldKind.choice &&
-          field.choices.isNotEmpty &&
-          field.required &&
-          _choices[field.id] == null) {
-        return;
-      }
       values[field.id] = _typedValue(field);
     }
     setState(() => _saving = true);
@@ -171,104 +245,48 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
     }
   }
 
-  Future<void> _pickFieldValue(MetraObservationField field) async {
-    final controller = _controllers[field.id];
-    if (controller == null) return;
-    String twoDigits(int value) => value.toString().padLeft(2, '0');
-    final current = DateTime.tryParse(controller.text) ?? DateTime.now();
-
-    if (field.kind == MetraFieldKind.date || field.kind == MetraFieldKind.datetime) {
-      final date = await showDatePicker(
-        context: context,
-        initialDate: current,
-        firstDate: DateTime(1900),
-        lastDate: DateTime(2100),
-      );
-      if (date == null || !mounted) return;
-      if (field.kind == MetraFieldKind.date) {
-        setState(() {
-          controller.text = <String>[
-            date.year.toString().padLeft(4, '0'),
-            twoDigits(date.month),
-            twoDigits(date.day),
-          ].join('-');
-        });
-        return;
-      }
-      final time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(current),
-      );
-      if (time == null || !mounted) return;
-      setState(() {
-        controller.text = DateTime(date.year, date.month, date.day, time.hour, time.minute).toIso8601String();
-      });
-      return;
-    }
-
-    if (field.kind == MetraFieldKind.time) {
-      final parts = controller.text.split(':');
-      final initial = TimeOfDay(
-        hour: int.tryParse(parts.first) ?? current.hour,
-        minute: parts.length > 1 ? int.tryParse(parts[1]) ?? current.minute : current.minute,
-      );
-      final time = await showTimePicker(context: context, initialTime: initial);
-      if (time == null || !mounted) return;
-      setState(() {
-        controller.text = <String>[twoDigits(time.hour), twoDigits(time.minute)].join(':');
-      });
-    }
-  }
   Widget _buildField(MetraObservationField field) {
     if (field.kind == MetraFieldKind.file) {
-      return InputDecorator(
+      return const InputDecorator(
         decoration: InputDecoration(
-          labelText: field.label,
-          helperText: 'رفع الملفات غير متصل حتى اعتماد خدمة التخزين.',
-          border: const OutlineInputBorder(),
+          labelText: 'مرفق',
+          border: OutlineInputBorder(),
         ),
-        child: const Row(
-          children: [Icon(Icons.attach_file), SizedBox(width: 8), Text('غير متاح حالياً')],
+        child: Row(
+          children: [
+            Icon(Icons.attach_file),
+            SizedBox(width: 8),
+            Text('رفع الملفات غير مفعّل في هذه النسخة'),
+          ],
         ),
       );
     }
     if (field.kind == MetraFieldKind.boolean) {
       return FormField<bool>(
         initialValue: _booleans[field.id] ?? false,
-        validator: (value) =>
-            field.required && value != true ? 'هذا الإقرار مطلوب' : null,
-        builder: (state) => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: state.value ?? false,
-              title: Text(field.label),
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: _saving
-                  ? null
-                  : (value) {
-                      final next = value ?? false;
-                      _booleans[field.id] = next;
-                      state.didChange(next);
-                    },
+        validator: (v) =>
+            field.required && v != true ? 'هذا الحقل مطلوب' : null,
+        builder: (state) {
+          return InputDecorator(
+            decoration: InputDecoration(
+              labelText: field.label,
+              errorText: state.errorText,
+              border: const OutlineInputBorder(),
             ),
-            if (state.hasError)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 12),
-                child: Text(
-                  state.errorText!,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-          ],
-        ),
+            child: SwitchListTile(
+              contentPadding: const EdgeInsetsDirectional.only(start: 12),
+              title: Text(field.label),
+              value: state.value ?? false,
+              onChanged: (v) {
+                setState(() => _booleans[field.id] = v);
+                state.didChange(v);
+                _notifyValuesChanged();
+              },
+            ),
+          );
+        },
       );
     }
-
     if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
       return DropdownButtonFormField<String>(
         initialValue: _choices[field.id],
@@ -277,79 +295,144 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           border: const OutlineInputBorder(),
         ),
         items: field.choices
-            .map((choice) => DropdownMenuItem(
-                  value: choice,
-                  child: Text(choice),
-                ))
+            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
             .toList(),
-        validator: (value) => field.required && value == null
-            ? 'يرجى اختيار قيمة'
-            : null,
-        onChanged: _saving
-            ? null
-            : (value) => setState(() => _choices[field.id] = value),
+        onChanged: (v) {
+          setState(() => _choices[field.id] = v);
+          _notifyValuesChanged();
+        },
+        validator: (v) =>
+            field.required && (v == null || v.isEmpty) ? 'هذا الحقل مطلوب' : null,
       );
     }
-
-    final usesPicker = field.kind == MetraFieldKind.date ||
-        field.kind == MetraFieldKind.time || field.kind == MetraFieldKind.datetime;
     return TextFormField(
       controller: _controllers[field.id],
-      readOnly: usesPicker,
-      onTap: usesPicker ? () => _pickFieldValue(field) : null,
-      keyboardType: switch (field.kind) {
-        MetraFieldKind.integer => TextInputType.number,
-        MetraFieldKind.decimal =>
-          const TextInputType.numberWithOptions(decimal: true, signed: true),
-        MetraFieldKind.date || MetraFieldKind.time || MetraFieldKind.datetime => TextInputType.datetime,
-        MetraFieldKind.phone => TextInputType.phone,
-        MetraFieldKind.multiline => TextInputType.multiline,
-        _ => TextInputType.text,
-      },
-      minLines: field.kind == MetraFieldKind.multiline ? 3 : 1,
-      maxLines: field.kind == MetraFieldKind.multiline ? 5 : 1,
+      keyboardType: field.kind == MetraFieldKind.integer ||
+              field.kind == MetraFieldKind.decimal
+          ? const TextInputType.numberWithOptions(decimal: true, signed: true)
+          : field.kind == MetraFieldKind.multiline
+              ? TextInputType.multiline
+              : field.kind == MetraFieldKind.phone
+                  ? TextInputType.phone
+                  : field.kind == MetraFieldKind.date ||
+                          field.kind == MetraFieldKind.time ||
+                          field.kind == MetraFieldKind.datetime
+                      ? TextInputType.datetime
+                      : TextInputType.text,
+      maxLines: field.kind == MetraFieldKind.multiline ? 4 : 1,
       maxLength: field.maxLength,
       decoration: InputDecoration(
         labelText: field.label,
         suffixText: field.unit,
-        helperText: field.kind == MetraFieldKind.choice && field.choices.isEmpty
-            ? 'خيارات القائمة الرسمية غير متاحة؛ أدخل الرمز المعتمد فقط.'
-            : null,
+        hintText: field.kind == MetraFieldKind.date
+            ? 'yyyy-MM-dd'
+            : field.kind == MetraFieldKind.time
+                ? (field.unit ?? 'HH:mm:ss')
+                : null,
         border: const OutlineInputBorder(),
       ),
-      validator: (value) => _validate(field, value),
+      validator: (raw) => _validate(field, raw),
+      onChanged: (_) => _notifyValuesChanged(),
+    );
+  }
+
+  Widget _formBody() {
+    return Form(
+      key: _formKey,
+      // Submit stays outside the scrollable body so long catalogues do not
+      // leave the action off-stage / unbuilt.
+      child: Column(
+        children: [
+          if (widget.embedded)
+            Material(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF061B4A),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          if (widget.draftBanner != null) widget.draftBanner!,
+          Expanded(
+            // SingleChildScrollView + Column keeps every FormField mounted
+            // so required validators run even when the control is off-screen.
+            // A lazy ListView would skip unbuilt required fields on submit.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final field in widget.fields) ...[
+                    _buildField(field),
+                    const SizedBox(height: 14),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          SafeArea(
+            minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('metra-observation-submit'),
+                    onPressed: _saving ? null : _submit,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    label: Text(
+                      _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
+                    ),
+                  ),
+                ),
+                if (widget.secondaryActionLabel != null &&
+                    widget.onSecondaryAction != null) ...[
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      key: const Key('metra-observation-discard-draft'),
+                      onPressed: _saving ? null : widget.onSecondaryAction,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(widget.secondaryActionLabel!),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   @override
-  Widget build(BuildContext context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          appBar: AppBar(title: Text(widget.title)),
-          body: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                for (final field in widget.fields) ...[
-                  _buildField(field),
-                  const SizedBox(height: 14),
-                ],
-                const SizedBox(height: 8),
-                FilledButton.icon(
-                  onPressed: _saving ? null : _submit,
-                  icon: _saving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.send),
-                  label: Text(_saving ? 'جارٍ الحفظ...' : widget.submitLabel),
-                ),
-              ],
+  Widget build(BuildContext context) {
+    final body = _formBody();
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: widget.embedded
+          ? body
+          : Scaffold(
+              appBar: AppBar(title: Text(widget.title)),
+              body: body,
             ),
-          ),
-        ),
-      );
+    );
+  }
 }

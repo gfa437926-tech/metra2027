@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
@@ -143,6 +145,64 @@ void main() {
     expect(find.text('هذا الحقل مطلوب'), findsOneWidget);
   });
 
+  testWidgets('rejects invalid calendar date before network submit', (tester) async {
+    var submitted = false;
+    const dateFields = [
+      MetraObservationField(
+        id: 'phenomenonDate',
+        label: 'تاريخ الظاهرة',
+        kind: MetraFieldKind.date,
+        required: true,
+      ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار التاريخ',
+        fields: dateFields,
+        onSubmit: (_) async => submitted = true,
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField), '17/11/2026');
+    await tester.tap(find.text('حفظ وإرسال'));
+    await tester.pumpAndSettle();
+    expect(find.text('التاريخ يجب أن يكون بالتنسيق yyyy-MM-dd'), findsOneWidget);
+    expect(submitted, isFalse);
+  });
+
+  testWidgets('accepts yyyy-MM-dd and HH:mm for phenomenon-style fields',
+      (tester) async {
+    Map<String, Object?>? submitted;
+    const scheduleFields = [
+      MetraObservationField(
+        id: 'phenomenonDate',
+        label: 'تاريخ الظاهرة',
+        kind: MetraFieldKind.date,
+        required: true,
+      ),
+      MetraObservationField(
+        id: 'startTime',
+        label: 'وقت البدء',
+        kind: MetraFieldKind.time,
+        required: true,
+        unit: 'HH:mm:ss',
+      ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار الموعد',
+        fields: scheduleFields,
+        onSubmit: (values) async => submitted = values,
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField).at(0), '2026-11-17');
+    await tester.enterText(find.byType(TextFormField).at(1), '09:30');
+    await tester.tap(find.text('حفظ وإرسال'));
+    await tester.pumpAndSettle();
+    expect(submitted, isNotNull);
+    expect(submitted!['phenomenonDate'], '2026-11-17');
+    expect(submitted!['startTime'], '09:30');
+  });
+
   test('hourly and daily catalog field counts match approved reference', () {
     expect(ObservationFieldCatalogs.hourly, hasLength(36));
     expect(ObservationFieldCatalogs.daily, hasLength(32));
@@ -163,5 +223,40 @@ void main() {
     expect([minTemp.minimum, minTemp.maximum], [-20, 50]);
     expect([maxTemp.minimum, maxTemp.maximum], [-20, 50]);
     expect([maxHumidity.minimum, maxHumidity.maximum], [0, 100]);
+  });
+
+  testWidgets('concurrent submit disables button and invokes onSubmit once', (tester) async {
+    final gate = Completer<void>();
+    var submitCount = 0;
+    const fields = [
+      MetraObservationField(
+        id: 'note',
+        label: 'ملاحظة',
+        kind: MetraFieldKind.text,
+        required: true,
+      ),
+    ];
+    await tester.pumpWidget(MaterialApp(
+      home: MetraObservationForm(
+        title: 'اختبار التزامن',
+        fields: fields,
+        submitLabel: 'إرسال الاختبار',
+        onSubmit: (_) async {
+          submitCount++;
+          await gate.future;
+        },
+      ),
+    ));
+    await tester.enterText(find.byType(TextFormField), 'قيمة');
+    await tester.tap(find.text('إرسال الاختبار'));
+    await tester.pump();
+    expect(find.text('جارٍ الإرسال...'), findsOneWidget);
+    await tester.tap(find.text('جارٍ الإرسال...'), warnIfMissed: false);
+    await tester.pump();
+    expect(submitCount, 1);
+    gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('إرسال الاختبار'), findsOneWidget);
+    expect(submitCount, 1);
   });
 }

@@ -92,11 +92,19 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
         ].join('-');
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('CLIMATOL والتجانس المناخي')),
-        body: ListView(
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Text(
+              'CLIMATOL والتجانس المناخي',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF061B4A),
+                  ),
+            ),
+            const SizedBox(height: 12),
             const _ServiceNotice(
               title: 'محرك التحليل غير متصل',
               message: 'هذه واجهة إعداد التحليل فقط. لا يتم تشغيل اختبار أو إصدار نتيجة من دون محرك CLIMATOL وخدمة API موثقة.',
@@ -146,7 +154,8 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
             ),
           ],
         ),
-      );
+      ),
+    );
 }
 
 class RecordsAiWorkspaceScreen extends StatelessWidget {
@@ -154,25 +163,40 @@ class RecordsAiWorkspaceScreen extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('الأرشيف المصور والذكاء الاصطناعي'),
-            bottom: const TabBar(
-              isScrollable: true,
-              tabs: [
-                Tab(text: 'الأرشيف المصور'),
-                Tab(text: 'مختبر الذكاء الاصطناعي'),
-                Tab(text: 'مقارنة النتائج'),
-              ],
-            ),
-          ),
-          body: TabBarView(
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: DefaultTabController(
+          length: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ArchiveTab(stationId: stationId),
-              _AiTab(stationId: stationId),
-              _ComparisonTab(stationId: stationId),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'الأرشيف المصور والذكاء الاصطناعي',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF061B4A),
+                      ),
+                ),
+              ),
+              const TabBar(
+                isScrollable: true,
+                tabs: [
+                  Tab(text: 'الأرشيف المصور'),
+                  Tab(text: 'مختبر الذكاء الاصطناعي'),
+                  Tab(text: 'مقارنة النتائج'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _ArchiveTab(stationId: stationId),
+                    _AiTab(stationId: stationId),
+                    _ComparisonTab(stationId: stationId),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
@@ -329,39 +353,57 @@ class OperationsWorkspaceScreen extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text('الأجهزة والصيانة والاتصالات وتقنية المعلومات'),
-            bottom: const TabBar(
-              isScrollable: true,
-              tabs: [
-                Tab(text: 'الأجهزة والصيانة'),
-                Tab(text: 'الشبكات والاتصالات'),
-                Tab(text: 'تقنية المعلومات'),
-              ],
-            ),
-          ),
-          body: TabBarView(
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: DefaultTabController(
+          length: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _OperationsTab(
-                title: 'سجل الأجهزة',
-                message: 'سجل الأجهزة والأعطال والصيانة يحتاج إلى API للأصول والصيانة.',
-                icon: Icons.sensors_outlined,
-                stationId: stationId,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Text(
+                  'الأجهزة والصيانة والاتصالات وتقنية المعلومات',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF061B4A),
+                      ),
+                ),
               ),
-              _OperationsTab(
-                title: 'حالة الشبكات والاتصالات',
-                message: 'مراقبة الاتصال وآخر اتصال وجودة الشبكة غير متصلة بمصدر حالة حي.',
-                icon: Icons.router,
-                stationId: stationId,
+              const TabBar(
+                isScrollable: true,
+                tabs: [
+                  Tab(text: 'الأجهزة والصيانة'),
+                  Tab(text: 'الشبكات والاتصالات'),
+                  Tab(text: 'تقنية المعلومات'),
+                ],
               ),
-              _OperationsTab(
-                title: 'أصول وطلبات تقنية المعلومات',
-                message: 'إدارة الأصول والبلاغات والتراخيص تنتظر عقود API المعتمدة.',
-                icon: Icons.computer,
-                stationId: stationId,
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _OperationsTab(
+                      title: 'سجل الأجهزة',
+                      message:
+                          'سجل الأجهزة والأعطال والصيانة يحتاج إلى API للأصول والصيانة.',
+                      icon: Icons.sensors_outlined,
+                      stationId: stationId,
+                    ),
+                    _OperationsTab(
+                      title: 'حالة الشبكات والاتصالات',
+                      message:
+                          'مراقبة الاتصال وآخر اتصال وجودة الشبكة غير متصلة بمصدر حالة حي.',
+                      icon: Icons.router,
+                      stationId: stationId,
+                    ),
+                    _OperationsTab(
+                      title: 'أصول وطلبات تقنية المعلومات',
+                      message:
+                          'إدارة الأصول والبلاغات والتراخيص تنتظر عقود API المعتمدة.',
+                      icon: Icons.computer,
+                      stationId: stationId,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -415,11 +457,19 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
   String _reportType = 'الرصد الساعي';
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('التقارير والإحصائيات')),
-        body: ListView(
+  Widget build(BuildContext context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            Text(
+              'التقارير والإحصائيات',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF061B4A),
+                  ),
+            ),
+            const SizedBox(height: 12),
             const _ServiceNotice(
               title: 'مصدر التقارير غير متصل',
               message: 'لن تظهر أرقام أو رسوم إحصائية رسمية قبل ربط بيانات الرصد المعتمدة وخدمات التقارير.',
@@ -459,66 +509,6 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
             ),
           ],
         ),
-      );
-}
-
-
-class SystemSettingsScreen extends StatelessWidget {
-  const SystemSettingsScreen({
-    super.key,
-    required this.userEmail,
-    required this.onSignOut,
-  });
-
-  final String? userEmail;
-  final Future<void> Function()? onSignOut;
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: const Text('إعدادات النظام والحساب')),
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Card(
-              elevation: 0,
-              child: ListTile(
-                leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-                title: const Text('الحساب الحالي'),
-                subtitle: Text(userEmail ?? 'بيانات الحساب غير متاحة'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Card(
-              elevation: 0,
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: Icon(Icons.language),
-                    title: Text('لغة الواجهة'),
-                    subtitle: Text('العربية'),
-                  ),
-                  Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.format_textdirection_r_to_l),
-                    title: Text('اتجاه الواجهة'),
-                    subtitle: Text('من اليمين إلى اليسار (RTL)'),
-                  ),
-                  Divider(height: 1),
-                  ListTile(
-                    leading: Icon(Icons.security_outlined),
-                    title: Text('حماية الجلسة'),
-                    subtitle: Text('لا تُخزن مفاتيح الخدمة السرية داخل تطبيق Flutter.'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onSignOut == null ? null : () async => onSignOut!(),
-              icon: const Icon(Icons.logout),
-              label: const Text('تسجيل الخروج'),
-            ),
-          ],
-        ),
-      );
+      ),
+    );
 }

@@ -165,14 +165,36 @@ public sealed class ObservationSubmissionDomainValidatorTests
     }
 
     [Fact]
-    public void Phenomenon_submission_fails_closed_until_its_domain_contract_is_connected()
+    public void Phenomenon_submission_uses_weather_phenomenon_domain_contract()
     {
-        using var payload = JsonDocument.Parse("""{"code":"rain"}""");
+        using var payload = JsonDocument.Parse("""
+        {
+          "phenomenonType":"rain",
+          "phenomenonDate":"2026-11-16",
+          "startTime":"09:00:00",
+          "endTime":"10:00:00",
+          "responsibilityAgreement":true
+        }
+        """);
         var request = new ObservationSubmissionRequest(
             "phenomenon-test-key", "phenomenon", DateTimeOffset.UtcNow, payload.RootElement, true);
 
         var issues = ObservationSubmissionDomainValidator.Validate(request);
 
-        Assert.Contains(issues, issue => issue.Field == "observationType");
+        Assert.Empty(issues);
+    }
+
+    [Fact]
+    public void Incomplete_phenomenon_submission_is_rejected_by_domain_rules()
+    {
+        using var payload = JsonDocument.Parse("""{"code":"rain"}""");
+        var request = new ObservationSubmissionRequest(
+            "phenomenon-incomplete", "phenomenon", DateTimeOffset.UtcNow, payload.RootElement, true);
+
+        var issues = ObservationSubmissionDomainValidator.Validate(request);
+
+        Assert.NotEmpty(issues);
+        Assert.DoesNotContain(issues, issue =>
+            issue.Message.Contains("لم يُربط بعد", StringComparison.Ordinal));
     }
 }

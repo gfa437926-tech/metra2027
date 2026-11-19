@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/auth/metra_auth.dart';
+import 'core/theme/metra_theme.dart';
 
 const _blue = Color(0xFF087CF0);
 Future<void> main() async {
@@ -21,8 +22,7 @@ class MetraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'METRA 2027', debugShowCheckedModeBanner: false,
-    theme: ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: _blue),
-      scaffoldBackgroundColor: const Color(0xFFF3F6FC)),
+    theme: MetraTheme.light(),
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     locale: const Locale('ar'),
     supportedLocales: const [Locale('ar'), Locale('en')],

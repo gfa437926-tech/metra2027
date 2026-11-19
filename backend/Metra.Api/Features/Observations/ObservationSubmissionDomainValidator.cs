@@ -5,9 +5,10 @@ using Metra.Api.Domain.Observations;
 namespace Metra.Api.Features.Observations;
 
 /// <summary>
-/// Runs the approved legacy daily/hourly domain validators on the actual
-/// persistence payload. The Flutter client sends typed JSON values, while
-/// the legacy validators consume the fixed-width meteorological code format.
+/// Runs the approved domain validators on the actual persistence payload.
+/// The Flutter client sends typed JSON values; legacy daily/hourly validators
+/// consume fixed-width meteorological codes after formatting.
+/// Phenomenon payloads use the WeatherPhenomenonValidator contract.
 /// </summary>
 public static class ObservationSubmissionDomainValidator
 {
@@ -33,7 +34,7 @@ public static class ObservationSubmissionDomainValidator
             return [new("payload", "يجب أن تكون حمولة الرصد كائناً مسطحاً.")];
 
         if (request.ObservationType == "phenomenon")
-            return [new("observationType", "التحقق الخادمي لهذا النوع من الرصد لم يُربط بعد؛ أُوقف الحفظ لمنع تجاوز التحقق.")];
+            return ValidatePhenomenon(payload);
 
         if (request.ObservationType is not ("daily" or "hourly"))
             return [new("observationType", "نوع الرصد غير مدعوم.")];
@@ -72,6 +73,58 @@ public static class ObservationSubmissionDomainValidator
         }
         RequireAffirmation(values, hourlyIssues);
         return hourlyIssues;
+    }
+
+    /// <summary>
+    /// Maps a flat JSON payload onto the approved WeatherPhenomenonRequest contract
+    /// and runs WeatherPhenomenonValidator. Keys may be camelCase or snake_case.
+    /// Nested objects/arrays are rejected. Persistence still requires observation.create
+    /// at the endpoint layer; this only validates structure and domain rules.
+    /// </summary>
+    private static IReadOnlyList<ValidationIssue> ValidatePhenomenon(JsonElement payload)
+    {
+        foreach (var property in payload.EnumerateObject())
+        {
+            if (property.Value.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+                return [new(property.Name, "يجب أن تكون قيمة الحقل نصاً أو رقماً أو قيمة منطقية.")];
+        }
+
+        var request = new WeatherPhenomenonRequest(
+            PhenomenonType: ReadString(payload, "phenomenonType", "phenomenon_type"),
+            PhenomenonDate: ReadString(payload, "phenomenonDate", "phenomenon_date"),
+            StartTime: ReadString(payload, "startTime", "start_time"),
+            EndTime: ReadString(payload, "endTime", "end_time"),
+            GeneralNotes: ReadString(payload, "generalNotes", "general_notes"));
+
+        var issues = WeatherPhenomenonValidator.Validate(request).ToList();
+
+        // Submission path requires the same operator affirmation as daily/hourly.
+        var agreement = ReadString(payload, "responsibilityAgreement", "responsibility_agreement");
+        if (!string.Equals(agreement, "true", StringComparison.OrdinalIgnoreCase))
+            issues.Add(new("responsibilityAgreement", "يجب تأكيد الإقرار بصحة بيانات الرصد."));
+
+        return issues;
+    }
+
+    private static string? ReadString(JsonElement payload, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (!payload.TryGetProperty(key, out var value))
+                continue;
+
+            return value.ValueKind switch
+            {
+                JsonValueKind.Null => null,
+                JsonValueKind.String => value.GetString(),
+                JsonValueKind.Number => value.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => null
+            };
+        }
+
+        return null;
     }
 
     private static void RequireAffirmation(
