@@ -24,7 +24,6 @@ class AccountHubScreen extends StatefulWidget {
 }
 
 class _AccountHubScreenState extends State<AccountHubScreen> {
-  final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   final _confirmPassword = TextEditingController();
   bool _busy = false;
@@ -33,7 +32,6 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
 
   @override
   void dispose() {
-    _currentPassword.dispose();
     _newPassword.dispose();
     _confirmPassword.dispose();
     super.dispose();
@@ -67,7 +65,6 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
         UserAttributes(password: next),
       );
       if (!mounted) return;
-      _currentPassword.clear();
       _newPassword.clear();
       _confirmPassword.clear();
       setState(() {
