@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -15,36 +16,29 @@ import 'package:metra_mobile/features/observations/hourly_observation_screen.dar
 Map<String, Object?> _validValues(List<MetraObservationField> fields) {
   final values = <String, Object?>{};
   for (final field in fields) {
-    switch (field.kind) {
-      case MetraFieldKind.integer:
-        final minimum = field.minimum?.toInt() ?? 0;
-        final maximum = field.maximum?.toInt();
-        values[field.id] = maximum != null && minimum > maximum
-            ? maximum
-            : minimum;
-      case MetraFieldKind.decimal:
-        final minimum = field.minimum ?? 0;
-        final maximum = field.maximum;
-        values[field.id] =
-            maximum != null && minimum > maximum ? maximum : minimum;
-      case MetraFieldKind.boolean:
-        values[field.id] = true;
-      case MetraFieldKind.date:
-        values[field.id] = '2026-11-23';
-      case MetraFieldKind.time:
-        values[field.id] = '12:00:00';
-      case MetraFieldKind.datetime:
-        values[field.id] = '2026-11-23T12:00:00';
-      case MetraFieldKind.choice:
-        values[field.id] =
-            field.choices.isEmpty ? 'test' : field.choices.first;
-      case MetraFieldKind.file:
-        break;
-      case MetraFieldKind.text:
-      case MetraFieldKind.phone:
-      case MetraFieldKind.multiline:
-        values[field.id] = 'test';
-    }
+    final value = switch (field.kind) {
+      MetraFieldKind.integer => () {
+          final minimum = field.minimum?.toInt() ?? 0;
+          final maximum = field.maximum?.toInt();
+          return maximum != null && minimum > maximum ? maximum : minimum;
+        }(),
+      MetraFieldKind.decimal => () {
+          final minimum = field.minimum ?? 0;
+          final maximum = field.maximum;
+          return maximum != null && minimum > maximum ? maximum : minimum;
+        }(),
+      MetraFieldKind.boolean => true,
+      MetraFieldKind.date => '2026-11-23',
+      MetraFieldKind.time => '12:00:00',
+      MetraFieldKind.datetime => '2026-11-23T12:00:00',
+      MetraFieldKind.choice =>
+        field.choices.isEmpty ? 'test' : field.choices.first,
+      MetraFieldKind.file => null,
+      MetraFieldKind.text ||
+      MetraFieldKind.phone ||
+      MetraFieldKind.multiline => 'test',
+    };
+    if (value != null) values[field.id] = value;
   }
   return values;
 }
