@@ -1,9 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/preferences/notification_preferences_store.dart';
 import '../../core/theme/metra_theme.dart';
 import '../../core/widgets/metra_async_state.dart';
 
 /// Notifications centre — structure complete; feed awaits a real service.
+///
+/// Preferences are local session flags only. No synthetic notification rows.
 class NotificationsCenterScreen extends StatefulWidget {
   const NotificationsCenterScreen({super.key});
 
@@ -14,15 +17,52 @@ class NotificationsCenterScreen extends StatefulWidget {
 
 class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
   String _filter = 'all';
-  bool _prefObs = false;
-  bool _prefReview = false;
-  bool _prefFault = false;
+  late NotificationPreferences _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = NotificationPreferencesStore.instance.current;
+  }
+
+  void _setFilter(String value) {
+    if (_filter == value) return;
+    setState(() => _filter = value);
+  }
+
+  void _setObs(bool value) {
+    NotificationPreferencesStore.instance.setObservationAlerts(value);
+    setState(() => _prefs = NotificationPreferencesStore.instance.current);
+  }
+
+  void _setReview(bool value) {
+    NotificationPreferencesStore.instance.setReviewAlerts(value);
+    setState(() => _prefs = NotificationPreferencesStore.instance.current);
+  }
+
+  void _setFault(bool value) {
+    NotificationPreferencesStore.instance.setFaultAlerts(value);
+    setState(() => _prefs = NotificationPreferencesStore.instance.current);
+  }
+
+  String get _emptySubtitle {
+    switch (_filter) {
+      case 'unread':
+        return 'لا يوجد غير مقروء — خدمة الإشعارات غير متصلة بعد.';
+      case 'read':
+        return 'لا يوجد مقروء — لن تُعرض سجلات وهمية.';
+      default:
+        return 'لا يوجد مصدر إشعارات إنتاجي متصل في هذا الإصدار.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ListView(
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
@@ -39,8 +79,35 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             style: TextStyle(color: MetraColors.muted, height: 1.45),
           ),
           const SizedBox(height: 12),
+          Card(
+            color: const Color(0xFFFFF7E8),
+            elevation: 0,
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.cloud_off_outlined, color: Color(0xFF9A6700)),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'وضع عدم الاتصال بالخدمة: التفضيلات محلية فقط ولن تُرسل '
+                      'تنبيهات فعلية قبل اعتماد خدمة الإشعارات.',
+                      style: TextStyle(
+                        color: Color(0xFF7C5E10),
+                        height: 1.4,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
+            runSpacing: 8,
             children: [
               for (final e in [
                 ('all', 'الكل'),
@@ -50,19 +117,17 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 FilterChip(
                   label: Text(e.$2),
                   selected: _filter == e.$1,
-                  onSelected: (_) => setState(() => _filter = e.$1),
+                  onSelected: (_) => _setFilter(e.$1),
                 ),
             ],
           ),
           const SizedBox(height: 16),
           SizedBox(
-            height: 220,
+            height: 200,
             child: MetraAsyncStatePanel.empty(
               icon: Icons.notifications_none,
               title: 'لا توجد إشعارات',
-              subtitle: _filter == 'unread'
-                  ? 'لا يوجد غير مقروء — الخدمة غير متصلة بعد.'
-                  : 'لا يوجد مصدر إشعارات إنتاجي متصل في هذا الإصدار.',
+              subtitle: _emptySubtitle,
             ),
           ),
           const SizedBox(height: 8),
@@ -73,29 +138,35 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   color: MetraColors.navy,
                 ),
           ),
+          const SizedBox(height: 4),
           Card(
             child: SwitchListTile(
-              value: _prefObs,
-              onChanged: (v) => setState(() => _prefObs = v),
+              value: _prefs.observationAlerts,
+              onChanged: _setObs,
               title: const Text('تنبيهات الرصد'),
-              subtitle: const Text('تُحفظ محلياً ولن تُرسل إشعارات فعلية قبل الخدمة'),
+              subtitle: const Text(
+                'تُحفظ محلياً ولن تُرسل إشعارات فعلية قبل الخدمة',
+              ),
             ),
           ),
           Card(
             child: SwitchListTile(
-              value: _prefReview,
-              onChanged: (v) => setState(() => _prefReview = v),
+              value: _prefs.reviewAlerts,
+              onChanged: _setReview,
               title: const Text('تنبيهات المراجعة'),
+              subtitle: const Text('محلي فقط — لا اشتراك خادم في هذا الإصدار'),
             ),
           ),
           Card(
             child: SwitchListTile(
-              value: _prefFault,
-              onChanged: (v) => setState(() => _prefFault = v),
+              value: _prefs.faultAlerts,
+              onChanged: _setFault,
               title: const Text('تنبيهات الأعطال'),
+              subtitle: const Text('محلي فقط — لا اشتراك خادم في هذا الإصدار'),
             ),
           ),
         ],
+        ),
       ),
     );
   }

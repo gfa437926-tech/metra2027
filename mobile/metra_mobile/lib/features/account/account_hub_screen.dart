@@ -95,7 +95,9 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
     final email = widget.userEmail ?? 'غير متاح';
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ListView(
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
@@ -221,6 +223,7 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
             label: Text(_busy ? 'جاري التحديث…' : 'تحديث كلمة المرور'),
           ),
         ],
+        ),
       ),
     );
   }
