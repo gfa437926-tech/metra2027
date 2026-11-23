@@ -4,8 +4,8 @@ import 'package:metra_mobile/features/workspaces/metra_workspaces.dart';
 
 void main() {
   testWidgets('CLIMATOL workspace exposes analysis filters without claiming execution', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: ClimatolWorkspaceScreen(stationId: 'station-1'),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ClimatolWorkspaceScreen(stationId: 'station-1')),
     ));
     expect(find.text('CLIMATOL والتجانس المناخي'), findsOneWidget);
     expect(find.text('رمز العنصر المناخي'), findsOneWidget);
@@ -13,8 +13,8 @@ void main() {
   });
 
   testWidgets('records AI workspace exposes archive, model and comparison tabs', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: RecordsAiWorkspaceScreen(stationId: 'station-1'),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: RecordsAiWorkspaceScreen(stationId: 'station-1')),
     ));
     expect(find.text('الأرشيف المصور'), findsOneWidget);
     expect(find.text('مختبر الذكاء الاصطناعي'), findsOneWidget);
@@ -23,8 +23,8 @@ void main() {
   });
 
   testWidgets('operations workspace exposes devices networks and IT tabs', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: OperationsWorkspaceScreen(stationId: 'station-1'),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: OperationsWorkspaceScreen(stationId: 'station-1')),
     ));
     expect(find.text('الأجهزة والصيانة'), findsOneWidget);
     expect(find.text('الشبكات والاتصالات'), findsOneWidget);
@@ -33,8 +33,8 @@ void main() {
   });
 
   testWidgets('reports workspace keeps generation disabled without a report API', (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      home: ReportsWorkspaceScreen(stationId: 'station-1'),
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(body: ReportsWorkspaceScreen(stationId: 'station-1')),
     ));
     expect(find.text('التقارير والإحصائيات'), findsOneWidget);
     final generate = tester.widget<FilledButton>(
