@@ -105,7 +105,7 @@ void main() {
         requests++;
         final offset = int.parse(request.url.queryParameters['offset']!);
         final limit = int.parse(request.url.queryParameters['limit']!);
-        final count = offset >= 10000 ? 0 : (10000 - offset).clamp(0, limit);
+        final count = offset >= 10000 ? 0 : (10000 - offset).clamp(0, limit).toInt();
         final rows = List.generate(count, (index) {
           final n = offset + index;
           return {
@@ -138,7 +138,7 @@ void main() {
       client: MockClient((request) async {
         final offset = int.parse(request.url.queryParameters['offset']!);
         final limit = int.parse(request.url.queryParameters['limit']!);
-        final count = offset >= 10000 ? 1 : (10000 - offset).clamp(0, limit);
+        final count = offset >= 10000 ? 1 : (10000 - offset).clamp(0, limit).toInt();
         final rows = List.generate(count, (index) {
           final n = offset + index;
           return {
