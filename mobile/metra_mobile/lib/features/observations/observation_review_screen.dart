@@ -274,6 +274,9 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   }
 
   Future<void> _decide(ObservationQueueItem item, String decision) async {
+    // Bind the decision to the station whose queue produced this item.
+    // The user may switch stations while a confirmation dialog is open.
+    final stationId = widget.stationId;
     String? note;
     if (decision == 'return_for_correction') {
       final controller = TextEditingController();
@@ -343,11 +346,15 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       if (confirmed != true) return;
     }
 
-    if (!mounted || _processingIds.contains(item.id)) return;
+    if (!mounted ||
+        stationId != widget.stationId ||
+        _processingIds.contains(item.id)) {
+      return;
+    }
     setState(() => _processingIds.add(item.id));
     try {
       await widget.api.decideObservation(
-        stationId: widget.stationId,
+        stationId: stationId,
         observationId: item.id,
         decision: decision,
         note: note,
