@@ -60,6 +60,14 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     setState(() => _signingOut = true);
     try {
       await widget.onSignOut!();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذر تسجيل الخروج. تحقق من الاتصال وحاول مجدداً.'),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _signingOut = false);
     }
