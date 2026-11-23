@@ -94,7 +94,9 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
   @override
   Widget build(BuildContext context) => Directionality(
         textDirection: TextDirection.rtl,
-        child: ListView(
+        child: Material(
+          color: Colors.transparent,
+          child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(
@@ -153,6 +155,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
               label: const Text('تصدير نتائج التحليل'),
             ),
           ],
+          ),
         ),
       );
 }
@@ -207,7 +210,9 @@ class _ArchiveTab extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const _ServiceNotice(
@@ -235,6 +240,7 @@ class _ArchiveTab extends StatelessWidget {
           const SizedBox(height: 8),
           const Center(child: Text('لا توجد صور معروضة — خدمة التخزين غير مهيأة')),
         ],
+        ),
       );
 }
 
