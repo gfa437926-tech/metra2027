@@ -64,7 +64,6 @@ void main() {
     expect(find.textContaining('تم الحفظ على الخادم'), findsNothing);
     expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsNothing);
   });
-}
 
   testWidgets('catalog drafts stay station-scoped and restore banner',
       (tester) async {
@@ -124,3 +123,4 @@ void main() {
 
     ObservationDraftStore.instance.clearAll();
   });
+}
