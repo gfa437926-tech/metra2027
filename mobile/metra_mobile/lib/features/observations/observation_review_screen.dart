@@ -274,32 +274,6 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   }
 
   Future<void> _decide(ObservationQueueItem item, String decision) async {
-    if (decision == 'approve') {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Text('تأكيد الاعتماد'),
-            content: Text(
-              'هل تعتمد «${_typeLabel(item.observationType)}» '
-              'المسجّلة في ${_formatObservedAt(item.observedAt)}؟',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(false),
-                child: const Text('إلغاء'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(dialogContext).pop(true),
-                child: const Text('اعتماد'),
-              ),
-            ],
-          ),
-        ),
-      );
-      if (ok != true || !mounted) return;
-    }
     String? note;
     if (decision == 'return_for_correction') {
       final controller = TextEditingController();
