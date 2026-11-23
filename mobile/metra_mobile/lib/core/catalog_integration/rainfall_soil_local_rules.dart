@@ -69,17 +69,17 @@ class RainfallSoilLocalRules {
 class DecimalFieldParse {
   const DecimalFieldParse._(this.kind, this.value);
 
-  const DecimalFieldParse.absent() : this._(_DecimalKind.absent, null);
-  const DecimalFieldParse.invalid() : this._(_DecimalKind.invalid, null);
-  const DecimalFieldParse.present(num value) : this._(_DecimalKind.present, value);
+  const DecimalFieldParse.absent() : this._(DecimalFieldParseKind.absent, null);
+  const DecimalFieldParse.invalid() : this._(DecimalFieldParseKind.invalid, null);
+  const DecimalFieldParse.present(num value) : this._(DecimalFieldParseKind.present, value);
 
-  final _DecimalKind kind;
+  final DecimalFieldParseKind kind;
   final num? value;
 
-  bool get isAbsent => kind == _DecimalKind.absent;
-  bool get isInvalid => kind == _DecimalKind.invalid;
-  bool get isPresent => kind == _DecimalKind.present;
+  bool get isAbsent => kind == DecimalFieldParseKind.absent;
+  bool get isInvalid => kind == DecimalFieldParseKind.invalid;
+  bool get isPresent => kind == DecimalFieldParseKind.present;
   bool get isRecordedZero => isPresent && value == 0;
 }
 
-enum _DecimalKind { absent, invalid, present }
+enum DecimalFieldParseKind { absent, invalid, present }
