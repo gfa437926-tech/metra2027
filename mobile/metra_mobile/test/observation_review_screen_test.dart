@@ -240,6 +240,41 @@ void main() {
     api.close();
   });
 
+  testWidgets('station switch while approval dialog is open drops stale decision',
+      (tester) async {
+    const otherStationId = '33333333-3333-4333-8333-333333333333';
+    var decisionCalls = 0;
+    final api = apiWith((request) async {
+      if (request.method == 'GET') {
+        return http.Response(jsonEncode([queueItem()]), 200);
+      }
+      decisionCalls++;
+      return http.Response('{}', 200);
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ObservationReviewScreen(api: api, stationId: stationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
+
+    // Keep the confirmation route open while the host changes station scope.
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ObservationReviewScreen(api: api, stationId: otherStationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await confirmApprove(tester);
+    await tester.pumpAndSettle();
+
+    expect(decisionCalls, 0);
+    api.close();
+  });
+
   testWidgets('concurrent approve taps only send one decision request',
       (tester) async {
     final gate = Completer<void>();
