@@ -14,10 +14,10 @@ import 'phenomenon_observation_screen.dart';
 const _navy = Color(0xFF061B4A);
 const _blue = Color(0xFF087CF0);
 
-/// Observation workspace: approved server-backed forms + local-only catalogues.
+/// Observation workspace: server-backed forms and explicitly local catalogues.
 ///
-/// Review tab is shown only when [accessContext] grants review permissions on
-/// [stationId]. Server still enforces every mutation.
+/// This screen fails closed when the server access context is absent or
+/// unresolved. The API remains authoritative for every server mutation.
 class ObservationWorkspaceScreen extends StatelessWidget {
   const ObservationWorkspaceScreen({
     super.key,
@@ -30,20 +30,13 @@ class ObservationWorkspaceScreen extends StatelessWidget {
   final String stationId;
   final MetraAccessContext? accessContext;
 
-  /// When context is absent (tests / legacy callers), keep connected entry tabs.
-  bool get _canEnter {
-    final access = accessContext;
-    if (access == null || !access.isResolved) return true;
-    return access.canEnterObservations(stationId);
-  }
+  bool get _canEnter =>
+      accessContext?.isResolved == true &&
+      accessContext!.canEnterObservations(stationId);
 
-  /// Review tab only when server context grants review codes on this station.
-  /// Absent context keeps the tab (server still enforces).
-  bool get _canReview {
-    final access = accessContext;
-    if (access == null || !access.isResolved) return true;
-    return access.canReviewObservations(stationId);
-  }
+  bool get _canReview =>
+      accessContext?.isResolved == true &&
+      accessContext!.canReviewObservations(stationId);
 
   @override
   Widget build(BuildContext context) {
@@ -61,81 +54,108 @@ class ObservationWorkspaceScreen extends StatelessWidget {
         DailyObservationScreen(api: api, stationId: stationId),
         PhenomenonObservationScreen(api: api, stationId: stationId),
       ]);
-    }
 
-    // Local-only catalogue forms (no server persistence contract yet).
-    void addCatalog({
-      required String tabLabel,
-      required String title,
-      required List<MetraObservationField> fields,
-      required String formCode,
-      required CatalogFormType formType,
-    }) {
-      tabs.add(Tab(text: tabLabel));
-      views.add(
-        CatalogObservationScreen(
-          title: title,
-          fields: fields,
-          formCode: formCode,
-          stationId: stationId,
-          formType: formType,
-        ),
+      // These catalogues remain local-only. They are still input workflows,
+      // therefore they require the same explicit station-scoped entry grant.
+      void addCatalog({
+        required String tabLabel,
+        required String title,
+        required List<MetraObservationField> fields,
+        required String formCode,
+        required CatalogFormType formType,
+      }) {
+        tabs.add(Tab(text: tabLabel));
+        views.add(
+          CatalogObservationScreen(
+            title: title,
+            fields: fields,
+            formCode: formCode,
+            stationId: stationId,
+            formType: formType,
+          ),
+        );
+      }
+
+      addCatalog(
+        tabLabel: 'زراعي',
+        title: 'الرصد الزراعي',
+        fields: ObservationFieldCatalogs.agricultural,
+        formCode: 'agricultural',
+        formType: CatalogFormType.agricultural,
+      );
+      addCatalog(
+        tabLabel: 'مناخي ساعي',
+        title: 'الرصد المناخي الساعي',
+        fields: ObservationFieldCatalogs.hourlyclimate,
+        formCode: 'hourlyclimate',
+        formType: CatalogFormType.hourlyClimate,
+      );
+      addCatalog(
+        tabLabel: 'أمطار',
+        title: 'رصد الأمطار',
+        fields: ObservationFieldCatalogs.rainfall,
+        formCode: 'rainfall',
+        formType: CatalogFormType.rainfall,
+      );
+      addCatalog(
+        tabLabel: 'تربة',
+        title: 'رصد التربة',
+        fields: ObservationFieldCatalogs.soil,
+        formCode: 'soil',
+        formType: CatalogFormType.soil,
+      );
+      addCatalog(
+        tabLabel: 'أعطال أجهزة',
+        title: 'أعطال الأجهزة',
+        fields: ObservationFieldCatalogs.faultequipment,
+        formCode: 'faultequipment',
+        formType: CatalogFormType.faultEquipment,
+      );
+      addCatalog(
+        tabLabel: 'اتصالات',
+        title: 'أعطال الاتصالات',
+        fields: ObservationFieldCatalogs.faulttelecom,
+        formCode: 'faulttelecom',
+        formType: CatalogFormType.faultTelecom,
+      );
+      addCatalog(
+        tabLabel: 'تقنية المعلومات',
+        title: 'بلاغات تقنية المعلومات',
+        fields: ObservationFieldCatalogs.faultit,
+        formCode: 'faultit',
+        formType: CatalogFormType.faultIt,
       );
     }
-
-    addCatalog(
-      tabLabel: 'زراعي',
-      title: 'الرصد الزراعي',
-      fields: ObservationFieldCatalogs.agricultural,
-      formCode: 'agricultural',
-      formType: CatalogFormType.agricultural,
-    );
-    addCatalog(
-      tabLabel: 'مناخي ساعي',
-      title: 'الرصد المناخي الساعي',
-      fields: ObservationFieldCatalogs.hourlyclimate,
-      formCode: 'hourlyclimate',
-      formType: CatalogFormType.hourlyClimate,
-    );
-    addCatalog(
-      tabLabel: 'أمطار',
-      title: 'رصد الأمطار',
-      fields: ObservationFieldCatalogs.rainfall,
-      formCode: 'rainfall',
-      formType: CatalogFormType.rainfall,
-    );
-    addCatalog(
-      tabLabel: 'تربة',
-      title: 'رصد التربة',
-      fields: ObservationFieldCatalogs.soil,
-      formCode: 'soil',
-      formType: CatalogFormType.soil,
-    );
-    addCatalog(
-      tabLabel: 'أعطال أجهزة',
-      title: 'أعطال الأجهزة',
-      fields: ObservationFieldCatalogs.faultequipment,
-      formCode: 'faultequipment',
-      formType: CatalogFormType.faultEquipment,
-    );
-    addCatalog(
-      tabLabel: 'اتصالات',
-      title: 'أعطال الاتصالات',
-      fields: ObservationFieldCatalogs.faulttelecom,
-      formCode: 'faulttelecom',
-      formType: CatalogFormType.faultTelecom,
-    );
-    addCatalog(
-      tabLabel: 'تقنية المعلومات',
-      title: 'بلاغات تقنية المعلومات',
-      fields: ObservationFieldCatalogs.faultit,
-      formCode: 'faultit',
-      formType: CatalogFormType.faultIt,
-    );
 
     if (_canReview) {
       tabs.add(const Tab(text: 'مراجعة · متصل'));
       views.add(ObservationReviewScreen(api: api, stationId: stationId));
+    }
+
+    if (tabs.isEmpty) {
+      final message = accessContext?.isResolved == true
+          ? MetraPermissionDeniedMessages.observations
+          : MetraPermissionDeniedMessages.contextUnavailable;
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, size: 40, color: _navy),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: _navy, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     }
 
     return DefaultTabController(
@@ -153,9 +173,7 @@ class ObservationWorkspaceScreen extends StatelessWidget {
                 tabs: tabs,
               ),
             ),
-            Expanded(
-              child: TabBarView(children: views),
-            ),
+            Expanded(child: TabBarView(children: views)),
           ],
         ),
       ),
