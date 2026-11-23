@@ -277,6 +277,14 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     // Bind the decision to the station whose queue produced this item.
     // The user may switch stations while a confirmation dialog is open.
     final stationId = widget.stationId;
+    if (item.stationId != stationId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('بيانات النشرة لا تطابق المحطة الحالية. حدّث قائمة المراجعة.'),
+        ),
+      );
+      return;
+    }
     String? note;
     if (decision == 'return_for_correction') {
       final controller = TextEditingController();
