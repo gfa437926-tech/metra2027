@@ -370,7 +370,7 @@ class _StationAdministrationScreenState
                       Builder(
                         builder: (context) {
                           final rid = _firstValue(record, ['id', 'request_id']);
-                          final busy = _processingRequestIds.contains(rid);
+                          final busy = _processingRequestIds.contains('${widget.stationId}::$rid');
                           return Wrap(
                             spacing: 8,
                             children: [
