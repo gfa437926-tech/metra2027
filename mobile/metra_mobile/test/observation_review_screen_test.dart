@@ -260,8 +260,10 @@ void main() {
 
     await openApproveDialog(tester);
     await confirmApprove(tester);
-    // Allow dialog route to finish leaving so only the list button remains.
-    await tester.pumpAndSettle();
+    // The request is intentionally held by the test completer; pump the route
+    // transition without waiting for the in-flight progress indicator to settle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
 
     // Second attempt while processing should be ignored by UI guard.
     // Prefer list button (first) if any transient dialog residue remains.
