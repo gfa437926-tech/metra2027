@@ -60,7 +60,7 @@ void main() {
       (tester) async {
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('الرصد الساعي'), findsOneWidget);
@@ -73,7 +73,7 @@ void main() {
       (tester) async {
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: DailyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: DailyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('الرصد اليومي'), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
       return http.Response('{}', 200);
     });
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     final submit = find.text('التحقق وإرسال الرصد الساعي');
@@ -129,9 +129,11 @@ void main() {
       home: StatefulBuilder(
         builder: (context, setState) {
           updateParent = setState;
-          return HourlyObservationScreen(
-            api: api,
-            stationId: selectedStation,
+          return Scaffold(
+            body: HourlyObservationScreen(
+              api: api,
+              stationId: selectedStation,
+            ),
           );
         },
       ),
@@ -172,7 +174,7 @@ void main() {
       return http.Response('{}', 200);
     });
     await tester.pumpWidget(MaterialApp(
-      home: DailyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: DailyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     final submit = find.text('التحقق وإرسال الرصد اليومي');
@@ -193,7 +195,7 @@ void main() {
     );
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
@@ -209,7 +211,7 @@ void main() {
     );
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.text('تجاهل المسودة المحلية'));
@@ -325,7 +327,7 @@ void main() {
 
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('مسودة محلية فقط'), findsOneWidget);
@@ -356,7 +358,7 @@ void main() {
       return http.Response('{}', 200);
     });
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
 
