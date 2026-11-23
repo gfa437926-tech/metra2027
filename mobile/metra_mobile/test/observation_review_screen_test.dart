@@ -40,7 +40,7 @@ void main() {
   }
 
   Future<void> openApproveDialog(WidgetTester tester) async {
-    final approve = find.widgetWithText(OutlinedButton, 'اعتماد');
+    final approve = find.widgetWithText(FilledButton, 'اعتماد');
     expect(approve, findsOneWidget);
     await tester.ensureVisible(approve);
     await tester.tap(approve);
