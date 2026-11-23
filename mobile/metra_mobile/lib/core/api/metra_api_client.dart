@@ -242,6 +242,16 @@ class MetraApiClient {
       stations.addAll(page);
       if (page.length < pageSize) return stations;
     }
+
+    // The cap itself is not proof that more rows exist. Probe one row beyond
+    // the cap so an exact 10,000-row directory is accepted while larger
+    // directories still fail explicitly rather than being silently truncated.
+    final overflowProbe = await getStationDirectory(
+      limit: 1,
+      offset: maximumRows,
+      stationType: stationType,
+    );
+    if (overflowProbe.isEmpty) return stations;
     throw const MetraApiException(413, 'station_directory_limit_exceeded');
   }
 
