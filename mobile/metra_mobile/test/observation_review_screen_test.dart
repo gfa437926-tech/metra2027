@@ -240,6 +240,37 @@ void main() {
     api.close();
   });
 
+  testWidgets('review rejects a queue row whose station does not match',
+      (tester) async {
+    const otherStationId = '33333333-3333-4333-8333-333333333333';
+    var decisionCalls = 0;
+    final mismatched = queueItem()..['station_id'] = otherStationId;
+    final api = apiWith((request) async {
+      if (request.method == 'GET') {
+        return http.Response(jsonEncode([mismatched]), 200);
+      }
+      decisionCalls++;
+      return http.Response('{}', 200);
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ObservationReviewScreen(api: api, stationId: stationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
+    await confirmApprove(tester);
+    await tester.pumpAndSettle();
+
+    expect(decisionCalls, 0);
+    expect(
+      find.text('بيانات النشرة لا تطابق المحطة الحالية. حدّث قائمة المراجعة.'),
+      findsOneWidget,
+    );
+    api.close();
+  });
+
   testWidgets('station switch while approval dialog is open drops stale decision',
       (tester) async {
     const otherStationId = '33333333-3333-4333-8333-333333333333';
