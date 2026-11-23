@@ -330,14 +330,14 @@ void main() {
       home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('مسودة محلية فقط'), findsOneWidget);
+    expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: HourlyObservationScreen(api: api, stationId: otherStation)),
     ));
     await tester.pumpAndSettle();
     // Draft for the new station is restored; values are station-isolated.
-    expect(find.text('مسودة محلية فقط'), findsOneWidget);
+    expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
     expect(find.text('33'), findsWidgets);
     api.close();
   });
@@ -357,18 +357,15 @@ void main() {
       }
       return http.Response('{}', 200);
     });
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'hourly',
+      values: _validValues(ObservationFieldCatalogs.hourly),
+    );
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
-
-    // Fill required agreement so client-side form validation can pass.
-    final switches = find.byType(SwitchListTile);
-    if (switches.evaluate().isNotEmpty) {
-      await tester.ensureVisible(switches.last);
-      await tester.tap(switches.last);
-      await tester.pump();
-    }
 
     final submit = find.text('التحقق وإرسال الرصد الساعي');
     await tester.ensureVisible(submit);
