@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/auth/metra_auth.dart';
 import 'core/theme/metra_theme.dart';
 
-const _blue = Color(0xFF087CF0);
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (isMetraSupabaseConfigured) {
