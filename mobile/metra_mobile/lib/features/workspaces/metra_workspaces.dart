@@ -249,7 +249,9 @@ class _AiTab extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const _ServiceNotice(
@@ -274,6 +276,7 @@ class _AiTab extends StatelessWidget {
             label: const Text('تشغيل استخراج OCR'),
           ),
         ],
+        ),
       );
 }
 
@@ -282,7 +285,9 @@ class _ComparisonTab extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const _ServiceNotice(
@@ -327,6 +332,7 @@ class _ComparisonTab extends StatelessWidget {
             label: const Text('تنفيذ المقارنة'),
           ),
         ],
+        ),
       );
 }
 
@@ -464,7 +470,9 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
   @override
   Widget build(BuildContext context) => Directionality(
         textDirection: TextDirection.rtl,
-        child: ListView(
+        child: Material(
+          color: Colors.transparent,
+          child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             Text(
@@ -513,6 +521,7 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
               label: const Text('طباعة / تصدير'),
             ),
           ],
+          ),
         ),
       );
 }
