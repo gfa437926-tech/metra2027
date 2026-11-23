@@ -110,6 +110,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(NavigationBar), findsOneWidget);
     expect(find.byType(NavigationRail), findsNothing);
+
+    // Wide but short split-screen windows must not overflow a labelled rail.
+    tester.view.physicalSize = const Size(1000, 600);
+    await tester.pumpAndSettle();
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(NavigationRail), findsNothing);
   });
 
 
