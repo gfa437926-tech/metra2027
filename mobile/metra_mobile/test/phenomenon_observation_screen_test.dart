@@ -22,7 +22,7 @@ void main() {
   testWidgets('renders phenomenon form title and submit control', (tester) async {
     final api = apiWith((_) async => http.Response('{}', 200));
     await tester.pumpWidget(MaterialApp(
-      home: PhenomenonObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('بلاغ ظاهرة جوية'), findsOneWidget);
@@ -45,7 +45,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: PhenomenonObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     final submit = find.text('التحقق وإرسال بلاغ الظاهرة');
@@ -62,7 +62,7 @@ void main() {
       (tester) async {
     final api = apiWith((_) async => http.Response('forbidden', 403));
     await tester.pumpWidget(MaterialApp(
-      home: PhenomenonObservationScreen(api: api, stationId: stationId),
+      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('بلاغ ظاهرة جوية'), findsOneWidget);
