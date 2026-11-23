@@ -5,6 +5,7 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/drafts/observation_draft_store.dart';
+import '../../core/drafts/observation_draft_ui.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
 /// Daily observation entry bound to the approved .NET validation/submit API.
@@ -71,42 +72,18 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
     }
   }
 
-  void _discardDraft() {
+  Future<void> _discardDraft() async {
+    final confirmed = await ObservationDraftUi.confirmDiscard(context);
+    if (!confirmed || !mounted) return;
     ObservationDraftStore.instance.clear(widget.stationId, _formType);
     setState(() {
       _draft = null;
       _formGeneration++;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم تجاهل المسودة المحلية')),
-    );
+    ObservationDraftUi.showDiscardedSnack(context);
   }
 
-  Widget? _draftBanner() {
-    if (_draft == null || _draft!.isEmpty) return null;
-    final local = _draft!.savedAt.toLocal();
-    final stamp =
-        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-    return Material(
-      color: const Color(0xFFE8F4FF),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-        child: Row(
-          children: [
-            const Icon(Icons.edit_note, color: Color(0xFF087CF0)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'مسودة محلية فقط — لم تُرسل إلى الخادم · حُفظت $stamp',
-                style: const TextStyle(fontSize: 12, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget? _draftBanner() => ObservationDraftUi.banner(_draft);
 
   Future<void> _submit(Map<String, Object?> values) async {
     if (_submitting) return;
@@ -217,7 +194,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
       onValuesChanged: _persistDraft,
       draftBanner: _draftBanner(),
       secondaryActionLabel:
-          _draft != null && !_draft!.isEmpty ? 'تجاهل المسودة المحلية' : null,
+          _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
       onSecondaryAction:
           _draft != null && !_draft!.isEmpty ? _discardDraft : null,
       submitLabel: _submitting

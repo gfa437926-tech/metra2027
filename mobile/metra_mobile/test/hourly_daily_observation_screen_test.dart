@@ -216,6 +216,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('تجاهل المسودة المحلية'));
     await tester.pumpAndSettle();
+    // Confirm dialog required before draft is cleared.
+    expect(find.text('تجاهل المسودة المحلية؟'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'تجاهل المسودة'));
+    await tester.pumpAndSettle();
     expect(find.textContaining('مسودة محلية فقط'), findsNothing);
     expect(ObservationDraftStore.instance.get(stationId, 'hourly'), isNull);
     api.close();

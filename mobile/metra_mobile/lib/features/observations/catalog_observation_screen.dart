@@ -4,6 +4,7 @@ import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/catalog_integration/catalog_observation_repository.dart';
 import '../../core/catalog_integration/local_catalog_observation_repository.dart';
 import '../../core/drafts/observation_draft_store.dart';
+import '../../core/drafts/observation_draft_ui.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
 /// Interactive catalogue form for forms without an approved persistence API.
@@ -112,44 +113,19 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
     });
   }
 
-  void _discardDraft() {
+  Future<void> _discardDraft() async {
     if (!_canDraft) return;
+    final confirmed = await ObservationDraftUi.confirmDiscard(context);
+    if (!confirmed || !mounted) return;
     ObservationDraftStore.instance.clear(widget.stationId!, _draftFormType!);
     setState(() {
       _draft = null;
       _formGeneration++;
     });
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    messenger?.showSnackBar(
-      const SnackBar(content: Text('تم تجاهل المسودة المحلية')),
-    );
+    ObservationDraftUi.showDiscardedSnack(context);
   }
 
-  Widget? _draftBanner() {
-    if (_draft == null || _draft!.isEmpty) return null;
-    final local = _draft!.savedAt.toLocal();
-    final stamp =
-        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
-        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
-    return Material(
-      color: const Color(0xFFE8F4FF),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-        child: Row(
-          children: [
-            const Icon(Icons.edit_note, color: Color(0xFF087CF0)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'مسودة محلية فقط — لم تُرسل إلى الخادم · حُفظت $stamp',
-                style: const TextStyle(fontSize: 12, height: 1.4),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget? _draftBanner() => ObservationDraftUi.banner(_draft);
 
   Future<void> _onSubmit(
     BuildContext context,
@@ -241,7 +217,7 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
               onValuesChanged: _canDraft ? _persistDraft : null,
               draftBanner: _draftBanner(),
               secondaryActionLabel:
-                  _draft != null && !_draft!.isEmpty ? 'تجاهل المسودة المحلية' : null,
+                  _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
               onSecondaryAction:
                   _draft != null && !_draft!.isEmpty ? _discardDraft : null,
               onSubmit: (values) => _onSubmit(context, values),

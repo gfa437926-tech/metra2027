@@ -86,11 +86,9 @@ void main() {
       isNull,
     );
   });
-}
 
   test('hasDraft and stationsWithDrafts isolate by station', () {
     final store = ObservationDraftStore.instance;
-    store.clearAll();
     store.save(stationId: 's1', formType: 'rainfall', values: {'a': 1});
     store.save(stationId: 's2', formType: 'soil', values: {'b': 2});
     expect(store.hasDraft('s1', 'rainfall'), isTrue);
@@ -99,5 +97,75 @@ void main() {
     store.clearStation('s1');
     expect(store.hasDraft('s1', 'rainfall'), isFalse);
     expect(store.hasDraft('s2', 'soil'), isTrue);
-    store.clearAll();
   });
+
+  test('blank station or form type is ignored', () {
+    ObservationDraftStore.instance.save(
+      stationId: '  ',
+      formType: 'hourly',
+      values: {'dryTemp': 1},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: '',
+      values: {'dryTemp': 1},
+    );
+    expect(ObservationDraftStore.instance.draftCount, 0);
+  });
+
+  test('overwrite replaces values for same station and form', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'phenomenon',
+      values: {'code': 'old'},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'phenomenon',
+      values: {'code': 'new', 'intensity': 2},
+    );
+    final draft =
+        ObservationDraftStore.instance.get('station-a', 'phenomenon');
+    expect(draft!.values['code'], 'new');
+    expect(draft.values['intensity'], 2);
+    expect(draft.values.containsKey('dryTemp'), isFalse);
+  });
+
+  test('form type key is case-insensitive', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'Hourly',
+      values: {'dryTemp': 9},
+    );
+    expect(
+      ObservationDraftStore.instance.get('station-a', 'hourly')!.values['dryTemp'],
+      9,
+    );
+  });
+
+  test('seven catalogue form types do not collide', () {
+    const types = [
+      'agricultural',
+      'hourlyclimate',
+      'rainfall',
+      'soil',
+      'faultequipment',
+      'faulttelecom',
+      'faultit',
+    ];
+    for (var i = 0; i < types.length; i++) {
+      ObservationDraftStore.instance.save(
+        stationId: 'station-a',
+        formType: types[i],
+        values: {'idx': i},
+      );
+    }
+    expect(ObservationDraftStore.instance.draftCount, types.length);
+    for (var i = 0; i < types.length; i++) {
+      expect(
+        ObservationDraftStore.instance.get('station-a', types[i])!.values['idx'],
+        i,
+      );
+    }
+  });
+}
