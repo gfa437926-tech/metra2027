@@ -32,6 +32,7 @@ class ObservationDraftStore {
       final id = entry.key.trim().toLowerCase();
       if (id.isEmpty) continue;
       if (_looksLikeSecret(id)) continue;
+      if (_isEffectivelyEmpty(entry.value)) continue;
       sanitized[entry.key] = entry.value;
     }
     if (sanitized.isEmpty) {
@@ -52,8 +53,10 @@ class ObservationDraftStore {
   }
 
   void clearStation(String stationId) {
-    final prefix = '${stationId.trim()}::';
-    _drafts.removeWhere((key, _) => key.startsWith(prefix));
+    final id = stationId.trim();
+    if (id.isEmpty) return;
+    // Match on stored stationId only — avoid prefix collisions (e.g. "st" vs "st2").
+    _drafts.removeWhere((_, draft) => draft.stationId == id);
   }
 
   /// Test / session reset helper.
@@ -73,6 +76,12 @@ class ObservationDraftStore {
       if (!draft.isEmpty) stations.add(draft.stationId);
     }
     return Set.unmodifiable(stations);
+  }
+
+  static bool _isEffectivelyEmpty(Object? value) {
+    if (value == null) return true;
+    if (value is String && value.trim().isEmpty) return true;
+    return false;
   }
 
   static bool _looksLikeSecret(String fieldId) {

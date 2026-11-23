@@ -168,4 +168,61 @@ void main() {
       );
     }
   });
+
+  test('whitespace-only values do not keep a draft', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'hourly',
+      values: {'dryTemp': '  ', 'note': ''},
+    );
+    expect(ObservationDraftStore.instance.get('station-a', 'hourly'), isNull);
+  });
+
+  test('false boolean is preserved as a real value', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'daily',
+      values: {'flag': false},
+    );
+    expect(
+      ObservationDraftStore.instance.get('station-a', 'daily')!.values['flag'],
+      isFalse,
+    );
+  });
+
+  test('clearStation does not wipe stations that only share a prefix', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'st',
+      formType: 'hourly',
+      values: {'dryTemp': 1},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st2',
+      formType: 'hourly',
+      values: {'dryTemp': 2},
+    );
+    ObservationDraftStore.instance.clearStation('st');
+    expect(ObservationDraftStore.instance.get('st', 'hourly'), isNull);
+    expect(
+      ObservationDraftStore.instance.get('st2', 'hourly')!.values['dryTemp'],
+      2,
+    );
+  });
+
+  test('failed validation scenario: draft remains after save without clear', () {
+    // Screens must not clear on validation failure; store itself only clears on
+    // explicit clear/save-empty.
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'hourly',
+      values: {'dryTemp': 18},
+    );
+    expect(ObservationDraftStore.instance.hasDraft('station-a', 'hourly'), isTrue);
+    // Simulate failed submit: no clear called.
+    expect(
+      ObservationDraftStore.instance.get('station-a', 'hourly')!.values['dryTemp'],
+      18,
+    );
+  });
+
 }
