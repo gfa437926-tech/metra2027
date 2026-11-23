@@ -96,6 +96,78 @@ void main() {
     client.close();
   });
 
+  test('accepts an exact 10,000-station directory without false overflow', () async {
+    var requests = 0;
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        requests++;
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final limit = int.parse(request.url.queryParameters['limit']!);
+        final count = offset >= 10000 ? 0 : (10000 - offset).clamp(0, limit);
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    final rows = await client.getAllStationDirectory();
+
+    expect(rows, hasLength(10000));
+    expect(requests, 21); // 20 full pages plus the one-row overflow probe.
+    client.close();
+  });
+
+  test('rejects station directories larger than the documented safety cap', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((request) async {
+        final offset = int.parse(request.url.queryParameters['offset']!);
+        final limit = int.parse(request.url.queryParameters['limit']!);
+        final count = offset >= 10000 ? 1 : (10000 - offset).clamp(0, limit);
+        final rows = List.generate(count, (index) {
+          final n = offset + index;
+          return {
+            'id': 'station-$n',
+            'local_station_code': 'ST-$n',
+            'name_ar': 'Station $n',
+            'name_en': 'Station $n',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'is_demo': false,
+            'station_coordinates': <Map<String, dynamic>>[],
+          };
+        });
+        return http.Response(jsonEncode(rows), 200);
+      }),
+    );
+
+    await expectLater(
+      client.getAllStationDirectory(),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code,
+        'code',
+        'station_directory_limit_exceeded',
+      )),
+    );
+    client.close();
+  });
+
   test('rejects unsupported observation types before making a request', () async {
     var requests = 0;
     final client = MetraApiClient(
