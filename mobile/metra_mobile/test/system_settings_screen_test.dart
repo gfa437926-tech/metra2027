@@ -37,7 +37,7 @@ void main() {
 
   testWidgets('system settings handles missing email safely', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: SystemSettingsScreen(
             userEmail: null,
