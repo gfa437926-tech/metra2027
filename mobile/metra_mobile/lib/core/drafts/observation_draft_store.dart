@@ -61,6 +61,20 @@ class ObservationDraftStore {
 
   int get draftCount => _drafts.length;
 
+  bool hasDraft(String stationId, String formType) {
+    final draft = get(stationId, formType);
+    return draft != null && !draft.isEmpty;
+  }
+
+  /// Station ids that currently hold at least one non-empty draft.
+  Set<String> stationsWithDrafts() {
+    final stations = <String>{};
+    for (final draft in _drafts.values) {
+      if (!draft.isEmpty) stations.add(draft.stationId);
+    }
+    return Set.unmodifiable(stations);
+  }
+
   static bool _looksLikeSecret(String fieldId) {
     const blocked = [
       'password',

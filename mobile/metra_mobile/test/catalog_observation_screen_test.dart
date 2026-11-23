@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
+import 'package:metra_mobile/core/catalog_integration/catalog_form_type.dart';
+import 'package:metra_mobile/core/drafts/observation_draft_store.dart';
 import 'package:metra_mobile/features/observations/catalog_observation_screen.dart';
 
 void main() {
@@ -63,3 +65,62 @@ void main() {
     expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsNothing);
   });
 }
+
+  testWidgets('catalog drafts stay station-scoped and restore banner',
+      (tester) async {
+    const stationA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const stationB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: stationA,
+      formType: 'rainfall',
+      values: {'amount_mm': 12.5},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CatalogObservationScreen(
+            title: 'رصد الأمطار',
+            fields: ObservationFieldCatalogs.rainfall,
+            formCode: 'rainfall',
+            formType: CatalogFormType.rainfall,
+            stationId: stationA,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
+    expect(find.text('تجاهل المسودة المحلية'), findsOneWidget);
+
+    // Switch station via a new pump: station B must not show station A draft.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CatalogObservationScreen(
+            title: 'رصد الأمطار',
+            fields: ObservationFieldCatalogs.rainfall,
+            formCode: 'rainfall',
+            formType: CatalogFormType.rainfall,
+            stationId: stationB,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('مسودة محلية فقط'), findsNothing);
+    expect(
+      ObservationDraftStore.instance.hasDraft(stationA, 'rainfall'),
+      isTrue,
+    );
+    expect(
+      ObservationDraftStore.instance.hasDraft(stationB, 'rainfall'),
+      isFalse,
+    );
+
+    ObservationDraftStore.instance.clearAll();
+  });

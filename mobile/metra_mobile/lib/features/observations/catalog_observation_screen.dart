@@ -3,13 +3,14 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/catalog_integration/catalog_observation_repository.dart';
 import '../../core/catalog_integration/local_catalog_observation_repository.dart';
+import '../../core/drafts/observation_draft_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
 /// Interactive catalogue form for forms without an approved persistence API.
 ///
 /// Validates locally through [CatalogObservationRepository] and never claims
-/// to save or submit to the server.
-class CatalogObservationScreen extends StatelessWidget {
+/// to save or submit to the server. Session drafts are station-scoped only.
+class CatalogObservationScreen extends StatefulWidget {
   const CatalogObservationScreen({
     super.key,
     required this.title,
@@ -34,10 +35,121 @@ class CatalogObservationScreen extends StatelessWidget {
 
   final CatalogObservationRepository? repository;
 
-  int get _requiredCount => fields.where((f) => f.required).length;
+  @override
+  State<CatalogObservationScreen> createState() =>
+      _CatalogObservationScreenState();
+}
+
+class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
+  ObservationDraft? _draft;
+  int _formGeneration = 0;
+
+  int get _requiredCount => widget.fields.where((f) => f.required).length;
 
   CatalogObservationRepository get _repo =>
-      repository ?? LocalCatalogObservationRepository();
+      widget.repository ?? LocalCatalogObservationRepository();
+
+  /// Draft key: prefer catalogue form type code, else formCode, else title slug.
+  String? get _draftFormType {
+    if (widget.formType != null) return widget.formType!.code;
+    final code = widget.formCode?.trim();
+    if (code != null && code.isNotEmpty) return code.toLowerCase();
+    return null;
+  }
+
+  bool get _canDraft {
+    final station = widget.stationId?.trim() ?? '';
+    final type = _draftFormType;
+    return station.isNotEmpty && type != null && type.isNotEmpty;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDraft();
+  }
+
+  @override
+  void didUpdateWidget(covariant CatalogObservationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final stationChanged =
+        oldWidget.stationId?.trim() != widget.stationId?.trim();
+    final typeChanged = oldWidget.formType != widget.formType ||
+        oldWidget.formCode != widget.formCode;
+    if (stationChanged || typeChanged) {
+      _loadDraft(resetForm: true);
+    }
+  }
+
+  void _loadDraft({bool resetForm = false}) {
+    if (!_canDraft) {
+      _draft = null;
+      if (resetForm) _formGeneration++;
+      return;
+    }
+    _draft = ObservationDraftStore.instance.get(
+      widget.stationId!,
+      _draftFormType!,
+    );
+    if (resetForm) {
+      _formGeneration++;
+    }
+  }
+
+  void _persistDraft(Map<String, Object?> values) {
+    if (!_canDraft) return;
+    ObservationDraftStore.instance.save(
+      stationId: widget.stationId!,
+      formType: _draftFormType!,
+      values: values,
+    );
+    if (!mounted) return;
+    setState(() {
+      _draft = ObservationDraftStore.instance.get(
+        widget.stationId!,
+        _draftFormType!,
+      );
+    });
+  }
+
+  void _discardDraft() {
+    if (!_canDraft) return;
+    ObservationDraftStore.instance.clear(widget.stationId!, _draftFormType!);
+    setState(() {
+      _draft = null;
+      _formGeneration++;
+    });
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    messenger?.showSnackBar(
+      const SnackBar(content: Text('تم تجاهل المسودة المحلية')),
+    );
+  }
+
+  Widget? _draftBanner() {
+    if (_draft == null || _draft!.isEmpty) return null;
+    final local = _draft!.savedAt.toLocal();
+    final stamp =
+        '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')} '
+        '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+    return Material(
+      color: const Color(0xFFE8F4FF),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+        child: Row(
+          children: [
+            const Icon(Icons.edit_note, color: Color(0xFF087CF0)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'مسودة محلية فقط — لم تُرسل إلى الخادم · حُفظت $stamp',
+                style: const TextStyle(fontSize: 12, height: 1.4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _onSubmit(
     BuildContext context,
@@ -45,25 +157,29 @@ class CatalogObservationScreen extends StatelessWidget {
   ) async {
     if (!context.mounted) return;
 
-    if (formType != null && stationId != null && stationId!.trim().isNotEmpty) {
+    if (widget.formType != null &&
+        widget.stationId != null &&
+        widget.stationId!.trim().isNotEmpty) {
       final result = await _repo.submitLocal(
-        type: formType!,
-        stationId: stationId!,
+        type: widget.formType!,
+        stationId: widget.stationId!,
         values: values,
       );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(content: Text(result.messageAr)),
       );
       // Explicit guard: repository must never claim server persistence.
       assert(!result.claimsServerPersistence);
+      // Local validation success does not clear the draft — only explicit
+      // discard or a future server submit with an approved contract may.
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(
         content: Text(
-          'اكتمل التحقق المحلي لـ«$title» (${fields.length} حقلاً). '
+          'اكتمل التحقق المحلي لـ«${widget.title}» (${widget.fields.length} حقلاً). '
           'الإرسال إلى الخادم غير متاح لعدم وجود عقد API معتمد.',
         ),
       ),
@@ -99,8 +215,8 @@ class CatalogObservationScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'عدد الحقول: ${fields.length} · المطلوبة: $_requiredCount'
-                          '${formCode == null ? '' : ' · الرمز: $formCode'}. '
+                          'عدد الحقول: ${widget.fields.length} · المطلوبة: $_requiredCount'
+                          '${widget.formCode == null ? '' : ' · الرمز: ${widget.formCode}'}. '
                           'الحفظ الإنتاجي يتطلب عقد API معتمداً وموافقة صريحة.',
                           style: const TextStyle(
                             color: Color(0xFF7C5E10),
@@ -117,9 +233,17 @@ class CatalogObservationScreen extends StatelessWidget {
           ),
           Expanded(
             child: MetraObservationForm(
-              title: title,
-              fields: fields,
+              key: ValueKey('catalog-form-$_formGeneration'),
+              title: widget.title,
+              fields: widget.fields,
               submitLabel: 'تحقق محلياً',
+              initialValues: _draft?.values ?? const {},
+              onValuesChanged: _canDraft ? _persistDraft : null,
+              draftBanner: _draftBanner(),
+              secondaryActionLabel:
+                  _draft != null && !_draft!.isEmpty ? 'تجاهل المسودة المحلية' : null,
+              onSecondaryAction:
+                  _draft != null && !_draft!.isEmpty ? _discardDraft : null,
               onSubmit: (values) => _onSubmit(context, values),
               embedded: true,
             ),

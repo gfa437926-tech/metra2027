@@ -87,3 +87,17 @@ void main() {
     );
   });
 }
+
+  test('hasDraft and stationsWithDrafts isolate by station', () {
+    final store = ObservationDraftStore.instance;
+    store.clearAll();
+    store.save(stationId: 's1', formType: 'rainfall', values: {'a': 1});
+    store.save(stationId: 's2', formType: 'soil', values: {'b': 2});
+    expect(store.hasDraft('s1', 'rainfall'), isTrue);
+    expect(store.hasDraft('s1', 'soil'), isFalse);
+    expect(store.stationsWithDrafts(), containsAll(['s1', 's2']));
+    store.clearStation('s1');
+    expect(store.hasDraft('s1', 'rainfall'), isFalse);
+    expect(store.hasDraft('s2', 'soil'), isTrue);
+    store.clearAll();
+  });
