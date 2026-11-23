@@ -112,13 +112,26 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
 
   Future<void> _submit(Map<String, Object?> values) async {
     if (_submitting) return;
+
+    // Bind the operation to the station/form generation that initiated it.
+    // A late validation or submit response must never mutate the next station.
+    final stationId = widget.stationId;
+    final generation = _formGeneration;
     final messenger = ScaffoldMessenger.of(context);
+    final payload = values;
     setState(() => _submitting = true);
     try {
       final validation = await widget.api.validateObservation(
         observationType: _formType,
-        values: values,
+        values: payload,
       );
+
+      if (!mounted ||
+          generation != _formGeneration ||
+          stationId != widget.stationId) {
+        return;
+      }
+
       if (!validation.isValid) {
         final message = validation.issues.isEmpty
             ? 'رفض الخادم بيانات الرصد الساعي.'
@@ -127,53 +140,71 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         return;
       }
 
-      final fingerprint = jsonEncode(values);
+      final fingerprint = jsonEncode(payload);
       if (_pendingPayloadFingerprint != fingerprint ||
           _pendingIdempotencyKey == null) {
         _pendingPayloadFingerprint = fingerprint;
         _pendingIdempotencyKey = <String>[
           _formType,
-          widget.stationId,
+          stationId,
           DateTime.now().toUtc().microsecondsSinceEpoch.toString(),
         ].join('-');
         _pendingObservedAt = DateTime.now().toUtc();
       }
 
+      final idempotencyKey = _pendingIdempotencyKey!;
+      final observedAt = _pendingObservedAt!;
+
       await widget.api.submitObservation(
-        stationId: widget.stationId,
-        idempotencyKey: _pendingIdempotencyKey!,
+        stationId: stationId,
+        idempotencyKey: idempotencyKey,
         observationType: _formType,
-        observedAt: _pendingObservedAt!,
-        payload: values,
+        observedAt: observedAt,
+        payload: payload,
         submit: true,
       );
+
+      if (!mounted ||
+          generation != _formGeneration ||
+          stationId != widget.stationId) {
+        return;
+      }
+
       _pendingPayloadFingerprint = null;
       _pendingIdempotencyKey = null;
       _pendingObservedAt = null;
-      ObservationDraftStore.instance.clear(widget.stationId, _formType);
-      if (mounted) {
-        setState(() {
-          _draft = null;
-          _formGeneration++;
-        });
-      }
+      ObservationDraftStore.instance.clear(stationId, _formType);
+      setState(() {
+        _draft = null;
+        _formGeneration++;
+        _submitting = false;
+      });
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-            'أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
-          ),
-        ),
+        const SnackBar(content: Text('أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.')),
       );
     } on MetraApiException catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(MetraErrorPresenter.submitMessage(error))),
-      );
+      if (mounted &&
+          generation == _formGeneration &&
+          stationId == widget.stationId) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(MetraErrorPresenter.submitMessage(error))),
+        );
+      }
     } catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
-      );
+      if (mounted &&
+          generation == _formGeneration &&
+          stationId == widget.stationId) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
+        );
+      }
     } finally {
-      if (mounted) setState(() => _submitting = false);
+      if (mounted &&
+          generation == _formGeneration &&
+          stationId == widget.stationId &&
+          _submitting) {
+        setState(() => _submitting = false);
+      }
     }
   }
 
