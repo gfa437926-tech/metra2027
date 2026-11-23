@@ -39,6 +39,14 @@ void main() {
     await tester.tap(dialogApprove);
   }
 
+  Future<void> openApproveDialog(WidgetTester tester) async {
+    final approve = find.widgetWithText(OutlinedButton, 'اعتماد');
+    expect(approve, findsOneWidget);
+    await tester.ensureVisible(approve);
+    await tester.tap(approve);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('renders queue returned by the API', (tester) async {
     final api = apiWith(
       (_) async => http.Response(jsonEncode([queueItem()]), 200),
@@ -144,8 +152,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('نشرة يومية'), findsOneWidget);
 
-    await tester.tap(find.text('اعتماد'));
-    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
     expect(find.text('اعتماد النشرة'), findsOneWidget);
     await confirmApprove(tester);
     await tester.pumpAndSettle();
@@ -203,8 +210,7 @@ void main() {
       home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('اعتماد'));
-    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
     await confirmApprove(tester);
     await tester.pumpAndSettle();
 
@@ -226,8 +232,7 @@ void main() {
       home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('اعتماد'));
-    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
     await confirmApprove(tester);
     await tester.pumpAndSettle();
 
@@ -253,8 +258,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('اعتماد'));
-    await tester.pumpAndSettle();
+    await openApproveDialog(tester);
     await confirmApprove(tester);
     // Allow dialog route to finish leaving so only the list button remains.
     await tester.pumpAndSettle();
