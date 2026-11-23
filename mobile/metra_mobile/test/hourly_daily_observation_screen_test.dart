@@ -6,8 +6,48 @@ import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/core/drafts/observation_draft_store.dart';
+import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
+import 'package:metra_mobile/core/widgets/metra_observation_form.dart';
 import 'package:metra_mobile/features/observations/daily_observation_screen.dart';
 import 'package:metra_mobile/features/observations/hourly_observation_screen.dart';
+
+
+Map<String, Object?> _validValues(List<MetraObservationField> fields) {
+  final values = <String, Object?>{};
+  for (final field in fields) {
+    switch (field.kind) {
+      case MetraFieldKind.integer:
+        final minimum = field.minimum?.toInt() ?? 0;
+        final maximum = field.maximum?.toInt();
+        values[field.id] = maximum != null && minimum > maximum
+            ? maximum
+            : minimum;
+      case MetraFieldKind.decimal:
+        final minimum = field.minimum ?? 0;
+        final maximum = field.maximum;
+        values[field.id] =
+            maximum != null && minimum > maximum ? maximum : minimum;
+      case MetraFieldKind.boolean:
+        values[field.id] = true;
+      case MetraFieldKind.date:
+        values[field.id] = '2026-11-23';
+      case MetraFieldKind.time:
+        values[field.id] = '12:00:00';
+      case MetraFieldKind.datetime:
+        values[field.id] = '2026-11-23T12:00:00';
+      case MetraFieldKind.choice:
+        values[field.id] =
+            field.choices.isEmpty ? 'test' : field.choices.first;
+      case MetraFieldKind.file:
+        break;
+      case MetraFieldKind.text:
+      case MetraFieldKind.phone:
+      case MetraFieldKind.multiline:
+        values[field.id] = 'test';
+    }
+  }
+  return values;
+}
 
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
@@ -63,6 +103,71 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
     expect(networkCalls, 0);
+    api.close();
+  });
+
+
+  testWidgets('late hourly validation cannot submit after station switch',
+      (tester) async {
+    const nextStationId = '22222222-2222-4222-8222-222222222222';
+    final validationResponse = Completer<http.Response>();
+    var submitCalls = 0;
+    final api = apiWith((request) async {
+      if (request.url.path.endsWith('/observations/hourly/validate')) {
+        return validationResponse.future;
+      }
+      if (request.url.path.endsWith('/observations')) {
+        submitCalls++;
+        return http.Response('{}', 201);
+      }
+      return http.Response('{}', 200);
+    });
+
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'hourly',
+      values: _validValues(ObservationFieldCatalogs.hourly),
+    );
+
+    var selectedStation = stationId;
+    late StateSetter updateParent;
+    await tester.pumpWidget(MaterialApp(
+      home: StatefulBuilder(
+        builder: (context, setState) {
+          updateParent = setState;
+          return HourlyObservationScreen(
+            api: api,
+            stationId: selectedStation,
+          );
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final submit = find.text('التحقق وإرسال الرصد الساعي');
+    await tester.ensureVisible(submit);
+    await tester.tap(submit);
+    await tester.pump();
+    expect(validationResponse.isCompleted, isFalse);
+
+    updateParent(() => selectedStation = nextStationId);
+    await tester.pumpAndSettle();
+
+    validationResponse.complete(
+      http.Response('{"isValid":true,"issues":[]}', 200),
+    );
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(submitCalls, 0);
+    expect(
+      ObservationDraftStore.instance.get(stationId, 'hourly'),
+      isNotNull,
+    );
+    expect(
+      ObservationDraftStore.instance.get(nextStationId, 'hourly'),
+      isNull,
+    );
     api.close();
   });
 
