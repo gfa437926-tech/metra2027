@@ -22,7 +22,12 @@ class MetraAdaptiveNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth >= wideBreakpoint) {
+          // NavigationRail needs vertical room for every labelled destination.
+          // A wide but short viewport (e.g. split-screen / compact desktop) must
+          // use the bottom bar rather than overflow the rail.
+          final hasRailHeight = !constraints.maxHeight.isFinite ||
+              constraints.maxHeight >= 680;
+          if (constraints.maxWidth >= wideBreakpoint && hasRailHeight) {
             return Row(
               children: [
                 NavigationRail(
