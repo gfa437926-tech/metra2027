@@ -20,9 +20,11 @@ Future<void> _pumpHome(
   addTearDown(api.close);
   await tester.pumpWidget(
     MaterialApp(
-      home: MetraHome(
-        api: api,
-        accessContextOverride: access,
+      home: Scaffold(
+        body: MetraHome(
+          api: api,
+          accessContextOverride: access,
+        ),
       ),
     ),
   );
