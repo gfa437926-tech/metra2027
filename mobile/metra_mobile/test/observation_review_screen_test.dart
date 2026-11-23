@@ -44,7 +44,7 @@ void main() {
       (_) async => http.Response(jsonEncode([queueItem()]), 200),
     );
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
@@ -57,7 +57,7 @@ void main() {
   testWidgets('shows empty state for an empty server queue', (tester) async {
     final api = apiWith((_) async => http.Response('[]', 200));
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
@@ -68,7 +68,7 @@ void main() {
     final completer = Completer<http.Response>();
     final api = apiWith((_) => completer.future);
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
           : http.Response('{"error":"unavailable"}', 503);
     });
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
@@ -105,7 +105,7 @@ void main() {
       (tester) async {
     final api = apiWith((_) async => http.Response('forbidden', 403));
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('صلاحية'), findsOneWidget);
@@ -116,7 +116,7 @@ void main() {
   testWidgets('queue load 401 shows login guidance', (tester) async {
     final api = apiWith((_) async => http.Response('unauthorized', 401));
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.textContaining('تسجيل الدخول'), findsOneWidget);
@@ -139,7 +139,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     expect(find.text('نشرة يومية'), findsOneWidget);
@@ -169,7 +169,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
 
@@ -200,7 +200,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
@@ -223,7 +223,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
     await tester.tap(find.text('اعتماد'));
@@ -249,7 +249,7 @@ void main() {
     });
 
     await tester.pumpWidget(MaterialApp(
-      home: ObservationReviewScreen(api: api, stationId: stationId),
+      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
     ));
     await tester.pumpAndSettle();
 
