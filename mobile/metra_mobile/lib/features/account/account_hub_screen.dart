@@ -119,7 +119,7 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Card(
+          const Card(
             color: MetraColors.warningBg,
             child: const ListTile(
               leading: Icon(Icons.verified_user_outlined, color: MetraColors.warning),
