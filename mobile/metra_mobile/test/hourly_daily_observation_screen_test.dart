@@ -333,7 +333,7 @@ void main() {
     expect(find.text('مسودة محلية فقط'), findsOneWidget);
 
     await tester.pumpWidget(MaterialApp(
-      home: HourlyObservationScreen(api: api, stationId: otherStation),
+      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: otherStation)),
     ));
     await tester.pumpAndSettle();
     // Draft for the new station is restored; values are station-isolated.
