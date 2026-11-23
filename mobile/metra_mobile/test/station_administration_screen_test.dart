@@ -211,6 +211,52 @@ void main() {
     api.close();
   });
 
+  testWidgets('station switch while registration dialog is open drops stale action',
+      (tester) async {
+    const otherStationId = '44444444-4444-4444-8444-444444444444';
+    var decisionCalls = 0;
+    final getPaths = <String>[];
+    final api = apiWith((request) async {
+      if (request.method == 'POST' &&
+          request.url.path.contains('/decision')) {
+        decisionCalls++;
+        return http.Response('{}', 200);
+      }
+      if (request.method == 'GET') {
+        getPaths.add(request.url.path);
+      }
+      if (request.url.path.contains('registration-requests')) {
+        return jsonOk([registrationRequest()]);
+      }
+      return emptyList();
+    });
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StationAdministrationScreen(api: api, stationId: stationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('طلبات التسجيل'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('اعتماد'));
+    await tester.pumpAndSettle();
+    expect(find.text('اعتماد طلب التسجيل'), findsOneWidget);
+
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StationAdministrationScreen(api: api, stationId: otherStationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
+    await tester.pumpAndSettle();
+
+    expect(decisionCalls, 0);
+    expect(getPaths.any((path) => path.contains(otherStationId)), isTrue);
+    api.close();
+  });
+
   testWidgets('concurrent registration approve only posts once', (tester) async {
     final gate = Completer<void>();
     var decideCalls = 0;
