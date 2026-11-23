@@ -41,6 +41,16 @@ class _StationAdministrationScreenState
   }
 
   @override
+  void didUpdateWidget(covariant StationAdministrationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stationId != widget.stationId ||
+        oldWidget.api != widget.api) {
+      _processingRequestIds.clear();
+      _refresh();
+    }
+  }
+
+  @override
   void dispose() {
     _userFilterController.dispose();
     super.dispose();
@@ -95,6 +105,8 @@ class _StationAdministrationScreenState
   }
 
   Future<void> _decide(Map<String, dynamic> record, String decision) async {
+    // Keep the action bound to the station that supplied this queue row.
+    final stationId = widget.stationId;
     final requestId = _firstValue(record, ['id', 'request_id']);
     if (requestId == '—') {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,40 +161,41 @@ class _StationAdministrationScreenState
         noteController.dispose();
       });
     }
-    if (!confirmed || !mounted) return;
+    if (!confirmed || !mounted || stationId != widget.stationId) return;
 
-    if (_processingRequestIds.contains(requestId)) return;
-    setState(() => _processingRequestIds.add(requestId));
+    final processingKey = '$stationId::$requestId';
+    if (_processingRequestIds.contains(processingKey)) return;
+    setState(() => _processingRequestIds.add(processingKey));
 
     final note = noteController.text.trim();
     try {
       await widget.api.decideStationRegistrationRequest(
-        stationId: widget.stationId,
+        stationId: stationId,
         requestId: requestId,
         decision: decision,
         note: note.isEmpty ? null : note,
       );
-      if (!mounted) return;
+      if (!mounted || stationId != widget.stationId) return;
       setState(_refresh);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('تم إرسال قرار المراجعة إلى الخادم.')),
       );
     } on MetraApiException catch (error) {
-      if (!mounted) return;
+      if (!mounted || stationId != widget.stationId) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content:
                 Text(MetraErrorPresenter.registrationDecisionMessage(error))),
       );
     } catch (error) {
-      if (mounted) {
+      if (mounted && stationId == widget.stationId) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
         );
       }
     } finally {
       if (mounted) {
-        setState(() => _processingRequestIds.remove(requestId));
+        setState(() => _processingRequestIds.remove(processingKey));
       }
     }
   }
