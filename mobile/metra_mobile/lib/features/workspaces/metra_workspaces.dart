@@ -154,8 +154,7 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
 }
 
 class RecordsAiWorkspaceScreen extends StatelessWidget {
@@ -509,6 +508,5 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
 }
