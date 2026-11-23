@@ -317,12 +317,12 @@ void main() {
     ObservationDraftStore.instance.save(
       stationId: stationId,
       formType: 'hourly',
-      values: const {'dryBulbTemperature': 21},
+      values: const {'dryTemp': 21},
     );
     ObservationDraftStore.instance.save(
       stationId: otherStation,
       formType: 'hourly',
-      values: const {'dryBulbTemperature': 33},
+      values: const {'dryTemp': 33},
     );
 
     final api = apiWith((_) async => http.Response('{}', 200));
@@ -338,7 +338,12 @@ void main() {
     await tester.pumpAndSettle();
     // Draft for the new station is restored; values are station-isolated.
     expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
-    expect(find.text('33'), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is EditableText && widget.controller.text == '33',
+      ),
+      findsOneWidget,
+    );
     api.close();
   });
 
