@@ -7,9 +7,11 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
       MaterialApp(
-        home: SystemSettingsScreen(
-          userEmail: 'operator@metra.example',
-          onSignOut: () async {},
+        home: Scaffold(
+          body: SystemSettingsScreen(
+            userEmail: 'operator@metra.example',
+            onSignOut: () async {},
+          ),
         ),
       ),
     );
@@ -21,6 +23,8 @@ void main() {
     expect(find.text('operator@metra.example'), findsOneWidget);
     expect(find.textContaining('إصدار التطبيق'), findsOneWidget);
     expect(find.text(SystemSettingsScreen.appVersionLabel), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -700));
+    await tester.pumpAndSettle();
     expect(find.textContaining('اتصال واجهة البرمجة'), findsOneWidget);
     expect(find.textContaining('مصادقة Supabase'), findsOneWidget);
     expect(find.textContaining('حماية الجلسة'), findsOneWidget);
@@ -34,9 +38,11 @@ void main() {
   testWidgets('system settings handles missing email safely', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: SystemSettingsScreen(
-          userEmail: null,
-          onSignOut: null,
+        home: Scaffold(
+          body: SystemSettingsScreen(
+            userEmail: null,
+            onSignOut: null,
+          ),
         ),
       ),
     );
@@ -57,11 +63,13 @@ void main() {
     var signedOut = false;
     await tester.pumpWidget(
       MaterialApp(
-        home: SystemSettingsScreen(
-          userEmail: 'operator@metra.example',
-          onSignOut: () async {
-            signedOut = true;
-          },
+        home: Scaffold(
+          body: SystemSettingsScreen(
+            userEmail: 'operator@metra.example',
+            onSignOut: () async {
+              signedOut = true;
+            },
+          ),
         ),
       ),
     );
