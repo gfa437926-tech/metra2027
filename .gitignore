@@ -4,6 +4,8 @@
 
 # Flutter generated outputs
 /mobile/metra_mobile/.dart_tool/
+/mobile/metra_mobile/.flutter-plugins
+/mobile/metra_mobile/.flutter-plugins-dependencies
 /mobile/metra_mobile/build/
 
 # Local IDE files
