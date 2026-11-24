@@ -78,7 +78,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: CatalogObservationScreen(
             title: 'رصد الأمطار',
@@ -97,7 +97,7 @@ void main() {
 
     // Switch station via a new pump: station B must not show station A draft.
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: CatalogObservationScreen(
             title: 'رصد الأمطار',

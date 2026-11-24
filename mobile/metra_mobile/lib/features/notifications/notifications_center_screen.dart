@@ -79,10 +79,10 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             style: TextStyle(color: MetraColors.muted, height: 1.45),
           ),
           const SizedBox(height: 12),
-          Card(
-            color: const Color(0xFFFFF7E8),
+          const Card(
+            color: Color(0xFFFFF7E8),
             elevation: 0,
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

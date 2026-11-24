@@ -436,7 +436,9 @@ class _OperationsTab extends StatelessWidget {
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => ListView(
+  Widget build(BuildContext context) => Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _ServiceNotice(title: 'الوحدة غير متصلة بالخادم', message: message),
@@ -453,6 +455,7 @@ class _OperationsTab extends StatelessWidget {
             label: Text('إضافة سجل — $title'),
           ),
         ],
+        ),
       );
 }
 

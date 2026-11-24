@@ -29,7 +29,11 @@ void main() {
     expect(find.text('الأجهزة والصيانة'), findsOneWidget);
     expect(find.text('الشبكات والاتصالات'), findsOneWidget);
     expect(find.text('تقنية المعلومات'), findsOneWidget);
-    expect(find.text('الوحدة غير متصلة بالخادم'), findsOneWidget);
+    expect(find.text('الوحدة غير متصلة بالخادم'), findsWidgets);
+    final add = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'إضافة سجل — سجل الأجهزة'),
+    );
+    expect(add.onPressed, isNull);
   });
 
   testWidgets('reports workspace keeps generation disabled without a report API', (tester) async {
