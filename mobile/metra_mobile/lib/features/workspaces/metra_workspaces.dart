@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'workspace_period.dart';
+
 class _ServiceNotice extends StatelessWidget {
   const _ServiceNotice({required this.title, required this.message});
 
@@ -140,6 +142,26 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
               label: Text('نهاية الفترة: ${_dateLabel(_end)}'),
             ),
             const SizedBox(height: 12),
+            if (workspacePeriodError(_start, _end) != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  workspacePeriodError(_start, _end)!,
+                  style: const TextStyle(color: Color(0xFFB45309), height: 1.4),
+                ),
+              ),
+            if (_start != null || _end != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  onPressed: () => setState(() {
+                    _start = null;
+                    _end = null;
+                  }),
+                  icon: const Icon(Icons.clear),
+                  label: const Text('مسح الفترة'),
+                ),
+              ),
             const _MetricCard(label: 'السجلات المتاحة للتحليل', value: '—', icon: Icons.storage_outlined),
             const _MetricCard(label: 'القيم المفقودة', value: '—', icon: Icons.help_outline),
             const _MetricCard(label: 'القيم الشاذة', value: '—', icon: Icons.warning_amber_outlined),
@@ -205,29 +227,55 @@ class RecordsAiWorkspaceScreen extends StatelessWidget {
       );
 }
 
-class _ArchiveTab extends StatelessWidget {
+class _ArchiveTab extends StatefulWidget {
   const _ArchiveTab({required this.stationId});
   final String stationId;
 
   @override
-  Widget build(BuildContext context) => Material(
-        color: Colors.transparent,
-        child: ListView(
+  State<_ArchiveTab> createState() => _ArchiveTabState();
+}
+
+class _ArchiveTabState extends State<_ArchiveTab> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasQuery = _query.text.trim().isNotEmpty;
+    return Material(
+      color: Colors.transparent,
+      child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           const _ServiceNotice(
             title: 'خدمة الأرشفة غير متصلة',
-            message: 'لا توجد خدمة تخزين/رفع ملفات معتمدة في API الحالي. لا يتم رفع الصور أو حفظها محلياً.',
+            message:
+                'لا توجد خدمة تخزين/رفع ملفات معتمدة في API الحالي. لا يتم رفع الصور أو حفظها محلياً.',
           ),
           const SizedBox(height: 12),
-          Text('المحطة: $stationId'),
+          Text('المحطة: ${widget.stationId}'),
           const SizedBox(height: 12),
-          const TextField(
+          TextField(
+            controller: _query,
+            textDirection: TextDirection.rtl,
             decoration: InputDecoration(
               labelText: 'البحث برقم السجل أو التاريخ',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.search),
+              border: const OutlineInputBorder(),
+              suffixIcon: hasQuery
+                  ? IconButton(
+                      tooltip: 'مسح البحث',
+                      onPressed: () => setState(_query.clear),
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
             ),
+            onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
           FilledButton.icon(
@@ -238,10 +286,18 @@ class _ArchiveTab extends StatelessWidget {
           const SizedBox(height: 28),
           const Icon(Icons.photo_library_outlined, size: 48, color: Color(0xFF94A3B8)),
           const SizedBox(height: 8),
-          const Center(child: Text('لا توجد صور معروضة — خدمة التخزين غير مهيأة')),
+          Center(
+            child: Text(
+              hasQuery
+                  ? 'لا توجد نتائج مطابقة — خدمة الأرشفة غير متصلة ولن تُخترع سجلات محلية'
+                  : 'لا توجد صور معروضة — خدمة التخزين غير مهيأة',
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
-        ),
-      );
+      ),
+    );
+  }
 }
 
 class _AiTab extends StatelessWidget {
@@ -469,9 +525,28 @@ class ReportsWorkspaceScreen extends StatefulWidget {
 
 class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
   String _reportType = 'الرصد الساعي';
+  DateTime? _start;
+  DateTime? _end;
+
+  Future<DateTime?> _pickDate(DateTime? current) => showDatePicker(
+        context: context,
+        initialDate: current ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+      );
+
+  String _dateLabel(DateTime? date) => date == null
+      ? 'اختر التاريخ'
+      : <String>[
+          date.year.toString().padLeft(4, '0'),
+          date.month.toString().padLeft(2, '0'),
+          date.day.toString().padLeft(2, '0'),
+        ].join('-');
 
   @override
-  Widget build(BuildContext context) => Directionality(
+  Widget build(BuildContext context) {
+    final periodError = workspacePeriodError(_start, _end);
+    return Directionality(
         textDirection: TextDirection.rtl,
         child: Material(
           color: Colors.transparent,
@@ -509,6 +584,28 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
               onChanged: (value) => setState(() => _reportType = value ?? _reportType),
             ),
             const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final date = await _pickDate(_start);
+                if (date != null && mounted) setState(() => _start = date);
+              },
+              icon: const Icon(Icons.calendar_today),
+              label: Text('بداية الفترة: ${_dateLabel(_start)}'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final date = await _pickDate(_end);
+                if (date != null && mounted) setState(() => _end = date);
+              },
+              icon: const Icon(Icons.event),
+              label: Text('نهاية الفترة: ${_dateLabel(_end)}'),
+            ),
+            if (periodError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(periodError, style: const TextStyle(color: Color(0xFFB45309), height: 1.4)),
+              ),
+            const SizedBox(height: 12),
             const _MetricCard(label: 'عدد السجلات', value: '—', icon: Icons.table_rows_outlined),
             const _MetricCard(label: 'نسبة الاكتمال', value: '—', icon: Icons.pie_chart_outline),
             const _MetricCard(label: 'الملاحظات', value: '—', icon: Icons.fact_check),
@@ -527,4 +624,5 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
           ),
         ),
       );
+  }
 }

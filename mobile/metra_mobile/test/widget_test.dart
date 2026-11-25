@@ -72,6 +72,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('محطة آلية'));
     expect(selected, '22222222-2222-4222-8222-222222222222');
+    await tester.enterText(find.byType(TextField), 'AU-01');
+    await tester.pump();
+    expect(find.text('محطة آلية'), findsOneWidget);
+    expect(find.text('محطة كلاسيكية'), findsNothing);
+    await tester.tap(find.byTooltip('مسح البحث'));
+    await tester.pump();
+    expect(find.text('محطة كلاسيكية'), findsOneWidget);
     api.close();
   });
   testWidgets('login exposes password recovery and validates email before request', (tester) async {
@@ -167,7 +174,10 @@ void main() {
     expect(find.text('المقارنة الجغرافية'), findsOneWidget);
     expect(find.textContaining('1200.0 م'), findsWidgets);
     expect(find.text('المسافة من المرجع'), findsWidgets);
-    expect(find.textContaining('لن نعرض قيماً افتراضية'), findsOneWidget);
+    // Banner remains after selection; scroll back to prove it is still present.
+    await tester.ensureVisible(find.text('الرصدات اللحظية والنشرات غير متصلة'));
+    expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
+    expect(find.textContaining('رصد فعلي'), findsOneWidget);
     api.close();
   });
 

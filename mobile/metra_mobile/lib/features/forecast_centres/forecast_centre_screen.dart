@@ -1,9 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
 import '../../core/widgets/metra_async_state.dart';
+import '../stations/station_directory_query.dart';
+import 'forecast_catalogue_distance.dart';
 
 /// Catalogue-based geographic comparison for forecast-centre staff.
 /// Live telemetry is intentionally not synthesized here: it needs a separate,
@@ -20,12 +20,19 @@ class ForecastCentreScreen extends StatefulWidget {
 class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
   late Future<List<StationDirectoryItem>> _stationsFuture;
   final Set<String> _selectedIds = <String>{};
+  final _query = TextEditingController();
   String? _referenceId;
 
   @override
   void initState() {
     super.initState();
     _stationsFuture = widget.api.getAllStationDirectory();
+  }
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
   }
 
   void _reload() {
@@ -51,8 +58,8 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
             onRetry: _reload,
           );
         }
-        final stations = snapshot.data ?? const <StationDirectoryItem>[];
-        if (stations.isEmpty) {
+        final loaded = snapshot.data ?? const <StationDirectoryItem>[];
+        if (loaded.isEmpty) {
           return MetraAsyncStatePanel.empty(
             icon: Icons.location_searching,
             title: 'لا توجد محطات متاحة للمقارنة',
@@ -61,9 +68,12 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
             action: TextButton(onPressed: _reload, child: const Text('تحديث')),
           );
         }
-        final selected = stations.where((s) => _selectedIds.contains(s.id)).toList();
+        final stations = loaded
+            .where((station) => stationMatchesDirectoryQuery(station, _query.text))
+            .toList(growable: false);
+        final selected = loaded.where((s) => _selectedIds.contains(s.id)).toList();
         StationDirectoryItem? reference;
-        for (final station in stations) {
+        for (final station in loaded) {
           if (station.id == _referenceId) { reference = station; break; }
         }
         return Directionality(
@@ -95,7 +105,33 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
-              ...stations.map((station) => _stationChoice(station)),
+              TextField(
+                controller: _query,
+                decoration: InputDecoration(
+                  labelText: 'تصفية الدليل المحمّل',
+                  hintText: 'الاسم أو الرمز',
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                  suffixIcon: _query.text.trim().isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'مسح التصفية',
+                          onPressed: () => setState(_query.clear),
+                          icon: const Icon(Icons.clear),
+                        ),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 8),
+              if (stations.isEmpty)
+                _state(
+                  icon: Icons.search_off,
+                  title: 'لا توجد محطات مطابقة',
+                  message: 'التصفية محلية على الدليل المحمّل ولا تستعلم الخادم من جديد.',
+                )
+              else
+                ...stations.map((station) => _stationChoice(station)),
               const SizedBox(height: 16),
               if (selected.length >= 2) ...[
                 Text('المقارنة الجغرافية',
@@ -221,7 +257,10 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
           border: OutlineInputBorder(),
         ),
         items: selected
-            .map((s) => DropdownMenuItem(value: s.id, child: Text(s.nameArabic)))
+            .map((s) => DropdownMenuItem(
+                  value: s.id,
+                  child: Text(s.nameArabic, overflow: TextOverflow.ellipsis),
+                ))
             .toList(),
         onChanged: (value) => setState(() => _referenceId = value),
       );
@@ -322,20 +361,11 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
   String _coordinate(double? value) =>
       value == null ? 'غير متوفر' : value.toStringAsFixed(5);
 
-  double? _distanceKm(StationDirectoryItem a, StationDirectoryItem b) {
-    if (!a.hasValidCoordinates || !b.hasValidCoordinates) return null;
-    const earthRadiusKm = 6371.0088;
-    final lat1 = _radians(a.latitude!);
-    final lat2 = _radians(b.latitude!);
-    final deltaLat = _radians(b.latitude! - a.latitude!);
-    final deltaLon = _radians(b.longitude! - a.longitude!);
-    final haversine = math.pow(math.sin(deltaLat / 2), 2) +
-        math.cos(lat1) * math.cos(lat2) *
-            math.pow(math.sin(deltaLon / 2), 2);
-    final bounded = haversine.clamp(0.0, 1.0);
-    return 2 * earthRadiusKm *
-        math.asin(math.sqrt(bounded.toDouble()));
-  }
-
-  double _radians(double degrees) => degrees * math.pi / 180;
+  double? _distanceKm(StationDirectoryItem a, StationDirectoryItem b) =>
+      forecastCatalogueDistanceKm(
+        latitudeA: a.latitude,
+        longitudeA: a.longitude,
+        latitudeB: b.latitude,
+        longitudeB: b.longitude,
+      );
 }

@@ -23,6 +23,7 @@ class ObservationReviewScreen extends StatefulWidget {
 class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   late Future<List<ObservationQueueItem>> _queue;
   final Set<String> _processingIds = <String>{};
+  final _query = TextEditingController();
   String _typeFilter = 'all';
 
   @override
@@ -32,12 +33,33 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   }
 
   @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
   void didUpdateWidget(covariant ObservationReviewScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stationId != widget.stationId) {
       _processingIds.clear();
+      _query.clear();
+      _typeFilter = 'all';
       _queue = widget.api.getReviewQueue(widget.stationId);
     }
+  }
+
+  bool _matchesQuery(ObservationQueueItem item) {
+    final q = _query.text.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    if (item.id.toLowerCase().contains(q)) return true;
+    if (item.observationType.toLowerCase().contains(q)) return true;
+    if (item.status.toLowerCase().contains(q)) return true;
+    for (final entry in item.payload.entries) {
+      if (entry.key.toLowerCase().contains(q)) return true;
+      if ('${entry.value}'.toLowerCase().contains(q)) return true;
+    }
+    return false;
   }
 
   Future<void> _refresh() async {
@@ -105,26 +127,51 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final entry in [
-                    ('all', 'الكل'),
-                    ('hourly', 'ساعي'),
-                    ('daily', 'يومي'),
-                    ('phenomenon', 'ظاهرة'),
-                  ])
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 8),
-                      child: FilterChip(
-                        label: Text(entry.$2),
-                        selected: _typeFilter == entry.$1,
-                        onSelected: (_) => setState(() => _typeFilter = entry.$1),
-                      ),
-                    ),
-                ],
-              ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _query,
+                  textDirection: TextDirection.rtl,
+                  decoration: InputDecoration(
+                    labelText: 'بحث في الطابور المحمّل',
+                    hintText: 'النوع أو الحالة أو حقل من الحمولة',
+                    prefixIcon: const Icon(Icons.search),
+                    isDense: true,
+                    border: const OutlineInputBorder(),
+                    suffixIcon: _query.text.trim().isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'مسح البحث',
+                            onPressed: () => setState(_query.clear),
+                            icon: const Icon(Icons.clear),
+                          ),
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+                const SizedBox(height: 8),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final entry in [
+                        ('all', 'الكل'),
+                        ('hourly', 'ساعي'),
+                        ('daily', 'يومي'),
+                        ('phenomenon', 'ظاهرة'),
+                      ])
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 8),
+                          child: FilterChip(
+                            label: Text(entry.$2),
+                            selected: _typeFilter == entry.$1,
+                            onSelected: (_) =>
+                                setState(() => _typeFilter = entry.$1),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -153,12 +200,17 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                       .where((r) => r.observationType == _typeFilter)
                       .toList(growable: false);
                 }
+                rows = rows.where(_matchesQuery).toList(growable: false);
                 if (rows.isEmpty) {
+                  final hasQuery = _query.text.trim().isNotEmpty;
                   return MetraAsyncStatePanel.empty(
                     icon: Icons.fact_check_outlined,
-                    title: 'لا توجد نشرات بانتظار المراجعة',
-                    subtitle:
-                        'عند إرسال تقارير من الراصدين ستظهر هنا لاتخاذ قرار الاعتماد أو الإرجاع.',
+                    title: hasQuery
+                        ? 'لا توجد نشرات مطابقة'
+                        : 'لا توجد نشرات بانتظار المراجعة',
+                    subtitle: hasQuery
+                        ? 'البحث محلي على الطابور المحمّل ولم يُستعلم الخادم من جديد.'
+                        : 'عند إرسال تقارير من الراصدين ستظهر هنا لاتخاذ قرار الاعتماد أو الإرجاع.',
                     action: TextButton.icon(
                       onPressed: _refresh,
                       icon: const Icon(Icons.refresh),

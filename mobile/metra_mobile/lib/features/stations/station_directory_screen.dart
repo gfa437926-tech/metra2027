@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
 import '../../core/widgets/metra_async_state.dart';
+import 'station_directory_query.dart';
 
 /// Station catalogue (map + list). Operational work still requires a selected
 /// station and server-side permission checks on every mutation.
@@ -33,12 +34,19 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   String? _type;
   bool _showMap = true;
   bool _mineOnly = false;
+  final _query = TextEditingController();
   late Future<List<StationDirectoryItem>> _stations;
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
   }
 
   void _load() {
@@ -53,8 +61,11 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   }
 
   List<StationDirectoryItem> _applyFilters(List<StationDirectoryItem> rows) {
-    if (!_mineOnly) return rows;
-    return rows.where((s) => _hasOperationalAccess(s.id)).toList(growable: false);
+    final visible = rows.where((station) {
+      if (_mineOnly && !_hasOperationalAccess(station.id)) return false;
+      return stationMatchesDirectoryQuery(station, _query.text);
+    }).toList(growable: false);
+    return visible;
   }
 
   @override
@@ -77,6 +88,26 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   _chip('الآلية', 'automatic'),
                   _chip('السينوبتيكية', 'synoptic'),
                 ],
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _query,
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  labelText: 'بحث في الدليل المحمّل',
+                  hintText: 'الاسم أو الرمز أو معرف المنظمة',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _query.text.trim().isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'مسح البحث',
+                          onPressed: () => setState(_query.clear),
+                          icon: const Icon(Icons.clear),
+                        ),
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                ),
+                onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -156,10 +187,14 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   icon: Icons.location_off,
                   title: _mineOnly
                       ? 'لا توجد محطات مصرّح بها'
-                      : 'لا توجد محطات',
+                      : _query.text.trim().isEmpty
+                          ? 'لا توجد محطات'
+                          : 'لا توجد محطات مطابقة',
                   subtitle: _mineOnly
                       ? 'لا يملك حسابك صلاحيات تشغيلية على أي محطة ضمن الفلتر الحالي.'
-                      : 'لا توجد سجلات مطابقة للنوع المحدد.',
+                      : _query.text.trim().isEmpty
+                          ? 'لا توجد سجلات مطابقة للنوع المحدد.'
+                          : 'عبارة البحث لا تطابق اسماً أو رمزاً ضمن المحطات المحمّلة. لم يُستعلم الخادم من جديد.',
                   action: TextButton(
                     onPressed: () => setState(_load),
                     child: const Text('تحديث'),
