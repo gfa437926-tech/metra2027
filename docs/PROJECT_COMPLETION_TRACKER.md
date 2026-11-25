@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `f0fcb0254c14cbcdb668c7109ee304dc60296fc5`  
+**HEAD (local):** `40ccf65f42b46c0fb65264ee1019da080e57590f`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
 
