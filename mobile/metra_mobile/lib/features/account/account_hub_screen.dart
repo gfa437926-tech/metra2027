@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../../core/auth/registration_field_rules.dart';
 import '../../core/theme/metra_theme.dart';
 import 'registration_request_screen.dart';
 
@@ -41,17 +42,11 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
     if (_busy) return;
     final next = _newPassword.text;
     final confirm = _confirmPassword.text;
-    if (next.trim().isEmpty || next.length < 8) {
+    final passwordError = RegistrationFieldRules.password(next);
+    if (passwordError != null) {
       setState(() {
         _error = true;
-        _message = 'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.';
-      });
-      return;
-    }
-    if (next.length > 128) {
-      setState(() {
-        _error = true;
-        _message = 'كلمة المرور أطول من الحد المسموح.';
+        _message = passwordError;
       });
       return;
     }
@@ -62,10 +57,11 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
       });
       return;
     }
-    if (next != confirm) {
+    final confirmError = RegistrationFieldRules.confirmPassword(next, confirm);
+    if (confirmError != null) {
       setState(() {
         _error = true;
-        _message = 'تأكيد كلمة المرور غير متطابق.';
+        _message = confirmError;
       });
       return;
     }
