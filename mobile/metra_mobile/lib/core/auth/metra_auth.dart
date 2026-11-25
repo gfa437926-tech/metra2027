@@ -190,8 +190,14 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                               icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                             ),
                           ),
-                          validator: (value) =>
-                              (value?.isNotEmpty ?? false) ? null : 'أدخل كلمة المرور',
+                          validator: (value) {
+                            final password = value ?? '';
+                            if (password.isEmpty) return 'أدخل كلمة المرور';
+                            if (password.length > 128) {
+                              return 'كلمة المرور أطول من الحد المسموح';
+                            }
+                            return null;
+                          },
                         ),
                         if (_error != null) ...[
                           const SizedBox(height: 12),
