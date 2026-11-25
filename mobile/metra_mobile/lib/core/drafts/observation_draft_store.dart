@@ -73,6 +73,13 @@ class ObservationDraftStore {
       'api_key',
       'service_role',
       'authorization',
+      'credential',
+      'privatekey',
+      'private_key',
+      'cookie',
+      'session',
+      'jwt',
+      'bearer',
     ];
     return blocked.any((b) => fieldId.contains(b));
   }
