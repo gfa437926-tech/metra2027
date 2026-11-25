@@ -150,6 +150,17 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
                   style: const TextStyle(color: Color(0xFFB45309), height: 1.4),
                 ),
               ),
+            if (workspacePeriodIsReady(_start, _end))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'عدد الأيام المختارة: ${workspacePeriodDayCount(_start, _end)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+              ),
             if (_start != null || _end != null)
               Align(
                 alignment: AlignmentDirectional.centerStart,
@@ -162,6 +173,11 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
                   label: const Text('مسح الفترة'),
                 ),
               ),
+            _MetricCard(
+              label: 'أيام الفترة المحلية',
+              value: workspacePeriodDayCount(_start, _end)?.toString() ?? '—',
+              icon: Icons.date_range_outlined,
+            ),
             const _MetricCard(label: 'السجلات المتاحة للتحليل', value: '—', icon: Icons.storage_outlined),
             const _MetricCard(label: 'القيم المفقودة', value: '—', icon: Icons.help_outline),
             const _MetricCard(label: 'القيم الشاذة', value: '—', icon: Icons.warning_amber_outlined),
@@ -626,7 +642,23 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(periodError, style: const TextStyle(color: Color(0xFFB45309), height: 1.4)),
               ),
+            if (workspacePeriodIsReady(_start, _end))
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'عدد الأيام المختارة: ${workspacePeriodDayCount(_start, _end)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F766E),
+                  ),
+                ),
+              ),
             const SizedBox(height: 12),
+            _MetricCard(
+              label: 'أيام الفترة المحلية',
+              value: workspacePeriodDayCount(_start, _end)?.toString() ?? '—',
+              icon: Icons.date_range_outlined,
+            ),
             const _MetricCard(label: 'عدد السجلات', value: '—', icon: Icons.table_rows_outlined),
             const _MetricCard(label: 'نسبة الاكتمال', value: '—', icon: Icons.pie_chart_outline),
             const _MetricCard(label: 'الملاحظات', value: '—', icon: Icons.fact_check),
