@@ -166,15 +166,21 @@ class _ClimatolWorkspaceScreenState extends State<ClimatolWorkspaceScreen> {
             const _MetricCard(label: 'القيم المفقودة', value: '—', icon: Icons.help_outline),
             const _MetricCard(label: 'القيم الشاذة', value: '—', icon: Icons.warning_amber_outlined),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.science_outlined),
-              label: const Text('تشغيل تحليل التجانس'),
+            Tooltip(
+              message: 'غير متاح — لا يوجد محرك CLIMATOL معتمد في API الحالي',
+              child: FilledButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.science_outlined),
+                label: const Text('تشغيل تحليل التجانس'),
+              ),
             ),
-            OutlinedButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.download_outlined),
-              label: const Text('تصدير نتائج التحليل'),
+            Tooltip(
+              message: 'غير متاح — لا يوجد مسار تصدير معتمد',
+              child: OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.download_outlined),
+                label: const Text('تصدير نتائج التحليل'),
+              ),
             ),
           ],
           ),
@@ -278,10 +284,13 @@ class _ArchiveTabState extends State<_ArchiveTab> {
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('رفع صورة سجل'),
+          Tooltip(
+            message: 'غير متاح — لا توجد خدمة أرشفة/تخزين ملفات معتمدة',
+            child: FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.upload_file),
+              label: const Text('رفع صورة سجل'),
+            ),
           ),
           const SizedBox(height: 28),
           const Icon(Icons.photo_library_outlined, size: 48, color: Color(0xFF94A3B8)),
@@ -321,15 +330,21 @@ class _AiTab extends StatelessWidget {
           const _MetricCard(label: 'إصدارات النماذج', value: '—', icon: Icons.psychology_outlined),
           const _MetricCard(label: 'دقة آخر تقييم', value: '—', icon: Icons.insights_outlined),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('بدء تدريب نموذج'),
+          Tooltip(
+            message: 'غير متاح — لا توجد خدمة AI/نماذج معتمدة',
+            child: FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('بدء تدريب نموذج'),
+            ),
           ),
-          OutlinedButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.auto_awesome),
-            label: const Text('تشغيل استخراج OCR'),
+          Tooltip(
+            message: 'غير متاح — لا توجد خدمة OCR معتمدة',
+            child: OutlinedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('تشغيل استخراج OCR'),
+            ),
           ),
         ],
         ),
@@ -382,10 +397,13 @@ class _ComparisonTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.compare_arrows),
-            label: const Text('تنفيذ المقارنة'),
+          Tooltip(
+            message: 'غير متاح — لا يوجد عقد مقارنة نتائج معتمد',
+            child: FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.compare_arrows),
+              label: const Text('تنفيذ المقارنة'),
+            ),
           ),
         ],
         ),
@@ -505,10 +523,13 @@ class _OperationsTab extends StatelessWidget {
           const _MetricCard(label: 'البلاغات المفتوحة', value: '—', icon: Icons.report_problem_outlined),
           const _MetricCard(label: 'طلبات الصيانة', value: '—', icon: Icons.build_outlined),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: null,
-            icon: const Icon(Icons.add),
-            label: Text('إضافة سجل — $title'),
+          Tooltip(
+            message: 'غير متاح — الوحدة غير متصلة بعقد خادمي معتمد',
+            child: FilledButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.add),
+              label: Text('إضافة سجل — $title'),
+            ),
           ),
         ],
         ),
@@ -610,15 +631,21 @@ class _ReportsWorkspaceScreenState extends State<ReportsWorkspaceScreen> {
             const _MetricCard(label: 'نسبة الاكتمال', value: '—', icon: Icons.pie_chart_outline),
             const _MetricCard(label: 'الملاحظات', value: '—', icon: Icons.fact_check),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.assessment),
-              label: const Text('إنشاء التقرير'),
+            Tooltip(
+              message: 'غير متاح — لا يوجد مسار تقارير إنتاجي معتمد',
+              child: FilledButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.assessment),
+                label: const Text('إنشاء التقرير'),
+              ),
             ),
-            OutlinedButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.print_outlined),
-              label: const Text('طباعة / تصدير'),
+            Tooltip(
+              message: 'غير متاح — لا يوجد مسار طباعة/تصدير معتمد',
+              child: OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.print_outlined),
+                label: const Text('طباعة / تصدير'),
+              ),
             ),
           ],
           ),
