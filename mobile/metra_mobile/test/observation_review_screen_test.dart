@@ -345,4 +345,39 @@ void main() {
     expect(decideCalls, 1);
     api.close();
   });
+
+  testWidgets('local queue search filters loaded rows without a new API call', (tester) async {
+    var loads = 0;
+    final api = apiWith((_) async {
+      loads += 1;
+      return http.Response(
+        jsonEncode([
+          queueItem(id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', type: 'hourly'),
+          queueItem(id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', type: 'daily'),
+        ]),
+        200,
+      );
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ObservationReviewScreen(api: api, stationId: stationId),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(loads, 1);
+
+    await tester.enterText(find.byType(TextField), 'hourly');
+    await tester.pump();
+    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsNothing);
+    expect(loads, 1);
+
+    await tester.enterText(find.byType(TextField), 'لا-يطابق');
+    await tester.pump();
+    expect(find.text('لا توجد نشرات مطابقة'), findsOneWidget);
+    expect(loads, 1);
+    api.close();
+  });
 }
