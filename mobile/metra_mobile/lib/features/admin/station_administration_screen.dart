@@ -46,6 +46,28 @@ bool stationAdminRecordMatchesQuery(Map<String, dynamic> record, String rawQuery
   return haystack.contains(q);
 }
 
+bool stationAdminAuditMatchesQuery(Map<String, dynamic> record, String rawQuery) {
+  final q = rawQuery.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  String first(List<String> keys) {
+    for (final key in keys) {
+      final value = record[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return '';
+  }
+  final haystack = [
+    first(['event_type', 'action', 'event', 'id']),
+    first(['created_at', 'occurred_at']),
+    first(['actor_user_id', 'actor_name', 'actor']),
+    first(['target_user_id', 'target', 'details', 'message']),
+  ].join(' ').toLowerCase();
+  return haystack.contains(q);
+}
+
+
 class StationAdministrationScreen extends StatefulWidget {
   const StationAdministrationScreen({
     super.key,
@@ -408,17 +430,27 @@ class _StationAdministrationScreenState
                           return Wrap(
                             spacing: 8,
                             children: [
-                              FilledButton.tonal(
-                                onPressed: busy
-                                    ? null
-                                    : () => _decide(record, 'approve'),
-                                child: Text(busy ? 'جارٍ...' : 'اعتماد'),
+                              Semantics(
+                                button: true,
+                                enabled: !busy,
+                                label: 'اعتماد طلب التسجيل',
+                                child: FilledButton.tonal(
+                                  onPressed: busy
+                                      ? null
+                                      : () => _decide(record, 'approve'),
+                                  child: Text(busy ? 'جارٍ...' : 'اعتماد'),
+                                ),
                               ),
-                              OutlinedButton(
-                                onPressed: busy
-                                    ? null
-                                    : () => _decide(record, 'reject'),
-                                child: const Text('رفض'),
+                              Semantics(
+                                button: true,
+                                enabled: !busy,
+                                label: 'رفض طلب التسجيل',
+                                child: OutlinedButton(
+                                  onPressed: busy
+                                      ? null
+                                      : () => _decide(record, 'reject'),
+                                  child: const Text('رفض'),
+                                ),
                               ),
                             ],
                           );

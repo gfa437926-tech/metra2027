@@ -32,4 +32,16 @@ void main() {
       'solo@metra.local',
     );
   });
+
+  test('stationAdminAuditMatchesQuery matches event and actor fields', () {
+    final record = {
+      'event_type': 'registration.approved',
+      'created_at': '2026-11-20T10:00:00Z',
+      'actor_name': 'مدقق المحطة',
+    };
+    expect(stationAdminAuditMatchesQuery(record, ''), isTrue);
+    expect(stationAdminAuditMatchesQuery(record, 'approved'), isTrue);
+    expect(stationAdminAuditMatchesQuery(record, 'مدقق'), isTrue);
+    expect(stationAdminAuditMatchesQuery(record, 'missing'), isFalse);
+  });
 }
