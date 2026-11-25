@@ -35,6 +35,8 @@ void main() {
     expect(stationMatchesDirectoryQuery(station, 'ساحل'), isTrue);
     expect(stationMatchesDirectoryQuery(station, 'COASTAL'), isTrue);
     expect(stationMatchesDirectoryQuery(station, '40430'), isTrue);
+    expect(stationMatchesDirectoryQuery(station, '11111111-1111'), isTrue);
+    expect(stationMatchesDirectoryQuery(station, 'classic'), isTrue);
     expect(stationMatchesDirectoryQuery(station, 'غير موجود'), isFalse);
   });
 

@@ -10,5 +10,7 @@ bool stationMatchesDirectoryQuery(StationDirectoryItem station, String rawQuery)
   return contains(station.nameArabic) ||
       contains(station.nameEnglish) ||
       contains(station.localCode) ||
-      contains(station.wmoStationId);
+      contains(station.wmoStationId) ||
+      contains(station.id) ||
+      contains(station.stationType);
 }
