@@ -34,6 +34,23 @@ void main() {
   });
 
   group('validateRainfall', () {
+    test('rejects malformed and impossible calendar dates', () {
+      for (final date in ['2026-2-01', '2026-02-31', '01-02-2026']) {
+        final errors = RainfallSoilLocalRules.validateRainfall({
+          'observationDate': date,
+          'responsibilityAgreement': true,
+        });
+        expect(errors.containsKey('observationDate'), isTrue, reason: date);
+      }
+    });
+
+    test('accepts a valid leap-day observation date', () {
+      final errors = RainfallSoilLocalRules.validateRainfall({
+        'observationDate': '2024-02-29',
+        'responsibilityAgreement': true,
+      });
+      expect(errors, isEmpty);
+    });
     test('requires date and agreement', () {
       final errors = RainfallSoilLocalRules.validateRainfall({});
       expect(errors.containsKey('observationDate'), isTrue);
@@ -68,6 +85,13 @@ void main() {
   });
 
   group('validateSoil', () {
+    test('rejects impossible observation date', () {
+      final errors = RainfallSoilLocalRules.validateSoil({
+        'observationDate': '2026-04-31',
+        'responsibilityAgreement': true,
+      });
+      expect(errors.containsKey('observationDate'), isTrue);
+    });
     test('requires date and agreement', () {
       final errors = RainfallSoilLocalRules.validateSoil({
         'depth5': '18',
