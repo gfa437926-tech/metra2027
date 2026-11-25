@@ -61,11 +61,12 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   }
 
   List<StationDirectoryItem> _applyFilters(List<StationDirectoryItem> rows) {
-    final visible = rows.where((station) {
-      if (_mineOnly && !_hasOperationalAccess(station.id)) return false;
-      return stationMatchesDirectoryQuery(station, _query.text);
-    }).toList(growable: false);
-    return visible;
+    return filterAndSortStationDirectory(
+      rows: rows,
+      query: _query.text,
+      mineOnly: _mineOnly,
+      hasOperationalAccess: _hasOperationalAccess,
+    );
   }
 
   @override

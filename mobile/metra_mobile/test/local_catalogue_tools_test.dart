@@ -80,4 +80,30 @@ void main() {
     expect(km, isNotNull);
     expect(km!, inInclusiveRange(111.0, 111.4));
   });
+
+  test('sortStationDirectoryLocally orders by Arabic name then code', () {
+    final rows = [
+      _station(nameArabic: 'ب', localCode: 'B1'),
+      _station(nameArabic: 'أ', localCode: 'A1'),
+      _station(nameArabic: 'أ', localCode: 'A0'),
+    ];
+    // Give distinct ids via copy — _station uses fixed id; mutate via localCode only.
+    final sorted = sortStationDirectoryLocally(rows);
+    expect(sorted.map((s) => s.localCode).toList(), ['A0', 'A1', 'B1']);
+  });
+
+  test('filterAndSortStationDirectory applies query and mineOnly', () {
+    final rows = [
+      _station(nameArabic: 'محطة الساحل', localCode: 'CL-09'),
+      _station(nameArabic: 'محطة داخلية', localCode: 'IN-01'),
+    ];
+    final mine = filterAndSortStationDirectory(
+      rows: rows,
+      query: 'ساحل',
+      mineOnly: true,
+      hasOperationalAccess: (id) => true,
+    );
+    expect(mine.length, 1);
+    expect(mine.first.localCode, 'CL-09');
+  });
 }
