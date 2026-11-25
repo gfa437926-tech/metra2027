@@ -605,3 +605,65 @@ class _ActionCard extends StatelessWidget {
         ),
       );
 }
+
+/// Live session-draft summary for the selected station (local only).
+class _StationDraftSummaryCard extends StatefulWidget {
+  const _StationDraftSummaryCard({
+    required this.stationId,
+    this.onOpenObservations,
+  });
+
+  final String stationId;
+  final VoidCallback? onOpenObservations;
+
+  @override
+  State<_StationDraftSummaryCard> createState() =>
+      _StationDraftSummaryCardState();
+}
+
+class _StationDraftSummaryCardState extends State<_StationDraftSummaryCard> {
+  @override
+  void initState() {
+    super.initState();
+    ObservationDraftStore.instance.addListener(_onChange);
+  }
+
+  @override
+  void dispose() {
+    ObservationDraftStore.instance.removeListener(_onChange);
+    super.dispose();
+  }
+
+  void _onChange() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final types =
+        ObservationDraftStore.instance.formTypesWithDrafts(widget.stationId);
+    if (types.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final labels = types.toList()..sort();
+    return Card(
+      elevation: 0,
+      color: const Color(0xFFE8F4FF),
+      child: ListTile(
+        leading: const Icon(Icons.edit_note, color: _blue),
+        title: Text('مسودات محلية: ${types.length} نموذج'),
+        subtitle: Text(
+          'جلسة فقط — لم تُرسل إلى الخادم · ${labels.join(' · ')}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: widget.onOpenObservations == null
+            ? null
+            : TextButton(
+                onPressed: widget.onOpenObservations,
+                child: const Text('الرصد'),
+              ),
+      ),
+    );
+  }
+}
