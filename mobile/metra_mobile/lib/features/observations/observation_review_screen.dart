@@ -376,43 +376,53 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: busy
-                                            ? null
-                                            : () => _decide(
-                                                  item,
-                                                  'return_for_correction',
-                                                ),
-                                        icon: busy
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : const Icon(Icons.replay),
-                                        label: const Text('إرجاع للتصحيح'),
+                                      child: Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'إرجاع النشرة للتصحيح',
+                                        child: OutlinedButton.icon(
+                                          onPressed: busy
+                                              ? null
+                                              : () => _decide(
+                                                    item,
+                                                    'return_for_correction',
+                                                  ),
+                                          icon: busy
+                                              ? const SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.replay),
+                                          label: const Text('إرجاع للتصحيح'),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
-                                      child: FilledButton.icon(
-                                        onPressed: busy
-                                            ? null
-                                            : () => _decide(item, 'approve'),
-                                        icon: busy
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : const Icon(Icons.check),
-                                        label: const Text('اعتماد'),
+                                      child: Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'اعتماد النشرة',
+                                        child: FilledButton.icon(
+                                          onPressed: busy
+                                              ? null
+                                              : () => _decide(item, 'approve'),
+                                          icon: busy
+                                              ? const SizedBox(
+                                                  width: 16,
+                                                  height: 16,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                  ),
+                                                )
+                                              : const Icon(Icons.check),
+                                          label: const Text('اعتماد'),
+                                        ),
                                       ),
                                     ),
                                   ],
