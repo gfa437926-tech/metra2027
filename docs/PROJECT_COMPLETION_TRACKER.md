@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `e2f6a208dcaf9c7edf83d0c41d7e40bd4a74cbc5`  
+**HEAD (local):** `e35f04be8d85d9712ec3b75eca625052959dee79`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
 
@@ -114,13 +114,12 @@ Previous sessions documented partial unit suites passing (draft store, submit fl
 
 ## 6. Next continuous tasks (ordered)
 
-1. Commit login whitespace hardening.
-2. Expand catalog local validation tests for agricultural + fault forms (required + choice bounds).
-3. Review-queue grouping headers by observation type (local UX).
-4. Access-context unit coverage for multi-station and unresolved edge cases.
-5. When SDK available: full `flutter test --concurrency=1`, analyze, web release build.
-6. Push branch when credentials available; verify Client CI.
-7. Only after explicit M1 approval: server persistence for rainfall/soil.
+1. Review-queue grouping headers by observation type (local UX).
+2. Broader Semantics labels on primary navigation and admin decision buttons.
+3. When SDK available: full `flutter test --concurrency=1`, analyze, web release build.
+4. Push branch when credentials available; verify Client CI.
+5. Only after explicit M1 approval: server persistence for rainfall/soil.
+6. Notification feed integration when service contract exists.
 
 ---
 
