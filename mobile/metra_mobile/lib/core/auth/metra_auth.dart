@@ -192,7 +192,9 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                           ),
                           validator: (value) {
                             final password = value ?? '';
-                            if (password.isEmpty) return 'أدخل كلمة المرور';
+                            if (password.trim().isEmpty) {
+                              return 'أدخل كلمة المرور';
+                            }
                             if (password.length > 128) {
                               return 'كلمة المرور أطول من الحد المسموح';
                             }
