@@ -344,6 +344,27 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
               data['reason'] ??
               data['note'] ??
               data['review_note'];
+          final role = data['requested_role_code'] ??
+              data['role_code'] ??
+              data['role'] ??
+              data['requested_role'];
+          final station = data['station_id'] ??
+              data['requested_station_id'] ??
+              data['stationId'];
+          final submittedAt = data['submitted_at'] ??
+              data['created_at'] ??
+              data['requested_at'];
+          // Never dump the entire response map: may include internal ids or notes.
+          final safeDetails = <String, String>{};
+          void put(String label, Object? value) {
+            if (value == null) return;
+            final text = value.toString().trim();
+            if (text.isEmpty) return;
+            safeDetails[label] = text;
+          }
+          put('الدور المطلوب', role);
+          put('المحطة', station);
+          put('تاريخ التقديم', submittedAt);
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -353,6 +374,11 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
                       fontWeight: FontWeight.bold,
                       color: MetraColors.navy,
                     ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'تُعرض الحقول المعتمدة من الخادم فقط. لا تُنشأ حالات وهمية.',
+                style: TextStyle(color: MetraColors.muted, height: 1.4),
               ),
               const SizedBox(height: 12),
               Card(
@@ -372,22 +398,21 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
                     subtitle: Text(reason.toString()),
                   ),
                 ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: SelectableText(
-                    data.entries
-                        .map((e) => '${e.key}: ${e.value}')
-                        .join('\n'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      height: 1.4,
-                      color: MetraColors.muted,
-                    ),
+              if (safeDetails.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Card(
+                  child: Column(
+                    children: [
+                      for (final entry in safeDetails.entries)
+                        ListTile(
+                          dense: true,
+                          title: Text(entry.key),
+                          subtitle: Text(entry.value),
+                        ),
+                    ],
                   ),
                 ),
-              ),
+              ],
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: _reload,
