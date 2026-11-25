@@ -381,7 +381,11 @@ class _HomeOverview extends StatelessWidget {
         access.isResolved &&
         access.canAdministerStation(stationId!);
 
-    return ListView(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text('لوحة التشغيل',
@@ -495,6 +499,8 @@ class _HomeOverview extends StatelessWidget {
               'المؤشرات الرقمية تظهر فقط من مصادر API معتمدة.',
         ),
       ],
+        ),
+      ),
     );
   }
 }

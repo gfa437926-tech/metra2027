@@ -73,7 +73,11 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     final access = widget.accessContext;
     final showMineFilter = access != null && access.isResolved;
 
-    return Column(
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        color: Colors.transparent,
+        child: Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
@@ -217,6 +221,8 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
           ),
         ),
       ],
+        ),
+      ),
     );
   }
 

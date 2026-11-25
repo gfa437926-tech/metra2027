@@ -129,7 +129,9 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ListView(
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
@@ -201,8 +203,17 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       border: OutlineInputBorder(),
                       helperText: 'استخدم المعرف من دليل المحطات بعد اعتماده',
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (value.isEmpty) return 'مطلوب';
+                      final uuid = RegExp(
+                        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+                      );
+                      if (!uuid.hasMatch(value)) {
+                        return 'أدخل معرّف محطة بصيغة UUID صحيحة';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
@@ -271,6 +282,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
               ),
             ),
         ],
+        ),
       ),
     );
   }
@@ -318,7 +330,9 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: FutureBuilder<Map<String, dynamic>>(
+      child: Material(
+        color: Colors.transparent,
+        child: FutureBuilder<Map<String, dynamic>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -395,6 +409,7 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
             ],
           );
         },
+        ),
       ),
     );
   }

@@ -46,6 +46,8 @@ class _StationAdministrationScreenState
     if (oldWidget.stationId != widget.stationId ||
         oldWidget.api != widget.api) {
       _processingRequestIds.clear();
+      _userFilterController.clear();
+      _userFilterQuery = '';
       _refresh();
     }
   }
@@ -120,39 +122,46 @@ class _StationAdministrationScreenState
     try {
       confirmed = await showDialog<bool>(
             context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: Text(
-                  decision == 'approve' ? 'اعتماد طلب التسجيل' : 'رفض طلب التسجيل'),
-              content: TextField(
-                controller: noteController,
-                minLines: 2,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  labelText: decision == 'reject'
-                      ? 'سبب الرفض (إلزامي)'
-                      : 'ملاحظة (اختيارية)',
-                  border: const OutlineInputBorder(),
+            builder: (dialogContext) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: Text(
+                  decision == 'approve'
+                      ? 'اعتماد طلب التسجيل'
+                      : 'رفض طلب التسجيل',
                 ),
+                content: TextField(
+                  controller: noteController,
+                  minLines: 2,
+                  maxLines: 4,
+                  textDirection: TextDirection.rtl,
+                  decoration: InputDecoration(
+                    labelText: decision == 'reject'
+                        ? 'سبب الرفض (إلزامي)'
+                        : 'ملاحظة (اختيارية)',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: const Text('إلغاء'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (decision == 'reject' &&
+                          noteController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(content: Text('أدخل سبب الرفض.')),
+                        );
+                        return;
+                      }
+                      Navigator.pop(dialogContext, true);
+                    },
+                    child: const Text('تأكيد'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('إلغاء'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    if (decision == 'reject' &&
-                        noteController.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(content: Text('أدخل سبب الرفض.')),
-                      );
-                      return;
-                    }
-                    Navigator.pop(dialogContext, true);
-                  },
-                  child: const Text('تأكيد'),
-                ),
-              ],
             ),
           ) ??
           false;

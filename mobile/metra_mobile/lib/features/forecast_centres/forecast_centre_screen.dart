@@ -78,7 +78,9 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
         }
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: ListView(
+          child: Material(
+            color: Colors.transparent,
+            child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               _intro(),
@@ -159,6 +161,7 @@ class _ForecastCentreScreenState extends State<ForecastCentreScreen> {
                 style: TextStyle(color: Color(0xFF64748B), height: 1.5),
               ),
             ],
+            ),
           ),
         );
       },
