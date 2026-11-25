@@ -30,7 +30,7 @@
 
 | Route group | Reason / next step |
 |---|---|
-| Station assignment **revoke** | Client method can be added when product prioritizes revoke UX |
+| Station assignment **revoke** | `revokeStationAssignment` wired |
 | System registration requests/audit | Chief-auditor flows; needs product UX scope |
 | Authority memberships / permission-grants / access-queue | Authority-admin product surface; not station operator app |
 | `POST /api/v1/stations/{id}/review` (catalogue review) | Station catalogue workflow; separate from observation review |

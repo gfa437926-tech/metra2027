@@ -461,6 +461,34 @@ class MetraApiClient {
     );
   }
 
+  /// Revoke an active station assignment (server-enforced).
+  Future<void> revokeStationAssignment({
+    required String stationId,
+    required String assignmentId,
+    String? reason,
+  }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    _requirePathIdentifier(assignmentId, 'invalid_assignment_id');
+    if (reason != null && (reason.length > 2000 || reason != reason.trim())) {
+      throw const MetraApiException(400, 'invalid_assignment_reason');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/assignments/',
+      Uri.encodeComponent(assignmentId),
+      '/revoke',
+    ].join();
+    await _send(
+      'POST',
+      path,
+      body: {
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+    );
+  }
+
+
   Future<List<Map<String, dynamic>>> _getJsonRecords(
     String path,
     String errorCode,
