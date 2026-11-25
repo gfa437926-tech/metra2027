@@ -125,17 +125,8 @@ class _StationAdministrationScreenState
     return '—';
   }
 
-  String _personName(Map<String, dynamic> record) {
-    final full = _firstValue(record, ['full_name', 'display_name', 'name_ar']);
-    if (full != '—') return full;
-    final parts = [
-      record['first_name'],
-      record['father_name'],
-      record['last_name'],
-    ].where((part) => part != null && part.toString().trim().isNotEmpty);
-    final joined = parts.join(' ');
-    return joined.isEmpty ? _firstValue(record, ['email', 'user_id', 'id']) : joined;
-  }
+  String _personName(Map<String, dynamic> record) =>
+      stationAdminPersonName(record);
 
   bool _matchesUserFilter(Map<String, dynamic> record) =>
       stationAdminRecordMatchesQuery(record, _userFilterQuery);
