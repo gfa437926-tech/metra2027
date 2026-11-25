@@ -191,9 +191,17 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                     decoration: const InputDecoration(
                       labelText: 'الهاتف',
                       border: OutlineInputBorder(),
+                      helperText: 'أرقام فقط، 8 محارف على الأقل',
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    validator: (v) {
+                      final value = v?.trim() ?? '';
+                      if (value.isEmpty) return 'مطلوب';
+                      final digits = value.replaceAll(RegExp(r'[\s\-+()]'), '');
+                      if (!RegExp(r'^\d{8,15}$').hasMatch(digits)) {
+                        return 'أدخل رقم هاتف صالحاً (8–15 رقماً)';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
