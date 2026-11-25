@@ -387,6 +387,80 @@ class MetraApiClient {
     await _send('POST', path, body: {'decision': decision, 'note': note});
   }
 
+  /// Roles that may be requested for station assignment (server catalogue).
+  Future<List<Map<String, dynamic>>> getStationAssignableRoles(
+    String stationId,
+  ) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/assignable-roles',
+    ].join();
+    return _getJsonRecords(path, 'invalid_assignable_roles');
+  }
+
+  /// Request a station role assignment for an existing user (server-enforced).
+  Future<void> requestStationAssignment({
+    required String stationId,
+    required String userId,
+    required String roleCode,
+    String? reason,
+  }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    _requirePathIdentifier(userId, 'invalid_user_id');
+    final role = roleCode.trim();
+    if (role.isEmpty || role.length > 64) {
+      throw const MetraApiException(400, 'invalid_assignment_role');
+    }
+    if (reason != null && (reason.length > 2000 || reason != reason.trim())) {
+      throw const MetraApiException(400, 'invalid_assignment_reason');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/assignments',
+    ].join();
+    await _send(
+      'POST',
+      path,
+      body: {
+        'userId': userId.trim(),
+        'roleCode': role,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+      },
+    );
+  }
+
+  /// Approve or reject a pending station assignment (server-enforced).
+  Future<void> decideStationAssignment({
+    required String stationId,
+    required String assignmentId,
+    required String decision,
+    String? note,
+  }) async {
+    _requirePathIdentifier(stationId, 'invalid_station_id');
+    _requirePathIdentifier(assignmentId, 'invalid_assignment_id');
+    if (decision != 'approve' && decision != 'reject') {
+      throw const MetraApiException(400, 'invalid_assignment_decision');
+    }
+    final path = <String>[
+      '/api/v1/stations/',
+      Uri.encodeComponent(stationId),
+      '/assignments/',
+      Uri.encodeComponent(assignmentId),
+      '/decision',
+    ].join();
+    await _send(
+      'POST',
+      path,
+      body: {
+        'decision': decision,
+        if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
+      },
+    );
+  }
+
   Future<List<Map<String, dynamic>>> _getJsonRecords(
     String path,
     String errorCode,

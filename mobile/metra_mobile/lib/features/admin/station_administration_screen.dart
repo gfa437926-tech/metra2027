@@ -92,6 +92,15 @@ class _StationAdministrationScreenState
   final Set<String> _processingRequestIds = <String>{};
   final TextEditingController _userFilterController = TextEditingController();
   String _userFilterQuery = '';
+  final _assignUserId = TextEditingController();
+  final _assignReason = TextEditingController();
+  String? _assignRoleCode;
+  List<Map<String, dynamic>> _assignableRoles = const [];
+  bool _assignmentBusy = false;
+  bool _rolesLoaded = false;
+  String? _assignmentMessage;
+  bool _assignmentError = false;
+
 
   @override
   void initState() {
@@ -112,6 +121,13 @@ class _StationAdministrationScreenState
       _processingRequestIds.clear();
       _userFilterController.clear();
       _userFilterQuery = '';
+      _assignUserId.clear();
+      _assignReason.clear();
+      _assignRoleCode = null;
+      _assignableRoles = const [];
+      _rolesLoaded = false;
+      _assignmentMessage = null;
+      _assignmentError = false;
       _refresh();
     }
   }
@@ -119,6 +135,8 @@ class _StationAdministrationScreenState
   @override
   void dispose() {
     _userFilterController.dispose();
+    _assignUserId.dispose();
+    _assignReason.dispose();
     super.dispose();
   }
 
@@ -256,6 +274,183 @@ class _StationAdministrationScreenState
     }
   }
 
+  Future<void> _ensureAssignableRoles() async {
+    if (_rolesLoaded || _assignmentBusy) return;
+    final stationId = widget.stationId;
+    setState(() {
+      _assignmentBusy = true;
+      _assignmentMessage = null;
+      _assignmentError = false;
+    });
+    try {
+      final roles = await widget.api.getStationAssignableRoles(stationId);
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignableRoles = roles;
+        _rolesLoaded = true;
+        if (_assignRoleCode == null && roles.isNotEmpty) {
+          final code = roles.first['role_code'] ?? roles.first['roleCode'];
+          if (code != null) _assignRoleCode = code.toString();
+        }
+      });
+    } catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+        _rolesLoaded = true;
+      });
+    } finally {
+      if (mounted) setState(() => _assignmentBusy = false);
+    }
+  }
+
+  Future<void> _submitAssignmentRequest() async {
+    if (_assignmentBusy) return;
+    final stationId = widget.stationId;
+    final userId = _assignUserId.text.trim();
+    final role = _assignRoleCode?.trim() ?? '';
+    if (userId.isEmpty || role.isEmpty) {
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = 'أدخل معرّف المستخدم واختر دوراً قابلاً للتعيين.';
+      });
+      return;
+    }
+    setState(() {
+      _assignmentBusy = true;
+      _assignmentMessage = null;
+      _assignmentError = false;
+    });
+    try {
+      await widget.api.requestStationAssignment(
+        stationId: stationId,
+        userId: userId,
+        roleCode: role,
+        reason: _assignReason.text.trim().isEmpty
+            ? null
+            : _assignReason.text.trim(),
+      );
+      if (!mounted || stationId != widget.stationId) return;
+      _assignUserId.clear();
+      _assignReason.clear();
+      setState(() {
+        _assignmentMessage =
+            'أُرسل طلب التعيين إلى الخادم. تظهر النتيجة بعد قرار المراجعة.';
+        _assignmentError = false;
+      });
+      setState(_refresh);
+    } on MetraApiException catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+      });
+    } catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+      });
+    } finally {
+      if (mounted) setState(() => _assignmentBusy = false);
+    }
+  }
+
+  Widget _assignmentRequestCard() {
+    return Card(
+      elevation: 0,
+      color: const Color(0xFFF8FAFC),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'طلب تعيين مستخدم على المحطة',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'يستخدم عقود التعيين المعتمدة على الخادم. لا يُنشأ حساب جديد من هنا.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.35),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _assignUserId,
+              decoration: const InputDecoration(
+                labelText: 'معرّف المستخدم (UUID)',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _assignRoleCode,
+              decoration: const InputDecoration(
+                labelText: 'الدور',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                for (final role in _assignableRoles)
+                  DropdownMenuItem(
+                    value: (role['role_code'] ?? role['roleCode'] ?? '').toString(),
+                    child: Text(
+                      [
+                        role['role_code'] ?? role['roleCode'] ?? '',
+                        if ((role['name_ar'] ?? role['nameAr']) != null)
+                          '— ${role['name_ar'] ?? role['nameAr']}',
+                      ].join(' '),
+                    ),
+                  ),
+              ].where((item) => (item.value ?? '').isNotEmpty).toList(),
+              onChanged: _assignmentBusy
+                  ? null
+                  : (value) => setState(() => _assignRoleCode = value),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _assignReason,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'سبب الطلب (اختياري)',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            if (_assignmentMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _assignmentMessage!,
+                style: TextStyle(
+                  color: _assignmentError
+                      ? const Color(0xFFB91C1C)
+                      : const Color(0xFF166534),
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _assignmentBusy ? null : _ensureAssignableRoles,
+                  child: const Text('تحميل الأدوار'),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _assignmentBusy ? null : _submitAssignmentRequest,
+                  child: Text(_assignmentBusy ? 'جارٍ…' : 'إرسال طلب التعيين'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _usersTab(Future<List<Map<String, dynamic>>> future) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: future,
@@ -278,14 +473,26 @@ class _StationAdministrationScreenState
         }
         final all = snapshot.data ?? const <Map<String, dynamic>>[];
         if (all.isEmpty) {
-          return MetraAsyncStatePanel.empty(
-            icon: Icons.group_off_outlined,
-            title: 'لا توجد حسابات ظاهرة لهذه المحطة',
-            subtitle: 'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
-            action: TextButton(
-              onPressed: () => setState(_refresh),
-              child: const Text('تحديث'),
-            ),
+          if (!_rolesLoaded && !_assignmentBusy) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _ensureAssignableRoles();
+            });
+          }
+          return ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _assignmentRequestCard(),
+              const SizedBox(height: 16),
+              MetraAsyncStatePanel.empty(
+                icon: Icons.group_off_outlined,
+                title: 'لا توجد حسابات ظاهرة لهذه المحطة',
+                subtitle: 'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
+                action: TextButton(
+                  onPressed: () => setState(_refresh),
+                  child: const Text('تحديث'),
+                ),
+              ),
+            ],
           );
         }
         final records = all.where(_matchesUserFilter).toList(growable: false);
