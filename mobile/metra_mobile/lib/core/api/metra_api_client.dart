@@ -193,12 +193,17 @@ class MetraApiClient {
     required this.accessTokenProvider,
     String baseUrl = metraApiBaseUrl,
     http.Client? client,
+    Duration requestTimeout = const Duration(seconds: 30),
   })  : _baseUri = Uri.tryParse(baseUrl.trim()),
-        _client = client ?? http.Client();
+        _client = client ?? http.Client(),
+        _requestTimeout = requestTimeout <= Duration.zero
+            ? const Duration(seconds: 30)
+            : requestTimeout;
 
   final Future<String?> Function() accessTokenProvider;
   final Uri? _baseUri;
   final http.Client _client;
+  final Duration _requestTimeout;
   bool get isConfigured => ApiConfig.isValidUrl(_baseUri?.toString() ?? '');
 
   Future<List<StationDirectoryItem>> getStationDirectory({
@@ -711,7 +716,12 @@ class MetraApiClient {
     if (!isConfigured) {
       throw const MetraApiException(503, 'api_not_configured');
     }
-    final token = await accessTokenProvider();
+    String? token;
+    try {
+      token = await accessTokenProvider().timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const MetraApiException(0, 'timeout');
+    }
     if (token == null || token.trim().isEmpty) {
       throw const MetraApiException(401, 'authentication_required');
     }
@@ -725,8 +735,13 @@ class MetraApiClient {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
     }
-    final response =
-        await http.Response.fromStream(await _client.send(request));
+    http.Response response;
+    try {
+      final streamed = await _client.send(request).timeout(_requestTimeout);
+      response = await http.Response.fromStream(streamed).timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const MetraApiException(0, 'timeout');
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw MetraApiException(response.statusCode, 'request_failed');
     }

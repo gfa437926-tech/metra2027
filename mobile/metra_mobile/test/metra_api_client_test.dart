@@ -315,6 +315,24 @@ void main() {
     client.close();
   });
 
+  test('maps request and response wait timeouts to safe timeout error', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      requestTimeout: const Duration(milliseconds: 15),
+      accessTokenProvider: () async => 'token',
+      client: MockClient((request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+        return http.Response('[]', 200);
+      }),
+    );
+    await expectLater(
+      client.getReviewQueue(stationId),
+      throwsA(isA<MetraApiException>().having(
+        (error) => error.code, 'code', 'timeout')),
+    );
+    client.close();
+  });
+
   test('requires access token', () async {
     final client = MetraApiClient(baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => null,
