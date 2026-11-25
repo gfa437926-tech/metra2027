@@ -1,8 +1,10 @@
 # METRA 2027 — Project Completion Tracker
 
-**Last updated:** 2026-11-25  
+**Last updated:** 2026-11-25 (format + closure report)
+**HEAD (local):** `c7a6c502d74c86a8f20664a90fc1b8a4c79a30e0`
+**Prior HEAD note:**  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `cc7d15c21721860136a6b5c3b5d7fb6a5718bde2` (merge commit)  
+**HEAD (local):** `c7a6c502d74c86a8f20664a90fc1b8a4c79a30e0`
 **GitHub tip (ls-remote):** `d7c7ca58a417b95de8461ef1de43a7f357d7cffd`  
 **Push status:** **Not pushed** — credentials unavailable (`could not read Username`)
 
