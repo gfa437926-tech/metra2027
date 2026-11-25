@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `40ccf65f42b46c0fb65264ee1019da080e57590f`  
+**HEAD (local):** `f0202dc16e588dedb433109333026d971e47bd86` (+ pending draft listener test)  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
 
@@ -13,124 +13,99 @@
 ### Core
 | Module | Status | Notes |
 |--------|--------|-------|
-| API client (`metra_api_client`) | Connected | Timeouts, access-context, stations, review, validate/submit observation, registration, station admin lists |
-| Access context | Fail-closed | Destination visibility + station permission codes |
+| API client | Connected | Timeouts, access-context, stations, review, validate/submit, registration, admin lists |
+| Access context | Fail-closed | Destination + station permission codes |
 | Auth / secure session | Connected | Supabase + FlutterSecureStorage |
-| Registration field rules | Local complete | UUID, phone, name, email optional, password, confirm |
+| Registration field rules | Local complete | UUID, phone, name, email, password, confirm |
 | Observation draft store | Local complete | ChangeNotifier, station-scoped, secret filter, draftsForStation |
-| Observation submit flow | Connected | Shared validate+submit for hourly/daily/phenomenon |
-| Rainfall/soil local rules | Local complete | Negative rain, calendar date, future date reject |
+| Observation submit flow | Connected | Validate+submit + idempotency key reuse |
+| Rainfall/soil local rules | Local complete | Negative rain, calendar + future date |
 | Notification preferences | Local session | ChangeNotifier; no push service |
-| Error presenter | Complete | Queue/load/auth mapping |
-| Theme / adaptive nav / async panel / permission denied | Complete | RTL-ready |
+| Error presenter | Complete | Queue/submit/review/registration mapping |
+| Theme / nav / async / permission denied | Complete | RTL-ready |
 
 ### Features / screens
 | Screen | Status | Server contract |
 |--------|--------|-----------------|
-| Home / navigation | Complete | Access-context gated |
-| Login / auth shell | Complete | Supabase |
-| Account hub | Complete | Password change, registration status link |
-| Registration request | Complete | Local validators + submit API |
-| Station directory | Complete | Search (name/code/WMO/id/type), map, mine filter |
-| Station administration | Complete | Users, registration requests decide, audit, queue |
-| Observation workspace | Complete | Live draft tab markers + station draft overview bar |
-| Hourly / Daily / Phenomenon | Connected | Draft + submit flow |
-| Catalog forms (7 types) | Local-only | Validation + draft; no server persist (honest message) |
-| Observation review | Connected | Filter, sort by observedAt, station mismatch guard, decide |
-| Notifications center | Local shell | Prefs only; empty feed (no synthetic rows) |
-| System settings | Complete | Account link, offline notices |
-| Forecast centre | Honest offline | No measurement contract — no fake values |
-| CLIMATOL / AI / OCR / Archive / Comparison / Operations / Reports | Honest offline | Period validation + day count; actions disabled with tooltips |
+| Home | Complete | Access gated + live draft summary for active station |
+| Login / auth | Complete | Supabase; whitespace-only password rejected |
+| Account hub | Complete | Password rules centralized |
+| Registration request + status | Complete | Structured status (no raw dump); pure status labels |
+| Station directory | Complete | Query id/type + local sort by Arabic name |
+| Station administration | Complete | Users/requests/audit/queue; pure search helpers |
+| Observation workspace | Complete | Draft tab markers + station draft overview bar |
+| Hourly / Daily / Phenomenon | Connected | Shared submit flow + generation/station guards |
+| Catalog forms (7) | Local-only | Validation + drafts; honest pending-contract messaging |
+| Observation review | Connected | Type filter, newest sort, type grouping headers, Semantics |
+| Notifications center | Local shell | Prefs only |
+| Settings | Complete | Account, sign-out confirm, config flags |
+| Forecast centre | Honest offline | Station distance comparison only |
+| CLIMATOL / AI / OCR / Ops / Reports | Honest offline | Period day-count + disabled actions |
 
 ---
 
 ## 2. Server-connected vs local-only
 
-**Connected (real API methods used):**
-- Access context
-- Station directory (paged + all)
-- Observation validate + submit (hourly / daily / phenomenon)
-- Review queue + decide (approve / return)
-- Registration roles, my status, submit request
-- Station users, registration requests + decide, audit log
+**Connected:** access context, station directory, observation validate/submit (hourly/daily/phenomenon), review queue + decide, registration roles/status/submit, station users/requests/decide, audit log.
 
-**Local-only (by design until contracts / M1–M4):**
-- Rainfall, soil, agricultural, hourly climate, fault equipment/telecom/IT forms
-- Notification delivery
-- CLIMATOL, AI, OCR, archive file storage, comparison metrics, production reports export
-- Draft persistence across app restarts (session memory only; no shared_preferences dep)
+**Local-only until contracts/M1–M4:** rainfall, soil, agricultural, hourly climate, fault forms; notification delivery; CLIMATOL/AI/OCR/archive/report export; cross-restart draft persistence (session memory only).
 
 ---
 
-## 3. Waiting on external approval
+## 3. External blockers
 
-| Item | Blocked action |
-|------|----------------|
-| M1 | DB CHECK/RPC expansion for catalog observation types |
-| M2 | event_type / audit structure |
-| M3 | .NET guards/validators expansion |
-| M4 | Server persistence for catalog forms |
-| Notification service contract | Real push/feed |
-| CLIMATOL / AI / OCR / archive / report export contracts | Execution paths |
+| Item | Blocked |
+|------|---------|
+| M1–M4 | DB/RPC/.NET expansion for catalog persistence |
+| Notification service | Real feed/push |
+| CLIMATOL / AI / OCR / archive / report APIs | Execution paths |
+| Flutter SDK in this sandbox | analyze / test / web / CI proof |
 
 ---
 
-## 4. Recent local commits (this line of work)
+## 4. Recent commits (this continuous line)
 
 ```
-e2f6a20 fix(flutter): shared observationDate calendar and future guards for catalogs
-3c8f38a test(flutter): cover agricultural/fault catalog validation and account states
-c3efa22 fix(flutter): reject whitespace-only login passwords client-side
-22c2d62 docs: add PROJECT_COMPLETION_TRACKER for continuous completion resume
-2860289 refactor(flutter): centralize account password rules via RegistrationFieldRules
-3ea3ce7 feat(flutter): match station directory query on id and type fields
-fcd7e52 fix(flutter): reject future observation dates on rainfall/soil local forms
-eb48374 fix(flutter): sort review queue by observedAt descending locally
-d4816ad feat(flutter): station draft overview bar and draftsForStation helper
-6686ce1 feat(flutter): notification prefs ChangeNotifier and enabled-count UX
-84461cf feat(flutter): expand registration validators (email, password, confirm)
-f1bd17a feat(flutter): local workspace period day-count and span guards
-98c5495 feat(flutter): unify observation submit flow and live draft tab markers
+f0202dc feat(flutter): Semantics labels on review approve and return actions
+934c8fd feat(flutter): pure registrationStatusLabel for operator-facing status codes
+b5ac0fe test(flutter): cover observation submit idempotency key reuse on retry
+e43ab46 feat(flutter): local station directory sort and pure filter helper
+3fa2ea6 fix(flutter): define home station draft summary widget class
+090f932 feat(flutter): live station draft summary on home overview
+d9301c9 fix(flutter): structured registration status without raw response dump
+9f1bee8 feat(flutter): group review queue by observation type with pure list builder
 …
 ```
 
-Shared ancestry includes previously verified CI SHA `d7c7ca5`.
-
 ---
 
-## 5. Quality gates (environment)
+## 5. Quality gates
 
 | Gate | Status |
 |------|--------|
-| `flutter pub get` | Not re-run this session (SDK tar transport error on sandbox) |
-| `flutter analyze` | Not run (no SDK binary) |
-| `flutter test` | Not run this session (1.2 GiB RAM / no SDK) |
-| `flutter build web` | Not run |
-| CI on GitHub | Requires push + credentials; local commits not claimed on remote |
-
-Previous sessions documented partial unit suites passing (draft store, submit flow, registration rules, rainfall rules, etc.) under constrained concurrency.
+| flutter analyze / test / web | Not runnable (no SDK binary; ~1.2 GiB RAM; tar transport error) |
+| CI on GitHub | Requires push credentials |
 
 ---
 
-## 6. Next continuous tasks (ordered)
+## 6. Next continuous tasks
 
-1. Review-queue grouping headers by observation type (local UX).
-2. Broader Semantics labels on primary navigation and admin decision buttons.
-3. When SDK available: full `flutter test --concurrency=1`, analyze, web release build.
-4. Push branch when credentials available; verify Client CI.
-5. Only after explicit M1 approval: server persistence for rainfall/soil.
-6. Notification feed integration when service contract exists.
+1. Expand Semantics on admin decision and primary nav destinations.
+2. Additional pure helpers for audit-log local search when useful.
+3. When SDK available: `flutter test --concurrency=1`, analyze, web release.
+4. Push branch; verify Client CI.
+5. After explicit M1: catalog server persistence only.
 
 ---
 
-## 7. Honest completion ratio (functional, contract-scoped)
+## 7. Honest completion ratio (contract-scoped)
 
-- **Screens / navigation / RTL / fail-closed gating:** ~95%  
-- **Observation cycle (server-backed types):** ~90% (draft → validate → submit → review → decide)  
-- **Catalog forms:** UI + local validation + drafts ~85%; server persist 0% (blocked)  
-- **Admin / stations / registration:** ~85% against existing contracts  
-- **Workspaces CLIMATOL/AI/OCR/Reports:** honest disabled shells ~100% of allowed scope  
-- **Notifications feed:** 0% (no service); prefs ~100% local  
-- **Automated test/CI proof this environment:** incomplete until SDK/push
+- Screens / RTL / fail-closed: ~96%
+- Observation cycle (server-backed): ~92%
+- Catalog forms: UI+local validation ~90%; server persist 0%
+- Admin / stations / registration: ~90%
+- Workspaces offline honesty: ~100% of allowed scope
+- Notifications feed: 0% (blocked); prefs complete
+- Automated test/CI proof this environment: incomplete
 
-**Overall contract-scoped product readiness (Flutter):** high for allowed surface; blocked items listed above prevent claiming full production completion.
+**Overall Flutter readiness within contracts:** high. Production “complete” claim remains blocked by M1–M4, notification service, and offline workspace engines.

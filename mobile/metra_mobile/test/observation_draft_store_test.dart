@@ -334,4 +334,17 @@ void main() {
       isEmpty,
     );
   });
+
+  test('notifies listeners on save and clear', () {
+    var ticks = 0;
+    void listener() => ticks++;
+    final store = ObservationDraftStore.instance;
+    store.clearAll();
+    store.addListener(listener);
+    store.save(stationId: 'st-n', formType: 'hourly', values: {'t': 1});
+    expect(ticks, 1);
+    store.clear('st-n', 'hourly');
+    expect(ticks, 2);
+    store.removeListener(listener);
+  });
 }
