@@ -23,7 +23,11 @@ class MetraApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'METRA 2027', debugShowCheckedModeBanner: false,
     theme: MetraTheme.light(),
-    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
     locale: const Locale('ar'),
     supportedLocales: const [Locale('ar'), Locale('en')],
     // Required temporarily because flutter_map still uses SDK Material types.

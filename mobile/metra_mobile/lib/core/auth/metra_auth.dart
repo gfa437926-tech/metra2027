@@ -128,7 +128,8 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
+      child: Material(
+        child: Scaffold(
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -259,33 +260,46 @@ class MetraConfigurationScreen extends StatelessWidget {
     }
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(28),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.settings_suggest_outlined, size: 48),
-                      const SizedBox(height: 16),
-                      const Text('إعداد تطبيق METRA 2027',
-                        style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      const Text('لا يمكن تشغيل التطبيق تشغيلياً قبل ضبط إعدادات الاتصال المطلوبة.',
-                        textAlign: TextAlign.center),
-                      const SizedBox(height: 12),
-                      Text('الإعدادات الناقصة أو غير الصالحة:\n• ${missing.join('\n• ')}',
-                        textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      const Text('استخدم عنوان API الحقيقي المنشور عبر HTTPS. لا تستخدم عنوان المحاكي الافتراضي، ولا تضع مفتاح service_role داخل تطبيق الهاتف.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 12, color: Colors.black54)),
-                    ],
+      child: Material(
+        child: Scaffold(
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.settings_suggest_outlined, size: 48),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'إعداد تطبيق METRA 2027',
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'لا يمكن تشغيل التطبيق تشغيلياً قبل ضبط إعدادات الاتصال المطلوبة.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'الإعدادات الناقصة أو غير الصالحة:\n• ${missing.join('\n• ')}',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'استخدم عنوان API الحقيقي المنشور عبر HTTPS. لا تستخدم عنوان المحاكي الافتراضي، ولا تضع مفتاح service_role داخل تطبيق الهاتف.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -296,3 +310,4 @@ class MetraConfigurationScreen extends StatelessWidget {
     );
   }
 }
+
