@@ -102,4 +102,58 @@ void main() {
     expect(result.claimsServerPersistence, isFalse);
     expect(drafts.get('station-a', 'soil'), isNotNull);
   });
+
+  test('agricultural empty values fail required fields', () async {
+    final result = await repo.submitLocal(
+      type: CatalogFormType.agricultural,
+      stationId: 'station-a',
+      values: const {},
+    );
+    expect(result.phase, CatalogSubmissionPhase.failed);
+    expect(result.claimsServerPersistence, isFalse);
+    expect(result.validationErrors, isNotEmpty);
+  });
+
+  test('fault equipment rejects unknown choice values', () async {
+    final fields = repo.fieldsFor(CatalogFormType.faultEquipment);
+    final values = <String, Object?>{};
+    for (final field in fields) {
+      if (field.kind == MetraFieldKind.boolean) {
+        values[field.id] = true;
+      } else if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
+        values[field.id] = '__invalid_choice__';
+      } else if (field.required) {
+        values[field.id] = 'x';
+      }
+    }
+    final result = await repo.submitLocal(
+      type: CatalogFormType.faultEquipment,
+      stationId: 'station-a',
+      values: values,
+    );
+    expect(result.phase, CatalogSubmissionPhase.failed);
+    expect(result.claimsServerPersistence, isFalse);
+  });
+
+  test('fault telecom accepts filled required fields and awaits contract', () async {
+    final fields = repo.fieldsFor(CatalogFormType.faultTelecom);
+    final values = <String, Object?>{};
+    for (final field in fields) {
+      if (field.kind == MetraFieldKind.boolean) {
+        values[field.id] = true;
+      } else if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
+        values[field.id] = field.choices.first;
+      } else if (field.required) {
+        values[field.id] = field.kind == MetraFieldKind.integer ? '1' : 'note';
+      }
+    }
+    final result = await repo.submitLocal(
+      type: CatalogFormType.faultTelecom,
+      stationId: 'station-a',
+      values: values,
+    );
+    expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
+    expect(result.claimsServerPersistence, isFalse);
+    expect(drafts.get('station-a', CatalogFormType.faultTelecom.code), isNotNull);
+  });
 }

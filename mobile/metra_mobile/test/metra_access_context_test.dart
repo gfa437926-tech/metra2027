@@ -119,4 +119,31 @@ void main() {
       expect(observer.hasStationPermission('station-a', ''), isFalse);
     });
   });
+
+  group('accountState informational only', () {
+    test('inactive account still resolves permissions but is not known-active', () {
+      final inactive = MetraAccessContext.resolved(
+        userId: 'user-inactive',
+        accountState: 'inactive',
+        stationPermissions: {
+          'station-a': {'observation.create', 'observation.submit'},
+        },
+      );
+      expect(inactive.isResolved, isTrue);
+      expect(inactive.hasKnownActiveAccount, isFalse);
+      // Permission codes still apply; UI may show account notices separately.
+      expect(inactive.canEnterObservations('station-a'), isTrue);
+    });
+
+    test('active account reports known-active', () {
+      final active = MetraAccessContext.resolved(
+        userId: 'user-active',
+        accountState: 'active',
+        stationPermissions: {
+          'station-a': {'observation.create'},
+        },
+      );
+      expect(active.hasKnownActiveAccount, isTrue);
+    });
+  });
 }
