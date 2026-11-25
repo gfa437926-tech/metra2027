@@ -377,8 +377,14 @@ class _StationAdministrationScreenState
             onRetry: () => setState(_refresh),
           );
         }
-        final records = snapshot.data ?? const <Map<String, dynamic>>[];
-        if (records.isEmpty) {
+        final all = snapshot.data ?? const <Map<String, dynamic>>[];
+        final records = all.where((record) {
+          if (audit) {
+            return stationAdminAuditMatchesQuery(record, _userFilterQuery);
+          }
+          return stationAdminRecordMatchesQuery(record, _userFilterQuery);
+        }).toList(growable: false);
+        if (all.isEmpty) {
           return MetraAsyncStatePanel.empty(
             title: emptyMessage,
             subtitle: 'اسحب للتحديث أو أعد فتح الشاشة بعد توفر بيانات جديدة.',
@@ -388,7 +394,40 @@ class _StationAdministrationScreenState
             ),
           );
         }
-        return ListView.separated(
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: TextField(
+                controller: _userFilterController,
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  hintText: audit
+                      ? 'بحث محلي في سجل التدقيق…'
+                      : 'بحث محلي في الطلبات…',
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                  suffixIcon: _userFilterQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            _userFilterController.clear();
+                          },
+                          icon: const Icon(Icons.clear),
+                        ),
+                ),
+              ),
+            ),
+            if (records.isEmpty)
+              Expanded(
+                child: MetraAsyncStatePanel.empty(
+                  title: 'لا توجد نتائج مطابقة',
+                  subtitle: 'البحث محلي على الصفحة المحمّلة من الخادم.',
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
           padding: const EdgeInsets.all(12),
           itemCount: records.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -462,6 +501,9 @@ class _StationAdministrationScreenState
               ),
             );
           },
+        ),
+              ),
+          ],
         );
       },
     );
