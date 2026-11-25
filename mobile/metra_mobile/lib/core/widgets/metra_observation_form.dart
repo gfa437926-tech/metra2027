@@ -101,8 +101,8 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         final candidate = initial?.toString();
         _choices[field.id] =
             candidate != null && field.choices.contains(candidate)
-                ? candidate
-                : null;
+            ? candidate
+            : null;
       } else if (field.kind == MetraFieldKind.boolean) {
         _booleans[field.id] = initial == true;
       } else {
@@ -153,8 +153,7 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
   }
 
   bool _isValidClockTime(String value) {
-    final normalized =
-        _timeHm.hasMatch(value) ? '$value:00' : value;
+    final normalized = _timeHm.hasMatch(value) ? '$value:00' : value;
     if (!_timeHms.hasMatch(normalized)) return false;
     final parts = normalized.split(':');
     final hour = int.tryParse(parts[0]);
@@ -301,24 +300,26 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
           setState(() => _choices[field.id] = v);
           _notifyValuesChanged();
         },
-        validator: (v) =>
-            field.required && (v == null || v.isEmpty) ? 'هذا الحقل مطلوب' : null,
+        validator: (v) => field.required && (v == null || v.isEmpty)
+            ? 'هذا الحقل مطلوب'
+            : null,
       );
     }
     return TextFormField(
       controller: _controllers[field.id],
-      keyboardType: field.kind == MetraFieldKind.integer ||
+      keyboardType:
+          field.kind == MetraFieldKind.integer ||
               field.kind == MetraFieldKind.decimal
           ? const TextInputType.numberWithOptions(decimal: true, signed: true)
           : field.kind == MetraFieldKind.multiline
-              ? TextInputType.multiline
-              : field.kind == MetraFieldKind.phone
-                  ? TextInputType.phone
-                  : field.kind == MetraFieldKind.date ||
-                          field.kind == MetraFieldKind.time ||
-                          field.kind == MetraFieldKind.datetime
-                      ? TextInputType.datetime
-                      : TextInputType.text,
+          ? TextInputType.multiline
+          : field.kind == MetraFieldKind.phone
+          ? TextInputType.phone
+          : field.kind == MetraFieldKind.date ||
+                field.kind == MetraFieldKind.time ||
+                field.kind == MetraFieldKind.datetime
+          ? TextInputType.datetime
+          : TextInputType.text,
       maxLines: field.kind == MetraFieldKind.multiline ? 4 : 1,
       maxLength: field.maxLength,
       decoration: InputDecoration(
@@ -327,8 +328,8 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
         hintText: field.kind == MetraFieldKind.date
             ? 'yyyy-MM-dd'
             : field.kind == MetraFieldKind.time
-                ? (field.unit ?? 'HH:mm:ss')
-                : null,
+            ? (field.unit ?? 'HH:mm:ss')
+            : null,
         border: const OutlineInputBorder(),
       ),
       validator: (raw) => _validate(field, raw),

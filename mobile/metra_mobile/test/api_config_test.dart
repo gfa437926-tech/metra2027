@@ -16,12 +16,21 @@ void main() {
 
     test('rejects API paths, query strings, and fragments', () {
       expect(ApiConfig.isValidUrl('https://api.metra.example/api/v1'), isFalse);
-      expect(ApiConfig.isValidUrl('https://api.metra.example?token=x'), isFalse);
-      expect(ApiConfig.isValidUrl('https://api.metra.example#section'), isFalse);
+      expect(
+        ApiConfig.isValidUrl('https://api.metra.example?token=x'),
+        isFalse,
+      );
+      expect(
+        ApiConfig.isValidUrl('https://api.metra.example#section'),
+        isFalse,
+      );
     });
 
     test('rejects embedded credentials and missing hosts', () {
-      expect(ApiConfig.isValidUrl('https://user:pass@api.metra.example'), isFalse);
+      expect(
+        ApiConfig.isValidUrl('https://user:pass@api.metra.example'),
+        isFalse,
+      );
       expect(ApiConfig.isValidUrl('https:///api'), isFalse);
       expect(ApiConfig.isValidUrl(''), isFalse);
     });

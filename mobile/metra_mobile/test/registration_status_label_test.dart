@@ -4,7 +4,10 @@ import 'package:metra_mobile/features/account/registration_request_screen.dart';
 void main() {
   test('registrationStatusLabel maps known codes', () {
     expect(registrationStatusLabel('pending'), contains('بانتظار'));
-    expect(registrationStatusLabel('pending_station_approval'), contains('بانتظار'));
+    expect(
+      registrationStatusLabel('pending_station_approval'),
+      contains('بانتظار'),
+    );
     expect(registrationStatusLabel('approved'), 'معتمد');
     expect(registrationStatusLabel('active'), 'معتمد');
     expect(registrationStatusLabel('rejected'), 'مرفوض');

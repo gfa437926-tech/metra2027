@@ -29,32 +29,34 @@ void main() {
     expect(result.validationErrors, isNotEmpty);
   });
 
-  test('valid rainfall values await API contract and keep station-scoped draft',
-      () async {
-    final fields = repo.fieldsFor(CatalogFormType.rainfall);
-    final values = <String, Object?>{};
-    for (final field in fields) {
-      if (field.kind == MetraFieldKind.boolean) {
-        values[field.id] = true;
-      } else if (field.required) {
-        values[field.id] = '2026-11-17';
-      } else {
-        values[field.id] = '1';
+  test(
+    'valid rainfall values await API contract and keep station-scoped draft',
+    () async {
+      final fields = repo.fieldsFor(CatalogFormType.rainfall);
+      final values = <String, Object?>{};
+      for (final field in fields) {
+        if (field.kind == MetraFieldKind.boolean) {
+          values[field.id] = true;
+        } else if (field.required) {
+          values[field.id] = '2026-11-17';
+        } else {
+          values[field.id] = '1';
+        }
       }
-    }
 
-    final result = await repo.submitLocal(
-      type: CatalogFormType.rainfall,
-      stationId: 'station-a',
-      values: values,
-    );
+      final result = await repo.submitLocal(
+        type: CatalogFormType.rainfall,
+        stationId: 'station-a',
+        values: values,
+      );
 
-    expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
-    expect(result.claimsServerPersistence, isFalse);
-    expect(result.messageAr, contains('عقد API'));
-    expect(drafts.get('station-a', 'rainfall'), isNotNull);
-    expect(drafts.get('station-b', 'rainfall'), isNull);
-  });
+      expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
+      expect(result.claimsServerPersistence, isFalse);
+      expect(result.messageAr, contains('عقد API'));
+      expect(drafts.get('station-a', 'rainfall'), isNotNull);
+      expect(drafts.get('station-b', 'rainfall'), isNull);
+    },
+  );
 
   test('empty station id is rejected', () async {
     final result = await repo.submitLocal(
@@ -120,7 +122,8 @@ void main() {
     for (final field in fields) {
       if (field.kind == MetraFieldKind.boolean) {
         values[field.id] = true;
-      } else if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
+      } else if (field.kind == MetraFieldKind.choice &&
+          field.choices.isNotEmpty) {
         values[field.id] = '__invalid_choice__';
       } else if (field.required) {
         values[field.id] = 'x';
@@ -135,35 +138,42 @@ void main() {
     expect(result.claimsServerPersistence, isFalse);
   });
 
-  test('fault telecom accepts filled required fields and awaits contract', () async {
-    final fields = repo.fieldsFor(CatalogFormType.faultTelecom);
-    final values = <String, Object?>{};
-    for (final field in fields) {
-      if (field.kind == MetraFieldKind.boolean) {
-        values[field.id] = true;
-      } else if (field.kind == MetraFieldKind.choice && field.choices.isNotEmpty) {
-        values[field.id] = field.choices.first;
-      } else if (field.required) {
-        values[field.id] = field.kind == MetraFieldKind.integer ? '1' : 'note';
+  test(
+    'fault telecom accepts filled required fields and awaits contract',
+    () async {
+      final fields = repo.fieldsFor(CatalogFormType.faultTelecom);
+      final values = <String, Object?>{};
+      for (final field in fields) {
+        if (field.kind == MetraFieldKind.boolean) {
+          values[field.id] = true;
+        } else if (field.kind == MetraFieldKind.choice &&
+            field.choices.isNotEmpty) {
+          values[field.id] = field.choices.first;
+        } else if (field.required) {
+          values[field.id] = field.kind == MetraFieldKind.integer
+              ? '1'
+              : 'note';
+        }
       }
-    }
-    final result = await repo.submitLocal(
-      type: CatalogFormType.faultTelecom,
-      stationId: 'station-a',
-      values: values,
-    );
-    expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
-    expect(result.claimsServerPersistence, isFalse);
-    expect(drafts.get('station-a', CatalogFormType.faultTelecom.code), isNotNull);
-  });
+      final result = await repo.submitLocal(
+        type: CatalogFormType.faultTelecom,
+        stationId: 'station-a',
+        values: values,
+      );
+      expect(result.phase, CatalogSubmissionPhase.awaitingApiContract);
+      expect(result.claimsServerPersistence, isFalse);
+      expect(
+        drafts.get('station-a', CatalogFormType.faultTelecom.code),
+        isNotNull,
+      );
+    },
+  );
 
   test('hourly climate rejects future observationDate', () async {
     final result = await repo.submitLocal(
       type: CatalogFormType.hourlyClimate,
       stationId: 'station-a',
-      values: {
-        'observationDate': '2099-01-01',
-      },
+      values: {'observationDate': '2099-01-01'},
     );
     expect(result.phase, CatalogSubmissionPhase.failed);
     expect(result.validationErrors.containsKey('observationDate'), isTrue);

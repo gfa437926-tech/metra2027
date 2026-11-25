@@ -17,7 +17,8 @@ double? forecastCatalogueDistanceKm({
   final lat2 = _radians(latitudeB!);
   final deltaLat = _radians(latitudeB - latitudeA);
   final deltaLon = _radians(longitudeB! - longitudeA!);
-  final haversine = math.pow(math.sin(deltaLat / 2), 2) +
+  final haversine =
+      math.pow(math.sin(deltaLat / 2), 2) +
       math.cos(lat1) * math.cos(lat2) * math.pow(math.sin(deltaLon / 2), 2);
   final bounded = haversine.clamp(0.0, 1.0);
   return 2 * earthRadiusKm * math.asin(math.sqrt(bounded.toDouble()));

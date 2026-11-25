@@ -1,10 +1,14 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/widgets/metra_async_state.dart';
 
 /// Local filter over an already-loaded review queue page. Does not call the API.
-bool observationQueueItemMatchesQuery(ObservationQueueItem item, String rawQuery) {
+bool observationQueueItemMatchesQuery(
+  ObservationQueueItem item,
+  String rawQuery,
+) {
   final q = rawQuery.trim().toLowerCase();
   if (q.isEmpty) return true;
   if (item.id.toLowerCase().contains(q)) return true;
@@ -19,11 +23,11 @@ bool observationQueueItemMatchesQuery(ObservationQueueItem item, String rawQuery
 
 /// Arabic label for known observation queue types (local display only).
 String observationQueueTypeLabel(String type) => switch (type) {
-      'daily' => 'نشرة يومية',
-      'hourly' => 'نشرة ساعية',
-      'phenomenon' => 'بلاغ ظاهرة جوية',
-      _ => 'نشرة: $type',
-    };
+  'daily' => 'نشرة يومية',
+  'hourly' => 'نشرة ساعية',
+  'phenomenon' => 'بلاغ ظاهرة جوية',
+  _ => 'نشرة: $type',
+};
 
 String formatObservationQueueObservedAt(DateTime value) {
   final local = value.toLocal();
@@ -36,13 +40,12 @@ String formatObservationQueueObservedAt(DateTime value) {
 }
 
 String observationQueueStatusLabel(String status) => switch (status) {
-      'submitted' => 'بانتظار المراجعة',
-      'approved' => 'معتمدة',
-      'returned' || 'return_for_correction' => 'مُرجَعة للتصحيح',
-      'rejected' => 'مرفوضة',
-      _ => status,
-    };
-
+  'submitted' => 'بانتظار المراجعة',
+  'approved' => 'معتمدة',
+  'returned' || 'return_for_correction' => 'مُرجَعة للتصحيح',
+  'rejected' => 'مرفوضة',
+  _ => status,
+};
 
 /// Local list model: either a type section header or a queue row.
 sealed class ObservationReviewListEntry {
@@ -77,9 +80,7 @@ List<ObservationReviewListEntry> buildObservationReviewListEntries(
     ..sort((a, b) => b.observedAt.compareTo(a.observedAt));
 
   if (typeFilter != 'all') {
-    return [
-      for (final item in ordered) ObservationReviewRowEntry(item),
-    ];
+    return [for (final item in ordered) ObservationReviewRowEntry(item)];
   }
 
   final byType = <String, List<ObservationQueueItem>>{};
@@ -359,7 +360,12 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                               ),
                               if (item.payload.isNotEmpty)
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    8,
+                                  ),
                                   child: Align(
                                     alignment: AlignmentDirectional.centerStart,
                                     child: Text(
@@ -378,7 +384,12 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                                   ),
                                 ),
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  0,
+                                  12,
+                                  8,
+                                ),
                                 child: Row(
                                   children: [
                                     Expanded(
@@ -390,17 +401,17 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                                           onPressed: busy
                                               ? null
                                               : () => _decide(
-                                                    item,
-                                                    'return_for_correction',
-                                                  ),
+                                                  item,
+                                                  'return_for_correction',
+                                                ),
                                           icon: busy
                                               ? const SizedBox(
                                                   width: 16,
                                                   height: 16,
                                                   child:
                                                       CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
+                                                        strokeWidth: 2,
+                                                      ),
                                                 )
                                               : const Icon(Icons.replay),
                                           label: const Text('إرجاع للتصحيح'),
@@ -423,8 +434,8 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                                                   height: 16,
                                                   child:
                                                       CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                  ),
+                                                        strokeWidth: 2,
+                                                      ),
                                                 )
                                               : const Icon(Icons.check),
                                           label: const Text('اعتماد'),
@@ -456,7 +467,9 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     if (item.stationId != stationId) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('بيانات النشرة لا تطابق المحطة الحالية. حدّث قائمة المراجعة.'),
+          content: Text(
+            'بيانات النشرة لا تطابق المحطة الحالية. حدّث قائمة المراجعة.',
+          ),
         ),
       );
       return;
@@ -544,9 +557,9 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
         note: note,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إرسال قرار المراجعة')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم إرسال قرار المراجعة')));
       await _refresh();
     } on MetraApiException catch (error) {
       if (!mounted) return;

@@ -8,78 +8,81 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
 
-  test('validateObservation phenomenon posts WeatherPhenomenonRequest body', () async {
-    late http.Request captured;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response(
-          jsonEncode({
-            'isValid': true,
-            'issues': <Map<String, String>>[],
-          }),
-          200,
-          headers: {'content-type': 'application/json'},
-        );
-      }),
-    );
+  test(
+    'validateObservation phenomenon posts WeatherPhenomenonRequest body',
+    () async {
+      late http.Request captured;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response(
+            jsonEncode({'isValid': true, 'issues': <Map<String, String>>[]}),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
 
-    final result = await client.validateObservation(
-      observationType: 'phenomenon',
-      values: {
-        'phenomenonType': 'fog',
-        'phenomenonDate': '2026-11-16',
-        'startTime': '06:00:00',
-        'endTime': null,
-        'generalNotes': 'ضباب',
-      },
-    );
+      final result = await client.validateObservation(
+        observationType: 'phenomenon',
+        values: {
+          'phenomenonType': 'fog',
+          'phenomenonDate': '2026-11-16',
+          'startTime': '06:00:00',
+          'endTime': null,
+          'generalNotes': 'ضباب',
+        },
+      );
 
-    expect(result.isValid, isTrue);
-    expect(captured.method, 'POST');
-    expect(captured.url.path, '/api/v1/observations/phenomena/validate');
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['phenomenonType'], 'fog');
-    expect(body['phenomenonDate'], '2026-11-16');
-    expect(body['startTime'], '06:00:00');
-    expect(body.containsKey('values'), isFalse);
-    client.close();
-  });
+      expect(result.isValid, isTrue);
+      expect(captured.method, 'POST');
+      expect(captured.url.path, '/api/v1/observations/phenomena/validate');
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['phenomenonType'], 'fog');
+      expect(body['phenomenonDate'], '2026-11-16');
+      expect(body['startTime'], '06:00:00');
+      expect(body.containsKey('values'), isFalse);
+      client.close();
+    },
+  );
 
-  test('submitObservation accepts phenomenon type with UTC observedAt', () async {
-    late http.Request captured;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response('{}', 201);
-      }),
-    );
+  test(
+    'submitObservation accepts phenomenon type with UTC observedAt',
+    () async {
+      late http.Request captured;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response('{}', 201);
+        }),
+      );
 
-    await client.submitObservation(
-      stationId: stationId,
-      idempotencyKey: 'phenomenon-key-1',
-      observationType: 'phenomenon',
-      observedAt: DateTime.parse('2026-11-16T09:30:00+03:00'),
-      payload: {
-        'phenomenonType': 'rain',
-        'phenomenonDate': '2026-11-16',
-        'startTime': '06:00:00',
-        'responsibilityAgreement': true,
-      },
-      submit: true,
-    );
+      await client.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'phenomenon-key-1',
+        observationType: 'phenomenon',
+        observedAt: DateTime.parse('2026-11-16T09:30:00+03:00'),
+        payload: {
+          'phenomenonType': 'rain',
+          'phenomenonDate': '2026-11-16',
+          'startTime': '06:00:00',
+          'responsibilityAgreement': true,
+        },
+        submit: true,
+      );
 
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['observationType'], 'phenomenon');
-    expect(body['idempotencyKey'], 'phenomenon-key-1');
-    expect(body['observedAt'], '2026-11-16T06:30:00.000Z');
-    expect(body['submit'], isTrue);
-    client.close();
-  });
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['observationType'], 'phenomenon');
+      expect(body['idempotencyKey'], 'phenomenon-key-1');
+      expect(body['observedAt'], '2026-11-16T06:30:00.000Z');
+      expect(body['submit'], isTrue);
+      client.close();
+    },
+  );
 
   test('failed validation does not claim success', () async {
     final client = MetraApiClient(
@@ -90,7 +93,11 @@ void main() {
           jsonEncode({
             'isValid': false,
             'issues': [
-              {'field': 'start_time', 'message': 'وقت البدء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC.'},
+              {
+                'field': 'start_time',
+                'message':
+                    'وقت البدء يجب أن يكون بالتنسيق HH:mm:ss بتوقيت UTC.',
+              },
             ],
           }),
           200,
@@ -109,32 +116,35 @@ void main() {
     client.close();
   });
 
-  test('401 maps to Arabic session message without technical leakage', () async {
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'expired',
-      client: MockClient((_) async => http.Response('unauthorized', 401)),
-    );
+  test(
+    '401 maps to Arabic session message without technical leakage',
+    () async {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'expired',
+        client: MockClient((_) async => http.Response('unauthorized', 401)),
+      );
 
-    try {
-      await client.submitObservation(
-        stationId: stationId,
-        idempotencyKey: 'k',
-        observationType: 'phenomenon',
-        observedAt: DateTime.utc(2026, 11, 16),
-        payload: const {'phenomenonType': 'fog'},
-      );
-      fail('expected exception');
-    } on MetraApiException catch (error) {
-      expect(error.statusCode, 401);
-      expect(error.displayMessage, isNot(contains('unauthorized')));
-      expect(
-        error.displayMessage,
-        anyOf(contains('الجلسة'), contains('صلاحية'), contains('الدخول')),
-      );
-    }
-    client.close();
-  });
+      try {
+        await client.submitObservation(
+          stationId: stationId,
+          idempotencyKey: 'k',
+          observationType: 'phenomenon',
+          observedAt: DateTime.utc(2026, 11, 16),
+          payload: const {'phenomenonType': 'fog'},
+        );
+        fail('expected exception');
+      } on MetraApiException catch (error) {
+        expect(error.statusCode, 401);
+        expect(error.displayMessage, isNot(contains('unauthorized')));
+        expect(
+          error.displayMessage,
+          anyOf(contains('الجلسة'), contains('صلاحية'), contains('الدخول')),
+        );
+      }
+      client.close();
+    },
+  );
 
   test('403 and 409 display Arabic operator messages', () async {
     for (final status in [403, 409]) {

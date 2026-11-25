@@ -2,8 +2,10 @@
 enum CatalogSubmissionPhase {
   idle,
   validating,
+
   /// Values accepted locally; no server write occurred.
   localAccepted,
+
   /// Explicitly blocked because no approved API contract exists.
   awaitingApiContract,
   failed,

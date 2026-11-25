@@ -25,7 +25,10 @@ String stationAdminPersonName(Map<String, dynamic> record) {
   return '—';
 }
 
-bool stationAdminRecordMatchesQuery(Map<String, dynamic> record, String rawQuery) {
+bool stationAdminRecordMatchesQuery(
+  Map<String, dynamic> record,
+  String rawQuery,
+) {
   final q = rawQuery.trim().toLowerCase();
   if (q.isEmpty) return true;
   String first(List<String> keys) {
@@ -37,6 +40,7 @@ bool stationAdminRecordMatchesQuery(Map<String, dynamic> record, String rawQuery
     }
     return '';
   }
+
   final haystack = [
     stationAdminPersonName(record),
     first(['role_code', 'requested_role_code', 'role']),
@@ -46,7 +50,10 @@ bool stationAdminRecordMatchesQuery(Map<String, dynamic> record, String rawQuery
   return haystack.contains(q);
 }
 
-bool stationAdminAuditMatchesQuery(Map<String, dynamic> record, String rawQuery) {
+bool stationAdminAuditMatchesQuery(
+  Map<String, dynamic> record,
+  String rawQuery,
+) {
   final q = rawQuery.trim().toLowerCase();
   if (q.isEmpty) return true;
   String first(List<String> keys) {
@@ -58,6 +65,7 @@ bool stationAdminAuditMatchesQuery(Map<String, dynamic> record, String rawQuery)
     }
     return '';
   }
+
   final haystack = [
     first(['event_type', 'action', 'event', 'id']),
     first(['created_at', 'occurred_at']),
@@ -66,7 +74,6 @@ bool stationAdminAuditMatchesQuery(Map<String, dynamic> record, String rawQuery)
   ].join(' ').toLowerCase();
   return haystack.contains(q);
 }
-
 
 class StationAdministrationScreen extends StatefulWidget {
   const StationAdministrationScreen({
@@ -100,7 +107,6 @@ class _StationAdministrationScreenState
   bool _rolesLoaded = false;
   String? _assignmentMessage;
   bool _assignmentError = false;
-
 
   @override
   void initState() {
@@ -149,8 +155,9 @@ class _StationAdministrationScreenState
 
   void _refresh() {
     _users = _observed(widget.api.getStationUsers(widget.stationId));
-    _requests =
-        _observed(widget.api.getStationRegistrationRequests(widget.stationId));
+    _requests = _observed(
+      widget.api.getStationRegistrationRequests(widget.stationId),
+    );
     _audit = _observed(widget.api.getStationAuditLog(widget.stationId));
     _observations = _observed(widget.api.getReviewQueue(widget.stationId));
   }
@@ -177,7 +184,9 @@ class _StationAdministrationScreenState
     final requestId = _firstValue(record, ['id', 'request_id']);
     if (requestId == '—') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('معرّف طلب التسجيل غير موجود في الاستجابة.')),
+        const SnackBar(
+          content: Text('معرّف طلب التسجيل غير موجود في الاستجابة.'),
+        ),
       );
       return;
     }
@@ -185,7 +194,8 @@ class _StationAdministrationScreenState
     final noteController = TextEditingController();
     bool confirmed = false;
     try {
-      confirmed = await showDialog<bool>(
+      confirmed =
+          await showDialog<bool>(
             context: context,
             builder: (dialogContext) => Directionality(
               textDirection: TextDirection.rtl,
@@ -258,8 +268,8 @@ class _StationAdministrationScreenState
       if (!mounted || stationId != widget.stationId) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text(MetraErrorPresenter.registrationDecisionMessage(error))),
+          content: Text(MetraErrorPresenter.registrationDecisionMessage(error)),
+        ),
       );
     } catch (error) {
       if (mounted && stationId == widget.stationId) {
@@ -373,7 +383,11 @@ class _StationAdministrationScreenState
             const SizedBox(height: 4),
             const Text(
               'يستخدم عقود التعيين المعتمدة على الخادم. لا يُنشأ حساب جديد من هنا.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.35),
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.35,
+              ),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -395,7 +409,8 @@ class _StationAdministrationScreenState
               items: [
                 for (final role in _assignableRoles)
                   DropdownMenuItem(
-                    value: (role['role_code'] ?? role['roleCode'] ?? '').toString(),
+                    value: (role['role_code'] ?? role['roleCode'] ?? '')
+                        .toString(),
                     child: Text(
                       [
                         role['role_code'] ?? role['roleCode'] ?? '',
@@ -486,7 +501,8 @@ class _StationAdministrationScreenState
               MetraAsyncStatePanel.empty(
                 icon: Icons.group_off_outlined,
                 title: 'لا توجد حسابات ظاهرة لهذه المحطة',
-                subtitle: 'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
+                subtitle:
+                    'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
                 action: TextButton(
                   onPressed: () => setState(_refresh),
                   child: const Text('تحديث'),
@@ -569,9 +585,7 @@ class _StationAdministrationScreenState
       future: future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return MetraAsyncStatePanel.loading(
-            message: 'جاري تحميل السجلات…',
-          );
+          return MetraAsyncStatePanel.loading(message: 'جاري تحميل السجلات…');
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
@@ -585,12 +599,14 @@ class _StationAdministrationScreenState
           );
         }
         final all = snapshot.data ?? const <Map<String, dynamic>>[];
-        final records = all.where((record) {
-          if (audit) {
-            return stationAdminAuditMatchesQuery(record, _userFilterQuery);
-          }
-          return stationAdminRecordMatchesQuery(record, _userFilterQuery);
-        }).toList(growable: false);
+        final records = all
+            .where((record) {
+              if (audit) {
+                return stationAdminAuditMatchesQuery(record, _userFilterQuery);
+              }
+              return stationAdminRecordMatchesQuery(record, _userFilterQuery);
+            })
+            .toList(growable: false);
         if (all.isEmpty) {
           return MetraAsyncStatePanel.empty(
             title: emptyMessage,
@@ -635,80 +651,108 @@ class _StationAdministrationScreenState
             else
               Expanded(
                 child: ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: records.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, index) {
-            final record = records[index];
-            final title = audit
-                ? _firstValue(record, ['event_type', 'action', 'event', 'id'])
-                : _personName(record);
-            final subtitle = audit
-                ? [
-                    _firstValue(record, ['created_at', 'occurred_at']),
-                    _firstValue(record, ['actor_user_id', 'actor_name']),
-                  ].where((value) => value != '—').join(' • ')
-                : [
-                    _firstValue(
-                        record, ['role_code', 'requested_role_code', 'role']),
-                    _firstValue(record, ['status', 'request_status']),
-                    _firstValue(record, ['phone', 'email']),
-                  ].where((value) => value != '—').join(' • ');
-            return Card(
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    if (subtitle.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(subtitle,
-                          style: const TextStyle(color: Color(0xFF64748B))),
-                    ],
-                    if (registrationQueue) ...[
-                      const SizedBox(height: 10),
-                      Builder(
-                        builder: (context) {
-                          final rid = _firstValue(record, ['id', 'request_id']);
-                          final busy = _processingRequestIds.contains('${widget.stationId}::$rid');
-                          return Wrap(
-                            spacing: 8,
-                            children: [
-                              Semantics(
-                                button: true,
-                                enabled: !busy,
-                                label: 'اعتماد طلب التسجيل',
-                                child: FilledButton.tonal(
-                                  onPressed: busy
-                                      ? null
-                                      : () => _decide(record, 'approve'),
-                                  child: Text(busy ? 'جارٍ...' : 'اعتماد'),
-                                ),
+                  padding: const EdgeInsets.all(12),
+                  itemCount: records.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final record = records[index];
+                    final title = audit
+                        ? _firstValue(record, [
+                            'event_type',
+                            'action',
+                            'event',
+                            'id',
+                          ])
+                        : _personName(record);
+                    final subtitle = audit
+                        ? [
+                            _firstValue(record, ['created_at', 'occurred_at']),
+                            _firstValue(record, [
+                              'actor_user_id',
+                              'actor_name',
+                            ]),
+                          ].where((value) => value != '—').join(' • ')
+                        : [
+                            _firstValue(record, [
+                              'role_code',
+                              'requested_role_code',
+                              'role',
+                            ]),
+                            _firstValue(record, ['status', 'request_status']),
+                            _firstValue(record, ['phone', 'email']),
+                          ].where((value) => value != '—').join(' • ');
+                    return Card(
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                               ),
-                              Semantics(
-                                button: true,
-                                enabled: !busy,
-                                label: 'رفض طلب التسجيل',
-                                child: OutlinedButton(
-                                  onPressed: busy
-                                      ? null
-                                      : () => _decide(record, 'reject'),
-                                  child: const Text('رفض'),
+                            ),
+                            if (subtitle.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                subtitle,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
                                 ),
                               ),
                             ],
-                          );
-                        },
+                            if (registrationQueue) ...[
+                              const SizedBox(height: 10),
+                              Builder(
+                                builder: (context) {
+                                  final rid = _firstValue(record, [
+                                    'id',
+                                    'request_id',
+                                  ]);
+                                  final busy = _processingRequestIds.contains(
+                                    '${widget.stationId}::$rid',
+                                  );
+                                  return Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'اعتماد طلب التسجيل',
+                                        child: FilledButton.tonal(
+                                          onPressed: busy
+                                              ? null
+                                              : () =>
+                                                    _decide(record, 'approve'),
+                                          child: Text(
+                                            busy ? 'جارٍ...' : 'اعتماد',
+                                          ),
+                                        ),
+                                      ),
+                                      Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'رفض طلب التسجيل',
+                                        child: OutlinedButton(
+                                          onPressed: busy
+                                              ? null
+                                              : () => _decide(record, 'reject'),
+                                          child: const Text('رفض'),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ],
-                  ],
+                    );
+                  },
                 ),
-              ),
-            );
-          },
-        ),
               ),
           ],
         );

@@ -78,9 +78,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             Text(
               'مركز الإشعارات',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: MetraColors.navy,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: MetraColors.navy,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -145,9 +145,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             Text(
               'التفضيلات (محلية حتى ربط الخدمة)',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: MetraColors.navy,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: MetraColors.navy,
+              ),
             ),
             const SizedBox(height: 4),
             Card(
@@ -165,7 +165,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 value: prefs.reviewAlerts,
                 onChanged: _setReview,
                 title: const Text('تنبيهات المراجعة'),
-                subtitle: const Text('محلي فقط — لا اشتراك خادم في هذا الإصدار'),
+                subtitle: const Text(
+                  'محلي فقط — لا اشتراك خادم في هذا الإصدار',
+                ),
               ),
             ),
             Card(
@@ -173,7 +175,9 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 value: prefs.faultAlerts,
                 onChanged: _setFault,
                 title: const Text('تنبيهات الأعطال'),
-                subtitle: const Text('محلي فقط — لا اشتراك خادم في هذا الإصدار'),
+                subtitle: const Text(
+                  'محلي فقط — لا اشتراك خادم في هذا الإصدار',
+                ),
               ),
             ),
           ],

@@ -66,15 +66,16 @@ class RainfallSoilLocalRules {
     final errors = <String, String>{};
     _requireObservationDate(values, errors);
     if (values['responsibilityAgreement'] != true) {
-      errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
+      errors['responsibilityAgreement'] =
+          'يجب الموافقة على الإقرار قبل المتابعة';
     }
     for (final id in ['rainAmount', 'snowDepth']) {
       final parsed = parseOptionalDecimal(values[id]);
       if (parsed.isInvalid) {
-        errors[id] =
-            'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
+        errors[id] = 'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
       } else if (parsed.isPresent && parsed.value! < 0) {
-        errors[id] = 'لا تُقبل قيمة سالبة. اترك الحقل فارغاً إن لم يتوفر القياس';
+        errors[id] =
+            'لا تُقبل قيمة سالبة. اترك الحقل فارغاً إن لم يتوفر القياس';
       }
     }
     return errors;
@@ -85,13 +86,13 @@ class RainfallSoilLocalRules {
     final errors = <String, String>{};
     _requireObservationDate(values, errors);
     if (values['responsibilityAgreement'] != true) {
-      errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
+      errors['responsibilityAgreement'] =
+          'يجب الموافقة على الإقرار قبل المتابعة';
     }
     for (final id in ['depth5', 'depth10', 'depth20', 'depth50']) {
       final parsed = parseOptionalDecimal(values[id]);
       if (parsed.isInvalid) {
-        errors[id] =
-            'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
+        errors[id] = 'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
       }
     }
     return errors;
@@ -103,9 +104,9 @@ class DecimalFieldParse {
 
   const DecimalFieldParse.absent() : this._(DecimalFieldParseKind.absent, null);
   const DecimalFieldParse.invalid()
-      : this._(DecimalFieldParseKind.invalid, null);
+    : this._(DecimalFieldParseKind.invalid, null);
   const DecimalFieldParse.present(num value)
-      : this._(DecimalFieldParseKind.present, value);
+    : this._(DecimalFieldParseKind.present, value);
 
   final DecimalFieldParseKind kind;
   final num? value;

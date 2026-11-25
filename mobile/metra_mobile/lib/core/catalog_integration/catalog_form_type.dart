@@ -15,24 +15,24 @@ enum CatalogFormType {
 extension CatalogFormTypeCode on CatalogFormType {
   /// Stable machine code used in drafts and future contracts.
   String get code => switch (this) {
-        CatalogFormType.agricultural => 'agricultural',
-        CatalogFormType.hourlyClimate => 'hourlyclimate',
-        CatalogFormType.rainfall => 'rainfall',
-        CatalogFormType.soil => 'soil',
-        CatalogFormType.faultEquipment => 'faultequipment',
-        CatalogFormType.faultTelecom => 'faulttelecom',
-        CatalogFormType.faultIt => 'faultit',
-      };
+    CatalogFormType.agricultural => 'agricultural',
+    CatalogFormType.hourlyClimate => 'hourlyclimate',
+    CatalogFormType.rainfall => 'rainfall',
+    CatalogFormType.soil => 'soil',
+    CatalogFormType.faultEquipment => 'faultequipment',
+    CatalogFormType.faultTelecom => 'faulttelecom',
+    CatalogFormType.faultIt => 'faultit',
+  };
 
   String get arabicTitle => switch (this) {
-        CatalogFormType.agricultural => 'الرصد الزراعي',
-        CatalogFormType.hourlyClimate => 'الرصد المناخي الساعي',
-        CatalogFormType.rainfall => 'رصد الأمطار',
-        CatalogFormType.soil => 'رصد التربة',
-        CatalogFormType.faultEquipment => 'أعطال الأجهزة',
-        CatalogFormType.faultTelecom => 'أعطال الاتصالات',
-        CatalogFormType.faultIt => 'بلاغات تقنية المعلومات',
-      };
+    CatalogFormType.agricultural => 'الرصد الزراعي',
+    CatalogFormType.hourlyClimate => 'الرصد المناخي الساعي',
+    CatalogFormType.rainfall => 'رصد الأمطار',
+    CatalogFormType.soil => 'رصد التربة',
+    CatalogFormType.faultEquipment => 'أعطال الأجهزة',
+    CatalogFormType.faultTelecom => 'أعطال الاتصالات',
+    CatalogFormType.faultIt => 'بلاغات تقنية المعلومات',
+  };
 
   /// Explicit operator-facing notice: local only until an API contract exists.
   String get pendingContractNotice =>

@@ -27,8 +27,9 @@ class _PhenomenonObservationScreenState
     extends State<PhenomenonObservationScreen> {
   static const _formType = 'phenomenon';
 
-  late final ObservationSubmitFlow _flow =
-      ObservationSubmitFlow(api: widget.api);
+  late final ObservationSubmitFlow _flow = ObservationSubmitFlow(
+    api: widget.api,
+  );
   bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
@@ -64,8 +65,10 @@ class _PhenomenonObservationScreenState
     );
     if (mounted) {
       setState(() {
-        _draft =
-            ObservationDraftStore.instance.get(widget.stationId, _formType);
+        _draft = ObservationDraftStore.instance.get(
+          widget.stationId,
+          _formType,
+        );
       });
     }
   }
@@ -133,10 +136,12 @@ class _PhenomenonObservationScreenState
       onSubmit: _submit,
       onValuesChanged: _persistDraft,
       draftBanner: _draftBanner(),
-      secondaryActionLabel:
-          _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
-      onSecondaryAction:
-          _draft != null && !_draft!.isEmpty ? _discardDraft : null,
+      secondaryActionLabel: _draft != null && !_draft!.isEmpty
+          ? ObservationDraftUi.discardActionLabel
+          : null,
+      onSecondaryAction: _draft != null && !_draft!.isEmpty
+          ? _discardDraft
+          : null,
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
           : 'التحقق وإرسال بلاغ الظاهرة',

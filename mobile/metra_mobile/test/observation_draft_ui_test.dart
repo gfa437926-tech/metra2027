@@ -12,8 +12,9 @@ void main() {
     expect(stamp, matches(RegExp(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$')));
   });
 
-  testWidgets('banner is null for empty draft and renders for saved draft',
-      (tester) async {
+  testWidgets('banner is null for empty draft and renders for saved draft', (
+    tester,
+  ) async {
     expect(ObservationDraftUi.banner(null), isNull);
     expect(
       ObservationDraftUi.banner(
@@ -36,12 +37,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(home: Scaffold(body: ObservationDraftUi.banner(draft)!)),
     );
-    expect(find.textContaining(ObservationDraftUi.bannerPrefix), findsOneWidget);
+    expect(
+      find.textContaining(ObservationDraftUi.bannerPrefix),
+      findsOneWidget,
+    );
     expect(find.textContaining('حُفظت'), findsOneWidget);
   });
 
-  testWidgets('confirmDiscard cancels by default and confirms on action',
-      (tester) async {
+  testWidgets('confirmDiscard cancels by default and confirms on action', (
+    tester,
+  ) async {
     bool? cancelled;
     bool? confirmed;
 
@@ -53,13 +58,17 @@ void main() {
               children: [
                 FilledButton(
                   onPressed: () async {
-                    cancelled = await ObservationDraftUi.confirmDiscard(context);
+                    cancelled = await ObservationDraftUi.confirmDiscard(
+                      context,
+                    );
                   },
                   child: const Text('open-cancel'),
                 ),
                 FilledButton(
                   onPressed: () async {
-                    confirmed = await ObservationDraftUi.confirmDiscard(context);
+                    confirmed = await ObservationDraftUi.confirmDiscard(
+                      context,
+                    );
                   },
                   child: const Text('open-confirm'),
                 ),

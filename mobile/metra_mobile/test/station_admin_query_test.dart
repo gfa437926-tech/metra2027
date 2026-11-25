@@ -3,10 +3,7 @@ import 'package:metra_mobile/features/admin/station_administration_screen.dart';
 
 void main() {
   test('empty query matches all admin records', () {
-    expect(
-      stationAdminRecordMatchesQuery({'email': 'a@b.c'}, ''),
-      isTrue,
-    );
+    expect(stationAdminRecordMatchesQuery({'email': 'a@b.c'}, ''), isTrue);
   });
 
   test('matches name, role, status, phone, and email', () {

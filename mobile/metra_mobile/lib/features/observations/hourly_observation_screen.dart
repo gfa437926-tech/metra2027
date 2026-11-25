@@ -26,8 +26,9 @@ class HourlyObservationScreen extends StatefulWidget {
 class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   static const _formType = 'hourly';
 
-  late final ObservationSubmitFlow _flow =
-      ObservationSubmitFlow(api: widget.api);
+  late final ObservationSubmitFlow _flow = ObservationSubmitFlow(
+    api: widget.api,
+  );
   bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
@@ -63,8 +64,10 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
     );
     if (mounted) {
       setState(() {
-        _draft =
-            ObservationDraftStore.instance.get(widget.stationId, _formType);
+        _draft = ObservationDraftStore.instance.get(
+          widget.stationId,
+          _formType,
+        );
       });
     }
   }
@@ -94,8 +97,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         formType: _formType,
         stationId: stationId,
         values: values,
-        successMessageAr:
-            'أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
+        successMessageAr: 'أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
         validationFallbackAr: 'رفض الخادم بيانات الرصد الساعي.',
       );
 
@@ -132,10 +134,12 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
       onSubmit: _submit,
       onValuesChanged: _persistDraft,
       draftBanner: _draftBanner(),
-      secondaryActionLabel:
-          _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
-      onSecondaryAction:
-          _draft != null && !_draft!.isEmpty ? _discardDraft : null,
+      secondaryActionLabel: _draft != null && !_draft!.isEmpty
+          ? ObservationDraftUi.discardActionLabel
+          : null,
+      onSecondaryAction: _draft != null && !_draft!.isEmpty
+          ? _discardDraft
+          : null,
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
           : 'التحقق وإرسال الرصد الساعي',

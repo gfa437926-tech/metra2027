@@ -20,10 +20,7 @@ class ObservationSubmitOutcome {
       );
 
   factory ObservationSubmitOutcome.failure(String messageAr) =>
-      ObservationSubmitOutcome._(
-        succeeded: false,
-        messageAr: messageAr,
-      );
+      ObservationSubmitOutcome._(succeeded: false, messageAr: messageAr);
 
   final bool succeeded;
   final String messageAr;
@@ -35,10 +32,8 @@ class ObservationSubmitOutcome {
 /// Station/generation guards remain the caller's responsibility around this
 /// call so a late response never mutates a switched station.
 class ObservationSubmitFlow {
-  ObservationSubmitFlow({
-    required this.api,
-    ObservationDraftStore? draftStore,
-  }) : _drafts = draftStore ?? ObservationDraftStore.instance;
+  ObservationSubmitFlow({required this.api, ObservationDraftStore? draftStore})
+    : _drafts = draftStore ?? ObservationDraftStore.instance;
 
   final MetraApiClient api;
   final ObservationDraftStore _drafts;

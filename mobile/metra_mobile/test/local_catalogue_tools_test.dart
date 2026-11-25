@@ -9,36 +9,38 @@ StationDirectoryItem _station({
   String nameEnglish = 'Station',
   String localCode = 'ST-1',
   String? wmo,
-}) =>
-    StationDirectoryItem(
-      id: '11111111-1111-4111-8111-111111111111',
-      localCode: localCode,
-      nameArabic: nameArabic,
-      nameEnglish: nameEnglish,
-      stationType: 'classic',
-      operationalStatus: 'active',
-      approvalStatus: 'approved',
-      isDemo: false,
-      wmoStationId: wmo,
-    );
+}) => StationDirectoryItem(
+  id: '11111111-1111-4111-8111-111111111111',
+  localCode: localCode,
+  nameArabic: nameArabic,
+  nameEnglish: nameEnglish,
+  stationType: 'classic',
+  operationalStatus: 'active',
+  approvalStatus: 'approved',
+  isDemo: false,
+  wmoStationId: wmo,
+);
 
 void main() {
-  test('directory query matches code, names, and WMO id without calling the API', () {
-    final station = _station(
-      nameArabic: 'محطة الساحل',
-      nameEnglish: 'Coastal Station',
-      localCode: 'CL-09',
-      wmo: '40430',
-    );
-    expect(stationMatchesDirectoryQuery(station, '  '), isTrue);
-    expect(stationMatchesDirectoryQuery(station, 'cl-09'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, 'ساحل'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, 'COASTAL'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, '40430'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, '11111111-1111'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, 'classic'), isTrue);
-    expect(stationMatchesDirectoryQuery(station, 'غير موجود'), isFalse);
-  });
+  test(
+    'directory query matches code, names, and WMO id without calling the API',
+    () {
+      final station = _station(
+        nameArabic: 'محطة الساحل',
+        nameEnglish: 'Coastal Station',
+        localCode: 'CL-09',
+        wmo: '40430',
+      );
+      expect(stationMatchesDirectoryQuery(station, '  '), isTrue);
+      expect(stationMatchesDirectoryQuery(station, 'cl-09'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, 'ساحل'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, 'COASTAL'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, '40430'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, '11111111-1111'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, 'classic'), isTrue);
+      expect(stationMatchesDirectoryQuery(station, 'غير موجود'), isFalse);
+    },
+  );
 
   test('workspace period rejects an end day before the start day', () {
     expect(workspacePeriodError(null, DateTime(2026, 1, 2)), isNull);

@@ -75,7 +75,8 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
     super.didUpdateWidget(oldWidget);
     final stationChanged =
         oldWidget.stationId?.trim() != widget.stationId?.trim();
-    final typeChanged = oldWidget.formType != widget.formType ||
+    final typeChanged =
+        oldWidget.formType != widget.formType ||
         oldWidget.formCode != widget.formCode;
     if (stationChanged || typeChanged) {
       _loadDraft(resetForm: true);
@@ -142,9 +143,8 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
         values: values,
       );
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text(result.messageAr)),
-      );
+      ScaffoldMessenger.maybeOf(context)
+          ?.showSnackBar(SnackBar(content: Text(result.messageAr)));
       // Explicit guard: repository must never claim server persistence.
       assert(!result.claimsServerPersistence);
       // Local validation success does not clear the draft — only explicit
@@ -216,10 +216,12 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
               initialValues: _draft?.values ?? const {},
               onValuesChanged: _canDraft ? _persistDraft : null,
               draftBanner: _draftBanner(),
-              secondaryActionLabel:
-                  _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
-              onSecondaryAction:
-                  _draft != null && !_draft!.isEmpty ? _discardDraft : null,
+              secondaryActionLabel: _draft != null && !_draft!.isEmpty
+                  ? ObservationDraftUi.discardActionLabel
+                  : null,
+              onSecondaryAction: _draft != null && !_draft!.isEmpty
+                  ? _discardDraft
+                  : null,
               onSubmit: (values) => _onSubmit(context, values),
               embedded: true,
             ),

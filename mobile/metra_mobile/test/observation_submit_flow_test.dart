@@ -15,11 +15,11 @@ void main() {
   });
 
   MetraApiClient clientWith(MockClientHandler handler) => MetraApiClient(
-        baseUrl: 'https://api.example.test',
-        accessTokenProvider: () async => 'token',
-        client: MockClient(handler),
-        requestTimeout: const Duration(seconds: 5),
-      );
+    baseUrl: 'https://api.example.test',
+    accessTokenProvider: () async => 'token',
+    client: MockClient(handler),
+    requestTimeout: const Duration(seconds: 5),
+  );
 
   test('successful validate+submit clears draft and returns success', () async {
     ObservationDraftStore.instance.save(
@@ -52,7 +52,10 @@ void main() {
     );
     expect(outcome.succeeded, isTrue);
     expect(outcome.clearedDraft, isTrue);
-    expect(ObservationDraftStore.instance.hasDraft(stationId, 'hourly'), isFalse);
+    expect(
+      ObservationDraftStore.instance.hasDraft(stationId, 'hourly'),
+      isFalse,
+    );
     api.close();
   });
 
@@ -110,7 +113,10 @@ void main() {
           outcome.messageAr.contains('الدخول'),
       isTrue,
     );
-    expect(ObservationDraftStore.instance.hasDraft(stationId, 'hourly'), isTrue);
+    expect(
+      ObservationDraftStore.instance.hasDraft(stationId, 'hourly'),
+      isTrue,
+    );
     api.close();
   });
 
@@ -128,7 +134,9 @@ void main() {
       if (request.url.path.contains('/observations')) {
         submitCount += 1;
         final body = jsonDecode(request.body) as Map<String, dynamic>;
-        final key = body['idempotency_key']?.toString() ?? body['idempotencyKey']?.toString();
+        final key =
+            body['idempotency_key']?.toString() ??
+            body['idempotencyKey']?.toString();
         if (submitCount == 1) {
           firstKey = key;
           return http.Response('timeout', 504);

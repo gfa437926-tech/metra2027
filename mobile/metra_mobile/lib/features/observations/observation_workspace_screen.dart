@@ -38,7 +38,8 @@ class ObservationWorkspaceScreen extends StatefulWidget {
       _ObservationWorkspaceScreenState();
 }
 
-class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen> {
+class _ObservationWorkspaceScreenState
+    extends State<ObservationWorkspaceScreen> {
   @override
   void initState() {
     super.initState();
@@ -64,8 +65,10 @@ class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen>
       widget.accessContext!.canReviewObservations(widget.stationId);
 
   String _tabLabel(String base, String formType) {
-    final has = ObservationDraftStore.instance
-        .hasDraft(widget.stationId, formType);
+    final has = ObservationDraftStore.instance.hasDraft(
+      widget.stationId,
+      formType,
+    );
     return has ? '$base · مسودة' : base;
   }
 
@@ -190,8 +193,9 @@ class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen>
       );
     }
 
-    final draftTypes =
-        ObservationDraftStore.instance.formTypesWithDrafts(stationId);
+    final draftTypes = ObservationDraftStore.instance.formTypesWithDrafts(
+      stationId,
+    );
     final hasDrafts = draftTypes.isNotEmpty;
 
     return DefaultTabController(
@@ -204,8 +208,10 @@ class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen>
               Material(
                 color: const Color(0xFFFFF7E8),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.edit_note, color: Color(0xFF9A6700)),
@@ -224,8 +230,9 @@ class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen>
                       ),
                       TextButton(
                         onPressed: () {
-                          ObservationDraftStore.instance
-                              .clearStation(stationId);
+                          ObservationDraftStore.instance.clearStation(
+                            stationId,
+                          );
                         },
                         child: const Text('مسح الكل'),
                       ),

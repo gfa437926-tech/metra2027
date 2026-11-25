@@ -25,8 +25,9 @@ class DailyObservationScreen extends StatefulWidget {
 class _DailyObservationScreenState extends State<DailyObservationScreen> {
   static const _formType = 'daily';
 
-  late final ObservationSubmitFlow _flow =
-      ObservationSubmitFlow(api: widget.api);
+  late final ObservationSubmitFlow _flow = ObservationSubmitFlow(
+    api: widget.api,
+  );
   bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
@@ -62,8 +63,10 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
     );
     if (mounted) {
       setState(() {
-        _draft =
-            ObservationDraftStore.instance.get(widget.stationId, _formType);
+        _draft = ObservationDraftStore.instance.get(
+          widget.stationId,
+          _formType,
+        );
       });
     }
   }
@@ -93,8 +96,7 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
         formType: _formType,
         stationId: stationId,
         values: values,
-        successMessageAr:
-            'أُرسلت الرصدة اليومية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
+        successMessageAr: 'أُرسلت الرصدة اليومية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
         validationFallbackAr: 'رفض الخادم بيانات الرصد اليومي.',
       );
 
@@ -131,10 +133,12 @@ class _DailyObservationScreenState extends State<DailyObservationScreen> {
       onSubmit: _submit,
       onValuesChanged: _persistDraft,
       draftBanner: _draftBanner(),
-      secondaryActionLabel:
-          _draft != null && !_draft!.isEmpty ? ObservationDraftUi.discardActionLabel : null,
-      onSecondaryAction:
-          _draft != null && !_draft!.isEmpty ? _discardDraft : null,
+      secondaryActionLabel: _draft != null && !_draft!.isEmpty
+          ? ObservationDraftUi.discardActionLabel
+          : null,
+      onSecondaryAction: _draft != null && !_draft!.isEmpty
+          ? _discardDraft
+          : null,
       submitLabel: _submitting
           ? 'جارٍ الإرسال...'
           : 'التحقق وإرسال الرصد اليومي',

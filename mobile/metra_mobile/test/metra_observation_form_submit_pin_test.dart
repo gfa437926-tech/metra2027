@@ -41,7 +41,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
   }
 
-  testWidgets('submit is built and visible on a small phone viewport', (tester) async {
+  testWidgets('submit is built and visible on a small phone viewport', (
+    tester,
+  ) async {
     await pumpForm(
       tester,
       size: const Size(320, 568),
@@ -59,7 +61,9 @@ void main() {
     expect(find.text('هذا الحقل مطلوب'), findsWidgets);
   });
 
-  testWidgets('submit stays visible on a large desktop viewport', (tester) async {
+  testWidgets('submit stays visible on a large desktop viewport', (
+    tester,
+  ) async {
     await pumpForm(
       tester,
       size: const Size(1280, 800),
@@ -70,7 +74,9 @@ void main() {
     expect(find.text('حفظ وإرسال'), findsOneWidget);
   });
 
-  testWidgets('long catalogue remains scrollable and does not hide submit', (tester) async {
+  testWidgets('long catalogue remains scrollable and does not hide submit', (
+    tester,
+  ) async {
     await pumpForm(
       tester,
       size: const Size(390, 700),

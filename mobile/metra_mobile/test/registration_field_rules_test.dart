@@ -53,7 +53,10 @@ void main() {
     test('rejects malformed and overlong', () {
       expect(RegistrationFieldRules.optionalEmail('not-an-email'), isNotNull);
       expect(RegistrationFieldRules.optionalEmail('a@'), isNotNull);
-      expect(RegistrationFieldRules.optionalEmail('${'a' * 250}@x.com'), isNotNull);
+      expect(
+        RegistrationFieldRules.optionalEmail('${'a' * 250}@x.com'),
+        isNotNull,
+      );
     });
 
     test('accepts plausible addresses', () {
@@ -82,7 +85,10 @@ void main() {
 
   group('RegistrationFieldRules.confirmPassword', () {
     test('requires confirmation and match', () {
-      expect(RegistrationFieldRules.confirmPassword('secret12', null), isNotNull);
+      expect(
+        RegistrationFieldRules.confirmPassword('secret12', null),
+        isNotNull,
+      );
       expect(RegistrationFieldRules.confirmPassword('secret12', ''), isNotNull);
       expect(
         RegistrationFieldRules.confirmPassword('secret12', 'secret13'),

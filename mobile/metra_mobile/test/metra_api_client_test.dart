@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -9,17 +10,26 @@ void main() {
   const stationId = '11111111-1111-4111-8111-111111111111';
   test('review queue authenticates and parses API rows', () async {
     late http.Request captured;
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'test-access-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response(jsonEncode([{
-          'id': '22222222-2222-4222-8222-222222222222',
-          'station_id': stationId, 'observation_type': 'daily',
-          'observed_at': '2026-11-03T12:00:00Z', 'status': 'submitted',
-          'payload': {'temperature': 28}
-        }]), 200);
-      }));
+        return http.Response(
+          jsonEncode([
+            {
+              'id': '22222222-2222-4222-8222-222222222222',
+              'station_id': stationId,
+              'observation_type': 'daily',
+              'observed_at': '2026-11-03T12:00:00Z',
+              'status': 'submitted',
+              'payload': {'temperature': 28},
+            },
+          ]),
+          200,
+        );
+      }),
+    );
     final rows = await client.getReviewQueue(stationId);
     expect(captured.headers['authorization'], 'Bearer test-access-token');
     expect(rows, hasLength(1));
@@ -29,18 +39,33 @@ void main() {
 
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'directory-token',
       client: MockClient((request) async {
         captured = request;
-        return http.Response.bytes(utf8.encode(jsonEncode([{
-          'id': stationId, 'local_station_code': 'ST-001',
-          'name_ar': 'محطة اختبار', 'name_en': 'Test station',
-          'station_type': 'classic', 'operational_status': 'unverified',
-          'approval_status': 'pending', 'is_demo': false,
-          'station_coordinates': [{'latitude': 24.7, 'longitude': 46.7}]
-        }])), 200);
-      }));
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode([
+              {
+                'id': stationId,
+                'local_station_code': 'ST-001',
+                'name_ar': 'محطة اختبار',
+                'name_en': 'Test station',
+                'station_type': 'classic',
+                'operational_status': 'unverified',
+                'approval_status': 'pending',
+                'is_demo': false,
+                'station_coordinates': [
+                  {'latitude': 24.7, 'longitude': 46.7},
+                ],
+              },
+            ]),
+          ),
+          200,
+        );
+      }),
+    );
     final rows = await client.getStationDirectory(stationType: 'classic');
     expect(captured.url.path, '/api/v1/stations');
     expect(captured.url.queryParameters['stationType'], 'classic');
@@ -51,174 +76,216 @@ void main() {
     client.close();
   });
 
+  test(
+    'station coordinates distinguish missing, valid and out-of-range values',
+    () {
+      StationDirectoryItem station(double? latitude, double? longitude) =>
+          StationDirectoryItem(
+            id: stationId,
+            localCode: 'ST-001',
+            nameArabic: 'اختبار',
+            nameEnglish: 'Test',
+            stationType: 'classic',
+            operationalStatus: 'unverified',
+            approvalStatus: 'pending',
+            isDemo: false,
+            latitude: latitude,
+            longitude: longitude,
+          );
+      expect(station(24.7, 46.7).hasValidCoordinates, isTrue);
+      expect(station(null, 46.7).hasValidCoordinates, isFalse);
+      expect(station(91, 46.7).hasValidCoordinates, isFalse);
+      expect(station(24.7, -181).hasValidCoordinates, isFalse);
+    },
+  );
 
-  test('station coordinates distinguish missing, valid and out-of-range values', () {
-    StationDirectoryItem station(double? latitude, double? longitude) => StationDirectoryItem(
-      id: stationId, localCode: 'ST-001', nameArabic: 'اختبار', nameEnglish: 'Test',
-      stationType: 'classic', operationalStatus: 'unverified', approvalStatus: 'pending',
-      isDemo: false, latitude: latitude, longitude: longitude);
-    expect(station(24.7, 46.7).hasValidCoordinates, isTrue);
-    expect(station(null, 46.7).hasValidCoordinates, isFalse);
-    expect(station(91, 46.7).hasValidCoordinates, isFalse);
-    expect(station(24.7, -181).hasValidCoordinates, isFalse);
-  });
+  test(
+    'station directory fetches every page instead of silently hiding stations',
+    () async {
+      var requests = 0;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'directory-token',
+        client: MockClient((request) async {
+          requests++;
+          final offset = int.parse(request.url.queryParameters['offset']!);
+          final count = offset == 0 ? 500 : 1;
+          final rows = List.generate(count, (index) {
+            final n = offset + index;
+            return {
+              'id': 'station-$n',
+              'local_station_code': 'ST-$n',
+              'name_ar': 'Station $n',
+              'name_en': 'Station $n',
+              'station_type': 'classic',
+              'operational_status': 'unverified',
+              'approval_status': 'pending',
+              'is_demo': false,
+              'station_coordinates': <Map<String, dynamic>>[],
+            };
+          });
+          return http.Response(jsonEncode(rows), 200);
+        }),
+      );
+      final rows = await client.getAllStationDirectory(stationType: 'classic');
+      expect(requests, 2);
+      expect(rows, hasLength(501));
+      expect(rows.last.localCode, 'ST-500');
+      client.close();
+    },
+  );
 
-  test('station directory fetches every page instead of silently hiding stations', () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'directory-token',
-      client: MockClient((request) async {
-        requests++;
-        final offset = int.parse(request.url.queryParameters['offset']!);
-        final count = offset == 0 ? 500 : 1;
-        final rows = List.generate(count, (index) {
-          final n = offset + index;
-          return {
-            'id': 'station-$n',
-            'local_station_code': 'ST-$n',
-            'name_ar': 'Station $n',
-            'name_en': 'Station $n',
-            'station_type': 'classic',
-            'operational_status': 'unverified',
-            'approval_status': 'pending',
-            'is_demo': false,
-            'station_coordinates': <Map<String, dynamic>>[],
-          };
-        });
-        return http.Response(jsonEncode(rows), 200);
-      }),
-    );
-    final rows = await client.getAllStationDirectory(stationType: 'classic');
-    expect(requests, 2);
-    expect(rows, hasLength(501));
-    expect(rows.last.localCode, 'ST-500');
-    client.close();
-  });
+  test(
+    'accepts an exact 10,000-station directory without false overflow',
+    () async {
+      var requests = 0;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'directory-token',
+        client: MockClient((request) async {
+          requests++;
+          final offset = int.parse(request.url.queryParameters['offset']!);
+          final limit = int.parse(request.url.queryParameters['limit']!);
+          final count = offset >= 10000
+              ? 0
+              : (10000 - offset).clamp(0, limit).toInt();
+          final rows = List.generate(count, (index) {
+            final n = offset + index;
+            return {
+              'id': 'station-$n',
+              'local_station_code': 'ST-$n',
+              'name_ar': 'Station $n',
+              'name_en': 'Station $n',
+              'station_type': 'classic',
+              'operational_status': 'unverified',
+              'approval_status': 'pending',
+              'is_demo': false,
+              'station_coordinates': <Map<String, dynamic>>[],
+            };
+          });
+          return http.Response(jsonEncode(rows), 200);
+        }),
+      );
 
-  test('accepts an exact 10,000-station directory without false overflow', () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'directory-token',
-      client: MockClient((request) async {
-        requests++;
-        final offset = int.parse(request.url.queryParameters['offset']!);
-        final limit = int.parse(request.url.queryParameters['limit']!);
-        final count = offset >= 10000 ? 0 : (10000 - offset).clamp(0, limit).toInt();
-        final rows = List.generate(count, (index) {
-          final n = offset + index;
-          return {
-            'id': 'station-$n',
-            'local_station_code': 'ST-$n',
-            'name_ar': 'Station $n',
-            'name_en': 'Station $n',
-            'station_type': 'classic',
-            'operational_status': 'unverified',
-            'approval_status': 'pending',
-            'is_demo': false,
-            'station_coordinates': <Map<String, dynamic>>[],
-          };
-        });
-        return http.Response(jsonEncode(rows), 200);
-      }),
-    );
+      final rows = await client.getAllStationDirectory();
 
-    final rows = await client.getAllStationDirectory();
+      expect(rows, hasLength(10000));
+      expect(requests, 21); // 20 full pages plus the one-row overflow probe.
+      client.close();
+    },
+  );
 
-    expect(rows, hasLength(10000));
-    expect(requests, 21); // 20 full pages plus the one-row overflow probe.
-    client.close();
-  });
+  test(
+    'rejects station directories larger than the documented safety cap',
+    () async {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'directory-token',
+        client: MockClient((request) async {
+          final offset = int.parse(request.url.queryParameters['offset']!);
+          final limit = int.parse(request.url.queryParameters['limit']!);
+          final count = offset >= 10000
+              ? 1
+              : (10000 - offset).clamp(0, limit).toInt();
+          final rows = List.generate(count, (index) {
+            final n = offset + index;
+            return {
+              'id': 'station-$n',
+              'local_station_code': 'ST-$n',
+              'name_ar': 'Station $n',
+              'name_en': 'Station $n',
+              'station_type': 'classic',
+              'operational_status': 'unverified',
+              'approval_status': 'pending',
+              'is_demo': false,
+              'station_coordinates': <Map<String, dynamic>>[],
+            };
+          });
+          return http.Response(jsonEncode(rows), 200);
+        }),
+      );
 
-  test('rejects station directories larger than the documented safety cap', () async {
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'directory-token',
-      client: MockClient((request) async {
-        final offset = int.parse(request.url.queryParameters['offset']!);
-        final limit = int.parse(request.url.queryParameters['limit']!);
-        final count = offset >= 10000 ? 1 : (10000 - offset).clamp(0, limit).toInt();
-        final rows = List.generate(count, (index) {
-          final n = offset + index;
-          return {
-            'id': 'station-$n',
-            'local_station_code': 'ST-$n',
-            'name_ar': 'Station $n',
-            'name_en': 'Station $n',
-            'station_type': 'classic',
-            'operational_status': 'unverified',
-            'approval_status': 'pending',
-            'is_demo': false,
-            'station_coordinates': <Map<String, dynamic>>[],
-          };
-        });
-        return http.Response(jsonEncode(rows), 200);
-      }),
-    );
+      await expectLater(
+        client.getAllStationDirectory(),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'station_directory_limit_exceeded',
+          ),
+        ),
+      );
+      client.close();
+    },
+  );
 
-    await expectLater(
-      client.getAllStationDirectory(),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code,
-        'code',
-        'station_directory_limit_exceeded',
-      )),
-    );
-    client.close();
-  });
-
-  test('rejects unsupported observation types before making a request', () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('{}', 200);
-      }),
-    );
-    await expectLater(
-      client.submitObservation(
-        stationId: stationId,
-        idempotencyKey: 'request-1',
-        observationType: 'agricultural',
-        observedAt: DateTime.utc(2026, 11, 16),
-        payload: const {'temperature': 20},
-      ),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'unsupported_observation_type')),
-    );
-    expect(requests, 0);
-    client.close();
-  });
-
-  test('rejects blank or padded idempotency keys before making a request', () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('{}', 200);
-      }),
-    );
-    for (final key in ['', ' request-1 ', 'request 1']) {
+  test(
+    'rejects unsupported observation types before making a request',
+    () async {
+      var requests = 0;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('{}', 200);
+        }),
+      );
       await expectLater(
         client.submitObservation(
           stationId: stationId,
-          idempotencyKey: key,
-          observationType: 'hourly',
+          idempotencyKey: 'request-1',
+          observationType: 'agricultural',
           observedAt: DateTime.utc(2026, 11, 16),
           payload: const {'temperature': 20},
         ),
-        throwsA(isA<MetraApiException>().having(
-          (error) => error.code, 'code', 'invalid_idempotency_key')),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'unsupported_observation_type',
+          ),
+        ),
       );
-    }
-    expect(requests, 0);
-    client.close();
-  });
+      expect(requests, 0);
+      client.close();
+    },
+  );
+
+  test(
+    'rejects blank or padded idempotency keys before making a request',
+    () async {
+      var requests = 0;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('{}', 200);
+        }),
+      );
+      for (final key in ['', ' request-1 ', 'request 1']) {
+        await expectLater(
+          client.submitObservation(
+            stationId: stationId,
+            idempotencyKey: key,
+            observationType: 'hourly',
+            observedAt: DateTime.utc(2026, 11, 16),
+            payload: const {'temperature': 20},
+          ),
+          throwsA(
+            isA<MetraApiException>().having(
+              (error) => error.code,
+              'code',
+              'invalid_idempotency_key',
+            ),
+          ),
+        );
+      }
+      expect(requests, 0);
+      client.close();
+    },
+  );
 
   test('rejects blank or padded station IDs before making a request', () async {
     var requests = 0;
@@ -239,124 +306,180 @@ void main() {
           observedAt: DateTime.utc(2026, 11, 16),
           payload: const {'temperature': 20},
         ),
-        throwsA(isA<MetraApiException>().having(
-          (error) => error.code, 'code', 'invalid_station_id')),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'invalid_station_id',
+          ),
+        ),
       );
     }
     expect(requests, 0);
     client.close();
   });
 
-  test('submits supported observation with bearer token and UTC timestamp', () async {
-    late http.Request captured;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'submit-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response('{}', 201);
-      }),
-    );
-    await client.submitObservation(
-      stationId: stationId,
-      idempotencyKey: 'stable-request-1',
-      observationType: 'hourly',
-      observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
-      payload: const {'dryTemp': 22},
-      submit: true,
-    );
-    expect(captured.method, 'POST');
-    expect(captured.url.path, '/api/v1/stations/$stationId/observations');
-    expect(captured.headers['authorization'], 'Bearer submit-token');
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['idempotencyKey'], 'stable-request-1');
-    expect(body['observationType'], 'hourly');
-    expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
-    expect(body['payload'], {'dryTemp': 22});
-    expect(body['submit'], isTrue);
-    client.close();
-  });
-
-  test('rejects malformed station and record identifiers before requests', () async {
-    var requests = 0;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'token',
-      client: MockClient((_) async {
-        requests++;
-        return http.Response('{}', 200);
-      }),
-    );
-
-    await expectLater(
-      client.getReviewQueue('station id'),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'invalid_station_id')),
-    );
-    await expectLater(
-      client.decideObservation(
+  test(
+    'submits supported observation with bearer token and UTC timestamp',
+    () async {
+      late http.Request captured;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'submit-token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response('{}', 201);
+        }),
+      );
+      await client.submitObservation(
         stationId: stationId,
-        observationId: ' ',
-        decision: 'approve',
-      ),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'invalid_observation_id')),
-    );
-    await expectLater(
-      client.decideStationRegistrationRequest(
-        stationId: stationId,
-        requestId: 'request\n1',
-        decision: 'approve',
-      ),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'invalid_registration_request_id')),
-    );
-    expect(requests, 0);
-    client.close();
-  });
+        idempotencyKey: 'stable-request-1',
+        observationType: 'hourly',
+        observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
+        payload: const {'dryTemp': 22},
+        submit: true,
+      );
+      expect(captured.method, 'POST');
+      expect(captured.url.path, '/api/v1/stations/$stationId/observations');
+      expect(captured.headers['authorization'], 'Bearer submit-token');
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['idempotencyKey'], 'stable-request-1');
+      expect(body['observationType'], 'hourly');
+      expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
+      expect(body['payload'], {'dryTemp': 22});
+      expect(body['submit'], isTrue);
+      client.close();
+    },
+  );
 
-  test('maps request and response wait timeouts to safe timeout error', () async {
+  test(
+    'rejects malformed station and record identifiers before requests',
+    () async {
+      var requests = 0;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async {
+          requests++;
+          return http.Response('{}', 200);
+        }),
+      );
+
+      await expectLater(
+        client.getReviewQueue('station id'),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'invalid_station_id',
+          ),
+        ),
+      );
+      await expectLater(
+        client.decideObservation(
+          stationId: stationId,
+          observationId: ' ',
+          decision: 'approve',
+        ),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'invalid_observation_id',
+          ),
+        ),
+      );
+      await expectLater(
+        client.decideStationRegistrationRequest(
+          stationId: stationId,
+          requestId: 'request\n1',
+          decision: 'approve',
+        ),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'invalid_registration_request_id',
+          ),
+        ),
+      );
+      expect(requests, 0);
+      client.close();
+    },
+  );
+
+  test(
+    'maps request and response wait timeouts to safe timeout error',
+    () async {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        requestTimeout: const Duration(milliseconds: 15),
+        accessTokenProvider: () async => 'token',
+        client: MockClient((request) async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+          return http.Response('[]', 200);
+        }),
+      );
+      await expectLater(
+        client.getReviewQueue(stationId),
+        throwsA(
+          isA<MetraApiException>().having(
+            (error) => error.code,
+            'code',
+            'timeout',
+          ),
+        ),
+      );
+      client.close();
+    },
+  );
+
+  test('requires access token', () async {
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
-      requestTimeout: const Duration(milliseconds: 15),
-      accessTokenProvider: () async => 'token',
-      client: MockClient((request) async {
-        await Future<void>.delayed(const Duration(milliseconds: 60));
-        return http.Response('[]', 200);
-      }),
+      accessTokenProvider: () async => null,
+      client: MockClient((_) async => http.Response('[]', 200)),
     );
     await expectLater(
       client.getReviewQueue(stationId),
-      throwsA(isA<MetraApiException>().having(
-        (error) => error.code, 'code', 'timeout')),
+      throwsA(
+        isA<MetraApiException>().having((e) => e.statusCode, 'statusCode', 401),
+      ),
     );
-    client.close();
-  });
-
-  test('requires access token', () async {
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => null,
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId),
-      throwsA(isA<MetraApiException>().having((e) => e.statusCode, 'statusCode', 401)));
     client.close();
   });
 
   test('requires HTTPS API origin', () async {
-    final client = MetraApiClient(baseUrl: 'http://api.example.test',
+    final client = MetraApiClient(
+      baseUrl: 'http://api.example.test',
       accessTokenProvider: () async => 'token',
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId),
-      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'api_not_configured')));
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+    await expectLater(
+      client.getReviewQueue(stationId),
+      throwsA(
+        isA<MetraApiException>().having(
+          (e) => e.code,
+          'code',
+          'api_not_configured',
+        ),
+      ),
+    );
     client.close();
   });
 
   test('bounds queue limit', () async {
-    final client = MetraApiClient(baseUrl: 'https://api.example.test',
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'token',
-      client: MockClient((_) async => http.Response('[]', 200)));
-    await expectLater(client.getReviewQueue(stationId, limit: 101),
-      throwsA(isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit')));
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+    await expectLater(
+      client.getReviewQueue(stationId, limit: 101),
+      throwsA(
+        isA<MetraApiException>().having((e) => e.code, 'code', 'invalid_limit'),
+      ),
+    );
     client.close();
   });
   test('API is not configured when the build-time URL is missing', () {
@@ -370,12 +493,17 @@ void main() {
   });
 
   test('rejects API URLs containing credentials, query or fragment', () {
-    expect(ApiConfig.isValidUrl('https://user:secret@api.example.test'), isFalse);
-    expect(ApiConfig.isValidUrl('https://api.example.test?token=secret'), isFalse);
+    expect(
+      ApiConfig.isValidUrl('https://user:secret@api.example.test'),
+      isFalse,
+    );
+    expect(
+      ApiConfig.isValidUrl('https://api.example.test?token=secret'),
+      isFalse,
+    );
     expect(ApiConfig.isValidUrl('https://api.example.test#section'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test/api/v1'), isFalse);
     expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
-
 }

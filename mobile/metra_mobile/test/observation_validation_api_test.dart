@@ -57,38 +57,43 @@ void main() {
     client.close();
   });
 
-  test('daily validation preserves values with unsupported precision', () async {
-    late http.Request captured;
-    final client = MetraApiClient(
-      baseUrl: 'https://api.example.test',
-      accessTokenProvider: () async => 'validation-token',
-      client: MockClient((request) async {
-        captured = request;
-        return http.Response.bytes(
-          utf8.encode(jsonEncode({
-            'isValid': false,
-            'issues': [
-              {'field': 'minTemp', 'message': 'تنسيق غير صالح'}
-            ]
-          })),
-          200,
-          headers: {'content-type': 'application/json'},
-        );
-      }),
-    );
+  test(
+    'daily validation preserves values with unsupported precision',
+    () async {
+      late http.Request captured;
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'validation-token',
+        client: MockClient((request) async {
+          captured = request;
+          return http.Response.bytes(
+            utf8.encode(
+              jsonEncode({
+                'isValid': false,
+                'issues': [
+                  {'field': 'minTemp', 'message': 'تنسيق غير صالح'},
+                ],
+              }),
+            ),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        }),
+      );
 
-    final result = await client.validateObservation(
-      observationType: 'daily',
-      values: {'minTemp': -2.25, 'maxTemp': 18},
-    );
+      final result = await client.validateObservation(
+        observationType: 'daily',
+        values: {'minTemp': -2.25, 'maxTemp': 18},
+      );
 
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    final values = body['values'] as Map<String, dynamic>;
-    expect(captured.url.path, '/api/v1/observations/daily/validate');
-    expect(values['minTemp'], '-2.25');
-    expect(values['maxTemp'], '18.0');
-    expect(result.isValid, isFalse);
-    expect(result.issues.single.field, 'minTemp');
-    client.close();
-  });
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      final values = body['values'] as Map<String, dynamic>;
+      expect(captured.url.path, '/api/v1/observations/daily/validate');
+      expect(values['minTemp'], '-2.25');
+      expect(values['maxTemp'], '18.0');
+      expect(result.isValid, isFalse);
+      expect(result.issues.single.field, 'minTemp');
+      client.close();
+    },
+  );
 }

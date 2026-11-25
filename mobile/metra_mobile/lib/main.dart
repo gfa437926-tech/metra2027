@@ -1,6 +1,7 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'core/auth/metra_auth.dart';
 import 'core/theme/metra_theme.dart';
 
@@ -17,11 +18,13 @@ Future<void> main() async {
   }
   runApp(const MetraApp());
 }
+
 class MetraApp extends StatelessWidget {
   const MetraApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'METRA 2027', debugShowCheckedModeBanner: false,
+    title: 'METRA 2027',
+    debugShowCheckedModeBanner: false,
     theme: MetraTheme.light(),
     localizationsDelegates: const [
       GlobalMaterialLocalizations.delegate,
@@ -35,5 +38,6 @@ class MetraApp extends StatelessWidget {
     builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
         ? const MetraAuthGate()
-        : const MetraConfigurationScreen());
+        : const MetraConfigurationScreen(),
+  );
 }

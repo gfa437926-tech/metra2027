@@ -20,10 +20,7 @@ void main() {
 
     test('rejects future end day', () {
       final tomorrow = DateTime.now().add(const Duration(days: 2));
-      final err = workspacePeriodError(
-        DateTime(2024, 1, 1),
-        tomorrow,
-      );
+      final err = workspacePeriodError(DateTime(2024, 1, 1), tomorrow);
       expect(err, isNotNull);
       expect(err, contains('المستقبل'));
     });

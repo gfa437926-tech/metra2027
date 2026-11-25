@@ -6,31 +6,35 @@ import 'package:metra_mobile/core/drafts/observation_draft_store.dart';
 import 'package:metra_mobile/features/observations/catalog_observation_screen.dart';
 
 void main() {
-  testWidgets('agricultural catalogue shows local-only banner and field count',
-      (tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: CatalogObservationScreen(
-            title: 'الرصد الزراعي',
-            fields: ObservationFieldCatalogs.agricultural,
-            formCode: 'agricultural',
+  testWidgets(
+    'agricultural catalogue shows local-only banner and field count',
+    (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: CatalogObservationScreen(
+              title: 'الرصد الزراعي',
+              fields: ObservationFieldCatalogs.agricultural,
+              formCode: 'agricultural',
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pump();
+      );
+      await tester.pump();
 
-    expect(find.textContaining('تحقق محلي فقط'), findsOneWidget);
-    expect(find.textContaining('agricultural'), findsOneWidget);
-    expect(
-      find.textContaining('${ObservationFieldCatalogs.agricultural.length}'),
-      findsWidgets,
-    );
-    expect(find.text('تحقق محلياً'), findsOneWidget);
-  });
+      expect(find.textContaining('تحقق محلي فقط'), findsOneWidget);
+      expect(find.textContaining('agricultural'), findsOneWidget);
+      expect(
+        find.textContaining('${ObservationFieldCatalogs.agricultural.length}'),
+        findsWidgets,
+      );
+      expect(find.text('تحقق محلياً'), findsOneWidget);
+    },
+  );
 
-  testWidgets('local validate does not claim server persistence', (tester) async {
+  testWidgets('local validate does not claim server persistence', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -65,8 +69,9 @@ void main() {
     expect(find.textContaining('غير متاح لعدم وجود عقد API'), findsNothing);
   });
 
-  testWidgets('catalog drafts stay station-scoped and restore banner',
-      (tester) async {
+  testWidgets('catalog drafts stay station-scoped and restore banner', (
+    tester,
+  ) async {
     const stationA = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const stationB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 

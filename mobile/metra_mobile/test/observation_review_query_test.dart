@@ -8,15 +8,14 @@ ObservationQueueItem _item({
   String status = 'pending_review',
   DateTime? observedAt,
   Map<String, dynamic> payload = const {'temp': 12},
-}) =>
-    ObservationQueueItem(
-      id: id,
-      stationId: 'station-a',
-      observationType: type,
-      status: status,
-      observedAt: observedAt ?? DateTime.utc(2026, 11, 20, 6),
-      payload: payload,
-    );
+}) => ObservationQueueItem(
+  id: id,
+  stationId: 'station-a',
+  observationType: type,
+  status: status,
+  observedAt: observedAt ?? DateTime.utc(2026, 11, 20, 6),
+  payload: payload,
+);
 
 void main() {
   test('empty query matches every row', () {
@@ -70,8 +69,10 @@ void main() {
       _item(id: 'h1', type: 'hourly'),
       _item(id: 'h2', type: 'hourly'),
     ];
-    final entries =
-        buildObservationReviewListEntries(rows, typeFilter: 'hourly');
+    final entries = buildObservationReviewListEntries(
+      rows,
+      typeFilter: 'hourly',
+    );
     expect(entries.whereType<ObservationReviewSectionHeader>(), isEmpty);
     expect(entries.whereType<ObservationReviewRowEntry>().length, 2);
   });
@@ -79,8 +80,13 @@ void main() {
   test('status and observedAt formatters are stable', () {
     expect(observationQueueStatusLabel('submitted'), contains('بانتظار'));
     expect(observationQueueStatusLabel('approved'), 'معتمدة');
-    expect(observationQueueStatusLabel('return_for_correction'), contains('تصحيح'));
-    final stamp = formatObservationQueueObservedAt(DateTime.utc(2026, 1, 2, 3, 4));
+    expect(
+      observationQueueStatusLabel('return_for_correction'),
+      contains('تصحيح'),
+    );
+    final stamp = formatObservationQueueObservedAt(
+      DateTime.utc(2026, 1, 2, 3, 4),
+    );
     expect(stamp, matches(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'));
   });
 }

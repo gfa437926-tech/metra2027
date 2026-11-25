@@ -29,20 +29,38 @@ void main() {
     });
 
     test('garbage is invalid', () {
-      expect(RainfallSoilLocalRules.parseOptionalDecimal('x').isInvalid, isTrue);
+      expect(
+        RainfallSoilLocalRules.parseOptionalDecimal('x').isInvalid,
+        isTrue,
+      );
     });
   });
 
   group('isValidObservationDate', () {
     test('accepts real calendar dates', () {
-      expect(RainfallSoilLocalRules.isValidObservationDate('2026-11-18'), isTrue);
-      expect(RainfallSoilLocalRules.isValidObservationDate('2024-02-29'), isTrue);
+      expect(
+        RainfallSoilLocalRules.isValidObservationDate('2026-11-18'),
+        isTrue,
+      );
+      expect(
+        RainfallSoilLocalRules.isValidObservationDate('2024-02-29'),
+        isTrue,
+      );
     });
 
     test('rejects invalid and non-ISO dates', () {
-      expect(RainfallSoilLocalRules.isValidObservationDate('2026-02-30'), isFalse);
-      expect(RainfallSoilLocalRules.isValidObservationDate('18-11-2026'), isFalse);
-      expect(RainfallSoilLocalRules.isValidObservationDate('2026/11/18'), isFalse);
+      expect(
+        RainfallSoilLocalRules.isValidObservationDate('2026-02-30'),
+        isFalse,
+      );
+      expect(
+        RainfallSoilLocalRules.isValidObservationDate('18-11-2026'),
+        isFalse,
+      );
+      expect(
+        RainfallSoilLocalRules.isValidObservationDate('2026/11/18'),
+        isFalse,
+      );
       expect(RainfallSoilLocalRules.isValidObservationDate(''), isFalse);
     });
   });
@@ -132,9 +150,7 @@ void main() {
       expect(errors.containsKey('observationDate'), isTrue);
     });
     test('requires date and agreement', () {
-      final errors = RainfallSoilLocalRules.validateSoil({
-        'depth5': '18',
-      });
+      final errors = RainfallSoilLocalRules.validateSoil({'depth5': '18'});
       expect(errors.containsKey('observationDate'), isTrue);
       expect(errors.containsKey('responsibilityAgreement'), isTrue);
     });

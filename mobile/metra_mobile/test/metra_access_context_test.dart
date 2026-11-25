@@ -15,7 +15,10 @@ void main() {
     });
 
     test('hides operational destinations while unresolved', () {
-      expect(context.isDestinationVisible(MetraDestinationId.observations), isFalse);
+      expect(
+        context.isDestinationVisible(MetraDestinationId.observations),
+        isFalse,
+      );
       expect(context.isDestinationVisible(MetraDestinationId.admin), isFalse);
       expect(context.isDestinationVisible(MetraDestinationId.home), isTrue);
       expect(context.isDestinationVisible(MetraDestinationId.stations), isTrue);
@@ -77,7 +80,10 @@ void main() {
       expect(observer.canEnterObservations('station-b'), isFalse);
       expect(observer.canAccessAnyObservationWorkspace, isTrue);
       expect(observer.canAccessAnyStationAdministration, isFalse);
-      expect(observer.isDestinationVisible(MetraDestinationId.observations), isTrue);
+      expect(
+        observer.isDestinationVisible(MetraDestinationId.observations),
+        isTrue,
+      );
       expect(observer.isDestinationVisible(MetraDestinationId.admin), isFalse);
       expect(observer.hasKnownActiveAccount, isFalse);
     });
@@ -87,7 +93,10 @@ void main() {
       expect(stationHead.canReviewObservations('station-a'), isTrue);
       expect(stationHead.canAdministerStation('station-a'), isTrue);
       expect(stationHead.canAccessAnyStationAdministration, isTrue);
-      expect(stationHead.isDestinationVisible(MetraDestinationId.admin), isTrue);
+      expect(
+        stationHead.isDestinationVisible(MetraDestinationId.admin),
+        isTrue,
+      );
       expect(
         stationHead.isDestinationVisible(MetraDestinationId.observations),
         isTrue,
@@ -111,7 +120,10 @@ void main() {
       );
       expect(draftOnly.canEnterObservations('station-a'), isTrue);
       expect(draftOnly.canAccessObservationWorkspace('station-a'), isTrue);
-      expect(draftOnly.isDestinationVisible(MetraDestinationId.observations), isTrue);
+      expect(
+        draftOnly.isDestinationVisible(MetraDestinationId.observations),
+        isTrue,
+      );
     });
 
     test('empty identifiers never grant access', () {
@@ -121,19 +133,22 @@ void main() {
   });
 
   group('accountState informational only', () {
-    test('inactive account still resolves permissions but is not known-active', () {
-      final inactive = MetraAccessContext.resolved(
-        userId: 'user-inactive',
-        accountState: 'inactive',
-        stationPermissions: {
-          'station-a': {'observation.create', 'observation.submit'},
-        },
-      );
-      expect(inactive.isResolved, isTrue);
-      expect(inactive.hasKnownActiveAccount, isFalse);
-      // Permission codes still apply; UI may show account notices separately.
-      expect(inactive.canEnterObservations('station-a'), isTrue);
-    });
+    test(
+      'inactive account still resolves permissions but is not known-active',
+      () {
+        final inactive = MetraAccessContext.resolved(
+          userId: 'user-inactive',
+          accountState: 'inactive',
+          stationPermissions: {
+            'station-a': {'observation.create', 'observation.submit'},
+          },
+        );
+        expect(inactive.isResolved, isTrue);
+        expect(inactive.hasKnownActiveAccount, isFalse);
+        // Permission codes still apply; UI may show account notices separately.
+        expect(inactive.canEnterObservations('station-a'), isTrue);
+      },
+    );
 
     test('active account reports known-active', () {
       final active = MetraAccessContext.resolved(
@@ -152,10 +167,19 @@ void main() {
       final context = MetraAccessContext.unresolved();
       expect(context.isDestinationVisible(MetraDestinationId.forecast), isTrue);
       expect(context.isDestinationVisible(MetraDestinationId.climatol), isTrue);
-      expect(context.isDestinationVisible(MetraDestinationId.recordsAi), isTrue);
-      expect(context.isDestinationVisible(MetraDestinationId.operations), isTrue);
+      expect(
+        context.isDestinationVisible(MetraDestinationId.recordsAi),
+        isTrue,
+      );
+      expect(
+        context.isDestinationVisible(MetraDestinationId.operations),
+        isTrue,
+      );
       expect(context.isDestinationVisible(MetraDestinationId.reports), isTrue);
-      expect(context.isDestinationVisible(MetraDestinationId.observations), isFalse);
+      expect(
+        context.isDestinationVisible(MetraDestinationId.observations),
+        isFalse,
+      );
       expect(context.isDestinationVisible(MetraDestinationId.admin), isFalse);
     });
   });

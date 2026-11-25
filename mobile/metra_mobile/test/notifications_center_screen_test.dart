@@ -8,7 +8,9 @@ void main() {
     NotificationPreferencesStore.instance.reset();
   });
 
-  testWidgets('shows offline banner and no synthetic feed rows', (tester) async {
+  testWidgets('shows offline banner and no synthetic feed rows', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: NotificationsCenterScreen())),
     );
@@ -41,8 +43,9 @@ void main() {
     );
   });
 
-  testWidgets('filter chips change empty-state copy without inventing rows',
-      (tester) async {
+  testWidgets('filter chips change empty-state copy without inventing rows', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: NotificationsCenterScreen())),
     );

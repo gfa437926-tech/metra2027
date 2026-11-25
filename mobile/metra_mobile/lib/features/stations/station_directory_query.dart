@@ -2,7 +2,10 @@ import '../../core/api/metra_api_client.dart';
 
 /// Client-side match against a directory page already returned by the API.
 /// Does not query the server and does not invent stations.
-bool stationMatchesDirectoryQuery(StationDirectoryItem station, String rawQuery) {
+bool stationMatchesDirectoryQuery(
+  StationDirectoryItem station,
+  String rawQuery,
+) {
   final query = rawQuery.trim().toLowerCase();
   if (query.isEmpty) return true;
   bool contains(String? value) =>
@@ -21,8 +24,7 @@ List<StationDirectoryItem> sortStationDirectoryLocally(
   Iterable<StationDirectoryItem> rows,
 ) {
   final list = List<StationDirectoryItem>.of(rows);
-  int cmp(String a, String b) =>
-      a.toLowerCase().compareTo(b.toLowerCase());
+  int cmp(String a, String b) => a.toLowerCase().compareTo(b.toLowerCase());
   list.sort((a, b) {
     final byAr = cmp(a.nameArabic, b.nameArabic);
     if (byAr != 0) return byAr;

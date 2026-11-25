@@ -108,131 +108,134 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
       child: Material(
         color: Colors.transparent,
         child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'الحساب الشخصي',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: MetraColors.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'إدارة بيانات الجلسة وكلمة المرور. طلبات التسجيل والصلاحيات تُعتمد عبر مسؤولي المحطة والنظام.',
-            style: TextStyle(color: MetraColors.muted, height: 1.45),
-          ),
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-              title: const Text('البريد الإلكتروني'),
-              subtitle: Text(email),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Card(
-            color: MetraColors.warningBg,
-            child: ListTile(
-              leading: Icon(Icons.verified_user_outlined, color: MetraColors.warning),
-              title: Text('حالة الحساب والصلاحيات'),
-              subtitle: Text(
-                'تُستمد من سياق الصلاحيات على الخادم بعد تسجيل الدخول. '
-                'الحساب غير المصرّح لا يظهر محطات تشغيلية.',
-              ),
-            ),
-          ),
-          if (widget.api != null) ...[
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.app_registration),
-              title: const Text('طلب تسجيل على محطة'),
-              trailing: const Icon(Icons.chevron_left),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('طلب تسجيل')),
-                      body: RegistrationRequestScreen(api: widget.api!),
-                    ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.pending_actions_outlined),
-              title: const Text('حالة طلب التسجيل'),
-              trailing: const Icon(Icons.chevron_left),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('حالة التسجيل')),
-                      body: RegistrationStatusScreen(api: widget.api!),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-          if (widget.onOpenNotifications != null) ...[
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: const Text('مركز الإشعارات'),
-              trailing: const Icon(Icons.chevron_left),
-              onTap: widget.onOpenNotifications,
-            ),
-          ],
-          const SizedBox(height: 20),
-          Text(
-            'تغيير كلمة المرور',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: MetraColors.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _newPassword,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'كلمة المرور الجديدة',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _confirmPassword,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'تأكيد كلمة المرور',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          if (_message != null) ...[
-            const SizedBox(height: 8),
+          padding: const EdgeInsets.all(16),
+          children: [
             Text(
-              _message!,
-              style: TextStyle(
-                color: _error ? MetraColors.danger : MetraColors.success,
-                height: 1.4,
+              'الحساب الشخصي',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: MetraColors.navy,
               ),
             ),
+            const SizedBox(height: 8),
+            const Text(
+              'إدارة بيانات الجلسة وكلمة المرور. طلبات التسجيل والصلاحيات تُعتمد عبر مسؤولي المحطة والنظام.',
+              style: TextStyle(color: MetraColors.muted, height: 1.45),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+                title: const Text('البريد الإلكتروني'),
+                subtitle: Text(email),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Card(
+              color: MetraColors.warningBg,
+              child: ListTile(
+                leading: Icon(
+                  Icons.verified_user_outlined,
+                  color: MetraColors.warning,
+                ),
+                title: Text('حالة الحساب والصلاحيات'),
+                subtitle: Text(
+                  'تُستمد من سياق الصلاحيات على الخادم بعد تسجيل الدخول. '
+                  'الحساب غير المصرّح لا يظهر محطات تشغيلية.',
+                ),
+              ),
+            ),
+            if (widget.api != null) ...[
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.app_registration),
+                title: const Text('طلب تسجيل على محطة'),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('طلب تسجيل')),
+                        body: RegistrationRequestScreen(api: widget.api!),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.pending_actions_outlined),
+                title: const Text('حالة طلب التسجيل'),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => Scaffold(
+                        appBar: AppBar(title: const Text('حالة التسجيل')),
+                        body: RegistrationStatusScreen(api: widget.api!),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+            if (widget.onOpenNotifications != null) ...[
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.notifications_outlined),
+                title: const Text('مركز الإشعارات'),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: widget.onOpenNotifications,
+              ),
+            ],
+            const SizedBox(height: 20),
+            Text(
+              'تغيير كلمة المرور',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: MetraColors.navy,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _newPassword,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'كلمة المرور الجديدة',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _confirmPassword,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'تأكيد كلمة المرور',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_message != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _message!,
+                style: TextStyle(
+                  color: _error ? MetraColors.danger : MetraColors.success,
+                  height: 1.4,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: _busy ? null : _changePassword,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.lock_reset),
+              label: Text(_busy ? 'جاري التحديث…' : 'تحديث كلمة المرور'),
+            ),
           ],
-          const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _busy ? null : _changePassword,
-            icon: _busy
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.lock_reset),
-            label: Text(_busy ? 'جاري التحديث…' : 'تحديث كلمة المرور'),
-          ),
-        ],
         ),
       ),
     );

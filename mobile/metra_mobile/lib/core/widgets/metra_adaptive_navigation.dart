@@ -21,43 +21,45 @@ class MetraAdaptiveNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          // NavigationRail needs vertical room for every labelled destination.
-          // A wide but short viewport (e.g. split-screen / compact desktop) must
-          // use the bottom bar rather than overflow the rail.
-          final hasRailHeight = !constraints.maxHeight.isFinite ||
-              constraints.maxHeight >= 680;
-          if (constraints.maxWidth >= wideBreakpoint && hasRailHeight) {
-            return Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: selectedIndex,
-                  onDestinationSelected: onDestinationSelected,
-                  labelType: NavigationRailLabelType.all,
-                  destinations: destinations
-                      .map((item) => NavigationRailDestination(
-                            icon: item.icon,
-                            selectedIcon: item.selectedIcon ?? item.icon,
-                            label: Text(item.label),
-                          ))
-                      .toList(growable: false),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: child),
-              ],
-            );
-          }
+    builder: (context, constraints) {
+      // NavigationRail needs vertical room for every labelled destination.
+      // A wide but short viewport (e.g. split-screen / compact desktop) must
+      // use the bottom bar rather than overflow the rail.
+      final hasRailHeight =
+          !constraints.maxHeight.isFinite || constraints.maxHeight >= 680;
+      if (constraints.maxWidth >= wideBreakpoint && hasRailHeight) {
+        return Row(
+          children: [
+            NavigationRail(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: onDestinationSelected,
+              labelType: NavigationRailLabelType.all,
+              destinations: destinations
+                  .map(
+                    (item) => NavigationRailDestination(
+                      icon: item.icon,
+                      selectedIcon: item.selectedIcon ?? item.icon,
+                      label: Text(item.label),
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(child: child),
+          ],
+        );
+      }
 
-          return Column(
-            children: [
-              Expanded(child: child),
-              NavigationBar(
-                selectedIndex: selectedIndex,
-                onDestinationSelected: onDestinationSelected,
-                destinations: destinations,
-              ),
-            ],
-          );
-        },
+      return Column(
+        children: [
+          Expanded(child: child),
+          NavigationBar(
+            selectedIndex: selectedIndex,
+            onDestinationSelected: onDestinationSelected,
+            destinations: destinations,
+          ),
+        ],
       );
+    },
+  );
 }

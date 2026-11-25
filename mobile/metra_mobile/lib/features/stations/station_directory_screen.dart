@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
 import '../../core/widgets/metra_async_state.dart';
@@ -79,149 +80,152 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
       child: Material(
         color: Colors.transparent,
         child: Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-          child: Column(
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: Column(
                 children: [
-                  _chip('الكل', null),
-                  _chip('الكلاسيكية', 'classic'),
-                  _chip('الآلية', 'automatic'),
-                  _chip('السينوبتيكية', 'synoptic'),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _query,
-                textDirection: TextDirection.rtl,
-                decoration: InputDecoration(
-                  labelText: 'بحث في الدليل المحمّل',
-                  hintText: 'الاسم أو الرمز أو معرف المنظمة',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _query.text.trim().isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'مسح البحث',
-                          onPressed: () => setState(_query.clear),
-                          icon: const Icon(Icons.clear),
-                        ),
-                  border: const OutlineInputBorder(),
-                  isDense: true,
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(
-                        value: true,
-                        icon: Icon(Icons.map_outlined),
-                        label: Text('الخريطة'),
-                      ),
-                      ButtonSegment(
-                        value: false,
-                        icon: Icon(Icons.list_alt),
-                        label: Text('القائمة'),
-                      ),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      _chip('الكل', null),
+                      _chip('الكلاسيكية', 'classic'),
+                      _chip('الآلية', 'automatic'),
+                      _chip('السينوبتيكية', 'synoptic'),
                     ],
-                    selected: {_showMap},
-                    onSelectionChanged: (v) =>
-                        setState(() => _showMap = v.first),
                   ),
-                  if (showMineFilter)
-                    FilterChip(
-                      label: const Text('محطاتي فقط'),
-                      selected: _mineOnly,
-                      onSelected: (v) => setState(() => _mineOnly = v),
-                      avatar: Icon(
-                        _mineOnly ? Icons.verified_user : Icons.verified_user_outlined,
-                        size: 18,
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _query,
+                    textDirection: TextDirection.rtl,
+                    decoration: InputDecoration(
+                      labelText: 'بحث في الدليل المحمّل',
+                      hintText: 'الاسم أو الرمز أو معرف المنظمة',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _query.text.trim().isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'مسح البحث',
+                              onPressed: () => setState(_query.clear),
+                              icon: const Icon(Icons.clear),
+                            ),
+                      border: const OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SegmentedButton<bool>(
+                        segments: const [
+                          ButtonSegment(
+                            value: true,
+                            icon: Icon(Icons.map_outlined),
+                            label: Text('الخريطة'),
+                          ),
+                          ButtonSegment(
+                            value: false,
+                            icon: Icon(Icons.list_alt),
+                            label: Text('القائمة'),
+                          ),
+                        ],
+                        selected: {_showMap},
+                        onSelectionChanged: (v) =>
+                            setState(() => _showMap = v.first),
+                      ),
+                      if (showMineFilter)
+                        FilterChip(
+                          label: const Text('محطاتي فقط'),
+                          selected: _mineOnly,
+                          onSelected: (v) => setState(() => _mineOnly = v),
+                          avatar: Icon(
+                            _mineOnly
+                                ? Icons.verified_user
+                                : Icons.verified_user_outlined,
+                            size: 18,
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (showMineFilter && _mineOnly)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          'تُعرض المحطات التي يملك حسابك عليها صلاحيات رصد أو إدارة فقط. '
+                          'التفويض النهائي من الخادم.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                            height: 1.4,
+                          ),
+                        ),
                       ),
                     ),
                 ],
               ),
-              if (showMineFilter && _mineOnly)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      'تُعرض المحطات التي يملك حسابك عليها صلاحيات رصد أو إدارة فقط. '
-                      'التفويض النهائي من الخادم.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: FutureBuilder<List<StationDirectoryItem>>(
-            future: _stations,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return MetraAsyncStatePanel.loading(
-                  message: 'جاري تحميل دليل المحطات…',
-                );
-              }
-              if (snapshot.hasError) {
-                return MetraAsyncStatePanel.error(
-                  title: 'تعذر تحميل دليل المحطات',
-                  subtitle:
-                      'تحقق من تسجيل الدخول والاتصال بالشبكة وواجهة API ثم أعد المحاولة.',
-                  onRetry: () => setState(_load),
-                );
-              }
-              final allRows = snapshot.data ?? const <StationDirectoryItem>[];
-              final rows = _applyFilters(allRows);
-              if (rows.isEmpty) {
-                return MetraAsyncStatePanel.empty(
-                  icon: Icons.location_off,
-                  title: _mineOnly
-                      ? 'لا توجد محطات مصرّح بها'
-                      : _query.text.trim().isEmpty
+            ),
+            Expanded(
+              child: FutureBuilder<List<StationDirectoryItem>>(
+                future: _stations,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return MetraAsyncStatePanel.loading(
+                      message: 'جاري تحميل دليل المحطات…',
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return MetraAsyncStatePanel.error(
+                      title: 'تعذر تحميل دليل المحطات',
+                      subtitle: 'تحقق من تسجيل الدخول والاتصال بالشبكة وواجهة API ثم أعد المحاولة.',
+                      onRetry: () => setState(_load),
+                    );
+                  }
+                  final allRows =
+                      snapshot.data ?? const <StationDirectoryItem>[];
+                  final rows = _applyFilters(allRows);
+                  if (rows.isEmpty) {
+                    return MetraAsyncStatePanel.empty(
+                      icon: Icons.location_off,
+                      title: _mineOnly
+                          ? 'لا توجد محطات مصرّح بها'
+                          : _query.text.trim().isEmpty
                           ? 'لا توجد محطات'
                           : 'لا توجد محطات مطابقة',
-                  subtitle: _mineOnly
-                      ? 'لا يملك حسابك صلاحيات تشغيلية على أي محطة ضمن الفلتر الحالي.'
-                      : _query.text.trim().isEmpty
+                      subtitle: _mineOnly
+                          ? 'لا يملك حسابك صلاحيات تشغيلية على أي محطة ضمن الفلتر الحالي.'
+                          : _query.text.trim().isEmpty
                           ? 'لا توجد سجلات مطابقة للنوع المحدد.'
                           : 'عبارة البحث لا تطابق اسماً أو رمزاً ضمن المحطات المحمّلة. لم يُستعلم الخادم من جديد.',
-                  action: TextButton(
-                    onPressed: () => setState(_load),
-                    child: const Text('تحديث'),
-                  ),
-                );
-              }
-              final located =
-                  rows.where((s) => s.hasValidCoordinates).toList();
-              if (_showMap) return _map(rows, located);
-              return RefreshIndicator(
-                onRefresh: () async => setState(_load),
-                child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: rows.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => _card(rows[i]),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                      action: TextButton(
+                        onPressed: () => setState(_load),
+                        child: const Text('تحديث'),
+                      ),
+                    );
+                  }
+                  final located = rows
+                      .where((s) => s.hasValidCoordinates)
+                      .toList();
+                  if (_showMap) return _map(rows, located);
+                  return RefreshIndicator(
+                    onRefresh: () async => setState(_load),
+                    child: ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: rows.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) => _card(rows[i]),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -240,8 +244,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     }
     final center = LatLng(
       located.map((s) => s.latitude!).reduce((a, b) => a + b) / located.length,
-      located.map((s) => s.longitude!).reduce((a, b) => a + b) /
-          located.length,
+      located.map((s) => s.longitude!).reduce((a, b) => a + b) / located.length,
     );
     return Stack(
       children: [
@@ -274,8 +277,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                       height: 58,
                       alignment: Alignment.topCenter,
                       child: Tooltip(
-                        message:
-                            '${station.nameArabic} • ${station.localCode}',
+                        message: '${station.nameArabic} • ${station.localCode}',
                         child: GestureDetector(
                           onTap: widget.onStationSelected == null
                               ? null
@@ -288,8 +290,8 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                             color: _hasOperationalAccess(station.id)
                                 ? const Color(0xFF087CF0)
                                 : station.stationType == 'classic'
-                                    ? const Color(0xFF2463B5)
-                                    : const Color(0xFF16835D),
+                                ? const Color(0xFF2463B5)
+                                : const Color(0xFF16835D),
                           ),
                         ),
                       ),
@@ -317,12 +319,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
     );
   }
 
-  Widget _empty(
-    IconData icon,
-    String title,
-    String body, [
-    Widget? action,
-  ]) {
+  Widget _empty(IconData icon, String title, String body, [Widget? action]) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -342,10 +339,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(height: 1.5, color: Color(0xFF475569)),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              action,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action],
           ],
         ),
       ),
@@ -353,34 +347,34 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   }
 
   Widget _chip(String label, String? value) => ChoiceChip(
-        label: Text(label),
-        selected: _type == value,
-        onSelected: (_) => setState(() {
-          _type = value;
-          _load();
-        }),
-      );
+    label: Text(label),
+    selected: _type == value,
+    onSelected: (_) => setState(() {
+      _type = value;
+      _load();
+    }),
+  );
 
   Widget _card(StationDirectoryItem station) {
     final classic = station.stationType == 'classic';
     final type = classic
         ? 'كلاسيكية'
         : station.stationType == 'automatic'
-            ? 'آلية'
-            : 'سينوبتيكية';
+        ? 'آلية'
+        : 'سينوبتيكية';
     final approval = station.approvalStatus == 'approved'
         ? 'معتمدة'
         : station.approvalStatus == 'pending'
-            ? 'بانتظار الاعتماد'
-            : station.approvalStatus;
+        ? 'بانتظار الاعتماد'
+        : station.approvalStatus;
     final operation = station.operationalStatus == 'unverified'
         ? 'غير متحقق منها'
         : station.operationalStatus;
     final coords = station.hasValidCoordinates
         ? 'إحداثيات صالحة'
         : station.hasCoordinates
-            ? 'إحداثيات غير صالحة — لن تظهر على الخريطة'
-            : 'لا توجد إحداثيات موثقة';
+        ? 'إحداثيات غير صالحة — لن تظهر على الخريطة'
+        : 'لا توجد إحداثيات موثقة';
     final authorized = _hasOperationalAccess(station.id);
 
     return Card(
@@ -394,15 +388,15 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
           backgroundColor: authorized
               ? const Color(0xFFE8F4FF)
               : classic
-                  ? const Color(0xFFEAF2FF)
-                  : const Color(0xFFE7F8F2),
+              ? const Color(0xFFEAF2FF)
+              : const Color(0xFFE7F8F2),
           child: Icon(
             classic ? Icons.cell_tower : Icons.sensors,
             color: authorized
                 ? const Color(0xFF087CF0)
                 : classic
-                    ? const Color(0xFF2463B5)
-                    : const Color(0xFF16835D),
+                ? const Color(0xFF2463B5)
+                : const Color(0xFF16835D),
           ),
         ),
         title: Row(
@@ -471,9 +465,7 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
               children: [
                 Text(
                   station.nameArabic,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
+                  style: Theme.of(context).textTheme.titleLarge
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
@@ -485,8 +477,11 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                   const SizedBox(height: 8),
                   const Row(
                     children: [
-                      Icon(Icons.verified_user,
-                          size: 18, color: Color(0xFF087CF0)),
+                      Icon(
+                        Icons.verified_user,
+                        size: 18,
+                        color: Color(0xFF087CF0),
+                      ),
                       SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -505,7 +500,9 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                 _detailRow('الرمز المحلي', station.localCode),
                 _detailRow('معرّف WMO', station.wmoStationId ?? 'غير متوفر'),
                 _detailRow(
-                    'نوع المحطة', _stationTypeLabel(station.stationType)),
+                  'نوع المحطة',
+                  _stationTypeLabel(station.stationType),
+                ),
                 _detailRow(
                   'الارتفاع عن سطح البحر',
                   station.elevationM == null
@@ -514,7 +511,9 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                 ),
                 _detailRow('الإحداثيات', coordinates),
                 _detailRow(
-                    'مصدر الإحداثيات', station.coordinateSource ?? 'غير موثق'),
+                  'مصدر الإحداثيات',
+                  station.coordinateSource ?? 'غير موثق',
+                ),
                 _detailRow(
                   'دقة الإحداثيات',
                   station.coordinateAccuracyM == null
@@ -522,7 +521,9 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                       : '${station.coordinateAccuracyM!.toStringAsFixed(1)} م',
                 ),
                 _detailRow(
-                    'حالة الاعتماد', _approvalLabel(station.approvalStatus)),
+                  'حالة الاعتماد',
+                  _approvalLabel(station.approvalStatus),
+                ),
                 _detailRow(
                   'الحالة التشغيلية',
                   _operationLabel(station.operationalStatus),
@@ -542,42 +543,42 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
   }
 
   Widget _detailRow(String label, String value) => Padding(
-        padding: const EdgeInsets.only(bottom: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              width: 140,
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 140,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w600,
             ),
-            Expanded(child: Text(value)),
-          ],
+          ),
         ),
-      );
+        Expanded(child: Text(value)),
+      ],
+    ),
+  );
 
   String _stationTypeLabel(String type) => switch (type) {
-        'classic' => 'كلاسيكية',
-        'automatic' => 'آلية',
-        'synoptic' => 'سينوبتيكية',
-        _ => type,
-      };
+    'classic' => 'كلاسيكية',
+    'automatic' => 'آلية',
+    'synoptic' => 'سينوبتيكية',
+    _ => type,
+  };
 
   String _approvalLabel(String status) => switch (status) {
-        'approved' => 'معتمدة',
-        'pending' => 'بانتظار الاعتماد',
-        _ => status,
-      };
+    'approved' => 'معتمدة',
+    'pending' => 'بانتظار الاعتماد',
+    _ => status,
+  };
 
   String _operationLabel(String status) => switch (status) {
-        'unverified' => 'غير متحقق منها',
-        'active' => 'نشطة',
-        'inactive' => 'غير نشطة',
-        _ => status,
-      };
+    'unverified' => 'غير متحقق منها',
+    'active' => 'نشطة',
+    'inactive' => 'غير نشطة',
+    _ => status,
+  };
 }

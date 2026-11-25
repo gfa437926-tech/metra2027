@@ -80,7 +80,11 @@ class MetraAsyncStatePanel extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: compact ? 36 : 44, color: const Color(0xFF64748B)),
+              Icon(
+                icon,
+                size: compact ? 36 : 44,
+                color: const Color(0xFF64748B),
+              ),
               const SizedBox(height: 12),
               Text(
                 title,
@@ -103,10 +107,7 @@ class MetraAsyncStatePanel extends StatelessWidget {
                   ),
                 ),
               ],
-              if (action != null) ...[
-                const SizedBox(height: 16),
-                action!,
-              ],
+              if (action != null) ...[const SizedBox(height: 16), action!],
             ],
           ),
         ),

@@ -16,21 +16,20 @@ void main() {
     String id = observationId,
     String type = 'daily',
     String status = 'submitted',
-  }) =>
-      {
-        'id': id,
-        'station_id': stationId,
-        'observation_type': type,
-        'observed_at': '2026-11-03T12:00:00Z',
-        'status': status,
-        'payload': <String, dynamic>{},
-      };
+  }) => {
+    'id': id,
+    'station_id': stationId,
+    'observation_type': type,
+    'observed_at': '2026-11-03T12:00:00Z',
+    'status': status,
+    'payload': <String, dynamic>{},
+  };
 
   MetraApiClient apiWith(MockClientHandler handler) => MetraApiClient(
-        baseUrl: 'https://api.example.test',
-        accessTokenProvider: () async => 'access-token',
-        client: MockClient(handler),
-      );
+    baseUrl: 'https://api.example.test',
+    accessTokenProvider: () async => 'access-token',
+    client: MockClient(handler),
+  );
 
   /// Dialog confirm button is the last FilledButton labelled اعتماد when open.
   Future<void> confirmApprove(WidgetTester tester) async {
@@ -51,9 +50,13 @@ void main() {
     final api = apiWith(
       (_) async => http.Response(jsonEncode([queueItem()]), 200),
     );
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);
@@ -64,9 +67,13 @@ void main() {
 
   testWidgets('shows empty state for an empty server queue', (tester) async {
     final api = apiWith((_) async => http.Response('[]', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
     api.close();
@@ -75,9 +82,13 @@ void main() {
   testWidgets('shows loading indicator while queue is pending', (tester) async {
     final completer = Completer<http.Response>();
     final api = apiWith((_) => completer.future);
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pump();
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     completer.complete(http.Response('[]', 200));
@@ -86,8 +97,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('renders recoverable error when queue load fails with 503',
-      (tester) async {
+  testWidgets('renders recoverable error when queue load fails with 503', (
+    tester,
+  ) async {
     var calls = 0;
     final api = apiWith((_) async {
       calls++;
@@ -95,9 +107,13 @@ void main() {
           ? http.Response('[]', 200)
           : http.Response('{"error":"unavailable"}', 503);
     });
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('لا توجد نشرات بانتظار المراجعة'), findsOneWidget);
 
@@ -109,12 +125,17 @@ void main() {
     api.close();
   });
 
-  testWidgets('queue load 403 shows station review permission message',
-      (tester) async {
+  testWidgets('queue load 403 shows station review permission message', (
+    tester,
+  ) async {
     final api = apiWith((_) async => http.Response('forbidden', 403));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('صلاحية'), findsOneWidget);
     expect(find.text('إعادة المحاولة'), findsOneWidget);
@@ -123,9 +144,13 @@ void main() {
 
   testWidgets('queue load 401 shows login guidance', (tester) async {
     final api = apiWith((_) async => http.Response('unauthorized', 401));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('تسجيل الدخول'), findsOneWidget);
     api.close();
@@ -146,9 +171,13 @@ void main() {
       return http.Response('{}', 200);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('نشرة يومية'), findsOneWidget);
 
@@ -164,8 +193,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('return for correction requires note and posts decision',
-      (tester) async {
+  testWidgets('return for correction requires note and posts decision', (
+    tester,
+  ) async {
     var decideBodies = <String>[];
     final api = apiWith((request) async {
       if (request.method == 'GET') {
@@ -175,9 +205,13 @@ void main() {
       return http.Response('{}', 200);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('إرجاع للتصحيح'));
@@ -206,9 +240,13 @@ void main() {
       return http.Response('{"error":"forbidden"}', 403);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await openApproveDialog(tester);
     await confirmApprove(tester);
@@ -219,8 +257,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('409 conflict on decision shows already-processed message',
-      (tester) async {
+  testWidgets('409 conflict on decision shows already-processed message', (
+    tester,
+  ) async {
     final api = apiWith((request) async {
       if (request.method == 'GET') {
         return http.Response(jsonEncode([queueItem()]), 200);
@@ -228,9 +267,13 @@ void main() {
       return http.Response('{}', 409);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await openApproveDialog(tester);
     await confirmApprove(tester);
@@ -240,8 +283,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('review rejects a queue row whose station does not match',
-      (tester) async {
+  testWidgets('review rejects a queue row whose station does not match', (
+    tester,
+  ) async {
     const otherStationId = '33333333-3333-4333-8333-333333333333';
     var decisionCalls = 0;
     final mismatched = queueItem()..['station_id'] = otherStationId;
@@ -253,11 +297,13 @@ void main() {
       return http.Response('{}', 200);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ObservationReviewScreen(api: api, stationId: stationId),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     await openApproveDialog(tester);
     await confirmApprove(tester);
@@ -271,43 +317,50 @@ void main() {
     api.close();
   });
 
-  testWidgets('station switch while approval dialog is open drops stale decision',
-      (tester) async {
-    const otherStationId = '33333333-3333-4333-8333-333333333333';
-    var decisionCalls = 0;
-    final api = apiWith((request) async {
-      if (request.method == 'GET') {
-        return http.Response(jsonEncode([queueItem()]), 200);
-      }
-      decisionCalls++;
-      return http.Response('{}', 200);
-    });
+  testWidgets(
+    'station switch while approval dialog is open drops stale decision',
+    (tester) async {
+      const otherStationId = '33333333-3333-4333-8333-333333333333';
+      var decisionCalls = 0;
+      final api = apiWith((request) async {
+        if (request.method == 'GET') {
+          return http.Response(jsonEncode([queueItem()]), 200);
+        }
+        decisionCalls++;
+        return http.Response('{}', 200);
+      });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ObservationReviewScreen(api: api, stationId: stationId),
-      ),
-    ));
-    await tester.pumpAndSettle();
-    await openApproveDialog(tester);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ObservationReviewScreen(api: api, stationId: stationId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openApproveDialog(tester);
 
-    // Keep the confirmation route open while the host changes station scope.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ObservationReviewScreen(api: api, stationId: otherStationId),
-      ),
-    ));
-    await tester.pumpAndSettle();
+      // Keep the confirmation route open while the host changes station scope.
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ObservationReviewScreen(api: api, stationId: otherStationId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await confirmApprove(tester);
-    await tester.pumpAndSettle();
+      await confirmApprove(tester);
+      await tester.pumpAndSettle();
 
-    expect(decisionCalls, 0);
-    api.close();
-  });
+      expect(decisionCalls, 0);
+      api.close();
+    },
+  );
 
-  testWidgets('concurrent approve taps only send one decision request',
-      (tester) async {
+  testWidgets('concurrent approve taps only send one decision request', (
+    tester,
+  ) async {
     final gate = Completer<void>();
     var decideCalls = 0;
     final api = apiWith((request) async {
@@ -319,9 +372,13 @@ void main() {
       return http.Response('{}', 200);
     });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: ObservationReviewScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await openApproveDialog(tester);
@@ -346,7 +403,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('local queue search filters loaded rows without a new API call', (tester) async {
+  testWidgets('local queue search filters loaded rows without a new API call', (
+    tester,
+  ) async {
     var loads = 0;
     final api = apiWith((_) async {
       loads += 1;
@@ -358,11 +417,13 @@ void main() {
         200,
       );
     });
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: ObservationReviewScreen(api: api, stationId: stationId),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ObservationReviewScreen(api: api, stationId: stationId),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     expect(find.text('نشرة ساعية'), findsOneWidget);
     expect(find.text('نشرة يومية'), findsOneWidget);

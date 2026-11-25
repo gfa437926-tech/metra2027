@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
 import '../../core/drafts/observation_draft_store.dart';
@@ -90,11 +91,10 @@ class _MetraHomeState extends State<MetraHome> {
   }
 
   Widget _needStation(String title) => _InformationPage(
-        icon: Icons.location_on_outlined,
-        title: title,
-        message:
-            'اختر محطة أولاً من دليل المحطات. يفرض الخادم صلاحيات حسابك على المحطة والعمليات.',
-      );
+    icon: Icons.location_on_outlined,
+    title: title,
+    message: 'اختر محطة أولاً من دليل المحطات. يفرض الخادم صلاحيات حسابك على المحطة والعمليات.',
+  );
 
   Widget _gateObservation() {
     if (_loadingAccess) {
@@ -106,7 +106,8 @@ class _MetraHomeState extends State<MetraHome> {
     if (!_access.isResolved) {
       return MetraPermissionDeniedPage(
         title: 'الصلاحيات غير متاحة',
-        message: _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
+        message:
+            _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
       );
     }
     if (_selectedStationId == null) return _needStation('وحدة الرصد');
@@ -134,7 +135,8 @@ class _MetraHomeState extends State<MetraHome> {
     if (!_access.isResolved) {
       return MetraPermissionDeniedPage(
         title: 'الصلاحيات غير متاحة',
-        message: _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
+        message:
+            _accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
       );
     }
     if (_selectedStationId == null) return _needStation('إدارة المحطة');
@@ -151,8 +153,9 @@ class _MetraHomeState extends State<MetraHome> {
   List<_NavItem> _buildNavItems() {
     // Visibility uses permission codes only. Placeholders stay visible because
     // they have no backend permission contract and show offline notices.
-    final accessForNav =
-        _loadingAccess ? MetraAccessContext.unresolved() : _access;
+    final accessForNav = _loadingAccess
+        ? MetraAccessContext.unresolved()
+        : _access;
 
     final all = <_NavItem>[
       _NavItem(
@@ -168,7 +171,8 @@ class _MetraHomeState extends State<MetraHome> {
           loadingAccess: _loadingAccess,
           accessError: _accessError,
           onRetryAccess: _loadAccessContext,
-          showObservationsShortcut: accessForNav.canAccessAnyObservationWorkspace,
+          showObservationsShortcut:
+              accessForNav.canAccessAnyObservationWorkspace,
           showAdminShortcut: accessForNav.canAccessAnyStationAdministration,
           onOpenStations: () => _selectDestination(MetraDestinationId.stations),
           onOpenObservations: () =>
@@ -304,8 +308,9 @@ class _MetraHomeState extends State<MetraHome> {
     }
 
     final pages = items.map((item) => item.builder()).toList(growable: false);
-    final destinations =
-        items.map((item) => item.destination).toList(growable: false);
+    final destinations = items
+        .map((item) => item.destination)
+        .toList(growable: false);
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -375,10 +380,12 @@ class _HomeOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final canObsOnStation = stationId != null &&
+    final canObsOnStation =
+        stationId != null &&
         access.isResolved &&
         access.canAccessObservationWorkspace(stationId!);
-    final canAdminOnStation = stationId != null &&
+    final canAdminOnStation =
+        stationId != null &&
         access.isResolved &&
         access.canAdministerStation(stationId!);
 
@@ -387,126 +394,132 @@ class _HomeOverview extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text('لوحة التشغيل',
-            style: Theme.of(context)
-                .textTheme
-                .headlineSmall
-                ?.copyWith(color: _navy, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Text(
-          stationId == null
-              ? 'ابدأ باختيار محطة من الدليل. تُفرض صلاحيات الرصد والمراجعة على الخادم.'
-              : 'المحطة النشطة: $stationId',
-          style: const TextStyle(color: Color(0xFF475569), height: 1.5),
-        ),
-        const SizedBox(height: 12),
-        if (loadingAccess)
-          const Card(
-            elevation: 0,
-            child: ListTile(
-              leading: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              title: Text(MetraPermissionDeniedMessages.contextLoading),
-            ),
-          )
-        else if (!access.isResolved)
-          Card(
-            elevation: 0,
-            color: const Color(0xFFFFF7E8),
-            child: ListTile(
-              leading: const Icon(Icons.warning_amber_outlined),
-              title: const Text('سياق الصلاحيات غير متاح'),
-              subtitle: Text(
-                accessError ?? MetraPermissionDeniedMessages.contextUnavailable,
-              ),
-              trailing: TextButton(
-                onPressed: onRetryAccess,
-                child: const Text('إعادة'),
-              ),
-            ),
-          )
-        else
-          Card(
-            elevation: 0,
-            child: ListTile(
-              leading: const Icon(Icons.verified_user_outlined, color: _blue),
-              title: const Text('سياق الصلاحيات محمّل من الخادم'),
-              subtitle: Text(
-                'محطات بصلاحيات مؤكدة: ${access.stationPermissions.length}',
-              ),
-            ),
-          ),
-        if (stationId != null && stationId!.trim().isNotEmpty) ...[
-          const SizedBox(height: 12),
-          _StationDraftSummaryCard(
-            stationId: stationId!,
-            onOpenObservations: showObservationsShortcut ? onOpenObservations : null,
-          ),
-        ],
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          padding: const EdgeInsets.all(16),
           children: [
-            _ActionCard(
-              icon: Icons.map_outlined,
-              title: 'دليل المحطات',
-              subtitle: 'اختيار محطة العمل',
-              onTap: onOpenStations,
+            Text(
+              'لوحة التشغيل',
+              style: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(color: _navy, fontWeight: FontWeight.bold),
             ),
-            if (showObservationsShortcut)
-              _ActionCard(
-                icon: Icons.fact_check_outlined,
-                title: 'وحدة الرصد',
-                subtitle: stationId == null
-                    ? 'يتطلب اختيار محطة'
-                    : (canObsOnStation
-                        ? 'ساعي · يومي · ظاهرة'
-                        : 'غير مصرح لهذه المحطة'),
-                onTap: onOpenObservations,
+            const SizedBox(height: 8),
+            Text(
+              stationId == null
+                  ? 'ابدأ باختيار محطة من الدليل. تُفرض صلاحيات الرصد والمراجعة على الخادم.'
+                  : 'المحطة النشطة: $stationId',
+              style: const TextStyle(color: Color(0xFF475569), height: 1.5),
+            ),
+            const SizedBox(height: 12),
+            if (loadingAccess)
+              const Card(
+                elevation: 0,
+                child: ListTile(
+                  leading: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  title: Text(MetraPermissionDeniedMessages.contextLoading),
+                ),
+              )
+            else if (!access.isResolved)
+              Card(
+                elevation: 0,
+                color: const Color(0xFFFFF7E8),
+                child: ListTile(
+                  leading: const Icon(Icons.warning_amber_outlined),
+                  title: const Text('سياق الصلاحيات غير متاح'),
+                  subtitle: Text(
+                    accessError ??
+                        MetraPermissionDeniedMessages.contextUnavailable,
+                  ),
+                  trailing: TextButton(
+                    onPressed: onRetryAccess,
+                    child: const Text('إعادة'),
+                  ),
+                ),
+              )
+            else
+              Card(
+                elevation: 0,
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.verified_user_outlined,
+                    color: _blue,
+                  ),
+                  title: const Text('سياق الصلاحيات محمّل من الخادم'),
+                  subtitle: Text(
+                    'محطات بصلاحيات مؤكدة: ${access.stationPermissions.length}',
+                  ),
+                ),
               ),
-            if (showAdminShortcut)
-              _ActionCard(
-                icon: Icons.admin_panel_settings_outlined,
-                title: 'إدارة المحطة',
-                subtitle: stationId == null
-                    ? 'يتطلب اختيار محطة'
-                    : (canAdminOnStation
-                        ? 'مستخدمون · تسجيلات'
-                        : 'غير مصرح لهذه المحطة'),
-                onTap: onOpenAdmin,
+            if (stationId != null && stationId!.trim().isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _StationDraftSummaryCard(
+                stationId: stationId!,
+                onOpenObservations: showObservationsShortcut
+                    ? onOpenObservations
+                    : null,
               ),
+            ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _ActionCard(
+                  icon: Icons.map_outlined,
+                  title: 'دليل المحطات',
+                  subtitle: 'اختيار محطة العمل',
+                  onTap: onOpenStations,
+                ),
+                if (showObservationsShortcut)
+                  _ActionCard(
+                    icon: Icons.fact_check_outlined,
+                    title: 'وحدة الرصد',
+                    subtitle: stationId == null
+                        ? 'يتطلب اختيار محطة'
+                        : (canObsOnStation
+                              ? 'ساعي · يومي · ظاهرة'
+                              : 'غير مصرح لهذه المحطة'),
+                    onTap: onOpenObservations,
+                  ),
+                if (showAdminShortcut)
+                  _ActionCard(
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'إدارة المحطة',
+                    subtitle: stationId == null
+                        ? 'يتطلب اختيار محطة'
+                        : (canAdminOnStation
+                              ? 'مستخدمون · تسجيلات'
+                              : 'غير مصرح لهذه المحطة'),
+                    onTap: onOpenAdmin,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const _StatusCard(
+              title: 'حالة الربط المعتمدة',
+              body:
+                  'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد وAccess Context. '
+                  'عناصر التنقل التشغيلية تُخفى عند غياب صلاحيات الخادم. '
+                  'بقية النماذج للتحقق المحلي فقط حتى اعتماد عقود API.',
+            ),
+            const SizedBox(height: 12),
+            const _StatusCard(
+              title: 'ملخص الأعمال اليومية',
+              body:
+                  'اختر محطة مصرّحاً بها ثم انتقل إلى وحدة الرصد لإدخال الساعي/اليومي/الظواهر. '
+                  'نماذج الأمطار والتربة والزراعي والمناخي الساعي والأعطال متاحة للتحقق المحلي والمسودات فقط '
+                  'حتى موافقة قاعدة البيانات والعقود (U1 وما يليها).',
+            ),
+            const SizedBox(height: 12),
+            const _StatusCard(
+              title: 'تنبيه بيانات',
+              body:
+                  'لا تُعرض أرقام رصد أو إحصاءات علمية وهمية في لوحة التحكم. '
+                  'المؤشرات الرقمية تظهر فقط من مصادر API معتمدة.',
+            ),
           ],
-        ),
-        const SizedBox(height: 16),
-        const _StatusCard(
-          title: 'حالة الربط المعتمدة',
-          body:
-              'المتصل بالخادم: الرصد الساعي واليومي والظواهر ومراجعة الأرصاد وAccess Context. '
-              'عناصر التنقل التشغيلية تُخفى عند غياب صلاحيات الخادم. '
-              'بقية النماذج للتحقق المحلي فقط حتى اعتماد عقود API.',
-        ),
-        const SizedBox(height: 12),
-        const _StatusCard(
-          title: 'ملخص الأعمال اليومية',
-          body:
-              'اختر محطة مصرّحاً بها ثم انتقل إلى وحدة الرصد لإدخال الساعي/اليومي/الظواهر. '
-              'نماذج الأمطار والتربة والزراعي والمناخي الساعي والأعطال متاحة للتحقق المحلي والمسودات فقط '
-              'حتى موافقة قاعدة البيانات والعقود (U1 وما يليها).',
-        ),
-        const SizedBox(height: 12),
-        const _StatusCard(
-          title: 'تنبيه بيانات',
-          body:
-              'لا تُعرض أرقام رصد أو إحصاءات علمية وهمية في لوحة التحكم. '
-              'المؤشرات الرقمية تظهر فقط من مصادر API معتمدة.',
-        ),
-      ],
         ),
       ),
     );
@@ -525,23 +538,27 @@ class _InformationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 48, color: _blue),
-              const SizedBox(height: 12),
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-              const SizedBox(height: 8),
-              Text(message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(height: 1.5)),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 48, color: _blue),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
           ),
-        ),
-      );
+          const SizedBox(height: 8),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(height: 1.5),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _StatusCard extends StatelessWidget {
@@ -551,19 +568,22 @@ class _StatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              Text(body, style: const TextStyle(height: 1.55, color: Color(0xFF334155))),
-            ],
+    elevation: 0,
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: const TextStyle(height: 1.55, color: Color(0xFF334155)),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 class _ActionCard extends StatelessWidget {
@@ -580,30 +600,31 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: 220,
-        child: Card(
-          elevation: 0,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(icon, color: _blue),
-                  const SizedBox(height: 10),
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Text(subtitle,
-                      style: const TextStyle(
-                          color: Color(0xFF64748B), fontSize: 12)),
-                ],
+    width: 220,
+    child: Card(
+      elevation: 0,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: _blue),
+              const SizedBox(height: 10),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
               ),
-            ),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 }
 
 /// Live session-draft summary for the selected station (local only).
@@ -640,8 +661,9 @@ class _StationDraftSummaryCardState extends State<_StationDraftSummaryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final types =
-        ObservationDraftStore.instance.formTypesWithDrafts(widget.stationId);
+    final types = ObservationDraftStore.instance.formTypesWithDrafts(
+      widget.stationId,
+    );
     if (types.isEmpty) {
       return const SizedBox.shrink();
     }

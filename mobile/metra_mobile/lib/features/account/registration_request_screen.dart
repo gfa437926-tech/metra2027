@@ -62,10 +62,11 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
         _roles = roles;
         _loadingRoles = false;
         if (_roles.isNotEmpty) {
-          _roleCode = (_roles.first['role_code'] ??
-                  _roles.first['roleCode'] ??
-                  _roles.first['code'])
-              ?.toString();
+          _roleCode =
+              (_roles.first['role_code'] ??
+                      _roles.first['roleCode'] ??
+                      _roles.first['code'])
+                  ?.toString();
         }
       });
     } catch (e) {
@@ -107,8 +108,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _success =
-            'تم استلام طلب التسجيل. ستظهر الحالة بعد مراجعة مسؤول المحطة/النظام.';
+        _success = 'تم استلام طلب التسجيل. ستظهر الحالة بعد مراجعة مسؤول المحطة/النظام.';
       });
     } catch (e) {
       if (!mounted) return;
@@ -133,143 +133,142 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
       child: Material(
         color: Colors.transparent,
         child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'طلب تسجيل على محطة',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: MetraColors.navy,
-                ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'يتطلب حساب مصادقة نشط. الحقول مطابقة لعقد الخادم: الاسم، الأب، العائلة، الهاتف، الدور، المحطة، وقبول الشروط.',
-            style: TextStyle(color: MetraColors.muted, height: 1.45),
-          ),
-          const SizedBox(height: 16),
-          if (_loadingRoles)
-            MetraAsyncStatePanel.loading(message: 'جاري تحميل الأدوار…')
-          else
-            Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _first,
-                    decoration: const InputDecoration(
-                      labelText: 'الاسم الأول',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: RegistrationFieldRules.requiredName,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _father,
-                    decoration: const InputDecoration(
-                      labelText: 'اسم الأب',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: RegistrationFieldRules.requiredName,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _last,
-                    decoration: const InputDecoration(
-                      labelText: 'اسم العائلة',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: RegistrationFieldRules.requiredName,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _phone,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'الهاتف',
-                      border: OutlineInputBorder(),
-                      helperText: 'أرقام فقط، 8 محارف على الأقل',
-                    ),
-                    validator: RegistrationFieldRules.phone,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _stationId,
-                    decoration: const InputDecoration(
-                      labelText: 'معرف المحطة (UUID)',
-                      border: OutlineInputBorder(),
-                      helperText: 'استخدم المعرف من دليل المحطات بعد اعتماده',
-                    ),
-                    validator: RegistrationFieldRules.stationId,
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    initialValue: _roleCode,
-                    decoration: const InputDecoration(
-                      labelText: 'الدور المطلوب',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: _roles
-                        .map(
-                          (r) => DropdownMenuItem(
-                            value: (r['role_code'] ??
-                                    r['roleCode'] ??
-                                    r['code'])
-                                ?.toString(),
-                            child: Text(_roleLabel(r)),
-                          ),
-                        )
-                        .where((e) => e.value != null && e.value!.isNotEmpty)
-                        .toList(),
-                    onChanged: (v) => setState(() => _roleCode = v),
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
-                    value: _terms,
-                    onChanged: (v) => setState(() => _terms = v ?? false),
-                    title: const Text(
-                      'أوافق على شروط METRA (الإصدار metra-terms-2026-11)',
-                    ),
-                    controlAffinity: ListTileControlAffinity.leading,
-                  ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        _error!,
-                        style: const TextStyle(color: MetraColors.danger),
-                      ),
-                    ),
-                  if (_success != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        _success!,
-                        style: const TextStyle(color: MetraColors.success),
-                      ),
-                    ),
-                  FilledButton.icon(
-                    onPressed: _submitting ? null : _submit,
-                    icon: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    label: Text(
-                      _submitting ? 'جاري الإرسال…' : 'إرسال طلب التسجيل',
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: _loadingRoles ? null : _loadRoles,
-                    child: const Text('تحديث قائمة الأدوار'),
-                  ),
-                ],
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'طلب تسجيل على محطة',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: MetraColors.navy,
               ),
             ),
-        ],
+            const SizedBox(height: 8),
+            const Text(
+              'يتطلب حساب مصادقة نشط. الحقول مطابقة لعقد الخادم: الاسم، الأب، العائلة، الهاتف، الدور، المحطة، وقبول الشروط.',
+              style: TextStyle(color: MetraColors.muted, height: 1.45),
+            ),
+            const SizedBox(height: 16),
+            if (_loadingRoles)
+              MetraAsyncStatePanel.loading(message: 'جاري تحميل الأدوار…')
+            else
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: _first,
+                      decoration: const InputDecoration(
+                        labelText: 'الاسم الأول',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: RegistrationFieldRules.requiredName,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _father,
+                      decoration: const InputDecoration(
+                        labelText: 'اسم الأب',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: RegistrationFieldRules.requiredName,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _last,
+                      decoration: const InputDecoration(
+                        labelText: 'اسم العائلة',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: RegistrationFieldRules.requiredName,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _phone,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'الهاتف',
+                        border: OutlineInputBorder(),
+                        helperText: 'أرقام فقط، 8 محارف على الأقل',
+                      ),
+                      validator: RegistrationFieldRules.phone,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _stationId,
+                      decoration: const InputDecoration(
+                        labelText: 'معرف المحطة (UUID)',
+                        border: OutlineInputBorder(),
+                        helperText: 'استخدم المعرف من دليل المحطات بعد اعتماده',
+                      ),
+                      validator: RegistrationFieldRules.stationId,
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      initialValue: _roleCode,
+                      decoration: const InputDecoration(
+                        labelText: 'الدور المطلوب',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _roles
+                          .map(
+                            (r) => DropdownMenuItem(
+                              value:
+                                  (r['role_code'] ?? r['roleCode'] ?? r['code'])
+                                      ?.toString(),
+                              child: Text(_roleLabel(r)),
+                            ),
+                          )
+                          .where((e) => e.value != null && e.value!.isNotEmpty)
+                          .toList(),
+                      onChanged: (v) => setState(() => _roleCode = v),
+                    ),
+                    const SizedBox(height: 8),
+                    CheckboxListTile(
+                      value: _terms,
+                      onChanged: (v) => setState(() => _terms = v ?? false),
+                      title: const Text(
+                        'أوافق على شروط METRA (الإصدار metra-terms-2026-11)',
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                    if (_error != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: MetraColors.danger),
+                        ),
+                      ),
+                    if (_success != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          _success!,
+                          style: const TextStyle(color: MetraColors.success),
+                        ),
+                      ),
+                    FilledButton.icon(
+                      onPressed: _submitting ? null : _submit,
+                      icon: _submitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                        _submitting ? 'جاري الإرسال…' : 'إرسال طلب التسجيل',
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _loadingRoles ? null : _loadRoles,
+                      child: const Text('تحديث قائمة الأدوار'),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -281,8 +280,9 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
 String registrationStatusLabel(Object? raw) {
   final s = raw?.toString().toLowerCase() ?? '';
   return switch (s) {
-    'pending' || 'pending_station_approval' || 'pending_system_approval' =>
-      'بانتظار الموافقة',
+    'pending' ||
+    'pending_station_approval' ||
+    'pending_system_approval' => 'بانتظار الموافقة',
     'approved' || 'active' => 'معتمد',
     'rejected' || 'denied' => 'مرفوض',
     '' => 'غير محدد',
@@ -324,107 +324,115 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
       child: Material(
         color: Colors.transparent,
         child: FutureBuilder<Map<String, dynamic>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return MetraAsyncStatePanel.loading(
-              message: 'جاري تحميل حالة التسجيل…',
-            );
-          }
-          if (snapshot.hasError) {
-            return MetraAsyncStatePanel.error(
-              title: 'تعذر تحميل حالة التسجيل',
-              subtitle: MetraErrorPresenter.messageFor(snapshot.error!),
-              onRetry: _reload,
-            );
-          }
-          final data = snapshot.data ?? {};
-          final status = data['status'] ??
-              data['result_status'] ??
-              data['approval_status'] ??
-              data['state'];
-          final reason = data['rejection_reason'] ??
-              data['reason'] ??
-              data['note'] ??
-              data['review_note'];
-          final role = data['requested_role_code'] ??
-              data['role_code'] ??
-              data['role'] ??
-              data['requested_role'];
-          final station = data['station_id'] ??
-              data['requested_station_id'] ??
-              data['stationId'];
-          final submittedAt = data['submitted_at'] ??
-              data['created_at'] ??
-              data['requested_at'];
-          // Never dump the entire response map: may include internal ids or notes.
-          final safeDetails = <String, String>{};
-          void put(String label, Object? value) {
-            if (value == null) return;
-            final text = value.toString().trim();
-            if (text.isEmpty) return;
-            safeDetails[label] = text;
-          }
-          put('الدور المطلوب', role);
-          put('المحطة', station);
-          put('تاريخ التقديم', submittedAt);
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(
-                'حالة طلب التسجيل',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: MetraColors.navy,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'تُعرض الحقول المعتمدة من الخادم فقط. لا تُنشأ حالات وهمية.',
-                style: TextStyle(color: MetraColors.muted, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.assignment_turned_in_outlined),
-                  title: const Text('الحالة'),
-                  subtitle: Text(_statusLabel(status)),
-                ),
-              ),
-              if (reason != null && reason.toString().trim().isNotEmpty)
-                Card(
-                  color: MetraColors.warningBg,
-                  child: ListTile(
-                    leading: const Icon(Icons.info_outline,
-                        color: MetraColors.warning),
-                    title: const Text('ملاحظة / سبب'),
-                    subtitle: Text(reason.toString()),
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return MetraAsyncStatePanel.loading(
+                message: 'جاري تحميل حالة التسجيل…',
+              );
+            }
+            if (snapshot.hasError) {
+              return MetraAsyncStatePanel.error(
+                title: 'تعذر تحميل حالة التسجيل',
+                subtitle: MetraErrorPresenter.messageFor(snapshot.error!),
+                onRetry: _reload,
+              );
+            }
+            final data = snapshot.data ?? {};
+            final status =
+                data['status'] ??
+                data['result_status'] ??
+                data['approval_status'] ??
+                data['state'];
+            final reason =
+                data['rejection_reason'] ??
+                data['reason'] ??
+                data['note'] ??
+                data['review_note'];
+            final role =
+                data['requested_role_code'] ??
+                data['role_code'] ??
+                data['role'] ??
+                data['requested_role'];
+            final station =
+                data['station_id'] ??
+                data['requested_station_id'] ??
+                data['stationId'];
+            final submittedAt =
+                data['submitted_at'] ??
+                data['created_at'] ??
+                data['requested_at'];
+            // Never dump the entire response map: may include internal ids or notes.
+            final safeDetails = <String, String>{};
+            void put(String label, Object? value) {
+              if (value == null) return;
+              final text = value.toString().trim();
+              if (text.isEmpty) return;
+              safeDetails[label] = text;
+            }
+
+            put('الدور المطلوب', role);
+            put('المحطة', station);
+            put('تاريخ التقديم', submittedAt);
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                Text(
+                  'حالة طلب التسجيل',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: MetraColors.navy,
                   ),
                 ),
-              if (safeDetails.isNotEmpty) ...[
                 const SizedBox(height: 8),
+                const Text(
+                  'تُعرض الحقول المعتمدة من الخادم فقط. لا تُنشأ حالات وهمية.',
+                  style: TextStyle(color: MetraColors.muted, height: 1.4),
+                ),
+                const SizedBox(height: 12),
                 Card(
-                  child: Column(
-                    children: [
-                      for (final entry in safeDetails.entries)
-                        ListTile(
-                          dense: true,
-                          title: Text(entry.key),
-                          subtitle: Text(entry.value),
-                        ),
-                    ],
+                  child: ListTile(
+                    leading: const Icon(Icons.assignment_turned_in_outlined),
+                    title: const Text('الحالة'),
+                    subtitle: Text(_statusLabel(status)),
                   ),
+                ),
+                if (reason != null && reason.toString().trim().isNotEmpty)
+                  Card(
+                    color: MetraColors.warningBg,
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.info_outline,
+                        color: MetraColors.warning,
+                      ),
+                      title: const Text('ملاحظة / سبب'),
+                      subtitle: Text(reason.toString()),
+                    ),
+                  ),
+                if (safeDetails.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Column(
+                      children: [
+                        for (final entry in safeDetails.entries)
+                          ListTile(
+                            dense: true,
+                            title: Text(entry.key),
+                            subtitle: Text(entry.value),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _reload,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('تحديث الحالة'),
                 ),
               ],
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _reload,
-                icon: const Icon(Icons.refresh),
-                label: const Text('تحديث الحالة'),
-              ),
-            ],
-          );
-        },
+            );
+          },
         ),
       ),
     );

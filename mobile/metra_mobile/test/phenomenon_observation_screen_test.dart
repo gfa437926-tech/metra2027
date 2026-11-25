@@ -14,16 +14,22 @@ void main() {
   });
 
   MetraApiClient apiWith(MockClientHandler handler) => MetraApiClient(
-        baseUrl: 'https://api.example.test',
-        accessTokenProvider: () async => 'token',
-        client: MockClient(handler),
-      );
+    baseUrl: 'https://api.example.test',
+    accessTokenProvider: () async => 'token',
+    client: MockClient(handler),
+  );
 
-  testWidgets('renders phenomenon form title and submit control', (tester) async {
+  testWidgets('renders phenomenon form title and submit control', (
+    tester,
+  ) async {
     final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PhenomenonObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('بلاغ ظاهرة جوية'), findsOneWidget);
     expect(find.text('التحقق وإرسال بلاغ الظاهرة'), findsOneWidget);
@@ -31,39 +37,50 @@ void main() {
     api.close();
   });
 
-  testWidgets('empty submit is blocked by local form validation before server call',
-      (tester) async {
-    var validateCalls = 0;
-    var submitCalls = 0;
-    final api = apiWith((request) async {
-      if (request.url.path.endsWith('/phenomena/validate')) validateCalls++;
-      if (request.url.path.contains('/stations/') &&
-          request.url.path.endsWith('/observations')) {
-        submitCalls++;
-      }
-      return http.Response('{}', 200);
-    });
+  testWidgets(
+    'empty submit is blocked by local form validation before server call',
+    (tester) async {
+      var validateCalls = 0;
+      var submitCalls = 0;
+      final api = apiWith((request) async {
+        if (request.url.path.endsWith('/phenomena/validate')) validateCalls++;
+        if (request.url.path.contains('/stations/') &&
+            request.url.path.endsWith('/observations')) {
+          submitCalls++;
+        }
+        return http.Response('{}', 200);
+      });
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
-    ));
-    await tester.pumpAndSettle();
-    final submit = find.text('التحقق وإرسال بلاغ الظاهرة');
-    await tester.ensureVisible(submit);
-    await tester.tap(submit);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-    expect(validateCalls, 0);
-    expect(submitCalls, 0);
-    api.close();
-  });
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PhenomenonObservationScreen(api: api, stationId: stationId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final submit = find.text('التحقق وإرسال بلاغ الظاهرة');
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(validateCalls, 0);
+      expect(submitCalls, 0);
+      api.close();
+    },
+  );
 
-  testWidgets('screen mounts with bound submit control for operator flow',
-      (tester) async {
+  testWidgets('screen mounts with bound submit control for operator flow', (
+    tester,
+  ) async {
     final api = apiWith((_) async => http.Response('forbidden', 403));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: PhenomenonObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PhenomenonObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('بلاغ ظاهرة جوية'), findsOneWidget);
     expect(find.text('التحقق وإرسال بلاغ الظاهرة'), findsOneWidget);

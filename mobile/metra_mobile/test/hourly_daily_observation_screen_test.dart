@@ -12,21 +12,20 @@ import 'package:metra_mobile/core/widgets/metra_observation_form.dart';
 import 'package:metra_mobile/features/observations/daily_observation_screen.dart';
 import 'package:metra_mobile/features/observations/hourly_observation_screen.dart';
 
-
 Map<String, Object?> _validValues(List<MetraObservationField> fields) {
   final values = <String, Object?>{};
   for (final field in fields) {
     final value = switch (field.kind) {
       MetraFieldKind.integer => () {
-          final minimum = field.minimum?.toInt() ?? 0;
-          final maximum = field.maximum?.toInt();
-          return maximum != null && minimum > maximum ? maximum : minimum;
-        }(),
+        final minimum = field.minimum?.toInt() ?? 0;
+        final maximum = field.maximum?.toInt();
+        return maximum != null && minimum > maximum ? maximum : minimum;
+      }(),
       MetraFieldKind.decimal => () {
-          final minimum = field.minimum ?? 0;
-          final maximum = field.maximum;
-          return maximum != null && minimum > maximum ? maximum : minimum;
-        }(),
+        final minimum = field.minimum ?? 0;
+        final maximum = field.maximum;
+        return maximum != null && minimum > maximum ? maximum : minimum;
+      }(),
       MetraFieldKind.boolean => true,
       MetraFieldKind.date => '2026-11-23',
       MetraFieldKind.time => '12:00:00',
@@ -51,17 +50,22 @@ void main() {
   });
 
   MetraApiClient apiWith(MockClientHandler handler) => MetraApiClient(
-        baseUrl: 'https://api.example.test',
-        accessTokenProvider: () async => 'token',
-        client: MockClient(handler),
-      );
+    baseUrl: 'https://api.example.test',
+    accessTokenProvider: () async => 'token',
+    client: MockClient(handler),
+  );
 
-  testWidgets('hourly screen shows title and configured submit label',
-      (tester) async {
+  testWidgets('hourly screen shows title and configured submit label', (
+    tester,
+  ) async {
     final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('الرصد الساعي'), findsOneWidget);
     expect(find.text('التحقق وإرسال الرصد الساعي'), findsOneWidget);
@@ -69,12 +73,17 @@ void main() {
     api.close();
   });
 
-  testWidgets('daily screen shows title and configured submit label',
-      (tester) async {
+  testWidgets('daily screen shows title and configured submit label', (
+    tester,
+  ) async {
     final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: DailyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DailyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('الرصد اليومي'), findsOneWidget);
     expect(find.text('التحقق وإرسال الرصد اليومي'), findsOneWidget);
@@ -87,9 +96,13 @@ void main() {
       networkCalls++;
       return http.Response('{}', 200);
     });
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     final submit = find.text('التحقق وإرسال الرصد الساعي');
     await tester.ensureVisible(submit);
@@ -100,9 +113,9 @@ void main() {
     api.close();
   });
 
-
-  testWidgets('late hourly validation cannot submit after station switch',
-      (tester) async {
+  testWidgets('late hourly validation cannot submit after station switch', (
+    tester,
+  ) async {
     const nextStationId = '22222222-2222-4222-8222-222222222222';
     final validationResponse = Completer<http.Response>();
     var submitCalls = 0;
@@ -125,19 +138,21 @@ void main() {
 
     var selectedStation = stationId;
     late StateSetter updateParent;
-    await tester.pumpWidget(MaterialApp(
-      home: StatefulBuilder(
-        builder: (context, setState) {
-          updateParent = setState;
-          return Scaffold(
-            body: HourlyObservationScreen(
-              api: api,
-              stationId: selectedStation,
-            ),
-          );
-        },
+    await tester.pumpWidget(
+      MaterialApp(
+        home: StatefulBuilder(
+          builder: (context, setState) {
+            updateParent = setState;
+            return Scaffold(
+              body: HourlyObservationScreen(
+                api: api,
+                stationId: selectedStation,
+              ),
+            );
+          },
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     final submit = find.text('التحقق وإرسال الرصد الساعي');
@@ -156,14 +171,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(submitCalls, 0);
-    expect(
-      ObservationDraftStore.instance.get(stationId, 'hourly'),
-      isNotNull,
-    );
-    expect(
-      ObservationDraftStore.instance.get(nextStationId, 'hourly'),
-      isNull,
-    );
+    expect(ObservationDraftStore.instance.get(stationId, 'hourly'), isNotNull);
+    expect(ObservationDraftStore.instance.get(nextStationId, 'hourly'), isNull);
     api.close();
   });
 
@@ -173,9 +182,13 @@ void main() {
       networkCalls++;
       return http.Response('{}', 200);
     });
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: DailyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DailyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     final submit = find.text('التحقق وإرسال الرصد اليومي');
     await tester.ensureVisible(submit);
@@ -186,33 +199,45 @@ void main() {
     api.close();
   });
 
-  testWidgets('hourly restores local draft banner without claiming server save',
-      (tester) async {
-    ObservationDraftStore.instance.save(
-      stationId: stationId,
-      formType: 'hourly',
-      values: const {'dryTemp': 21.5, 'utcTime': '09'},
-    );
-    final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
-    expect(find.text('تجاهل المسودة المحلية'), findsOneWidget);
-    api.close();
-  });
+  testWidgets(
+    'hourly restores local draft banner without claiming server save',
+    (tester) async {
+      ObservationDraftStore.instance.save(
+        stationId: stationId,
+        formType: 'hourly',
+        values: const {'dryTemp': 21.5, 'utcTime': '09'},
+      );
+      final api = apiWith((_) async => http.Response('{}', 200));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: HourlyObservationScreen(api: api, stationId: stationId),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
+      expect(find.text('تجاهل المسودة المحلية'), findsOneWidget);
+      api.close();
+    },
+  );
 
-  testWidgets('discarding hourly draft clears banner and store', (tester) async {
+  testWidgets('discarding hourly draft clears banner and store', (
+    tester,
+  ) async {
     ObservationDraftStore.instance.save(
       stationId: stationId,
       formType: 'hourly',
       values: const {'dryTemp': 21.5},
     );
     final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('تجاهل المسودة المحلية'));
     await tester.pumpAndSettle();
@@ -225,51 +250,53 @@ void main() {
     api.close();
   });
 
-  test('client converts local observedAt offset to UTC ISO for hourly submit',
-      () async {
-    late http.Request captured;
-    final api = apiWith((request) async {
-      captured = request;
-      return http.Response('{}', 201);
-    });
-    await api.submitObservation(
-      stationId: stationId,
-      idempotencyKey: 'hourly-utc-key',
-      observationType: 'hourly',
-      observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
-      payload: const {'utcTime': '12'},
-      submit: true,
-    );
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
-    expect(body['observationType'], 'hourly');
-    api.close();
-  });
-
-  test('client converts local observedAt offset to UTC ISO for daily submit',
-      () async {
-    late http.Request captured;
-    final api = apiWith((request) async {
-      captured = request;
-      return http.Response('{}', 201);
-    });
-    await api.submitObservation(
-      stationId: stationId,
-      idempotencyKey: 'daily-utc-key',
-      observationType: 'daily',
-      observedAt: DateTime.parse('2026-11-16T03:00:00+03:00'),
-      payload: const {'currentDate': '2026-11-16'},
-      submit: true,
-    );
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['observedAt'], '2026-11-16T00:00:00.000Z');
-    expect(body['observationType'], 'daily');
-    api.close();
-  });
+  test(
+    'client converts local observedAt offset to UTC ISO for hourly submit',
+    () async {
+      late http.Request captured;
+      final api = apiWith((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      });
+      await api.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'hourly-utc-key',
+        observationType: 'hourly',
+        observedAt: DateTime.parse('2026-11-16T15:30:00+03:00'),
+        payload: const {'utcTime': '12'},
+        submit: true,
+      );
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['observedAt'], '2026-11-16T12:30:00.000Z');
+      expect(body['observationType'], 'hourly');
+      api.close();
+    },
+  );
 
   test(
-      '403 on hourly submit yields Arabic displayMessage without status code leak pattern',
-      () async {
+    'client converts local observedAt offset to UTC ISO for daily submit',
+    () async {
+      late http.Request captured;
+      final api = apiWith((request) async {
+        captured = request;
+        return http.Response('{}', 201);
+      });
+      await api.submitObservation(
+        stationId: stationId,
+        idempotencyKey: 'daily-utc-key',
+        observationType: 'daily',
+        observedAt: DateTime.parse('2026-11-16T03:00:00+03:00'),
+        payload: const {'currentDate': '2026-11-16'},
+        submit: true,
+      );
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      expect(body['observedAt'], '2026-11-16T00:00:00.000Z');
+      expect(body['observationType'], 'daily');
+      api.close();
+    },
+  );
+
+  test('403 on hourly submit yields Arabic displayMessage without status code leak pattern', () async {
     final api = apiWith((_) async => http.Response('forbidden', 403));
     try {
       await api.submitObservation(
@@ -315,8 +342,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('hourly reloads station-scoped draft when stationId changes',
-      (tester) async {
+  testWidgets('hourly reloads station-scoped draft when stationId changes', (
+    tester,
+  ) async {
     const otherStation = '22222222-2222-4222-8222-222222222222';
     ObservationDraftStore.instance.save(
       stationId: stationId,
@@ -330,15 +358,23 @@ void main() {
     );
 
     final api = apiWith((_) async => http.Response('{}', 200));
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
 
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: otherStation)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: otherStation),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     // Draft for the new station is restored; values are station-isolated.
     expect(find.textContaining('مسودة محلية فقط'), findsOneWidget);
@@ -351,8 +387,9 @@ void main() {
     api.close();
   });
 
-  testWidgets('hourly submit button disables while request is in flight',
-      (tester) async {
+  testWidgets('hourly submit button disables while request is in flight', (
+    tester,
+  ) async {
     var validateCalls = 0;
     final api = apiWith((request) async {
       if (request.url.path.contains('/validate')) {
@@ -371,9 +408,13 @@ void main() {
       formType: 'hourly',
       values: _validValues(ObservationFieldCatalogs.hourly),
     );
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(body: HourlyObservationScreen(api: api, stationId: stationId)),
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: HourlyObservationScreen(api: api, stationId: stationId),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final submit = find.text('التحقق وإرسال الرصد الساعي');

@@ -27,10 +27,7 @@ void main() {
     await tester.tap(find.text('تحديث كلمة المرور'));
     await tester.pump();
 
-    expect(
-      find.textContaining('يجب ألا تقل عن 8 أحرف'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('يجب ألا تقل عن 8 أحرف'), findsOneWidget);
   });
 
   testWidgets('rejects mismatched password confirmation', (tester) async {

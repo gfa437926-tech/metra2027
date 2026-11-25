@@ -11,9 +11,10 @@ import 'rainfall_soil_local_rules.dart';
 /// - Validates required fields and basic numeric shapes.
 /// - Persists session drafts via [ObservationDraftStore] (no secrets).
 /// - Never calls the network and never invents API routes.
-class LocalCatalogObservationRepository implements CatalogObservationRepository {
+class LocalCatalogObservationRepository
+    implements CatalogObservationRepository {
   LocalCatalogObservationRepository({ObservationDraftStore? draftStore})
-      : _drafts = draftStore ?? ObservationDraftStore.instance;
+    : _drafts = draftStore ?? ObservationDraftStore.instance;
 
   final ObservationDraftStore _drafts;
 

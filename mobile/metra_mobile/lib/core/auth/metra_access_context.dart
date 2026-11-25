@@ -12,12 +12,12 @@ class MetraAccessContext {
   });
 
   factory MetraAccessContext.unresolved() => const MetraAccessContext._(
-        isResolved: false,
-        userId: null,
-        accountState: null,
-        stationPermissions: {},
-        stationRoles: {},
-      );
+    isResolved: false,
+    userId: null,
+    accountState: null,
+    stationPermissions: {},
+    stationRoles: {},
+  );
 
   factory MetraAccessContext.resolved({
     required String userId,
@@ -154,8 +154,7 @@ class MetraPermissionDeniedMessages {
   static const observations =
       'لا تملك صلاحية إدخال أو إرسال أرصاد لهذه المحطة.';
 
-  static const review =
-      'لا تملك صلاحية مراجعة أرصاد هذه المحطة.';
+  static const review = 'لا تملك صلاحية مراجعة أرصاد هذه المحطة.';
 
   static const administration =
       'لا تملك صلاحية إدارة مستخدمي هذه المحطة أو طلبات التسجيل.';

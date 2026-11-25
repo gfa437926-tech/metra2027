@@ -3,31 +3,37 @@ import 'package:metra_mobile/core/catalog/observation_field_catalogs.dart';
 import 'package:metra_mobile/core/widgets/metra_observation_form.dart';
 
 void main() {
-  test('hourly catalog uses only approved field ids and proven temp bounds', () {
-    final ids = ObservationFieldCatalogs.hourly.map((f) => f.id).toSet();
-    expect(ids.contains('dryTemp'), isTrue);
-    expect(ids.contains('wetTemp'), isTrue);
-    expect(ids.contains('inventedField'), isFalse);
+  test(
+    'hourly catalog uses only approved field ids and proven temp bounds',
+    () {
+      final ids = ObservationFieldCatalogs.hourly.map((f) => f.id).toSet();
+      expect(ids.contains('dryTemp'), isTrue);
+      expect(ids.contains('wetTemp'), isTrue);
+      expect(ids.contains('inventedField'), isFalse);
 
-    final dry =
-        ObservationFieldCatalogs.hourly.firstWhere((f) => f.id == 'dryTemp');
-    expect(dry.minimum, -20);
-    expect(dry.maximum, 50);
-    expect(dry.required, isTrue);
-    expect(dry.kind, MetraFieldKind.decimal);
-  });
+      final dry = ObservationFieldCatalogs.hourly.firstWhere(
+        (f) => f.id == 'dryTemp',
+      );
+      expect(dry.minimum, -20);
+      expect(dry.maximum, 50);
+      expect(dry.required, isTrue);
+      expect(dry.kind, MetraFieldKind.decimal);
+    },
+  );
 
   test('daily catalog enforces proven precipitation bounds', () {
-    final precip = ObservationFieldCatalogs.daily
-        .firstWhere((f) => f.id == 'precipitation');
+    final precip = ObservationFieldCatalogs.daily.firstWhere(
+      (f) => f.id == 'precipitation',
+    );
     expect(precip.minimum, 0);
     expect(precip.maximum, 999.9);
     expect(precip.required, isTrue);
   });
 
   test('catalogs do not invent humidity bounds outside proven sources', () {
-    final hourlyRh = ObservationFieldCatalogs.hourly
-        .firstWhere((f) => f.id == 'relativeHumidity');
+    final hourlyRh = ObservationFieldCatalogs.hourly.firstWhere(
+      (f) => f.id == 'relativeHumidity',
+    );
     expect(hourlyRh.minimum, 1);
     expect(hourlyRh.maximum, 100);
   });
@@ -85,38 +91,46 @@ void main() {
   });
 
   test('hourlyclimate remains distinct from operational hourly catalog', () {
-    final climateIds =
-        ObservationFieldCatalogs.hourlyclimate.map((f) => f.id).toSet();
+    final climateIds = ObservationFieldCatalogs.hourlyclimate
+        .map((f) => f.id)
+        .toSet();
     final hourlyIds = ObservationFieldCatalogs.hourly.map((f) => f.id).toSet();
     // Shared meteorological names may overlap; catalogues must stay separate lists.
-    expect(identical(ObservationFieldCatalogs.hourlyclimate,
-        ObservationFieldCatalogs.hourly), isFalse);
+    expect(
+      identical(
+        ObservationFieldCatalogs.hourlyclimate,
+        ObservationFieldCatalogs.hourly,
+      ),
+      isFalse,
+    );
     expect(climateIds.contains('stationPressure'), isTrue);
     expect(hourlyIds.contains('dryTemp'), isTrue);
   });
 
-  test('rainfall and soil quantity fields are decimal without undocumented bounds',
-      () {
-    MetraObservationField f(List<MetraObservationField> list, String id) =>
-        list.firstWhere((e) => e.id == id);
+  test(
+    'rainfall and soil quantity fields are decimal without undocumented bounds',
+    () {
+      MetraObservationField f(List<MetraObservationField> list, String id) =>
+          list.firstWhere((e) => e.id == id);
 
-    final rain = f(ObservationFieldCatalogs.rainfall, 'rainAmount');
-    expect(rain.kind, MetraFieldKind.decimal);
-    expect(rain.unit, 'mm');
-    expect(rain.minimum, isNull);
-    expect(rain.maximum, isNull);
+      final rain = f(ObservationFieldCatalogs.rainfall, 'rainAmount');
+      expect(rain.kind, MetraFieldKind.decimal);
+      expect(rain.unit, 'mm');
+      expect(rain.minimum, isNull);
+      expect(rain.maximum, isNull);
 
-    final snow = f(ObservationFieldCatalogs.rainfall, 'snowDepth');
-    expect(snow.kind, MetraFieldKind.decimal);
-    expect(snow.unit, 'cm');
-    expect(snow.minimum, isNull);
+      final snow = f(ObservationFieldCatalogs.rainfall, 'snowDepth');
+      expect(snow.kind, MetraFieldKind.decimal);
+      expect(snow.unit, 'cm');
+      expect(snow.minimum, isNull);
 
-    for (final id in ['depth5', 'depth10', 'depth20', 'depth50']) {
-      final depth = f(ObservationFieldCatalogs.soil, id);
-      expect(depth.kind, MetraFieldKind.decimal, reason: id);
-      expect(depth.unit, '°C');
-      expect(depth.minimum, isNull, reason: id);
-      expect(depth.maximum, isNull, reason: id);
-    }
-  });
+      for (final id in ['depth5', 'depth10', 'depth20', 'depth50']) {
+        final depth = f(ObservationFieldCatalogs.soil, id);
+        expect(depth.kind, MetraFieldKind.decimal, reason: id);
+        expect(depth.unit, '°C');
+        expect(depth.minimum, isNull, reason: id);
+        expect(depth.maximum, isNull, reason: id);
+      }
+    },
+  );
 }

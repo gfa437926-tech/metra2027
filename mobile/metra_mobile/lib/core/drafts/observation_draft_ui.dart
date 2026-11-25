@@ -77,8 +77,7 @@ class ObservationDraftUi {
   }
 
   static void showDiscardedSnack(BuildContext context) {
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      const SnackBar(content: Text(discardedSnackMessage)),
-    );
+    ScaffoldMessenger.maybeOf(context)
+        ?.showSnackBar(const SnackBar(content: Text(discardedSnackMessage)));
   }
 }

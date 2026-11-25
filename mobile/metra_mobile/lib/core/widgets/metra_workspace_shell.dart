@@ -21,17 +21,16 @@ class MetraWorkspaceShell extends StatelessWidget {
   final String? stateMessage;
 
   Color get _bannerColor => switch (state) {
-        MetraServiceState.liveApi => const Color(0xFF0F766E),
-        MetraServiceState.gated => const Color(0xFFB45309),
-        MetraServiceState.specificationOnly => const Color(0xFF475569),
-      };
+    MetraServiceState.liveApi => const Color(0xFF0F766E),
+    MetraServiceState.gated => const Color(0xFFB45309),
+    MetraServiceState.specificationOnly => const Color(0xFF475569),
+  };
 
   String get _bannerLabel => switch (state) {
-        MetraServiceState.liveApi => 'متصل بالخادم ضمن الصلاحيات',
-        MetraServiceState.gated => 'موقوف ببوابة على الخادم حتى الاعتماد',
-        MetraServiceState.specificationOnly =>
-          'مواصفة واجهة — المحرك غير منفّذ',
-      };
+    MetraServiceState.liveApi => 'متصل بالخادم ضمن الصلاحيات',
+    MetraServiceState.gated => 'موقوف ببوابة على الخادم حتى الاعتماد',
+    MetraServiceState.specificationOnly => 'مواصفة واجهة — المحرك غير منفّذ',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -85,16 +84,20 @@ class MetraPlaceholderBody extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (final line in lines) ...[
-              Text(line,
-                  style:
-                      const TextStyle(color: Color(0xFF475569), height: 1.6)),
+              Text(
+                line,
+                style: const TextStyle(color: Color(0xFF475569), height: 1.6),
+              ),
               const SizedBox(height: 8),
             ],
             const SizedBox(height: 4),
             const Text(
               'لا تُعرض بيانات علمية وهمية. عند توفر المحرك أو الـ API ستُربط هذه الواجهة دون تغيير هيكل التنقل.',
               style: TextStyle(
-                  color: _blue, fontWeight: FontWeight.w600, height: 1.5),
+                color: _blue,
+                fontWeight: FontWeight.w600,
+                height: 1.5,
+              ),
             ),
           ],
         ),

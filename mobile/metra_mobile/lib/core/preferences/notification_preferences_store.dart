@@ -19,15 +19,13 @@ class NotificationPreferences {
     bool? observationAlerts,
     bool? reviewAlerts,
     bool? faultAlerts,
-  }) =>
-      NotificationPreferences(
-        observationAlerts: observationAlerts ?? this.observationAlerts,
-        reviewAlerts: reviewAlerts ?? this.reviewAlerts,
-        faultAlerts: faultAlerts ?? this.faultAlerts,
-      );
+  }) => NotificationPreferences(
+    observationAlerts: observationAlerts ?? this.observationAlerts,
+    reviewAlerts: reviewAlerts ?? this.reviewAlerts,
+    faultAlerts: faultAlerts ?? this.faultAlerts,
+  );
 
-  bool get anyEnabled =>
-      observationAlerts || reviewAlerts || faultAlerts;
+  bool get anyEnabled => observationAlerts || reviewAlerts || faultAlerts;
 
   int get enabledCount =>
       (observationAlerts ? 1 : 0) +
