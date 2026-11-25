@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `f0202dc16e588dedb433109333026d971e47bd86` (+ pending draft listener test)  
+**HEAD (local):** `4dcaa023c44ebfc987cf89b429472f932c42337e`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
 
@@ -66,6 +66,9 @@
 ## 4. Recent commits (this continuous line)
 
 ```
+4dcaa02 chore(flutter): declare flutter_localizations for MaterialApp delegates
+fde9087 feat(flutter): admin audit search helper and Semantics on registration decisions
+28ed537 test(flutter): draft store notifies listeners; refresh completion tracker
 f0202dc feat(flutter): Semantics labels on review approve and return actions
 934c8fd feat(flutter): pure registrationStatusLabel for operator-facing status codes
 b5ac0fe test(flutter): cover observation submit idempotency key reuse on retry
