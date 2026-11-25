@@ -48,6 +48,36 @@ void main() {
     expect(draft.values.containsKey('api_key'), isFalse);
   });
 
+  test('rejects additional credential and session field variants', () {
+    ObservationDraftStore.instance.save(
+      stationId: 'station-a',
+      formType: 'hourly',
+      values: {
+        'temperature': 12,
+        'private_key': 'key',
+        'credential_blob': 'credential',
+        'cookie_header': 'cookie',
+        'session_id': 'session',
+        'jwt': 'token',
+        'bearer': 'token',
+      },
+    );
+    final draft =
+        ObservationDraftStore.instance.get('station-a', 'hourly');
+    expect(draft, isNotNull);
+    expect(draft!.values.containsKey('temperature'), isTrue);
+    for (final key in [
+      'private_key',
+      'credential_blob',
+      'cookie_header',
+      'session_id',
+      'jwt',
+      'bearer',
+    ]) {
+      expect(draft.values.containsKey(key), isFalse, reason: key);
+    }
+  });
+
   test('clear removes only the targeted draft', () {
     ObservationDraftStore.instance.save(
       stationId: 'station-a',
