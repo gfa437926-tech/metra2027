@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `28602894024f457c6ca34db80f558b5f7071886a` (+ pending uncommitted login whitespace fix)  
+**HEAD (local):** `e2f6a208dcaf9c7edf83d0c41d7e40bd4a74cbc5`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
 
@@ -78,6 +78,10 @@
 ## 4. Recent local commits (this line of work)
 
 ```
+e2f6a20 fix(flutter): shared observationDate calendar and future guards for catalogs
+3c8f38a test(flutter): cover agricultural/fault catalog validation and account states
+c3efa22 fix(flutter): reject whitespace-only login passwords client-side
+22c2d62 docs: add PROJECT_COMPLETION_TRACKER for continuous completion resume
 2860289 refactor(flutter): centralize account password rules via RegistrationFieldRules
 3ea3ce7 feat(flutter): match station directory query on id and type fields
 fcd7e52 fix(flutter): reject future observation dates on rainfall/soil local forms
