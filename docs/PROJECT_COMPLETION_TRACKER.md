@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `35eea5560b79bd2ee73af623b88ecbbd1b7255a3`  
+**HEAD (local):** `50151dd1953a76ce01c1a8bab6d099dfdb27bd25`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints. No force push.
 
@@ -55,6 +55,7 @@
 ### Recent commits (continuous line, preserved history)
 
 ```
+50151dd feat(flutter): local search on station registration and audit admin tabs
 35eea55 fix(flutter): complete localization delegates and Material on config screen
 03ed439 test(flutter): unresolved access keeps placeholder destinations visible only
 60217e7 refactor(flutter): delegate review formatters to pure helpers
