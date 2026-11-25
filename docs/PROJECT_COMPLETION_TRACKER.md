@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `3a7be6e2c6d628861489f9cb0ee3f8e188b66f9c`  
+**HEAD (local):** `34754913489ca6a3591cb5ac8f0988f743779390`  
 **Origin (fetched):** `600076f79d3c4256267af2539a83a8bfdab13605` — local **ahead by 63 commits**, not pushed  
 **Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 execution without explicit approval. No invented endpoints. No force push. Angular deferred.
 
