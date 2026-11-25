@@ -201,6 +201,9 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                       .toList(growable: false);
                 }
                 rows = rows.where(_matchesQuery).toList(growable: false);
+                // Newest observations first — local stable order for review UX.
+                rows = List<ObservationQueueItem>.of(rows)
+                  ..sort((a, b) => b.observedAt.compareTo(a.observedAt));
                 if (rows.isEmpty) {
                   final hasQuery = _query.text.trim().isNotEmpty;
                   return MetraAsyncStatePanel.empty(
