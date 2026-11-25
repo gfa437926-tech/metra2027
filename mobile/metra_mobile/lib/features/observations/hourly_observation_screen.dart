@@ -1,11 +1,10 @@
-import 'dart:convert';
-
 import 'package:material_ui/material_ui.dart';
+
 import '../../core/api/metra_api_client.dart';
-import '../../core/errors/metra_error_presenter.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/drafts/observation_draft_ui.dart';
+import '../../core/observations/observation_submit_flow.dart';
 import '../../core/widgets/metra_observation_form.dart';
 
 /// Hourly observation entry bound to the approved .NET validation/submit API.
@@ -27,9 +26,8 @@ class HourlyObservationScreen extends StatefulWidget {
 class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   static const _formType = 'hourly';
 
-  String? _pendingPayloadFingerprint;
-  String? _pendingIdempotencyKey;
-  DateTime? _pendingObservedAt;
+  late final ObservationSubmitFlow _flow =
+      ObservationSubmitFlow(api: widget.api);
   bool _submitting = false;
   ObservationDraft? _draft;
   int _formGeneration = 0;
@@ -44,10 +42,7 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   void didUpdateWidget(covariant HourlyObservationScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stationId != widget.stationId) {
-      // Station scope changed: drop in-flight idempotency and reload drafts.
-      _pendingPayloadFingerprint = null;
-      _pendingIdempotencyKey = null;
-      _pendingObservedAt = null;
+      _flow.resetPending();
       _submitting = false;
       _loadDraftForStation(resetForm: true);
     }
@@ -90,55 +85,18 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
   Future<void> _submit(Map<String, Object?> values) async {
     if (_submitting) return;
 
-    // Bind the operation to the station/form generation that initiated it.
-    // A late validation or submit response must never mutate the next station.
     final stationId = widget.stationId;
     final generation = _formGeneration;
     final messenger = ScaffoldMessenger.of(context);
-    final payload = values;
     setState(() => _submitting = true);
     try {
-      final validation = await widget.api.validateObservation(
-        observationType: _formType,
-        values: payload,
-      );
-
-      if (!mounted ||
-          generation != _formGeneration ||
-          stationId != widget.stationId) {
-        return;
-      }
-
-      if (!validation.isValid) {
-        final message = validation.issues.isEmpty
-            ? 'رفض الخادم بيانات الرصد الساعي.'
-            : validation.issues.first.message;
-        messenger.showSnackBar(SnackBar(content: Text(message)));
-        return;
-      }
-
-      final fingerprint = jsonEncode(payload);
-      if (_pendingPayloadFingerprint != fingerprint ||
-          _pendingIdempotencyKey == null) {
-        _pendingPayloadFingerprint = fingerprint;
-        _pendingIdempotencyKey = <String>[
-          _formType,
-          stationId,
-          DateTime.now().toUtc().microsecondsSinceEpoch.toString(),
-        ].join('-');
-        _pendingObservedAt = DateTime.now().toUtc();
-      }
-
-      final idempotencyKey = _pendingIdempotencyKey!;
-      final observedAt = _pendingObservedAt!;
-
-      await widget.api.submitObservation(
+      final outcome = await _flow.validateAndSubmit(
+        formType: _formType,
         stationId: stationId,
-        idempotencyKey: idempotencyKey,
-        observationType: _formType,
-        observedAt: observedAt,
-        payload: payload,
-        submit: true,
+        values: values,
+        successMessageAr:
+            'أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
+        validationFallbackAr: 'رفض الخادم بيانات الرصد الساعي.',
       );
 
       if (!mounted ||
@@ -147,34 +105,13 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         return;
       }
 
-      _pendingPayloadFingerprint = null;
-      _pendingIdempotencyKey = null;
-      _pendingObservedAt = null;
-      ObservationDraftStore.instance.clear(stationId, _formType);
-      setState(() {
-        _draft = null;
-        _formGeneration++;
-        _submitting = false;
-      });
-      messenger.showSnackBar(
-        const SnackBar(content: Text('أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.')),
-      );
-    } on MetraApiException catch (error) {
-      if (mounted &&
-          generation == _formGeneration &&
-          stationId == widget.stationId) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(MetraErrorPresenter.submitMessage(error))),
-        );
+      if (outcome.clearedDraft) {
+        setState(() {
+          _draft = null;
+          _formGeneration++;
+        });
       }
-    } catch (error) {
-      if (mounted &&
-          generation == _formGeneration &&
-          stationId == widget.stationId) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
-        );
-      }
+      messenger.showSnackBar(SnackBar(content: Text(outcome.messageAr)));
     } finally {
       if (mounted &&
           generation == _formGeneration &&

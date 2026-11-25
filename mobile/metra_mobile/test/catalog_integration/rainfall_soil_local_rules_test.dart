@@ -33,11 +33,33 @@ void main() {
     });
   });
 
+  group('isValidObservationDate', () {
+    test('accepts real calendar dates', () {
+      expect(RainfallSoilLocalRules.isValidObservationDate('2026-11-18'), isTrue);
+      expect(RainfallSoilLocalRules.isValidObservationDate('2024-02-29'), isTrue);
+    });
+
+    test('rejects invalid and non-ISO dates', () {
+      expect(RainfallSoilLocalRules.isValidObservationDate('2026-02-30'), isFalse);
+      expect(RainfallSoilLocalRules.isValidObservationDate('18-11-2026'), isFalse);
+      expect(RainfallSoilLocalRules.isValidObservationDate('2026/11/18'), isFalse);
+      expect(RainfallSoilLocalRules.isValidObservationDate(''), isFalse);
+    });
+  });
+
   group('validateRainfall', () {
     test('requires date and agreement', () {
       final errors = RainfallSoilLocalRules.validateRainfall({});
       expect(errors.containsKey('observationDate'), isTrue);
       expect(errors.containsKey('responsibilityAgreement'), isTrue);
+    });
+
+    test('rejects impossible calendar date', () {
+      final errors = RainfallSoilLocalRules.validateRainfall({
+        'observationDate': '2026-02-30',
+        'responsibilityAgreement': true,
+      });
+      expect(errors.containsKey('observationDate'), isTrue);
     });
 
     test('allows missing rain amount as unavailable', () {

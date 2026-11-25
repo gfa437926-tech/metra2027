@@ -4,7 +4,9 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
 import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/catalog_integration/catalog_form_type.dart';
+import '../../core/drafts/observation_draft_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
+import '../../core/widgets/metra_permission_denied_page.dart';
 import 'catalog_observation_screen.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
@@ -16,9 +18,10 @@ const _blue = Color(0xFF087CF0);
 
 /// Observation workspace: server-backed forms and explicitly local catalogues.
 ///
-/// This screen fails closed when the server access context is absent or
-/// unresolved. The API remains authoritative for every server mutation.
-class ObservationWorkspaceScreen extends StatelessWidget {
+/// Fails closed when the server access context is absent or unresolved.
+/// Tab labels show a local-draft marker when a session draft exists for the
+/// active station (does not claim server persistence).
+class ObservationWorkspaceScreen extends StatefulWidget {
   const ObservationWorkspaceScreen({
     super.key,
     required this.api,
@@ -30,24 +33,55 @@ class ObservationWorkspaceScreen extends StatelessWidget {
   final String stationId;
   final MetraAccessContext? accessContext;
 
+  @override
+  State<ObservationWorkspaceScreen> createState() =>
+      _ObservationWorkspaceScreenState();
+}
+
+class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen> {
+  @override
+  void initState() {
+    super.initState();
+    ObservationDraftStore.instance.addListener(_onDraftsChanged);
+  }
+
+  @override
+  void dispose() {
+    ObservationDraftStore.instance.removeListener(_onDraftsChanged);
+    super.dispose();
+  }
+
+  void _onDraftsChanged() {
+    if (mounted) setState(() {});
+  }
+
   bool get _canEnter =>
-      accessContext?.isResolved == true &&
-      accessContext!.canEnterObservations(stationId);
+      widget.accessContext?.isResolved == true &&
+      widget.accessContext!.canEnterObservations(widget.stationId);
 
   bool get _canReview =>
-      accessContext?.isResolved == true &&
-      accessContext!.canReviewObservations(stationId);
+      widget.accessContext?.isResolved == true &&
+      widget.accessContext!.canReviewObservations(widget.stationId);
+
+  String _tabLabel(String base, String formType) {
+    final has = ObservationDraftStore.instance
+        .hasDraft(widget.stationId, formType);
+    return has ? '$base · مسودة' : base;
+  }
 
   @override
   Widget build(BuildContext context) {
     final tabs = <Tab>[];
     final views = <Widget>[];
+    final stationId = widget.stationId;
+    final api = widget.api;
+    final accessContext = widget.accessContext;
 
     if (_canEnter) {
-      tabs.addAll(const [
-        Tab(text: 'ساعي · متصل'),
-        Tab(text: 'يومي · متصل'),
-        Tab(text: 'ظاهرة · متصل'),
+      tabs.addAll([
+        Tab(text: _tabLabel('ساعي · متصل', 'hourly')),
+        Tab(text: _tabLabel('يومي · متصل', 'daily')),
+        Tab(text: _tabLabel('ظاهرة · متصل', 'phenomenon')),
       ]);
       views.addAll([
         HourlyObservationScreen(api: api, stationId: stationId),
@@ -55,8 +89,6 @@ class ObservationWorkspaceScreen extends StatelessWidget {
         PhenomenonObservationScreen(api: api, stationId: stationId),
       ]);
 
-      // These catalogues remain local-only. They are still input workflows,
-      // therefore they require the same explicit station-scoped entry grant.
       void addCatalog({
         required String tabLabel,
         required String title,
@@ -64,7 +96,7 @@ class ObservationWorkspaceScreen extends StatelessWidget {
         required String formCode,
         required CatalogFormType formType,
       }) {
-        tabs.add(Tab(text: tabLabel));
+        tabs.add(Tab(text: _tabLabel(tabLabel, formType.code)));
         views.add(
           CatalogObservationScreen(
             title: title,

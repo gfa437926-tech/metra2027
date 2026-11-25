@@ -1,0 +1,116 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:metra_mobile/core/api/metra_api_client.dart';
+import 'package:metra_mobile/core/drafts/observation_draft_store.dart';
+import 'package:metra_mobile/core/observations/observation_submit_flow.dart';
+
+void main() {
+  const stationId = '11111111-1111-4111-8111-111111111111';
+
+  setUp(() {
+    ObservationDraftStore.instance.clearAll();
+  });
+
+  MetraApiClient clientWith(MockClientHandler handler) => MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient(handler),
+        requestTimeout: const Duration(seconds: 5),
+      );
+
+  test('successful validate+submit clears draft and returns success', () async {
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'hourly',
+      values: {'temp': 20},
+    );
+    final api = clientWith((request) async {
+      if (request.url.path.contains('/validate')) {
+        return http.Response(
+          jsonEncode({'isValid': true, 'issues': <Object>[]}),
+          200,
+        );
+      }
+      if (request.url.path.contains('/observations')) {
+        return http.Response(
+          jsonEncode({'id': 'obs-1', 'status': 'submitted'}),
+          200,
+        );
+      }
+      return http.Response('not found', 404);
+    });
+    final flow = ObservationSubmitFlow(api: api);
+    final outcome = await flow.validateAndSubmit(
+      formType: 'hourly',
+      stationId: stationId,
+      values: {'temp': 20},
+      successMessageAr: 'تم',
+      validationFallbackAr: 'فشل',
+    );
+    expect(outcome.succeeded, isTrue);
+    expect(outcome.clearedDraft, isTrue);
+    expect(ObservationDraftStore.instance.hasDraft(stationId, 'hourly'), isFalse);
+    api.close();
+  });
+
+  test('invalid validation keeps draft and returns failure', () async {
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'daily',
+      values: {'x': 1},
+    );
+    final api = clientWith((request) async {
+      return http.Response(
+        jsonEncode({
+          'isValid': false,
+          'issues': [
+            {'field': 'x', 'message': 'حقل ناقص'},
+          ],
+        }),
+        200,
+      );
+    });
+    final flow = ObservationSubmitFlow(api: api);
+    final outcome = await flow.validateAndSubmit(
+      formType: 'daily',
+      stationId: stationId,
+      values: {'x': 1},
+      successMessageAr: 'تم',
+      validationFallbackAr: 'فشل',
+    );
+    expect(outcome.succeeded, isFalse);
+    expect(outcome.messageAr, 'حقل ناقص');
+    expect(ObservationDraftStore.instance.hasDraft(stationId, 'daily'), isTrue);
+    api.close();
+  });
+
+  test('auth failure maps to Arabic message without clearing draft', () async {
+    ObservationDraftStore.instance.save(
+      stationId: stationId,
+      formType: 'hourly',
+      values: {'temp': 1},
+    );
+    final api = clientWith((request) async {
+      return http.Response('{}', 401);
+    });
+    final flow = ObservationSubmitFlow(api: api);
+    final outcome = await flow.validateAndSubmit(
+      formType: 'hourly',
+      stationId: stationId,
+      values: {'temp': 1},
+      successMessageAr: 'تم',
+      validationFallbackAr: 'فشل',
+    );
+    expect(outcome.succeeded, isFalse);
+    expect(
+      outcome.messageAr.contains('الجلسة') ||
+          outcome.messageAr.contains('الدخول'),
+      isTrue,
+    );
+    expect(ObservationDraftStore.instance.hasDraft(stationId, 'hourly'), isTrue);
+    api.close();
+  });
+}

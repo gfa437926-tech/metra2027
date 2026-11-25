@@ -26,6 +26,16 @@ class RainfallSoilLocalRules {
     return DecimalFieldParse.present(value);
   }
 
+  /// Strict calendar-date validation; rejects normalized invalid dates.
+  static bool isValidObservationDate(String value) {
+    if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return false;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return false;
+    return parsed.year.toString().padLeft(4, '0') == value.substring(0, 4) &&
+        parsed.month.toString().padLeft(2, '0') == value.substring(5, 7) &&
+        parsed.day.toString().padLeft(2, '0') == value.substring(8, 10);
+  }
+
   /// Rainfall: observationDate + agreement required; amounts optional.
   /// Missing rainAmount/snowDepth means unavailable, not zero rainfall.
   static Map<String, String> validateRainfall(Map<String, Object?> values) {
@@ -33,6 +43,8 @@ class RainfallSoilLocalRules {
     final date = values['observationDate']?.toString().trim() ?? '';
     if (date.isEmpty) {
       errors['observationDate'] = 'تاريخ الرصد مطلوب';
+    } else if (!isValidObservationDate(date)) {
+      errors['observationDate'] = 'أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD';
     }
     if (values['responsibilityAgreement'] != true) {
       errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
@@ -55,6 +67,8 @@ class RainfallSoilLocalRules {
     final date = values['observationDate']?.toString().trim() ?? '';
     if (date.isEmpty) {
       errors['observationDate'] = 'تاريخ الرصد مطلوب';
+    } else if (!isValidObservationDate(date)) {
+      errors['observationDate'] = 'أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD';
     }
     if (values['responsibilityAgreement'] != true) {
       errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
@@ -74,8 +88,10 @@ class DecimalFieldParse {
   const DecimalFieldParse._(this.kind, this.value);
 
   const DecimalFieldParse.absent() : this._(DecimalFieldParseKind.absent, null);
-  const DecimalFieldParse.invalid() : this._(DecimalFieldParseKind.invalid, null);
-  const DecimalFieldParse.present(num value) : this._(DecimalFieldParseKind.present, value);
+  const DecimalFieldParse.invalid()
+      : this._(DecimalFieldParseKind.invalid, null);
+  const DecimalFieldParse.present(num value)
+      : this._(DecimalFieldParseKind.present, value);
 
   final DecimalFieldParseKind kind;
   final num? value;

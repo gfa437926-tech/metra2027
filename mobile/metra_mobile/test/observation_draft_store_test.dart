@@ -225,4 +225,54 @@ void main() {
     );
   });
 
+
+
+  test('expanded secret field names are never stored', () {
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: 'st-1',
+      formType: 'hourly',
+      values: {
+        'temp': 12,
+        'session_id': 'x',
+        'jwt_token': 'y',
+        'bearer_header': 'z',
+        'private_key': 'no',
+      },
+    );
+    final draft = ObservationDraftStore.instance.get('st-1', 'hourly');
+    expect(draft, isNotNull);
+    expect(draft!.values.containsKey('temp'), isTrue);
+    expect(draft.values.containsKey('session_id'), isFalse);
+    expect(draft.values.containsKey('jwt_token'), isFalse);
+    expect(draft.values.containsKey('bearer_header'), isFalse);
+    expect(draft.values.containsKey('private_key'), isFalse);
+  });
+
+  test('formTypesWithDrafts returns only non-empty types for station', () {
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: 'st-a',
+      formType: 'hourly',
+      values: {'t': 1},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-a',
+      formType: 'daily',
+      values: {'t': 2},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-b',
+      formType: 'hourly',
+      values: {'t': 3},
+    );
+    final types = ObservationDraftStore.instance.formTypesWithDrafts('st-a');
+    expect(types, containsAll(['hourly', 'daily']));
+    expect(types.contains('phenomenon'), isFalse);
+    expect(
+      ObservationDraftStore.instance.formTypesWithDrafts('st-b'),
+      equals({'hourly'}),
+    );
+  });
+
 }
