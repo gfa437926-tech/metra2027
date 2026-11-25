@@ -277,6 +277,19 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
 }
 
 /// Displays registration status from GET /api/v1/account/registration-status.
+/// Operator-facing Arabic label for registration request status codes.
+String registrationStatusLabel(Object? raw) {
+  final s = raw?.toString().toLowerCase() ?? '';
+  return switch (s) {
+    'pending' || 'pending_station_approval' || 'pending_system_approval' =>
+      'بانتظار الموافقة',
+    'approved' || 'active' => 'معتمد',
+    'rejected' || 'denied' => 'مرفوض',
+    '' => 'غير محدد',
+    _ => raw.toString(),
+  };
+}
+
 class RegistrationStatusScreen extends StatefulWidget {
   const RegistrationStatusScreen({super.key, required this.api});
 
@@ -302,17 +315,7 @@ class _RegistrationStatusScreenState extends State<RegistrationStatusScreen> {
     });
   }
 
-  String _statusLabel(Object? raw) {
-    final s = raw?.toString().toLowerCase() ?? '';
-    return switch (s) {
-      'pending' || 'pending_station_approval' || 'pending_system_approval' =>
-        'بانتظار الموافقة',
-      'approved' || 'active' => 'معتمد',
-      'rejected' || 'denied' => 'مرفوض',
-      '' => 'غير محدد',
-      _ => raw.toString(),
-    };
-  }
+  String _statusLabel(Object? raw) => registrationStatusLabel(raw);
 
   @override
   Widget build(BuildContext context) {
