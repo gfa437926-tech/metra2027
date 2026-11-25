@@ -105,9 +105,11 @@ class LocalCatalogObservationRepository implements CatalogObservationRepository 
     }
 
     if (errors.isNotEmpty) {
+      final first = errors.entries.first;
       return CatalogSubmissionResult(
         phase: CatalogSubmissionPhase.failed,
-        messageAr: 'تحقق من الحقول المطلوبة قبل المتابعة.',
+        messageAr:
+            'تحقق من الحقول قبل المتابعة (${errors.length}): ${first.value}',
         values: values,
         validationErrors: errors,
       );
