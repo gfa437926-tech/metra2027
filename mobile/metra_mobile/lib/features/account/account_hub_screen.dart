@@ -41,10 +41,24 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
     if (_busy) return;
     final next = _newPassword.text;
     final confirm = _confirmPassword.text;
-    if (next.length < 8) {
+    if (next.trim().isEmpty || next.length < 8) {
       setState(() {
         _error = true;
         _message = 'كلمة المرور الجديدة يجب ألا تقل عن 8 أحرف.';
+      });
+      return;
+    }
+    if (next.length > 128) {
+      setState(() {
+        _error = true;
+        _message = 'كلمة المرور أطول من الحد المسموح.';
+      });
+      return;
+    }
+    if (next.contains(' ')) {
+      setState(() {
+        _error = true;
+        _message = 'لا تستخدم مسافات داخل كلمة المرور.';
       });
       return;
     }

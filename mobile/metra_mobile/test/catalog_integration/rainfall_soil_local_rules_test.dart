@@ -65,6 +65,15 @@ void main() {
       });
       expect(errors.containsKey('rainAmount'), isTrue);
     });
+
+    test('rejects negative rain amount', () {
+      final errors = RainfallSoilLocalRules.validateRainfall({
+        'observationDate': '2026-11-18',
+        'responsibilityAgreement': true,
+        'rainAmount': '-1',
+      });
+      expect(errors.containsKey('rainAmount'), isTrue);
+    });
   });
 
   group('validateSoil', () {

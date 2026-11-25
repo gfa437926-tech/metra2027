@@ -40,7 +40,10 @@ class RainfallSoilLocalRules {
     for (final id in ['rainAmount', 'snowDepth']) {
       final parsed = parseOptionalDecimal(values[id]);
       if (parsed.isInvalid) {
-        errors[id] = 'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
+        errors[id] =
+            'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
+      } else if (parsed.isPresent && parsed.value! < 0) {
+        errors[id] = 'لا تُقبل قيمة سالبة. اترك الحقل فارغاً إن لم يتوفر القياس';
       }
     }
     return errors;
@@ -59,7 +62,8 @@ class RainfallSoilLocalRules {
     for (final id in ['depth5', 'depth10', 'depth20', 'depth50']) {
       final parsed = parseOptionalDecimal(values[id]);
       if (parsed.isInvalid) {
-        errors[id] = 'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
+        errors[id] =
+            'أدخل رقماً منتهياً وصالحاً، أو اترك الحقل فارغاً إن لم يتوفر القياس';
       }
     }
     return errors;

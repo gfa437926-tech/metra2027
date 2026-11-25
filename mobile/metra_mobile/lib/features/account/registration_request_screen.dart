@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
+import '../../core/auth/registration_field_rules.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/theme/metra_theme.dart';
 import '../../core/widgets/metra_async_state.dart';
@@ -161,8 +162,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       labelText: 'الاسم الأول',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    validator: RegistrationFieldRules.requiredName,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -171,8 +171,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       labelText: 'اسم الأب',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    validator: RegistrationFieldRules.requiredName,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -181,8 +180,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       labelText: 'اسم العائلة',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'مطلوب' : null,
+                    validator: RegistrationFieldRules.requiredName,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -193,15 +191,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       border: OutlineInputBorder(),
                       helperText: 'أرقام فقط، 8 محارف على الأقل',
                     ),
-                    validator: (v) {
-                      final value = v?.trim() ?? '';
-                      if (value.isEmpty) return 'مطلوب';
-                      final digits = value.replaceAll(RegExp(r'[\s\-+()]'), '');
-                      if (!RegExp(r'^\d{8,15}$').hasMatch(digits)) {
-                        return 'أدخل رقم هاتف صالحاً (8–15 رقماً)';
-                      }
-                      return null;
-                    },
+                    validator: RegistrationFieldRules.phone,
                   ),
                   const SizedBox(height: 10),
                   TextFormField(
@@ -211,17 +201,7 @@ class _RegistrationRequestScreenState extends State<RegistrationRequestScreen> {
                       border: OutlineInputBorder(),
                       helperText: 'استخدم المعرف من دليل المحطات بعد اعتماده',
                     ),
-                    validator: (v) {
-                      final value = v?.trim() ?? '';
-                      if (value.isEmpty) return 'مطلوب';
-                      final uuid = RegExp(
-                        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
-                      );
-                      if (!uuid.hasMatch(value)) {
-                        return 'أدخل معرّف محطة بصيغة UUID صحيحة';
-                      }
-                      return null;
-                    },
+                    validator: RegistrationFieldRules.stationId,
                   ),
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(

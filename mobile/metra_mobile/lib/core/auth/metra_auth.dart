@@ -163,10 +163,18 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
                             labelText: 'البريد الإلكتروني',
                             border: OutlineInputBorder(),
                           ),
-                          validator: (value) =>
-                              (value?.trim().contains('@') ?? false)
-                                  ? null
-                                  : 'أدخل بريداً إلكترونياً صحيحاً',
+                          validator: (value) {
+                            final email = value?.trim() ?? '';
+                            if (email.isEmpty) {
+                              return 'أدخل بريداً إلكترونياً صحيحاً';
+                            }
+                            if (email.length > 254 ||
+                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                    .hasMatch(email)) {
+                              return 'أدخل بريداً إلكترونياً صحيحاً';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 14),
                         TextFormField(
