@@ -96,6 +96,14 @@ void main() {
       });
       expect(errors.containsKey('rainAmount'), isTrue);
     });
+
+    test('rejects future observation date', () {
+      final errors = RainfallSoilLocalRules.validateRainfall({
+        'observationDate': '2099-01-01',
+        'responsibilityAgreement': true,
+      });
+      expect(errors['observationDate'], contains('المستقبل'));
+    });
   });
 
   group('validateSoil', () {

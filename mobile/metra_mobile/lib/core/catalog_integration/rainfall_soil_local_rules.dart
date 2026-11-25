@@ -36,16 +36,35 @@ class RainfallSoilLocalRules {
         parsed.day.toString().padLeft(2, '0') == value.substring(8, 10);
   }
 
-  /// Rainfall: observationDate + agreement required; amounts optional.
-  /// Missing rainAmount/snowDepth means unavailable, not zero rainfall.
-  static Map<String, String> validateRainfall(Map<String, Object?> values) {
-    final errors = <String, String>{};
+  /// True when the calendar day is after today (local).
+  static bool isFutureObservationDate(String value) {
+    if (!isValidObservationDate(value)) return false;
+    final parsed = DateTime.parse(value);
+    final day = DateTime(parsed.year, parsed.month, parsed.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return day.isAfter(today);
+  }
+
+  static void _requireObservationDate(
+    Map<String, Object?> values,
+    Map<String, String> errors,
+  ) {
     final date = values['observationDate']?.toString().trim() ?? '';
     if (date.isEmpty) {
       errors['observationDate'] = 'تاريخ الرصد مطلوب';
     } else if (!isValidObservationDate(date)) {
       errors['observationDate'] = 'أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD';
+    } else if (isFutureObservationDate(date)) {
+      errors['observationDate'] = 'لا يُقبل تاريخ رصد في المستقبل';
     }
+  }
+
+  /// Rainfall: observationDate + agreement required; amounts optional.
+  /// Missing rainAmount/snowDepth means unavailable, not zero rainfall.
+  static Map<String, String> validateRainfall(Map<String, Object?> values) {
+    final errors = <String, String>{};
+    _requireObservationDate(values, errors);
     if (values['responsibilityAgreement'] != true) {
       errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
     }
@@ -64,12 +83,7 @@ class RainfallSoilLocalRules {
   /// Soil: observationDate + agreement required; depths optional decimals (°C).
   static Map<String, String> validateSoil(Map<String, Object?> values) {
     final errors = <String, String>{};
-    final date = values['observationDate']?.toString().trim() ?? '';
-    if (date.isEmpty) {
-      errors['observationDate'] = 'تاريخ الرصد مطلوب';
-    } else if (!isValidObservationDate(date)) {
-      errors['observationDate'] = 'أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD';
-    }
+    _requireObservationDate(values, errors);
     if (values['responsibilityAgreement'] != true) {
       errors['responsibilityAgreement'] = 'يجب الموافقة على الإقرار قبل المتابعة';
     }
