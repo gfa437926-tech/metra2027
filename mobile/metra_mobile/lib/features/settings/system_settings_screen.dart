@@ -80,7 +80,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: ListView(
+      child: Material(
+        color: Colors.transparent,
+        child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Text(
@@ -235,6 +237,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             label: Text(_signingOut ? 'جاري تسجيل الخروج…' : 'تسجيل الخروج'),
           ),
         ],
+        ),
       ),
     );
   }
