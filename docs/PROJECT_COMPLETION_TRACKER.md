@@ -2,76 +2,74 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `50151dd1953a76ce01c1a8bab6d099dfdb27bd25`  
-**Scope:** Flutter app `mobile/metra_mobile/` only  
-**Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints. No force push.
+**HEAD (local):** `d73190d661455ebf3cd5130a5b62fa9210dc00ca`  
+**Origin (fetched):** `600076f79d3c4256267af2539a83a8bfdab13605` — local **ahead by 63 commits**, not pushed  
+**Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 execution without explicit approval. No invented endpoints. No force push. Angular deferred.
 
 ---
 
-## Closure status (contract-scoped)
+## Phase status
 
-### Complete within current contracts and fail-closed rules
+| Phase | Status |
+|-------|--------|
+| 1 Source integrity | Local history intact; origin lag documented |
+| 2 Flutter within contracts | ~98% of allowed surface |
+| 3 Observation cycle (server-backed types) | Complete client-side against existing contracts |
+| 4 Backend API mapping | Coverage matrix written; assignment routes wired |
+| 5 M1–M4 | **Decision packages ready — awaiting owner approval** (not executed) |
+| 6 Specialized services | Honest offline / no contract |
+| 7 Analyze/test/build | **Blocked:** no Flutter/dotnet SDK in sandbox |
+| 8 GitHub push / CI | **Blocked:** no push credentials |
+| 9 Production closure | **Partial closure only** |
 
-| Area | State |
+---
+
+## Completed this session (from 1c67654)
+
+- Station assignment client: `getStationAssignableRoles`, `requestStationAssignment`, `decideStationAssignment`
+- Admin users tab: assignment request form (roles load + submit)
+- `docs/delivery/API-CLIENT-COVERAGE-MATRIX.md`
+- `docs/delivery/M1-M4-DECISION-PACKAGES.md`
+
+---
+
+## User approvals required (blocking full product)
+
+1. **M1** — DB observation_type allow-list for rainfall/soil  
+2. **M2** — audit event taxonomy (recommended: defer)  
+3. **M3** — .NET validators for expanded types  
+4. **M4** — Flutter server persist for approved catalog types  
+5. Push credentials or local push of `fix/flutter-quality-gates-2026-11-23`  
+6. Optional: contracts for notifications feed, CLIMATOL, AI, OCR, report export, archive store  
+
+---
+
+## Quality gates (this environment)
+
+| Gate | Result |
 |------|--------|
-| Auth / login / secure session | Complete |
-| Registration request + structured status | Complete |
-| Account hub / password rules | Complete |
-| Access context fail-closed navigation | Complete |
-| Station directory (search, sort, map, mine filter) | Complete |
-| Station administration (users, requests, audit, queue) | Complete |
-| Hourly / daily / phenomenon cycle (draft → validate → submit → review → decide) | Complete |
-| Catalog forms (7): local validation + drafts + honest offline messaging | Complete (no server persist) |
-| Observation workspace (tabs, draft markers, overview bar) | Complete |
-| Review queue (filter, sort, type grouping, Semantics) | Complete |
-| Notifications center (local prefs only) | Complete shell |
-| Settings / configuration gate | Complete |
-| Forecast centre geographic comparison | Complete (no fake telemetry) |
-| CLIMATOL / AI / OCR / Ops / Reports | Honest offline shells with period guards |
-| Error presenter / timeouts / idempotency | Complete |
-| Unit tests for pure helpers (validation, drafts, review, admin, access, API config) | Expanded (run blocked here) |
+| `git fetch origin` | Succeeded; origin at 600076f |
+| `git push` | Fails: no username device |
+| `flutter analyze/test/web` | Not run — `flutter.tar.xz` transport error |
+| `dotnet test` | No `dotnet` binary |
 
-### External blockers preventing full production claim
+---
 
-1. **Flutter SDK unavailable in this sandbox** — cannot execute `flutter analyze`, `flutter test`, or `flutter build web` here (tar transport error, ~1.2 GiB RAM).
-2. **No GitHub push credentials** — `git push` fails; local commits not on remote; Client CI not triggered from this environment.
-3. **M1–M4 not approved** — catalog forms cannot gain server persistence.
-4. **No notification service contract** — feed remains empty by design.
-5. **No CLIMATOL / AI / OCR / archive / report-export contracts** — actions stay disabled with honest tooltips.
-6. **Angular deferred** by mission order.
+## Next session start
 
-### Honest ratios
+1. Read this tracker + `git rev-parse HEAD`  
+2. If credentials available: push branch, watch Client CI  
+3. If M1–M4 approved: implement **only** approved package  
+4. Else: wire remaining existing contracts (assignment decide UI queue, revoke) without DB  
+5. Never claim production-complete while phases 7–8 blocked  
 
-- Flutter surface allowed by contracts: **~95–98%**
-- Full METRA 2027 product including DB catalog persist + offline engines + push + CI proof: **not claimable** until blockers above clear
+---
 
-### Next actions outside this agent environment
-
-1. Push `fix/flutter-quality-gates-2026-11-23` with credentials → verify Client CI (analyze + test).
-2. On a machine with Flutter stable: `flutter pub get && flutter analyze && flutter test --concurrency=1 && flutter build web --release`.
-3. Explicit approval only for M1–M4 if catalog server persistence is required.
-4. Contract work for notifications and workspace engines when product prioritizes them.
-
-### Recent commits (continuous line, preserved history)
+## Recent commits
 
 ```
+d73190d feat(flutter): station assignment API client (roles, request, decide)
+1c67654 docs: tracker HEAD 50151dd after admin local search
 50151dd feat(flutter): local search on station registration and audit admin tabs
-35eea55 fix(flutter): complete localization delegates and Material on config screen
-03ed439 test(flutter): unresolved access keeps placeholder destinations visible only
-60217e7 refactor(flutter): delegate review formatters to pure helpers
-1e67ca8 feat(flutter): pure review status and observedAt formatters with tests
-4dcaa02 chore(flutter): declare flutter_localizations for MaterialApp delegates
-fde9087 feat(flutter): admin audit search helper and Semantics on registration decisions
-28ed537 test(flutter): draft store notifies listeners; refresh completion tracker
-f0202dc feat(flutter): Semantics labels on review approve and return actions
-934c8fd feat(flutter): pure registrationStatusLabel for operator-facing status codes
-b5ac0fe test(flutter): cover observation submit idempotency key reuse on retry
-e43ab46 feat(flutter): local station directory sort and pure filter helper
-3fa2ea6 fix(flutter): define home station draft summary widget class
-090f932 feat(flutter): live station draft summary on home overview
-d9301c9 fix(flutter): structured registration status without raw response dump
-9f1bee8 feat(flutter): group review queue by observation type with pure list builder
 …
 ```
-
-Shared ancestry includes previously verified CI SHA `d7c7ca5`. Remote push not performed.
