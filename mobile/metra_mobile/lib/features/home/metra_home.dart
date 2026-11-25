@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
+import '../../core/drafts/observation_draft_store.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 import '../../core/widgets/metra_permission_denied_page.dart';
@@ -440,6 +441,13 @@ class _HomeOverview extends StatelessWidget {
               ),
             ),
           ),
+        if (stationId != null && stationId!.trim().isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _StationDraftSummaryCard(
+            stationId: stationId!,
+            onOpenObservations: showObservationsShortcut ? onOpenObservations : null,
+          ),
+        ],
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
