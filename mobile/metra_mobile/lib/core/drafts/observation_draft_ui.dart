@@ -27,6 +27,7 @@ class ObservationDraftUi {
   static Widget? banner(ObservationDraft? draft) {
     if (draft == null || draft.isEmpty) return null;
     final stamp = formatSavedAtLocal(draft.savedAt);
+    final count = draft.values.length;
     return Material(
       color: const Color(0xFFE8F4FF),
       child: Padding(
@@ -37,7 +38,7 @@ class ObservationDraftUi {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                '$bannerPrefix · حُفظت $stamp',
+                '$bannerPrefix · $count حقلاً · حُفظت $stamp',
                 style: const TextStyle(fontSize: 12, height: 1.4),
               ),
             ),
