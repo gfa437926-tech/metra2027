@@ -38,7 +38,7 @@ String formatObservationQueueObservedAt(DateTime value) {
 String observationQueueStatusLabel(String status) => switch (status) {
       'submitted' => 'بانتظار المراجعة',
       'approved' => 'معتمدة',
-      'returned' || 'return_for_correction' => 'مُعادة للتصحيح',
+      'returned' || 'return_for_correction' => 'مُرجَعة للتصحيح',
       'rejected' => 'مرفوضة',
       _ => status,
     };
@@ -172,23 +172,10 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     }
   }
 
-  String _formatObservedAt(DateTime value) {
-    final local = value.toLocal();
-    final y = local.year.toString().padLeft(4, '0');
-    final m = local.month.toString().padLeft(2, '0');
-    final d = local.day.toString().padLeft(2, '0');
-    final hh = local.hour.toString().padLeft(2, '0');
-    final mm = local.minute.toString().padLeft(2, '0');
-    return '$y-$m-$d $hh:$mm';
-  }
+  String _formatObservedAt(DateTime value) =>
+      formatObservationQueueObservedAt(value);
 
-  String _statusLabel(String status) => switch (status) {
-        'submitted' => 'بانتظار المراجعة',
-        'approved' => 'معتمدة',
-        'returned' => 'مُرجَعة للتصحيح',
-        'return_for_correction' => 'مُرجَعة للتصحيح',
-        _ => status,
-      };
+  String _statusLabel(String status) => observationQueueStatusLabel(status);
 
   @override
   Widget build(BuildContext context) {
