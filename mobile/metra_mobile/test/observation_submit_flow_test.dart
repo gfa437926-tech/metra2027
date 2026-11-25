@@ -113,4 +113,54 @@ void main() {
     expect(ObservationDraftStore.instance.hasDraft(stationId, 'hourly'), isTrue);
     api.close();
   });
+
+  test('idempotency key reused for identical payload retry', () async {
+    var submitCount = 0;
+    String? firstKey;
+    String? secondKey;
+    final api = clientWith((request) async {
+      if (request.url.path.contains('/validate')) {
+        return http.Response(
+          jsonEncode({'isValid': true, 'issues': <Object>[]}),
+          200,
+        );
+      }
+      if (request.url.path.contains('/observations')) {
+        submitCount += 1;
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        final key = body['idempotency_key']?.toString() ?? body['idempotencyKey']?.toString();
+        if (submitCount == 1) {
+          firstKey = key;
+          return http.Response('timeout', 504);
+        }
+        secondKey = key;
+        return http.Response(
+          jsonEncode({'id': 'obs-2', 'status': 'submitted'}),
+          200,
+        );
+      }
+      return http.Response('not found', 404);
+    });
+    final flow = ObservationSubmitFlow(api: api);
+    final values = {'temp': 21};
+    final first = await flow.validateAndSubmit(
+      formType: 'hourly',
+      stationId: stationId,
+      values: values,
+      successMessageAr: 'تم',
+      validationFallbackAr: 'فشل',
+    );
+    expect(first.succeeded, isFalse);
+    final second = await flow.validateAndSubmit(
+      formType: 'hourly',
+      stationId: stationId,
+      values: values,
+      successMessageAr: 'تم',
+      validationFallbackAr: 'فشل',
+    );
+    expect(second.succeeded, isTrue);
+    expect(firstKey, isNotNull);
+    expect(secondKey, firstKey);
+    api.close();
+  });
 }
