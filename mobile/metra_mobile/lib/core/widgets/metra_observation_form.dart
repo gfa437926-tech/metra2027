@@ -384,20 +384,25 @@ class _MetraObservationFormState extends State<MetraObservationForm> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    key: const Key('metra-observation-submit'),
-                    onPressed: _saving ? null : _submit,
-                    icon: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.send),
-                    label: Text(
-                      _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
+                Semantics(
+                  button: true,
+                  label: _saving ? 'جارٍ الإرسال' : widget.submitLabel,
+                  enabled: !_saving,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      key: const Key('metra-observation-submit'),
+                      onPressed: _saving ? null : _submit,
+                      icon: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send),
+                      label: Text(
+                        _saving ? 'جارٍ الإرسال...' : widget.submitLabel,
+                      ),
                     ),
                   ),
                 ),
