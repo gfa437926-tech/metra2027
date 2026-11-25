@@ -75,4 +75,12 @@ void main() {
     expect(entries.whereType<ObservationReviewSectionHeader>(), isEmpty);
     expect(entries.whereType<ObservationReviewRowEntry>().length, 2);
   });
+
+  test('status and observedAt formatters are stable', () {
+    expect(observationQueueStatusLabel('submitted'), contains('بانتظار'));
+    expect(observationQueueStatusLabel('approved'), 'معتمدة');
+    expect(observationQueueStatusLabel('return_for_correction'), contains('تصحيح'));
+    final stamp = formatObservationQueueObservedAt(DateTime.utc(2026, 1, 2, 3, 4));
+    expect(stamp, matches(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'));
+  });
 }

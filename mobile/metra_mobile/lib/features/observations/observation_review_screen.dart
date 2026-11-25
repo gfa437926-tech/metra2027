@@ -25,6 +25,25 @@ String observationQueueTypeLabel(String type) => switch (type) {
       _ => 'نشرة: $type',
     };
 
+String formatObservationQueueObservedAt(DateTime value) {
+  final local = value.toLocal();
+  final y = local.year.toString().padLeft(4, '0');
+  final m = local.month.toString().padLeft(2, '0');
+  final d = local.day.toString().padLeft(2, '0');
+  final hh = local.hour.toString().padLeft(2, '0');
+  final mm = local.minute.toString().padLeft(2, '0');
+  return '$y-$m-$d $hh:$mm';
+}
+
+String observationQueueStatusLabel(String status) => switch (status) {
+      'submitted' => 'بانتظار المراجعة',
+      'approved' => 'معتمدة',
+      'returned' || 'return_for_correction' => 'مُعادة للتصحيح',
+      'rejected' => 'مرفوضة',
+      _ => status,
+    };
+
+
 /// Local list model: either a type section header or a queue row.
 sealed class ObservationReviewListEntry {
   const ObservationReviewListEntry();
