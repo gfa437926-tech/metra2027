@@ -190,12 +190,49 @@ class _ObservationWorkspaceScreenState extends State<ObservationWorkspaceScreen>
       );
     }
 
+    final draftTypes =
+        ObservationDraftStore.instance.formTypesWithDrafts(stationId);
+    final hasDrafts = draftTypes.isNotEmpty;
+
     return DefaultTabController(
       length: tabs.length,
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
+            if (hasDrafts)
+              Material(
+                color: const Color(0xFFFFF7E8),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_note, color: Color(0xFF9A6700)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'مسودات محلية لهذه المحطة: ${draftTypes.length} '
+                          '(${draftTypes.take(4).join('، ')}'
+                          '${draftTypes.length > 4 ? '…' : ''})',
+                          style: const TextStyle(
+                            color: Color(0xFF7C5E10),
+                            height: 1.35,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          ObservationDraftStore.instance
+                              .clearStation(stationId);
+                        },
+                        child: const Text('مسح الكل'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Material(
               color: Colors.white,
               child: TabBar(

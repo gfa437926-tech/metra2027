@@ -276,3 +276,62 @@ void main() {
   });
 
 }
+
+  test('draftsForStation returns newest-first non-empty drafts only', () {
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: 'st-x',
+      formType: 'hourly',
+      values: {'t': 1},
+  test('formTypesWithDrafts returns only non-empty types for station', () {
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: 'st-a',
+      formType: 'hourly',
+      values: {'t': 1},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-a',
+      formType: 'daily',
+      values: {'t': 2},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-b',
+      formType: 'hourly',
+      values: {'t': 3},
+    );
+    final types = ObservationDraftStore.instance.formTypesWithDrafts('st-a');
+    expect(types, containsAll(['hourly', 'daily']));
+    expect(types.contains('phenomenon'), isFalse);
+    expect(
+      ObservationDraftStore.instance.formTypesWithDrafts('st-b'),
+      equals({'hourly'}),
+    );
+  });
+
+  test('draftsForStation returns newest-first non-empty drafts only', () {
+    ObservationDraftStore.instance.clearAll();
+    ObservationDraftStore.instance.save(
+      stationId: 'st-x',
+      formType: 'hourly',
+      values: {'t': 1},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-x',
+      formType: 'daily',
+      values: {'t': 2},
+    );
+    ObservationDraftStore.instance.save(
+      stationId: 'st-y',
+      formType: 'hourly',
+      values: {'t': 3},
+    );
+    final list = ObservationDraftStore.instance.draftsForStation('st-x');
+    expect(list.length, 2);
+    expect(list.every((d) => d.stationId == 'st-x'), isTrue);
+    expect(
+      ObservationDraftStore.instance.draftsForStation('missing'),
+      isEmpty,
+    );
+  });
+}

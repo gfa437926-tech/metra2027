@@ -106,6 +106,18 @@ class ObservationDraftStore extends ChangeNotifier {
     return Set.unmodifiable(types);
   }
 
+  /// Non-empty drafts for one station, newest first.
+  List<ObservationDraft> draftsForStation(String stationId) {
+    final id = stationId.trim();
+    if (id.isEmpty) return const [];
+    final list = _drafts.values
+        .where((d) => d.stationId == id && !d.isEmpty)
+        .toList(growable: false);
+    final sorted = List<ObservationDraft>.of(list)
+      ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return List.unmodifiable(sorted);
+  }
+
   static bool _isEffectivelyEmpty(Object? value) {
     if (value == null) return true;
     if (value is String && value.trim().isEmpty) return true;
