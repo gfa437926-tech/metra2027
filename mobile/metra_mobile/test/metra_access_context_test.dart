@@ -146,4 +146,17 @@ void main() {
       expect(active.hasKnownActiveAccount, isTrue);
     });
   });
+
+  group('placeholder destinations', () {
+    test('placeholder destinations remain visible while unresolved', () {
+      final context = MetraAccessContext.unresolved();
+      expect(context.isDestinationVisible(MetraDestinationId.forecast), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.climatol), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.recordsAi), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.operations), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.reports), isTrue);
+      expect(context.isDestinationVisible(MetraDestinationId.observations), isFalse);
+      expect(context.isDestinationVisible(MetraDestinationId.admin), isFalse);
+    });
+  });
 }
