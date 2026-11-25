@@ -156,4 +156,17 @@ void main() {
     expect(result.claimsServerPersistence, isFalse);
     expect(drafts.get('station-a', CatalogFormType.faultTelecom.code), isNotNull);
   });
+
+  test('hourly climate rejects future observationDate', () async {
+    final result = await repo.submitLocal(
+      type: CatalogFormType.hourlyClimate,
+      stationId: 'station-a',
+      values: {
+        'observationDate': '2099-01-01',
+      },
+    );
+    expect(result.phase, CatalogSubmissionPhase.failed);
+    expect(result.validationErrors.containsKey('observationDate'), isTrue);
+    expect(result.claimsServerPersistence, isFalse);
+  });
 }

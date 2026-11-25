@@ -53,6 +53,16 @@ class LocalCatalogObservationRepository implements CatalogObservationRepository 
       errors.addAll(RainfallSoilLocalRules.validateRainfall(values));
     } else if (type == CatalogFormType.soil) {
       errors.addAll(RainfallSoilLocalRules.validateSoil(values));
+    } else if (values.containsKey('observationDate')) {
+      // Shared calendar + not-future rule for other catalogue forms that use the field.
+      final date = values['observationDate']?.toString().trim() ?? '';
+      if (date.isNotEmpty) {
+        if (!RainfallSoilLocalRules.isValidObservationDate(date)) {
+          errors['observationDate'] = 'أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD';
+        } else if (RainfallSoilLocalRules.isFutureObservationDate(date)) {
+          errors['observationDate'] = 'لا يُقبل تاريخ رصد في المستقبل';
+        }
+      }
     }
 
     for (final field in fields) {
