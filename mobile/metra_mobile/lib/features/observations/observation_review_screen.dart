@@ -3,8 +3,6 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/widgets/metra_async_state.dart';
 
-/// Host app supplies an authenticated API client and an authorized station UUID.
-/// Authorization is enforced on the server for queue load and every decision.
 /// Local filter over an already-loaded review queue page. Does not call the API.
 bool observationQueueItemMatchesQuery(ObservationQueueItem item, String rawQuery) {
   final q = rawQuery.trim().toLowerCase();
@@ -19,6 +17,81 @@ bool observationQueueItemMatchesQuery(ObservationQueueItem item, String rawQuery
   return false;
 }
 
+/// Arabic label for known observation queue types (local display only).
+String observationQueueTypeLabel(String type) => switch (type) {
+      'daily' => 'نشرة يومية',
+      'hourly' => 'نشرة ساعية',
+      'phenomenon' => 'بلاغ ظاهرة جوية',
+      _ => 'نشرة: $type',
+    };
+
+/// Local list model: either a type section header or a queue row.
+sealed class ObservationReviewListEntry {
+  const ObservationReviewListEntry();
+}
+
+class ObservationReviewSectionHeader extends ObservationReviewListEntry {
+  const ObservationReviewSectionHeader({
+    required this.observationType,
+    required this.count,
+  });
+
+  final String observationType;
+  final int count;
+
+  String get label => observationQueueTypeLabel(observationType);
+}
+
+class ObservationReviewRowEntry extends ObservationReviewListEntry {
+  const ObservationReviewRowEntry(this.item);
+  final ObservationQueueItem item;
+}
+
+/// Groups filtered rows by observationType while preserving newest-first order
+/// within each group. When [typeFilter] is not "all", headers are omitted.
+List<ObservationReviewListEntry> buildObservationReviewListEntries(
+  List<ObservationQueueItem> rows, {
+  String typeFilter = 'all',
+}) {
+  if (rows.isEmpty) return const [];
+  final ordered = List<ObservationQueueItem>.of(rows)
+    ..sort((a, b) => b.observedAt.compareTo(a.observedAt));
+
+  if (typeFilter != 'all') {
+    return [
+      for (final item in ordered) ObservationReviewRowEntry(item),
+    ];
+  }
+
+  final byType = <String, List<ObservationQueueItem>>{};
+  final typeOrder = <String>[];
+  for (final item in ordered) {
+    final key = item.observationType;
+    if (!byType.containsKey(key)) {
+      byType[key] = <ObservationQueueItem>[];
+      typeOrder.add(key);
+    }
+    byType[key]!.add(item);
+  }
+
+  final entries = <ObservationReviewListEntry>[];
+  for (final type in typeOrder) {
+    final group = byType[type]!;
+    entries.add(
+      ObservationReviewSectionHeader(
+        observationType: type,
+        count: group.length,
+      ),
+    );
+    for (final item in group) {
+      entries.add(ObservationReviewRowEntry(item));
+    }
+  }
+  return entries;
+}
+
+/// Host app supplies an authenticated API client and an authorized station UUID.
+/// Authorization is enforced on the server for queue load and every decision.
 class ObservationReviewScreen extends StatefulWidget {
   const ObservationReviewScreen({
     super.key,
@@ -205,10 +278,11 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                       .toList(growable: false);
                 }
                 rows = rows.where(_matchesQuery).toList(growable: false);
-                // Newest observations first — local stable order for review UX.
-                rows = List<ObservationQueueItem>.of(rows)
-                  ..sort((a, b) => b.observedAt.compareTo(a.observedAt));
-                if (rows.isEmpty) {
+                final entries = buildObservationReviewListEntries(
+                  rows,
+                  typeFilter: _typeFilter,
+                );
+                if (entries.isEmpty) {
                   final hasQuery = _query.text.trim().isNotEmpty;
                   return MetraAsyncStatePanel.empty(
                     icon: Icons.fact_check_outlined,
@@ -229,10 +303,37 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   onRefresh: _refresh,
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    itemCount: rows.length,
+                    itemCount: entries.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      final item = rows[index];
+                      final entry = entries[index];
+                      if (entry is ObservationReviewSectionHeader) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4, bottom: 2),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  entry.label,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF061B4A),
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                '${entry.count}',
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      final item = (entry as ObservationReviewRowEntry).item;
                       final busy = _processingIds.contains(item.id);
                       return Card(
                         child: Padding(
@@ -448,10 +549,5 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     }
   }
 
-  String _typeLabel(String type) => switch (type) {
-        'daily' => 'نشرة يومية',
-        'hourly' => 'نشرة ساعية',
-        'phenomenon' => 'بلاغ ظاهرة جوية',
-        _ => 'نشرة: $type',
-      };
+  String _typeLabel(String type) => observationQueueTypeLabel(type);
 }
