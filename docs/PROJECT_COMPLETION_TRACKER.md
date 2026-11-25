@@ -2,70 +2,63 @@
 
 **Last updated:** 2026-11-25  
 **Branch:** `fix/flutter-quality-gates-2026-11-23`  
-**HEAD (local):** `03ed439c64396ae6b7ce053c0a8144909906c44a`  
+**HEAD (local):** `35eea5560b79bd2ee73af623b88ecbbd1b7255a3`  
 **Scope:** Flutter app `mobile/metra_mobile/` only  
-**Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints.
+**Constraints:** No DB/SQL/migrations/RLS/RPC/M1–M4 without explicit approval. No invented API endpoints. No force push.
 
 ---
 
-## 1. Unit inventory (Flutter)
+## Closure status (contract-scoped)
 
-### Core
-| Module | Status | Notes |
-|--------|--------|-------|
-| API client | Connected | Timeouts, access-context, stations, review, validate/submit, registration, admin lists |
-| Access context | Fail-closed | Destination + station permission codes |
-| Auth / secure session | Connected | Supabase + FlutterSecureStorage |
-| Registration field rules | Local complete | UUID, phone, name, email, password, confirm |
-| Observation draft store | Local complete | ChangeNotifier, station-scoped, secret filter, draftsForStation |
-| Observation submit flow | Connected | Validate+submit + idempotency key reuse |
-| Rainfall/soil local rules | Local complete | Negative rain, calendar + future date |
-| Notification preferences | Local session | ChangeNotifier; no push service |
-| Error presenter | Complete | Queue/submit/review/registration mapping |
-| Theme / nav / async / permission denied | Complete | RTL-ready |
+### Complete within current contracts and fail-closed rules
 
-### Features / screens
-| Screen | Status | Server contract |
-|--------|--------|-----------------|
-| Home | Complete | Access gated + live draft summary for active station |
-| Login / auth | Complete | Supabase; whitespace-only password rejected |
-| Account hub | Complete | Password rules centralized |
-| Registration request + status | Complete | Structured status (no raw dump); pure status labels |
-| Station directory | Complete | Query id/type + local sort by Arabic name |
-| Station administration | Complete | Users/requests/audit/queue; pure search helpers |
-| Observation workspace | Complete | Draft tab markers + station draft overview bar |
-| Hourly / Daily / Phenomenon | Connected | Shared submit flow + generation/station guards |
-| Catalog forms (7) | Local-only | Validation + drafts; honest pending-contract messaging |
-| Observation review | Connected | Type filter, newest sort, type grouping headers, Semantics |
-| Notifications center | Local shell | Prefs only |
-| Settings | Complete | Account, sign-out confirm, config flags |
-| Forecast centre | Honest offline | Station distance comparison only |
-| CLIMATOL / AI / OCR / Ops / Reports | Honest offline | Period day-count + disabled actions |
+| Area | State |
+|------|--------|
+| Auth / login / secure session | Complete |
+| Registration request + structured status | Complete |
+| Account hub / password rules | Complete |
+| Access context fail-closed navigation | Complete |
+| Station directory (search, sort, map, mine filter) | Complete |
+| Station administration (users, requests, audit, queue) | Complete |
+| Hourly / daily / phenomenon cycle (draft → validate → submit → review → decide) | Complete |
+| Catalog forms (7): local validation + drafts + honest offline messaging | Complete (no server persist) |
+| Observation workspace (tabs, draft markers, overview bar) | Complete |
+| Review queue (filter, sort, type grouping, Semantics) | Complete |
+| Notifications center (local prefs only) | Complete shell |
+| Settings / configuration gate | Complete |
+| Forecast centre geographic comparison | Complete (no fake telemetry) |
+| CLIMATOL / AI / OCR / Ops / Reports | Honest offline shells with period guards |
+| Error presenter / timeouts / idempotency | Complete |
+| Unit tests for pure helpers (validation, drafts, review, admin, access, API config) | Expanded (run blocked here) |
 
----
+### External blockers preventing full production claim
 
-## 2. Server-connected vs local-only
+1. **Flutter SDK unavailable in this sandbox** — cannot execute `flutter analyze`, `flutter test`, or `flutter build web` here (tar transport error, ~1.2 GiB RAM).
+2. **No GitHub push credentials** — `git push` fails; local commits not on remote; Client CI not triggered from this environment.
+3. **M1–M4 not approved** — catalog forms cannot gain server persistence.
+4. **No notification service contract** — feed remains empty by design.
+5. **No CLIMATOL / AI / OCR / archive / report-export contracts** — actions stay disabled with honest tooltips.
+6. **Angular deferred** by mission order.
 
-**Connected:** access context, station directory, observation validate/submit (hourly/daily/phenomenon), review queue + decide, registration roles/status/submit, station users/requests/decide, audit log.
+### Honest ratios
 
-**Local-only until contracts/M1–M4:** rainfall, soil, agricultural, hourly climate, fault forms; notification delivery; CLIMATOL/AI/OCR/archive/report export; cross-restart draft persistence (session memory only).
+- Flutter surface allowed by contracts: **~95–98%**
+- Full METRA 2027 product including DB catalog persist + offline engines + push + CI proof: **not claimable** until blockers above clear
 
----
+### Next actions outside this agent environment
 
-## 3. External blockers
+1. Push `fix/flutter-quality-gates-2026-11-23` with credentials → verify Client CI (analyze + test).
+2. On a machine with Flutter stable: `flutter pub get && flutter analyze && flutter test --concurrency=1 && flutter build web --release`.
+3. Explicit approval only for M1–M4 if catalog server persistence is required.
+4. Contract work for notifications and workspace engines when product prioritizes them.
 
-| Item | Blocked |
-|------|---------|
-| M1–M4 | DB/RPC/.NET expansion for catalog persistence |
-| Notification service | Real feed/push |
-| CLIMATOL / AI / OCR / archive / report APIs | Execution paths |
-| Flutter SDK in this sandbox | analyze / test / web / CI proof |
-
----
-
-## 4. Recent commits (this continuous line)
+### Recent commits (continuous line, preserved history)
 
 ```
+35eea55 fix(flutter): complete localization delegates and Material on config screen
+03ed439 test(flutter): unresolved access keeps placeholder destinations visible only
+60217e7 refactor(flutter): delegate review formatters to pure helpers
+1e67ca8 feat(flutter): pure review status and observedAt formatters with tests
 4dcaa02 chore(flutter): declare flutter_localizations for MaterialApp delegates
 fde9087 feat(flutter): admin audit search helper and Semantics on registration decisions
 28ed537 test(flutter): draft store notifies listeners; refresh completion tracker
@@ -80,35 +73,4 @@ d9301c9 fix(flutter): structured registration status without raw response dump
 …
 ```
 
----
-
-## 5. Quality gates
-
-| Gate | Status |
-|------|--------|
-| flutter analyze / test / web | Not runnable (no SDK binary; ~1.2 GiB RAM; tar transport error) |
-| CI on GitHub | Requires push credentials |
-
----
-
-## 6. Next continuous tasks
-
-1. Expand Semantics on admin decision and primary nav destinations.
-2. Additional pure helpers for audit-log local search when useful.
-3. When SDK available: `flutter test --concurrency=1`, analyze, web release.
-4. Push branch; verify Client CI.
-5. After explicit M1: catalog server persistence only.
-
----
-
-## 7. Honest completion ratio (contract-scoped)
-
-- Screens / RTL / fail-closed: ~96%
-- Observation cycle (server-backed): ~92%
-- Catalog forms: UI+local validation ~90%; server persist 0%
-- Admin / stations / registration: ~90%
-- Workspaces offline honesty: ~100% of allowed scope
-- Notifications feed: 0% (blocked); prefs complete
-- Automated test/CI proof this environment: incomplete
-
-**Overall Flutter readiness within contracts:** high. Production “complete” claim remains blocked by M1–M4, notification service, and offline workspace engines.
+Shared ancestry includes previously verified CI SHA `d7c7ca5`. Remote push not performed.
