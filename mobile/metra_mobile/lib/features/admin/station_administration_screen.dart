@@ -4,6 +4,48 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/errors/metra_error_presenter.dart';
 import '../../core/widgets/metra_async_state.dart';
 
+String stationAdminPersonName(Map<String, dynamic> record) {
+  final parts = [
+    record['name_ar'],
+    record['name'],
+    record['full_name'],
+    record['display_name'],
+    record['first_name'],
+    record['father_name'],
+    record['last_name'],
+  ].where((part) => part != null && part.toString().trim().isNotEmpty);
+  final joined = parts.join(' ');
+  if (joined.isNotEmpty) return joined;
+  for (final key in ['email', 'user_id', 'id']) {
+    final value = record[key];
+    if (value != null && value.toString().trim().isNotEmpty) {
+      return value.toString();
+    }
+  }
+  return '—';
+}
+
+bool stationAdminRecordMatchesQuery(Map<String, dynamic> record, String rawQuery) {
+  final q = rawQuery.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  String first(List<String> keys) {
+    for (final key in keys) {
+      final value = record[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return '';
+  }
+  final haystack = [
+    stationAdminPersonName(record),
+    first(['role_code', 'requested_role_code', 'role']),
+    first(['status', 'request_status', 'account_status']),
+    first(['phone', 'email', 'user_id', 'id']),
+  ].join(' ').toLowerCase();
+  return haystack.contains(q);
+}
+
 class StationAdministrationScreen extends StatefulWidget {
   const StationAdministrationScreen({
     super.key,
@@ -95,16 +137,8 @@ class _StationAdministrationScreenState
     return joined.isEmpty ? _firstValue(record, ['email', 'user_id', 'id']) : joined;
   }
 
-  bool _matchesUserFilter(Map<String, dynamic> record) {
-    if (_userFilterQuery.isEmpty) return true;
-    final haystack = [
-      _personName(record),
-      _firstValue(record, ['role_code', 'requested_role_code', 'role']),
-      _firstValue(record, ['status', 'request_status', 'account_status']),
-      _firstValue(record, ['phone', 'email', 'user_id', 'id']),
-    ].join(' ').toLowerCase();
-    return haystack.contains(_userFilterQuery.toLowerCase());
-  }
+  bool _matchesUserFilter(Map<String, dynamic> record) =>
+      stationAdminRecordMatchesQuery(record, _userFilterQuery);
 
   Future<void> _decide(Map<String, dynamic> record, String decision) async {
     // Keep the action bound to the station that supplied this queue row.
