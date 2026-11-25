@@ -5,6 +5,20 @@ import '../../core/widgets/metra_async_state.dart';
 
 /// Host app supplies an authenticated API client and an authorized station UUID.
 /// Authorization is enforced on the server for queue load and every decision.
+/// Local filter over an already-loaded review queue page. Does not call the API.
+bool observationQueueItemMatchesQuery(ObservationQueueItem item, String rawQuery) {
+  final q = rawQuery.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  if (item.id.toLowerCase().contains(q)) return true;
+  if (item.observationType.toLowerCase().contains(q)) return true;
+  if (item.status.toLowerCase().contains(q)) return true;
+  for (final entry in item.payload.entries) {
+    if (entry.key.toLowerCase().contains(q)) return true;
+    if ('${entry.value}'.toLowerCase().contains(q)) return true;
+  }
+  return false;
+}
+
 class ObservationReviewScreen extends StatefulWidget {
   const ObservationReviewScreen({
     super.key,
@@ -49,18 +63,8 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     }
   }
 
-  bool _matchesQuery(ObservationQueueItem item) {
-    final q = _query.text.trim().toLowerCase();
-    if (q.isEmpty) return true;
-    if (item.id.toLowerCase().contains(q)) return true;
-    if (item.observationType.toLowerCase().contains(q)) return true;
-    if (item.status.toLowerCase().contains(q)) return true;
-    for (final entry in item.payload.entries) {
-      if (entry.key.toLowerCase().contains(q)) return true;
-      if ('${entry.value}'.toLowerCase().contains(q)) return true;
-    }
-    return false;
-  }
+  bool _matchesQuery(ObservationQueueItem item) =>
+      observationQueueItemMatchesQuery(item, _query.text);
 
   Future<void> _refresh() async {
     final next = widget.api.getReviewQueue(widget.stationId);
