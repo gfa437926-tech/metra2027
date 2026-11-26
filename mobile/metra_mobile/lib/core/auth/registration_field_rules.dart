@@ -56,7 +56,7 @@ class RegistrationFieldRules {
     final value = raw ?? '';
     if (value.isEmpty) return 'مطلوب';
     if (value.trim().isEmpty) return 'كلمة المرور لا يمكن أن تكون مسافات فقط';
-    if (value.length < 8) return 'كلمة المرور أقصر من 8 أحرف';
+    if (value.length < 8) return 'يجب ألا تقل عن 8 أحرف';
     if (value.length > 128) return 'كلمة المرور أطول من الحد المسموح';
     return null;
   }
