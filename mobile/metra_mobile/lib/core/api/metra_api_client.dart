@@ -92,9 +92,10 @@ class ObservationQueueItem {
 
   factory ObservationQueueItem.fromJson(Map<String, dynamic> json) {
     final id = json['id'];
-    final stationId = json['station_id'];
-    final type = json['observation_type'];
-    final observedAt = DateTime.tryParse('${json['observed_at'] ?? ''}');
+    final stationId = json['station_id'] ?? json['stationId'];
+    final type = json['observation_type'] ?? json['observationType'];
+    final observedAtRaw = json['observed_at'] ?? json['observedAt'] ?? '';
+    final observedAt = DateTime.tryParse('$observedAtRaw');
     if (id is! String ||
         stationId is! String ||
         type is! String ||
