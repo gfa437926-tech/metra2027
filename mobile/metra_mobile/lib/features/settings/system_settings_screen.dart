@@ -149,6 +149,18 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                             body: AccountHubScreen(
                               userEmail: widget.userEmail,
                               api: widget.api,
+                              onOpenNotifications: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => Scaffold(
+                                      appBar: AppBar(
+                                        title: const Text('الإشعارات'),
+                                      ),
+                                      body: const NotificationsCenterScreen(),
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),

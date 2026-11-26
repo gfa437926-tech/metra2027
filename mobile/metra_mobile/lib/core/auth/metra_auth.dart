@@ -61,10 +61,16 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
   @override
   void dispose() { _subscription?.cancel(); _api.close(); super.dispose(); }
   @override
-  Widget build(BuildContext context) => _signedIn
-      ? MetraHome(api: _api, userEmail: _supabase.auth.currentUser?.email,
-          onSignOut: () => _supabase.auth.signOut())
-      : const MetraLoginScreen();
+  Widget build(BuildContext context) {
+    if (!_signedIn) return const MetraLoginScreen();
+    final user = _supabase.auth.currentUser;
+    return MetraHome(
+      key: ValueKey<String>('home-${user?.id ?? 'anon'}'),
+      api: _api,
+      userEmail: user?.email,
+      onSignOut: () => _supabase.auth.signOut(),
+    );
+  }
 }
 
 class MetraLoginScreen extends StatefulWidget {
