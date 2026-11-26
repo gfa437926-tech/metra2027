@@ -132,4 +132,31 @@ void main() {
     expect(message.toLowerCase(), isNot(contains('stateerror')));
     expect(message.toLowerCase(), isNot(contains('secret-token')));
   });
+
+  test('assignment messages map role and permission failures', () {
+    expect(
+      MetraErrorPresenter.assignmentMessage(
+        const MetraApiException(400, 'assignment_role_unavailable'),
+      ),
+      contains('الدور'),
+    );
+    expect(
+      MetraErrorPresenter.assignmentMessage(
+        const MetraApiException(403, 'request_failed'),
+      ),
+      contains('صلاحية'),
+    );
+    expect(
+      MetraErrorPresenter.assignmentMessage(
+        const MetraApiException(503, 'request_failed'),
+      ),
+      contains('غير متاحة'),
+    );
+    expect(
+      MetraErrorPresenter.assignmentMessage(
+        const MetraApiException(409, 'request_failed'),
+      ),
+      contains('تعارض'),
+    );
+  });
 }

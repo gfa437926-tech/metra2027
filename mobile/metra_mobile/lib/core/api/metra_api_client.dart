@@ -316,7 +316,10 @@ class MetraApiClient {
     await _send(
       'POST',
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations/${Uri.encodeComponent(observationId)}/decision',
-      body: {'decision': decision, 'note': note},
+      body: {
+        'decision': decision,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
     );
   }
 
@@ -398,7 +401,14 @@ class MetraApiClient {
       Uri.encodeComponent(requestId),
       '/decision',
     ].join();
-    await _send('POST', path, body: {'decision': decision, 'note': note});
+    await _send(
+      'POST',
+      path,
+      body: {
+        'decision': decision,
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+    );
   }
 
   /// Roles that may be requested for station assignment (server catalogue).

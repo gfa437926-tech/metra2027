@@ -1,3 +1,5 @@
+library workspace_period;
+
 /// Local calendar-day helpers for workspace period filters.
 ///
 /// Pure functions only. No network. Used to gate local UI actions and
