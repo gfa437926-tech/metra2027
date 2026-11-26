@@ -5,6 +5,7 @@ import '../../core/api/metra_api_client.dart';
 import '../../core/auth/registration_field_rules.dart';
 import '../../core/theme/metra_theme.dart';
 import 'registration_request_screen.dart';
+import '../data_recovery/legacy_data_recovery_screen.dart';
 
 /// Account hub: profile summary, password change, registration status notes.
 /// Does not invent admin user management APIs.
@@ -173,6 +174,18 @@ class _AccountHubScreenState extends State<AccountHubScreen> {
                         appBar: AppBar(title: const Text('حالة التسجيل')),
                         body: RegistrationStatusScreen(api: widget.api!),
                       ),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.inventory_2_outlined),
+                title: const Text('استرداد بيانات محلية غير منسوبة'),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LegacyDataRecoveryScreen(),
                     ),
                   );
                 },

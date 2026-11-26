@@ -182,6 +182,7 @@ class _MetraHomeState extends State<MetraHome> {
         ),
         builder: () => _HomeOverview(
           stationId: _selectedStationId,
+          stationLabel: _selectedStationLabel,
           access: _access,
           loadingAccess: _loadingAccess,
           accessError: _accessError,
@@ -372,6 +373,7 @@ class _MetraHomeState extends State<MetraHome> {
 class _HomeOverview extends StatelessWidget {
   const _HomeOverview({
     required this.stationId,
+    this.stationLabel,
     required this.access,
     required this.loadingAccess,
     required this.accessError,
@@ -384,6 +386,7 @@ class _HomeOverview extends StatelessWidget {
   });
 
   final String? stationId;
+  final String? stationLabel;
   final MetraAccessContext access;
   final bool loadingAccess;
   final String? accessError;
@@ -421,7 +424,7 @@ class _HomeOverview extends StatelessWidget {
             Text(
               stationId == null
                   ? 'ابدأ باختيار محطة من الدليل. تُفرض صلاحيات الرصد والمراجعة على الخادم.'
-                  : 'المحطة النشطة: $stationId',
+                  : 'المحطة النشطة: ${stationLabel ?? stationId}',
               style: const TextStyle(color: Color(0xFF475569), height: 1.5),
             ),
             const SizedBox(height: 12),
@@ -691,7 +694,7 @@ class _StationDraftSummaryCardState extends State<_StationDraftSummaryCard> {
         leading: const Icon(Icons.edit_note, color: _blue),
         title: Text('مسودات محلية: ${types.length} نموذج'),
         subtitle: Text(
-          'جلسة فقط — لم تُرسل إلى الخادم · ${labels.join(' · ')}',
+          'محلي على الجهاز — لم يُرسل إلى الخادم · ${labels.join(' · ')}',
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
