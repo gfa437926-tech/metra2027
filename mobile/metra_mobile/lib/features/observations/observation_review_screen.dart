@@ -129,6 +129,7 @@ class ObservationReviewScreen extends StatefulWidget {
 
 class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
   late Future<List<ObservationQueueItem>> _queue;
+  final Set<String> _hiddenIds = <String>{};
   final Set<String> _processingIds = <String>{};
   final _query = TextEditingController();
   String _typeFilter = 'all';
@@ -150,6 +151,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stationId != widget.stationId) {
       _processingIds.clear();
+      _hiddenIds.clear();
       _query.clear();
       _typeFilter = 'all';
       _queue = widget.api.getReviewQueue(widget.stationId);
@@ -279,6 +281,22 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
                   );
                 }
                 var rows = snapshot.data ?? const <ObservationQueueItem>[];
+                if (_hiddenIds.isNotEmpty) {
+                  final liveIds = {
+                    for (final r in snapshot.data ?? const <ObservationQueueItem>[])
+                      r.id,
+                  };
+                  final stale = _hiddenIds.where((id) => !liveIds.contains(id)).toList();
+                  if (stale.isNotEmpty) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() => _hiddenIds.removeAll(stale));
+                    });
+                  }
+                  rows = rows
+                      .where((r) => !_hiddenIds.contains(r.id))
+                      .toList(growable: false);
+                }
                 if (_typeFilter != 'all') {
                   rows = rows
                       .where((r) => r.observationType == _typeFilter)
@@ -560,6 +578,7 @@ class _ObservationReviewScreenState extends State<ObservationReviewScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('تم إرسال قرار المراجعة')));
+      setState(() => _hiddenIds.add(item.id));
       await _refresh();
     } on MetraApiException catch (error) {
       if (!mounted) return;
