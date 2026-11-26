@@ -87,9 +87,21 @@ class _ObservationWorkspaceScreenState
         Tab(text: _tabLabel('ظاهرة · متصل', 'phenomenon')),
       ]);
       views.addAll([
-        HourlyObservationScreen(api: api, stationId: stationId),
-        DailyObservationScreen(api: api, stationId: stationId),
-        PhenomenonObservationScreen(api: api, stationId: stationId),
+        HourlyObservationScreen(
+          key: ValueKey('hourly-$stationId'),
+          api: api,
+          stationId: stationId,
+        ),
+        DailyObservationScreen(
+          key: ValueKey('daily-$stationId'),
+          api: api,
+          stationId: stationId,
+        ),
+        PhenomenonObservationScreen(
+          key: ValueKey('phenomenon-$stationId'),
+          api: api,
+          stationId: stationId,
+        ),
       ]);
 
       void addCatalog({
@@ -102,6 +114,7 @@ class _ObservationWorkspaceScreenState
         tabs.add(Tab(text: _tabLabel(tabLabel, formType.code)));
         views.add(
           CatalogObservationScreen(
+            key: ValueKey('catalog-${formType.code}-$stationId'),
             title: title,
             fields: fields,
             formCode: formCode,
@@ -164,7 +177,13 @@ class _ObservationWorkspaceScreenState
 
     if (_canReview) {
       tabs.add(const Tab(text: 'مراجعة · متصل'));
-      views.add(ObservationReviewScreen(api: api, stationId: stationId));
+      views.add(
+        ObservationReviewScreen(
+          key: ValueKey('review-$stationId'),
+          api: api,
+          stationId: stationId,
+        ),
+      );
     }
 
     if (tabs.isEmpty) {
@@ -198,7 +217,12 @@ class _ObservationWorkspaceScreenState
     );
     final hasDrafts = draftTypes.isNotEmpty;
 
+    // Key resets controller when station or permitted tab set changes so length
+    // never mismatches an old TabController (fail-safe across station switch).
     return DefaultTabController(
+      key: ValueKey<String>(
+        'obs-ws-$stationId-${tabs.length}-$_canEnter-$_canReview',
+      ),
       length: tabs.length,
       child: Directionality(
         textDirection: TextDirection.rtl,

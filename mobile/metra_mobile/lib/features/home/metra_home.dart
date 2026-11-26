@@ -119,6 +119,7 @@ class _MetraHomeState extends State<MetraHome> {
       );
     }
     return ObservationWorkspaceScreen(
+      key: ValueKey('obs-workspace-$stationId'),
       api: widget.api,
       stationId: stationId,
       accessContext: _access,
@@ -147,7 +148,11 @@ class _MetraHomeState extends State<MetraHome> {
         message: MetraPermissionDeniedMessages.administration,
       );
     }
-    return StationAdministrationScreen(api: widget.api, stationId: stationId);
+    return StationAdministrationScreen(
+      key: ValueKey('admin-$stationId'),
+      api: widget.api,
+      stationId: stationId,
+    );
   }
 
   List<_NavItem> _buildNavItems() {
