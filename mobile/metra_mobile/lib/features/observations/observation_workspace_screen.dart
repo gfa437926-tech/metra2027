@@ -228,6 +228,29 @@ class _ObservationWorkspaceScreenState
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
+            Material(
+              color: const Color(0xFFF1F5F9),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.cell_tower, size: 16, color: Color(0xFF475569)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'محطة الرصد: $stationId',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             if (hasDrafts)
               Material(
                 color: const Color(0xFFFFF7E8),
