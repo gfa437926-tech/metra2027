@@ -5,6 +5,7 @@ import '../../core/auth/metra_auth.dart';
 import '../../core/api/metra_api_client.dart';
 import '../account/account_hub_screen.dart';
 import '../notifications/notifications_center_screen.dart';
+import '../data_recovery/legacy_data_recovery_screen.dart';
 
 /// Account and client configuration. Never displays secrets or service-role keys.
 ///
@@ -179,6 +180,22 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                             appBar: AppBar(title: const Text('الإشعارات')),
                             body: const NotificationsCenterScreen(),
                           ),
+                        ),
+                      );
+                    },
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.inventory_2_outlined),
+                    title: const Text('استرداد بيانات محلية غير منسوبة'),
+                    subtitle: const Text(
+                      'سجلات أو مسودات قديمة بلا حساب — استرداد صريح فقط',
+                    ),
+                    trailing: const Icon(Icons.chevron_left),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const LegacyDataRecoveryScreen(),
                         ),
                       );
                     },
