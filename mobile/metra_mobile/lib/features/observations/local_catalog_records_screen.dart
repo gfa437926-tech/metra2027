@@ -229,6 +229,18 @@ class _LocalCatalogRecordsScreenState extends State<LocalCatalogRecordsScreen> {
                   title: Text(_loadNote!, style: const TextStyle(fontSize: 13)),
                 ),
               ),
+            if (LocalCatalogRecordStore.instance.lastPersistError != null)
+              Material(
+                color: const Color(0xFFFFF1F0),
+                child: ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.save_outlined, color: Color(0xFFB42318)),
+                  title: Text(
+                    LocalCatalogRecordStore.instance.lastPersistError!,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
               child: TextField(
@@ -302,6 +314,9 @@ class _LocalCatalogRecordsScreenState extends State<LocalCatalogRecordsScreen> {
                                     } else if (value == 'archive') {
                                       LocalCatalogRecordStore.instance
                                           .archive(record.id);
+                                    } else if (value == 'restore') {
+                                      LocalCatalogRecordStore.instance
+                                          .restore(record.id);
                                     } else if (value == 'delete') {
                                       _confirmDelete(record);
                                     }
@@ -315,6 +330,11 @@ class _LocalCatalogRecordsScreenState extends State<LocalCatalogRecordsScreen> {
                                       const PopupMenuItem(
                                         value: 'archive',
                                         child: Text('أرشفة محلية'),
+                                      ),
+                                    if (archived)
+                                      const PopupMenuItem(
+                                        value: 'restore',
+                                        child: Text('استعادة من الأرشيف'),
                                       ),
                                     const PopupMenuItem(
                                       value: 'delete',

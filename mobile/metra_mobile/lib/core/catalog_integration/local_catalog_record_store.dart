@@ -32,6 +32,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   bool _loading = false;
   int _lastSkippedCorrupt = 0;
   String? _activeAccountKey;
+  String? lastPersistError;
 
   bool get isLoaded => _loaded;
   bool get isLoading => _loading;
@@ -123,8 +124,15 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           'writtenAt': DateTime.now().toUtc().toIso8601String(),
         }),
       );
-    } catch (_) {
+      if (lastPersistError != null) {
+        lastPersistError = null;
+        notifyListeners();
+      }
+    } catch (error) {
       // Persistence failure must not discard in-memory records this session.
+      lastPersistError =
+          'تعذر حفظ السجلات المحلية على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
+      notifyListeners();
     }
   }
 
@@ -180,6 +188,23 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     if (current == null) return false;
     _byId[id] = current.copyWith(
       status: LocalCatalogRecordStatus.localArchived,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    notifyListeners();
+    // ignore: unawaited_futures
+    _persist();
+    return true;
+  }
+
+  /// Move an archived local record back to localSaved (same id).
+  bool restore(String id) {
+    final current = _byId[id];
+    if (current == null) return false;
+    if (current.status != LocalCatalogRecordStatus.localArchived) {
+      return false;
+    }
+    _byId[id] = current.copyWith(
+      status: LocalCatalogRecordStatus.localSaved,
       updatedAt: DateTime.now().toUtc(),
     );
     notifyListeners();

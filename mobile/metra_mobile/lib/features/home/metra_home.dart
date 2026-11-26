@@ -2,8 +2,10 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/api/metra_api_client.dart';
 import '../../core/auth/metra_access_context.dart';
+import '../../core/catalog_integration/local_catalog_record_store.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/errors/metra_error_presenter.dart';
+import '../../core/notifications/local_notification_store.dart';
 import '../../core/widgets/metra_adaptive_navigation.dart';
 import '../../core/widgets/metra_permission_denied_page.dart';
 import '../observations/observation_workspace_screen.dart';
@@ -59,6 +61,13 @@ class _MetraHomeState extends State<MetraHome> {
   @override
   void initState() {
     super.initState();
+    // Warm local stores (drafts / catalog / notifications) without blocking UI.
+    // ignore: unawaited_futures
+    ObservationDraftStore.instance.ensureLoaded();
+    // ignore: unawaited_futures
+    LocalCatalogRecordStore.instance.ensureLoaded();
+    // ignore: unawaited_futures
+    LocalNotificationStore.instance.ensureLoaded();
     if (widget.accessContextOverride != null) {
       _access = widget.accessContextOverride!;
       _loadingAccess = false;
