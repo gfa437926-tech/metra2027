@@ -51,6 +51,7 @@ class MetraHome extends StatefulWidget {
 class _MetraHomeState extends State<MetraHome> {
   int _index = 0;
   String? _selectedStationId;
+  String? _selectedStationLabel;
   MetraAccessContext _access = MetraAccessContext.unresolved();
   bool _loadingAccess = true;
   String? _accessError;
@@ -198,8 +199,9 @@ class _MetraHomeState extends State<MetraHome> {
           accessContext: _loadingAccess
               ? MetraAccessContext.unresolved()
               : _access,
-          onStationSelected: (id) => setState(() {
-            _selectedStationId = id;
+          onStationSelected: (selection) => setState(() {
+            _selectedStationId = selection.id;
+            _selectedStationLabel = selection.label;
             // Keep current index; page gates re-evaluate for the new station.
           }),
         ),
@@ -333,7 +335,7 @@ class _MetraHomeState extends State<MetraHome> {
                   child: Text(
                     _selectedStationId == null
                         ? 'منصة الأرصاد'
-                        : 'محطة: $_selectedStationId',
+                        : 'محطة: ${_selectedStationLabel ?? _selectedStationId}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,

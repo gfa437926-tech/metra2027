@@ -9,6 +9,15 @@ import 'station_directory_query.dart';
 
 /// Station catalogue (map + list). Operational work still requires a selected
 /// station and server-side permission checks on every mutation.
+
+/// User-selected station identity for parent shells (id + operator-facing label).
+class StationSelection {
+  const StationSelection({required this.id, required this.label});
+
+  final String id;
+  final String label;
+}
+
 class StationDirectoryScreen extends StatefulWidget {
   const StationDirectoryScreen({
     super.key,
@@ -20,7 +29,7 @@ class StationDirectoryScreen extends StatefulWidget {
 
   final MetraApiClient api;
   final String? selectedStationId;
-  final ValueChanged<String>? onStationSelected;
+  final ValueChanged<StationSelection>? onStationSelected;
 
   /// When resolved, stations with operational permissions are badged and can
   /// be filtered via «محطاتي». Directory remains readable for all stations;
@@ -281,7 +290,12 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
                         child: GestureDetector(
                           onTap: widget.onStationSelected == null
                               ? null
-                              : () => widget.onStationSelected!(station.id),
+                              : () => widget.onStationSelected!(StationSelection(
+                id: station.id,
+                label: station.localCode.isNotEmpty
+                    ? '${station.localCode} — ${station.nameArabic}'
+                    : station.nameArabic,
+              )),
                           child: Icon(
                             station.stationType == 'classic'
                                 ? Icons.cell_tower
@@ -383,7 +397,12 @@ class _StationDirectoryScreenState extends State<StationDirectoryScreen> {
         selected: station.id == widget.selectedStationId,
         onTap: widget.onStationSelected == null
             ? null
-            : () => widget.onStationSelected!(station.id),
+            : () => widget.onStationSelected!(StationSelection(
+                id: station.id,
+                label: station.localCode.isNotEmpty
+                    ? '${station.localCode} — ${station.nameArabic}'
+                    : station.nameArabic,
+              )),
         leading: CircleAvatar(
           backgroundColor: authorized
               ? const Color(0xFFE8F4FF)

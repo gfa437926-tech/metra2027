@@ -78,7 +78,7 @@ void main() {
           home: Scaffold(
             body: StationDirectoryScreen(
               api: api,
-              onStationSelected: (id) => selected = id,
+              onStationSelected: (selection) => selected = selection.id,
             ),
           ),
         ),
