@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/metra_api_client.dart';
 import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
+import '../catalog_integration/local_catalog_record_store.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
 const metraSupabasePublishableKey = String.fromEnvironment('METRA_SUPABASE_PUBLISHABLE_KEY');
@@ -64,6 +65,7 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
   Widget build(BuildContext context) {
     if (!_signedIn) return const MetraLoginScreen();
     final user = _supabase.auth.currentUser;
+    LocalCatalogRecordStore.instance.setActiveAccountKey(user?.id);
     return MetraHome(
       key: ValueKey<String>('home-${user?.id ?? 'anon'}'),
       api: _api,
