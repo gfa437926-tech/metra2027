@@ -61,6 +61,16 @@ class LocalNotificationStore extends ChangeNotifier {
     required String category,
     String? sourceKey,
   }) {
+    // Avoid flooding identical events for the same local source in one minute.
+    if (sourceKey != null && sourceKey.isNotEmpty) {
+      final now = DateTime.now().toUtc();
+      final dup = _items.any(
+        (e) =>
+            e.sourceKey == sourceKey &&
+            now.difference(e.createdAt).inSeconds < 60,
+      );
+      if (dup) return;
+    }
     final item = LocalNotificationItem(
       id: 'n-${DateTime.now().toUtc().microsecondsSinceEpoch}',
       titleAr: titleAr,

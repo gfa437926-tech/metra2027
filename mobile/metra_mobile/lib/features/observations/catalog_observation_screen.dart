@@ -24,6 +24,8 @@ class CatalogObservationScreen extends StatefulWidget {
     this.stationId,
     this.formType,
     this.repository,
+    this.existingRecordId,
+    this.initialRecordValues,
   });
 
   final String title;
@@ -39,6 +41,12 @@ class CatalogObservationScreen extends StatefulWidget {
   final CatalogFormType? formType;
 
   final CatalogObservationRepository? repository;
+
+  /// When set, successful local save updates this record id (no duplicate).
+  final String? existingRecordId;
+
+  /// Seed form values when editing an existing local record.
+  final Map<String, Object?>? initialRecordValues;
 
   @override
   State<CatalogObservationScreen> createState() =>
@@ -153,6 +161,7 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
       if (result.phase == CatalogSubmissionPhase.localAccepted) {
         await LocalCatalogRecordStore.instance.ensureLoaded();
         final record = LocalCatalogRecordStore.instance.upsert(
+          id: widget.existingRecordId,
           stationId: widget.stationId!,
           formType: widget.formType!.code,
           values: values,
@@ -269,7 +278,9 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
               title: widget.title,
               fields: widget.fields,
               submitLabel: 'تحقق محلياً',
-              initialValues: _draft?.values ?? const {},
+              initialValues: _draft?.values ??
+          widget.initialRecordValues ??
+          const {},
               onValuesChanged: _canDraft ? _persistDraft : null,
               draftBanner: _draftBanner(),
               secondaryActionLabel: _draft != null && !_draft!.isEmpty
