@@ -829,6 +829,29 @@ class _StationAdministrationScreenState
         length: 4,
         child: Column(
           children: [
+            Material(
+              color: const Color(0xFFF1F5F9),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.admin_panel_settings_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'محطة الإدارة: ${widget.stationId}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const Material(
               color: Colors.white,
               child: TabBar(

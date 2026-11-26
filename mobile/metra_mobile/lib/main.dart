@@ -35,7 +35,10 @@ class MetraApp extends StatelessWidget {
     supportedLocales: const [Locale('ar'), Locale('en')],
     // Required temporarily because flutter_map still uses SDK Material types.
     // ignore: deprecated_member_use
-    builder: (context, child) => MaterialUiCompatibilityBridge(child: child!),
+    builder: (context, child) => Directionality(
+      textDirection: TextDirection.rtl,
+      child: MaterialUiCompatibilityBridge(child: child!),
+    ),
     home: isMetraSupabaseConfigured && isMetraApiConfigured
         ? const MetraAuthGate()
         : const MetraConfigurationScreen(),
