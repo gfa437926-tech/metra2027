@@ -3,49 +3,77 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Local observation drafts (session + optional on-device persistence).
+/// Local observation drafts (session + on-device persistence).
 ///
 /// Rules:
 /// - Never stores passwords, tokens, or session secrets.
 /// - Never claims server persistence.
-/// - Cleared after explicit successful server submit, local catalog save, or user discard.
-/// - Keyed by stationId + formType so drafts do not leak across stations.
+/// - Keyed by stationId + formType (+ active account) so drafts do not leak.
 class ObservationDraftStore extends ChangeNotifier {
   ObservationDraftStore._();
 
   static final ObservationDraftStore instance = ObservationDraftStore._();
 
-  static const _prefsKey = 'metra2027.observation_drafts.v1';
+  static const _prefsKey = 'metra2027.observation_drafts.v2';
+  static const _legacyPrefsKey = 'metra2027.observation_drafts.v1';
 
   final Map<String, ObservationDraft> _drafts = {};
   bool _loaded = false;
   bool _loading = false;
+  bool _diskTrusted = true;
+  String? _activeAccountKey;
   String? lastPersistError;
 
-  static String keyFor(String stationId, String formType) =>
-      '${stationId.trim()}::${formType.trim().toLowerCase()}';
+  static String keyFor(String stationId, String formType, {String? accountKey}) {
+    final station = stationId.trim();
+    final type = formType.trim().toLowerCase();
+    final account = accountKey?.trim() ?? '';
+    if (account.isEmpty) return '$station::$type';
+    return '$account::$station::$type';
+  }
 
   bool get isLoaded => _loaded;
+  String? get activeAccountKey => _activeAccountKey;
+
+  void setActiveAccountKey(String? key) {
+    final next = key?.trim();
+    final normalized = (next == null || next.isEmpty) ? null : next;
+    if (_activeAccountKey == normalized) return;
+    _activeAccountKey = normalized;
+    notifyListeners();
+  }
 
   Future<void> ensureLoaded() async {
     if (_loaded || _loading) return;
     _loading = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefsKey);
+      var raw = prefs.getString(_prefsKey);
+      raw ??= prefs.getString(_legacyPrefsKey);
       if (raw != null && raw.isNotEmpty) {
-        final decoded = jsonDecode(raw);
-        if (decoded is Map) {
-          decoded.forEach((key, value) {
-            final draft = ObservationDraft.tryParse(value);
-            if (draft != null && !draft.isEmpty) {
-              _drafts['$key'] = draft;
-            }
-          });
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is Map) {
+            decoded.forEach((key, value) {
+              final draft = ObservationDraft.tryParse(value);
+              if (draft != null && !draft.isEmpty) {
+                final mapKey = keyFor(
+                  draft.stationId,
+                  draft.formType,
+                  accountKey: draft.accountKey,
+                );
+                _drafts[mapKey] = draft;
+              }
+            });
+          }
+          _diskTrusted = true;
+        } catch (_) {
+          // Do not mark disk untrusted for total wipe; refuse rewrite of empty.
+          _diskTrusted = false;
         }
       }
     } catch (_) {
-      // Keep memory empty rather than crashing; do not wipe disk.
+      _diskTrusted = false;
     } finally {
       _loaded = true;
       _loading = false;
@@ -54,6 +82,10 @@ class ObservationDraftStore extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    if (!_diskTrusted && _drafts.isEmpty) {
+      // Avoid wiping a corrupt-but-present payload with an empty write.
+      return;
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       final payload = <String, Object?>{};
@@ -65,6 +97,7 @@ class ObservationDraftStore extends ChangeNotifier {
         lastPersistError = null;
         notifyListeners();
       }
+      _diskTrusted = true;
     } catch (_) {
       lastPersistError =
           'تعذر حفظ المسودات على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
@@ -74,10 +107,13 @@ class ObservationDraftStore extends ChangeNotifier {
 
   ObservationDraft? get(String stationId, String formType) {
     if (stationId.trim().isEmpty || formType.trim().isEmpty) return null;
-    return _drafts[keyFor(stationId, formType)];
+    return _drafts[keyFor(
+      stationId,
+      formType,
+      accountKey: _activeAccountKey,
+    )];
   }
 
-  /// Saves field values only. Rejects keys that look like secrets.
   void save({
     required String stationId,
     required String formType,
@@ -92,7 +128,7 @@ class ObservationDraftStore extends ChangeNotifier {
       if (_isEffectivelyEmpty(entry.value)) continue;
       sanitized[entry.key] = entry.value;
     }
-    final key = keyFor(stationId, formType);
+    final key = keyFor(stationId, formType, accountKey: _activeAccountKey);
     if (sanitized.isEmpty) {
       if (_drafts.remove(key) != null) {
         notifyListeners();
@@ -106,6 +142,7 @@ class ObservationDraftStore extends ChangeNotifier {
       formType: formType.trim().toLowerCase(),
       values: Map.unmodifiable(sanitized),
       savedAt: DateTime.now().toUtc(),
+      accountKey: _activeAccountKey,
     );
     notifyListeners();
     // ignore: unawaited_futures
@@ -114,7 +151,10 @@ class ObservationDraftStore extends ChangeNotifier {
 
   void clear(String stationId, String formType) {
     if (stationId.trim().isEmpty || formType.trim().isEmpty) return;
-    if (_drafts.remove(keyFor(stationId, formType)) != null) {
+    if (_drafts.remove(
+          keyFor(stationId, formType, accountKey: _activeAccountKey),
+        ) !=
+        null) {
       notifyListeners();
       // ignore: unawaited_futures
       _persist();
@@ -125,7 +165,11 @@ class ObservationDraftStore extends ChangeNotifier {
     final id = stationId.trim();
     if (id.isEmpty) return;
     final before = _drafts.length;
-    _drafts.removeWhere((_, draft) => draft.stationId == id);
+    _drafts.removeWhere((key, draft) {
+      if (draft.stationId != id) return false;
+      if (_activeAccountKey == null) return true;
+      return draft.accountKey == _activeAccountKey;
+    });
     if (_drafts.length != before) {
       notifyListeners();
       // ignore: unawaited_futures
@@ -133,7 +177,19 @@ class ObservationDraftStore extends ChangeNotifier {
     }
   }
 
-  /// Test / session reset helper.
+  /// Drops in-memory drafts for the active account only (keeps other accounts).
+  void clearActiveAccountMemory() {
+    if (_activeAccountKey == null) {
+      if (_drafts.isEmpty) return;
+      _drafts.clear();
+      notifyListeners();
+      return;
+    }
+    final before = _drafts.length;
+    _drafts.removeWhere((_, d) => d.accountKey == _activeAccountKey);
+    if (_drafts.length != before) notifyListeners();
+  }
+
   void clearAll({bool persist = false}) {
     if (_drafts.isEmpty) return;
     _drafts.clear();
@@ -144,42 +200,60 @@ class ObservationDraftStore extends ChangeNotifier {
     }
   }
 
-  int get draftCount => _drafts.length;
+  int get draftCount {
+    if (_activeAccountKey == null) return _drafts.length;
+    return _drafts.values
+        .where((d) => d.accountKey == _activeAccountKey || d.accountKey == null)
+        .length;
+  }
 
   bool hasDraft(String stationId, String formType) {
     final draft = get(stationId, formType);
     return draft != null && !draft.isEmpty;
   }
 
-  /// Station ids that currently hold at least one non-empty draft.
   Set<String> stationsWithDrafts() {
     final stations = <String>{};
     for (final draft in _drafts.values) {
-      if (!draft.isEmpty) stations.add(draft.stationId);
+      if (draft.isEmpty) continue;
+      if (_activeAccountKey != null &&
+          draft.accountKey != null &&
+          draft.accountKey != _activeAccountKey) {
+        continue;
+      }
+      stations.add(draft.stationId);
     }
     return Set.unmodifiable(stations);
   }
 
-  /// Form types with a non-empty draft for the given station.
   Set<String> formTypesWithDrafts(String stationId) {
     final id = stationId.trim();
     if (id.isEmpty) return const <String>{};
     final types = <String>{};
     for (final draft in _drafts.values) {
-      if (draft.stationId == id && !draft.isEmpty) {
-        types.add(draft.formType);
+      if (draft.stationId != id || draft.isEmpty) continue;
+      if (_activeAccountKey != null &&
+          draft.accountKey != null &&
+          draft.accountKey != _activeAccountKey) {
+        continue;
       }
+      types.add(draft.formType);
     }
     return Set.unmodifiable(types);
   }
 
-  /// Non-empty drafts for one station, newest first.
   List<ObservationDraft> draftsForStation(String stationId) {
     final id = stationId.trim();
     if (id.isEmpty) return const [];
-    final list = _drafts.values
-        .where((d) => d.stationId == id && !d.isEmpty)
-        .toList(growable: false);
+    final list = _drafts.values.where((d) {
+      if (d.stationId != id || d.isEmpty) return false;
+      if (_activeAccountKey != null &&
+          d.accountKey != null &&
+          d.accountKey != _activeAccountKey) {
+        return false;
+      }
+      return true;
+    }).toList(growable: false);
     final sorted = List<ObservationDraft>.of(list)
       ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return List.unmodifiable(sorted);
@@ -207,12 +281,14 @@ class ObservationDraft {
     required this.formType,
     required this.values,
     required this.savedAt,
+    this.accountKey,
   });
 
   final String stationId;
   final String formType;
   final Map<String, Object?> values;
   final DateTime savedAt;
+  final String? accountKey;
 
   bool get isEmpty => values.isEmpty;
 
@@ -221,6 +297,7 @@ class ObservationDraft {
         'formType': formType,
         'values': values,
         'savedAt': savedAt.toUtc().toIso8601String(),
+        if (accountKey != null && accountKey!.isNotEmpty) 'accountKey': accountKey,
       };
 
   static ObservationDraft? tryParse(Object? raw) {
@@ -239,11 +316,13 @@ class ObservationDraft {
         values[key] = v;
       });
     }
+    final accountKey = map['accountKey']?.toString().trim();
     return ObservationDraft(
       stationId: stationId,
       formType: formType,
       values: Map.unmodifiable(values),
       savedAt: savedAt.toUtc(),
+      accountKey: (accountKey == null || accountKey.isEmpty) ? null : accountKey,
     );
   }
 }

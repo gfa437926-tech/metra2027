@@ -7,6 +7,8 @@ import '../api/metra_api_client.dart';
 import '../../api_config.dart';
 import '../../features/home/metra_home.dart';
 import '../catalog_integration/local_catalog_record_store.dart';
+import '../drafts/observation_draft_store.dart';
+import '../notifications/local_notification_store.dart';
 
 const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
 const metraSupabasePublishableKey = String.fromEnvironment('METRA_SUPABASE_PUBLISHABLE_KEY');
@@ -56,7 +58,20 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
     _signedIn = _supabase.auth.currentSession != null;
     _api = MetraApiClient(accessTokenProvider: () async => _supabase.auth.currentSession?.accessToken);
     _subscription = _supabase.auth.onAuthStateChange.listen((state) {
-      if (mounted) setState(() => _signedIn = state.session != null);
+      final session = state.session;
+      if (session == null) {
+        // Fail-closed session end: clear active account scope for UI; keep
+        // other accounts' on-device payloads for when they sign back in.
+        LocalCatalogRecordStore.instance.setActiveAccountKey(null);
+        ObservationDraftStore.instance.setActiveAccountKey(null);
+        LocalNotificationStore.instance.setActiveAccountKey(null);
+      } else {
+        final id = session.user.id;
+        LocalCatalogRecordStore.instance.setActiveAccountKey(id);
+        ObservationDraftStore.instance.setActiveAccountKey(id);
+        LocalNotificationStore.instance.setActiveAccountKey(id);
+      }
+      if (mounted) setState(() => _signedIn = session != null);
     }, onError: (Object error, StackTrace stackTrace) {});
   }
   @override
@@ -66,11 +81,18 @@ class _MetraAuthGateState extends State<MetraAuthGate> {
     if (!_signedIn) return const MetraLoginScreen();
     final user = _supabase.auth.currentUser;
     LocalCatalogRecordStore.instance.setActiveAccountKey(user?.id);
+    ObservationDraftStore.instance.setActiveAccountKey(user?.id);
+    LocalNotificationStore.instance.setActiveAccountKey(user?.id);
     return MetraHome(
       key: ValueKey<String>('home-${user?.id ?? 'anon'}'),
       api: _api,
       userEmail: user?.email,
-      onSignOut: () => _supabase.auth.signOut(),
+      onSignOut: () async {
+        LocalCatalogRecordStore.instance.setActiveAccountKey(null);
+        ObservationDraftStore.instance.setActiveAccountKey(null);
+        LocalNotificationStore.instance.setActiveAccountKey(null);
+        await _supabase.auth.signOut();
+      },
     );
   }
 }

@@ -9,6 +9,7 @@ class LocalNotificationItem {
     required this.category,
     this.read = false,
     this.sourceKey,
+    this.accountKey,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class LocalNotificationItem {
   final String category; // observation | review | fault | system
   final bool read;
   final String? sourceKey;
+  final String? accountKey;
 
   LocalNotificationItem copyWith({bool? read}) => LocalNotificationItem(
         id: id,
@@ -27,6 +29,7 @@ class LocalNotificationItem {
         category: category,
         read: read ?? this.read,
         sourceKey: sourceKey,
+        accountKey: accountKey,
       );
 
   Map<String, Object?> toJson() => {
@@ -37,6 +40,7 @@ class LocalNotificationItem {
         'category': category,
         'read': read,
         'sourceKey': sourceKey,
+        if (accountKey != null && accountKey!.isNotEmpty) 'accountKey': accountKey,
       };
 
   static LocalNotificationItem? tryParse(Object? raw) {
@@ -56,6 +60,7 @@ class LocalNotificationItem {
         createdAt == null) {
       return null;
     }
+    final accountKey = map['accountKey']?.toString().trim();
     return LocalNotificationItem(
       id: id,
       titleAr: title,
@@ -64,6 +69,7 @@ class LocalNotificationItem {
       category: category,
       read: map['read'] == true,
       sourceKey: map['sourceKey']?.toString(),
+      accountKey: (accountKey == null || accountKey.isEmpty) ? null : accountKey,
     );
   }
 }

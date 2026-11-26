@@ -30,6 +30,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   final Map<String, LocalCatalogRecord> _byId = {};
   bool _loaded = false;
   bool _loading = false;
+  bool _diskTrusted = true;
   int _lastSkippedCorrupt = 0;
   String? _activeAccountKey;
   String? lastPersistError;
@@ -71,6 +72,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           // Keep empty map; do not wipe disk until a successful rewrite.
           skipped = 1;
           decoded = null;
+          _diskTrusted = false;
         }
         if (decoded is List) {
           for (final item in decoded) {
@@ -95,9 +97,10 @@ class LocalCatalogRecordStore extends ChangeNotifier {
             skipped++;
           }
         }
+        _diskTrusted = true;
       }
     } catch (_) {
-      // Unexpected I/O: leave memory as-is for this session.
+      _diskTrusted = false;
     } finally {
       _lastSkippedCorrupt = skipped;
       _loaded = true;
@@ -111,6 +114,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    if (!_diskTrusted && _byId.isEmpty) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       final payload =
@@ -124,6 +128,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           'writtenAt': DateTime.now().toUtc().toIso8601String(),
         }),
       );
+      _diskTrusted = true;
       if (lastPersistError != null) {
         lastPersistError = null;
         notifyListeners();

@@ -17,9 +17,20 @@ class LocalNotificationStore extends ChangeNotifier {
 
   final List<LocalNotificationItem> _items = [];
   bool _loaded = false;
+  bool _diskTrusted = true;
+  String? _activeAccountKey;
 
   bool get isLoaded => _loaded;
-  int get unreadCount => _items.where((i) => !i.read).length;
+  String? get activeAccountKey => _activeAccountKey;
+
+  void setActiveAccountKey(String? key) {
+    final next = key?.trim();
+    final normalized = (next == null || next.isEmpty) ? null : next;
+    if (_activeAccountKey == normalized) return;
+    _activeAccountKey = normalized;
+    notifyListeners();
+  }
+  int get unreadCount => _visible.where((i) => !i.read).length;
   List<LocalNotificationItem> get items => List.unmodifiable(_items);
 
   Future<void> ensureLoaded() async {
@@ -28,17 +39,22 @@ class LocalNotificationStore extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey);
       if (raw != null && raw.isNotEmpty) {
-        final decoded = jsonDecode(raw);
-        if (decoded is List) {
-          for (final item in decoded) {
-            final parsed = LocalNotificationItem.tryParse(item);
-            if (parsed != null) _items.add(parsed);
+        try {
+          final decoded = jsonDecode(raw);
+          if (decoded is List) {
+            for (final item in decoded) {
+              final parsed = LocalNotificationItem.tryParse(item);
+              if (parsed != null) _items.add(parsed);
+            }
+            _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           }
-          _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _diskTrusted = true;
+        } catch (_) {
+          _diskTrusted = false;
         }
       }
     } catch (_) {
-      _items.clear();
+      _diskTrusted = false;
     } finally {
       _loaded = true;
       notifyListeners();
@@ -46,12 +62,14 @@ class LocalNotificationStore extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    if (!_diskTrusted && _items.isEmpty) return;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         _prefsKey,
         jsonEncode(_items.map((e) => e.toJson()).toList(growable: false)),
       );
+      _diskTrusted = true;
     } catch (_) {}
   }
 
@@ -78,6 +96,7 @@ class LocalNotificationStore extends ChangeNotifier {
       createdAt: DateTime.now().toUtc(),
       category: category,
       sourceKey: sourceKey,
+      accountKey: _activeAccountKey,
     );
     _items.insert(0, item);
     while (_items.length > _maxItems) {
@@ -119,14 +138,26 @@ class LocalNotificationStore extends ChangeNotifier {
     _persist();
   }
 
+  Iterable<LocalNotificationItem> get _visible sync* {
+    for (final e in _items) {
+      if (_activeAccountKey != null &&
+          e.accountKey != null &&
+          e.accountKey != _activeAccountKey) {
+        continue;
+      }
+      yield e;
+    }
+  }
+
   List<LocalNotificationItem> filtered(String filter) {
+    final visible = _visible.toList(growable: false);
     switch (filter) {
       case 'unread':
-        return _items.where((e) => !e.read).toList(growable: false);
+        return visible.where((e) => !e.read).toList(growable: false);
       case 'read':
-        return _items.where((e) => e.read).toList(growable: false);
+        return visible.where((e) => e.read).toList(growable: false);
       default:
-        return items;
+        return List.unmodifiable(visible);
     }
   }
 }
