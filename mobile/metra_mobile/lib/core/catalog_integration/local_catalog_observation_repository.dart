@@ -116,6 +116,11 @@ class LocalCatalogObservationRepository
     }
 
     if (errors.isNotEmpty) {
+      _drafts.save(
+        stationId: trimmedStation,
+        formType: type.code,
+        values: values,
+      );
       final first = errors.entries.first;
       return CatalogSubmissionResult(
         phase: CatalogSubmissionPhase.failed,
