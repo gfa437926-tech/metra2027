@@ -102,36 +102,59 @@ class MetraLoginScreen extends StatefulWidget {
   @override
   State<MetraLoginScreen> createState() => _MetraLoginScreenState();
 }
+
 class _MetraLoginScreenState extends State<MetraLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _password = TextEditingController();
-  bool _busy = false, _obscure = true;
+  bool _busy = false;
+  bool _obscure = true;
   String? _error;
+
   @override
-  void dispose() { _email.dispose(); _password.dispose(); super.dispose(); }
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
   Future<void> _requestPasswordReset() async {
     if (_busy) return;
     final email = _email.text.trim();
     if (!email.contains('@') || email.length > 254) {
-      setState(() => _error = 'أدخل البريد الإلكتروني أولاً لاستلام رابط الاستعادة.');
+      setState(
+        () => _error =
+            'أدخل البريد الإلكتروني أولاً لاستلام رابط الاستعادة.',
+      );
       return;
     }
-    setState(() { _busy = true; _error = null; });
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('إذا كان البريد مسجلاً، فسيصلك رابط استعادة كلمة المرور. تحقق من صندوق الوارد والبريد غير المرغوب فيه.'),
+            content: Text(
+              'إذا كان البريد مسجلاً، فسيصلك رابط استعادة كلمة المرور. تحقق من صندوق الوارد والبريد غير المرغوب فيه.',
+            ),
             duration: Duration(seconds: 6),
           ),
         );
       }
     } on AuthException {
-      if (mounted) setState(() => _error = 'تعذر إرسال طلب الاستعادة حالياً. تحقق من البريد وحاول لاحقاً.');
+      if (mounted) {
+        setState(
+          () => _error =
+              'تعذر إرسال طلب الاستعادة حالياً. تحقق من البريد وحاول لاحقاً.',
+        );
+      }
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة استعادة كلمة المرور.');
+      if (mounted) {
+        setState(() => _error = 'تعذر الاتصال بخدمة استعادة كلمة المرور.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -139,132 +162,157 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
 
   Future<void> _signIn() async {
     if (!_formKey.currentState!.validate() || _busy) return;
-    setState(() { _busy = true; _error = null; });
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       await Supabase.instance.client.auth.signInWithPassword(
-        email: _email.text.trim(), password: _password.text);
+        email: _email.text.trim(),
+        password: _password.text,
+      );
     } on AuthException catch (error) {
       final message = error.message.toLowerCase();
-      final safe = message.contains('invalid login credentials') ? 'بيانات الدخول غير صحيحة.' :
-        message.contains('email not confirmed') ? 'يجب تأكيد البريد الإلكتروني قبل الدخول.' :
-        message.contains('too many requests') ? 'محاولات كثيرة. انتظر قليلاً.' :
-        'تعذر تسجيل الدخول. تحقق من البيانات أو إعدادات الحساب.';
+      final safe = message.contains('invalid login credentials')
+          ? 'بيانات الدخول غير صحيحة.'
+          : message.contains('email not confirmed')
+              ? 'يجب تأكيد البريد الإلكتروني قبل الدخول.'
+              : message.contains('too many requests')
+                  ? 'محاولات كثيرة. انتظر قليلاً.'
+                  : 'تعذر تسجيل الدخول. تحقق من البيانات أو إعدادات الحساب.';
       if (mounted) setState(() => _error = safe);
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر الاتصال بخدمة تسجيل الدخول.');
-    } finally { if (mounted) setState(() => _busy = false); }
+      if (mounted) {
+        setState(() => _error = 'تعذر الاتصال بخدمة تسجيل الدخول.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Material(
         child: Scaffold(
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Icon(Icons.cloud_outlined, size: 48, color: MetraColors.blue),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'METRA 2027',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: MetraColors.navy),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'سجّل الدخول بحسابك المعتمد للوصول إلى المحطات والرصد.',
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        TextFormField(
-                          controller: _email,
-                          keyboardType: TextInputType.emailAddress,
-                          autofillHints: const [AutofillHints.username, AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'البريد الإلكتروني',
-                            border: OutlineInputBorder(),
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Icon(
+                            Icons.cloud_outlined,
+                            size: 48,
+                            color: MetraColors.blue,
                           ),
-                          validator: (value) {
-                            final email = value?.trim() ?? '';
-                            if (email.isEmpty) {
-                              return 'أدخل بريداً إلكترونياً صحيحاً';
-                            }
-                            if (email.length > 254 ||
-                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                    .hasMatch(email)) {
-                              return 'أدخل بريداً إلكترونياً صحيحاً';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 14),
-                        TextFormField(
-                          controller: _password,
-                          obscureText: _obscure,
-                          autofillHints: const [AutofillHints.password],
-                          onFieldSubmitted: (_) => _signIn(),
-                          decoration: InputDecoration(
-                            labelText: 'كلمة المرور',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(() => _obscure = !_obscure),
-                              icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'METRA 2027',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          validator: (value) {
-                            final password = value ?? '';
-                            if (password.trim().isEmpty) {
-                              return 'أدخل كلمة المرور';
-                            }
-                            if (password.length > 128) {
-                              return 'كلمة المرور أطول من الحد المسموح';
-                            }
-                            return null;
-                          },
-                        ),
-                        if (_error != null) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            _error!,
+                          const SizedBox(height: 8),
+                          const Text(
+                            'تسجيل الدخول',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
+                          ),
+                          const SizedBox(height: 20),
+                          if (_error != null) ...[
+                            Text(
+                              _error!,
+                              style: const TextStyle(color: MetraColors.danger),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          TextFormField(
+                            controller: _email,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.email],
+                            decoration: const InputDecoration(
+                              labelText: 'البريد الإلكتروني',
+                            ),
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) {
+                                return 'أدخل بريداً إلكترونياً صحيحاً';
+                              }
+                              if (!v.contains('@') || v.length > 254) {
+                                return 'أدخل بريداً إلكترونياً صحيحاً';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _password,
+                            obscureText: _obscure,
+                            autofillHints: const [AutofillHints.password],
+                            decoration: InputDecoration(
+                              labelText: 'كلمة المرور',
+                              suffixIcon: IconButton(
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              final v = value ?? '';
+                              if (v.isEmpty) return 'أدخل كلمة المرور';
+                              if (v.length > 128) {
+                                return 'كلمة المرور أطول من الحد المسموح';
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) => _signIn(),
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: _busy ? null : _signIn,
+                            child: _busy
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('تسجيل الدخول'),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: TextButton(
+                              onPressed: _busy ? null : _requestPasswordReset,
+                              child: const Text('نسيت كلمة المرور؟'),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
                           ),
                         ],
-                        const SizedBox(height: 20),
-                        FilledButton(
-                          onPressed: _busy ? null : _signIn,
-                          child: _busy
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('تسجيل الدخول'),
-                        ),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: TextButton(
-                            onPressed: _busy ? null : _requestPasswordReset,
-                            child: const Text('نسيت كلمة المرور؟'),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: Colors.black54),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -279,6 +327,7 @@ class _MetraLoginScreenState extends State<MetraLoginScreen> {
 
 class MetraConfigurationScreen extends StatelessWidget {
   const MetraConfigurationScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final missing = <String>[];
@@ -340,4 +389,3 @@ class MetraConfigurationScreen extends StatelessWidget {
     );
   }
 }
-

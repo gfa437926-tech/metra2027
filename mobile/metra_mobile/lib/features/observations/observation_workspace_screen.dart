@@ -6,7 +6,6 @@ import '../../core/catalog/observation_field_catalogs.dart';
 import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
-import '../../core/widgets/metra_permission_denied_page.dart';
 import 'catalog_observation_screen.dart';
 import 'daily_observation_screen.dart';
 import 'hourly_observation_screen.dart';
