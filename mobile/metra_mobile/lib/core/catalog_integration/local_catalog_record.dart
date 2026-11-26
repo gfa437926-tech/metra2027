@@ -144,8 +144,8 @@ class LocalCatalogRecordQuery {
       if (station.isNotEmpty && r.stationId != station) return false;
       if (type.isNotEmpty && r.formType != type) return false;
       if (account.isNotEmpty) {
-        // Records without accountKey are legacy device-wide; keep visible.
-        if (r.accountKey != null && r.accountKey != account) return false;
+        // Fail-closed: unassigned (null) and other accounts stay hidden.
+        if (r.accountKey != account) return false;
       }
       if (q.isEmpty) return true;
       if (r.id.toLowerCase().contains(q)) return true;
@@ -159,6 +159,23 @@ class LocalCatalogRecordQuery {
     final sorted = List<LocalCatalogRecord>.of(list)
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     return List.unmodifiable(sorted);
+  }
+
+  /// Records with no account identity (legacy / unassigned quarantine).
+  static List<LocalCatalogRecord> unassigned({
+    required Iterable<LocalCatalogRecord> records,
+    bool includeArchived = false,
+  }) {
+    final list = records.where((r) {
+      if (r.accountKey != null && r.accountKey!.trim().isNotEmpty) return false;
+      if (!includeArchived &&
+          r.status == LocalCatalogRecordStatus.localArchived) {
+        return false;
+      }
+      return true;
+    }).toList(growable: false);
+    list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return List.unmodifiable(list);
   }
 }
 

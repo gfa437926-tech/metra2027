@@ -201,10 +201,11 @@ class ObservationDraftStore extends ChangeNotifier {
   }
 
   int get draftCount {
-    if (_activeAccountKey == null) return _drafts.length;
-    return _drafts.values
-        .where((d) => d.accountKey == _activeAccountKey || d.accountKey == null)
-        .length;
+    if (_activeAccountKey == null) {
+      // Signed-out: do not expose account drafts as a session count.
+      return _drafts.values.where((d) => d.accountKey == null).length;
+    }
+    return _drafts.values.where((d) => d.accountKey == _activeAccountKey).length;
   }
 
   bool hasDraft(String stationId, String formType) {
@@ -216,10 +217,9 @@ class ObservationDraftStore extends ChangeNotifier {
     final stations = <String>{};
     for (final draft in _drafts.values) {
       if (draft.isEmpty) continue;
-      if (_activeAccountKey != null &&
-          draft.accountKey != null &&
-          draft.accountKey != _activeAccountKey) {
-        continue;
+      if (_activeAccountKey != null) {
+        // Fail-closed: hide unassigned and other accounts.
+        if (draft.accountKey != _activeAccountKey) continue;
       }
       stations.add(draft.stationId);
     }
@@ -232,10 +232,8 @@ class ObservationDraftStore extends ChangeNotifier {
     final types = <String>{};
     for (final draft in _drafts.values) {
       if (draft.stationId != id || draft.isEmpty) continue;
-      if (_activeAccountKey != null &&
-          draft.accountKey != null &&
-          draft.accountKey != _activeAccountKey) {
-        continue;
+      if (_activeAccountKey != null) {
+        if (draft.accountKey != _activeAccountKey) continue;
       }
       types.add(draft.formType);
     }
@@ -247,16 +245,45 @@ class ObservationDraftStore extends ChangeNotifier {
     if (id.isEmpty) return const [];
     final list = _drafts.values.where((d) {
       if (d.stationId != id || d.isEmpty) return false;
-      if (_activeAccountKey != null &&
-          d.accountKey != null &&
-          d.accountKey != _activeAccountKey) {
-        return false;
+      if (_activeAccountKey != null) {
+        if (d.accountKey != _activeAccountKey) return false;
       }
       return true;
     }).toList(growable: false);
     final sorted = List<ObservationDraft>.of(list)
       ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
     return List.unmodifiable(sorted);
+  }
+
+  /// Explicit claim of a legacy (null-account) draft into the active account.
+  bool claimUnassignedDraft(String stationId, String formType) {
+    final account = _activeAccountKey;
+    if (account == null || account.isEmpty) return false;
+    final legacyKey = keyFor(stationId, formType, accountKey: null);
+    final draft = _drafts[legacyKey];
+    if (draft == null || draft.isEmpty) return false;
+    final claimedKey = keyFor(stationId, formType, accountKey: account);
+    if (_drafts.containsKey(claimedKey)) return false; // no overwrite
+    _drafts.remove(legacyKey);
+    _drafts[claimedKey] = ObservationDraft(
+      stationId: draft.stationId,
+      formType: draft.formType,
+      values: draft.values,
+      savedAt: DateTime.now().toUtc(),
+      accountKey: account,
+    );
+    notifyListeners();
+    // ignore: unawaited_futures
+    _persist();
+    return true;
+  }
+
+  List<ObservationDraft> listUnassignedDrafts() {
+    final list = _drafts.values
+        .where((d) => !d.isEmpty && (d.accountKey == null || d.accountKey!.isEmpty))
+        .toList(growable: false);
+    list.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return List.unmodifiable(list);
   }
 
   static bool _looksLikeSecret(String id) {

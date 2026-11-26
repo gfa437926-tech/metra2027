@@ -34,6 +34,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   int _lastSkippedCorrupt = 0;
   String? _activeAccountKey;
   String? lastPersistError;
+  int _writeGeneration = 0;
 
   bool get isLoaded => _loaded;
   bool get isLoading => _loading;
@@ -115,11 +116,15 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   Future<void> _persist() async {
     if (!_diskTrusted && _byId.isEmpty) return;
+    final generation = ++_writeGeneration;
     try {
       final prefs = await SharedPreferences.getInstance();
       final payload =
           _byId.values.map((r) => r.toJson()).toList(growable: false);
+      // Drop stale writers that were scheduled before a newer mutation.
+      if (generation != _writeGeneration) return;
       await prefs.setString(_prefsKey, jsonEncode(payload));
+      if (generation != _writeGeneration) return;
       await prefs.setString(
         _prefsMetaKey,
         jsonEncode({
@@ -128,13 +133,14 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           'writtenAt': DateTime.now().toUtc().toIso8601String(),
         }),
       );
+      if (generation != _writeGeneration) return;
       _diskTrusted = true;
       if (lastPersistError != null) {
         lastPersistError = null;
         notifyListeners();
       }
     } catch (error) {
-      // Persistence failure must not discard in-memory records this session.
+      if (generation != _writeGeneration) return;
       lastPersistError =
           'تعذر حفظ السجلات المحلية على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
       notifyListeners();
@@ -245,6 +251,43 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         accountKey: accountKey ?? _activeAccountKey,
         includeArchived: includeArchived,
       );
+
+  /// Legacy / unassigned quarantine — never mixed into account lists.
+  List<LocalCatalogRecord> listUnassigned({bool includeArchived = false}) =>
+      LocalCatalogRecordQuery.unassigned(
+        records: _byId.values,
+        includeArchived: includeArchived,
+      );
+
+  /// Explicit operator claim of a quarantined record to [accountKey].
+  /// Returns null if missing, already owned by someone else, or account empty.
+  LocalCatalogRecord? claimToAccount(String id, String accountKey) {
+    final account = accountKey.trim();
+    if (account.isEmpty) return null;
+    final current = _byId[id];
+    if (current == null) return null;
+    if (current.accountKey != null && current.accountKey!.isNotEmpty) {
+      // Already owned — only same account may "claim" (no-op).
+      if (current.accountKey != account) return null;
+      return current;
+    }
+    final claimed = LocalCatalogRecord(
+      id: current.id,
+      stationId: current.stationId,
+      formType: current.formType,
+      values: current.values,
+      createdAt: current.createdAt,
+      updatedAt: DateTime.now().toUtc(),
+      status: current.status,
+      schemaVersion: current.schemaVersion,
+      accountKey: account,
+    );
+    _byId[id] = claimed;
+    notifyListeners();
+    // ignore: unawaited_futures
+    _persist();
+    return claimed;
+  }
 
   /// JSON export of the filtered subset (local only).
   String exportJson({

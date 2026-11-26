@@ -140,10 +140,12 @@ class LocalNotificationStore extends ChangeNotifier {
 
   Iterable<LocalNotificationItem> get _visible sync* {
     for (final e in _items) {
-      if (_activeAccountKey != null &&
-          e.accountKey != null &&
-          e.accountKey != _activeAccountKey) {
-        continue;
+      if (_activeAccountKey != null) {
+        // Fail-closed: hide unassigned + other accounts.
+        if (e.accountKey != _activeAccountKey) continue;
+      } else {
+        // Signed out: only unassigned local system notes if any.
+        if (e.accountKey != null && e.accountKey!.isNotEmpty) continue;
       }
       yield e;
     }

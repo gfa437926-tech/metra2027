@@ -149,6 +149,8 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
     if (widget.formType != null &&
         widget.stationId != null &&
         widget.stationId!.trim().isNotEmpty) {
+      final accountAtStart =
+          LocalCatalogRecordStore.instance.activeAccountKey;
       final result = await _repo.submitLocal(
         type: widget.formType!,
         stationId: widget.stationId!,
@@ -159,12 +161,25 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
       assert(!result.claimsServerPersistence);
 
       if (result.phase == CatalogSubmissionPhase.localAccepted) {
+        // Pending save must not land on a different account after switch.
+        if (LocalCatalogRecordStore.instance.activeAccountKey !=
+            accountAtStart) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(
+              content: Text(
+                'تغير الحساب أثناء الحفظ. لم يُكتب السجل تحت الحساب الجديد.',
+              ),
+            ),
+          );
+          return;
+        }
         await LocalCatalogRecordStore.instance.ensureLoaded();
         final record = LocalCatalogRecordStore.instance.upsert(
           id: widget.existingRecordId,
           stationId: widget.stationId!,
           formType: widget.formType!.code,
           values: values,
+          accountKey: accountAtStart,
         );
         LocalNotificationStore.instance.add(
           titleAr: 'سجل محلي جديد',
