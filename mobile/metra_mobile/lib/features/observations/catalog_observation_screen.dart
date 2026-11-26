@@ -2,10 +2,14 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/catalog_integration/catalog_observation_repository.dart';
+import '../../core/catalog_integration/catalog_submission_state.dart';
 import '../../core/catalog_integration/local_catalog_observation_repository.dart';
+import '../../core/catalog_integration/local_catalog_record_store.dart';
 import '../../core/drafts/observation_draft_store.dart';
 import '../../core/drafts/observation_draft_ui.dart';
+import '../../core/notifications/local_notification_store.dart';
 import '../../core/widgets/metra_observation_form.dart';
+import 'local_catalog_records_screen.dart';
 
 /// Interactive catalogue form for forms without an approved persistence API.
 ///
@@ -143,12 +147,64 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
         values: values,
       );
       if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)
-          ?.showSnackBar(SnackBar(content: Text(result.messageAr)));
       // Explicit guard: repository must never claim server persistence.
       assert(!result.claimsServerPersistence);
-      // Local validation success does not clear the draft — only explicit
-      // discard or a future server submit with an approved contract may.
+
+      if (result.phase == CatalogSubmissionPhase.localAccepted) {
+        await LocalCatalogRecordStore.instance.ensureLoaded();
+        final record = LocalCatalogRecordStore.instance.upsert(
+          stationId: widget.stationId!,
+          formType: widget.formType!.code,
+          values: values,
+        );
+        LocalNotificationStore.instance.add(
+          titleAr: 'سجل محلي جديد',
+          bodyAr:
+              'حُفظ «${widget.title}» محلياً على المحطة (لا إرسال للخادم).',
+          category: widget.formType!.code.contains('fault')
+              ? 'fault'
+              : 'observation',
+          sourceKey: record.id,
+        );
+        // Clear draft after successful local save to avoid re-submit confusion.
+        if (_canDraft) {
+          ObservationDraftStore.instance.clear(
+            widget.stationId!,
+            _draftFormType!,
+          );
+          if (mounted) {
+            setState(() {
+              _draft = null;
+              _formGeneration++;
+            });
+          }
+        }
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${result.messageAr} حُفظ السجل محلياً فقط.',
+            ),
+            action: SnackBarAction(
+              label: 'السجلات',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => LocalCatalogRecordsScreen(
+                      stationId: widget.stationId!,
+                      formType: widget.formType!.code,
+                      titleAr: widget.title,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+        return;
+      }
+
+      ScaffoldMessenger.maybeOf(context)
+          ?.showSnackBar(SnackBar(content: Text(result.messageAr)));
       return;
     }
 

@@ -126,18 +126,12 @@ class LocalCatalogObservationRepository
       );
     }
 
-    // Keep a session draft so operator input is not lost while waiting for a
-    // future approved API contract. Never claim server persistence.
-    _drafts.save(
-      stationId: trimmedStation,
-      formType: type.code,
-      values: values,
-    );
-
+    // Validated values may be stored on-device as local records by the UI.
+    // Still no server persistence. Draft retention is owned by the screen.
     return CatalogSubmissionResult(
-      phase: CatalogSubmissionPhase.awaitingApiContract,
+      phase: CatalogSubmissionPhase.localAccepted,
       messageAr:
-          'اكتمل التحقق المحلي لـ«${type.arabicTitle}». ${type.pendingContractNotice}',
+          'اكتمل التحقق المحلي لـ«${type.arabicTitle}». السجل محلي على الجهاز فقط — لا إرسال للخادم.',
       values: Map<String, Object?>.from(values),
     );
   }
