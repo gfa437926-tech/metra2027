@@ -1,8 +1,5 @@
 import 'package:flutter_localizations/flutter_localizations.dart'
-    hide
-        GlobalMaterialLocalizations,
-        GlobalCupertinoLocalizations,
-        GlobalWidgetsLocalizations;
+    hide GlobalMaterialLocalizations;
 import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
