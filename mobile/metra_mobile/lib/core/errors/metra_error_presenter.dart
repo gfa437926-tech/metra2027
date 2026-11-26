@@ -107,4 +107,31 @@ class MetraErrorPresenter {
       _ => forApiException(error),
     };
   }
+
+  /// Station role assignment request / decision / revoke.
+  static String assignmentMessage(MetraApiException error) {
+    final code = error.code.toLowerCase();
+    if (code.contains('invalid_assignment_role') ||
+        code == 'assignment_role_unavailable') {
+      return 'الدور المطلوب غير متاح للتعيين على هذه المحطة.';
+    }
+    if (code == 'target_account_not_active') {
+      return 'حساب المستخدم المستهدف غير نشط.';
+    }
+    if (code == 'target_authority_membership_required') {
+      return 'المستخدم المستهدف يفتقد عضوية الجهة المطلوبة.';
+    }
+    if (code == 'station_not_available') {
+      return 'المحطة غير متاحة لطلب التعيين.';
+    }
+    return switch (error.statusCode) {
+      401 => 'انتهت الجلسة. سجّل الدخول مجدداً.',
+      403 => 'لا تملك صلاحية إدارة تعيينات هذه المحطة.',
+      404 => 'طلب التعيين غير موجود.',
+      409 => 'تعارض في طلب التعيين. قد يكون مُعالجاً مسبقاً.',
+      503 => 'خدمة تعيين المستخدمين غير متاحة حالياً.',
+      _ => forApiException(error),
+    };
+  }
+
 }

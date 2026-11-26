@@ -354,7 +354,7 @@ class _StationAdministrationScreenState
       if (!mounted || stationId != widget.stationId) return;
       setState(() {
         _assignmentError = true;
-        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+        _assignmentMessage = MetraErrorPresenter.assignmentMessage(error);
       });
     } catch (error) {
       if (!mounted || stationId != widget.stationId) return;
