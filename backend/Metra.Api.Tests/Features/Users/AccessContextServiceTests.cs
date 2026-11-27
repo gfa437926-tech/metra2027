@@ -292,6 +292,35 @@ public sealed class AccessContextServiceTests
         Assert.Null(await service.BuildAsync(Guid.NewGuid(), CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Assignment_and_membership_reads_are_user_scoped_approved_time_valid_and_bounded()
+    {
+        var userId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var queries = new List<string>();
+        var service = CreateService(request =>
+        {
+            queries.Add(Uri.UnescapeDataString(request.RequestUri!.Query));
+            return JsonOk("[]");
+        }, new FakeAuthorization());
+
+        var context = await service.BuildAsync(userId, CancellationToken.None);
+
+        Assert.NotNull(context);
+        Assert.Equal(2, queries.Count);
+        foreach (var query in queries)
+        {
+            Assert.Contains($"user_id=eq.{userId}", query);
+            Assert.Contains("approval_status=eq.approved", query);
+            Assert.Contains("valid_from=lte.", query);
+            Assert.Contains("valid_to.is.null", query);
+            Assert.Contains("valid_to.gt.", query);
+            Assert.Contains("limit=101", query);
+        }
+
+        Assert.Contains("select=station_id,role_code", queries[0]);
+        Assert.Contains("select=authority_id,role_code", queries[1]);
+    }
+
     private static SupabaseAccessContextService CreateService(
         Func<HttpRequestMessage, HttpResponseMessage> responseFactory,
         IStationAuthorizationService authorization)
