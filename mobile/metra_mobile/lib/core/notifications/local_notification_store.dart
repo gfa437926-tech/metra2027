@@ -10,6 +10,9 @@ import 'local_notification_item.dart';
 class LocalNotificationStore extends ChangeNotifier {
   LocalNotificationStore._();
 
+  @visibleForTesting
+  LocalNotificationStore.forTesting();
+
   static final LocalNotificationStore instance = LocalNotificationStore._();
 
   static const _prefsKey = 'metra2027.local_notifications.v1';
@@ -17,6 +20,11 @@ class LocalNotificationStore extends ChangeNotifier {
 
   final List<LocalNotificationItem> _items = [];
   bool _loaded = false;
+  bool _loading = false;
+  Future<void>? _loadFuture;
+  Future<void> _persistTail = Future<void>.value();
+  final Set<String> _dirtyIds = <String>{};
+  int _writeGeneration = 0;
   bool _diskTrusted = true;
   String? _activeAccountKey;
 
@@ -31,24 +39,43 @@ class LocalNotificationStore extends ChangeNotifier {
     notifyListeners();
   }
   int get unreadCount => _visible.where((i) => !i.read).length;
-  List<LocalNotificationItem> get items => List.unmodifiable(_items);
+  List<LocalNotificationItem> get items =>
+      List.unmodifiable(_visible.toList(growable: false));
 
-  Future<void> ensureLoaded() async {
-    if (_loaded) return;
+  Future<void> ensureLoaded() {
+    if (_loaded) return Future<void>.value();
+    return _loadFuture ??= _loadFromDisk();
+  }
+
+  Future<void> _loadFromDisk() async {
+    _loading = true;
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_prefsKey);
       if (raw != null && raw.isNotEmpty) {
         try {
           final decoded = jsonDecode(raw);
+          var payloadTrusted = true;
           if (decoded is List) {
             for (final item in decoded) {
               final parsed = LocalNotificationItem.tryParse(item);
-              if (parsed != null) _items.add(parsed);
+              if (parsed == null) {
+                payloadTrusted = false;
+                continue;
+              }
+              if (_dirtyIds.contains(parsed.id)) continue;
+              final existingIndex = _items.indexWhere((e) => e.id == parsed.id);
+              if (existingIndex < 0) {
+                _items.add(parsed);
+              } else if (parsed.createdAt.isAfter(_items[existingIndex].createdAt)) {
+                _items[existingIndex] = parsed;
+              }
             }
-            _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          } else {
+            payloadTrusted = false;
           }
-          _diskTrusted = true;
+          _diskTrusted = payloadTrusted;
+          _items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         } catch (_) {
           _diskTrusted = false;
         }
@@ -57,20 +84,40 @@ class LocalNotificationStore extends ChangeNotifier {
       _diskTrusted = false;
     } finally {
       _loaded = true;
+      _loading = false;
       notifyListeners();
     }
   }
 
-  Future<void> _persist() async {
-    if (!_diskTrusted && _items.isEmpty) return;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        _prefsKey,
-        jsonEncode(_items.map((e) => e.toJson()).toList(growable: false)),
-      );
-      _diskTrusted = true;
-    } catch (_) {}
+  Future<void> _persist() {
+    final generation = ++_writeGeneration;
+    final write = _persistTail.then((_) async {
+      await ensureLoaded();
+      if (!_diskTrusted || generation != _writeGeneration) return;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final payload = _items.map((e) => e.toJson()).toList(growable: false);
+        if (generation != _writeGeneration) return;
+        await prefs.setString(_prefsKey, jsonEncode(payload));
+        if (generation != _writeGeneration) return;
+        _dirtyIds.clear();
+        _diskTrusted = true;
+      } catch (_) {
+        // Keep the in-memory feed available; never claim disk persistence.
+      }
+    });
+    _persistTail = write.catchError((_) {});
+    return write;
+  }
+
+  @visibleForTesting
+  Future<void> flushForTesting() => _persist();
+
+  bool _isVisible(LocalNotificationItem item) {
+    if (_activeAccountKey != null) {
+      return item.accountKey == _activeAccountKey;
+    }
+    return item.accountKey == null || item.accountKey!.isEmpty;
   }
 
   void add({
@@ -99,6 +146,7 @@ class LocalNotificationStore extends ChangeNotifier {
       accountKey: _activeAccountKey,
     );
     _items.insert(0, item);
+    _dirtyIds.add(item.id);
     while (_items.length > _maxItems) {
       _items.removeLast();
     }
@@ -109,8 +157,9 @@ class LocalNotificationStore extends ChangeNotifier {
 
   void markRead(String id) {
     final index = _items.indexWhere((e) => e.id == id);
-    if (index < 0 || _items[index].read) return;
+    if (index < 0 || _items[index].read || !_isVisible(_items[index])) return;
     _items[index] = _items[index].copyWith(read: true);
+    _dirtyIds.add(id);
     notifyListeners();
     // ignore: unawaited_futures
     _persist();
@@ -119,8 +168,9 @@ class LocalNotificationStore extends ChangeNotifier {
   void markAllRead() {
     var changed = false;
     for (var i = 0; i < _items.length; i++) {
-      if (!_items[i].read) {
+      if (_isVisible(_items[i]) && !_items[i].read) {
         _items[i] = _items[i].copyWith(read: true);
+        _dirtyIds.add(_items[i].id);
         changed = true;
       }
     }
@@ -131,23 +181,18 @@ class LocalNotificationStore extends ChangeNotifier {
   }
 
   void clearAll() {
-    if (_items.isEmpty) return;
-    _items.clear();
+    final removed = _items.where(_isVisible).toList(growable: false);
+    if (removed.isEmpty) return;
+    _dirtyIds.addAll(removed.map((item) => item.id));
+    _items.removeWhere(_isVisible);
     notifyListeners();
     // ignore: unawaited_futures
     _persist();
   }
 
   Iterable<LocalNotificationItem> get _visible sync* {
-    for (final e in _items) {
-      if (_activeAccountKey != null) {
-        // Fail-closed: hide unassigned + other accounts.
-        if (e.accountKey != _activeAccountKey) continue;
-      } else {
-        // Signed out: only unassigned local system notes if any.
-        if (e.accountKey != null && e.accountKey!.isNotEmpty) continue;
-      }
-      yield e;
+    for (final item in _items) {
+      if (_isVisible(item)) yield item;
     }
   }
 
