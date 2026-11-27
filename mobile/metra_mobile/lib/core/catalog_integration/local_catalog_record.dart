@@ -221,16 +221,31 @@ class LocalCatalogExportEnvelope {
     final exportedAt = DateTime.tryParse('${map['exportedAt'] ?? ''}');
     final listRaw = map['records'];
     if (exportedAt == null || listRaw is! List) return null;
+
+    // Legacy exports may omit schemaVersion; explicit invalid/future versions fail closed.
+    final schemaRaw = map['schemaVersion'];
+    final schemaVersion = schemaRaw == null
+        ? LocalCatalogRecord.currentSchemaVersion
+        : (schemaRaw is int ? schemaRaw : null);
+    if (schemaVersion == null ||
+        schemaVersion <= 0 ||
+        schemaVersion > LocalCatalogRecord.currentSchemaVersion) {
+      return null;
+    }
+
+    // If a count is declared, it must be valid and match the payload length.
+    final countRaw = map['recordCount'];
+    if (countRaw != null &&
+        (countRaw is! int || countRaw < 0 || countRaw != listRaw.length)) {
+      return null;
+    }
+
     final records = <LocalCatalogRecord>[];
     for (final item in listRaw) {
       final parsed = LocalCatalogRecord.tryParse(item);
-      if (parsed != null) records.add(parsed);
+      if (parsed == null) return null;
+      records.add(parsed);
     }
-    final schemaRaw = map['schemaVersion'];
-    final schemaVersion = schemaRaw is int
-        ? schemaRaw
-        : int.tryParse('${schemaRaw ?? ''}') ??
-            LocalCatalogRecord.currentSchemaVersion;
     return LocalCatalogExportEnvelope(
       exportedAt: exportedAt.toUtc(),
       records: List.unmodifiable(records),

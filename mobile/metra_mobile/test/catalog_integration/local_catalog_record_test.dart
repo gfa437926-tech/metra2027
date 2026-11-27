@@ -121,4 +121,36 @@ void main() {
     expect(LocalCatalogRecord.tryParse(unknownStatus), isNull);
   });
 
+
+  test('export envelope rejects future and malformed explicit schema versions', () {
+    final base = {
+      'kind': 'metra2027.local_catalog_export',
+      'exportedAt': '2026-11-20T00:00:00.000Z',
+      'recordCount': 0,
+      'records': <Object>[],
+    };
+    expect(LocalCatalogExportEnvelope.tryParse({
+      ...base,
+      'schemaVersion': LocalCatalogRecord.currentSchemaVersion + 1,
+    }), isNull);
+    expect(LocalCatalogExportEnvelope.tryParse({
+      ...base,
+      'schemaVersion': 'oops',
+    }), isNull);
+    expect(LocalCatalogExportEnvelope.tryParse({
+      ...base,
+      'schemaVersion': 0,
+    }), isNull);
+  });
+
+  test('export envelope rejects mismatched count and malformed records', () {
+    final base = {
+      'kind': 'metra2027.local_catalog_export',
+      'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
+      'exportedAt': '2026-11-20T00:00:00.000Z',
+      'records': <Object>[{'broken': true}],
+    };
+    expect(LocalCatalogExportEnvelope.tryParse({...base, 'recordCount': 0}), isNull);
+    expect(LocalCatalogExportEnvelope.tryParse({...base, 'recordCount': 1}), isNull);
+  });
 }
