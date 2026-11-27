@@ -88,7 +88,15 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('محطة كلاسيكية'), findsOneWidget);
       expect(find.text('محطة آلية'), findsOneWidget);
-      await tester.tap(find.byTooltip('تفاصيل المحطة').first);
+      await tester.tap(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text('محطة كلاسيكية'),
+            matching: find.byType(Card),
+          ).first,
+          matching: find.byTooltip('تفاصيل المحطة'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.text('الارتفاع عن سطح البحر'), findsOneWidget);
       expect(find.text('1150.0 م'), findsOneWidget);
@@ -235,9 +243,8 @@ void main() {
       expect(find.textContaining('1200.0 م'), findsWidgets);
       expect(find.text('المسافة من المرجع'), findsWidgets);
       // Banner remains after selection; scroll back to prove it is still present.
-      await tester.ensureVisible(
-        find.text('الرصدات اللحظية والنشرات غير متصلة'),
-      );
+      await tester.drag(find.byType(ListView).first, const Offset(0, 900));
+      await tester.pumpAndSettle();
       expect(find.text('الرصدات اللحظية والنشرات غير متصلة'), findsOneWidget);
       expect(find.textContaining('رصد فعلي'), findsOneWidget);
       api.close();
