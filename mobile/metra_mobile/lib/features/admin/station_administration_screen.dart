@@ -31,21 +31,17 @@ bool stationAdminRecordMatchesQuery(
 ) {
   final q = rawQuery.trim().toLowerCase();
   if (q.isEmpty) return true;
-  String first(List<String> keys) {
-    for (final key in keys) {
-      final value = record[key];
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString();
-      }
-    }
-    return '';
-  }
+  String all(List<String> keys) => keys
+      .map((key) => record[key])
+      .where((value) => value != null && value.toString().trim().isNotEmpty)
+      .map((value) => value.toString())
+      .join(' ');
 
   final haystack = [
     stationAdminPersonName(record),
-    first(['role_code', 'requested_role_code', 'role']),
-    first(['status', 'request_status', 'account_status']),
-    first(['phone', 'email', 'user_id', 'id']),
+    all(['role_code', 'requested_role_code', 'role']),
+    all(['status', 'request_status', 'account_status']),
+    all(['phone', 'email', 'user_id', 'id']),
   ].join(' ').toLowerCase();
   return haystack.contains(q);
 }
