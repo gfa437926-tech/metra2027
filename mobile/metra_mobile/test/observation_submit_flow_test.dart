@@ -66,14 +66,17 @@ void main() {
       values: {'x': 1},
     );
     final api = clientWith((request) async {
-      return http.Response(
-        jsonEncode({
-          'isValid': false,
-          'issues': [
-            {'field': 'x', 'message': 'حقل ناقص'},
-          ],
-        }),
+      return http.Response.bytes(
+        utf8.encode(
+          jsonEncode({
+            'isValid': false,
+            'issues': [
+              {'field': 'x', 'message': 'حقل ناقص'},
+            ],
+          }),
+        ),
         200,
+        headers: {'content-type': 'application/json; charset=utf-8'},
       );
     });
     final flow = ObservationSubmitFlow(api: api);
