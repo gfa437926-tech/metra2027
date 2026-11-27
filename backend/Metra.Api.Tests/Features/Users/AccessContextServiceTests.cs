@@ -139,6 +139,37 @@ public sealed class AccessContextServiceTests
     }
 
     [Fact]
+    public async Task Authority_membership_permissions_are_scoped_to_the_authority_id()
+    {
+        var authorityId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        var authorization = new FakeAuthorization(
+            authorityPermission: (id, code) =>
+                id == authorityId && code == "stations.catalogue.review");
+
+        var service = CreateService(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.Contains("authority_memberships"))
+            {
+                var body = JsonSerializer.Serialize(new[]
+                {
+                    new { authority_id = authorityId, role_code = "system_reviewer" }
+                });
+                return JsonOk(body);
+            }
+
+            return JsonOk("[]");
+        }, authorization);
+
+        var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.NotNull(context);
+        var authority = Assert.Single(context!.Authorities);
+        Assert.Equal(authorityId, authority.AuthorityId);
+        Assert.Equal("system_reviewer", authority.RoleCode);
+        Assert.Equal(new[] { "stations.catalogue.review" }, authority.Permissions);
+    }
+
+    [Fact]
     public async Task Assignment_without_any_granted_permission_is_omitted()
     {
         var stationId = Guid.NewGuid();
@@ -198,7 +229,7 @@ public sealed class AccessContextServiceTests
 
     private sealed class FakeAuthorization(
         Func<Guid, string, bool>? stationPermission = null,
-        Func<string, bool>? authorityPermission = null,
+        Func<Guid, string, bool>? authorityPermission = null,
         bool isConfigured = true) : IStationAuthorizationService
     {
         public bool IsConfigured { get; } = isConfigured;
@@ -216,7 +247,7 @@ public sealed class AccessContextServiceTests
         public Task<bool> HasAuthorityPermissionAsync(
             Guid userId, Guid authorityId, string permissionCode,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(authorityPermission?.Invoke(permissionCode) ?? false);
+            Task.FromResult(authorityPermission?.Invoke(authorityId, permissionCode) ?? false);
     }
 
     private sealed class StubHttpClientFactory(
