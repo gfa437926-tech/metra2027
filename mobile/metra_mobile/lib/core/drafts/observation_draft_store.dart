@@ -18,6 +18,7 @@ class ObservationDraftStore extends ChangeNotifier {
   static const _legacyPrefsKey = 'metra2027.observation_drafts.v1';
 
   final Map<String, ObservationDraft> _drafts = {};
+  final Set<String> _dirtyKeys = <String>{};
   bool _loaded = false;
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
@@ -73,7 +74,7 @@ class ObservationDraftStore extends ChangeNotifier {
                   draft.formType,
                   accountKey: draft.accountKey,
                 );
-                _drafts[mapKey] = draft;
+                if (!_dirtyKeys.contains(mapKey)) _drafts[mapKey] = draft;
               } else {
                 _diskTrusted = false;
               }
@@ -93,9 +94,11 @@ class ObservationDraftStore extends ChangeNotifier {
     }
   }
 
-  Future<void> _persist() {
-    // A failed or partial load must never overwrite data that could not be read.
-    if (!_diskTrusted) return Future<void>.value();
+  Future<void> _persist() async {
+    // Resolve the existing disk snapshot before writing, otherwise a save
+    // issued during startup could replace drafts that have not been loaded.
+    await ensureLoaded();
+    if (!_diskTrusted) return;
 
     final generation = ++_writeGeneration;
     final payload = <String, Object?>{};
@@ -113,6 +116,7 @@ class ObservationDraftStore extends ChangeNotifier {
         if (generation != _writeGeneration) return;
         await prefs.setString(_prefsKey, encoded);
         if (generation != _writeGeneration) return;
+        _dirtyKeys.clear();
         if (lastPersistError != null) {
           lastPersistError = null;
           notifyListeners();
@@ -125,7 +129,7 @@ class ObservationDraftStore extends ChangeNotifier {
       }
     });
     _persistTail = operation;
-    return operation;
+    await operation;
   }
 
   ObservationDraft? get(String stationId, String formType) {
@@ -152,6 +156,7 @@ class ObservationDraftStore extends ChangeNotifier {
       sanitized[entry.key] = entry.value;
     }
     final key = keyFor(stationId, formType, accountKey: _activeAccountKey);
+    _dirtyKeys.add(key);
     if (sanitized.isEmpty) {
       if (_drafts.remove(key) != null) {
         notifyListeners();
@@ -174,10 +179,9 @@ class ObservationDraftStore extends ChangeNotifier {
 
   void clear(String stationId, String formType) {
     if (stationId.trim().isEmpty || formType.trim().isEmpty) return;
-    if (_drafts.remove(
-          keyFor(stationId, formType, accountKey: _activeAccountKey),
-        ) !=
-        null) {
+    final key = keyFor(stationId, formType, accountKey: _activeAccountKey);
+    if (_drafts.remove(key) != null) {
+      _dirtyKeys.add(key);
       notifyListeners();
       // ignore: unawaited_futures
       _persist();
@@ -190,8 +194,10 @@ class ObservationDraftStore extends ChangeNotifier {
     final before = _drafts.length;
     _drafts.removeWhere((key, draft) {
       if (draft.stationId != id) return false;
-      if (_activeAccountKey == null) return true;
-      return draft.accountKey == _activeAccountKey;
+      final matchesAccount = _activeAccountKey == null ||
+          draft.accountKey == _activeAccountKey;
+      if (matchesAccount) _dirtyKeys.add(key);
+      return matchesAccount;
     });
     if (_drafts.length != before) {
       notifyListeners();
@@ -215,6 +221,7 @@ class ObservationDraftStore extends ChangeNotifier {
 
   void clearAll({bool persist = false}) {
     if (_drafts.isEmpty) return;
+    _dirtyKeys.addAll(_drafts.keys);
     _drafts.clear();
     notifyListeners();
     if (persist) {
@@ -288,6 +295,7 @@ class ObservationDraftStore extends ChangeNotifier {
     final claimedKey = keyFor(stationId, formType, accountKey: account);
     if (_drafts.containsKey(claimedKey)) return false; // no overwrite
     _drafts.remove(legacyKey);
+    _dirtyKeys.addAll([legacyKey, claimedKey]);
     _drafts[claimedKey] = ObservationDraft(
       stationId: draft.stationId,
       formType: draft.formType,
