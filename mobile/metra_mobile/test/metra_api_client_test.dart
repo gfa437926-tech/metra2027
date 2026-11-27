@@ -191,6 +191,18 @@ void main() {
     client.close();
   });
 
+  test('review queue rejects null and scalar rows without leaking cast errors', () async {
+    for (final body in ['[null]', '[42]', '["row"]']) {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async => http.Response(body, 200)),
+      );
+      await expectLater(client.getReviewQueue(stationId), throwsFormatException);
+      client.close();
+    }
+  });
+
   test('review queue rejects rows that are not submitted records', () async {
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
