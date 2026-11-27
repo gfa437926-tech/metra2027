@@ -731,6 +731,9 @@ class MetraApiClient {
     final stationsRaw = map['stations'];
     final stationPermissions = <String, Set<String>>{};
     final stationRoles = <String, String>{};
+    final authoritiesRaw = map['authorities'];
+    final authorityPermissions = <String, Set<String>>{};
+    final authorityRoles = <String, String>{};
     if (stationsRaw is List) {
       for (final item in stationsRaw) {
         if (item is! Map) continue;
@@ -754,11 +757,32 @@ class MetraApiClient {
         stationPermissions[stationId.trim()] = perms;
       }
     }
+    if (authoritiesRaw is List) {
+      for (final item in authoritiesRaw) {
+        if (item is! Map) continue;
+        final row = Map<String, dynamic>.from(item);
+        final id = row['authorityId']?.toString() ?? row['authority_id']?.toString() ?? '';
+        if (id.trim().isEmpty) continue;
+        final role = row['roleCode']?.toString() ?? row['role_code']?.toString();
+        if (role != null && role.trim().isNotEmpty) authorityRoles[id.trim()] = role.trim();
+        final permissions = <String>{};
+        final raw = row['permissions'];
+        if (raw is List) {
+          for (final p in raw) {
+            final code = p?.toString().trim() ?? '';
+            if (code.isNotEmpty) permissions.add(code);
+          }
+        }
+        authorityPermissions[id.trim()] = permissions;
+      }
+    }
     return MetraAccessContext.resolved(
       userId: userId,
       accountState: accountState,
       stationPermissions: stationPermissions,
       stationRoles: stationRoles,
+      authorityPermissions: authorityPermissions,
+      authorityRoles: authorityRoles,
     );
   }
 
