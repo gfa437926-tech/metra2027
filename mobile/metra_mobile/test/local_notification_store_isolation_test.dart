@@ -135,4 +135,34 @@ void main() {
     expect((rows.single as Map<String, dynamic>)['id'], 'early-clear-b');
   });
 
+  test('notification added before initial load deduplicates persisted source', () async {
+    final existing = LocalNotificationItem(
+      id: 'persisted-source-event',
+      titleAr: 'حدث محفوظ',
+      bodyAr: 'إشعار سابق',
+      createdAt: DateTime.now().toUtc().subtract(const Duration(seconds: 20)),
+      category: 'observation',
+      sourceKey: 'observation-duplicate-1',
+      accountKey: 'account-a',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1': jsonEncode([existing.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    store.add(
+      titleAr: 'حدث جديد',
+      bodyAr: 'نفس مصدر الحدث',
+      category: 'observation',
+      sourceKey: 'observation-duplicate-1',
+    );
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.items, hasLength(1));
+    expect(store.items.single.id, isNot('persisted-source-event'));
+    expect(store.items.single.titleAr, 'حدث جديد');
+  });
+
 }
