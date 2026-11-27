@@ -63,6 +63,34 @@ public sealed class SupabaseRegistrationReviewServiceTests
     }
 
     [Fact]
+    public async Task Queue_fails_closed_when_rpc_returns_non_array_json()
+    {
+        var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\\"unexpected\\":true}", System.Text.Encoding.UTF8, "application/json")
+        });
+
+        var result = await service.GetPendingForStationAsync(
+            Guid.NewGuid(), "pending_station_approval", 20, Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task Audit_fails_closed_when_rpc_returns_non_array_json()
+    {
+        var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\\"unexpected\\":true}", System.Text.Encoding.UTF8, "application/json")
+        });
+
+        var result = await service.GetAuditForStationAsync(
+            Guid.NewGuid(), 25, Guid.NewGuid(), false, CancellationToken.None);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
     public async Task System_queue_fails_closed_without_actor_identity()
     {
         var service = CreateService(_ => throw new InvalidOperationException("RPC must not be called"));
