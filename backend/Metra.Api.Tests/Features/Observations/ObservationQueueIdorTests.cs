@@ -84,6 +84,23 @@ public sealed class ObservationQueueIdorTests : IClassFixture<WebApplicationFact
     }
 
     [Fact]
+    public async Task Non_array_queue_payload_is_rejected_as_unavailable()
+    {
+        var queue = new RecordingQueueService
+        {
+            Next = JsonDocument.Parse("{\\"unexpected\\":true}").RootElement.Clone()
+        };
+        var auth = new ConfigurableAuthorizationService();
+        auth.Allowed[(UserId, StationId, "observation.review")] = true;
+
+        using var client = CreateClient(auth, queue);
+        using var response = await client.GetAsync($"/api/v1/stations/{StationId}/observations");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Single(queue.Calls);
+    }
+
+    [Fact]
     public async Task Invalid_limit_is_rejected_before_queue_service()
     {
         var queue = new RecordingQueueService();
