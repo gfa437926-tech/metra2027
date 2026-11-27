@@ -24,6 +24,7 @@ class LocalNotificationStore extends ChangeNotifier {
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
   final Set<String> _dirtyIds = <String>{};
+  final List<String?> _pendingClearAccountKeys = <String?>[];
   int _writeGeneration = 0;
   bool _diskTrusted = true;
   String? _activeAccountKey;
@@ -86,7 +87,22 @@ class LocalNotificationStore extends ChangeNotifier {
     } finally {
       _loaded = true;
       _loading = false;
+      var clearedAny = false;
+      for (final accountKey in _pendingClearAccountKeys) {
+        final removed = _items
+            .where((item) => _isVisibleForAccount(item, accountKey))
+            .toList(growable: false);
+        if (removed.isEmpty) continue;
+        _dirtyIds.addAll(removed.map((item) => item.id));
+        _items.removeWhere((item) => _isVisibleForAccount(item, accountKey));
+        clearedAny = true;
+      }
+      _pendingClearAccountKeys.clear();
       notifyListeners();
+      if (clearedAny && _diskTrusted) {
+        // ignore: unawaited_futures
+        _persist();
+      }
     }
   }
 
@@ -114,12 +130,13 @@ class LocalNotificationStore extends ChangeNotifier {
   @visibleForTesting
   Future<void> flushForTesting() => _persist();
 
-  bool _isVisible(LocalNotificationItem item) {
-    if (_activeAccountKey != null) {
-      return item.accountKey == _activeAccountKey;
-    }
+  bool _isVisibleForAccount(LocalNotificationItem item, String? accountKey) {
+    if (accountKey != null) return item.accountKey == accountKey;
     return item.accountKey == null || item.accountKey!.isEmpty;
   }
+
+  bool _isVisible(LocalNotificationItem item) =>
+      _isVisibleForAccount(item, _activeAccountKey);
 
   void add({
     required String titleAr,
@@ -183,6 +200,14 @@ class LocalNotificationStore extends ChangeNotifier {
   }
 
   void clearAll() {
+    if (!_loaded) {
+      // Preserve the intent across the initial disk read; otherwise old
+      // notifications can reappear after an early clear action.
+      _pendingClearAccountKeys.add(_activeAccountKey);
+      // ignore: unawaited_futures
+      ensureLoaded();
+      return;
+    }
     final removed = _items.where(_isVisible).toList(growable: false);
     if (removed.isEmpty) return;
     _dirtyIds.addAll(removed.map((item) => item.id));
