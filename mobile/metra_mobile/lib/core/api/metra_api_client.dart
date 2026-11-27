@@ -295,7 +295,7 @@ class MetraApiClient {
       '/api/v1/stations/${Uri.encodeComponent(stationId)}/observations?limit=$limit',
     );
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) {
+    if (decoded is! List || decoded.any((item) => item is! Map)) {
       throw const FormatException('invalid_observation_queue');
     }
     return decoded
@@ -531,7 +531,10 @@ class MetraApiClient {
     final response = await _send('GET', path);
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw FormatException(errorCode);
-    if (decoded.any((item) => item is! Map)) {
+    if (decoded.any(
+      (item) =>
+          item is! Map || item.keys.any((key) => key is! String),
+    )) {
       throw FormatException(errorCode);
     }
     return decoded
