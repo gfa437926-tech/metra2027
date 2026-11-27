@@ -890,6 +890,10 @@ class MetraApiClient {
           .timeout(_requestTimeout);
     } on TimeoutException {
       throw const MetraApiException(0, 'timeout');
+    } on http.ClientException {
+      throw const MetraApiException(0, 'network_unavailable');
+    } on Exception {
+      throw const MetraApiException(0, 'network_unavailable');
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw MetraApiException(response.statusCode, 'request_failed');
