@@ -99,12 +99,16 @@ class LocalCatalogRecord {
     if (matchingStatuses.isEmpty) return null;
     final status = matchingStatuses.first;
     final schemaRaw = map['schemaVersion'];
-    final schemaVersion = schemaRaw is int
-        ? schemaRaw
-        : int.tryParse('${schemaRaw ?? ''}') ?? currentSchemaVersion;
-    // A newer schema must remain untouched until an explicit migration exists.
-    // Treating it as v1 could silently discard fields on the next local write.
-    if (schemaVersion > currentSchemaVersion) return null;
+    final schemaVersion = schemaRaw == null
+        ? currentSchemaVersion
+        : (schemaRaw is int ? schemaRaw : null);
+    // Explicit malformed, zero, negative, or future schemas fail closed.
+    // Treating an invalid version as v1 could silently discard fields.
+    if (schemaVersion == null ||
+        schemaVersion <= 0 ||
+        schemaVersion > currentSchemaVersion) {
+      return null;
+    }
     final accountKey = map['accountKey']?.toString().trim();
     return LocalCatalogRecord(
       id: id,

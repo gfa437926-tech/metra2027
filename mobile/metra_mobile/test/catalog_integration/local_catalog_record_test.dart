@@ -107,6 +107,21 @@ void main() {
     expect(LocalCatalogRecord.tryParse(futureRecord), isNull);
   });
 
+  test('tryParse rejects malformed and nonpositive explicit schema versions', () {
+    final base = {
+      'id': 'bad-schema',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'values': {'rainAmount': 8},
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'localSaved',
+    };
+    expect(LocalCatalogRecord.tryParse({...base, 'schemaVersion': 'oops'}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'schemaVersion': 0}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'schemaVersion': -1}), isNull);
+  });
+
   test('tryParse rejects unknown lifecycle states instead of relabeling them', () {
     final unknownStatus = {
       'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
