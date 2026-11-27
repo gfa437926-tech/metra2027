@@ -118,6 +118,8 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           skipped++;
           payloadTrusted = false;
         } else {
+          // JSON null is syntactically valid but not a valid store payload.
+          skipped++;
           payloadTrusted = false;
         }
         _diskTrusted = payloadTrusted;
