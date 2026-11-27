@@ -321,7 +321,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   /// Returns null if missing, already owned by someone else, or account empty.
   LocalCatalogRecord? claimToAccount(String id, String accountKey) {
     final account = accountKey.trim();
-    if (account.isEmpty) return null;
+    if (account.isEmpty || _activeAccountKey != account) return null;
     final current = _byId[id];
     if (current == null) return null;
     if (current.accountKey != null && current.accountKey!.isNotEmpty) {
