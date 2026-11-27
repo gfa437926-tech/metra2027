@@ -598,24 +598,32 @@ class MetraApiClient {
       throw const FormatException('invalid_observation_validation_response');
     }
     final map = Map<String, dynamic>.from(decoded);
+    final isValid = map['isValid'];
     final rawIssues = map['issues'];
-    final issues = rawIssues is List
-        ? rawIssues
-              .whereType<Map>()
-              .map(
-                (item) {
-                  final row = Map<String, dynamic>.from(item);
-                  return MetraValidationIssue(
-                    field: row['field']?.toString() ?? '',
-                    message: row['message']?.toString() ?? 'قيمة غير صالحة',
-                  );
-                },
-              )
-              .toList(growable: false)
-        : const <MetraValidationIssue>[];
+    if (isValid is! bool || rawIssues is! List) {
+      throw const FormatException('invalid_observation_validation_response');
+    }
+
+    final issues = <MetraValidationIssue>[];
+    for (final item in rawIssues) {
+      if (item is! Map) {
+        throw const FormatException('invalid_observation_validation_issue');
+      }
+      final row = Map<String, dynamic>.from(item);
+      final field = row['field'];
+      final message = row['message'];
+      if (field is! String ||
+          field.trim().isEmpty ||
+          message is! String ||
+          message.trim().isEmpty) {
+        throw const FormatException('invalid_observation_validation_issue');
+      }
+      issues.add(MetraValidationIssue(field: field, message: message));
+    }
+
     return MetraObservationValidation(
-      isValid: map['isValid'] == true,
-      issues: issues,
+      isValid: isValid,
+      issues: List<MetraValidationIssue>.unmodifiable(issues),
     );
   }
 
