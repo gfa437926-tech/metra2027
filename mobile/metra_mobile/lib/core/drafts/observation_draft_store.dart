@@ -12,6 +12,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ObservationDraftStore extends ChangeNotifier {
   ObservationDraftStore._();
 
+  @visibleForTesting
+  ObservationDraftStore.forTesting() : this._();
+
   static final ObservationDraftStore instance = ObservationDraftStore._();
 
   static const _prefsKey = 'metra2027.observation_drafts.v2';
