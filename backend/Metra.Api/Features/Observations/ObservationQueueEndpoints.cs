@@ -46,8 +46,12 @@ public sealed class SupabaseObservationQueueService(
             if (!response.IsSuccessStatusCode)
                 return null;
 
-            return await response.Content.ReadFromJsonAsync<JsonElement>(
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>(
                 cancellationToken: cancellationToken);
+
+            // PostgREST returns a JSON array for this table query. Treat any other
+            // successful JSON shape as an upstream contract failure, not an empty queue.
+            return data.ValueKind == JsonValueKind.Array ? data : null;
         }
         catch (HttpRequestException)
         {
@@ -111,7 +115,7 @@ public static class ObservationQueueEndpoints
                     return Results.Forbid();
 
                 var data = await queue.GetSubmittedAsync(stationId, take, cancellationToken);
-                if (data is null)
+                if (data is null || data.Value.ValueKind != JsonValueKind.Array)
                     return Results.Problem(title: "Observation queue read failed",
                         statusCode: StatusCodes.Status503ServiceUnavailable);
 
