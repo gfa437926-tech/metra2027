@@ -22,6 +22,9 @@ class LocalCatalogLoadReport {
 class LocalCatalogRecordStore extends ChangeNotifier {
   LocalCatalogRecordStore._();
 
+  @visibleForTesting
+  LocalCatalogRecordStore.forTesting();
+
   static final LocalCatalogRecordStore instance = LocalCatalogRecordStore._();
 
   static const _prefsKey = 'metra2027.local_catalog_records.v1';
@@ -164,6 +167,9 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     return write;
   }
 
+  @visibleForTesting
+  Future<void> flushForTesting() => _persist();
+
   /// Create or update by stable [id]. Empty id creates a new record.
   LocalCatalogRecord upsert({
     String? id,
@@ -233,6 +239,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     if (current.status != LocalCatalogRecordStatus.localArchived) {
       return false;
     }
+    _dirtyIds.add(id);
     _byId[id] = current.copyWith(
       status: LocalCatalogRecordStatus.localSaved,
       updatedAt: DateTime.now().toUtc(),
