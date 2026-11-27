@@ -126,12 +126,16 @@ public sealed class SupabaseStationDirectoryService(
             : "or=" + Uri.EscapeDataString("(" + string.Join(",", filters) + ")");
         var rows = new List<JsonElement>();
 
-        for (var offset = 0; offset < MaximumCatalogueRows; offset += PageSize)
+        // Read the catalogue in bounded pages, then probe one row beyond the
+        // cap. An exact 10,000-row scope is valid; only a non-empty probe means
+        // the result exceeds the supported maximum.
+        for (var offset = 0; offset <= MaximumCatalogueRows; offset += PageSize)
         {
+            var pageLimit = offset == MaximumCatalogueRows ? 1 : PageSize;
             var query = BuildStationSelect() +
                         "&is_demo=eq.false&station_coordinates.valid_to=is.null&" +
                         scopeFilter +
-                        "&order=name_ar.asc&limit=" + PageSize + "&offset=" + offset;
+                        "&order=name_ar.asc&limit=" + pageLimit + "&offset=" + offset;
             if (!string.IsNullOrWhiteSpace(stationType))
                 query += "&station_type=eq." + Uri.EscapeDataString(stationType);
 
@@ -140,15 +144,15 @@ public sealed class SupabaseStationDirectoryService(
                 return null;
 
             var pageRows = page.Value.EnumerateArray().Select(row => row.Clone()).ToArray();
-            rows.AddRange(pageRows);
-            if (pageRows.Length < PageSize)
-                return ToJsonArray(rows);
+            if (offset == MaximumCatalogueRows)
+                return pageRows.Length == 0 ? ToJsonArray(rows) : null;
 
-            if (rows.Count >= MaximumCatalogueRows)
-                return null;
+            rows.AddRange(pageRows);
+            if (pageRows.Length < pageLimit)
+                return ToJsonArray(rows);
         }
 
-        return ToJsonArray(rows);
+        return null;
     }
 
     private async Task<JsonElement?> GetRowsAsync(string path, CancellationToken cancellationToken)

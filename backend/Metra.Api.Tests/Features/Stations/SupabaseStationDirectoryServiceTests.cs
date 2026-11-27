@@ -59,6 +59,57 @@ public sealed class SupabaseStationDirectoryServiceTests
         Assert.Equal(0, rows.Value.GetArrayLength());
     }
 
+    [Fact]
+    public async Task Exact_maximum_catalogue_scope_is_accepted_after_empty_overflow_probe()
+    {
+        var requestCount = 0;
+        var handler = new StubHandler(request =>
+        {
+            requestCount++;
+            var query = request.RequestUri!.Query;
+            if (query.Contains("offset=10000", StringComparison.Ordinal))
+            {
+                Assert.Contains("limit=1", query, StringComparison.Ordinal);
+                return JsonResponse("[]");
+            }
+
+            return JsonResponse("[" + string.Join(",", Enumerable.Repeat("{}", 500)) + "]");
+        });
+        var service = CreateService(handler);
+
+        var rows = await service.GetStationsByScopeAsync(
+            Array.Empty<Guid>(), new[] { Guid.NewGuid() }, null, CancellationToken.None);
+
+        Assert.NotNull(rows);
+        Assert.Equal(10_000, rows!.Value.GetArrayLength());
+        Assert.Equal(21, requestCount);
+    }
+
+    [Fact]
+    public async Task Catalogue_scope_over_limit_fails_closed_when_overflow_probe_finds_a_row()
+    {
+        var requestCount = 0;
+        var handler = new StubHandler(request =>
+        {
+            requestCount++;
+            var query = request.RequestUri!.Query;
+            if (query.Contains("offset=10000", StringComparison.Ordinal))
+            {
+                Assert.Contains("limit=1", query, StringComparison.Ordinal);
+                return JsonResponse("[{}]");
+            }
+
+            return JsonResponse("[" + string.Join(",", Enumerable.Repeat("{}", 500)) + "]");
+        });
+        var service = CreateService(handler);
+
+        var rows = await service.GetStationsByScopeAsync(
+            Array.Empty<Guid>(), new[] { Guid.NewGuid() }, null, CancellationToken.None);
+
+        Assert.Null(rows);
+        Assert.Equal(21, requestCount);
+    }
+
     private static SupabaseStationDirectoryService CreateService(HttpMessageHandler handler)
     {
         var configuration = new ConfigurationBuilder()
