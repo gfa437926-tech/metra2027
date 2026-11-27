@@ -86,4 +86,29 @@ void main() {
     expect(store.draftsForStation('station-clear-all'), isEmpty);
   });
 
+  test('clear all before initial load removes the persisted snapshot', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear-everything',
+      formType: 'daily',
+      values: const {'rainfall': 8},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear-everything::daily': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clearAll(persist: true);
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.draftCount, 0);
+  });
+
 }
