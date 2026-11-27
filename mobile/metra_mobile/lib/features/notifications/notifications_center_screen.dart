@@ -19,13 +19,16 @@ class NotificationsCenterScreen extends StatefulWidget {
 
 class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
   String _filter = 'all';
-  bool _loading = true;
+  bool _loading = false;
 
   @override
   void initState() {
     super.initState();
     NotificationPreferencesStore.instance.addListener(_onChanged);
     LocalNotificationStore.instance.addListener(_onChanged);
+    // Never block the first frame on storage; empty local list is correct
+    // until ensureLoaded finishes and notifies listeners.
+    _loading = false;
     _bootstrap();
   }
 
@@ -114,7 +117,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   onSelected: (_) => _setFilter('all'),
                 ),
                 ChoiceChip(
-                  label: Text('غير مقروء ($unread)'),
+                  label: Text(unread == 0 ? 'غير مقروء' : 'غير مقروء ($unread)'),
                   selected: _filter == 'unread',
                   onSelected: (_) => _setFilter('unread'),
                 ),
