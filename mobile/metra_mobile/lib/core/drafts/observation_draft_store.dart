@@ -26,6 +26,8 @@ class ObservationDraftStore extends ChangeNotifier {
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
   int _writeGeneration = 0;
+  DateTime? _pendingClearAllBefore;
+  bool _pendingClearAllPersist = false;
   bool _diskTrusted = true;
   String? _activeAccountKey;
   String? lastPersistError;
@@ -77,7 +79,12 @@ class ObservationDraftStore extends ChangeNotifier {
                   draft.formType,
                   accountKey: draft.accountKey,
                 );
-                if (!_dirtyKeys.contains(mapKey)) _drafts[mapKey] = draft;
+                final clearBefore = _pendingClearAllBefore;
+                if (clearBefore != null && !draft.savedAt.isAfter(clearBefore)) {
+                  _dirtyKeys.add(mapKey);
+                } else if (!_dirtyKeys.contains(mapKey)) {
+                  _drafts[mapKey] = draft;
+                }
               } else {
                 _diskTrusted = false;
               }
@@ -93,7 +100,22 @@ class ObservationDraftStore extends ChangeNotifier {
     } finally {
       _loaded = true;
       _loadFuture = null;
+      final clearBefore = _pendingClearAllBefore;
+      if (clearBefore != null) {
+        _drafts.removeWhere((key, draft) {
+          final shouldClear = !draft.savedAt.isAfter(clearBefore);
+          if (shouldClear) _dirtyKeys.add(key);
+          return shouldClear;
+        });
+        _pendingClearAllBefore = null;
+      }
+      final persistClear = _pendingClearAllPersist;
+      _pendingClearAllPersist = false;
       notifyListeners();
+      if (persistClear && _diskTrusted) {
+        // ignore: unawaited_futures
+        _persist();
+      }
     }
   }
 
@@ -259,6 +281,22 @@ class ObservationDraftStore extends ChangeNotifier {
   }
 
   void clearAll({bool persist = false}) {
+    if (!_loaded) {
+      final requestedAt = DateTime.now().toUtc();
+      _pendingClearAllBefore = requestedAt;
+      _pendingClearAllPersist = _pendingClearAllPersist || persist;
+      final before = _drafts.length;
+      _drafts.removeWhere((key, draft) {
+        final shouldClear = !draft.savedAt.isAfter(requestedAt);
+        if (shouldClear) _dirtyKeys.add(key);
+        return shouldClear;
+      });
+      if (_drafts.length != before) notifyListeners();
+      // The initial load applies the pending clear before any queued write.
+      // ignore: unawaited_futures
+      ensureLoaded();
+      return;
+    }
     if (_drafts.isEmpty) return;
     _dirtyKeys.addAll(_drafts.keys);
     _drafts.clear();
