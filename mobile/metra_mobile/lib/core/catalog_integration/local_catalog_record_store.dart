@@ -30,6 +30,9 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   final Map<String, LocalCatalogRecord> _byId = {};
   bool _loaded = false;
   bool _loading = false;
+  Future<LocalCatalogLoadReport>? _loadFuture;
+  Future<void> _persistTail = Future<void>.value();
+  final Set<String> _dirtyIds = <String>{};
   bool _diskTrusted = true;
   int _lastSkippedCorrupt = 0;
   String? _activeAccountKey;
@@ -49,17 +52,19 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   String? get activeAccountKey => _activeAccountKey;
 
-  Future<LocalCatalogLoadReport> ensureLoaded() async {
+  Future<LocalCatalogLoadReport> ensureLoaded() {
     if (_loaded) {
-      return LocalCatalogLoadReport(
-        loaded: _byId.length,
-        skippedCorrupt: _lastSkippedCorrupt,
+      return Future.value(
+        LocalCatalogLoadReport(
+          loaded: _byId.length,
+          skippedCorrupt: _lastSkippedCorrupt,
+        ),
       );
     }
-    if (_loading) {
-      // Wait-free: concurrent callers see eventual notifyListeners.
-      return const LocalCatalogLoadReport(loaded: 0, skippedCorrupt: 0);
-    }
+    return _loadFuture ??= _loadFromDisk();
+  }
+
+  Future<LocalCatalogLoadReport> _loadFromDisk() async {
     _loading = true;
     var skipped = 0;
     try {
@@ -71,7 +76,6 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         try {
           decoded = jsonDecode(raw);
         } catch (_) {
-          // Keep the original bytes intact; never overwrite malformed storage.
           skipped = 1;
           payloadTrusted = false;
         }
@@ -83,7 +87,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
               payloadTrusted = false;
               continue;
             }
-            // Prefer newer updatedAt when duplicate ids appear in payload.
+            if (_dirtyIds.contains(record.id)) continue;
             final existing = _byId[record.id];
             if (existing == null ||
                 record.updatedAt.isAfter(existing.updatedAt)) {
@@ -91,16 +95,16 @@ class LocalCatalogRecordStore extends ChangeNotifier {
             }
           }
         } else if (decoded is Map) {
-          // Legacy single-object mistake: attempt one record recovery.
           final record = LocalCatalogRecord.tryParse(decoded);
           if (record != null) {
-            _byId[record.id] = record;
+            if (!_dirtyIds.contains(record.id)) {
+              _byId[record.id] = record;
+            }
           } else {
             skipped++;
             payloadTrusted = false;
           }
         } else if (decoded != null) {
-          // Unknown JSON shapes are not safe to replace with an empty list.
           skipped++;
           payloadTrusted = false;
         } else {
@@ -122,40 +126,42 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     );
   }
 
-  Future<void> _persist() async {
-    // A partial/corrupt load must never be rewritten: doing so could silently
-    // delete records that could not be decoded. Keep the stored payload intact
-    // until an explicit recovery path is provided.
-    if (!_diskTrusted) return;
+  Future<void> _persist() {
     final generation = ++_writeGeneration;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final payload =
-          _byId.values.map((r) => r.toJson()).toList(growable: false);
-      // Drop stale writers that were scheduled before a newer mutation.
-      if (generation != _writeGeneration) return;
-      await prefs.setString(_prefsKey, jsonEncode(payload));
-      if (generation != _writeGeneration) return;
-      await prefs.setString(
-        _prefsMetaKey,
-        jsonEncode({
-          'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
-          'count': payload.length,
-          'writtenAt': DateTime.now().toUtc().toIso8601String(),
-        }),
-      );
-      if (generation != _writeGeneration) return;
-      _diskTrusted = true;
-      if (lastPersistError != null) {
-        lastPersistError = null;
+    final write = _persistTail.then((_) async {
+      await ensureLoaded();
+      if (!_diskTrusted || generation != _writeGeneration) return;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final payload =
+            _byId.values.map((r) => r.toJson()).toList(growable: false);
+        if (generation != _writeGeneration) return;
+        await prefs.setString(_prefsKey, jsonEncode(payload));
+        if (generation != _writeGeneration) return;
+        await prefs.setString(
+          _prefsMetaKey,
+          jsonEncode({
+            'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
+            'count': payload.length,
+            'writtenAt': DateTime.now().toUtc().toIso8601String(),
+          }),
+        );
+        if (generation != _writeGeneration) return;
+        _dirtyIds.clear();
+        _diskTrusted = true;
+        if (lastPersistError != null) {
+          lastPersistError = null;
+          notifyListeners();
+        }
+      } catch (_) {
+        if (generation != _writeGeneration) return;
+        lastPersistError =
+            'تعذر حفظ السجلات المحلية على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
         notifyListeners();
       }
-    } catch (error) {
-      if (generation != _writeGeneration) return;
-      lastPersistError =
-          'تعذر حفظ السجلات المحلية على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
-      notifyListeners();
-    }
+    });
+    _persistTail = write.catchError((_) {});
+    return write;
   }
 
   /// Create or update by stable [id]. Empty id creates a new record.
@@ -199,6 +205,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       accountKey: resolvedAccount,
     );
     _byId[recordId] = next;
+    _dirtyIds.add(recordId);
     notifyListeners();
     // ignore: unawaited_futures
     _persist();
@@ -208,6 +215,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   bool archive(String id) {
     final current = _byId[id];
     if (current == null) return false;
+    _dirtyIds.add(id);
     _byId[id] = current.copyWith(
       status: LocalCatalogRecordStatus.localArchived,
       updatedAt: DateTime.now().toUtc(),
@@ -237,6 +245,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   bool delete(String id) {
     final removed = _byId.remove(id) != null;
+    if (removed) _dirtyIds.add(id);
     if (removed) {
       notifyListeners();
       // ignore: unawaited_futures
@@ -294,6 +303,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       accountKey: account,
     );
     _byId[id] = claimed;
+    _dirtyIds.add(id);
     notifyListeners();
     // ignore: unawaited_futures
     _persist();
@@ -349,9 +359,11 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         final existing = _byId[record.id];
         if (existing == null) {
           _byId[record.id] = record;
+          _dirtyIds.add(record.id);
           added++;
         } else if (overwriteExisting) {
           _byId[record.id] = record.copyWith(updatedAt: DateTime.now().toUtc());
+          _dirtyIds.add(record.id);
           updated++;
         } else {
           skipped++;
@@ -375,6 +387,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   /// Test helper: wipe memory (and optionally disk).
   Future<void> clearAll({bool persist = false}) async {
+    _dirtyIds.addAll(_byId.keys);
     _byId.clear();
     notifyListeners();
     if (persist) {
