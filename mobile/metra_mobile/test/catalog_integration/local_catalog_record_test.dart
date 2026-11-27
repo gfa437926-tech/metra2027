@@ -190,4 +190,22 @@ void main() {
     expect(parsed, isNotNull);
     expect(parsed!.records, isEmpty);
   });
+  test('tryParse rejects coerced non-string identity and metadata fields', () {
+    final base = {
+      'id': 'strict-types',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'values': <String, Object?>{'rainAmount': 2},
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'localSaved',
+    };
+    expect(LocalCatalogRecord.tryParse({...base, 'id': 42}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'stationId': 42}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'formType': 42}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'createdAt': 42}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'status': 42}), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'accountKey': 42}), isNull);
+  });
+
 }

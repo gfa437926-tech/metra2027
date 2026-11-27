@@ -69,11 +69,16 @@ class LocalCatalogRecord {
     } on TypeError {
       return null;
     }
-    final id = map['id']?.toString().trim();
-    final stationId = map['stationId']?.toString().trim();
-    final formType = map['formType']?.toString().trim().toLowerCase();
-    final createdAt = DateTime.tryParse('${map['createdAt'] ?? ''}');
-    final updatedAt = DateTime.tryParse('${map['updatedAt'] ?? ''}');
+    final idRaw = map['id'];
+    final stationRaw = map['stationId'];
+    final formRaw = map['formType'];
+    final createdRaw = map['createdAt'];
+    final updatedRaw = map['updatedAt'];
+    final id = idRaw is String ? idRaw.trim() : null;
+    final stationId = stationRaw is String ? stationRaw.trim() : null;
+    final formType = formRaw is String ? formRaw.trim().toLowerCase() : null;
+    final createdAt = createdRaw is String ? DateTime.tryParse(createdRaw) : null;
+    final updatedAt = updatedRaw is String ? DateTime.tryParse(updatedRaw) : null;
     if (id == null ||
         id.isEmpty ||
         stationId == null ||
@@ -84,6 +89,8 @@ class LocalCatalogRecord {
         updatedAt == null) {
       return null;
     }
+    final accountRaw = map['accountKey'];
+    if (accountRaw != null && accountRaw is! String) return null;
     final valuesRaw = map['values'];
     if (valuesRaw is! Map) return null;
     final values = <String, Object?>{};
@@ -93,7 +100,9 @@ class LocalCatalogRecord {
       if (key.isEmpty) return null;
       values[key] = entry.value;
     }
-    final statusName = map['status']?.toString() ?? 'localSaved';
+    final statusRaw = map['status'];
+    if (statusRaw != null && statusRaw is! String) return null;
+    final statusName = statusRaw as String? ?? 'localSaved';
     final matchingStatuses = LocalCatalogRecordStatus.values
         .where((s) => s.name == statusName);
     if (matchingStatuses.isEmpty) return null;
@@ -119,7 +128,9 @@ class LocalCatalogRecord {
       updatedAt: updatedAt.toUtc(),
       status: status,
       schemaVersion: schemaVersion <= 0 ? currentSchemaVersion : schemaVersion,
-      accountKey: (accountKey == null || accountKey.isEmpty) ? null : accountKey,
+      accountKey: (accountRaw as String?)?.trim().isNotEmpty == true
+          ? (accountRaw as String).trim()
+          : null,
     );
   }
 }
