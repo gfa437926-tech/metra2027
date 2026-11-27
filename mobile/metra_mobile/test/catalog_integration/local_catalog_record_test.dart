@@ -81,6 +81,14 @@ void main() {
     expect(parsed!.records.single.id, 'e1');
   });
 
+  test('export envelope rejects malformed non-string keys without throwing', () {
+    final malformed = <Object, Object?>{
+      'kind': 'metra2027.local_catalog_export',
+      7: 'unexpected-key',
+    };
+    expect(LocalCatalogExportEnvelope.tryParse(malformed), isNull);
+  });
+
   test('tryParse rejects corrupt payload without throwing', () {
     expect(LocalCatalogRecord.tryParse({'id': 'x'}), isNull);
     expect(LocalCatalogRecord.tryParse(null), isNull);
