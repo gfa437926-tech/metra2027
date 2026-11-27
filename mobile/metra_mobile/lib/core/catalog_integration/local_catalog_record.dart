@@ -97,7 +97,7 @@ class LocalCatalogRecord {
     for (final entry in valuesRaw.entries) {
       if (entry.key is! String) return null;
       final key = (entry.key as String).trim();
-      if (key.isEmpty) return null;
+      if (key.isEmpty || values.containsKey(key)) return null;
       values[key] = entry.value;
     }
     final statusRaw = map['status'];

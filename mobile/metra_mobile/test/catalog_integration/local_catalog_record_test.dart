@@ -208,4 +208,20 @@ void main() {
     expect(LocalCatalogRecord.tryParse({...base, 'accountKey': 42}), isNull);
   });
 
+  test('tryParse rejects value keys that collide after whitespace normalization', () {
+    final malformed = {
+      'id': 'duplicate-value-key',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'values': <String, Object?>{
+        'rainAmount': 2,
+        ' rainAmount ': 9,
+      },
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'localSaved',
+    };
+    expect(LocalCatalogRecord.tryParse(malformed), isNull);
+  });
+
 }
