@@ -162,4 +162,9 @@ void main() {
     expect(ticks, 2);
     store.removeListener(listener);
   });
+  test('rejects malformed draft maps with non-string keys safely', () {
+    final malformed = <Object, Object?>{4: 'invalid-key'};
+    expect(ObservationDraft.tryParse(malformed), isNull);
+  });
+
 }
