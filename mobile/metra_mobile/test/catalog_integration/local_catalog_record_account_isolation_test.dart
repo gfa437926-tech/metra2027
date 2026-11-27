@@ -20,6 +20,7 @@ void main() {
     await store.flushForTesting();
 
     store.setActiveAccountKey('account-b');
+    expect(store.count, 0);
     expect(store.getById('shared-id'), isNull);
     expect(store.list(), isEmpty);
     expect(store.archive('shared-id'), isFalse);
@@ -36,6 +37,7 @@ void main() {
     );
 
     store.setActiveAccountKey('account-a');
+    expect(store.count, 1);
     expect(store.getById('shared-id')?.values['amount'], 12);
     expect(store.list().single.id, 'shared-id');
   });
@@ -55,6 +57,7 @@ void main() {
     await store.flushForTesting();
 
     store.setActiveAccountKey(null);
+    expect(store.count, 0);
     expect(store.getById('private-record'), isNull);
     expect(store.list(), isEmpty);
     expect(store.listUnassigned(), isEmpty);
