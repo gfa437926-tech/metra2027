@@ -79,13 +79,17 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       if (raw != null && raw.isNotEmpty) {
         Object? decoded;
         var payloadTrusted = true;
+        var decodeFailed = false;
         try {
           decoded = jsonDecode(raw);
         } catch (_) {
           skipped = 1;
           payloadTrusted = false;
+          decodeFailed = true;
         }
-        if (decoded is List) {
+        if (decodeFailed) {
+          // The malformed payload was already counted above.
+        } else if (decoded is List) {
           for (final item in decoded) {
             final record = LocalCatalogRecord.tryParse(item);
             if (record == null) {
