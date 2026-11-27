@@ -335,7 +335,6 @@ public sealed class AccessContextServiceTests
                     ["role_code"] = 123
                 };
                 return JsonOk(JsonSerializer.Serialize(new[] { row }));
-                return JsonOk(body);
             }
 
             return JsonOk("[]");
