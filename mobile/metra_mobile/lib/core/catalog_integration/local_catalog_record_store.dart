@@ -394,6 +394,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   /// Test helper: wipe memory (and optionally disk).
   Future<void> clearAll({bool persist = false}) async {
+    await ensureLoaded();
     _dirtyIds.addAll(_byId.keys);
     _byId.clear();
     notifyListeners();
