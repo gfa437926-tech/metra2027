@@ -67,7 +67,7 @@ public sealed class SupabaseRegistrationReviewServiceTests
     {
         var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("{\\"unexpected\\":true}", System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent("{\"unexpected\":true}", System.Text.Encoding.UTF8, "application/json")
         });
 
         var result = await service.GetPendingForStationAsync(
@@ -81,7 +81,7 @@ public sealed class SupabaseRegistrationReviewServiceTests
     {
         var service = CreateService(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("{\\"unexpected\\":true}", System.Text.Encoding.UTF8, "application/json")
+            Content = new StringContent("{\"unexpected\":true}", System.Text.Encoding.UTF8, "application/json")
         });
 
         var result = await service.GetAuditForStationAsync(
