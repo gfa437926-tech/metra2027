@@ -92,6 +92,75 @@ void main() {
     client.close();
   });
 
+
+  test('access context ignores non-string identifiers, roles and permissions', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'typed-contract-token',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({
+          'userId': 'typed-user',
+          'stations': [
+            {
+              'stationId': 123,
+              'roleCode': 7,
+              'permissions': [1, true, 'observation.create'],
+            },
+            {
+              'stationId': 'station-valid',
+              'roleCode': 9,
+              'permissions': [42, 'observation.submit'],
+            },
+          ],
+          'authorities': [
+            {
+              'authorityId': 456,
+              'roleCode': 8,
+              'permissions': [1, 'authority.access.review'],
+            },
+            {
+              'authorityId': 'authority-valid',
+              'roleCode': false,
+              'permissions': [false, 'stations.catalogue.review'],
+            },
+          ],
+        }),
+        200,
+      )),
+    );
+
+    final context = await client.getAccessContext();
+
+    expect(context.stationPermissions, {
+      'station-valid': {'observation.submit'},
+    });
+    expect(context.stationRoles, isEmpty);
+    expect(context.authorityPermissions, {
+      'authority-valid': {'stations.catalogue.review'},
+    });
+    expect(context.authorityRoles, isEmpty);
+    expect(context.hasStationPermission('123', 'observation.create'), isFalse);
+    expect(context.hasAuthorityPermission('456', 'authority.access.review'), isFalse);
+    client.close();
+  });
+
+  test('access context rejects a non-string user identifier', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'invalid-user-token',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({'userId': 123, 'stations': [], 'authorities': []}),
+        200,
+      )),
+    );
+
+    await expectLater(
+      client.getAccessContext(),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
   const stationId = '11111111-1111-4111-8111-111111111111';
   test('review queue authenticates and parses API rows', () async {
     late http.Request captured;
