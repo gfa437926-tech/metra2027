@@ -31,6 +31,9 @@ class MetraAccessContext {
     Map<String, Set<String>> authorityPermissions = const {},
     Map<String, String> authorityRoles = const {},
   }) {
+    if (userId.trim().isEmpty) {
+      throw ArgumentError.value(userId, 'userId', 'must not be blank');
+    }
     final normalized = <String, Set<String>>{};
     for (final entry in stationPermissions.entries) {
       final stationId = entry.key.trim();
