@@ -206,7 +206,12 @@ class LocalCatalogExportEnvelope {
 
   static LocalCatalogExportEnvelope? tryParse(Object? raw) {
     if (raw is! Map) return null;
-    final map = Map<String, dynamic>.from(raw);
+    late final Map<String, dynamic> map;
+    try {
+      map = Map<String, dynamic>.from(raw);
+    } on TypeError {
+      return null;
+    }
     if (map['kind']?.toString() != 'metra2027.local_catalog_export') {
       return null;
     }
