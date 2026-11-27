@@ -173,6 +173,10 @@ class StationDirectoryItem {
         throw const FormatException('invalid_station_directory_item');
       }
     }
+    final wmoStationId = json['wmo_station_id'];
+    if (wmoStationId != null && wmoStationId is! String) {
+      throw const FormatException('invalid_station_directory_item');
+    }
     double? number(dynamic value) =>
         value is num ? value.toDouble() : double.tryParse('$value');
     double? lat, lon;
@@ -194,7 +198,7 @@ class StationDirectoryItem {
       isDemo: json['is_demo'] == true,
       latitude: lat,
       longitude: lon,
-      wmoStationId: json['wmo_station_id'] as String?,
+      wmoStationId: wmoStationId as String?,
       elevationM: number(json['elevation_m']),
       coordinateSource: point?['coordinate_source'] is String
           ? point!['coordinate_source'] as String

@@ -294,6 +294,30 @@ void main() {
     }
   });
 
+  test('station directory rejects a non-string optional WMO station id', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'directory-token',
+      client: MockClient((_) async => http.Response(
+        jsonEncode([
+          {
+            'id': stationId,
+            'local_station_code': 'ST-001',
+            'name_ar': 'محطة اختبار',
+            'name_en': 'Test station',
+            'station_type': 'classic',
+            'operational_status': 'unverified',
+            'approval_status': 'pending',
+            'wmo_station_id': 123,
+          },
+        ]),
+        200,
+      )),
+    );
+    await expectLater(client.getStationDirectory(), throwsFormatException);
+    client.close();
+  });
+
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
     final client = MetraApiClient(
