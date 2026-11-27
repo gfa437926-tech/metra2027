@@ -330,7 +330,7 @@ public sealed class AccessContextServiceTests
         {
             if (request.RequestUri!.AbsolutePath.Contains(table))
             {
-                var row = "{\\\"" + idColumn + "\\\":\\\"" + duplicateId + "\\\",\\\"role_code\\\":\\\"observer\\\"}";
+                var row = "{\"" + idColumn + "\":\"" + duplicateId + "\",\"role_code\":\"observer\"}";
                 var body = $"[{row},{row}]";
                 return JsonOk(body);
             }
