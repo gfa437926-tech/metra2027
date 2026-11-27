@@ -132,6 +132,7 @@ class LocalNotificationStore extends ChangeNotifier {
       final now = DateTime.now().toUtc();
       final dup = _items.any(
         (e) =>
+            e.accountKey == _activeAccountKey &&
             e.sourceKey == sourceKey &&
             now.difference(e.createdAt).inSeconds < 60,
       );
