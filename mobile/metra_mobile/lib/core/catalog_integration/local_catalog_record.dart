@@ -118,7 +118,6 @@ class LocalCatalogRecord {
         schemaVersion > currentSchemaVersion) {
       return null;
     }
-    final accountKey = map['accountKey']?.toString().trim();
     return LocalCatalogRecord(
       id: id,
       stationId: stationId,
