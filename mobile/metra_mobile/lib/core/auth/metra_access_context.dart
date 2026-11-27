@@ -9,6 +9,8 @@ class MetraAccessContext {
     required this.accountState,
     required this.stationPermissions,
     required this.stationRoles,
+    required this.authorityPermissions,
+    required this.authorityRoles,
   });
 
   factory MetraAccessContext.unresolved() => const MetraAccessContext._(
@@ -17,6 +19,8 @@ class MetraAccessContext {
     accountState: null,
     stationPermissions: {},
     stationRoles: {},
+    authorityPermissions: {},
+    authorityRoles: {},
   );
 
   factory MetraAccessContext.resolved({
@@ -24,6 +28,8 @@ class MetraAccessContext {
     String? accountState,
     required Map<String, Set<String>> stationPermissions,
     Map<String, String> stationRoles = const {},
+    Map<String, Set<String>> authorityPermissions = const {},
+    Map<String, String> authorityRoles = const {},
   }) {
     final normalized = <String, Set<String>>{};
     for (final entry in stationPermissions.entries) {
@@ -40,6 +46,20 @@ class MetraAccessContext {
       if (stationId.isEmpty || role.isEmpty) continue;
       roles[stationId] = role;
     }
+    final normalizedAuthorityPermissions = <String, Set<String>>{};
+    for (final entry in authorityPermissions.entries) {
+      final id = entry.key.trim();
+      if (id.isEmpty) continue;
+      normalizedAuthorityPermissions[id] = Set<String>.unmodifiable(
+        entry.value.where((code) => code.trim().isNotEmpty).toSet(),
+      );
+    }
+    final normalizedAuthorityRoles = <String, String>{};
+    for (final entry in authorityRoles.entries) {
+      final id = entry.key.trim();
+      final role = entry.value.trim();
+      if (id.isNotEmpty && role.isNotEmpty) normalizedAuthorityRoles[id] = role;
+    }
     return MetraAccessContext._(
       isResolved: true,
       userId: userId.trim().isEmpty ? null : userId.trim(),
@@ -48,6 +68,8 @@ class MetraAccessContext {
           : accountState?.trim(),
       stationPermissions: Map<String, Set<String>>.unmodifiable(normalized),
       stationRoles: Map<String, String>.unmodifiable(roles),
+      authorityPermissions: Map<String, Set<String>>.unmodifiable(normalizedAuthorityPermissions),
+      authorityRoles: Map<String, String>.unmodifiable(normalizedAuthorityRoles),
     );
   }
 
@@ -56,6 +78,16 @@ class MetraAccessContext {
   final String? accountState;
   final Map<String, Set<String>> stationPermissions;
   final Map<String, String> stationRoles;
+  final Map<String, Set<String>> authorityPermissions;
+  final Map<String, String> authorityRoles;
+
+  bool hasAuthorityPermission(String authorityId, String permissionCode) {
+    if (!isResolved) return false;
+    final id = authorityId.trim();
+    final code = permissionCode.trim();
+    if (id.isEmpty || code.isEmpty) return false;
+    return authorityPermissions[id]?.contains(code) ?? false;
+  }
 
   /// accountState is informational only; never treat "unknown" as active.
   bool get hasKnownActiveAccount =>
