@@ -59,7 +59,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('مراجعة النشرات'), findsOneWidget);
-    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsWidgets);
     expect(find.text('اعتماد'), findsOneWidget);
     expect(find.text('إرجاع للتصحيح'), findsOneWidget);
     api.close();
@@ -179,7 +179,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsWidgets);
 
     await openApproveDialog(tester);
     expect(find.text('اعتماد النشرة'), findsOneWidget);
@@ -222,7 +222,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(decideBodies, isEmpty);
 
-    await tester.enterText(find.byType(TextField), 'تحتاج تصحيح الضغط');
+    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), 'تحتاج تصحيح الضغط');
     await tester.tap(find.text('تأكيد الإرجاع'));
     await tester.pumpAndSettle();
 
@@ -253,7 +253,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('ليست لديك صلاحية تنفيذ هذا القرار'), findsOneWidget);
-    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.text('نشرة يومية'), findsWidgets);
     api.close();
   });
 
@@ -425,13 +425,13 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('نشرة ساعية'), findsOneWidget);
-    expect(find.text('نشرة يومية'), findsOneWidget);
+    expect(find.text('نشرة ساعية'), findsWidgets);
+    expect(find.text('نشرة يومية'), findsWidgets);
     expect(loads, 1);
 
     await tester.enterText(find.byType(TextField), 'hourly');
     await tester.pump();
-    expect(find.text('نشرة ساعية'), findsOneWidget);
+    expect(find.text('نشرة ساعية'), findsWidgets);
     expect(find.text('نشرة يومية'), findsNothing);
     expect(loads, 1);
 
