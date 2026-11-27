@@ -71,4 +71,31 @@ void main() {
     expect(store.isLoaded, isTrue);
     expect(store.isLoading, isFalse);
   });
+
+  test('same source event is deduplicated only within its account', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalNotificationStore.forTesting();
+    await store.ensureLoaded();
+
+    store.setActiveAccountKey('account-a');
+    store.add(
+      titleAr: 'حدث أ',
+      bodyAr: 'المصدر نفسه',
+      category: 'observation',
+      sourceKey: 'observation-123',
+    );
+    store.setActiveAccountKey('account-b');
+    store.add(
+      titleAr: 'حدث ب',
+      bodyAr: 'المصدر نفسه',
+      category: 'observation',
+      sourceKey: 'observation-123',
+    );
+
+    expect(store.items, hasLength(1));
+    expect(store.items.single.accountKey, 'account-b');
+    store.setActiveAccountKey('account-a');
+    expect(store.items, hasLength(1));
+    expect(store.items.single.accountKey, 'account-a');
+  });
 }
