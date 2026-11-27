@@ -43,6 +43,37 @@ void main() {
     expect(ids, containsAll(['station-old::rainfall', added.id]));
   });
 
+  test('legacy single-record payload does not replace a newer imported record', () async {
+    final diskRecord = LocalCatalogRecord(
+      id: 'legacy-single-record',
+      stationId: 'station-1',
+      formType: 'rainfall',
+      values: const {'amount': 3},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 20),
+    );
+    final importedRecord = LocalCatalogRecord(
+      id: 'legacy-single-record',
+      stationId: 'station-1',
+      formType: 'rainfall',
+      values: const {'amount': 15},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 27),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_catalog_records.v1': jsonEncode(diskRecord.toJson()),
+    });
+    final store = LocalCatalogRecordStore.forTesting();
+
+    final result = store.importJson(jsonEncode([importedRecord.toJson()]));
+    expect(result['added'], 1);
+
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.getById(importedRecord.id)?.values['amount'], 15);
+  });
+
   test('concurrent initial-load callers await the same completed load', () async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalCatalogRecordStore.forTesting();

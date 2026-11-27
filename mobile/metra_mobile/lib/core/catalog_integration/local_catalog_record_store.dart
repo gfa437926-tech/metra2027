@@ -104,7 +104,11 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           final record = LocalCatalogRecord.tryParse(decoded);
           if (record != null) {
             if (!_dirtyIds.contains(record.id)) {
-              _byId[record.id] = record;
+              final existing = _byId[record.id];
+              if (existing == null ||
+                  record.updatedAt.isAfter(existing.updatedAt)) {
+                _byId[record.id] = record;
+              }
             }
           } else {
             skipped++;
