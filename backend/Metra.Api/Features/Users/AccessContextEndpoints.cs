@@ -234,6 +234,11 @@ public sealed class SupabaseAccessContextService(
                 list.Add((id, role));
             }
 
+            // Duplicate scope identifiers are ambiguous and can cause duplicate
+            // permission probes or duplicate entries in the resolved context.
+            if (list.Select(item => item.Item1).Distinct().Count() != list.Count)
+                return null;
+
             return list;
         }
         catch (HttpRequestException)
