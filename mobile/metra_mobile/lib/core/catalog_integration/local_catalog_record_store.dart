@@ -50,7 +50,10 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   /// Optional account scope applied to new writes (auth user id).
   void setActiveAccountKey(String? key) {
     final next = key?.trim();
-    _activeAccountKey = (next == null || next.isEmpty) ? null : next;
+    final normalized = (next == null || next.isEmpty) ? null : next;
+    if (_activeAccountKey == normalized) return;
+    _activeAccountKey = normalized;
+    notifyListeners();
   }
 
   String? get activeAccountKey => _activeAccountKey;
