@@ -67,11 +67,34 @@ class LocalNotificationStore extends ChangeNotifier {
               }
               if (_dirtyIds.contains(parsed.id)) continue;
               final existingIndex = _items.indexWhere((e) => e.id == parsed.id);
-              if (existingIndex < 0) {
-                _items.add(parsed);
-              } else if (parsed.createdAt.isAfter(_items[existingIndex].createdAt)) {
-                _items[existingIndex] = parsed;
+              if (existingIndex >= 0) {
+                if (parsed.createdAt.isAfter(_items[existingIndex].createdAt)) {
+                  _items[existingIndex] = parsed;
+                }
+                continue;
               }
+              final duplicateSourceIndex = parsed.sourceKey == null ||
+                      parsed.sourceKey!.isEmpty
+                  ? -1
+                  : _items.indexWhere((existing) =>
+                      existing.accountKey == parsed.accountKey &&
+                      existing.sourceKey == parsed.sourceKey &&
+                      parsed.createdAt
+                              .difference(existing.createdAt)
+                              .inSeconds
+                              .abs() <
+                          60);
+              if (duplicateSourceIndex >= 0) {
+                final existing = _items[duplicateSourceIndex];
+                // Keep a newer in-memory event (usually added during load),
+                // otherwise retain the newest persisted event.
+                if (!_dirtyIds.contains(existing.id) &&
+                    parsed.createdAt.isAfter(existing.createdAt)) {
+                  _items[duplicateSourceIndex] = parsed;
+                }
+                continue;
+              }
+              _items.add(parsed);
             }
           } else {
             payloadTrusted = false;
