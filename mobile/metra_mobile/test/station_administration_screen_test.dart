@@ -191,7 +191,7 @@ void main() {
     expect(decisionBodies, isEmpty);
     expect(find.textContaining('سبب الرفض'), findsWidgets);
 
-    await tester.enterText(find.byType(TextField), 'بيانات غير مكتملة');
+    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), 'بيانات غير مكتملة');
     await tester.tap(find.widgetWithText(FilledButton, 'تأكيد'));
     await tester.pumpAndSettle();
     expect(decisionBodies, hasLength(1));
