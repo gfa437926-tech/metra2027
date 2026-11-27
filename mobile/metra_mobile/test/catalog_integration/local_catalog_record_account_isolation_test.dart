@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:metra_mobile/core/catalog_integration/local_catalog_record.dart';
 import 'package:metra_mobile/core/catalog_integration/local_catalog_record_store.dart';
