@@ -242,9 +242,9 @@ class LocalCatalogExportEnvelope {
 
     final records = <LocalCatalogRecord>[];
     for (final item in listRaw) {
+      // Keep valid rows for partial import; store reports rejected rows as corrupt.
       final parsed = LocalCatalogRecord.tryParse(item);
-      if (parsed == null) return null;
-      records.add(parsed);
+      if (parsed != null) records.add(parsed);
     }
     return LocalCatalogExportEnvelope(
       exportedAt: exportedAt.toUtc(),

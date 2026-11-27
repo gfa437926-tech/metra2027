@@ -48,6 +48,7 @@ void main() {
       records: [valid],
     ).toJson();
     envelope['records'] = [valid.toJson(), {'id': 'malformed'}];
+    envelope['recordCount'] = 2;
 
     final result = store.importJson(jsonEncode(envelope));
 
