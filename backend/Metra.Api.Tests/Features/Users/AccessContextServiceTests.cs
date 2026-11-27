@@ -144,7 +144,10 @@ public sealed class AccessContextServiceTests
         var authorityId = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         var authorization = new FakeAuthorization(
             authorityPermission: (id, code) =>
-                id == authorityId && code == "stations.catalogue.review");
+                id == authorityId && code is
+                    "stations.catalogue.review" or
+                    "authority.access.review" or
+                    "authority.access.revoke");
 
         var service = CreateService(request =>
         {
@@ -166,7 +169,14 @@ public sealed class AccessContextServiceTests
         var authority = Assert.Single(context!.Authorities);
         Assert.Equal(authorityId, authority.AuthorityId);
         Assert.Equal("system_reviewer", authority.RoleCode);
-        Assert.Equal(new[] { "stations.catalogue.review" }, authority.Permissions);
+        Assert.Equal(
+            new[]
+            {
+                "stations.catalogue.review",
+                "authority.access.review",
+                "authority.access.revoke"
+            },
+            authority.Permissions);
     }
 
     [Fact]
