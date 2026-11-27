@@ -75,7 +75,11 @@ class ObservationSubmitFlow {
         );
       }
 
-      final fingerprint = jsonEncode(values);
+      final fingerprint = jsonEncode({
+        'formType': formType,
+        'stationId': stationId,
+        'values': values,
+      });
       if (_pendingPayloadFingerprint != fingerprint ||
           _pendingIdempotencyKey == null) {
         _pendingPayloadFingerprint = fingerprint;

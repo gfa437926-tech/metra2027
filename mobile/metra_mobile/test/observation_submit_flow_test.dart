@@ -174,4 +174,43 @@ void main() {
     expect(secondKey, firstKey);
     api.close();
   });
+
+  test('idempotency key is not reused across station or form scope', () async {
+    final keys = <String>[];
+    final api = clientWith((request) async {
+      if (request.url.path.contains('/validate')) {
+        return http.Response(
+          jsonEncode({'isValid': true, 'issues': <Object>[]}),
+          200,
+        );
+      }
+      if (request.url.path.contains('/observations')) {
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        keys.add(
+          body['idempotency_key']?.toString() ??
+              body['idempotencyKey']?.toString() ??
+              '',
+        );
+        return http.Response('gateway timeout', 504);
+      }
+      return http.Response('not found', 404);
+    });
+    final flow = ObservationSubmitFlow(api: api);
+    Future<void> attempt(String type, String station) async {
+      await flow.validateAndSubmit(
+        formType: type,
+        stationId: station,
+        values: const {'temp': 21},
+        successMessageAr: 'تم',
+        validationFallbackAr: 'فشل',
+      );
+    }
+    await attempt('hourly', stationId);
+    await attempt('daily', stationId);
+    await attempt('hourly', '22222222-2222-4222-8222-222222222222');
+    expect(keys, hasLength(3));
+    expect(keys.toSet(), hasLength(3));
+    api.close();
+  });
+
 }
