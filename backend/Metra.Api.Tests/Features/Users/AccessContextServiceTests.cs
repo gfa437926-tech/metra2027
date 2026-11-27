@@ -329,7 +329,12 @@ public sealed class AccessContextServiceTests
         {
             if (request.RequestUri!.AbsolutePath.Contains(table))
             {
-                var body = $"[{{\\"{idColumn}\\":\\"{Guid.NewGuid()}\\",\\"role_code\\":123}}]";
+                var row = new Dictionary<string, object?>
+                {
+                    [idColumn] = Guid.NewGuid(),
+                    ["role_code"] = 123
+                };
+                return JsonOk(JsonSerializer.Serialize(new[] { row }));
                 return JsonOk(body);
             }
 
