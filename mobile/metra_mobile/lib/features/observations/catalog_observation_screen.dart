@@ -2,7 +2,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/catalog_integration/catalog_form_type.dart';
 import '../../core/catalog_integration/catalog_observation_repository.dart';
-import '../../core/catalog_integration/catalog_submission_state.dart';
 import '../../core/catalog_integration/local_catalog_observation_repository.dart';
 import '../../core/catalog_integration/local_catalog_record_store.dart';
 import '../../core/drafts/observation_draft_store.dart';
