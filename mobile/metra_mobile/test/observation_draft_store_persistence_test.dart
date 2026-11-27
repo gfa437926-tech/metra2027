@@ -49,7 +49,7 @@ void main() {
       }),
     });
 
-    final store = ObservationDraftStore.instance;
+    final store = ObservationDraftStore.forTesting();
     store.clear('station-clear', 'hourly');
     await store.ensureLoaded();
     await Future<void>.delayed(const Duration(milliseconds: 20));
