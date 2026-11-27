@@ -420,9 +420,16 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           // Imports must obey the same identity lock as upsert().
           skipped++;
         } else if (overwriteExisting) {
-          _byId[record.id] = record.copyWith(
+          _byId[record.id] = LocalCatalogRecord(
+            id: record.id,
+            stationId: record.stationId,
+            formType: record.formType,
+            values: record.values,
             createdAt: existing.createdAt,
             updatedAt: DateTime.now().toUtc(),
+            status: record.status,
+            schemaVersion: record.schemaVersion,
+            accountKey: record.accountKey,
           );
           _dirtyIds.add(record.id);
           updated++;
