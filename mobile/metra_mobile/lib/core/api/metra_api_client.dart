@@ -242,7 +242,10 @@ class MetraApiClient {
       '/api/v1/stations?limit=$limit&offset=$offset$filter',
     );
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is! List) {
+    if (decoded is! List ||
+        decoded.any(
+          (item) => item is! Map || item.keys.any((key) => key is! String),
+        )) {
       throw const FormatException('invalid_station_directory');
     }
     return decoded
