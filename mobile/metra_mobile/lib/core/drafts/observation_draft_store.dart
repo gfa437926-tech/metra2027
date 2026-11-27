@@ -287,12 +287,28 @@ class ObservationDraftStore extends ChangeNotifier {
   }
 
   static bool _looksLikeSecret(String id) {
-    return id.contains('password') ||
-        id.contains('token') ||
-        id.contains('secret') ||
-        id.contains('apikey') ||
-        id.contains('access_token') ||
-        id.contains('refresh');
+    final normalized = id.trim().toLowerCase().replaceAll('-', '_');
+    if (normalized.isEmpty) return false;
+    const markers = <String>[
+      'password',
+      'token',
+      'secret',
+      'apikey',
+      'api_key',
+      'access_token',
+      'refresh',
+      'session',
+      'jwt',
+      'bearer',
+      'private_key',
+      'privatekey',
+      'credential',
+      'authorization',
+    ];
+    for (final marker in markers) {
+      if (normalized.contains(marker)) return true;
+    }
+    return false;
   }
 
   static bool _isEffectivelyEmpty(Object? value) {
