@@ -75,7 +75,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'القائمة محلية على هذا الجهاز فقط. لا يوجد مصدر إشعارات خادمي متصل.',
+              'وضع عدم الاتصال بالخدمة: القائمة محلية على هذا الجهاز فقط ولا يوجد مصدر إشعارات خادمي متصل.',
               style: TextStyle(color: Color(0xFF64748B), height: 1.4),
             ),
             const SizedBox(height: 12),
@@ -148,10 +148,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             else if (items.isEmpty)
               MetraAsyncStatePanel.empty(
                 icon: Icons.notifications_none,
-                title: 'لا إشعارات محلية',
+                title: 'لا توجد إشعارات',
                 subtitle: _filter == 'unread'
                     ? 'لا يوجد غير مقروء. ستظهر إشعارات عند حفظ سجلات كتالوج محلية.'
-                    : 'لا يوجد مصدر خادمي. الأحداث المحلية فقط تُعرض هنا.',
+                    : _filter == 'read'
+                        ? 'لا يوجد مقروء. الأحداث المحلية فقط تُعرض هنا.'
+                        : 'لا يوجد مصدر خادمي. الأحداث المحلية فقط تُعرض هنا.',
               )
             else
               ...items.map(
