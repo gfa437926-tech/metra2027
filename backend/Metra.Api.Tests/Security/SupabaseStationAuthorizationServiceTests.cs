@@ -56,13 +56,17 @@ public sealed class SupabaseStationAuthorizationServiceTests
     }
 
     [Fact]
-    public async Task Authority_permission_uses_the_station_owner_authority_rpc()
+    public async Task Station_owner_authority_permission_uses_station_id_rpc_argument()
     {
         var service = CreateService(request =>
         {
             Assert.Equal(
                 "/rest/v1/rpc/metra_user_has_station_owner_authority_permission",
                 request.RequestUri!.AbsolutePath);
+            using var body = System.Text.Json.JsonDocument.Parse(
+                request.Content!.ReadAsStringAsync().GetAwaiter().GetResult());
+            Assert.True(body.RootElement.TryGetProperty("p_station_id", out _));
+            Assert.False(body.RootElement.TryGetProperty("p_authority_id", out _));
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("true", System.Text.Encoding.UTF8, "application/json")
