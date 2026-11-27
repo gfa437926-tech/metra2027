@@ -24,7 +24,7 @@ class LocalNotificationStore extends ChangeNotifier {
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
   final Set<String> _dirtyIds = <String>{};
-  final List<String?> _pendingClearAccountKeys = <String?>[];
+  final List<({String? accountKey, DateTime requestedAt})>\n  _pendingClearRequests = [];
   final List<({String? accountKey, DateTime requestedAt})>
   _pendingMarkAllReadRequests = [];
   int _writeGeneration = 0;
@@ -113,16 +113,19 @@ class LocalNotificationStore extends ChangeNotifier {
       _loaded = true;
       _loading = false;
       var clearedAny = false;
-      for (final accountKey in _pendingClearAccountKeys) {
+      for (final request in _pendingClearRequests) {
         final removed = _items
-            .where((item) => _isVisibleForAccount(item, accountKey))
+            .where((item) =>
+                _isVisibleForAccount(item, request.accountKey) &&
+                !item.createdAt.isAfter(request.requestedAt))
             .toList(growable: false);
         if (removed.isEmpty) continue;
         _dirtyIds.addAll(removed.map((item) => item.id));
-        _items.removeWhere((item) => _isVisibleForAccount(item, accountKey));
+        final removedIds = removed.map((item) => item.id).toSet();
+        _items.removeWhere((item) => removedIds.contains(item.id));
         clearedAny = true;
       }
-      _pendingClearAccountKeys.clear();
+      _pendingClearRequests.clear();
       var markedAnyRead = false;
       for (final request in _pendingMarkAllReadRequests) {
         for (var i = 0; i < _items.length; i++) {
@@ -253,7 +256,10 @@ class LocalNotificationStore extends ChangeNotifier {
     if (!_loaded) {
       // Preserve the intent across the initial disk read; otherwise old
       // notifications can reappear after an early clear action.
-      _pendingClearAccountKeys.add(_activeAccountKey);
+      _pendingClearRequests.add((
+        accountKey: _activeAccountKey,
+        requestedAt: DateTime.now().toUtc(),
+      ));
       // ignore: unawaited_futures
       ensureLoaded();
       return;

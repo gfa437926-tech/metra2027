@@ -276,4 +276,40 @@ void main() {
     expect(rows.singleWhere((row) => row['id'] == 'unread-b')['read'], isFalse);
   });
 
+  test('clear before initial load preserves notifications added after the clear request', () async {
+    final existing = LocalNotificationItem(
+      id: 'clear-before-load-existing',
+      titleAr: 'إشعار سابق',
+      bodyAr: 'يجب حذفه',
+      createdAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+      category: 'system',
+      accountKey: 'account-a',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1': jsonEncode([existing.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    store.clearAll();
+    store.add(
+      titleAr: 'إشعار جديد',
+      bodyAr: 'أُضيف بعد طلب المسح',
+      category: 'system',
+    );
+
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.items, hasLength(1));
+    expect(store.items.single.titleAr, 'إشعار جديد');
+    expect(store.items.single.read, isFalse);
+    final prefs = await SharedPreferences.getInstance();
+    final rows = (jsonDecode(
+      prefs.getString('metra2027.local_notifications.v1')!,
+    ) as List).cast<Map<String, dynamic>>();
+    expect(rows, hasLength(1));
+    expect(rows.single['titleAr'], 'إشعار جديد');
+  });
+
 }
