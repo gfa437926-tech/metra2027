@@ -53,6 +53,45 @@ void main() {
     client.close();
   });
 
+  test('access context accepts snake case authority fields and ignores malformed entries', () async {
+    const authorityId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'snake-case-token',
+      client: MockClient((request) async => http.Response(
+        jsonEncode({
+          'user_id': 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+          'account_state': 'unknown',
+          'stations': [
+            null,
+            {'station_id': '', 'permissions': ['observation.create']},
+          ],
+          'authorities': [
+            null,
+            {'authority_id': '', 'permissions': ['authority.access.review']},
+            {
+              'authority_id': authorityId,
+              'role_code': 'system_reviewer',
+              'permissions': ['authority.access.review', '', null],
+            },
+          ],
+        }),
+        200,
+      )),
+    );
+
+    final context = await client.getAccessContext();
+
+    expect(context.userId, 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+    expect(context.accountState, 'unknown');
+    expect(context.authorityRoles[authorityId], 'system_reviewer');
+    expect(context.hasAuthorityPermission(authorityId, 'authority.access.review'), isTrue);
+    expect(context.hasAuthorityPermission('', 'authority.access.review'), isFalse);
+    expect(context.stationPermissions, isEmpty);
+    expect(context.authorityPermissions[authorityId], {'authority.access.review'});
+    client.close();
+  });
+
   const stationId = '11111111-1111-4111-8111-111111111111';
   test('review queue authenticates and parses API rows', () async {
     late http.Request captured;
