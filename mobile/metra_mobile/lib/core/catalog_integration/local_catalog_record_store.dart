@@ -340,6 +340,11 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       if (envelope == null && decoded is! List) {
         return {'added': 0, 'updated': 0, 'skipped': 0, 'corrupt': 1};
       }
+      // Report every malformed row even when other rows import successfully.
+      // Previously mixed valid/invalid lists incorrectly reported zero corrupt.
+      if (envelope == null && decoded is List) {
+        corrupt = decoded.length - records.length;
+      }
       for (final record in records) {
         final existing = _byId[record.id];
         if (existing == null) {
@@ -351,10 +356,6 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         } else {
           skipped++;
         }
-      }
-      if (records.isEmpty && decoded is List) {
-        // Count unparseable list items as corrupt.
-        corrupt = decoded.length;
       }
     } catch (_) {
       return {'added': 0, 'updated': 0, 'skipped': 0, 'corrupt': 1};
