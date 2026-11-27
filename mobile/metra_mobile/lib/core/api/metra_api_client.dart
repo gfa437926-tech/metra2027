@@ -97,15 +97,21 @@ class ObservationQueueItem {
     final observedAtRaw = json['observed_at'] ?? json['observedAt'] ?? '';
     final observedAt = DateTime.tryParse('$observedAtRaw');
     if (id is! String ||
+        id.trim().isEmpty ||
         stationId is! String ||
+        stationId.trim().isEmpty ||
         type is! String ||
+        type.trim().isEmpty ||
+        observedAtRaw is! String ||
+        observedAtRaw.trim().isEmpty ||
         observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
     final status = json['status'];
     final rawPayload = json['payload'];
     if (status != 'submitted' ||
-        (rawPayload != null && rawPayload is! Map)) {
+        (rawPayload != null &&
+            (rawPayload is! Map || rawPayload.keys.any((key) => key is! String)))) {
       throw const FormatException('invalid_observation_queue_item');
     }
     return ObservationQueueItem(
