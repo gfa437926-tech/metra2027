@@ -128,4 +128,35 @@ void main() {
     }
   });
 
+
+  test('validation result flag must agree with the issue list', () async {
+    final inconsistentResponses = [
+      {'isValid': true, 'issues': [
+        {'field': 'minTemp', 'message': 'قيمة غير صالحة'},
+      ]},
+      {'isValid': false, 'issues': []},
+    ];
+
+    for (final payload in inconsistentResponses) {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'validation-token',
+        client: MockClient((_) async => http.Response(
+          jsonEncode(payload),
+          200,
+          headers: {'content-type': 'application/json'},
+        )),
+      );
+
+      await expectLater(
+        client.validateObservation(
+          observationType: 'daily',
+          values: {'minTemp': '-02.0'},
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      client.close();
+    }
+  });
+
 }
