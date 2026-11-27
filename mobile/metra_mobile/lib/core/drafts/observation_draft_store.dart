@@ -19,7 +19,6 @@ class ObservationDraftStore extends ChangeNotifier {
 
   final Map<String, ObservationDraft> _drafts = {};
   bool _loaded = false;
-  bool _loading = false;
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
   int _writeGeneration = 0;
@@ -56,7 +55,6 @@ class ObservationDraftStore extends ChangeNotifier {
   }
 
   Future<void> _loadFromDisk() async {
-    _loading = true;
     try {
       final prefs = await SharedPreferences.getInstance();
       var raw = prefs.getString(_prefsKey);
@@ -90,7 +88,6 @@ class ObservationDraftStore extends ChangeNotifier {
       _diskTrusted = false;
     } finally {
       _loaded = true;
-      _loading = false;
       _loadFuture = null;
       notifyListeners();
     }
