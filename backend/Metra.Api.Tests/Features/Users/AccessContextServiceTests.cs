@@ -314,6 +314,36 @@ public sealed class AccessContextServiceTests
         Assert.Equal(0, permissionProbes);
     }
 
+    [Theory]
+    [InlineData("station_assignments", "station_id")]
+    [InlineData("authority_memberships", "authority_id")]
+    public async Task Duplicate_membership_scope_fails_closed_without_permission_probes(
+        string table,
+        string idColumn)
+    {
+        var duplicateId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var permissionProbes = 0;
+        var authorization = new FakeAuthorization(
+            stationPermission: (_, _) => { permissionProbes++; return true; },
+            authorityPermission: (_, _) => { permissionProbes++; return true; });
+        var service = CreateService(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.Contains(table))
+            {
+                var body = $"[{{\\"{idColumn}\\":\\"{duplicateId}\\",\\"role_code\\":\\"observer\\"}}," +
+                           $"{{\\"{idColumn}\\":\\"{duplicateId}\\",\\"role_code\\":\\"observer\\"}}]";
+                return JsonOk(body);
+            }
+
+            return JsonOk("[]");
+        }, authorization);
+
+        var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Null(context);
+        Assert.Equal(0, permissionProbes);
+    }
+
     [Fact]
     public async Task Postgrest_failure_fails_closed()
     {
