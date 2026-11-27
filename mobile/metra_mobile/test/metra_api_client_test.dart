@@ -37,6 +37,40 @@ void main() {
     client.close();
   });
 
+  test('review queue rejects rows that are not submitted records', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response(
+        jsonEncode([
+          {
+            'id': '22222222-2222-4222-8222-222222222222',
+            'station_id': stationId,
+            'observation_type': 'daily',
+            'observed_at': '2026-11-03T12:00:00Z',
+            'payload': {},
+          },
+        ]),
+        200,
+      )),
+    );
+    await expectLater(client.getReviewQueue(stationId), throwsFormatException);
+    client.close();
+  });
+
+  test('generic API record lists reject malformed non-object rows', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('[{},null]', 200)),
+    );
+    await expectLater(
+      client.getStationUsers(stationId),
+      throwsFormatException,
+    );
+    client.close();
+  });
+
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
     final client = MetraApiClient(
