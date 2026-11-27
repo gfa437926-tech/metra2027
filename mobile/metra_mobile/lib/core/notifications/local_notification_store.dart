@@ -192,7 +192,7 @@ class LocalNotificationStore extends ChangeNotifier {
         (e) =>
             e.accountKey == _activeAccountKey &&
             e.sourceKey == sourceKey &&
-            now.difference(e.createdAt).inSeconds < 60,
+            now.difference(e.createdAt).inSeconds.abs() < 60,
       );
       if (dup) return;
     }

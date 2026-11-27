@@ -98,6 +98,34 @@ void main() {
     expect(store.items, hasLength(1));
     expect(store.items.single.accountKey, 'account-a');
   });
+  test('future-dated source event outside deduplication window does not block new event', () async {
+    final futureEvent = LocalNotificationItem(
+      id: 'future-source-event',
+      titleAr: 'حدث مستقبلي',
+      bodyAr: 'توقيت مستقبلي',
+      createdAt: DateTime.now().toUtc().add(const Duration(minutes: 2)),
+      category: 'observation',
+      sourceKey: 'observation-future-clock',
+      accountKey: 'account-a',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1': jsonEncode([futureEvent.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    await store.ensureLoaded();
+    store.add(
+      titleAr: 'حدث جديد',
+      bodyAr: 'يجب ألا يمنع توقيت مستقبلي بعيد الإضافة',
+      category: 'observation',
+      sourceKey: 'observation-future-clock',
+    );
+
+    expect(store.items, hasLength(2));
+    expect(store.items.first.id, isNot('future-source-event'));
+  });
+
   test('clear before initial load removes persisted items for the active account', () async {
     final accountA = LocalNotificationItem(
       id: 'early-clear-a',
