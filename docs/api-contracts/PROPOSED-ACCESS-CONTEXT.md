@@ -51,7 +51,13 @@ Authorization: Bearer <access_token>
 
 محطة: observation.create, observation.edit_own_draft, observation.submit, observation.review, observation.return_for_correction, observation.approve, registrations.station.approve, users.station.view, users.station.manage
 
-سلطة: stations.catalogue.review, registrations.system.approve
+سلطة: stations.catalogue.review, registrations.system.approve, authority.access.review, authority.access.revoke
+
+## سلامة قراءة العضويات
+
+- يجب أن تكون كل صفوف العضوية كائنات صالحة وتحمل معرّف UUID غير فارغ.
+- أي صف مشوّه يجعل بناء السياق كله يفشل مغلقاً؛ لا يُعاد سياق جزئي.
+- تُرفض القوائم التي تتجاوز 100 عضوية لكل نوع قبل فحص الصلاحيات.
 
 ## سلوك Flutter
 
