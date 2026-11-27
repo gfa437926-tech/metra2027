@@ -31,7 +31,7 @@ public sealed class SupabaseObservationSubmissionServiceTests
             // HttpClient disposes the request and its content after SendAsync.
             // Read the body while the handler still owns the live request.
             capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
-            return JsonResponse(HttpStatusCode.OK, "{\"id\":\"obs-1\",\"status\":\"submitted\"}");
+            return JsonResponse(HttpStatusCode.OK, "{\"id\":\"33333333-3333-4333-8333-333333333333\",\"status\":\"submitted\",\"replayed\":false}");
         });
 
         using var payloadDocument = JsonDocument.Parse("{\"temperature\":21}");
