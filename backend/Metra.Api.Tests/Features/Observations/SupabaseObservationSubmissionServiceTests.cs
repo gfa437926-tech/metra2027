@@ -15,10 +15,22 @@ public sealed class SupabaseObservationSubmissionServiceTests
     [Fact]
     public async Task Sends_server_authenticated_atomic_rpc_with_expected_identity_and_payload()
     {
-        HttpRequestMessage? captured = null;
+        string? capturedBody = null;
+        string? capturedPath = null;
+        string? capturedMethod = null;
+        string? capturedApiKey = null;
+        string? capturedAuthScheme = null;
+        string? capturedAuthParameter = null;
         var service = CreateService(request =>
         {
-            captured = request;
+            capturedPath = request.RequestUri!.AbsolutePath;
+            capturedMethod = request.Method.Method;
+            capturedApiKey = request.Headers.GetValues("apikey").Single();
+            capturedAuthScheme = request.Headers.Authorization!.Scheme;
+            capturedAuthParameter = request.Headers.Authorization.Parameter;
+            // HttpClient disposes the request and its content after SendAsync.
+            // Read the body while the handler still owns the live request.
+            capturedBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
             return JsonResponse(HttpStatusCode.OK, "{\"id\":\"obs-1\",\"status\":\"submitted\"}");
         });
 
@@ -32,13 +44,13 @@ public sealed class SupabaseObservationSubmissionServiceTests
         Assert.True(result.IsConfigured);
         Assert.True(result.Succeeded);
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-        Assert.Equal("/rest/v1/rpc/metra_submit_observation", captured!.RequestUri!.AbsolutePath);
-        Assert.Equal(HttpMethod.Post, captured.Method);
-        Assert.Equal("server-test-key", captured.Headers.GetValues("apikey").Single());
-        Assert.Equal("Bearer", captured.Headers.Authorization!.Scheme);
-        Assert.Equal("server-test-key", captured.Headers.Authorization.Parameter);
+        Assert.Equal("/rest/v1/rpc/metra_submit_observation", capturedPath);
+        Assert.Equal("POST", capturedMethod);
+        Assert.Equal("server-test-key", capturedApiKey);
+        Assert.Equal("Bearer", capturedAuthScheme);
+        Assert.Equal("server-test-key", capturedAuthParameter);
 
-        using var body = JsonDocument.Parse(await captured.Content!.ReadAsStringAsync());
+        using var body = JsonDocument.Parse(capturedBody!);
         var root = body.RootElement;
         Assert.Equal(UserId, root.GetProperty("p_user_id").GetGuid());
         Assert.Equal(StationId, root.GetProperty("p_station_id").GetGuid());
