@@ -67,19 +67,20 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       final raw = prefs.getString(_prefsKey);
       if (raw != null && raw.isNotEmpty) {
         Object? decoded;
+        var payloadTrusted = true;
         try {
           decoded = jsonDecode(raw);
         } catch (_) {
-          // Keep empty map; do not wipe disk until a successful rewrite.
+          // Keep the original bytes intact; never overwrite malformed storage.
           skipped = 1;
-          decoded = null;
-          _diskTrusted = false;
+          payloadTrusted = false;
         }
         if (decoded is List) {
           for (final item in decoded) {
             final record = LocalCatalogRecord.tryParse(item);
             if (record == null) {
               skipped++;
+              payloadTrusted = false;
               continue;
             }
             // Prefer newer updatedAt when duplicate ids appear in payload.
@@ -96,9 +97,16 @@ class LocalCatalogRecordStore extends ChangeNotifier {
             _byId[record.id] = record;
           } else {
             skipped++;
+            payloadTrusted = false;
           }
+        } else if (decoded != null) {
+          // Unknown JSON shapes are not safe to replace with an empty list.
+          skipped++;
+          payloadTrusted = false;
+        } else {
+          payloadTrusted = false;
         }
-        _diskTrusted = true;
+        _diskTrusted = payloadTrusted;
       }
     } catch (_) {
       _diskTrusted = false;
@@ -115,7 +123,10 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
-    if (!_diskTrusted && _byId.isEmpty) return;
+    // A partial/corrupt load must never be rewritten: doing so could silently
+    // delete records that could not be decoded. Keep the stored payload intact
+    // until an explicit recovery path is provided.
+    if (!_diskTrusted) return;
     final generation = ++_writeGeneration;
     try {
       final prefs = await SharedPreferences.getInstance();
