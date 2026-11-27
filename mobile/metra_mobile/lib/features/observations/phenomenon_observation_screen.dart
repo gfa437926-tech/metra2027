@@ -98,6 +98,10 @@ class _PhenomenonObservationScreenState
         formType: _formType,
         stationId: stationId,
         values: values,
+        stillCurrent: () =>
+            mounted &&
+            stationId == widget.stationId &&
+            generation == _formGeneration,
         successMessageAr:
             'أُرسل بلاغ الظاهرة إلى الخادم. يمكنك متابعته من تبويب المراجعة.',
         validationFallbackAr: 'رفض الخادم بيانات الظاهرة الجوية.',
