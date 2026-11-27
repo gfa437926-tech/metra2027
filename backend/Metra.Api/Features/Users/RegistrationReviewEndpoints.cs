@@ -70,7 +70,9 @@ public sealed class SupabaseRegistrationReviewService(IHttpClientFactory clients
             using var response = await clients.CreateClient(nameof(SupabaseRegistrationReviewService))
                 .SendAsync(message, cancellationToken);
             if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+            var data = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: cancellationToken);
+            // Audit screens consume a list; reject successful responses that violate that contract.
+            return data.ValueKind == JsonValueKind.Array ? data : null;
         }
         catch (HttpRequestException) { return null; }
         catch (JsonException) { return null; }
