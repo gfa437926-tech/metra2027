@@ -392,6 +392,11 @@ class LocalCatalogRecordStore extends ChangeNotifier {
       // Previously mixed valid/invalid lists incorrectly reported zero corrupt.
       if (envelope == null && decoded is List) {
         corrupt = decoded.length - records.length;
+      } else if (envelope != null && decoded is Map) {
+        final rawRecords = decoded['records'];
+        if (rawRecords is List) {
+          corrupt = rawRecords.length - records.length;
+        }
       }
       for (final record in records) {
         // Imported data may only enter the currently authenticated account
