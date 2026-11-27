@@ -88,7 +88,7 @@ public sealed class ObservationQueueIdorTests : IClassFixture<WebApplicationFact
     {
         var queue = new RecordingQueueService
         {
-            Next = JsonDocument.Parse("{\\"unexpected\\":true}").RootElement.Clone()
+            Next = JsonDocument.Parse("{\"unexpected\":true}").RootElement.Clone()
         };
         var auth = new ConfigurableAuthorizationService();
         auth.Allowed[(UserId, StationId, "observation.review")] = true;
