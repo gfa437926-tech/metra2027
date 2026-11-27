@@ -213,13 +213,14 @@ public sealed class SupabaseAccessContextService(
             var list = new List<(Guid, string?)>();
             foreach (var row in rows.EnumerateArray())
             {
-                if (row.ValueKind != JsonValueKind.Object)
-                    continue;
-                if (!row.TryGetProperty(idProperty, out var idValue) ||
+                // A malformed membership row makes the complete access context
+                // untrustworthy; never silently return a partial permission view.
+                if (row.ValueKind != JsonValueKind.Object ||
+                    !row.TryGetProperty(idProperty, out var idValue) ||
                     idValue.ValueKind != JsonValueKind.String ||
                     !Guid.TryParse(idValue.GetString(), out var id) ||
                     id == Guid.Empty)
-                    continue;
+                    return null;
 
                 string? role = null;
                 if (row.TryGetProperty("role_code", out var roleValue) &&
