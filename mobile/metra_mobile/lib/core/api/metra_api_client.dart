@@ -621,6 +621,10 @@ class MetraApiClient {
       issues.add(MetraValidationIssue(field: field, message: message));
     }
 
+    if (isValid != issues.isEmpty) {
+      throw const FormatException('inconsistent_observation_validation_response');
+    }
+
     return MetraObservationValidation(
       isValid: isValid,
       issues: List<MetraValidationIssue>.unmodifiable(issues),
