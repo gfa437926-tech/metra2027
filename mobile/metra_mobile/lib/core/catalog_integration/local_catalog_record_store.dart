@@ -44,7 +44,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   bool get isLoaded => _loaded;
   bool get isLoading => _loading;
-  int get count => _byId.length;
+  int get count => _byId.values.where(_canAccessRecord).length;
   int get lastSkippedCorrupt => _lastSkippedCorrupt;
 
   /// Optional account scope applied to new writes (auth user id).
