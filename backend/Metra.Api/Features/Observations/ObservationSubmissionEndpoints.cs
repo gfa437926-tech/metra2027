@@ -75,6 +75,23 @@ public sealed class SupabaseObservationSubmissionService(
 
             var data = await response.Content.ReadFromJsonAsync<JsonElement>(
                 cancellationToken: cancellationToken);
+
+            // The RPC contract always returns { id, status, replayed }.
+            // A 2xx with an empty, null, scalar, or incomplete body is not
+            // proof that persistence completed; fail closed instead.
+            if (data.ValueKind != JsonValueKind.Object ||
+                !data.TryGetProperty("id", out var id) ||
+                id.ValueKind != JsonValueKind.String ||
+                !Guid.TryParse(id.GetString(), out _) ||
+                !data.TryGetProperty("status", out var status) ||
+                status.ValueKind != JsonValueKind.String ||
+                status.GetString() is not ("draft" or "submitted" or "returned" or "approved") ||
+                !data.TryGetProperty("replayed", out var replayed) ||
+                replayed.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                return new(true, false, HttpStatusCode.ServiceUnavailable, null);
+            }
+
             return new(true, true, response.StatusCode, data);
         }
         catch (JsonException)
