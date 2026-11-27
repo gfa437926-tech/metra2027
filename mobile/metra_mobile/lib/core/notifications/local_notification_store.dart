@@ -25,6 +25,8 @@ class LocalNotificationStore extends ChangeNotifier {
   Future<void> _persistTail = Future<void>.value();
   final Set<String> _dirtyIds = <String>{};
   final List<String?> _pendingClearAccountKeys = <String?>[];
+  final List<({String? accountKey, DateTime requestedAt})>
+  _pendingMarkAllReadRequests = [];
   int _writeGeneration = 0;
   bool _diskTrusted = true;
   String? _activeAccountKey;
@@ -121,8 +123,24 @@ class LocalNotificationStore extends ChangeNotifier {
         clearedAny = true;
       }
       _pendingClearAccountKeys.clear();
+      var markedAnyRead = false;
+      for (final request in _pendingMarkAllReadRequests) {
+        for (var i = 0; i < _items.length; i++) {
+          final item = _items[i];
+          final belongsToAccount =
+              _isVisibleForAccount(item, request.accountKey);
+          if (belongsToAccount &&
+              !item.read &&
+              !item.createdAt.isAfter(request.requestedAt)) {
+            _items[i] = item.copyWith(read: true);
+            _dirtyIds.add(item.id);
+            markedAnyRead = true;
+          }
+        }
+      }
+      _pendingMarkAllReadRequests.clear();
       notifyListeners();
-      if (clearedAny && _diskTrusted) {
+      if ((clearedAny || markedAnyRead) && _diskTrusted) {
         // ignore: unawaited_futures
         _persist();
       }
@@ -208,6 +226,15 @@ class LocalNotificationStore extends ChangeNotifier {
   }
 
   void markAllRead() {
+    if (!_loaded) {
+      _pendingMarkAllReadRequests.add((
+        accountKey: _activeAccountKey,
+        requestedAt: DateTime.now().toUtc(),
+      ));
+      // ignore: unawaited_futures
+      ensureLoaded();
+      return;
+    }
     var changed = false;
     for (var i = 0; i < _items.length; i++) {
       if (_isVisible(_items[i]) && !_items[i].read) {
