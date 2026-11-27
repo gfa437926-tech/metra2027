@@ -102,16 +102,21 @@ class ObservationQueueItem {
         observedAt == null) {
       throw const FormatException('invalid_observation_queue_item');
     }
+    final status = json['status'];
     final rawPayload = json['payload'];
+    if (status != 'submitted' ||
+        (rawPayload != null && rawPayload is! Map)) {
+      throw const FormatException('invalid_observation_queue_item');
+    }
     return ObservationQueueItem(
       id: id,
       stationId: stationId,
       observationType: type,
       observedAt: observedAt,
-      status: json['status'] is String ? json['status'] as String : 'submitted',
-      payload: rawPayload is Map<String, dynamic>
-          ? rawPayload
-          : const <String, dynamic>{},
+      status: status as String,
+      payload: rawPayload == null
+          ? const <String, dynamic>{}
+          : Map<String, dynamic>.from(rawPayload as Map),
     );
   }
 }
@@ -520,9 +525,11 @@ class MetraApiClient {
     final response = await _send('GET', path);
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is! List) throw FormatException(errorCode);
+    if (decoded.any((item) => item is! Map)) {
+      throw FormatException(errorCode);
+    }
     return decoded
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
+        .map((item) => Map<String, dynamic>.from(item as Map))
         .toList(growable: false);
   }
 
