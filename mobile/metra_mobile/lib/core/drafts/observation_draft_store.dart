@@ -401,7 +401,12 @@ class ObservationDraft {
 
   static ObservationDraft? tryParse(Object? raw) {
     if (raw is! Map) return null;
-    final map = Map<String, dynamic>.from(raw);
+    late final Map<String, dynamic> map;
+    try {
+      map = Map<String, dynamic>.from(raw);
+    } on TypeError {
+      return null;
+    }
     final stationId = map['stationId']?.toString().trim() ?? '';
     final formType = map['formType']?.toString().trim().toLowerCase() ?? '';
     final savedAt = DateTime.tryParse('${map['savedAt'] ?? ''}');
