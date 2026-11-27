@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:metra_mobile/core/catalog_integration/local_catalog_record.dart';
 import 'package:metra_mobile/core/catalog_integration/local_catalog_record_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -98,6 +99,54 @@ void main() {
     final claimed = store.claimToAccount(legacy.id, 'account-a');
     expect(claimed?.accountKey, 'account-a');
     expect(claimed?.values['amount'], 5);
+  });
+
+  test('imports cannot add or overwrite records owned by another account', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalCatalogRecordStore.forTesting();
+    await store.ensureLoaded();
+
+    store.setActiveAccountKey('account-a');
+    store.upsert(
+      id: 'owned-by-a',
+      stationId: 'station-a',
+      formType: 'rainfall',
+      values: const {'amount': 11},
+    );
+    await store.flushForTesting();
+
+    final foreign = LocalCatalogRecord(
+      id: 'owned-by-a',
+      stationId: 'station-a',
+      formType: 'rainfall',
+      values: const {'amount': 999},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 27),
+      accountKey: 'account-a',
+    );
+    final foreignNew = LocalCatalogRecord(
+      id: 'foreign-new',
+      stationId: 'station-b',
+      formType: 'soil',
+      values: const {'depth': 30},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 27),
+      accountKey: 'account-a',
+    );
+
+    store.setActiveAccountKey('account-b');
+    final result = store.importJson(
+      jsonEncode([foreign.toJson(), foreignNew.toJson()]),
+      overwriteExisting: true,
+    );
+    expect(result['added'], 0);
+    expect(result['updated'], 0);
+    expect(result['skipped'], 2);
+    expect(store.list(), isEmpty);
+
+    store.setActiveAccountKey('account-a');
+    expect(store.getById('owned-by-a')?.values['amount'], 11);
+    expect(store.getById('foreign-new'), isNull);
   });
 
 }
