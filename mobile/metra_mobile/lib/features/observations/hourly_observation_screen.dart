@@ -99,6 +99,10 @@ class _HourlyObservationScreenState extends State<HourlyObservationScreen> {
         values: values,
         successMessageAr: 'أُرسلت الرصدة الساعية إلى الخادم. يمكنك متابعتها من تبويب المراجعة.',
         validationFallbackAr: 'رفض الخادم بيانات الرصد الساعي.',
+        stillCurrent: () =>
+            mounted &&
+            stationId == widget.stationId &&
+            generation == _formGeneration,
       );
 
       if (!mounted ||
