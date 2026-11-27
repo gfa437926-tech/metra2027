@@ -211,6 +211,31 @@ class ObservationDraftStore extends ChangeNotifier {
   void clearStation(String stationId) {
     final id = stationId.trim();
     if (id.isEmpty) return;
+    if (!_loaded) {
+      final accountAtRequest = _activeAccountKey;
+      final requestedAt = DateTime.now().toUtc();
+      // Wait for the initial snapshot, then remove only drafts that existed
+      // when this clear was requested. A later save remains intact.
+      // ignore: unawaited_futures
+      ensureLoaded().then((_) {
+        final before = _drafts.length;
+        _drafts.removeWhere((key, draft) {
+          final belongsToAccount = accountAtRequest == null
+              ? draft.accountKey == null || draft.accountKey!.isEmpty
+              : draft.accountKey == accountAtRequest;
+          final shouldClear = draft.stationId == id &&
+              belongsToAccount &&
+              !draft.savedAt.isAfter(requestedAt);
+          if (shouldClear) _dirtyKeys.add(key);
+          return shouldClear;
+        });
+        if (_drafts.length != before) notifyListeners();
+        // Persist even if the disk-only rows were removed during load.
+        // ignore: unawaited_futures
+        _persist();
+      });
+      return;
+    }
     final before = _drafts.length;
     _drafts.removeWhere((key, draft) {
       if (draft.stationId != id) return false;
