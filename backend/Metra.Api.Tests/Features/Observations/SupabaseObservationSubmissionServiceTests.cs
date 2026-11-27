@@ -59,7 +59,7 @@ public sealed class SupabaseObservationSubmissionServiceTests
         Assert.True(root.GetProperty("p_submit").GetBoolean());
         Assert.Equal(21, root.GetProperty("p_payload").GetProperty("temperature").GetInt32());
         Assert.NotNull(result.Data);
-        Assert.Equal("obs-1", result.Data!.Value.GetProperty("id").GetString());
+        Assert.Equal("33333333-3333-4333-8333-333333333333", result.Data!.Value.GetProperty("id").GetString());
     }
 
     [Theory]
@@ -82,13 +82,20 @@ public sealed class SupabaseObservationSubmissionServiceTests
         Assert.Null(result.Data);
     }
 
-    [Fact]
-    public async Task Malformed_success_body_is_not_reported_as_persisted()
+    [Theory]
+    [InlineData("")]
+    [InlineData("null")]
+    [InlineData("[]")]
+    [InlineData("\"ok\"")]
+    [InlineData("{}")]
+    [InlineData("{\"id\":\"33333333-3333-4333-8333-333333333333\",\"status\":\"submitted\"}")]
+    [InlineData("not-json")]
+    public async Task Invalid_success_body_is_not_reported_as_persisted(string body)
     {
         var service = CreateService(_ =>
             new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("not-json", Encoding.UTF8, "application/json")
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
             });
         using var payloadDocument = JsonDocument.Parse("{}");
         var request = new ObservationSubmissionRequest(
