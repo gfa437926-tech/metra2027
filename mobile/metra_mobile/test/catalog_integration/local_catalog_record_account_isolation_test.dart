@@ -102,6 +102,43 @@ void main() {
     expect(claimed?.values['amount'], 5);
   });
 
+  test('import cannot reassign an existing record to another station or form', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalCatalogRecordStore.forTesting();
+    await store.ensureLoaded();
+    store.setActiveAccountKey('account-a');
+    final original = store.upsert(
+      id: 'immutable-identity',
+      stationId: 'station-a',
+      formType: 'rainfall',
+      values: const {'amount': 11},
+    );
+    await store.flushForTesting();
+
+    final reassigned = LocalCatalogRecord(
+      id: 'immutable-identity',
+      stationId: 'station-b',
+      formType: 'soil',
+      values: const {'depth': 99},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 27),
+      accountKey: 'account-a',
+    );
+    final result = store.importJson(
+      jsonEncode([reassigned.toJson()]),
+      overwriteExisting: true,
+    );
+
+    expect(result['added'], 0);
+    expect(result['updated'], 0);
+    expect(result['skipped'], 1);
+    final unchanged = store.getById('immutable-identity')!;
+    expect(unchanged.stationId, 'station-a');
+    expect(unchanged.formType, 'rainfall');
+    expect(unchanged.values['amount'], 11);
+    expect(unchanged.createdAt, original.createdAt);
+  });
+
   test('imports cannot add or overwrite records owned by another account', () async {
     SharedPreferences.setMockInitialValues({});
     final store = LocalCatalogRecordStore.forTesting();

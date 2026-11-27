@@ -414,8 +414,16 @@ class LocalCatalogRecordStore extends ChangeNotifier {
           _byId[record.id] = record;
           _dirtyIds.add(record.id);
           added++;
+        } else if (existing.stationId != record.stationId ||
+            existing.formType != record.formType) {
+          // A stable record id is permanently bound to its station and form.
+          // Imports must obey the same identity lock as upsert().
+          skipped++;
         } else if (overwriteExisting) {
-          _byId[record.id] = record.copyWith(updatedAt: DateTime.now().toUtc());
+          _byId[record.id] = record.copyWith(
+            createdAt: existing.createdAt,
+            updatedAt: DateTime.now().toUtc(),
+          );
           _dirtyIds.add(record.id);
           updated++;
         } else {
