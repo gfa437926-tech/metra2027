@@ -196,6 +196,11 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     if (station.isEmpty || type.isEmpty) {
       throw ArgumentError('stationId and formType are required');
     }
+    if (!_loaded && id?.trim().isNotEmpty == true) {
+      throw StateError(
+        'cannot use a caller-supplied record id before the local catalogue is loaded',
+      );
+    }
     final recordId = (id != null && id.trim().isNotEmpty)
         ? id.trim()
         : 'local-$type-${now.microsecondsSinceEpoch}';
