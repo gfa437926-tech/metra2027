@@ -7,6 +7,52 @@ import 'package:metra_mobile/core/api/metra_api_client.dart';
 import 'package:metra_mobile/api_config.dart';
 
 void main() {
+  test('access context parses authority permissions without station scope leakage', () async {
+    late http.Request captured;
+    const authorityId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    const stationId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'authority-token',
+      client: MockClient((request) async {
+        captured = request;
+        return http.Response(
+          jsonEncode({
+            'userId': 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+            'accountState': 'unknown',
+            'stations': [
+              {
+                'stationId': stationId,
+                'roleCode': 'observer',
+                'permissions': ['observation.create'],
+              },
+            ],
+            'authorities': [
+              {
+                'authorityId': authorityId,
+                'roleCode': 'system_reviewer',
+                'permissions': ['stations.catalogue.review', 'authority.access.review'],
+              },
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final context = await client.getAccessContext();
+
+    expect(captured.method, 'GET');
+    expect(captured.url.path, '/api/v1/me/access-context');
+    expect(captured.headers['authorization'], 'Bearer authority-token');
+    expect(context.hasAuthorityPermission(authorityId, 'authority.access.review'), isTrue);
+    expect(context.hasAuthorityPermission(stationId, 'authority.access.review'), isFalse);
+    expect(context.hasStationPermission(stationId, 'observation.create'), isTrue);
+    expect(context.hasStationPermission(authorityId, 'observation.create'), isFalse);
+    expect(context.authorityRoles[authorityId], 'system_reviewer');
+    client.close();
+  });
+
   const stationId = '11111111-1111-4111-8111-111111111111';
   test('review queue authenticates and parses API rows', () async {
     late http.Request captured;
