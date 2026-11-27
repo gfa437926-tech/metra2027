@@ -212,6 +212,48 @@ void main() {
     client.close();
   });
 
+  test('review queue rejects blank identifiers and non-string timestamps', () async {
+    final malformedRows = [
+      {
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': '   ',
+        'observation_type': 'daily',
+        'observed_at': '2026-11-03T12:00:00Z',
+        'status': 'submitted',
+        'payload': {},
+      },
+      {
+        'id': '22222222-2222-4222-8222-222222222222',
+        'station_id': stationId,
+        'observation_type': 'daily',
+        'observed_at': 1793707200,
+        'status': 'submitted',
+        'payload': {},
+      },
+      {
+        'id': '   ',
+        'station_id': stationId,
+        'observation_type': 'daily',
+        'observed_at': '2026-11-03T12:00:00Z',
+        'status': 'submitted',
+        'payload': {},
+      },
+    ];
+
+    for (final row in malformedRows) {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async => http.Response(
+          jsonEncode([row]),
+          200,
+        )),
+      );
+      await expectLater(client.getReviewQueue(stationId), throwsFormatException);
+      client.close();
+    }
+  });
+
   test('generic API record lists reject malformed non-object rows', () async {
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
