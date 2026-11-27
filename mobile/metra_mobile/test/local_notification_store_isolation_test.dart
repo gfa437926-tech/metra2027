@@ -8,6 +8,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('malformed persisted notification fields are rejected without coercion', () {
+    final valid = <String, Object?>{
+      'id': 'valid-id',
+      'titleAr': 'عنوان',
+      'bodyAr': 'محتوى',
+      'createdAt': '2026-11-27T12:00:00.000Z',
+      'category': 'system',
+      'read': false,
+      'sourceKey': null,
+      'accountKey': 'account-a',
+    };
+
+    expect(LocalNotificationItem.tryParse(valid), isNotNull);
+    for (final malformed in <Map<String, Object?>>[
+      {...valid, 'id': 42},
+      {...valid, 'titleAr': false},
+      {...valid, 'bodyAr': 9},
+      {...valid, 'createdAt': 1764244800},
+      {...valid, 'category': <String>[]},
+      {...valid, 'read': 'true'},
+      {...valid, 'sourceKey': 12},
+      {...valid, 'accountKey': <String, String>{}},
+      {...valid, 'id': '   '},
+    ]) {
+      expect(LocalNotificationItem.tryParse(malformed), isNull);
+    }
+  });
+
+  test('legacy notification without optional fields keeps safe defaults', () {
+    final parsed = LocalNotificationItem.tryParse({
+      'id': 'legacy-id',
+      'titleAr': 'عنوان قديم',
+      'bodyAr': 'محتوى قديم',
+      'createdAt': '2026-11-27T12:00:00.000Z',
+    });
+
+    expect(parsed, isNotNull);
+    expect(parsed!.category, 'system');
+    expect(parsed.read, isFalse);
+    expect(parsed.sourceKey, isNull);
+    expect(parsed.accountKey, isNull);
+  });
+
   test('early writes preserve disk records and account clear is isolated', () async {
     final accountA = LocalNotificationItem(
       id: 'notification-a',

@@ -45,30 +45,45 @@ class LocalNotificationItem {
 
   static LocalNotificationItem? tryParse(Object? raw) {
     if (raw is! Map) return null;
-    final map = Map<String, dynamic>.from(raw);
-    final id = map['id']?.toString();
-    final title = map['titleAr']?.toString();
-    final body = map['bodyAr']?.toString();
-    final createdAt = DateTime.tryParse('${map['createdAt'] ?? ''}');
-    final category = map['category']?.toString() ?? 'system';
-    if (id == null ||
-        id.isEmpty ||
-        title == null ||
-        title.isEmpty ||
-        body == null ||
-        body.isEmpty ||
-        createdAt == null) {
+    if (raw.keys.any((key) => key is! String)) return null;
+
+    final map = Map<String, Object?>.from(raw);
+    final id = map['id'];
+    final title = map['titleAr'];
+    final body = map['bodyAr'];
+    final createdAtRaw = map['createdAt'];
+    final categoryRaw = map['category'];
+    final readRaw = map['read'];
+    final sourceKeyRaw = map['sourceKey'];
+    final accountKeyRaw = map['accountKey'];
+
+    if (id is! String ||
+        id.trim().isEmpty ||
+        title is! String ||
+        title.trim().isEmpty ||
+        body is! String ||
+        body.trim().isEmpty ||
+        createdAtRaw is! String ||
+        (categoryRaw != null && categoryRaw is! String) ||
+        (readRaw != null && readRaw is! bool) ||
+        (sourceKeyRaw != null && sourceKeyRaw is! String) ||
+        (accountKeyRaw != null && accountKeyRaw is! String)) {
       return null;
     }
-    final accountKey = map['accountKey']?.toString().trim();
+
+    final createdAt = DateTime.tryParse(createdAtRaw);
+    if (createdAt == null) return null;
+    final category = categoryRaw as String? ?? 'system';
+    final accountKey = (accountKeyRaw as String?)?.trim();
+
     return LocalNotificationItem(
       id: id,
       titleAr: title,
       bodyAr: body,
       createdAt: createdAt.toUtc(),
       category: category,
-      read: map['read'] == true,
-      sourceKey: map['sourceKey']?.toString(),
+      read: readRaw as bool? ?? false,
+      sourceKey: sourceKeyRaw as String?,
       accountKey: (accountKey == null || accountKey.isEmpty) ? null : accountKey,
     );
   }
