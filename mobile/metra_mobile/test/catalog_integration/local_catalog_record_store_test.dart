@@ -8,6 +8,19 @@ import 'package:metra_mobile/core/catalog_integration/local_catalog_record_store
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('malformed disk JSON is counted as corrupt exactly once', () async {
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_catalog_records.v1': '{malformed',
+    });
+    final store = LocalCatalogRecordStore.forTesting();
+
+    final report = await store.ensureLoaded();
+
+    expect(report.loaded, 0);
+    expect(report.skippedCorrupt, 1);
+    expect(store.lastSkippedCorrupt, 1);
+  });
+
   test('JSON null disk payload is counted as corrupt and not trusted', () async {
     SharedPreferences.setMockInitialValues({
       'metra2027.local_catalog_records.v1': 'null',
