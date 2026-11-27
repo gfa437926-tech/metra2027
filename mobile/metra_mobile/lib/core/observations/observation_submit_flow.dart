@@ -54,6 +54,7 @@ class ObservationSubmitFlow {
     required Map<String, Object?> values,
     required String successMessageAr,
     required String validationFallbackAr,
+    bool Function()? stillCurrent,
   }) async {
     try {
       final validation = await api.validateObservation(
@@ -65,6 +66,13 @@ class ObservationSubmitFlow {
             ? validationFallbackAr
             : validation.issues.first.message;
         return ObservationSubmitOutcome.failure(message);
+      }
+
+      // Drop late validation success if the operator switched station/form.
+      if (stillCurrent != null && !stillCurrent()) {
+        return ObservationSubmitOutcome.failure(
+          'تم إلغاء الإرسال لأن سياق المحطة أو النموذج تغيّر.',
+        );
       }
 
       final fingerprint = jsonEncode(values);
