@@ -225,6 +225,63 @@ public sealed class AccessContextServiceTests
         Assert.Contains(requests, path => path.Contains("authority_memberships"));
     }
 
+
+    [Fact]
+    public async Task Assignment_read_over_the_safety_limit_fails_closed_without_permission_probes()
+    {
+        var permissionProbes = 0;
+        var authorization = new FakeAuthorization(
+            stationPermission: (_, _) =>
+            {
+                permissionProbes++;
+                return true;
+            });
+        var service = CreateService(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.Contains("station_assignments"))
+            {
+                var rows = Enumerable.Range(1, 101)
+                    .Select(_ => new { station_id = Guid.NewGuid(), role_code = "observer" });
+                return JsonOk(JsonSerializer.Serialize(rows));
+            }
+
+            return JsonOk("[]");
+        }, authorization);
+
+        var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Null(context);
+        Assert.Equal(0, permissionProbes);
+    }
+
+    [Fact]
+    public async Task Authority_membership_read_over_the_safety_limit_fails_closed()
+    {
+        var permissionProbes = 0;
+        var authorization = new FakeAuthorization(
+            authorityPermission: (_, _) =>
+            {
+                permissionProbes++;
+                return true;
+            });
+        var service = CreateService(request =>
+        {
+            if (request.RequestUri!.AbsolutePath.Contains("authority_memberships"))
+            {
+                var rows = Enumerable.Range(1, 101)
+                    .Select(_ => new { authority_id = Guid.NewGuid(), role_code = "reviewer" });
+                return JsonOk(JsonSerializer.Serialize(rows));
+            }
+
+            return JsonOk("[]");
+        }, authorization);
+
+        var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Null(context);
+        Assert.Equal(0, permissionProbes);
+    }
+
     [Fact]
     public async Task Postgrest_failure_fails_closed()
     {
