@@ -150,9 +150,11 @@ void main() {
             field.choices.isNotEmpty) {
           values[field.id] = field.choices.first;
         } else if (field.required) {
-          values[field.id] = field.kind == MetraFieldKind.integer
-              ? '1'
-              : 'note';
+          values[field.id] = switch (field.kind) {
+            MetraFieldKind.integer => '1',
+            MetraFieldKind.decimal => '1.5',
+            _ => 'note',
+          };
         }
       }
       final result = await repo.submitLocal(
