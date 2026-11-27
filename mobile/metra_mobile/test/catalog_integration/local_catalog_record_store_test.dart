@@ -56,4 +56,9 @@ void main() {
     expect(store.getById('envelope-valid'), isNotNull);
   });
 
+  test('malformed non-string record keys are rejected without throwing', () {
+    final malformed = <Object, Object?>{7: 'unexpected-key'};
+    expect(LocalCatalogRecord.tryParse(malformed), isNull);
+  });
+
 }
