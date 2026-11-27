@@ -67,12 +67,14 @@ void main() {
     );
     final api = clientWith((request) async {
       return http.Response(
-        jsonEncode({
-          'isValid': false,
-          'issues': [
-            {'field': 'x', 'message': 'حقل ناقص'},
-          ],
-        }),
+        utf8.encode(
+          jsonEncode({
+            'isValid': false,
+            'issues': [
+              {'field': 'x', 'message': 'حقل ناقص'},
+            ],
+          }),
+        ),
         200,
       );
     });
