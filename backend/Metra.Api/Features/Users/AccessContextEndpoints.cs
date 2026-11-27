@@ -223,12 +223,17 @@ public sealed class SupabaseAccessContextService(
                     return null;
 
                 string? role = null;
-                if (row.TryGetProperty("role_code", out var roleValue) &&
-                    roleValue.ValueKind == JsonValueKind.String)
+                if (row.TryGetProperty("role_code", out var roleValue))
                 {
-                    var text = roleValue.GetString();
-                    if (!string.IsNullOrWhiteSpace(text))
-                        role = text.Trim();
+                    if (roleValue.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+                        return null;
+
+                    if (roleValue.ValueKind == JsonValueKind.String)
+                    {
+                        var text = roleValue.GetString();
+                        if (!string.IsNullOrWhiteSpace(text))
+                            role = text.Trim();
+                    }
                 }
 
                 list.Add((id, role));
