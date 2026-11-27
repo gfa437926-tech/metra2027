@@ -29,6 +29,7 @@ class LocalNotificationStore extends ChangeNotifier {
   String? _activeAccountKey;
 
   bool get isLoaded => _loaded;
+  bool get isLoading => _loading;
   String? get activeAccountKey => _activeAccountKey;
 
   void setActiveAccountKey(String? key) {
