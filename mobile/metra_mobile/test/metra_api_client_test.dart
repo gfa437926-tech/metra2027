@@ -587,4 +587,26 @@ void main() {
     );
     client.close();
   });
+  test('maps transport exceptions to a safe network-unavailable error', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async {
+        throw http.ClientException('connection refused');
+      }),
+    );
+
+    await expectLater(
+      client.getReviewQueue(stationId),
+      throwsA(
+        isA<MetraApiException>().having(
+          (error) => error.code,
+          'code',
+          'network_unavailable',
+        ),
+      ),
+    );
+    client.close();
+  });
+
 }
