@@ -61,6 +61,8 @@ void main() {
         ),
       );
       expect(find.text('التقارير والإحصائيات'), findsOneWidget);
+      await tester.drag(find.byType(ListView), const Offset(0, -1200));
+      await tester.pumpAndSettle();
       final generate = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'إنشاء التقرير'),
       );
