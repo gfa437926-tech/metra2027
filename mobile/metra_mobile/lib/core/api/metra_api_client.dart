@@ -792,22 +792,17 @@ class MetraApiClient {
   Future<List<Map<String, dynamic>>> getRegistrationRoles() async {
     final response = await _send('GET', '/api/v1/registration-roles');
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-    if (decoded is List) {
-      return decoded
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList(growable: false);
+    final rows = decoded is List
+        ? decoded
+        : decoded is Map
+        ? (decoded['roles'] ?? decoded['data'])
+        : null;
+    if (rows is! List || rows.any((item) => item is! Map)) {
+      throw const FormatException('invalid_registration_roles_response');
     }
-    if (decoded is Map) {
-      final rows = decoded['roles'] ?? decoded['data'];
-      if (rows is List) {
-        return rows
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(growable: false);
-      }
-    }
-    return const [];
+    return rows
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList(growable: false);
   }
 
   /// Current user's registration status payload (shape depends on RPC).
@@ -815,10 +810,10 @@ class MetraApiClient {
     final response = await _send('GET', '/api/v1/account/registration-status');
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+    if (decoded is List && decoded.length == 1 && decoded.first is Map) {
       return Map<String, dynamic>.from(decoded.first as Map);
     }
-    return <String, dynamic>{'raw': decoded};
+    throw const FormatException('invalid_registration_status_response');
   }
 
   /// Submit station registration request — fields match server contract only.
@@ -849,7 +844,7 @@ class MetraApiClient {
     );
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
     if (decoded is Map) return Map<String, dynamic>.from(decoded);
-    return <String, dynamic>{'status': 'submitted'};
+    throw const FormatException('invalid_registration_submission_response');
   }
 
   void _requirePathIdentifier(String value, String errorCode) {
