@@ -143,7 +143,7 @@ void main() {
     }), isNull);
   });
 
-  test('export envelope rejects mismatched count and malformed records', () {
+  test('export envelope rejects mismatched count but preserves partial rows', () {
     final base = {
       'kind': 'metra2027.local_catalog_export',
       'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
@@ -151,6 +151,8 @@ void main() {
       'records': <Object>[{'broken': true}],
     };
     expect(LocalCatalogExportEnvelope.tryParse({...base, 'recordCount': 0}), isNull);
-    expect(LocalCatalogExportEnvelope.tryParse({...base, 'recordCount': 1}), isNull);
+    final parsed = LocalCatalogExportEnvelope.tryParse({...base, 'recordCount': 1});
+    expect(parsed, isNotNull);
+    expect(parsed!.records, isEmpty);
   });
 }
