@@ -170,7 +170,16 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   @visibleForTesting
   Future<void> flushForTesting() => _persist();
 
+  bool _canAccessRecord(LocalCatalogRecord record) {
+    final active = _activeAccountKey;
+    if (active == null) {
+      return record.accountKey == null || record.accountKey!.isEmpty;
+    }
+    return record.accountKey == active;
+  }
+
   /// Create or update by stable [id]. Empty id creates a new record.
+  /// Existing records are writable only by their owning active account.
   LocalCatalogRecord upsert({
     String? id,
     required String stationId,
@@ -188,6 +197,13 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         ? id.trim()
         : 'local-$type-${now.microsecondsSinceEpoch}';
     final existing = _byId[recordId];
+    if (existing != null && !_canAccessRecord(existing)) {
+      throw StateError('cannot modify a local record owned by another account');
+    }
+    final requestedAccount = accountKey?.trim();
+    if (requestedAccount != null && requestedAccount.isNotEmpty && requestedAccount != _activeAccountKey) {
+      throw StateError('local record account must match the active account');
+    }
     // Identity lock: cannot change station/formType of an existing id.
     if (existing != null) {
       if (existing.stationId != station || existing.formType != type) {
@@ -196,10 +212,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         );
       }
     }
-    final resolvedAccount =
-        accountKey?.trim().isNotEmpty == true
-            ? accountKey!.trim()
-            : (existing?.accountKey ?? _activeAccountKey);
+    final resolvedAccount = _activeAccountKey;
     final next = LocalCatalogRecord(
       id: recordId,
       stationId: station,
@@ -220,7 +233,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
 
   bool archive(String id) {
     final current = _byId[id];
-    if (current == null) return false;
+    if (current == null || !_canAccessRecord(current)) return false;
     _dirtyIds.add(id);
     _byId[id] = current.copyWith(
       status: LocalCatalogRecordStatus.localArchived,
@@ -235,7 +248,7 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   /// Move an archived local record back to localSaved (same id).
   bool restore(String id) {
     final current = _byId[id];
-    if (current == null) return false;
+    if (current == null || !_canAccessRecord(current)) return false;
     if (current.status != LocalCatalogRecordStatus.localArchived) {
       return false;
     }
@@ -251,6 +264,8 @@ class LocalCatalogRecordStore extends ChangeNotifier {
   }
 
   bool delete(String id) {
+    final current = _byId[id];
+    if (current == null || !_canAccessRecord(current)) return false;
     final removed = _byId.remove(id) != null;
     if (removed) _dirtyIds.add(id);
     if (removed) {
@@ -261,7 +276,10 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     return removed;
   }
 
-  LocalCatalogRecord? getById(String id) => _byId[id];
+  LocalCatalogRecord? getById(String id) {
+    final record = _byId[id];
+    return record != null && _canAccessRecord(record) ? record : null;
+  }
 
   List<LocalCatalogRecord> list({
     String? stationId,
@@ -269,15 +287,20 @@ class LocalCatalogRecordStore extends ChangeNotifier {
     String? query,
     String? accountKey,
     bool includeArchived = false,
-  }) =>
-      LocalCatalogRecordQuery.filter(
-        records: _byId.values,
-        stationId: stationId,
-        formType: formType,
-        query: query,
-        accountKey: accountKey ?? _activeAccountKey,
-        includeArchived: includeArchived,
-      );
+  }) {
+    // An explicit account override must never bypass the authenticated scope.
+    if (accountKey != null && accountKey.trim() != (_activeAccountKey ?? '')) {
+      return const <LocalCatalogRecord>[];
+    }
+    return LocalCatalogRecordQuery.filter(
+      records: _byId.values.where(_canAccessRecord),
+      stationId: stationId,
+      formType: formType,
+      query: query,
+      accountKey: _activeAccountKey,
+      includeArchived: includeArchived,
+    );
+  }
 
   /// Legacy / unassigned quarantine — never mixed into account lists.
   List<LocalCatalogRecord> listUnassigned({bool includeArchived = false}) =>
