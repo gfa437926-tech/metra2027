@@ -204,6 +204,28 @@ public sealed class AccessContextServiceTests
     }
 
     [Fact]
+    public async Task Authority_membership_read_failure_fails_closed_even_when_station_read_succeeds()
+    {
+        var requests = new List<string>();
+        var service = CreateService(request =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            requests.Add(path);
+            if (path.Contains("station_assignments"))
+                return JsonOk("[]");
+            if (path.Contains("authority_memberships"))
+                return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+            throw new InvalidOperationException($"Unexpected request: {path}");
+        }, new FakeAuthorization());
+
+        var context = await service.BuildAsync(Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Null(context);
+        Assert.Contains(requests, path => path.Contains("station_assignments"));
+        Assert.Contains(requests, path => path.Contains("authority_memberships"));
+    }
+
+    [Fact]
     public async Task Postgrest_failure_fails_closed()
     {
         var service = CreateService(
