@@ -132,6 +132,14 @@ class ObservationDraftStore extends ChangeNotifier {
     await operation;
   }
 
+  bool _isVisibleDraft(ObservationDraft draft) {
+    final account = _activeAccountKey;
+    if (account == null) {
+      return draft.accountKey == null || draft.accountKey!.isEmpty;
+    }
+    return draft.accountKey == account;
+  }
+
   ObservationDraft? get(String stationId, String formType) {
     if (stationId.trim().isEmpty || formType.trim().isEmpty) return null;
     return _drafts[keyFor(
@@ -194,8 +202,7 @@ class ObservationDraftStore extends ChangeNotifier {
     final before = _drafts.length;
     _drafts.removeWhere((key, draft) {
       if (draft.stationId != id) return false;
-      final matchesAccount = _activeAccountKey == null ||
-          draft.accountKey == _activeAccountKey;
+      final matchesAccount = _isVisibleDraft(draft);
       if (matchesAccount) _dirtyKeys.add(key);
       return matchesAccount;
     });
@@ -208,12 +215,7 @@ class ObservationDraftStore extends ChangeNotifier {
 
   /// Drops in-memory drafts for the active account only (keeps other accounts).
   void clearActiveAccountMemory() {
-    if (_activeAccountKey == null) {
-      if (_drafts.isEmpty) return;
-      _drafts.clear();
-      notifyListeners();
-      return;
-    }
+    if (_activeAccountKey == null) return;
     final before = _drafts.length;
     _drafts.removeWhere((_, d) => d.accountKey == _activeAccountKey);
     if (_drafts.length != before) notifyListeners();
@@ -230,13 +232,7 @@ class ObservationDraftStore extends ChangeNotifier {
     }
   }
 
-  int get draftCount {
-    if (_activeAccountKey == null) {
-      // Signed-out: do not expose account drafts as a session count.
-      return _drafts.values.where((d) => d.accountKey == null).length;
-    }
-    return _drafts.values.where((d) => d.accountKey == _activeAccountKey).length;
-  }
+  int get draftCount => _drafts.values.where(_isVisibleDraft).length;
 
   bool hasDraft(String stationId, String formType) {
     final draft = get(stationId, formType);
@@ -247,10 +243,7 @@ class ObservationDraftStore extends ChangeNotifier {
     final stations = <String>{};
     for (final draft in _drafts.values) {
       if (draft.isEmpty) continue;
-      if (_activeAccountKey != null) {
-        // Fail-closed: hide unassigned and other accounts.
-        if (draft.accountKey != _activeAccountKey) continue;
-      }
+      if (!_isVisibleDraft(draft)) continue;
       stations.add(draft.stationId);
     }
     return Set.unmodifiable(stations);
@@ -262,9 +255,7 @@ class ObservationDraftStore extends ChangeNotifier {
     final types = <String>{};
     for (final draft in _drafts.values) {
       if (draft.stationId != id || draft.isEmpty) continue;
-      if (_activeAccountKey != null) {
-        if (draft.accountKey != _activeAccountKey) continue;
-      }
+      if (!_isVisibleDraft(draft)) continue;
       types.add(draft.formType);
     }
     return Set.unmodifiable(types);
@@ -275,10 +266,7 @@ class ObservationDraftStore extends ChangeNotifier {
     if (id.isEmpty) return const [];
     final list = _drafts.values.where((d) {
       if (d.stationId != id || d.isEmpty) return false;
-      if (_activeAccountKey != null) {
-        if (d.accountKey != _activeAccountKey) return false;
-      }
-      return true;
+      return _isVisibleDraft(d);
     }).toList(growable: false);
     final sorted = List<ObservationDraft>.of(list)
       ..sort((a, b) => b.savedAt.compareTo(a.savedAt));
