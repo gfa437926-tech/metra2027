@@ -96,4 +96,36 @@ void main() {
       client.close();
     },
   );
+
+  test('malformed validation responses fail closed', () async {
+    final malformedResponses = [
+      {'isValid': true, 'issues': 'not-a-list'},
+      {'isValid': true, 'issues': [null]},
+      {'isValid': true, 'issues': [{'field': 7, 'message': 'bad'}]},
+      {'isValid': true, 'issues': [{'field': 'minTemp', 'message': false}]},
+      {'issues': []},
+    ];
+
+    for (final payload in malformedResponses) {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'validation-token',
+        client: MockClient((_) async => http.Response(
+          jsonEncode(payload),
+          200,
+          headers: {'content-type': 'application/json'},
+        )),
+      );
+
+      await expectLater(
+        client.validateObservation(
+          observationType: 'daily',
+          values: {'minTemp': '-02.0'},
+        ),
+        throwsA(isA<FormatException>()),
+      );
+      client.close();
+    }
+  });
+
 }
