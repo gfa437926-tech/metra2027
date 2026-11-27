@@ -63,7 +63,12 @@ class LocalCatalogRecord {
   /// Returns null for unrecoverable rows; never throws.
   static LocalCatalogRecord? tryParse(Object? raw) {
     if (raw is! Map) return null;
-    final map = Map<String, dynamic>.from(raw);
+    Map<String, dynamic> map;
+    try {
+      map = Map<String, dynamic>.from(raw);
+    } on TypeError {
+      return null;
+    }
     final id = map['id']?.toString().trim();
     final stationId = map['stationId']?.toString().trim();
     final formType = map['formType']?.toString().trim().toLowerCase();
