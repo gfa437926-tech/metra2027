@@ -56,4 +56,28 @@ void main() {
     expect(reports.every((report) => report.loaded == 0), isTrue);
     expect(store.isLoaded, isTrue);
   });
+
+  test('clear before first read clears the disk payload instead of restoring it', () async {
+    final oldRecord = LocalCatalogRecord(
+      id: 'old-record',
+      stationId: 'station-old',
+      formType: 'rainfall',
+      values: const {'amount': 4},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 20),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_catalog_records.v1': jsonEncode([oldRecord.toJson()]),
+    });
+    final store = LocalCatalogRecordStore.forTesting();
+
+    await store.clearAll(persist: true);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(
+      jsonDecode(prefs.getString('metra2027.local_catalog_records.v1')!),
+      isEmpty,
+    );
+    expect(store.count, 0);
+  });
 }
