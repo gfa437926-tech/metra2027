@@ -721,13 +721,14 @@ class MetraApiClient {
       throw const FormatException('invalid_access_context');
     }
     final map = Map<String, dynamic>.from(decoded);
+    String? stringValue(dynamic value) => value is String ? value : null;
     final userId =
-        map['userId']?.toString() ?? map['user_id']?.toString() ?? '';
+        stringValue(map['userId']) ?? stringValue(map['user_id']) ?? '';
     if (userId.trim().isEmpty) {
       throw const FormatException('invalid_access_context_user');
     }
     final accountState =
-        map['accountState']?.toString() ?? map['account_state']?.toString();
+        stringValue(map['accountState']) ?? stringValue(map['account_state']);
     final stationsRaw = map['stations'];
     final stationPermissions = <String, Set<String>>{};
     final stationRoles = <String, String>{};
@@ -739,10 +740,10 @@ class MetraApiClient {
         if (item is! Map) continue;
         final row = Map<String, dynamic>.from(item);
         final stationId =
-            row['stationId']?.toString() ?? row['station_id']?.toString() ?? '';
+            stringValue(row['stationId']) ?? stringValue(row['station_id']) ?? '';
         if (stationId.trim().isEmpty) continue;
         final role =
-            row['roleCode']?.toString() ?? row['role_code']?.toString();
+            stringValue(row['roleCode']) ?? stringValue(row['role_code']);
         if (role != null && role.trim().isNotEmpty) {
           stationRoles[stationId.trim()] = role.trim();
         }
@@ -750,7 +751,7 @@ class MetraApiClient {
         final rawPerms = row['permissions'];
         if (rawPerms is List) {
           for (final p in rawPerms) {
-            final code = p?.toString().trim() ?? '';
+            final code = stringValue(p)?.trim() ?? '';
             if (code.isNotEmpty) perms.add(code);
           }
         }
@@ -761,15 +762,15 @@ class MetraApiClient {
       for (final item in authoritiesRaw) {
         if (item is! Map) continue;
         final row = Map<String, dynamic>.from(item);
-        final id = row['authorityId']?.toString() ?? row['authority_id']?.toString() ?? '';
+        final id = stringValue(row['authorityId']) ?? stringValue(row['authority_id']) ?? '';
         if (id.trim().isEmpty) continue;
-        final role = row['roleCode']?.toString() ?? row['role_code']?.toString();
+        final role = stringValue(row['roleCode']) ?? stringValue(row['role_code']);
         if (role != null && role.trim().isNotEmpty) authorityRoles[id.trim()] = role.trim();
         final permissions = <String>{};
         final raw = row['permissions'];
         if (raw is List) {
           for (final p in raw) {
-            final code = p?.toString().trim() ?? '';
+            final code = stringValue(p)?.trim() ?? '';
             if (code.isNotEmpty) permissions.add(code);
           }
         }
