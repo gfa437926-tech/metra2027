@@ -23,8 +23,7 @@ void main() {
 
     final store = LocalCatalogRecordStore.forTesting();
     final loading = store.ensureLoaded();
-    store.upsert(
-      id: 'station-new::soil',
+    final added = store.upsert(
       stationId: 'station-new',
       formType: 'soil',
       values: const {'depth': 30},
@@ -41,7 +40,7 @@ void main() {
         .cast<Map<String, dynamic>>()
         .map((row) => row['id'])
         .toSet();
-    expect(ids, containsAll(['station-old::rainfall', 'station-new::soil']));
+    expect(ids, containsAll(['station-old::rainfall', added.id]));
   });
 
   test('concurrent initial-load callers await the same completed load', () async {
@@ -80,4 +79,32 @@ void main() {
     );
     expect(store.count, 0);
   });
+  test('explicit id updates fail closed before initial load completes', () async {
+    final oldRecord = LocalCatalogRecord(
+      id: 'stable-existing-id',
+      stationId: 'station-old',
+      formType: 'rainfall',
+      values: const {'amount': 7},
+      createdAt: DateTime.utc(2026, 11, 20),
+      updatedAt: DateTime.utc(2026, 11, 20),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_catalog_records.v1': jsonEncode([oldRecord.toJson()]),
+    });
+    final store = LocalCatalogRecordStore.forTesting();
+
+    expect(
+      () => store.upsert(
+        id: 'stable-existing-id',
+        stationId: 'station-old',
+        formType: 'rainfall',
+        values: const {'amount': 99},
+      ),
+      throwsStateError,
+    );
+
+    await store.ensureLoaded();
+    expect(store.getById('stable-existing-id')?.values['amount'], 7);
+  });
+
 }
