@@ -448,20 +448,32 @@ class ObservationDraft {
     } on TypeError {
       return null;
     }
-    final stationId = map['stationId']?.toString().trim() ?? '';
-    final formType = map['formType']?.toString().trim().toLowerCase() ?? '';
-    final savedAt = DateTime.tryParse('${map['savedAt'] ?? ''}');
-    if (stationId.isEmpty || formType.isEmpty || savedAt == null) return null;
-    final valuesRaw = map['values'];
-    final values = <String, Object?>{};
-    if (valuesRaw is Map) {
-      valuesRaw.forEach((k, v) {
-        final key = '$k'.trim();
-        if (key.isEmpty) return;
-        values[key] = v;
-      });
+    final stationRaw = map['stationId'];
+    final formRaw = map['formType'];
+    final savedAtRaw = map['savedAt'];
+    if (stationRaw is! String ||
+        formRaw is! String ||
+        savedAtRaw is! String) {
+      return null;
     }
-    final accountKey = map['accountKey']?.toString().trim();
+    final stationId = stationRaw.trim();
+    final formType = formRaw.trim().toLowerCase();
+    final savedAt = DateTime.tryParse(savedAtRaw);
+    if (stationId.isEmpty || formType.isEmpty || savedAt == null) return null;
+
+    final valuesRaw = map['values'];
+    if (valuesRaw is! Map) return null;
+    final values = <String, Object?>{};
+    for (final entry in valuesRaw.entries) {
+      if (entry.key is! String) return null;
+      final key = (entry.key as String).trim();
+      if (key.isEmpty || values.containsKey(key)) return null;
+      values[key] = entry.value;
+    }
+
+    final accountRaw = map['accountKey'];
+    if (accountRaw != null && accountRaw is! String) return null;
+    final accountKey = (accountRaw as String?)?.trim();
     return ObservationDraft(
       stationId: stationId,
       formType: formType,

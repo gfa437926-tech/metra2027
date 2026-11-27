@@ -167,4 +167,49 @@ void main() {
     expect(ObservationDraft.tryParse(malformed), isNull);
   });
 
+  test('rejects draft identity fields with non-string types', () {
+    final base = {
+      'stationId': 'station-a',
+      'formType': 'hourly',
+      'savedAt': DateTime.utc(2026, 11, 27).toIso8601String(),
+      'values': {'temperature': 12},
+    };
+    for (final entry in {
+      'stationId': 42,
+      'formType': true,
+      'savedAt': 20261127,
+      'accountKey': 99,
+    }.entries) {
+      final malformed = Map<String, Object?>.from(base)..[entry.key] = entry.value;
+      expect(
+        ObservationDraft.tryParse(malformed),
+        isNull,
+        reason: entry.key,
+      );
+    }
+  });
+
+  test('rejects malformed values maps and normalized duplicate keys', () {
+    final base = {
+      'stationId': 'station-a',
+      'formType': 'hourly',
+      'savedAt': DateTime.utc(2026, 11, 27).toIso8601String(),
+    };
+    expect(
+      ObservationDraft.tryParse({...base, 'values': 'not-a-map'}),
+      isNull,
+    );
+    expect(
+      ObservationDraft.tryParse({
+        ...base,
+        'values': {' temperature ': 12, 'temperature': 13},
+      }),
+      isNull,
+    );
+    expect(
+      ObservationDraft.tryParse({...base, 'values': { '   ': 12 }}),
+      isNull,
+    );
+  });
+
 }
