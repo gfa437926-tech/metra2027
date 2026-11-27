@@ -130,6 +130,23 @@ void main() {
       expect(observer.hasStationPermission('', 'observation.create'), isFalse);
       expect(observer.hasStationPermission('station-a', ''), isFalse);
     });
+
+    test('authority permissions remain isolated from station permissions', () {
+      final context = MetraAccessContext.resolved(
+        userId: 'director',
+        stationPermissions: {'station-a': {'observation.create'}},
+        authorityPermissions: {'authority-a': {'stations.catalogue.review'}},
+        authorityRoles: {'authority-a': 'network_director'},
+      );
+      expect(context.hasAuthorityPermission('authority-a', 'stations.catalogue.review'), isTrue);
+      expect(context.hasAuthorityPermission('station-a', 'stations.catalogue.review'), isFalse);
+      expect(context.hasStationPermission('authority-a', 'stations.catalogue.review'), isFalse);
+      expect(context.authorityRoles['authority-a'], 'network_director');
+    });
+
+    test('unresolved context denies authority permissions', () {
+      expect(MetraAccessContext.unresolved().hasAuthorityPermission('authority-a', 'stations.catalogue.review'), isFalse);
+    });
   });
 
   group('accountState informational only', () {
