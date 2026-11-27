@@ -94,14 +94,17 @@ class LocalCatalogRecord {
       });
     }
     final statusName = map['status']?.toString() ?? 'localSaved';
-    final status = LocalCatalogRecordStatus.values.firstWhere(
-      (s) => s.name == statusName,
-      orElse: () => LocalCatalogRecordStatus.localSaved,
-    );
+    final matchingStatuses = LocalCatalogRecordStatus.values
+        .where((s) => s.name == statusName);
+    if (matchingStatuses.isEmpty) return null;
+    final status = matchingStatuses.first;
     final schemaRaw = map['schemaVersion'];
     final schemaVersion = schemaRaw is int
         ? schemaRaw
         : int.tryParse('${schemaRaw ?? ''}') ?? currentSchemaVersion;
+    // A newer schema must remain untouched until an explicit migration exists.
+    // Treating it as v1 could silently discard fields on the next local write.
+    if (schemaVersion > currentSchemaVersion) return null;
     final accountKey = map['accountKey']?.toString().trim();
     return LocalCatalogRecord(
       id: id,

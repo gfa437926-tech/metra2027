@@ -93,4 +93,32 @@ void main() {
     expect(LocalCatalogRecord.tryParse({'id': 'x'}), isNull);
     expect(LocalCatalogRecord.tryParse(null), isNull);
   });
+  test('tryParse rejects records from a newer unsupported schema', () {
+    final futureRecord = {
+      'schemaVersion': LocalCatalogRecord.currentSchemaVersion + 1,
+      'id': 'future-1',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'values': {'rainAmount': 8, 'futureField': 'preserve-me'},
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'localSaved',
+    };
+    expect(LocalCatalogRecord.tryParse(futureRecord), isNull);
+  });
+
+  test('tryParse rejects unknown lifecycle states instead of relabeling them', () {
+    final unknownStatus = {
+      'schemaVersion': LocalCatalogRecord.currentSchemaVersion,
+      'id': 'unknown-status',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'values': {'rainAmount': 8},
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'serverSynced',
+    };
+    expect(LocalCatalogRecord.tryParse(unknownStatus), isNull);
+  });
+
 }
