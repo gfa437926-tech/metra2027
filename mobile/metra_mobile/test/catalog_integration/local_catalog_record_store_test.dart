@@ -30,4 +30,30 @@ void main() {
     expect(result['corrupt'], 1);
     expect(store.getById('valid-1'), isNotNull);
   });
+  test('envelope import reports malformed rows alongside valid records', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalCatalogRecordStore.forTesting();
+    await store.ensureLoaded();
+
+    final valid = LocalCatalogRecord(
+      id: 'envelope-valid',
+      stationId: 'station-1',
+      formType: 'soil',
+      values: const {'depth': 20},
+      createdAt: DateTime.utc(2026, 11, 27),
+      updatedAt: DateTime.utc(2026, 11, 27),
+    );
+    final envelope = LocalCatalogExportEnvelope(
+      exportedAt: DateTime.utc(2026, 11, 27),
+      records: [valid],
+    ).toJson();
+    envelope['records'] = [valid.toJson(), {'id': 'malformed'}];
+
+    final result = store.importJson(jsonEncode(envelope));
+
+    expect(result['added'], 1);
+    expect(result['corrupt'], 1);
+    expect(store.getById('envelope-valid'), isNotNull);
+  });
+
 }
