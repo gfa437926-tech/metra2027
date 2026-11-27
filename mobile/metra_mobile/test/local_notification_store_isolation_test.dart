@@ -165,4 +165,44 @@ void main() {
     expect(store.items.single.titleAr, 'حدث جديد');
   });
 
+  test('mark all read before initial load updates only the active account', () async {
+    final accountA = LocalNotificationItem(
+      id: 'unread-a',
+      titleAr: 'إشعار أ',
+      bodyAr: 'محتوى أ',
+      createdAt: DateTime.utc(2026, 11, 26),
+      category: 'system',
+      accountKey: 'account-a',
+    );
+    final accountB = LocalNotificationItem(
+      id: 'unread-b',
+      titleAr: 'إشعار ب',
+      bodyAr: 'محتوى ب',
+      createdAt: DateTime.utc(2026, 11, 26),
+      category: 'system',
+      accountKey: 'account-b',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1':
+          jsonEncode([accountA.toJson(), accountB.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    store.markAllRead();
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.items, hasLength(1));
+    expect(store.items.single.id, 'unread-a');
+    expect(store.items.single.read, isTrue);
+
+    final prefs = await SharedPreferences.getInstance();
+    final rows = (jsonDecode(
+      prefs.getString('metra2027.local_notifications.v1')!,
+    ) as List).cast<Map<String, dynamic>>();
+    expect(rows.singleWhere((row) => row['id'] == 'unread-a')['read'], isTrue);
+    expect(rows.singleWhere((row) => row['id'] == 'unread-b')['read'], isFalse);
+  });
+
 }
