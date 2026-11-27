@@ -140,4 +140,40 @@ void main() {
     expect(store.get('station-empty-save', 'hourly'), isNull);
   });
 
+  test('a save made after early station clear is preserved', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear-then-save',
+      formType: 'hourly',
+      values: const {'temperature': 12},
+      savedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 2)),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear-then-save::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clearStation('station-clear-then-save');
+    store.save(
+      stationId: 'station-clear-then-save',
+      formType: 'hourly',
+      values: const {'temperature': 24},
+    );
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(
+      store.get('station-clear-then-save', 'hourly')?.values['temperature'],
+      24,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    final decoded = jsonDecode(raw!) as Map<String, dynamic>;
+    expect(
+      decoded['station-clear-then-save::hourly']['values']['temperature'],
+      24,
+    );
+  });
+
 }
