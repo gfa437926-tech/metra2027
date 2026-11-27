@@ -126,6 +126,19 @@ void main() {
       );
     });
 
+
+    test('resolved context rejects a blank user identity', () {
+      expect(
+        () => MetraAccessContext.resolved(
+          userId: '  ',
+          stationPermissions: {
+            'station-a': {'observation.create'},
+          },
+        ),
+        throwsArgumentError,
+      );
+    });
+
     test('empty identifiers never grant access', () {
       expect(observer.hasStationPermission('', 'observation.create'), isFalse);
       expect(observer.hasStationPermission('station-a', ''), isFalse);
