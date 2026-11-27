@@ -111,4 +111,33 @@ void main() {
     expect(store.draftCount, 0);
   });
 
+  test('saving empty values before initial load persists a clear', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-empty-save',
+      formType: 'hourly',
+      values: const {'temperature': 19},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-empty-save::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.save(
+      stationId: 'station-empty-save',
+      formType: 'hourly',
+      values: const {},
+    );
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.get('station-empty-save', 'hourly'), isNull);
+  });
+
 }
