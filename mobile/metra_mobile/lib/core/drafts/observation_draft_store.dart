@@ -189,9 +189,10 @@ class ObservationDraftStore extends ChangeNotifier {
     if (stationId.trim().isEmpty || formType.trim().isEmpty) return;
     final key = keyFor(stationId, formType, accountKey: _activeAccountKey);
     if (!_loaded) {
-      // Mark the key dirty even when it is not in memory yet. The initial
-      // disk load will skip it, and the serialized write will persist removal.
+      // Remove an in-memory value immediately, and mark the key dirty even
+      // when it is not loaded yet so the disk read cannot resurrect it.
       _dirtyKeys.add(key);
+      if (_drafts.remove(key) != null) notifyListeners();
       // ignore: unawaited_futures
       _persist();
       return;
