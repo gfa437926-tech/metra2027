@@ -98,4 +98,41 @@ void main() {
     expect(store.items, hasLength(1));
     expect(store.items.single.accountKey, 'account-a');
   });
+  test('clear before initial load removes persisted items for the active account', () async {
+    final accountA = LocalNotificationItem(
+      id: 'early-clear-a',
+      titleAr: 'إشعار أ',
+      bodyAr: 'محتوى أ',
+      createdAt: DateTime.utc(2026, 11, 20),
+      category: 'system',
+      accountKey: 'account-a',
+    );
+    final accountB = LocalNotificationItem(
+      id: 'early-clear-b',
+      titleAr: 'إشعار ب',
+      bodyAr: 'محتوى ب',
+      createdAt: DateTime.utc(2026, 11, 21),
+      category: 'system',
+      accountKey: 'account-b',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1':
+          jsonEncode([accountA.toJson(), accountB.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    store.clearAll();
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.items, isEmpty);
+    final prefs = await SharedPreferences.getInstance();
+    final rows = jsonDecode(
+      prefs.getString('metra2027.local_notifications.v1')!,
+    ) as List;
+    expect(rows, hasLength(1));
+    expect((rows.single as Map<String, dynamic>)['id'], 'early-clear-b');
+  });
+
 }
