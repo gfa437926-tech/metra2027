@@ -215,6 +215,24 @@ public sealed class SupabaseObservationDecisionService(IHttpClientFactory client
           using var response=await clients.CreateClient(nameof(SupabaseObservationDecisionService)).SendAsync(message,cancellationToken);
           if(!response.IsSuccessStatusCode) return new(true,false,response.StatusCode,null);
           var data=await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken:cancellationToken);
+
+          // The decision RPC contract is { id, status, replayed }. A 2xx response
+          // is not proof of a completed review unless all fields are valid.
+          var expectedStatus = request.Decision == "approve" ? "approved" : "returned";
+          if (data.ValueKind != JsonValueKind.Object ||
+              !data.TryGetProperty("id", out var id) ||
+              id.ValueKind != JsonValueKind.String ||
+              !Guid.TryParse(id.GetString(), out var returnedId) ||
+              returnedId != observationId ||
+              !data.TryGetProperty("status", out var status) ||
+              status.ValueKind != JsonValueKind.String ||
+              status.GetString() != expectedStatus ||
+              !data.TryGetProperty("replayed", out var replayed) ||
+              replayed.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+          {
+              return new(true,false,HttpStatusCode.ServiceUnavailable,null);
+          }
+
           return new(true,true,response.StatusCode,data);
         } catch(JsonException) {
             // Do not report success when the database response cannot be parsed.
