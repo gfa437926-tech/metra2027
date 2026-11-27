@@ -540,4 +540,51 @@ void main() {
     expect(ApiConfig.isValidUrl('https://api.example.test/'), isTrue);
     expect(ApiConfig.isValidUrl('https://api.example.test'), isTrue);
   });
+
+  test('registration roles reject malformed successful responses', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('{"roles":"invalid"}', 200)),
+    );
+    await expectLater(
+      client.getRegistrationRoles(),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
+  test('registration status rejects malformed successful responses', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('[]', 200)),
+    );
+    await expectLater(
+      client.getMyRegistrationStatus(),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
+
+  test('registration submission never fabricates a submitted result', () async {
+    final client = MetraApiClient(
+      baseUrl: 'https://api.example.test',
+      accessTokenProvider: () async => 'token',
+      client: MockClient((_) async => http.Response('[]', 201)),
+    );
+    await expectLater(
+      client.submitRegistrationRequest(
+        firstName: 'Test',
+        fatherName: 'User',
+        lastName: 'Example',
+        phone: '0000000000',
+        roleCode: 'observer',
+        stationId: stationId,
+        idempotencyKey: 'registration-request-1',
+      ),
+      throwsA(isA<FormatException>()),
+    );
+    client.close();
+  });
 }
