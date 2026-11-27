@@ -80,4 +80,24 @@ void main() {
     store.removeListener(listener);
   });
 
+  test('legacy record can only be claimed by the matching active account', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalCatalogRecordStore.forTesting();
+    await store.ensureLoaded();
+
+    final legacy = store.upsert(
+      stationId: 'station-legacy',
+      formType: 'rainfall',
+      values: const {'amount': 5},
+    );
+    await store.flushForTesting();
+
+    expect(store.claimToAccount(legacy.id, 'account-a'), isNull);
+    store.setActiveAccountKey('account-a');
+    expect(store.claimToAccount(legacy.id, 'account-b'), isNull);
+    final claimed = store.claimToAccount(legacy.id, 'account-a');
+    expect(claimed?.accountKey, 'account-a');
+    expect(claimed?.values['amount'], 5);
+  });
+
 }
