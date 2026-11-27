@@ -58,7 +58,9 @@ public sealed class SupabaseAccessContextService(
     private static readonly string[] AuthorityPermissionCodes =
     [
         "stations.catalogue.review",
-        "registrations.system.approve"
+        "registrations.system.approve",
+        "authority.access.review",
+        "authority.access.revoke"
     ];
 
     private readonly string? _url = configuration["Supabase:Url"];
