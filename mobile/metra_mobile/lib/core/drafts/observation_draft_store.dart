@@ -191,8 +191,11 @@ class ObservationDraftStore extends ChangeNotifier {
     final key = keyFor(stationId, formType, accountKey: _activeAccountKey);
     _dirtyKeys.add(key);
     if (sanitized.isEmpty) {
-      if (_drafts.remove(key) != null) {
-        notifyListeners();
+      final removed = _drafts.remove(key) != null;
+      if (removed) notifyListeners();
+      if (!_loaded || removed) {
+        // Treat an empty save as a clear, including when the old draft has
+        // not been loaded into memory yet.
         // ignore: unawaited_futures
         _persist();
       }
