@@ -298,8 +298,8 @@ void main() {
     final client = MetraApiClient(
       baseUrl: 'https://api.example.test',
       accessTokenProvider: () async => 'directory-token',
-      client: MockClient((_) async => http.Response(
-        jsonEncode([
+      client: MockClient((_) async => http.Response.bytes(
+        utf8.encode(jsonEncode([
           {
             'id': stationId,
             'local_station_code': 'ST-001',
@@ -310,7 +310,7 @@ void main() {
             'approval_status': 'pending',
             'wmo_station_id': 123,
           },
-        ]),
+        ])),
         200,
       )),
     );
