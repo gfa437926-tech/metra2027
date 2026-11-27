@@ -20,6 +20,9 @@ class ObservationDraftStore extends ChangeNotifier {
   final Map<String, ObservationDraft> _drafts = {};
   bool _loaded = false;
   bool _loading = false;
+  Future<void>? _loadFuture;
+  Future<void> _persistTail = Future<void>.value();
+  int _writeGeneration = 0;
   bool _diskTrusted = true;
   String? _activeAccountKey;
   String? lastPersistError;
@@ -43,8 +46,16 @@ class ObservationDraftStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> ensureLoaded() async {
-    if (_loaded || _loading) return;
+  Future<void> ensureLoaded() {
+    if (_loaded) return Future<void>.value();
+    final inFlight = _loadFuture;
+    if (inFlight != null) return inFlight;
+    final future = _loadFromDisk();
+    _loadFuture = future;
+    return future;
+  }
+
+  Future<void> _loadFromDisk() async {
     _loading = true;
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -53,7 +64,9 @@ class ObservationDraftStore extends ChangeNotifier {
       if (raw != null && raw.isNotEmpty) {
         try {
           final decoded = jsonDecode(raw);
-          if (decoded is Map) {
+          if (decoded is! Map) {
+            _diskTrusted = false;
+          } else {
             decoded.forEach((key, value) {
               final draft = ObservationDraft.tryParse(value);
               if (draft != null && !draft.isEmpty) {
@@ -63,12 +76,13 @@ class ObservationDraftStore extends ChangeNotifier {
                   accountKey: draft.accountKey,
                 );
                 _drafts[mapKey] = draft;
+              } else {
+                _diskTrusted = false;
               }
             });
           }
-          _diskTrusted = true;
         } catch (_) {
-          // Do not mark disk untrusted for total wipe; refuse rewrite of empty.
+          // Preserve malformed storage rather than replacing it with partial data.
           _diskTrusted = false;
         }
       }
@@ -77,32 +91,44 @@ class ObservationDraftStore extends ChangeNotifier {
     } finally {
       _loaded = true;
       _loading = false;
+      _loadFuture = null;
       notifyListeners();
     }
   }
 
-  Future<void> _persist() async {
-    if (!_diskTrusted && _drafts.isEmpty) {
-      // Avoid wiping a corrupt-but-present payload with an empty write.
-      return;
-    }
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final payload = <String, Object?>{};
-      _drafts.forEach((key, draft) {
-        payload[key] = draft.toJson();
-      });
-      await prefs.setString(_prefsKey, jsonEncode(payload));
-      if (lastPersistError != null) {
-        lastPersistError = null;
+  Future<void> _persist() {
+    // A failed or partial load must never overwrite data that could not be read.
+    if (!_diskTrusted) return Future<void>.value();
+
+    final generation = ++_writeGeneration;
+    final payload = <String, Object?>{};
+    _drafts.forEach((key, draft) {
+      payload[key] = draft.toJson();
+    });
+    final encoded = jsonEncode(payload);
+
+    // Serialize writes. If an older write is already in progress, the newer
+    // snapshot runs after it and becomes the final on-disk state.
+    final operation = _persistTail.then((_) async {
+      if (generation != _writeGeneration) return;
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        if (generation != _writeGeneration) return;
+        await prefs.setString(_prefsKey, encoded);
+        if (generation != _writeGeneration) return;
+        if (lastPersistError != null) {
+          lastPersistError = null;
+          notifyListeners();
+        }
+      } catch (_) {
+        if (generation != _writeGeneration) return;
+        lastPersistError =
+            'تعذر حفظ المسودات على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
         notifyListeners();
       }
-      _diskTrusted = true;
-    } catch (_) {
-      lastPersistError =
-          'تعذر حفظ المسودات على الجهاز. تبقى متاحة لهذه الجلسة فقط.';
-      notifyListeners();
-    }
+    });
+    _persistTail = operation;
+    return operation;
   }
 
   ObservationDraft? get(String stationId, String formType) {
