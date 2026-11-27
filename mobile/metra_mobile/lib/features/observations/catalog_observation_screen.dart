@@ -160,7 +160,9 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
       // Explicit guard: repository must never claim server persistence.
       assert(!result.claimsServerPersistence);
 
-      if (result.phase == CatalogSubmissionPhase.localAccepted) {
+      // Persist on-device for any successful local validation path.
+      // awaitingApiContract still means "no server write" — records stay local-only.
+      if (result.isSuccess) {
         // Pending save must not land on a different account after switch.
         if (LocalCatalogRecordStore.instance.activeAccountKey !=
             accountAtStart) {
@@ -294,8 +296,8 @@ class _CatalogObservationScreenState extends State<CatalogObservationScreen> {
               fields: widget.fields,
               submitLabel: 'تحقق محلياً',
               initialValues: _draft?.values ??
-          widget.initialRecordValues ??
-          const {},
+                  widget.initialRecordValues ??
+                  const {},
               onValuesChanged: _canDraft ? _persistDraft : null,
               draftBanner: _draftBanner(),
               secondaryActionLabel: _draft != null && !_draft!.isEmpty
