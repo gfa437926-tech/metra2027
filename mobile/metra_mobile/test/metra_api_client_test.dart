@@ -279,6 +279,21 @@ void main() {
     client.close();
   });
 
+  test('station directory rejects null and scalar rows as malformed data', () async {
+    for (final body in ['[null]', '[42]', '["row"]']) {
+      final client = MetraApiClient(
+        baseUrl: 'https://api.example.test',
+        accessTokenProvider: () async => 'token',
+        client: MockClient((_) async => http.Response(body, 200)),
+      );
+      await expectLater(
+        client.getStationDirectory(),
+        throwsFormatException,
+      );
+      client.close();
+    }
+  });
+
   test('station directory parses coordinate and approval state', () async {
     late http.Request captured;
     final client = MetraApiClient(
