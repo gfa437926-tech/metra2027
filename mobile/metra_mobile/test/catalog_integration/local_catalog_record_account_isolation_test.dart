@@ -62,4 +62,22 @@ void main() {
     expect(store.list(), isEmpty);
     expect(store.listUnassigned(), isEmpty);
   });
+  test('account changes notify catalogue listeners exactly when scope changes', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalCatalogRecordStore.forTesting();
+    await store.ensureLoaded();
+    var notifications = 0;
+    void listener() => notifications++;
+    store.addListener(listener);
+
+    store.setActiveAccountKey('account-a');
+    expect(notifications, 1);
+    store.setActiveAccountKey('account-a');
+    expect(notifications, 1);
+    store.setActiveAccountKey('account-b');
+    expect(notifications, 2);
+
+    store.removeListener(listener);
+  });
+
 }
