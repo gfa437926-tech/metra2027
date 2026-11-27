@@ -85,13 +85,13 @@ class LocalCatalogRecord {
       return null;
     }
     final valuesRaw = map['values'];
+    if (valuesRaw is! Map) return null;
     final values = <String, Object?>{};
-    if (valuesRaw is Map) {
-      valuesRaw.forEach((key, value) {
-        final k = '$key'.trim();
-        if (k.isEmpty) return;
-        values[k] = value;
-      });
+    for (final entry in valuesRaw.entries) {
+      if (entry.key is! String) return null;
+      final key = (entry.key as String).trim();
+      if (key.isEmpty) return null;
+      values[key] = entry.value;
     }
     final statusName = map['status']?.toString() ?? 'localSaved';
     final matchingStatuses = LocalCatalogRecordStatus.values

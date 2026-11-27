@@ -89,6 +89,26 @@ void main() {
     expect(LocalCatalogExportEnvelope.tryParse(malformed), isNull);
   });
 
+  test('tryParse rejects missing or malformed values instead of erasing them', () {
+    final base = {
+      'id': 'invalid-values',
+      'stationId': 'st-a',
+      'formType': 'rainfall',
+      'createdAt': '2026-11-20T00:00:00.000Z',
+      'updatedAt': '2026-11-21T00:00:00.000Z',
+      'status': 'localSaved',
+    };
+    expect(LocalCatalogRecord.tryParse(base), isNull);
+    expect(LocalCatalogRecord.tryParse({...base, 'values': 'not-a-map'}), isNull);
+    expect(
+      LocalCatalogRecord.tryParse({
+        ...base,
+        'values': <Object, Object?>{7: 'invalid-key'},
+      }),
+      isNull,
+    );
+  });
+
   test('tryParse rejects corrupt payload without throwing', () {
     expect(LocalCatalogRecord.tryParse({'id': 'x'}), isNull);
     expect(LocalCatalogRecord.tryParse(null), isNull);
