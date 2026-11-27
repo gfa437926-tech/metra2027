@@ -229,10 +229,14 @@ class LocalCatalogExportEnvelope {
     } on TypeError {
       return null;
     }
-    if (map['kind']?.toString() != 'metra2027.local_catalog_export') {
+    final kindRaw = map['kind'];
+    final exportedAtRaw = map['exportedAt'];
+    if (kindRaw is! String ||
+        kindRaw != 'metra2027.local_catalog_export' ||
+        exportedAtRaw is! String) {
       return null;
     }
-    final exportedAt = DateTime.tryParse('${map['exportedAt'] ?? ''}');
+    final exportedAt = DateTime.tryParse(exportedAtRaw);
     final listRaw = map['records'];
     if (exportedAt == null || listRaw is! List) return null;
 

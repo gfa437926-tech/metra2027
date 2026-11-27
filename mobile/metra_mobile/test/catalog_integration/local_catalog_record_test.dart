@@ -81,6 +81,16 @@ void main() {
     expect(parsed!.records.single.id, 'e1');
   });
 
+  test('export envelope rejects coerced kind and timestamp metadata', () {
+    final base = {
+      'kind': 'metra2027.local_catalog_export',
+      'exportedAt': '2026-11-20T00:00:00.000Z',
+      'records': <Object>[],
+    };
+    expect(LocalCatalogExportEnvelope.tryParse({...base, 'kind': 7}), isNull);
+    expect(LocalCatalogExportEnvelope.tryParse({...base, 'exportedAt': 7}), isNull);
+  });
+
   test('export envelope rejects malformed non-string keys without throwing', () {
     final malformed = <Object, Object?>{
       'kind': 'metra2027.local_catalog_export',
