@@ -386,7 +386,17 @@ class LocalCatalogRecordStore extends ChangeNotifier {
         corrupt = decoded.length - records.length;
       }
       for (final record in records) {
+        // Imported data may only enter the currently authenticated account
+        // (or the unassigned quarantine while signed out).
+        if (!_canAccessRecord(record)) {
+          skipped++;
+          continue;
+        }
         final existing = _byId[record.id];
+        if (existing != null && !_canAccessRecord(existing)) {
+          skipped++;
+          continue;
+        }
         if (existing == null) {
           _byId[record.id] = record;
           _dirtyIds.add(record.id);
