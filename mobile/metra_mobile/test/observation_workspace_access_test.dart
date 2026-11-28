@@ -57,6 +57,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'reviewer',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.review',
@@ -85,6 +86,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'observer',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {'observation.create', 'observation.submit'},
       },
@@ -106,6 +108,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'other-station-user',
+      accountState: 'active',
       stationPermissions: {
         'station-b': {'observation.create', 'observation.submit'},
       },
@@ -120,5 +123,30 @@ void main() {
     expect(find.text('ساعي · متصل'), findsNothing);
     expect(find.text('مراجعة · متصل'), findsNothing);
     expect(find.text('زراعي'), findsNothing);
+  });
+
+  testWidgets('unknown accountState denies workspace even with permission codes', (
+    tester,
+  ) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'unknown-user',
+      accountState: 'unknown',
+      stationPermissions: {
+        'station-a': {
+          'observation.create',
+          'observation.submit',
+          'observation.review',
+        },
+      },
+    );
+
+    await _pump(tester, access: access);
+
+    expect(
+      find.text(MetraPermissionDeniedMessages.observations),
+      findsOneWidget,
+    );
+    expect(find.text('ساعي · متصل'), findsNothing);
+    expect(find.text('مراجعة · متصل'), findsNothing);
   });
 }
