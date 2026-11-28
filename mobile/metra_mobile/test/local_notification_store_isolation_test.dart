@@ -351,4 +351,5 @@ void main() {
     expect(rows.singleWhere((row) => row['id'] == existing.id)['read'], isTrue);
     expect(rows.singleWhere((row) => row['id'] == newItem.id)['read'], isFalse);
   });
-\n}\n
+
+}
