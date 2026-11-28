@@ -34,6 +34,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u1',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.create',
@@ -57,6 +58,7 @@ void main() {
     (tester) async {
       final access = MetraAccessContext.resolved(
         userId: 'u2',
+        accountState: 'active',
         stationPermissions: {
           'station-a': {
             'observation.review',
@@ -80,6 +82,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u3',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.review',
@@ -98,6 +101,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u4',
+      accountState: 'active',
       stationPermissions: const {},
     );
     await _pumpHome(tester, access: access);
@@ -126,6 +130,7 @@ void main() {
     (tester) async {
       final access = MetraAccessContext.resolved(
         userId: 'u5',
+        accountState: 'active',
         stationPermissions: {
           'station-a': {'users.station.view'},
           'station-b': {'observation.create', 'observation.submit'},
@@ -143,6 +148,7 @@ void main() {
     (tester) async {
       final access = MetraAccessContext.resolved(
         userId: 'u6',
+        accountState: 'active',
         stationPermissions: const {},
       );
       await _pumpHome(tester, access: access);
@@ -158,6 +164,7 @@ void main() {
     (tester) async {
       final access = MetraAccessContext.resolved(
         userId: 'u7',
+        accountState: 'active',
         stationPermissions: {
           'station-a': {
             'observation.create',
@@ -178,6 +185,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u8',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.review',
@@ -198,6 +206,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u9',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {'observation.edit_own_draft'},
       },
@@ -213,6 +222,7 @@ void main() {
   ) async {
     final access = MetraAccessContext.resolved(
       userId: 'u10',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {'users.station.view', 'registrations.station.approve'},
       },
@@ -222,5 +232,27 @@ void main() {
     expect(find.text('الرصد'), findsNothing);
     expect(find.text('إدارة'), findsWidgets);
     expect(find.text('إدارة المحطة'), findsOneWidget);
+  });
+
+  testWidgets('unknown accountState hides operational destinations', (
+    tester,
+  ) async {
+    final access = MetraAccessContext.resolved(
+      userId: 'u-unknown',
+      accountState: 'unknown',
+      stationPermissions: {
+        'station-a': {
+          'observation.create',
+          'observation.submit',
+          'users.station.manage',
+        },
+      },
+    );
+    await _pumpHome(tester, access: access);
+
+    expect(find.text('الرصد'), findsNothing);
+    expect(find.text('إدارة'), findsNothing);
+    expect(find.text('وحدة الرصد'), findsNothing);
+    expect(find.text('الرئيسية'), findsWidgets);
   });
 }
