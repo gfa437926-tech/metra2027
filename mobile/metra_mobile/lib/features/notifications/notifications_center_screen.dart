@@ -135,7 +135,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   onPressed: unread == 0
                       ? null
                       : () => LocalNotificationStore.instance.markAllRead(),
-                  child: const Text('تعليميز الكل كمقروء'),
+                  child: const Text('تعليم الكل كمقروء'),
                 ),
                 TextButton(
                   onPressed: items.isEmpty
