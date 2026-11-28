@@ -1,0 +1,2738 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام تسجيل الظواهر الجوية - بدء وانتهاء</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #2c3e50;
+        --secondary-color: #3498db;
+        --success-color: #27ae60;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --info-color: #17a2b8;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        margin: 0;
+        padding: 20px;
+        min-height: 100vh;
+        padding-bottom: 60px; /* مساحة للفوتر */
+        padding-right: 300px; /* مساحة للقائمة الجانبية */
+        transition: padding-right 0.3s ease;
+      }
+
+      /* تنسيقات للجوال */
+      @media (max-width: 768px) {
+        body {
+          padding-right: 20px;
+        }
+
+        .sidebar-dashboard {
+          transform: translateX(100%);
+          transition: transform 0.3s ease;
+        }
+
+        .sidebar-dashboard.active {
+          transform: translateX(0);
+        }
+
+        .mobile-menu-toggle {
+          display: block !important;
+        }
+      }
+
+      /* زر القائمة للجوال */
+      .mobile-menu-toggle {
+        display: none;
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1001;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .mobile-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      .mobile-overlay.active {
+        display: block;
+      }
+
+      .main-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header-card {
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-card {
+        background-color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .phenomena-card {
+        background-color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-left: 8px;
+        animation: pulse 2s infinite;
+      }
+
+      .status-active {
+        background-color: var(--success-color);
+      }
+
+      .status-ended {
+        background-color: var(--danger-color);
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .phenomena-item {
+        border-left: 4px solid var(--secondary-color);
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .phenomena-item.active {
+        border-left-color: var(--success-color);
+        background-color: #e8f5e9;
+      }
+
+      .phenomena-item.ended {
+        border-left-color: var(--danger-color);
+        background-color: #ffebee;
+      }
+
+      .phenomena-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .time-display {
+        font-family: "Courier New", monospace;
+        font-weight: bold;
+        color: var(--primary-color);
+        background-color: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        display: inline-block;
+      }
+
+      .duration-badge {
+        font-family: "Courier New", monospace;
+        background-color: var(--warning-color);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.9rem;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9998;
+        width: 350px;
+      }
+
+      .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 10px;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .filter-buttons {
+        margin-bottom: 20px;
+      }
+
+      .filter-btn.active {
+        background-color: var(--secondary-color);
+        color: white;
+      }
+
+      .realtime-indicator {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background-color: var(--success-color);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .phenomena-controls {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid #dee2e6;
+      }
+
+      .control-btn {
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        transition: all 0.3s;
+        border: none;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .control-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .time-inputs {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        border: 1px solid #dee2e6;
+      }
+
+      .phenomena-list {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+
+      .phenomena-list::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .phenomena-list::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+
+      .phenomena-list::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+
+      .user-info-badge {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 5px 15px;
+        margin: 0 5px;
+        font-size: 0.85rem;
+      }
+
+      .login-warning {
+        max-width: 450px;
+        margin: 50px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+
+      .whatsapp-btn {
+        background-color: #25d366;
+        border-color: #25d366;
+        color: white;
+        font-size: 0.85rem;
+        padding: 5px 10px;
+      }
+
+      .whatsapp-btn:hover {
+        background-color: #128c7e;
+        border-color: #128c7e;
+        color: white;
+      }
+
+      .modal-arabic .modal-header,
+      .modal-arabic .modal-body,
+      .modal-arabic .modal-footer {
+        text-align: right;
+      }
+
+      .suggestion-item {
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .suggestion-item:hover {
+        transform: scale(1.05);
+        background-color: var(--primary-color) !important;
+      }
+
+      /* تنسيق صندوق الإحصائيات الرئيسي */
+      .station-stats {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      /* تنسيق شبكة العناصر */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      /* تنسيق العنصر الفردي داخل الإحصائيات */
+      .stat-item {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px 8px;
+        text-align: center;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      /* ألوان الحالات المختلفة */
+      .stat-item.complete {
+        background: rgba(46, 204, 113, 0.15);
+        border-color: rgba(46, 204, 113, 0.3);
+      }
+      .stat-item.warning {
+        background: rgba(241, 196, 15, 0.15);
+        border-color: rgba(241, 196, 15, 0.3);
+      }
+      .stat-item.danger {
+        background: rgba(231, 76, 60, 0.15);
+        border-color: rgba(231, 76, 60, 0.3);
+      }
+
+      .stat-count {
+        font-size: 1.6rem;
+        font-weight: bold;
+        display: block;
+      }
+
+      /* Footer تنسيقات */
+      .page-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: #2c3e50;
+        color: white;
+        padding: 10px 0;
+        z-index: 1000;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .footer-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+      }
+
+      .footer-content > div {
+        flex: 1;
+        text-align: center;
+        font-size: 0.85rem;
+      }
+
+      .center-text {
+        border-left: 1px solid rgba(255, 255, 255, 0.2);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .programmer {
+        text-align: left;
+        padding-left: 20px;
+      }
+
+      .copyright {
+        text-align: right;
+        padding-right: 20px;
+      }
+
+      /* تنسيقات القائمة الجانبية */
+      .sidebar-dashboard {
+        background: linear-gradient(
+          180deg,
+          rgba(44, 62, 80, 0.95) 0%,
+          rgba(52, 73, 94, 0.95) 100%
+        );
+        min-height: 100vh;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+        padding: 12px;
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 280px;
+        z-index: 1000;
+        overflow-y: auto;
+        backdrop-filter: blur(5px);
+      }
+
+      .sidebar-sticky {
+        position: sticky;
+        top: 16px;
+        height: calc(100vh - 48px);
+        padding-top: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .sidebar-dashboard .nav-link {
+        color: #ecf0f1;
+        padding: 0.5rem 0.7rem;
+        margin: 0.2rem 0;
+        border-radius: 0.375rem;
+        transition: all 0.18s ease;
+        border: none;
+        font-size: 0.9rem;
+      }
+
+      .sidebar-dashboard .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        transform: translateX(-4px);
+      }
+
+      .sidebar-dashboard .nav-link.active {
+        background-color: #3498db;
+        color: white;
+        box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+      }
+
+      .sidebar-dashboard .nav-link .badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
+        margin-right: auto;
+        margin-left: 5px;
+      }
+
+      .phenomena-badge {
+        background-color: #e74c3c;
+        animation: pulse 2s infinite;
+      }
+
+      .sidebar-header {
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .user-info-sidebar {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+        font-size: 0.85rem;
+      }
+
+      .station-info {
+        color: #3498db;
+        font-weight: bold;
+      }
+
+      /* تحسينات للعرض على الأجهزة الصغيرة */
+      @media (max-width: 1200px) {
+        body {
+          padding-right: 280px;
+        }
+      }
+
+      @media (max-width: 992px) {
+        body {
+          padding-right: 20px;
+          padding-left: 20px;
+        }
+
+        .sidebar-dashboard {
+          transform: translateX(100%);
+          transition: transform 0.3s ease;
+        }
+
+        .sidebar-dashboard.active {
+          transform: translateX(0);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header-card .d-flex {
+          flex-direction: column;
+          align-items: flex-start !important;
+        }
+
+        .user-info-badge {
+          margin: 5px 0;
+        }
+
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .center-text {
+          border: none;
+          margin: 10px 0;
+          padding: 10px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .programmer,
+        .copyright {
+          text-align: center;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- زر القائمة للجوال -->
+    <button class="mobile-menu-toggle" id="mobileMenuBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- طبقة التعتيم للجوال -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- القائمة الجانبية -->
+    <div class="sidebar-dashboard" id="mainSidebar">
+      <div class="sidebar-sticky">
+        <!-- رأس القائمة -->
+        <div class="sidebar-header">
+          <div class="text-center">
+            <h5 class="mt-2 text-white">
+              <i class="fas fa-cloud-sun-rain me-2"></i>
+              نظام الظواهر الجوية
+            </h5>
+            <p class="text-light mb-0" style="font-size: 0.85rem; opacity: 0.8">
+              تسجيل ومتابعة الظواهر
+            </p>
+          </div>
+
+          <!-- معلومات المستخدم -->
+          <div class="user-info-sidebar">
+            <div class="d-flex align-items-center mb-2">
+              <i class="fas fa-user me-2" style="color: #3498db"></i>
+              <span id="sidebarUser">مستخدم</span>
+            </div>
+            <div class="d-flex align-items-center">
+              <i class="fas fa-map-marker-alt me-2" style="color: #2ecc71"></i>
+              <span id="sidebarStation" class="station-info">محطة</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- القائمة الرئيسية -->
+        <ul class="nav flex-column" id="sidebarMenu">
+          <li class="nav-item mb-2">
+            <a class="nav-link d-flex align-items-center" href="main.html">
+              <i class="fa-solid fa-chart-line me-2" style="color: #009dff"></i>
+              لوحة التحكم الرئيسية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a class="nav-link d-flex align-items-center active" href="#">
+              <i class="fas fa-cloud-rain me-2" style="color: #3498db"></i>
+              تسجيل الظواهر الجوية
+              <span class="badge phenomena-badge ms-2">مباشر</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="phenomena_history.html"
+            >
+              <i class="fas fa-history me-2" style="color: #f39c12"></i>
+              سجل الظواهر السابقة
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../hourly/hourly_send/hourly_reports.html"
+            >
+              <i class="fa-regular fa-clock me-2" style="color: #009dff"></i>
+              النشرات الساعية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../daily/daily_send/daily.html"
+            >
+              <i
+                class="fa-regular fa-calendar-days me-2"
+                style="color: #009dff"
+              ></i>
+              النشرات اليومية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../rain/rain_send/rainfall_reports.html"
+            >
+              <i class="fa-solid fa-cloud-rain me-2" style="color: #009dff"></i>
+              النشرات المطرية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../h_climate/h_climate_send/h_climate_send.html"
+            >
+              <i class="fa-solid fa-wind me-2" style="color: #009dff"></i>
+              الساعي المناخي
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../soil/soil_send/soil-send.html"
+            >
+              <i
+                class="fa-solid fa-temperature-half me-2"
+                style="color: #009dff"
+              ></i>
+              حرارة التربة
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../arg/send-argicultural/agricultural_reports.html"
+            >
+              <i class="fa-solid fa-leaf me-2" style="color: #009dff"></i>
+              النشرات الزراعية
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../fix/fix.html"
+            >
+              <i class="fa-solid fa-microchip me-2" style="color: #009dff"></i>
+              أعطال أجهزة الرصد
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../fix/fix-tel.html"
+            >
+              <i class="fa-solid fa-tower-cell me-2" style="color: #009dff"></i>
+              مشاكل أجهزة الإتصالات
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a class="nav-link d-flex align-items-center" href="../fix/it.html">
+              <i class="fa-solid fa-bug me-2" style="color: #009dff"></i>
+              أعطال البرامج (IT)
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../settings/settings.html"
+            >
+              <i class="fas fa-cog me-2" style="color: #95a5a6"></i>
+              الإعدادات
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <a
+              class="nav-link d-flex align-items-center text-danger"
+              href="../index.html"
+            >
+              <i
+                class="fa-solid fa-right-from-bracket me-2"
+                style="color: #ff0000"
+              ></i>
+              تسجيل الخروج
+            </a>
+          </li>
+        </ul>
+
+        <!-- إحصائيات سريعة -->
+        <div class="mt-4">
+          <div
+            class="alert alert-info p-2"
+            style="background: rgba(52, 152, 219, 0.15); border: none"
+          >
+            <small class="d-flex justify-content-between">
+              <span>ظواهر نشطة:</span>
+              <span class="fw-bold" id="sidebarActiveCount">0</span>
+            </small>
+            <small class="d-flex justify-content-between mt-1">
+              <span>ظواهر اليوم:</span>
+              <span class="fw-bold" id="sidebarTodayCount">0</span>
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نظام الإشعارات -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- طبقة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div
+        class="spinner-border text-light"
+        style="width: 3rem; height: 3rem"
+        role="status"
+      >
+        <span class="visually-hidden">جاري الإرسال...</span>
+      </div>
+      <div class="text-light mt-3" id="loadingMessage">
+        جاري معالجة البيانات...
+      </div>
+    </div>
+
+    <!-- مؤشر البث المباشر -->
+    <div
+      class="realtime-indicator"
+      id="realtimeIndicator"
+      style="display: none"
+    >
+      <i class="fas fa-broadcast-tower me-2"></i>
+      <span>البث المباشر نشط</span>
+    </div>
+
+    <!-- تحذير تسجيل الدخول -->
+    <div class="login-warning" id="loginWarning" style="display: none">
+      <h3 class="text-danger mb-4">
+        <i class="fas fa-exclamation-triangle me-2"></i>تحذير
+      </h3>
+      <p>
+        يجب تسجيل الدخول أولاً من الصفحة الرئيسية لاستخدام نظام الظواهر الجوية.
+      </p>
+      <button class="btn btn-primary" onclick="redirectToLogin()">
+        <i class="fas fa-sign-in-alt me-2"></i>تسجيل الدخول
+      </button>
+    </div>
+
+    <!-- الواجهة الرئيسية -->
+    <div class="main-container" id="mainContainer" style="display: none">
+      <!-- الرأس -->
+      <div class="header-card">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1>
+              <i class="fas fa-cloud-rain me-2"></i>نظام تسجيل الظواهر الجوية
+            </h1>
+            <p class="mb-0">
+              تسجيل بدء وانتهاء الظواهر الجوية ومتابعتها في الوقت الفعلي
+            </p>
+          </div>
+          <div class="text-end">
+            <div class="d-flex align-items-center">
+              <div class="me-3">
+                <small>الحالة:</small>
+                <div id="connectionStatus" class="badge bg-success">
+                  <i class="fas fa-circle me-1" style="font-size: 0.6rem"></i>
+                  جاري الاتصال...
+                </div>
+              </div>
+              <div class="user-info-badge">
+                <small>المستخدم:</small>
+                <div id="currentUser" class="fw-bold">غير مسجل</div>
+              </div>
+              <div class="user-info-badge">
+                <small>المحطة:</small>
+                <div id="currentStation" class="fw-bold">غير محددة</div>
+              </div>
+              <div class="user-info-badge">
+                <small>الصفة:</small>
+                <div id="currentRole" class="fw-bold">غير محددة</div>
+              </div>
+              <button
+                class="btn btn-outline-light btn-sm ms-3"
+                onclick="goBackToMain()"
+                title="العودة للصفحة الرئيسية"
+              >
+                <i class="fas fa-home"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- الإحصائيات -->
+      <div class="stats-card">
+        <div class="row text-center">
+          <div class="col-md-3 col-6">
+            <div class="stat-item">
+              <div class="stat-value" id="totalPhenomena">0</div>
+              <div class="stat-label">إجمالي الظواهر</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-item">
+              <div class="stat-value" id="activePhenomena">0</div>
+              <div class="stat-label">ظواهر نشطة</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-item">
+              <div class="stat-value" id="myActivePhenomena">0</div>
+              <div class="stat-label">ظواهري النشطة</div>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-item">
+              <div class="stat-value" id="todayPhenomena">0</div>
+              <div class="stat-label">اليوم</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- قسم التحكم بالظاهرة -->
+      <div class="form-card">
+        <h3 class="mb-4">
+          <i class="fas fa-cloud-sun-rain me-2"></i>التحكم بالظاهرة الحالية
+        </h3>
+
+        <!-- حالة الظاهرة -->
+        <div class="phenomena-controls mb-4">
+          <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+              <h5 id="currentStatusText">لا توجد ظاهرة نشطة حالياً</h5>
+              <div class="d-flex align-items-center mt-2">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <small class="text-muted" id="statusDetails"
+                  >قم ببدء ظاهرة جديدة</small
+                >
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <div id="durationContainer" style="display: none">
+                <span class="duration-badge">
+                  <i class="fas fa-hourglass-half me-1"></i>
+                  <span id="currentDuration">00:00:00</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- إدخال نوع الظاهرة -->
+          <div class="mb-4">
+            <label for="phenomenonType" class="form-label fw-bold">
+              <i class="fas fa-cloud-showers-heavy me-2"></i>نوع الظاهرة الجوية
+            </label>
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                id="phenomenonType"
+                placeholder="اكتب وصف الظاهرة (مثال: مطر خفيف، عاصفة رعدية، ضباب...)"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                id="suggestBtn"
+              >
+                <i class="fas fa-lightbulb"></i> اقتراحات
+              </button>
+            </div>
+            <div id="suggestions" class="mt-2" style="display: none">
+              <div class="d-flex flex-wrap gap-2">
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="مطر خفيف"
+                  >مطر خفيف</span
+                >
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="عاصفة رعدية"
+                  >عاصفة رعدية</span
+                >
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="رذاذ"
+                  >رذاذ</span
+                >
+                <span class="badge bg-secondary suggestion-item" data-type="ثلج"
+                  >ثلج</span
+                >
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="ضباب"
+                  >ضباب</span
+                >
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="عاصفة ترابية"
+                  >عاصفة ترابية</span
+                >
+                <span class="badge bg-secondary suggestion-item" data-type="برد"
+                  >برد</span
+                >
+                <span
+                  class="badge bg-secondary suggestion-item"
+                  data-type="رياح قوية"
+                  >رياح قوية</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- أزرار التحكم -->
+          <div class="row g-3">
+            <div class="col-md-4">
+              <button class="btn btn-success control-btn w-100" id="startBtn">
+                <i class="fas fa-play-circle"></i>
+                <span>بدء الظاهرة</span>
+              </button>
+              <div class="form-text text-center mt-1">
+                تسجيل وقت بدء الظاهرة
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <button
+                class="btn btn-warning control-btn w-100"
+                id="pauseBtn"
+                disabled
+              >
+                <i class="fas fa-pause-circle"></i>
+                <span>إيقاف مؤقت</span>
+              </button>
+              <div class="form-text text-center mt-1">توقف مؤقت في التسجيل</div>
+            </div>
+
+            <div class="col-md-4">
+              <button
+                class="btn btn-danger control-btn w-100"
+                id="stopBtn"
+                disabled
+              >
+                <i class="fas fa-stop-circle"></i>
+                <span>إنهاء الظاهرة</span>
+              </button>
+              <div class="form-text text-center mt-1">
+                تسجيل وقت انتهاء الظاهرة
+              </div>
+            </div>
+          </div>
+
+          <!-- عرض التوقيتات -->
+          <div class="time-inputs">
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label"
+                  ><i class="fas fa-play me-1"></i>وقت البدء (UTC)</label
+                >
+                <div
+                  class="time-display w-100 text-center"
+                  id="startTimeDisplay"
+                >
+                  --:--:--
+                </div>
+                <input type="hidden" id="startTime" name="startTime" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"
+                  ><i class="fas fa-stop me-1"></i>وقت الانتهاء (UTC)</label
+                >
+                <div class="time-display w-100 text-center" id="endTimeDisplay">
+                  --:--:--
+                </div>
+                <input type="hidden" id="endTime" name="endTime" />
+              </div>
+            </div>
+            <div class="row mt-2">
+              <div class="col-md-6">
+                <label class="form-label"
+                  ><i class="fas fa-play me-1"></i>وقت البدء (محلي)</label
+                >
+                <div
+                  class="time-display w-100 text-center"
+                  id="startTimeLocalDisplay"
+                >
+                  --:--:--
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label"
+                  ><i class="fas fa-stop me-1"></i>وقت الانتهاء (محلي)</label
+                >
+                <div
+                  class="time-display w-100 text-center"
+                  id="endTimeLocalDisplay"
+                >
+                  --:--:--
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ملاحظات -->
+          <div class="mb-3">
+            <label for="notes" class="form-label">
+              <i class="fas fa-comment me-1"></i>ملاحظات إضافية
+            </label>
+            <textarea
+              class="form-control"
+              id="notes"
+              rows="3"
+              placeholder="ملاحظات حول الظاهرة، شدتها، تأثيرها..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- سجل الظواهر -->
+      <div class="phenomena-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h3><i class="fas fa-history me-2"></i>سجل الظواهر الجوية</h3>
+          <div>
+            <small class="text-muted me-3">
+              <i class="fas fa-sync-alt me-1"></i>
+              آخر تحديث: <span id="lastUpdateTime">--:--</span>
+            </small>
+            <button class="btn btn-outline-primary btn-sm" id="refreshBtn">
+              <i class="fas fa-redo me-1"></i>تحديث
+            </button>
+          </div>
+        </div>
+
+        <!-- أزرار الفلترة -->
+        <div class="filter-buttons">
+          <button
+            class="btn btn-outline-primary filter-btn active"
+            data-filter="all"
+          >
+            <i class="fas fa-list me-1"></i> الكل
+          </button>
+          <button
+            class="btn btn-outline-success filter-btn"
+            data-filter="active"
+          >
+            <i class="fas fa-play-circle me-1"></i> النشطة
+          </button>
+          <button class="btn btn-outline-danger filter-btn" data-filter="ended">
+            <i class="fas fa-stop-circle me-1"></i> المنتهية
+          </button>
+          <button class="btn btn-outline-warning filter-btn" data-filter="my">
+            <i class="fas fa-user me-1"></i> ظواهري
+          </button>
+          <button class="btn btn-outline-info filter-btn" data-filter="today">
+            <i class="fas fa-calendar-day me-1"></i> اليوم
+          </button>
+        </div>
+
+        <!-- معلومات الفلترة -->
+        <div class="alert alert-info mb-3" id="filterInfo">
+          <i class="fas fa-filter me-2"></i>
+          <span id="filterInfoText">جاري عرض جميع الظواهر في محطتك</span>
+        </div>
+
+        <!-- قائمة الظواهر -->
+        <div class="phenomena-list" id="phenomenaList">
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+            <p class="mt-3">جاري تحميل سجل الظواهر...</p>
+          </div>
+        </div>
+
+        <!-- حالة فارغة -->
+        <div class="text-center py-5" id="emptyState" style="display: none">
+          <i class="fas fa-cloud fa-4x text-muted mb-3"></i>
+          <h4 class="text-muted">لا توجد ظواهر مسجلة في محطتك</h4>
+          <p class="text-muted">لم يتم تسجيل أي ظواهر جوية بعد في محطتك.</p>
+          <button class="btn btn-primary" id="startFirstBtn">
+            <i class="fas fa-plus me-1"></i> ابدأ تسجيل أول ظاهرة
+          </button>
+        </div>
+      </div>
+
+      <!-- إحصائيات تقارير المحطة -->
+      <div class="station-stats" id="stationStats">
+        <h5>
+          <i class="fas fa-chart-pie me-2"></i>إحصائيات تقارير المحطة اليوم
+        </h5>
+
+        <div class="stats-loading" id="statsLoading">
+          <div
+            class="spinner-border spinner-border-sm text-light"
+            role="status"
+          >
+            <span class="visually-hidden">جاري التحميل...</span>
+          </div>
+          <span class="ms-2">جاري تحديث الإحصائيات...</span>
+        </div>
+
+        <div class="stats-grid" id="statsGrid" style="display: none">
+          <!-- ستتم إضافة الإحصائيات هنا ديناميكياً -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer حقوق النشر -->
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="traffic-monitor.js"></script>
+    <script src="js/protect.js"></script>
+
+    <!-- المراقب -->
+    <script>
+      // ====== متغيرات التطبيق ======
+      let supabaseClient = null;
+      let currentUser = null;
+      let currentStation = null;
+      let phenomenaData = [];
+      let activePhenomenon = null;
+      let durationInterval = null;
+      let realtimeSubscription = null;
+
+      // ====== تكوين Supabase ======
+      const SUPABASE_CONFIG = {
+        URL: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        ANON_KEY:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      // ====== دالة تحديث القائمة الجانبية ======
+      function updateSidebarUserInfo() {
+        try {
+          if (currentUser) {
+            document.getElementById("sidebarUser").textContent =
+              currentUser.name || "مستخدم";
+            document.getElementById("sidebarStation").textContent =
+              currentUser.station || "محطة";
+            console.log("✅ تم تحديث معلومات القائمة الجانبية");
+          }
+        } catch (error) {
+          console.warn("⚠️ لا يمكن تحديث معلومات القائمة الجانبية:", error);
+        }
+      }
+
+      function updateSidebarStats() {
+        try {
+          const activeElement = document.getElementById("activePhenomena");
+          const todayElement = document.getElementById("todayPhenomena");
+
+          if (activeElement && todayElement) {
+            const activeCount = parseInt(activeElement.textContent) || 0;
+            const todayCount = parseInt(todayElement.textContent) || 0;
+
+            document.getElementById("sidebarActiveCount").textContent =
+              activeCount;
+            document.getElementById("sidebarTodayCount").textContent =
+              todayCount;
+            console.log("✅ تم تحديث إحصائيات القائمة الجانبية");
+          }
+        } catch (error) {
+          console.warn("⚠️ لا يمكن تحديث إحصائيات القائمة الجانبية:", error);
+        }
+      }
+
+      // ====== دالة إدارة القائمة الجانبية للجوال ======
+      function setupMobileSidebar() {
+        const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+        const mobileOverlay = document.getElementById("mobileOverlay");
+        const sidebar = document.getElementById("mainSidebar");
+
+        if (mobileMenuBtn && mobileOverlay && sidebar) {
+          mobileMenuBtn.addEventListener("click", function () {
+            sidebar.classList.add("active");
+            mobileOverlay.classList.add("active");
+            document.body.style.overflow = "hidden";
+          });
+
+          mobileOverlay.addEventListener("click", function () {
+            sidebar.classList.remove("active");
+            mobileOverlay.classList.remove("active");
+            document.body.style.overflow = "";
+          });
+
+          // إغلاق القائمة عند النقر على رابط
+          const navLinks = document.querySelectorAll(
+            ".sidebar-dashboard .nav-link",
+          );
+          navLinks.forEach((link) => {
+            link.addEventListener("click", function () {
+              sidebar.classList.remove("active");
+              mobileOverlay.classList.remove("active");
+              document.body.style.overflow = "";
+            });
+          });
+
+          console.log("✅ تم إعداد القائمة الجانبية للجوال");
+        }
+      }
+
+      // ====== تهيئة التطبيق ======
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 بدء تهيئة نظام الظواهر الجوية...");
+
+        // تهيئة Supabase
+        initializeSupabase();
+
+        // إعداد الأحداث
+        setupEventListeners();
+
+        // تحميل بيانات المستخدم من localStorage
+        loadUserDataFromLocalStorage();
+
+        // إعداد القائمة الجانبية للجوال
+        setupMobileSidebar();
+
+        console.log("✅ تم تهيئة التطبيق");
+      });
+
+      // ====== تحميل بيانات المستخدم من localStorage ======
+      function loadUserDataFromLocalStorage() {
+        try {
+          // جلب بيانات المستخدم من التخزين المحلي (من ملف login.js)
+          const userDataString = localStorage.getItem("currentUser");
+
+          if (!userDataString) {
+            showLoginWarning();
+            return;
+          }
+
+          const userData = JSON.parse(userDataString);
+
+          // التحقق من وجود البيانات المطلوبة
+          if (
+            !userData ||
+            !userData.email ||
+            !userData.station ||
+            !userData.role
+          ) {
+            showLoginWarning();
+            return;
+          }
+
+          // تعيين بيانات المستخدم
+          currentUser = {
+            name:
+              (userData.first_name || "") + " " + (userData.last_name || "") ||
+              "مستخدم",
+            email: userData.email,
+            station: userData.station,
+            role: userData.role,
+          };
+
+          currentStation = userData.station;
+
+          // عرض الواجهة الرئيسية
+          showMainInterface();
+
+          // تحديث القائمة الجانبية
+          updateSidebarUserInfo();
+
+          // تحميل الظواهر
+          loadPhenomena();
+
+          // تحميل إحصائيات المحطة
+          loadAllStationStatistics();
+
+          console.log("✅ تم تحميل بيانات المستخدم:", currentUser);
+        } catch (error) {
+          console.error("❌ خطأ في تحميل بيانات المستخدم:", error);
+          showLoginWarning();
+        }
+      }
+
+      // ====== عرض تحذير تسجيل الدخول ======
+      function showLoginWarning() {
+        document.getElementById("loginWarning").style.display = "block";
+        document.getElementById("mainContainer").style.display = "none";
+      }
+
+      // ====== توجيه لتسجيل الدخول ======
+      function redirectToLogin() {
+        window.location.href = "index.html";
+      }
+
+      // ====== العودة للصفحة الرئيسية ======
+      function goBackToMain() {
+        window.location.href = "main.html";
+      }
+
+      // ====== عرض الواجهة الرئيسية ======
+      function showMainInterface() {
+        document.getElementById("loginWarning").style.display = "none";
+        document.getElementById("mainContainer").style.display = "block";
+
+        // تحديث معلومات المستخدم
+        document.getElementById("currentUser").textContent = currentUser.name;
+        document.getElementById("currentStation").textContent =
+          currentUser.station;
+        document.getElementById("currentRole").textContent = currentUser.role;
+
+        // تحديث نص الفلترة
+        document.getElementById("filterInfoText").textContent =
+          `جاري عرض الظواهر في محطة: ${currentUser.station}`;
+
+        // التحقق من الظواهر النشطة
+        setTimeout(() => {
+          checkActivePhenomenon();
+        }, 1000);
+      }
+
+      // ====== تهيئة Supabase ======
+      function initializeSupabase() {
+        try {
+          supabaseClient = supabase.createClient(
+            SUPABASE_CONFIG.URL,
+            SUPABASE_CONFIG.ANON_KEY,
+            {
+              auth: {
+                persistSession: false,
+              },
+            },
+          );
+
+          updateConnectionStatus(true);
+          console.log("✅ تم تهيئة Supabase");
+        } catch (error) {
+          console.error("❌ خطأ في تهيئة Supabase:", error);
+          updateConnectionStatus(false, "فشل التهيئة");
+        }
+      }
+
+      // ====== تحديث حالة الاتصال ======
+      function updateConnectionStatus(connected, message = "") {
+        const statusElement = document.getElementById("connectionStatus");
+
+        if (connected) {
+          statusElement.className = "badge bg-success";
+          statusElement.innerHTML =
+            '<i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i> متصل';
+        } else {
+          statusElement.className = "badge bg-danger";
+          statusElement.innerHTML = `<i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i> ${message || "غير متصل"}`;
+        }
+      }
+
+      // ====== إعداد الأحداث ======
+      function setupEventListeners() {
+        // أزرار التحكم بالظاهرة
+        document
+          .getElementById("startBtn")
+          .addEventListener("click", startPhenomenon);
+        document
+          .getElementById("pauseBtn")
+          .addEventListener("click", togglePause);
+        document
+          .getElementById("stopBtn")
+          .addEventListener("click", stopPhenomenon);
+
+        // اقتراحات
+        document
+          .getElementById("suggestBtn")
+          .addEventListener("click", toggleSuggestions);
+        document.querySelectorAll(".suggestion-item").forEach((item) => {
+          item.addEventListener("click", function () {
+            document.getElementById("phenomenonType").value = this.dataset.type;
+            showNotification(`تم اختيار: ${this.dataset.type}`, "info");
+          });
+        });
+
+        // تحديث
+        document
+          .getElementById("refreshBtn")
+          .addEventListener("click", loadPhenomena);
+
+        // بدء أول ظاهرة
+        document
+          .getElementById("startFirstBtn")
+          .addEventListener("click", function () {
+            document.getElementById("phenomenonType").focus();
+          });
+
+        // فلترة
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const filter = this.dataset.filter;
+            applyFilter(filter);
+          });
+        });
+
+        // إرسال بالضغط على Enter
+        document
+          .getElementById("phenomenonType")
+          .addEventListener("keypress", function (e) {
+            if (
+              e.key === "Enter" &&
+              !document.getElementById("startBtn").disabled
+            ) {
+              startPhenomenon();
+            }
+          });
+      }
+
+      // ====== تحويل التوقيت المحلي إلى UTC ======
+      function localTimeToUTC(localTime) {
+        // التأكد من أن الوقت بصيغة صحيحة
+        if (!localTime) return "00:00:00";
+
+        // تحليل الوقت المحلي
+        const timeParts = localTime.split(":");
+        if (timeParts.length < 2) return "00:00:00";
+
+        let hours = parseInt(timeParts[0]) || 0;
+        let minutes = parseInt(timeParts[1]) || 0;
+        let seconds = parseInt(timeParts[2]) || 0;
+
+        console.log(`🕒 الوقت المحلي الأصلي: ${hours}:${minutes}:${seconds}`);
+
+        // تحويل إلى UTC (اطرح 3 ساعات لأن سوريا GMT+3)
+        hours -= 3;
+
+        // التعامل مع الساعات السلبية
+        if (hours < 0) {
+          hours += 24;
+        }
+
+        console.log(
+          `🌍 الوقت العالمي بعد التحويل: ${hours}:${minutes}:${seconds}`,
+        );
+
+        const result = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+        console.log(`✅ النتيجة النهائية: ${result}`);
+        return result;
+      }
+
+      // ====== تحويل التوقيت UTC إلى المحلي ======
+      function utcToLocalTime(utcTime) {
+        if (!utcTime || utcTime === "--:--" || utcTime === "--:--:--")
+          return "--:--";
+
+        // تحليل الوقت العالمي
+        const timeParts = utcTime.split(":");
+        if (timeParts.length < 2) return "--:--";
+
+        let hours = parseInt(timeParts[0]) || 0;
+        let minutes = parseInt(timeParts[1]) || 0;
+        let seconds = parseInt(timeParts[2]) || 0;
+
+        // تحويل إلى التوقيت المحلي (أضف 3 ساعات لأن سوريا GMT+3)
+        hours += 3;
+
+        // التعامل مع الساعات فوق 24
+        if (hours >= 24) {
+          hours -= 24;
+        }
+
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
+
+      // ====== دالة مساعدة: الحصول على التوقيت المحلي الحالي ======
+      function getCurrentLocalTime() {
+        const now = new Date();
+        // استخدام التوقيت المحلي للنظام
+        const hours = now.getHours().toString().padStart(2, "0");
+        const minutes = now.getMinutes().toString().padStart(2, "0");
+        const seconds = now.getSeconds().toString().padStart(2, "0");
+
+        return `${hours}:${minutes}:${seconds}`;
+      }
+
+      // ====== الحصول على التاريخ الحالي ======
+      function getCurrentDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, "0");
+        const day = now.getDate().toString().padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+      }
+
+      // ====== بدء ظاهرة جديدة ======
+      async function startPhenomenon() {
+        if (!currentUser) {
+          showNotification("يجب تسجيل الدخول أولاً", "error");
+          return;
+        }
+
+        const phenomenonType = document
+          .getElementById("phenomenonType")
+          .value.trim();
+
+        if (!phenomenonType) {
+          showNotification("يرجى كتابة نوع الظاهرة أولاً", "error");
+          document.getElementById("phenomenonType").focus();
+          return;
+        }
+
+        // التحقق من وجود ظاهرة نشطة
+        if (activePhenomenon) {
+          showNotification(
+            "يوجد ظاهرة نشطة بالفعل. يرجى إنهائها أولاً.",
+            "warning",
+          );
+          return;
+        }
+
+        // الحصول على التوقيت المحلي الحالي
+        const now = new Date();
+        const localTime = getCurrentLocalTime();
+        const currentDate = getCurrentDate();
+
+        // تحويل إلى UTC
+        const utcTime = localTimeToUTC(localTime);
+
+        // إعداد البيانات - استخدام جميع الأعمدة المطلوبة
+        const phenomenonData = {
+          phenomenon_type: phenomenonType,
+          phenomenon_date: currentDate,
+          start_time: utcTime,
+          phenomenon_status: "نشطة",
+          general_notes: document.getElementById("notes").value.trim(),
+          user_email: currentUser.email,
+          user_name: currentUser.name,
+          station_name: currentStation,
+          user_role: currentUser.role,
+          // الأعمدة المطلوبة حسب قاعدة البيانات
+          submission_date: currentDate,
+          submission_time: utcTime,
+          report_type: "phenomena_record",
+          status: "submitted",
+          validation_status: "pending",
+          is_shared_with_station: true,
+          shared_at: now.toISOString(),
+          created_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        };
+
+        console.log("📤 بدء ظاهرة جديدة:", phenomenonData);
+        console.log(`📅 التاريخ: ${currentDate}`);
+        console.log(`🕐 الوقت المحلي: ${localTime}`);
+        console.log(`🌍 الوقت العالمي: ${utcTime}`);
+
+        // عرض التحميل
+        showLoading("جاري تسجيل بدء الظاهرة...");
+
+        try {
+          // إرسال إلى Supabase
+          const { data, error } = await supabaseClient
+            .from("weather_phenomena")
+            .insert([phenomenonData])
+            .select();
+
+          if (error) {
+            console.error("❌ خطأ في إرسال البيانات:", error);
+            throw error;
+          }
+
+          // حفظ محلياً مع الوقت المحلي
+          activePhenomenon = {
+            ...phenomenonData,
+            id: data[0].id,
+            local_start_time: now.getTime(),
+            start_time_local: localTime, // حفظ محلياً فقط للعرض
+          };
+
+          // تحديث الواجهة
+          updateUIForActivePhenomenon();
+
+          // تحديث القائمة الجانبية
+          updateSidebarStats();
+
+          // إظهار إشعار النجاح
+          showNotification(
+            `تم بدء تسجيل الظاهرة: ${phenomenonType}`,
+            "success",
+          );
+
+          // إعادة تحميل القائمة
+          await loadPhenomena();
+
+          // إعداد تحديث المدة
+          startDurationTimer();
+
+          // عرض خيار إرسال إلى واتساب
+          setTimeout(() => {
+            showWhatsAppConfirmation("start", activePhenomenon);
+          }, 1000);
+        } catch (error) {
+          console.error("❌ خطأ في بدء الظاهرة:", error);
+
+          // بدء ظاهرة محلية
+          showNotification("تم البدء كظاهرة محلية", "warning");
+
+          // تحديث الواجهة محلياً
+          activePhenomenon = {
+            phenomenon_type: phenomenonType,
+            phenomenon_date: currentDate,
+            start_time: utcTime,
+            start_time_local: localTime,
+            phenomenon_status: "نشطة",
+            general_notes: document.getElementById("notes").value.trim(),
+            user_email: currentUser.email,
+            user_name: currentUser.name,
+            station_name: currentStation,
+            user_role: currentUser.role,
+            submission_date: currentDate,
+            submission_time: utcTime,
+            report_type: "phenomena_record",
+            status: "submitted",
+            validation_status: "pending",
+            is_shared_with_station: true,
+            shared_at: now.toISOString(),
+            created_at: now.toISOString(),
+            updated_at: now.toISOString(),
+            id: "local_" + Date.now(),
+            local_start_time: now.getTime(),
+          };
+
+          updateUIForActivePhenomenon();
+          updateSidebarStats();
+          startDurationTimer();
+
+          // عرض خيار إرسال إلى واتساب محلياً أيضاً
+          setTimeout(() => {
+            showWhatsAppConfirmation("start", activePhenomenon);
+          }, 1000);
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ====== إنهاء الظاهرة ======
+      async function stopPhenomenon() {
+        if (!currentUser) {
+          showNotification("يجب تسجيل الدخول أولاً", "error");
+          return;
+        }
+
+        if (!activePhenomenon) {
+          showNotification("لا توجد ظاهرة نشطة", "error");
+          return;
+        }
+
+        // الحصول على التوقيت المحلي الحالي
+        const now = new Date();
+        const localTime = getCurrentLocalTime();
+        const currentDate = getCurrentDate();
+
+        // تحويل إلى UTC
+        const utcTime = localTimeToUTC(localTime);
+
+        // حساب المدة
+        const startTime = activePhenomenon.local_start_time
+          ? new Date(activePhenomenon.local_start_time)
+          : new Date(activePhenomenon.created_at);
+        const durationMs = now - startTime;
+        const duration = formatDuration(durationMs);
+
+        // إعداد بيانات التحديث - باستخدام الأعمدة المطلوبة
+        const updateData = {
+          end_time: utcTime,
+          phenomenon_duration: duration,
+          phenomenon_status: "منتهية",
+          submission_date: currentDate,
+          submission_time: utcTime,
+          updated_at: now.toISOString(),
+        };
+
+        console.log("🛑 إنهاء الظاهرة:", updateData);
+        console.log(`📅 التاريخ: ${currentDate}`);
+        console.log(`🕐 الوقت المحلي: ${localTime}`);
+        console.log(`🌍 الوقت العالمي: ${utcTime}`);
+        console.log(`⏱️ المدة: ${duration}`);
+
+        // عرض التحميل
+        showLoading("جاري تسجيل انتهاء الظاهرة...");
+
+        try {
+          // الحصول على معرف الظاهرة كسلسلة نصية للتحقق
+          const phenomenonId = String(activePhenomenon.id);
+
+          // التحقق إذا كانت الظاهرة محفوظة في قاعدة البيانات
+          if (phenomenonId && !phenomenonId.startsWith("local_")) {
+            // تحديث في Supabase باستخدام الأعمدة المطلوبة
+            const { error } = await supabaseClient
+              .from("weather_phenomena")
+              .update(updateData)
+              .eq("id", phenomenonId);
+
+            if (error) {
+              console.error("❌ خطأ في تحديث الظاهرة:", error);
+              throw error;
+            }
+
+            // إضافة ملاحظات إذا كانت موجودة
+            const notes = document.getElementById("notes").value.trim();
+            if (notes) {
+              await supabaseClient
+                .from("weather_phenomena")
+                .update({ general_notes: notes })
+                .eq("id", phenomenonId);
+            }
+
+            showNotification("تم إنهاء تسجيل الظاهرة بنجاح", "success");
+
+            // إعداد بيانات الظاهرة مع المعلومات المحدثة
+            const completePhenomenon = {
+              ...activePhenomenon,
+              end_time: utcTime,
+              end_time_local: localTime,
+              phenomenon_duration: duration,
+            };
+
+            // عرض خيار إرسال إلى واتساب
+            setTimeout(() => {
+              showWhatsAppConfirmation("stop", completePhenomenon);
+            }, 1000);
+          } else {
+            // إذا كانت ظاهرة محلية، حفظ نسخة جديدة
+            const phenomenonData = {
+              phenomenon_type: activePhenomenon.phenomenon_type,
+              phenomenon_date: activePhenomenon.phenomenon_date,
+              start_time: activePhenomenon.start_time,
+              end_time: utcTime,
+              phenomenon_duration: duration,
+              phenomenon_status: "منتهية",
+              general_notes: document.getElementById("notes").value.trim(),
+              user_email: currentUser.email,
+              user_name: currentUser.name,
+              station_name: currentStation,
+              user_role: currentUser.role,
+              // الأعمدة المطلوبة
+              submission_date: currentDate,
+              submission_time: utcTime,
+              report_type: "phenomena_record",
+              status: "submitted",
+              validation_status: "pending",
+              is_shared_with_station: true,
+              shared_at: now.toISOString(),
+              created_at: now.toISOString(),
+              updated_at: now.toISOString(),
+            };
+
+            const { error } = await supabaseClient
+              .from("weather_phenomena")
+              .insert([phenomenonData])
+              .select();
+
+            if (error) {
+              console.error("❌ خطأ في حفظ الظاهرة المحلية:", error);
+              throw error;
+            }
+
+            showNotification(
+              "تم حفظ الظاهرة المحلية في قاعدة البيانات",
+              "success",
+            );
+
+            // إعداد البيانات الكاملة للظاهرة المحلية
+            const localCompletePhenomenon = {
+              ...phenomenonData,
+              end_time_local: localTime,
+              user_name: currentUser.name,
+              user_role: currentUser.role,
+              station_name: currentStation,
+            };
+
+            // عرض خيار إرسال إلى واتساب
+            setTimeout(() => {
+              showWhatsAppConfirmation("stop", localCompletePhenomenon);
+            }, 1000);
+          }
+
+          // إعادة تعيين الحالة المحلية
+          activePhenomenon = null;
+
+          // تحديث الواجهة
+          updateUIForNoPhenomenon();
+
+          // تحديث القائمة الجانبية
+          updateSidebarStats();
+
+          // إيقاف مؤقت المدة
+          stopDurationTimer();
+
+          // إعادة تحميل القائمة
+          await loadPhenomena();
+
+          // مسح الحقول
+          document.getElementById("phenomenonType").value = "";
+          document.getElementById("notes").value = "";
+        } catch (error) {
+          console.error("❌ خطأ في إنهاء الظاهرة:", error);
+          showNotification("فشل في إنهاء الظاهرة: " + error.message, "error");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ====== التحقق من الظواهر النشطة ======
+      async function checkActivePhenomenon() {
+        try {
+          if (!supabaseClient || !currentUser) return;
+
+          // البحث عن الظواهر النشطة للمستخدم الحالي في نفس المحطة
+          const { data, error } = await supabaseClient
+            .from("weather_phenomena")
+            .select("*")
+            .eq("user_email", currentUser.email)
+            .eq("station_name", currentStation)
+            .eq("phenomenon_status", "نشطة")
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (error) {
+            console.warn("⚠️ خطأ في البحث عن الظواهر النشطة:", error);
+            return;
+          }
+
+          if (data && data.length > 0) {
+            activePhenomenon = data[0];
+            // إضافة الوقت المحلي محلياً
+            if (activePhenomenon.start_time) {
+              activePhenomenon.start_time_local = utcToLocalTime(
+                activePhenomenon.start_time,
+              );
+            }
+            activePhenomenon.local_start_time = new Date(
+              activePhenomenon.created_at,
+            ).getTime();
+            updateUIForActivePhenomenon();
+            startDurationTimer();
+            console.log("✅ تم العثور على ظاهرة نشطة:", activePhenomenon);
+          }
+        } catch (error) {
+          console.warn("⚠️ خطأ في التحقق من الظواهر النشطة:", error);
+        }
+      }
+
+      // ====== تحديث واجهة الظاهرة النشطة ======
+      function updateUIForActivePhenomenon() {
+        if (!activePhenomenon) return;
+
+        // تحديث النصوص
+        document.getElementById("currentStatusText").textContent =
+          `ظاهرة نشطة: ${activePhenomenon.phenomenon_type}`;
+
+        // استخدام الوقت المحلي المحفوظ أو تحويل UTC
+        const localStartTime =
+          activePhenomenon.start_time_local ||
+          utcToLocalTime(activePhenomenon.start_time);
+        document.getElementById("statusDetails").textContent =
+          `بدأت في ${localStartTime} (محلي)`;
+
+        // تحديث المؤشر
+        const indicator = document.getElementById("statusIndicator");
+        indicator.className = "status-indicator status-active";
+        indicator.style.animation = "pulse 2s infinite";
+
+        // إظهار المدة
+        document.getElementById("durationContainer").style.display = "block";
+
+        // تحديث التوقيتات
+        const startTimeUTC = activePhenomenon.start_time || "--:--";
+        document.getElementById("startTimeDisplay").textContent =
+          startTimeUTC + " (UTC)";
+        document.getElementById("startTimeLocalDisplay").textContent =
+          localStartTime + " (محلي)";
+        document.getElementById("startTime").value =
+          activePhenomenon.start_time;
+
+        // تحديث وقت الانتهاء إذا كان موجوداً
+        if (activePhenomenon.end_time) {
+          const localEndTime = utcToLocalTime(activePhenomenon.end_time);
+          document.getElementById("endTimeDisplay").textContent =
+            activePhenomenon.end_time + " (UTC)";
+          document.getElementById("endTimeLocalDisplay").textContent =
+            localEndTime + " (محلي)";
+          document.getElementById("endTime").value = activePhenomenon.end_time;
+        } else {
+          document.getElementById("endTimeDisplay").textContent = "--:--:--";
+          document.getElementById("endTimeLocalDisplay").textContent =
+            "--:--:--";
+        }
+
+        // تعطيل/تمكين الأزرار
+        document.getElementById("startBtn").disabled = true;
+        document.getElementById("phenomenonType").disabled = true;
+        document.getElementById("stopBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = false;
+
+        // تعبئة الحقول
+        if (activePhenomenon.phenomenon_type) {
+          document.getElementById("phenomenonType").value =
+            activePhenomenon.phenomenon_type;
+        }
+        if (activePhenomenon.general_notes) {
+          document.getElementById("notes").value =
+            activePhenomenon.general_notes;
+        }
+      }
+
+      // ====== تحديث واجهة بدون ظاهرة نشطة ======
+      function updateUIForNoPhenomenon() {
+        // تحديث النصوص
+        document.getElementById("currentStatusText").textContent =
+          "لا توجد ظاهرة نشطة حالياً";
+        document.getElementById("statusDetails").textContent =
+          "قم ببدء ظاهرة جديدة";
+
+        // تحديث المؤشر
+        const indicator = document.getElementById("statusIndicator");
+        indicator.className = "status-indicator";
+        indicator.style.backgroundColor = "#6c757d";
+        indicator.style.animation = "none";
+
+        // إخفاء المدة
+        document.getElementById("durationContainer").style.display = "none";
+
+        // تحديث التوقيتات
+        document.getElementById("startTimeDisplay").textContent = "--:--:--";
+        document.getElementById("endTimeDisplay").textContent = "--:--:--";
+        document.getElementById("startTimeLocalDisplay").textContent =
+          "--:--:--";
+        document.getElementById("endTimeLocalDisplay").textContent = "--:--:--";
+        document.getElementById("startTime").value = "";
+        document.getElementById("endTime").value = "";
+
+        // تعطيل/تمكين الأزرار
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("phenomenonType").disabled = false;
+        document.getElementById("stopBtn").disabled = true;
+        document.getElementById("pauseBtn").disabled = true;
+
+        // إعادة تعيين زر الإيقاف المؤقت
+        document.getElementById("pauseBtn").classList.remove("btn-secondary");
+        document.getElementById("pauseBtn").classList.add("btn-warning");
+        document.getElementById("pauseBtn").innerHTML =
+          '<i class="fas fa-pause-circle"></i><span>إيقاف مؤقت</span>';
+      }
+
+      // ====== بدء مؤقت المدة ======
+      function startDurationTimer() {
+        if (!activePhenomenon) return;
+
+        // إيقاف أي مؤقت سابق
+        stopDurationTimer();
+
+        // حساب المدة الأولية
+        updateDuration();
+
+        // بدء التحديث كل ثانية
+        durationInterval = setInterval(updateDuration, 1000);
+      }
+
+      // ====== تحديث المدة ======
+      function updateDuration() {
+        if (!activePhenomenon) return;
+
+        const startTime = activePhenomenon.local_start_time
+          ? new Date(activePhenomenon.local_start_time)
+          : new Date(activePhenomenon.created_at);
+        const now = new Date();
+        const durationMs = now - startTime;
+
+        document.getElementById("currentDuration").textContent =
+          formatDuration(durationMs);
+      }
+
+      // ====== إيقاف مؤقت المدة ======
+      function stopDurationTimer() {
+        if (durationInterval) {
+          clearInterval(durationInterval);
+          durationInterval = null;
+        }
+      }
+
+      // ====== تنسيق المدة ======
+      function formatDuration(ms) {
+        const seconds = Math.floor(ms / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+      }
+
+      // ====== تحميل الظواهر من قاعدة البيانات ======
+      async function loadPhenomena() {
+        try {
+          const listElement = document.getElementById("phenomenaList");
+          const emptyState = document.getElementById("emptyState");
+
+          // عرض حالة التحميل
+          listElement.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                        <p class="mt-3">جاري تحميل سجل الظواهر...</p>
+                    </div>
+                `;
+
+          if (!supabaseClient || !currentStation) {
+            throw new Error("لا يوجد اتصال بقاعدة البيانات");
+          }
+
+          // بناء الاستعلام - فلترة حسب المحطة فقط
+          let query = supabaseClient
+            .from("weather_phenomena")
+            .select("*")
+            .eq("station_name", currentStation) // الفلترة حسب المحطة فقط
+            .order("created_at", { ascending: false });
+
+          // جلب البيانات
+          const { data, error } = await query;
+
+          if (error) throw error;
+
+          phenomenaData = data || [];
+
+          // تحديث الإحصائيات
+          updateStatistics();
+
+          // تحديث القائمة الجانبية
+          updateSidebarStats();
+
+          // تحديث وقت آخر تحديث
+          document.getElementById("lastUpdateTime").textContent =
+            new Date().toLocaleTimeString("ar-SA", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+          // عرض البيانات
+          if (phenomenaData.length === 0) {
+            listElement.style.display = "none";
+            emptyState.style.display = "block";
+          } else {
+            listElement.style.display = "block";
+            emptyState.style.display = "none";
+            renderPhenomenaList(phenomenaData);
+          }
+
+          console.log(
+            `✅ تم تحميل ${phenomenaData.length} ظاهرة لـ محطة ${currentStation}`,
+          );
+
+          // إعداد البث المباشر إذا لم يكن موجوداً
+          if (!realtimeSubscription && currentStation) {
+            setupRealtimeUpdates();
+          }
+        } catch (error) {
+          console.error("❌ خطأ في تحميل الظواهر:", error);
+
+          const listElement = document.getElementById("phenomenaList");
+          listElement.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        تعذر تحميل سجل الظواهر: ${error.message}
+                        <br>
+                        <button class="btn btn-sm btn-outline-danger mt-2" onclick="loadPhenomena()">
+                            <i class="fas fa-redo"></i> إعادة المحاولة
+                        </button>
+                    </div>
+                `;
+        }
+      }
+
+      // ====== عرض قائمة الظواهر ======
+      function renderPhenomenaList(phenomena) {
+        const listElement = document.getElementById("phenomenaList");
+        let html = "";
+
+        phenomena.forEach((phenomenon) => {
+          const isActive = phenomenon.phenomenon_status === "نشطة";
+          const isMine = phenomenon.user_email === currentUser?.email;
+          const isToday =
+            phenomenon.phenomenon_date ===
+            new Date().toISOString().split("T")[0];
+
+          let statusClass = isActive ? "active" : "ended";
+          let statusIcon = isActive
+            ? "fa-play-circle text-success"
+            : "fa-stop-circle text-danger";
+          let statusBadge = isActive
+            ? '<span class="badge bg-success">نشطة</span>'
+            : '<span class="badge bg-danger">منتهية</span>';
+
+          // إضافة فئة خاصة إذا كانت الظاهرة خاصة بالمستخدم
+          if (isMine) {
+            statusClass += " my-phenomenon";
+          }
+
+          // تنسيق الوقت
+          const startTimeUTC = phenomenon.start_time || "--:--";
+          const endTimeUTC = phenomenon.end_time || "--:--";
+          const startTimeLocal = utcToLocalTime(startTimeUTC);
+          const endTimeLocal = utcToLocalTime(endTimeUTC);
+          const duration = phenomenon.phenomenon_duration || "--:--:--";
+
+          html += `
+                    <div class="phenomena-item ${statusClass}" data-id="${phenomenon.id}" 
+                         data-status="${isActive ? "active" : "ended"}" 
+                         data-mine="${isMine}" 
+                         data-today="${isToday}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">
+                                    <i class="fas fa-cloud-rain me-2"></i>
+                                    ${phenomenon.phenomenon_type}
+                                </h5>
+                                <div class="d-flex align-items-center mb-2">
+                                    ${statusBadge}
+                                    ${isMine ? '<span class="badge bg-warning me-2">ظاهرة</span>' : ""}
+                                    <small class="text-muted me-3">
+                                        <i class="fas fa-user me-1"></i>
+                                        ${phenomenon.user_name}
+                                    </small>
+                                    <small class="text-muted me-3">
+                                        <i class="fas fa-user-tag me-1"></i>
+                                        ${phenomenon.user_role || "راصد جوي"}
+                                    </small>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        ${phenomenon.phenomenon_date}
+                                    </small>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">وقت البدء (محلي)</small>
+                                            <div class="time-display">${startTimeLocal}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">وقت البدء (UTC)</small>
+                                            <div class="time-display">${startTimeUTC}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">وقت الانتهاء (محلي)</small>
+                                            <div class="time-display">${endTimeLocal}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mb-2">
+                                            <small class="text-muted d-block">المدة</small>
+                                            <div class="duration-badge">${duration}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                ${
+                                  phenomenon.general_notes
+                                    ? `
+                                    <div class="mt-2">
+                                        <small class="text-muted d-block">ملاحظات:</small>
+                                        <p class="mb-0">${phenomenon.general_notes}</p>
+                                    </div>
+                                `
+                                    : ""
+                                }
+                                
+                                <div class="mt-3 d-flex gap-2">
+                                    <button class="btn btn-success btn-sm whatsapp-btn" onclick="sharePhenomenonToWhatsApp('${phenomenon.id}')">
+                                        <i class="fab fa-whatsapp me-1"></i> مشاركة على واتساب
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <i class="fas ${statusIcon} fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        });
+
+        listElement.innerHTML = html;
+
+        // تطبيق الفلترة الافتراضية
+        applyFilter("all");
+      }
+
+      // ====== تحديث الإحصائيات ======
+      function updateStatistics() {
+        if (!phenomenaData || phenomenaData.length === 0) {
+          document.getElementById("totalPhenomena").textContent = "0";
+          document.getElementById("activePhenomena").textContent = "0";
+          document.getElementById("myActivePhenomena").textContent = "0";
+          document.getElementById("todayPhenomena").textContent = "0";
+          return;
+        }
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const total = phenomenaData.length;
+        const active = phenomenaData.filter(
+          (p) => p.phenomenon_status === "نشطة",
+        ).length;
+        const myActive = phenomenaData.filter(
+          (p) =>
+            p.phenomenon_status === "نشطة" &&
+            p.user_email === currentUser?.email,
+        ).length;
+        const todayPhenomena = phenomenaData.filter(
+          (p) => p.phenomenon_date === today,
+        ).length;
+
+        document.getElementById("totalPhenomena").textContent = total;
+        document.getElementById("activePhenomena").textContent = active;
+        document.getElementById("myActivePhenomena").textContent = myActive;
+        document.getElementById("todayPhenomena").textContent = todayPhenomena;
+      }
+
+      // ====== تطبيق الفلترة ======
+      function applyFilter(filterType) {
+        const items = document.querySelectorAll(".phenomena-item");
+
+        items.forEach((item) => {
+          const isActive = item.dataset.status === "active";
+          const isMine = item.dataset.mine === "true";
+          const isToday = item.dataset.today === "true";
+          let show = true;
+
+          switch (filterType) {
+            case "all":
+              show = true;
+              break;
+            case "active":
+              show = isActive;
+              break;
+            case "ended":
+              show = !isActive;
+              break;
+            case "my":
+              show = isMine;
+              break;
+            case "today":
+              show = isToday;
+              break;
+          }
+
+          item.style.display = show ? "block" : "none";
+        });
+
+        // تحديث أزرار الفلترة النشطة
+        document.querySelectorAll(".filter-btn").forEach((btn) => {
+          btn.classList.remove("active");
+          if (btn.dataset.filter === filterType) {
+            btn.classList.add("active");
+          }
+        });
+      }
+
+      // ====== إعداد البث المباشر ======
+      function setupRealtimeUpdates() {
+        if (!supabaseClient || !currentStation) return;
+
+        try {
+          // إلغاء أي اشتراكات سابقة
+          if (realtimeSubscription) {
+            supabaseClient.removeChannel(realtimeSubscription);
+          }
+
+          // إنشاء اشتراك جديد - حسب المحطة فقط
+          realtimeSubscription = supabaseClient
+            .channel("phenomena_realtime")
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "weather_phenomena",
+                filter: `station_name=eq.${currentStation}`, // الفلترة حسب المحطة فقط
+              },
+              (payload) => {
+                console.log("🔔 تحديث في الوقت الحقيقي:", payload);
+
+                // إعادة تحميل البيانات
+                loadPhenomena();
+
+                // تحديث القائمة الجانبية
+                updateSidebarStats();
+
+                // إشعار للمستخدم
+                if (payload.eventType === "INSERT") {
+                  const newPhenomenon = payload.new;
+                  if (newPhenomenon.user_email !== currentUser?.email) {
+                    showNotification(
+                      `ظاهرة جديدة: ${newPhenomenon.phenomenon_type} - ${newPhenomenon.user_name}`,
+                      "info",
+                    );
+                  }
+                }
+              },
+            )
+            .subscribe();
+
+          // إظهار مؤشر البث المباشر
+          document.getElementById("realtimeIndicator").style.display = "flex";
+
+          console.log("✅ تم إعداد البث المباشر للمحطة:", currentStation);
+        } catch (error) {
+          console.error("❌ خطأ في إعداد البث المباشر:", error);
+        }
+      }
+
+      // ====== عرض/إخفاء الاقتراحات ======
+      function toggleSuggestions() {
+        const suggestions = document.getElementById("suggestions");
+        suggestions.style.display =
+          suggestions.style.display === "none" ? "block" : "none";
+      }
+
+      // ====== إيقاف مؤقت ======
+      function togglePause() {
+        const pauseBtn = document.getElementById("pauseBtn");
+        const isPaused = pauseBtn.classList.contains("btn-secondary");
+
+        if (isPaused) {
+          // استئناف
+          pauseBtn.classList.remove("btn-secondary");
+          pauseBtn.classList.add("btn-warning");
+          pauseBtn.innerHTML =
+            '<i class="fas fa-pause-circle"></i><span>إيقاف مؤقت</span>';
+          showNotification("تم استئناف تسجيل الظاهرة", "info");
+        } else {
+          // إيقاف مؤقت
+          pauseBtn.classList.remove("btn-warning");
+          pauseBtn.classList.add("btn-secondary");
+          pauseBtn.innerHTML =
+            '<i class="fas fa-play-circle"></i><span>استئناف</span>';
+          showNotification("تم إيقاف تسجيل الظاهرة مؤقتاً", "warning");
+        }
+      }
+
+      // ====== إرسال الظاهرة إلى واتساب ======
+      function sendToWhatsApp(action, phenomenonData) {
+        try {
+          // تحويل التاريخ إلى الميلادي بالتنسيق DD/MM/YYYY
+          const dateParts = phenomenonData.phenomenon_date.split("-");
+          let formattedDate;
+
+          if (dateParts.length === 3) {
+            // تحويل من YYYY-MM-DD إلى DD/MM/YYYY
+            const [year, month, day] = dateParts;
+            formattedDate = `${day}/${month}/${year}`;
+          } else {
+            // إذا كان التاريخ غير صحيح، استخدم التاريخ الحالي
+            const now = new Date();
+            formattedDate = `${now.getDate().toString().padStart(2, "0")}/${(now.getMonth() + 1).toString().padStart(2, "0")}/${now.getFullYear()}`;
+          }
+
+          // بناء النص بناءً على حالة الظاهرة
+          let statusText =
+            action === "start" ? "🟢 بدء ظاهرة جديدة" : "🔴 انتهاء ظاهرة";
+          let statusEmoji = action === "start" ? "▶️" : "⏹️";
+
+          // الحصول على الوقت المحلي
+          const localTime =
+            action === "start"
+              ? phenomenonData.start_time_local || getCurrentLocalTime()
+              : getCurrentLocalTime();
+
+          // تحويل الوقت المحلي إلى UTC
+          const utcTime = localTimeToUTC(localTime);
+
+          // إعداد النص للمشاركة
+          const whatsappMessage = `🌤️ *نظام الظواهر الجوية*
+                
+${statusEmoji} *${statusText}*
+
+*🔸 نوع الظاهرة:* ${phenomenonData.phenomenon_type}
+*📅 التاريخ (ميلادي):* ${formattedDate}
+*🕐 وقت البداية (محلي):* ${localTime}
+*🌍 وقت البداية (UTC):* ${utcTime}
+*🏢 المحطة:* ${phenomenonData.station_name}
+*👤 الراصد:* ${phenomenonData.user_name}
+*👔 الصفة:* ${phenomenonData.user_role}
+
+${action === "stop" ? `*⏱️ المدة:* ${phenomenonData.phenomenon_duration || "--:--:--"}\n` : ""}
+${phenomenonData.general_notes ? `*📝 ملاحظات:* ${phenomenonData.general_notes}\n` : ""}
+*📡 المصدر:* نظام تسجيل الظواهر الجوية`;
+
+          console.log("📱 نص واتساب:", whatsappMessage);
+
+          // تشفير النص للرابط
+          const encodedMessage = encodeURIComponent(whatsappMessage);
+
+          // إنشاء رابط واتساب (بدون رقم هاتف - سيفتح التطبيق مباشرة)
+          const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
+
+          // فتح واتساب في نافذة جديدة
+          window.open(whatsappURL, "_blank");
+
+          console.log("✅ تم فتح واتساب للمشاركة");
+          showNotification(
+            "تم فتح واتساب للمشاركة. الرجاء إرسال الرسالة يدوياً.",
+            "info",
+          );
+
+          return true;
+        } catch (error) {
+          console.error("❌ خطأ في إرسال إلى واتساب:", error);
+          showNotification("فشل في فتح واتساب: " + error.message, "error");
+          return false;
+        }
+      }
+
+      // ====== مشاركة ظاهرة محددة من القائمة ======
+      function sharePhenomenonToWhatsApp(phenomenonId) {
+        const phenomenon = phenomenaData.find(
+          (p) => p.id.toString() === phenomenonId,
+        );
+
+        if (!phenomenon) {
+          showNotification("لم يتم العثور على بيانات الظاهرة", "error");
+          return;
+        }
+
+        const action =
+          phenomenon.phenomenon_status === "نشطة" ? "start" : "stop";
+        showWhatsAppConfirmation(action, phenomenon);
+      }
+
+      // ====== عرض نافذة تأكيد إرسال واتساب ======
+      function showWhatsAppConfirmation(action, phenomenonData) {
+        // إنشاء عنصر تأكيد
+        const confirmationHTML = `
+                <div class="modal fade" id="whatsappModal" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 class="modal-title">
+                                    <i class="fab fa-whatsapp me-2"></i>
+                                    مشاركة على واتساب
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <i class="fab fa-whatsapp fa-4x text-success mb-3"></i>
+                                    <h5>هل تريد مشاركة الظاهرة على واتساب؟</h5>
+                                    <p class="text-muted">
+                                        ${
+                                          action === "start"
+                                            ? "سيتم فتح واتساب مع تفاصيل بدء الظاهرة الجديدة"
+                                            : "سيتم فتح واتساب مع تفاصيل انتهاء الظاهرة"
+                                        }
+                                    </p>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    سيتم فتح تطبيق واتساب مباشرة. الرجاء إرسال الرسالة يدوياً.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-1"></i> إلغاء
+                                </button>
+                                <button type="button" class="btn btn-success" id="confirmWhatsApp">
+                                    <i class="fab fa-whatsapp me-1"></i> فتح واتساب
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+        // إضافة النافذة إلى الصفحة
+        if (!document.getElementById("whatsappModal")) {
+          const modalContainer = document.createElement("div");
+          modalContainer.innerHTML = confirmationHTML;
+          document.body.appendChild(modalContainer);
+        }
+
+        // عرض النافذة
+        const modal = new bootstrap.Modal(
+          document.getElementById("whatsappModal"),
+        );
+        modal.show();
+
+        // إعداد حدث التأكيد
+        document.getElementById("confirmWhatsApp").onclick = function () {
+          modal.hide();
+          sendToWhatsApp(action, phenomenonData);
+        };
+      }
+
+      // ====== عرض التحميل ======
+      function showLoading(message) {
+        document.getElementById("loadingOverlay").style.display = "flex";
+        document.getElementById("loadingMessage").textContent = message;
+      }
+
+      // ====== إخفاء التحميل ======
+      function hideLoading() {
+        setTimeout(() => {
+          document.getElementById("loadingOverlay").style.display = "none";
+        }, 500);
+      }
+
+      // ====== عرض الإشعارات ======
+      function showNotification(message, type = "info") {
+        const container = document.getElementById("notificationContainer");
+
+        const alertClass =
+          type === "error"
+            ? "alert-danger"
+            : type === "success"
+              ? "alert-success"
+              : type === "warning"
+                ? "alert-warning"
+                : "alert-info";
+
+        const iconClass =
+          type === "success"
+            ? "fa-check-circle"
+            : type === "error"
+              ? "fa-exclamation-circle"
+              : type === "warning"
+                ? "fa-exclamation-triangle"
+                : "fa-info-circle";
+
+        const notification = document.createElement("div");
+        notification.className = `alert ${alertClass} alert-dismissible fade show`;
+        notification.innerHTML = `
+                <i class="fas ${iconClass} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+        container.appendChild(notification);
+
+        // إزالة الإشعار بعد 5 ثواني
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove();
+          }
+        }, 5000);
+      }
+
+      // ====== جلب جميع إحصائيات المحطة ======
+      async function loadAllStationStatistics() {
+        const stationName = currentStation; // استخدام اسم المحطة الحالي
+
+        try {
+          // جلب البيانات بشكل متوازي لسرعة الأداء
+          const [hourly, soil, agri, climate, daily, rain] = await Promise.all([
+            supabaseClient
+              .from("hourly_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station_name", stationName),
+            supabaseClient
+              .from("soil_temperatures")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName),
+            supabaseClient
+              .from("agricultural_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName),
+            supabaseClient
+              .from("climate_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName),
+            supabaseClient
+              .from("daily_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("station", stationName),
+            supabaseClient
+              .from("rainfall_reports")
+              .select("*", { count: "exact", head: true })
+              .eq("observer_station", stationName),
+          ]);
+
+          // إنشاء HTML للإحصائيات
+          const statsGrid = document.getElementById("statsGrid");
+          const statsLoading = document.getElementById("statsLoading");
+
+          if (statsLoading) statsLoading.style.display = "none";
+
+          const statsHTML = `
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-hourly">${hourly.count || 0}</div>
+                        <div class="stat-label">التقارير الساعية</div>
+                    </div>
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-soil">${soil.count || 0}</div>
+                        <div class="stat-label">درجات حرارة التربة</div>
+                    </div>
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-agri">${agri.count || 0}</div>
+                        <div class="stat-label">التقارير الزراعية</div>
+                    </div>
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-climate">${climate.count || 0}</div>
+                        <div class="stat-label">التقارير المناخية</div>
+                    </div>
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-daily">${daily.count || 0}</div>
+                        <div class="stat-label">التقارير اليومية</div>
+                    </div>
+                    <div class="stat-item complete">
+                        <div class="stat-count" id="count-rain">${rain.count || 0}</div>
+                        <div class="stat-label">تقارير هطول الأمطار</div>
+                    </div>
+                `;
+
+          statsGrid.innerHTML = statsHTML;
+          statsGrid.style.display = "grid";
+
+          console.log("✅ تم تحديث إحصائيات المحطة الشاملة");
+        } catch (error) {
+          console.error("❌ خطأ في جلب الإحصائيات الشاملة:", error);
+          const statsLoading = document.getElementById("statsLoading");
+          if (statsLoading) {
+            statsLoading.innerHTML =
+              '<small class="text-danger">تعذر تحديث الإحصائيات</small>';
+          }
+        }
+      }
+
+      // ====== التنظيف عند إغلاق الصفحة ======
+      window.addEventListener("beforeunload", function () {
+        if (realtimeSubscription) {
+          supabaseClient.removeChannel(realtimeSubscription);
+        }
+        stopDurationTimer();
+      });
+    </script>
+  </body>
+</html>

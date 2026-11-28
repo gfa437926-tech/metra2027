@@ -1,0 +1,1584 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية السورية - لوحة التحكم</title>
+
+    <link rel="icon" href="data:," />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- خطوط Google Fonts لجمالية النصوص -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary-gradient: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        --success-gradient: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        --warning-gradient: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+        --purple-gradient: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        --info-gradient: linear-gradient(135deg, #00cec9 0%, #0984e3 100%);
+      }
+
+      body {
+        font-family: "Tajawal", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+        overflow-x: hidden;
+        background-attachment: fixed;
+      }
+
+      /* تصميم الشريط الجانبي المحسن */
+      .sidebar-container {
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 300px;
+        height: 100vh;
+        background: var(--dark-gradient);
+        z-index: 1000;
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+        border-left: 5px solid #3498db;
+      }
+
+      .content-area {
+        margin-right: 300px;
+        padding: 30px;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      }
+
+      @media (max-width: 1200px) {
+        .sidebar-container {
+          width: 260px;
+        }
+
+        .content-area {
+          margin-right: 260px;
+        }
+      }
+
+      @media (max-width: 992px) {
+        .sidebar-container {
+          width: 100%;
+          height: auto;
+          position: relative;
+          border-left: none;
+          border-bottom: 5px solid #3498db;
+        }
+
+        .content-area {
+          margin-right: 0;
+          padding: 20px;
+        }
+
+        .sidebar-toggle-btn {
+          display: block;
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 1001;
+          background: var(--primary-gradient);
+          color: white;
+          border: none;
+          border-radius: 10px;
+          padding: 12px 20px;
+          cursor: pointer;
+          box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+          transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+      }
+
+      /* بطاقات لوحة التحكم المحسنة */
+      .dashboard-card {
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 30px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        position: relative;
+      }
+
+      .dashboard-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--primary-gradient);
+        transition: height 0.3s ease;
+      }
+
+      .dashboard-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .dashboard-card:hover::before {
+        height: 8px;
+      }
+
+      .card-icon {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        display: inline-block;
+        position: relative;
+        z-index: 1;
+      }
+
+      .card-icon::after {
+        content: "";
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: rgba(52, 152, 219, 0.1);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .card-title {
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: #2c3e50;
+        font-size: 1.3rem;
+        position: relative;
+        padding-bottom: 10px;
+      }
+
+      .card-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 50px;
+        height: 3px;
+        background: var(--primary-gradient);
+        border-radius: 2px;
+      }
+
+      .card-description {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+        flex-grow: 1;
+        line-height: 1.6;
+      }
+
+      .card-btn {
+        width: 100%;
+        padding: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      .card-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: width 0.3s ease;
+        z-index: -1;
+      }
+
+      .card-btn:hover::before {
+        width: 100%;
+      }
+
+      .card-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      /* ترويسة الترحيب المحسنة */
+      .user-welcome {
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(52, 152, 219, 0.3);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .user-welcome::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0) 70%
+        );
+        pointer-events: none;
+      }
+
+      .user-station {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 20px;
+        border-radius: 25px;
+        margin-top: 10px;
+        font-size: 0.95rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .card-col {
+        margin-bottom: 30px;
+      }
+
+      .section-title {
+        color: #2c3e50;
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+        position: relative;
+        font-weight: 800;
+        font-size: 1.8rem;
+      }
+
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -3px;
+        right: 0;
+        width: 100px;
+        height: 3px;
+        background: #e74c3c;
+        border-radius: 3px;
+      }
+
+      /* ألوان مختلفة للبطاقات حسب النوع */
+      .card-report {
+        border-top: 5px solid #3498db;
+      }
+
+      .card-climate {
+        border-top: 5px solid #2ecc71;
+      }
+
+      .card-agriculture {
+        border-top: 5px solid #e67e22;
+      }
+
+      .card-maintenance {
+        border-top: 5px solid #e74c3c;
+      }
+
+      .card-management {
+        border-top: 5px solid #9b59b6;
+      }
+
+      .card-weather {
+        border-top: 5px solid #e74c3c;
+      }
+
+      .card-about {
+        border-top: 5px solid #00cec9;
+      }
+
+      /* تصميم خاص لبطاقة الظواهر الجوية المحسنة */
+      .weather-phenomena-card {
+        background: var(--danger-gradient);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: none !important;
+      }
+
+      .weather-phenomena-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+        background-size: cover;
+        pointer-events: none;
+      }
+
+      .weather-phenomena-card .card-icon {
+        color: rgba(255, 255, 255, 0.95);
+        animation: pulse 2s infinite;
+        font-size: 4rem;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .weather-phenomena-card .card-title {
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .weather-phenomena-card .card-title::after {
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .weather-phenomena-card .card-description {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .weather-phenomena-card .card-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid white;
+        color: white;
+        backdrop-filter: blur(10px);
+      }
+
+      .weather-phenomena-card .card-btn:hover {
+        background: white;
+        color: #e74c3c;
+        box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
+      }
+
+      /* تحسينات عامة */
+      .btn-group .btn {
+        border-radius: 10px;
+        margin-left: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      /* تخصيص شريط التمرير */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary-gradient);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #1c6ea4 100%);
+      }
+
+      /* رسوم متحركة لدخول العناصر */
+      .fade-in {
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* بطاقة من نحن المميزة */
+      .about-us-card {
+        background: var(--info-gradient);
+        color: white;
+        border: none !important;
+      }
+
+      .about-us-card .card-icon {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .about-us-card .card-title {
+        color: white;
+      }
+
+      .about-us-card .card-title::after {
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .about-us-card .card-description {
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .about-us-card .card-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid white;
+        color: white;
+        backdrop-filter: blur(10px);
+      }
+
+      .about-us-card .card-btn:hover {
+        background: white;
+        color: #00cec9;
+        box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
+      }
+
+      /* شعار جديد متطور */
+      .logo-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 20px;
+        margin-bottom: 40px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .logo-header::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0) 70%
+        );
+        pointer-events: none;
+      }
+
+      .logo-icon {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        display: block;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .logo-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .logo-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 300;
+      }
+
+      /* تنسيقات الفوتر الجديدة */
+      .main-footer {
+        background: var(--dark-gradient);
+        color: white;
+        padding: 30px 0;
+        margin-top: 60px;
+        border-top: 5px solid #3498db;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .developer-info {
+        text-align: center;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+
+      .developer-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #3498db;
+        margin-bottom: 5px;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+      }
+
+      .whatsapp-link {
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 25px;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3);
+      }
+
+      .whatsapp-link:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(37, 211, 102, 0.4);
+        color: white;
+      }
+
+      .copyright {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .footer-links {
+          gap: 20px;
+          margin-top: 15px;
+        }
+
+        .whatsapp-link {
+          padding: 10px 20px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- زر عرض/إخفاء القائمة الجانبية للشاشات الصغيرة -->
+    <button class="sidebar-toggle-btn d-lg-none" id="sidebarToggle">
+      <i class="fas fa-bars me-2"></i>القائمة
+    </button>
+
+    <!-- القائمة الجانبية -->
+    <div class="sidebar-container d-none d-lg-block" id="sidebarContainer">
+      <iframe
+        src="sidebar.html"
+        style="width: 100%; height: 100%; border: none"
+      ></iframe>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="content-area" id="contentArea">
+      <div class="container-fluid">
+        <!-- الشعار الجديد المتطور -->
+        <div class="logo-header fade-in">
+          <i class="fas fa-cloud-sun logo-icon"></i>
+          <h1 class="logo-title">نظام إدارة البيانات الجوية</h1>
+          <p class="logo-subtitle">المراقبة • التحليل • التنبؤ</p>
+        </div>
+
+        <!-- رسالة الترحيب بالمستخدم -->
+        <div class="user-welcome fade-in" id="userWelcomeSection">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h4 id="welcomeMessage">طاب يومك بالخير..ً</h4>
+              <div class="user-station" id="userStationInfo">
+                <i class="fas fa-map-marker-alt me-2"></i>
+                <span id="stationName"></span>
+              </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <div class="btn-group">
+                <button
+                  class="btn btn-outline-light"
+                  onclick="refreshDashboard()"
+                >
+                  <i class="fas fa-sync-alt me-2"></i>تحديث اللوحة
+                </button>
+                <button class="btn btn-light" onclick="logout()">
+                  <i class="fas fa-sign-out-alt me-2"></i>خروج
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- لوحة التحكم الرئيسية -->
+        <h3 class="section-title fade-in">
+          <i class="fas fa-tachometer-alt me-3"></i>لوحة التحكم الرئيسية
+        </h3>
+
+        <!-- قسم الظواهر الجوية (بطاقة مميزة) -->
+        <div class="row g-4 mb-5">
+          <div class="col-12">
+            <div class="dashboard-card weather-phenomena-card fade-in">
+              <div class="row align-items-center">
+                <div class="col-lg-2 text-center">
+                  <div class="card-icon">
+                    <i class="fas fa-bolt-lightning"></i>
+                  </div>
+                </div>
+                <div class="col-lg-8">
+                  <h4 class="card-title mb-3">نشرة الظواهر الجوية الخطرة</h4>
+                  <p class="card-description mb-0">
+                    قم بإرسال تقارير الظواهر الجوية الخطرة والاستثنائية مثل
+                    العواصف الرعدية، الأمطار الغزيرة، العواصف الترابية، والصقيع.
+                    هذه النشرة مهمة للتحذير المبكر وإدارة الطوارئ لحماية الأرواح
+                    والممتلكات.
+                  </p>
+                </div>
+                <div class="col-lg-2 text-center">
+                  <button
+                    class="btn card-btn px-4 py-3"
+                    onclick="openWeatherPhenomena()"
+                  >
+                    <i class="fas fa-paper-plane me-2"></i>إرسال النشرة
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- قسم التقارير الأساسية -->
+        <h4 class="mb-4 text-secondary fade-in">
+          <i class="fas fa-file-alt me-3"></i>التقارير الأساسية
+        </h4>
+        <div class="row g-4" id="basicReportsCards"></div>
+
+        <!-- قسم المناخ والزراعة -->
+        <h4 class="mb-4 text-secondary mt-5 fade-in">
+          <i class="fas fa-leaf me-3"></i>المناخ والزراعة
+        </h4>
+        <div class="row g-4" id="climateCards"></div>
+
+        <!-- قسم الصيانة والإصلاح -->
+        <h4 class="mb-4 text-secondary mt-5 fade-in">
+          <i class="fas fa-tools me-3"></i>الصيانة والإصلاح
+        </h4>
+        <div class="row g-4" id="maintenanceCards"></div>
+
+        <!-- قسم من نحن -->
+        <h4 class="mb-4 text-secondary mt-5 fade-in">
+          <i class="fas fa-info-circle me-3"></i>حول النظام
+        </h4>
+        <div class="row g-4" id="aboutUsCards"></div>
+
+        <!-- قسم الإدارة (للمديرين فقط) -->
+        <div id="managementSection" style="display: none">
+          <h4 class="mb-4 text-secondary mt-5 fade-in">
+            <i class="fas fa-user-tie me-3"></i>لوحات الإدارة
+          </h4>
+          <div class="row g-4" id="managementCards"></div>
+        </div>
+
+        <!-- الفوتر الجديد -->
+        <footer class="main-footer fade-in" style="animation-delay: 1.5s">
+          <div class="container">
+            <div class="footer-content">
+              <div class="developer-info">
+                <div class="developer-name">
+                  <i class="fas fa-code me-2"></i>مطور النظام
+                </div>
+                <p>إبراهيم أحمد زينب</p>
+              </div>
+
+              <div class="footer-links">
+                <a
+                  href="https://wa.me/0934884157"
+                  class="whatsapp-link"
+                  target="_blank"
+                >
+                  <i class="fab fa-whatsapp"></i>
+                  تواصل عبر واتساب
+                </a>
+              </div>
+
+              <div class="copyright">
+                <p>© 2026 نظام إدارة البيانات الجوية. جميع الحقوق محفوظة.</p>
+                <p>تم التطوير بواسطة إبراهيم أحمد زينب</p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <!-- المكتبات -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/traffic-monitor.js"></script>
+    <!-- المراقب -->
+    <script>
+      /* =======================
+إعداد Supabase
+======================= */
+      const SUPABASE_URL = "https://vktcvkwqszehgmhqjrkb.supabase.co";
+      const SUPABASE_ANON_KEY = "PUT_YOUR_REAL_KEY_HERE";
+
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY,
+      );
+
+      /* =======================
+ثوابت النظام
+======================= */
+      const PATHS = {
+        LOGIN: "index.html",
+        MAIN: "main.html",
+        HOURLY_REPORTS: "pages/hourly/hourly_send/hourly_reports.html",
+        DAILY_REPORTS: "pages/daily/daily_send/daily.html",
+        RAINFALL_REPORTS: "pages/rain/rain_send/rainfall_reports.html",
+        CLIMATE_HOURLY: "pages/h_climate/h_climate_send/h_climate_send.html",
+        SOIL_TEMPERATURE: "pages/soil/soil_send/soil-send.html",
+        AGRICULTURAL_REPORTS:
+          "pages/arg/send-argicultural/agricultural_reports.html",
+        FIX_EQUIPMENT: "pages/fix/fix.html",
+        FIX_TELECOMM: "pages/fix/fix-tel.html",
+        FIX_SOFTWARE: "pages/fix/it.html",
+        STATION_MANAGER: "station-manager.html",
+        CENTER_MANAGER: "center-manager.html",
+        MANAGER_DASHBOARD: "manager-dashboard.html",
+        WEATHER_PHENOMENA: "pages/weather_phenomena/weather_phenomena.html",
+        ABOUT_US: "pages/about/about_us.html", // مسار جديد لصفحة من نحن
+      };
+
+      let currentUser = null;
+      let userRole = "";
+
+      /* =======================
+   التحقق من تسجيل الدخول
+======================= */
+      function checkAuth() {
+        const data = localStorage.getItem("currentUser");
+        if (!data) {
+          location.href = PATHS.LOGIN;
+          return false;
+        }
+
+        try {
+          currentUser = JSON.parse(data);
+          userRole = currentUser.role || "";
+
+          // التحقق من انتهاء الجلسة (24 ساعة)
+          const loginTime = currentUser.login_time;
+          if (
+            loginTime &&
+            Date.now() - parseInt(loginTime) > 24 * 60 * 60 * 1000
+          ) {
+            logout();
+            return false;
+          }
+
+          return true;
+        } catch (e) {
+          console.error("خطأ في تحليل بيانات المستخدم:", e);
+          logout();
+          return false;
+        }
+      }
+
+      /* =======================
+   عرض بيانات المستخدم
+======================= */
+      function renderUserInfo() {
+        if (!currentUser) return;
+
+        const welcomeMessage = document.getElementById("welcomeMessage");
+        const stationInfo = document.getElementById("userStationInfo");
+        const stationName = document.getElementById("stationName");
+
+        if (welcomeMessage) {
+          welcomeMessage.innerHTML = `
+            <i class="fas fa-user-circle me-2"></i>
+            طاب يومك بالخير..ً <strong>${currentUser.first_name || ""} ${currentUser.last_name || ""}</strong>
+            <br>
+            <small class="mt-2 d-block"><i class="far fa-clock me-1"></i> ${userRole} - ${getGreetingTime()}</small>
+        `;
+        }
+
+        if (stationInfo && stationName && currentUser.station) {
+          stationName.textContent = currentUser.station;
+        }
+      }
+
+      /* =======================
+   الحصول على تحية الوقت
+======================= */
+      function getGreetingTime() {
+        const hour = new Date().getHours();
+        if (hour < 5) return "ليلة سعيدة";
+        if (hour < 12) return "صباح الخير";
+        if (hour < 18) return "مساء الخير";
+        return "مساء الخير";
+      }
+
+      /* =======================
+   فتح صفحة الظواهر الجوية
+======================= */
+      function openWeatherPhenomena() {
+        // إذا كان المسار موجود، انتقل إليه
+        if (PATHS.WEATHER_PHENOMENA) {
+          window.location.href = PATHS.WEATHER_PHENOMENA;
+        } else {
+          // إذا لم يكن المسار موجوداً، عرض رسالة
+          showToast("صفحة الظواهر الجوية قيد التطوير", "info");
+
+          // أو يمكنك فتح نموذج مباشرة
+          setTimeout(() => {
+            showWeatherPhenomenaModal();
+          }, 1000);
+        }
+      }
+
+      /* =======================
+   عرض نافذة الظواهر الجوية (احتياطي)
+======================= */
+      function showWeatherPhenomenaModal() {
+        const modalHTML = `
+        <div class="modal fade" id="weatherPhenomenaModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-bolt-lightning me-2"></i>نشرة الظواهر الجوية</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="weatherPhenomenaForm">
+                            <div class="mb-3">
+                                <label class="form-label">نوع الظاهرة الجوية:</label>
+                                <select class="form-select" required>
+                                    <option value="">اختر نوع الظاهرة</option>
+                                    <option value="thunderstorm">عاصفة رعدية</option>
+                                    <option value="heavy_rain">أمطار غزيرة</option>
+                                    <option value="dust_storm">عاصفة ترابية</option>
+                                    <option value="frost">صقيع</option>
+                                    <option value="fog">ضباب كثيف</option>
+                                    <option value="hail">برد</option>
+                                    <option value="heat_wave">موجة حر</option>
+                                    <option value="cold_wave">موجة برد</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">شدة الظاهرة:</label>
+                                <select class="form-select" required>
+                                    <option value="">اختر الشدة</option>
+                                    <option value="light">خفيفة</option>
+                                    <option value="moderate">متوسطة</option>
+                                    <option value="severe">شديدة</option>
+                                    <option value="extreme">قاسية</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ ووقت البدء:</label>
+                                <input type="datetime-local" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ ووقت الانتهاء المتوقع:</label>
+                                <input type="datetime-local" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">وصف الظاهرة:</label>
+                                <textarea class="form-control" rows="3" placeholder="وصف تفصيلي للظاهرة الجوية..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">التوصيات والتحذيرات:</label>
+                                <textarea class="form-control" rows="3" placeholder="توصيات للجمهور والجهات المعنية..."></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="button" class="btn btn-danger" onclick="submitWeatherPhenomena()">
+                            <i class="fas fa-paper-plane me-2"></i>إرسال النشرة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // إضافة المودال إلى الصفحة
+        const modalContainer = document.createElement("div");
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer);
+
+        // عرض المودال
+        const modal = new bootstrap.Modal(
+          document.getElementById("weatherPhenomenaModal"),
+        );
+        modal.show();
+
+        // تنظيف المودال بعد الإغلاق
+        modalContainer.addEventListener("hidden.bs.modal", () => {
+          modalContainer.remove();
+        });
+      }
+
+      /* =======================
+   إرسال تقرير الظواهر الجوية
+======================= */
+      function submitWeatherPhenomena() {
+        // هنا يمكنك إضافة كود إرسال البيانات إلى Supabase
+        showToast("تم إرسال نشرة الظواهر الجوية بنجاح", "success");
+
+        // إغلاق المودال
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("weatherPhenomenaModal"),
+        );
+        modal.hide();
+      }
+
+      /* =======================
+   إنشاء البطاقات
+======================= */
+      function renderDashboardCards() {
+        renderBasicReportsCards();
+        renderClimateCards();
+        renderMaintenanceCards();
+        renderAboutUsCards(); // إضافة بطاقات من نحن
+
+        // عرض قسم الإدارة فقط للمديرين
+        if (["مدير النظام", "رئيس محطة", "مدير مركز"].includes(userRole)) {
+          renderManagementCards();
+          document.getElementById("managementSection").style.display = "block";
+        }
+      }
+
+      /* =======================
+   بطاقات التقارير الأساسية
+======================= */
+      function renderBasicReportsCards() {
+        const basicReports = [
+          {
+            title: "النشرات الساعية",
+            icon: "fas fa-clock",
+            description:
+              "إرسال وعرض التقارير الساعية لبيانات الطقس مثل الحرارة والرطوبة والرياح",
+            link: PATHS.HOURLY_REPORTS,
+            colorClass: "card-report",
+            iconColor: "#3498db",
+            buttonClass: "btn-primary",
+            delay: "0.1s",
+          },
+          {
+            title: "النشرات اليومية",
+            icon: "fas fa-calendar-day",
+            description:
+              "التقارير اليومية الشاملة لبيانات الطقس والإحصائيات اليومية",
+            link: PATHS.DAILY_REPORTS,
+            colorClass: "card-report",
+            iconColor: "#2980b9",
+            buttonClass: "btn-primary",
+            delay: "0.2s",
+          },
+          {
+            title: "النشرات المطرية",
+            icon: "fas fa-cloud-rain",
+            description:
+              "تقرير كميات الأمطار والهطول المطري والتحليل المطري الشامل",
+            link: PATHS.RAINFALL_REPORTS,
+            colorClass: "card-report",
+            iconColor: "#3498db",
+            buttonClass: "btn-primary",
+            delay: "0.3s",
+          },
+        ];
+
+        const container = document.getElementById("basicReportsCards");
+        if (!container) return;
+
+        container.innerHTML = basicReports
+          .map(
+            (card, index) => `
+        <div class="col-xl-4 col-lg-6 col-md-6 card-col">
+            <div class="dashboard-card ${card.colorClass} fade-in" style="animation-delay: ${card.delay}">
+                <div class="card-icon" style="color: ${card.iconColor}">
+                    <i class="${card.icon}"></i>
+                </div>
+                <h5 class="card-title">${card.title}</h5>
+                <p class="card-description">${card.description}</p>
+                <a href="${card.link}" class="btn ${card.buttonClass} card-btn">
+                    <i class="fas fa-chart-line me-2"></i>فتح التقرير
+                </a>
+            </div>
+        </div>
+    `,
+          )
+          .join("");
+      }
+
+      /* =======================
+   بطاقات المناخ والزراعة
+======================= */
+      function renderClimateCards() {
+        const climateCards = [
+          {
+            title: "المناخ الساعي",
+            icon: "fas fa-wind",
+            description:
+              "بيانات المناخ الساعية ودرجات الحرارة والرطوبة النسبية",
+            link: PATHS.CLIMATE_HOURLY,
+            colorClass: "card-climate",
+            iconColor: "#2ecc71",
+            buttonClass: "btn-success",
+            delay: "0.4s",
+          },
+          {
+            title: "حرارة التربة",
+            icon: "fas fa-temperature-low",
+            description:
+              "قياسات حرارة التربة على أعماق مختلفة للاستخدام الزراعي",
+            link: PATHS.SOIL_TEMPERATURE,
+            colorClass: "card-climate",
+            iconColor: "#27ae60",
+            buttonClass: "btn-success",
+            delay: "0.5s",
+          },
+          {
+            title: "النشرات الزراعية",
+            icon: "fas fa-seedling",
+            description:
+              "تقارير خاصة بالبيانات الزراعية والمناخية لدعم القطاع الزراعي",
+            link: PATHS.AGRICULTURAL_REPORTS,
+            colorClass: "card-agriculture",
+            iconColor: "#e67e22",
+            buttonClass: "btn-warning",
+            delay: "0.6s",
+          },
+        ];
+
+        const container = document.getElementById("climateCards");
+        if (!container) return;
+
+        container.innerHTML = climateCards
+          .map(
+            (card, index) => `
+        <div class="col-xl-4 col-lg-6 col-md-6 card-col">
+            <div class="dashboard-card ${card.colorClass} fade-in" style="animation-delay: ${card.delay}">
+                <div class="card-icon" style="color: ${card.iconColor}">
+                    <i class="${card.icon}"></i>
+                </div>
+                <h5 class="card-title">${card.title}</h5>
+                <p class="card-description">${card.description}</p>
+                <a href="${card.link}" class="btn ${card.buttonClass} card-btn">
+                    <i class="fas fa-chart-bar me-2"></i>عرض البيانات
+                </a>
+            </div>
+        </div>
+    `,
+          )
+          .join("");
+      }
+
+      /* =======================
+   بطاقات الصيانة والإصلاح
+======================= */
+      function renderMaintenanceCards() {
+        const maintenanceCards = [
+          {
+            title: "أعطال الرصد",
+            icon: "fas fa-satellite-dish",
+            description: "تسجيل ومتابعة أعطال أجهزة الرصد الجوي والمحطات ",
+            link: PATHS.FIX_EQUIPMENT,
+            colorClass: "card-maintenance",
+            iconColor: "#e74c3c",
+            buttonClass: "btn-danger",
+            delay: "0.7s",
+          },
+          {
+            title: "أعطال الاتصالات",
+            icon: "fas fa-network-wired",
+            description: "مشاكل الاتصالات والشبكات في المحطة ونقل البيانات",
+            link: PATHS.FIX_TELECOMM,
+            colorClass: "card-maintenance",
+            iconColor: "#c0392b",
+            buttonClass: "btn-danger",
+            delay: "0.8s",
+          },
+          {
+            title: "أعطال البرامج (IT)",
+            icon: "fas fa-laptop-code",
+            description: "مشاكل البرامج والنظم التقنية ودعم المستخدمين",
+            link: PATHS.FIX_SOFTWARE,
+            colorClass: "card-maintenance",
+            iconColor: "#d35400",
+            buttonClass: "btn-danger",
+            delay: "0.9s",
+          },
+        ];
+
+        const container = document.getElementById("maintenanceCards");
+        if (!container) return;
+
+        container.innerHTML = maintenanceCards
+          .map(
+            (card, index) => `
+        <div class="col-xl-4 col-lg-6 col-md-6 card-col">
+            <div class="dashboard-card ${card.colorClass} fade-in" style="animation-delay: ${card.delay}">
+                <div class="card-icon" style="color: ${card.iconColor}">
+                    <i class="${card.icon}"></i>
+                </div>
+                <h5 class="card-title">${card.title}</h5>
+                <p class="card-description">${card.description}</p>
+                <a href="${card.link}" class="btn ${card.buttonClass} card-btn">
+                    <i class="fas fa-wrench me-2"></i>إدارة الأعطال
+                </a>
+            </div>
+        </div>
+    `,
+          )
+          .join("");
+      }
+
+      /* =======================
+   بطاقات من نحن (جديدة)
+======================= */
+      function renderAboutUsCards() {
+        const aboutUsCards = [
+          {
+            title: "من نحن",
+            icon: "fas fa-info-circle",
+            description:
+              "تعرف على فريق العمل، رؤيتنا، رسالتنا، وأهداف نظام إدارة البيانات الجوية",
+            link: PATHS.ABOUT_US,
+            colorClass: "card-about",
+            iconColor: "#00cec9",
+            buttonClass: "btn-info",
+            delay: "1.0s",
+          },
+          {
+            title: "دليل المستخدم",
+            icon: "fas fa-book-open",
+            description:
+              "تعليمات الاستخدام، الأسئلة الشائعة، ودليل تفصيلي لجميع ميزات النظام",
+            link: "#",
+            colorClass: "card-about",
+            iconColor: "#0984e3",
+            buttonClass: "btn-info",
+            delay: "1.1s",
+            onClick: () => showToast("دليل المستخدم قيد الإعداد", "info"),
+          },
+          {
+            title: "اتصل بنا",
+            icon: "fas fa-headset",
+            description: "معلومات الاتصال، الدعم الفني، اقتراحاتكم، وشكاويكم",
+            link: "#",
+            colorClass: "card-about",
+            iconColor: "#6c5ce7",
+            buttonClass: "btn-info",
+            delay: "1.2s",
+            onClick: () => showContactModal(),
+          },
+        ];
+
+        const container = document.getElementById("aboutUsCards");
+        if (!container) return;
+
+        container.innerHTML = aboutUsCards
+          .map(
+            (card, index) => `
+        <div class="col-xl-4 col-lg-6 col-md-6 card-col">
+            <div class="dashboard-card ${card.colorClass} fade-in" style="animation-delay: ${card.delay}">
+                <div class="card-icon" style="color: ${card.iconColor}">
+                    <i class="${card.icon}"></i>
+                </div>
+                <h5 class="card-title">${card.title}</h5>
+                <p class="card-description">${card.description}</p>
+                ${
+                  card.onClick
+                    ? `<button class="btn ${card.buttonClass} card-btn" onclick="${card.onClick}">
+                        <i class="fas fa-external-link-alt me-2"></i>فتح
+                    </button>`
+                    : `<a href="${card.link}" class="btn ${card.buttonClass} card-btn">
+                        <i class="fas fa-external-link-alt me-2"></i>فتح
+                    </a>`
+                }
+            </div>
+        </div>
+    `,
+          )
+          .join("");
+      }
+
+      /* =======================
+   عرض نافذة الاتصال
+======================= */
+      function showContactModal() {
+        const modalHTML = `
+        <div class="modal fade" id="contactModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-headset me-2"></i>اتصل بنا</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-phone-alt text-info mb-3" style="font-size: 2rem;"></i>
+                                        <h5>الدعم الفني</h5>
+                                        <p class="text-muted">للمساعدة الفنية والمشاكل التقنية</p>
+                                        <a href="tel:+966500000000" class="btn btn-outline-info mt-2">
+                                            <i class="fas fa-phone me-2"></i>+966 50 000 0000
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-envelope text-info mb-3" style="font-size: 2rem;"></i>
+                                        <h5>البريد الإلكتروني</h5>
+                                        <p class="text-muted">للاقتراحات والشكاوى</p>
+                                        <a href="mailto:support@weather.gov.sa" class="btn btn-outline-info mt-2">
+                                            <i class="fas fa-envelope me-2"></i>support@weather.gov.sa
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>ساعات العمل:</strong> من الأحد إلى الخميس، 8:00 صباحاً حتى 4:00 مساءً
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+        // إضافة المودال إلى الصفحة
+        const modalContainer = document.createElement("div");
+        modalContainer.innerHTML = modalHTML;
+        document.body.appendChild(modalContainer);
+
+        // عرض المودال
+        const modal = new bootstrap.Modal(
+          document.getElementById("contactModal"),
+        );
+        modal.show();
+
+        // تنظيف المودال بعد الإغلاق
+        modalContainer.addEventListener("hidden.bs.modal", () => {
+          modalContainer.remove();
+        });
+      }
+
+      /* =======================
+   بطاقات الإدارة
+======================= */
+      function renderManagementCards() {
+        const managementCards = [];
+        let delay = 1.3;
+
+        if (userRole === "رئيس محطة") {
+          managementCards.push({
+            title: "إدارة المحطة",
+            icon: "fas fa-user-tie",
+            description:
+              "لوحة تحكم رئيس المحطة لإدارة المستخدمين والتقارير والعمليات",
+            link: PATHS.STATION_MANAGER,
+            colorClass: "card-management",
+            iconColor: "#9b59b6",
+            buttonClass: "btn-purple",
+            delay: (delay += 0.1) + "s",
+          });
+        }
+
+        if (userRole === "مدير مركز") {
+          managementCards.push({
+            title: "إدارة المركز",
+            icon: "fas fa-user-cog",
+            description:
+              "لوحة تحكم مدير المركز للمتابعة والإشراف والتقارير الشاملة",
+            link: PATHS.CENTER_MANAGER,
+            colorClass: "card-management",
+            iconColor: "#8e44ad",
+            buttonClass: "btn-purple",
+            delay: (delay += 0.1) + "s",
+          });
+        }
+
+        if (userRole === "مدير النظام") {
+          managementCards.push({
+            title: "لوحة المدير العام",
+            icon: "fas fa-crown",
+            description:
+              "لوحة التحكم الشاملة لمدير النظام والإحصائيات والتقارير الإدارية",
+            link: PATHS.MANAGER_DASHBOARD,
+            colorClass: "card-management",
+            iconColor: "#f1c40f",
+            buttonClass: "btn-warning",
+            delay: (delay += 0.1) + "s",
+          });
+        }
+
+        const container = document.getElementById("managementCards");
+        if (!container) return;
+
+        if (managementCards.length > 0) {
+          container.innerHTML = managementCards
+            .map(
+              (card) => `
+            <div class="col-xl-4 col-lg-6 col-md-6 card-col">
+                <div class="dashboard-card ${card.colorClass} fade-in" style="animation-delay: ${card.delay}">
+                    <div class="card-icon" style="color: ${card.iconColor}">
+                        <i class="${card.icon}"></i>
+                    </div>
+                    <h5 class="card-title">${card.title}</h5>
+                    <p class="card-description">${card.description}</p>
+                    <a href="${card.link}" class="btn ${card.buttonClass} card-btn" style="background: ${card.iconColor}; border-color: ${card.iconColor}; color: white">
+                        <i class="fas fa-chart-pie me-2"></i>فتح اللوحة
+                    </a>
+                </div>
+            </div>
+        `,
+            )
+            .join("");
+        }
+      }
+
+      /* =======================
+   إدارة القائمة الجانبية للشاشات الصغيرة
+======================= */
+      function setupMobileSidebar() {
+        const toggleBtn = document.getElementById("sidebarToggle");
+        const sidebarContainer = document.getElementById("sidebarContainer");
+        const contentArea = document.getElementById("contentArea");
+
+        if (toggleBtn && sidebarContainer && contentArea) {
+          toggleBtn.addEventListener("click", () => {
+            const isVisible = sidebarContainer.classList.contains("d-block");
+
+            if (isVisible) {
+              sidebarContainer.classList.remove("d-block");
+              sidebarContainer.classList.add("d-none");
+              toggleBtn.innerHTML = '<i class="fas fa-bars me-2"></i>القائمة';
+            } else {
+              sidebarContainer.classList.remove("d-none");
+              sidebarContainer.classList.add("d-block");
+              sidebarContainer.style.height = "auto";
+              sidebarContainer.style.position = "relative";
+              toggleBtn.innerHTML =
+                '<i class="fas fa-times me-2"></i>إغلاق القائمة';
+            }
+          });
+        }
+      }
+
+      /* =======================
+   تحديث اللوحة
+======================= */
+      function refreshDashboard() {
+        // إظهار رسالة تحميل
+        const refreshBtn = event?.target?.closest("button") || event?.target;
+        if (refreshBtn) {
+          const originalHTML = refreshBtn.innerHTML;
+          refreshBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin me-2"></i>جاري التحديث...';
+          refreshBtn.disabled = true;
+
+          setTimeout(() => {
+            refreshBtn.innerHTML = originalHTML;
+            refreshBtn.disabled = false;
+
+            // إعادة تحميل بيانات المستخدم
+            renderUserInfo();
+
+            // إظهار رسالة نجاح
+            showToast("تم تحديث لوحة التحكم بنجاح", "success");
+          }, 1500);
+        }
+      }
+
+      /* =======================
+   تسجيل الخروج
+======================= */
+      function logout() {
+        if (confirm("هل أنت متأكد من رغبتك في تسجيل الخروج؟")) {
+          localStorage.removeItem("currentUser");
+          showToast("تم تسجيل الخروج بنجاح", "info");
+          setTimeout(() => {
+            window.location.href = PATHS.LOGIN;
+          }, 1000);
+        }
+      }
+
+      /* =======================
+   عرض رسالة Toast
+======================= */
+      function showToast(message, type = "info") {
+        // إنشاء عنصر toast ديناميكي
+        const toastId = "toast-" + Date.now();
+        const icons = {
+          success: "fa-check-circle",
+          error: "fa-exclamation-circle",
+          warning: "fa-exclamation-triangle",
+          info: "fa-info-circle",
+        };
+
+        const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="fas ${icons[type] || "fa-info-circle"} me-3" style="font-size: 1.5rem;"></i>
+                    <div>${message}</div>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-3 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+        // إضافة إلى الصفحة
+        const toastContainer = document.createElement("div");
+        toastContainer.className =
+          "toast-container position-fixed top-0 start-0 p-3";
+        toastContainer.innerHTML = toastHTML;
+        document.body.appendChild(toastContainer);
+
+        // عرض الرسالة
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, {
+          delay: 4000,
+          animation: true,
+        });
+        toast.show();
+
+        // إزالة العنصر بعد الاختفاء
+        toastElement.addEventListener("hidden.bs.toast", () => {
+          toastContainer.remove();
+        });
+      }
+
+      /* =======================
+   تهيئة الصفحة
+======================= */
+      document.addEventListener("DOMContentLoaded", () => {
+        // التحقق من المصادقة
+        if (!checkAuth()) return;
+
+        // تهيئة العناصر
+        renderUserInfo();
+        renderDashboardCards();
+        setupMobileSidebar();
+
+        // إضافة تنسيقات إضافية
+        const style = document.createElement("style");
+        style.textContent = `
+        .btn-purple { 
+            color: white !important;
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            border: none;
+        }
+        .btn-purple:hover { 
+            color: white !important;
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(155, 89, 182, 0.4);
+        }
+        .toast {
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        .btn-info {
+            background: linear-gradient(135deg, #00cec9 0%, #0984e3 100%);
+            border: none;
+            color: white;
+        }
+    `;
+        document.head.appendChild(style);
+
+        // رسالة ترحيب أولية
+        setTimeout(() => {
+          showToast(
+            `طاب يومك بالخير..ً بك في نظام إدارة البيانات الجوية، ${currentUser.first_name}`,
+            "info",
+          );
+        }, 1500);
+
+        // إضافة تأثيرات ظهور متتالية للبطاقات
+        const observerOptions = {
+          threshold: 0.1,
+          rootMargin: "0px 0px -50px 0px",
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.style.opacity = "1";
+              entry.target.style.transform = "translateY(0)";
+            }
+          });
+        }, observerOptions);
+
+        // تطبيق تأثيرات على البطاقات
+        document.querySelectorAll(".fade-in").forEach((el) => {
+          el.style.opacity = "0";
+          el.style.transform = "translateY(20px)";
+          el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+          observer.observe(el);
+        });
+      });
+    </script>
+  </body>
+</html>

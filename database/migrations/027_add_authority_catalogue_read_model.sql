@@ -1,0 +1,3 @@
+CREATE OR REPLACE FUNCTION public.get_authority_catalogue() RETURNS SETOF jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$ SELECT jsonb_build_object('id',a.id,'authority_code',a.authority_code,'name_ar',a.name_ar,'name_en',a.name_en,'is_national',a.is_national,'country_id',c.id,'country_name_ar',c.name_ar,'country_name_en',c.name_en) FROM public.meteorological_authorities a JOIN public.countries c ON c.id=a.country_id WHERE a.is_active AND c.is_active ORDER BY a.is_national DESC,a.name_ar,a.authority_code; $$;
+REVOKE ALL ON FUNCTION public.get_authority_catalogue() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.get_authority_catalogue() TO service_role;

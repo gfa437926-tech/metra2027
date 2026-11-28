@@ -1,0 +1,2946 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - قسم أعطال أجهزة الاتصالات</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --secondary-color: #198754;
+        --accent-color: #fd7e14;
+        --error-color: #dc3545;
+        --warning-color: #ffc107;
+        --dark-blue: #0a58ca;
+        --light-bg: #f8f9fa;
+        --border-color: #dee2e6;
+        --text-muted: #6c757d;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+      }
+
+      .loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .spinner-border {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .error-message {
+        display: none;
+        text-align: center;
+      }
+
+      .main-container {
+        display: none;
+      }
+
+      .user-info-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        padding: 25px !important;
+      }
+
+      .user-info .badge {
+        font-size: 0.9rem;
+        padding: 10px 15px;
+        margin-bottom: 8px;
+      }
+
+      .card-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--dark-blue)
+        );
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+
+      .card-icon i {
+        font-size: 1.8rem;
+        color: white;
+      }
+
+      .dashboard-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .dashboard-card .card-body {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+      }
+
+      .dashboard-card .card-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .dashboard-card .card-text {
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 25px;
+        text-align: center;
+        flex-grow: 1;
+        font-size: 0.95rem;
+      }
+
+      .dashboard-card .btn {
+        align-self: center;
+        min-width: 140px;
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+
+      .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+
+      .status-in-progress {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .status-resolved {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .sidebar-container {
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .content-area {
+        padding: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .user-info-section {
+          padding: 15px !important;
+        }
+
+        .user-info .badge {
+          display: block;
+          margin-bottom: 8px;
+        }
+
+        .sidebar-container {
+          display: none;
+        }
+      }
+
+      .device-category {
+        margin-bottom: 30px;
+      }
+
+      .category-title {
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        color: var(--dark-blue);
+      }
+
+      .form-required::after {
+        content: " *";
+        color: var(--error-color);
+      }
+
+      .is-invalid {
+        border-color: var(--error-color) !important;
+      }
+
+      .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        color: var(--error-color);
+      }
+
+      .is-invalid ~ .invalid-feedback {
+        display: block;
+      }
+
+      .custom-alert {
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        z-index: 9999 !important;
+        min-width: 300px !important;
+        direction: rtl !important;
+      }
+
+      .logout-btn:hover {
+        background-color: rgba(255, 193, 7, 0.1);
+      }
+
+      /* أزرار جديدة */
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .btn-test {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        color: white;
+      }
+
+      .btn-whatsapp {
+        background-color: #25d366;
+        border-color: #25d366;
+        color: white;
+      }
+
+      .btn-test:hover {
+        background-color: #e66a00;
+        border-color: #e66a00;
+        color: white;
+      }
+
+      .btn-whatsapp:hover {
+        background-color: #128c7e;
+        border-color: #128c7e;
+        color: white;
+      }
+
+      .test-data-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px dashed var(--accent-color);
+      }
+
+      .test-data-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .btn-test-small {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        color: white;
+        padding: 5px 15px;
+        font-size: 0.9rem;
+      }
+
+      .btn-test-small:hover {
+        background-color: #e66a00;
+        border-color: #e66a00;
+        color: white;
+      }
+
+      .failure-details {
+        background-color: var(--light-bg);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 10px;
+        border-right: 4px solid var(--primary-color);
+      }
+
+      .failure-details h6 {
+        color: var(--dark-blue);
+        margin-bottom: 10px;
+      }
+
+      .details-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-label {
+        font-weight: 600;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .detail-value {
+        color: #333;
+        font-size: 0.95rem;
+      }
+
+      /* تذييل الصفحة */
+      .page-footer {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 20px;
+        margin-top: 40px;
+        text-align: center;
+        border-top: 3px solid var(--primary-color);
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .copyright,
+      .center-text,
+      .programmer {
+        flex: 1;
+        min-width: 200px;
+        margin: 10px 0;
+      }
+
+      .center-text {
+        font-weight: 600;
+        color: var(--warning-color);
+      }
+
+      .programmer {
+        color: #ddd;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- شاشة التحميل -->
+    <div class="loading-container" id="loadingContainer">
+      <div class="spinner-border text-primary spinner" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-3">جاري تحميل البيانات...</p>
+      <div class="error-message" id="errorMessage">
+        <div class="alert alert-danger" role="alert">
+          <h5>
+            <i class="fas fa-exclamation-triangle me-2"></i>حدث خطأ في التحميل
+          </h5>
+          <p class="mb-3">
+            تعذر تحميل البيانات. يرجى التحقق من اتصال الإنترنت والمحاولة مرة
+            أخرى.
+          </p>
+          <button class="btn btn-primary mt-2" id="retryButton">
+            <i class="fas fa-redo me-1"></i>إعادة المحاولة
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-container" id="mainContainer">
+      <div class="container-fluid">
+        <div class="row">
+          <!-- القائمة الجانبية -->
+          <div class="col-lg-2 sidebar-container d-none d-lg-block">
+            <div class="sidebar-content">
+              <div class="sidebar-header text-center mb-4">
+                <h5 class="text-white">نظام الأعطال</h5>
+                <hr class="text-white" />
+              </div>
+              <nav class="nav flex-column" id="sidebarMenu">
+                <!-- سيتم تعبئته بواسطة JavaScript -->
+              </nav>
+            </div>
+          </div>
+
+          <!-- المحتوى الرئيسي -->
+          <div class="col-lg-10 content-area">
+            <!-- معلومات المستخدم -->
+            <div class="user-info-section" id="userWelcomeSection">
+              <!-- سيتم تعبئته بواسطة JavaScript -->
+            </div>
+
+            <!-- قسم البيانات التجريبية -->
+            <div
+              class="test-data-section"
+              id="testDataSection"
+              style="display: none"
+            >
+              <h5><i class="fas fa-flask me-2"></i>البيانات التجريبية</h5>
+              <p class="text-muted mb-3">
+                يمكنك إرسال بيانات تجريبية إلى قاعدة البيانات للتجربة والاختبار
+              </p>
+              <div class="test-data-buttons" id="testDataButtons">
+                <!-- سيتم تعبئته بواسطة JavaScript -->
+              </div>
+            </div>
+
+            <div class="card shadow-sm">
+              <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                  <i class="fas fa-phone-alt me-2"></i>نظام الإبلاغ عن أعطال
+                  أجهزة الاتصالات والتقنية
+                </h4>
+              </div>
+              <div class="card-body">
+                <!-- فئة أجهزة الاتصالات -->
+                <div class="device-category">
+                  <h4 class="category-title">
+                    <i class="fas fa-broadcast-tower me-2"></i>أجهزة الاتصالات
+                  </h4>
+                  <div class="row">
+                    <!-- الهواتف -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-phone"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الهواتف</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أجهزة الهاتف الأرضي واللاسلكي
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#phoneModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- أبراج الاتصالات -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-tower-cell"></i>
+                          </div>
+                          <h5 class="card-title">أعطال أبراج الاتصالات</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أبراج الاتصالات والهوائيات
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#towerModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- الأقمار الصناعية -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-satellite"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الأقمار الصناعية</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أنظمة الاستقبال الفضائي
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#satelliteModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- الفاكسات -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-fax"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الفاكسات</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أجهزة الفاكس والاتصالات الكتابية
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#faxModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- فئة أجهزة الحاسوب والشبكات -->
+                <div class="device-category">
+                  <h4 class="category-title">
+                    <i class="fas fa-desktop me-2"></i>أجهزة الحاسوب والشبكات
+                  </h4>
+                  <div class="row">
+                    <!-- الكمبيوترات -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-desktop"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الكمبيوترات</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أجهزة الكمبيوتر المكتبية
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#computerModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- اللابتوبات -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-laptop"></i>
+                          </div>
+                          <h5 class="card-title">أعطال اللابتوبات</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال أجهزة اللابتوب والمحمولة
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#laptopModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- الطابعات -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-print"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الطابعات</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال الطابعات وملحقاتها
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#printerModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- الشبكات السلكية -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-network-wired"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الشبكات السلكية</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال الشبكات والإنترنت السلكي
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#networkModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- الواي فاي -->
+                    <div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                      <div class="dashboard-card">
+                        <div class="card-body">
+                          <div class="card-icon">
+                            <i class="fas fa-wifi"></i>
+                          </div>
+                          <h5 class="card-title">أعطال الواي فاي</h5>
+                          <p class="card-text">
+                            الإبلاغ عن أعطال الشبكات اللاسلكية والواي فاي
+                          </p>
+                          <button
+                            class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#wifiModal"
+                          >
+                            <i class="fas fa-plus me-1"></i>إبلاغ عن عطل
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- الإحصائيات والأعطال السابقة -->
+                <div class="row mt-5">
+                  <div class="col-md-8">
+                    <!-- الإحصائيات -->
+                    <div class="card mb-4">
+                      <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">
+                          <i class="fas fa-chart-bar me-2"></i>إحصائيات الأعطال
+                        </h6>
+                      </div>
+                      <div class="card-body">
+                        <div class="row text-center">
+                          <div class="col-6 col-md-3 mb-3">
+                            <div class="text-primary">
+                              <h4 id="pendingCount">0</h4>
+                              <small>معلقة</small>
+                            </div>
+                          </div>
+                          <div class="col-6 col-md-3 mb-3">
+                            <div class="text-warning">
+                              <h4 id="reviewCount">0</h4>
+                              <small>قيد المراجعة</small>
+                            </div>
+                          </div>
+                          <div class="col-6 col-md-3">
+                            <div class="text-success">
+                              <h4 id="resolvedCount">0</h4>
+                              <small>تم الإصلاح</small>
+                            </div>
+                          </div>
+                          <div class="col-6 col-md-3">
+                            <div class="text-danger">
+                              <h4 id="urgentCount">0</h4>
+                              <small>عاجلة</small>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- أزرار الإجراءات -->
+                        <div class="action-buttons">
+                          <button
+                            class="btn btn-test"
+                            onclick="App.toggleTestDataSection()"
+                          >
+                            <i class="fas fa-flask me-1"></i>البيانات التجريبية
+                          </button>
+                          <button
+                            class="btn btn-whatsapp"
+                            onclick="App.shareLastReport()"
+                          >
+                            <i class="fab fa-whatsapp me-1"></i>مشاركة آخر تقرير
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <!-- الأعطال السابقة -->
+                    <div class="card">
+                      <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                          <i class="fas fa-history me-2"></i>آخر الأعطال
+                        </h6>
+                      </div>
+                      <div class="card-body">
+                        <div class="table-responsive">
+                          <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th>النوع</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                              </tr>
+                            </thead>
+                            <tbody id="failuresTableBody">
+                              <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                  <i class="fas fa-spinner fa-spin me-2"></i
+                                  >جاري التحميل...
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نماذج الأعطال -->
+
+    <!-- نموذج عطل الهاتف -->
+    <div class="modal fade" id="phoneModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-phone me-2"></i>إبلاغ عن عطل هاتف
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="phoneFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع الهاتف</label>
+                    <select class="form-select" name="phoneType" required>
+                      <option value="">اختر نوع الهاتف</option>
+                      <option value="هاتف أرضي">هاتف أرضي</option>
+                      <option value="هاتف لاسلكي">هاتف لاسلكي</option>
+                      <option value="هاتف IP">هاتف IP</option>
+                      <option value="هاتف مؤتمرات">هاتف مؤتمرات</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع الهاتف</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="phoneBrand"
+                      placeholder="مثل: Cisco, Avaya, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="لا يعمل نهائياً">لا يعمل نهائياً</option>
+                  <option value="صوت مشوش">صوت مشوش</option>
+                  <option value="لا يوجد خط">لا يوجد خط</option>
+                  <option value="مشكلة في الشحن">مشكلة في الشحن</option>
+                  <option value="مشكلة في السماعة">مشكلة في السماعة</option>
+                  <option value="شاشة لا تعمل">شاشة لا تعمل</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitPhoneFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل البرج -->
+    <div class="modal fade" id="towerModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-tower-cell me-2"></i>إبلاغ عن عطل برج اتصالات
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="towerFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع البرج</label>
+                    <select class="form-select" name="towerType" required>
+                      <option value="">اختر نوع البرج</option>
+                      <option value="برج اتصالات">برج اتصالات</option>
+                      <option value="هوائي">هوائي</option>
+                      <option value="ماست">ماست</option>
+                      <option value="برج مراقبة">برج مراقبة</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع البرج</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >ارتفاع البرج (م)</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control"
+                      name="towerHeight"
+                      placeholder="أدخل الارتفاع بالمتر"
+                      required
+                    />
+                    <div class="invalid-feedback">يرجى إدخال ارتفاع البرج</div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="تلف ميكانيكي">تلف ميكانيكي</option>
+                  <option value="مشكلة في الأسلاك">مشكلة في الأسلاك</option>
+                  <option value="تلف بسبب الطقس">تلف بسبب الطقس</option>
+                  <option value="مشكلة في الأساس">مشكلة في الأساس</option>
+                  <option value="مشكلة في الإضاءة">مشكلة في الإضاءة</option>
+                  <option value="صدأ وتآكل">صدأ وتآكل</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitTowerFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل القمر الصناعي -->
+    <div class="modal fade" id="satelliteModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-satellite me-2"></i>إبلاغ عن عطل قمر صناعي
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="satelliteFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع النظام</label>
+                    <select class="form-select" name="satelliteType" required>
+                      <option value="">اختر نوع النظام</option>
+                      <option value="VSAT">VSAT</option>
+                      <option value="بث مباشر">بث مباشر</option>
+                      <option value="استقبال بيانات">استقبال بيانات</option>
+                      <option value="اتصالات عسكرية">اتصالات عسكرية</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع النظام</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="satelliteBrand"
+                      placeholder="مثل: Hughes, Gilat, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="فقدان الإشارة">فقدان الإشارة</option>
+                  <option value="مشكلة في المحاذاة">مشكلة في المحاذاة</option>
+                  <option value="تلف في الهوائي">تلف في الهوائي</option>
+                  <option value="مشكلة في LNB">مشكلة في LNB</option>
+                  <option value="مشكلة في BUC">مشكلة في BUC</option>
+                  <option value="مشكلة في modem">مشكلة في modem</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitSatelliteFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل الفاكس -->
+    <div class="modal fade" id="faxModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-fax me-2"></i>إبلاغ عن عطل فاكس
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="faxFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع الفاكس</label>
+                    <select class="form-select" name="faxType" required>
+                      <option value="">اختر نوع الفاكس</option>
+                      <option value="فاكس تناظري">فاكس تناظري</option>
+                      <option value="فاكس رقمي">فاكس رقمي</option>
+                      <option value="فاكس متعدد الوظائف">
+                        فاكس متعدد الوظائف
+                      </option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع الفاكس</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="faxBrand"
+                      placeholder="مثل: Canon, HP, Brother, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="لا يستقبل">لا يستقبل</option>
+                  <option value="لا يرسل">لا يرسل</option>
+                  <option value="ورق عالق">ورق عالق</option>
+                  <option value="جودة طباعة سيئة">جودة طباعة سيئة</option>
+                  <option value="مشكلة في السطر الهاتفي">
+                    مشكلة في السطر الهاتفي
+                  </option>
+                  <option value="شاشة لا تعمل">شاشة لا تعمل</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button type="button" class="btn btn-primary" id="submitFaxFailure">
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل الكمبيوتر -->
+    <div class="modal fade" id="computerModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-desktop me-2"></i>إبلاغ عن عطل كمبيوتر
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="computerFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >نوع الكمبيوتر</label
+                    >
+                    <select class="form-select" name="computerType" required>
+                      <option value="">اختر نوع الكمبيوتر</option>
+                      <option value="كمبيوتر مكتبي">كمبيوتر مكتبي</option>
+                      <option value="محطة عمل">محطة عمل</option>
+                      <option value="خادم">خادم</option>
+                      <option value="كمبيوتر مركزي">كمبيوتر مركزي</option>
+                    </select>
+                    <div class="invalid-feedback">
+                      يرجى اختيار نوع الكمبيوتر
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="computerBrand"
+                      placeholder="مثل: Dell, HP, Lenovo, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="لا يعمل نهائياً">لا يعمل نهائياً</option>
+                  <option value="مشكلة في التشغيل">مشكلة في التشغيل</option>
+                  <option value="شاشة زرقاء">شاشة زرقاء</option>
+                  <option value="بطء شديد">بطء شديد</option>
+                  <option value="مشكلة في القرص الصلب">
+                    مشكلة في القرص الصلب
+                  </option>
+                  <option value="مشكلة في الذاكرة">مشكلة في الذاكرة</option>
+                  <option value="مشكلة في نظام التشغيل">
+                    مشكلة في نظام التشغيل
+                  </option>
+                  <option value="فايروسات وبرامج ضارة">
+                    فايروسات وبرامج ضارة
+                  </option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitComputerFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل اللابتوب -->
+    <div class="modal fade" id="laptopModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-laptop me-2"></i>إبلاغ عن عطل لابتوب
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="laptopFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع اللابتوب</label>
+                    <select class="form-select" name="laptopType" required>
+                      <option value="">اختر نوع اللابتوب</option>
+                      <option value="لابتوب عادي">لابتوب عادي</option>
+                      <option value="لابتوب للأعمال">لابتوب للأعمال</option>
+                      <option value="لابتوب للألعاب">لابتوب للألعاب</option>
+                      <option value="لابتوب محمول">لابتوب محمول</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع اللابتوب</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="laptopBrand"
+                      placeholder="مثل: Dell, HP, Lenovo, Apple, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="لا يعمل نهائياً">لا يعمل نهائياً</option>
+                  <option value="مشكلة في الشاشة">مشكلة في الشاشة</option>
+                  <option value="مشكلة في الشحن">مشكلة في الشحن</option>
+                  <option value="مشكلة في البطارية">مشكلة في البطارية</option>
+                  <option value="مشكلة في لوحة المفاتيح">
+                    مشكلة في لوحة المفاتيح
+                  </option>
+                  <option value="مشكلة في التبريد">مشكلة في التبريد</option>
+                  <option value="مشكلة في السماعات">مشكلة في السماعات</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitLaptopFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل الطابعة -->
+    <div class="modal fade" id="printerModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-print me-2"></i>إبلاغ عن عطل طابعة
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="printerFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع الطابعة</label>
+                    <select class="form-select" name="printerType" required>
+                      <option value="">اختر نوع الطابعة</option>
+                      <option value="طابعة ليزر">طابعة ليزر</option>
+                      <option value="طابعة حبر">طابعة حبر</option>
+                      <option value="طابعة متعددة الوظائف">
+                        طابعة متعددة الوظائف
+                      </option>
+                      <option value="طابعة سلكية">طابعة سلكية</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع الطابعة</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="printerBrand"
+                      placeholder="مثل: HP, Canon, Epson, Brother, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="لا تطبع نهائياً">لا تطبع نهائياً</option>
+                  <option value="ورق عالق">ورق عالق</option>
+                  <option value="نقص الحبر">نقص الحبر</option>
+                  <option value="جودة طباعة سيئة">جودة طباعة سيئة</option>
+                  <option value="مشكلة في الاتصال">مشكلة في الاتصال</option>
+                  <option value="مشكلة في السكنر">مشكلة في السكنر</option>
+                  <option value="ضوضاء عالية">ضوضاء عالية</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitPrinterFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل الشبكة السلكية -->
+    <div class="modal fade" id="networkModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-network-wired me-2"></i>إبلاغ عن عطل شبكة سلكية
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="networkFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع الشبكة</label>
+                    <select class="form-select" name="networkType" required>
+                      <option value="">اختر نوع الشبكة</option>
+                      <option value="شبكة محلية (LAN)">شبكة محلية (LAN)</option>
+                      <option value="شبكة واسعة (WAN)">شبكة واسعة (WAN)</option>
+                      <option value="شبكة إنترنت">شبكة إنترنت</option>
+                      <option value="شبكة داخلية">شبكة داخلية</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع الشبكة</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="networkBrand"
+                      placeholder="مثل: Cisco, Juniper, Huawei, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="فقدان الاتصال">فقدان الاتصال</option>
+                  <option value="بطء في السرعة">بطء في السرعة</option>
+                  <option value="مشكلة في الراوتر">مشكلة في الراوتر</option>
+                  <option value="مشكلة في السويتش">مشكلة في السويتش</option>
+                  <option value="مشكلة في الكابلات">مشكلة في الكابلات</option>
+                  <option value="مشكلة في الـ DNS">مشكلة في الـ DNS</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitNetworkFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عطل الواي فاي -->
+    <div class="modal fade" id="wifiModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-wifi me-2"></i>إبلاغ عن عطل واي فاي
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="wifiFailureForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required">نوع الشبكة</label>
+                    <select class="form-select" name="wifiType" required>
+                      <option value="">اختر نوع الشبكة</option>
+                      <option value="واي فاي داخلي">واي فاي داخلي</option>
+                      <option value="واي فاي خارجي">واي فاي خارجي</option>
+                      <option value="شبكة لاسلكية">شبكة لاسلكية</option>
+                      <option value="نقاط اتصال">نقاط اتصال</option>
+                    </select>
+                    <div class="invalid-feedback">يرجى اختيار نوع الشبكة</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label form-required"
+                      >العلامة التجارية</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="wifiBrand"
+                      placeholder="مثل: Cisco, Ubiquiti, TP-Link, etc."
+                      required
+                    />
+                    <div class="invalid-feedback">
+                      يرجى إدخال العلامة التجارية
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">نوع العطل</label>
+                <select class="form-select" name="problemType" required>
+                  <option value="">اختر نوع العطل</option>
+                  <option value="فقدان الاتصال">فقدان الاتصال</option>
+                  <option value="بطء في السرعة">بطء في السرعة</option>
+                  <option value="مشكلة في التغطية">مشكلة في التغطية</option>
+                  <option value="تقطع في الإشارة">تقطع في الإشارة</option>
+                  <option value="مشكلة في المصادقة">مشكلة في المصادقة</option>
+                  <option value="مشكلة في الـ DHCP">مشكلة في الـ DHCP</option>
+                </select>
+                <div class="invalid-feedback">يرجى اختيار نوع العطل</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label form-required">وصف العطل</label>
+                <textarea
+                  class="form-control"
+                  name="description"
+                  rows="3"
+                  placeholder="صف العطل بالتفصيل..."
+                  required
+                ></textarea>
+                <div class="invalid-feedback">يرجى إدخال وصف العطل</div>
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="urgent" />
+                <label class="form-check-label"
+                  >عطل عاجل (يحتاج تدخل فوري)</label
+                >
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="submitWifiFailure"
+            >
+              <i class="fas fa-paper-plane me-1"></i>إرسال البلاغ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نموذج عرض تفاصيل العطل -->
+    <div class="modal fade" id="failureDetailsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-info-circle me-2"></i>تفاصيل العطل
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="failureDetailsBody">
+            <!-- سيتم تعبئته بواسطة JavaScript -->
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+            <button
+              type="button"
+              class="btn btn-whatsapp"
+              onclick="App.shareCurrentReport()"
+            >
+              <i class="fab fa-whatsapp me-1"></i>مشاركة عبر واتساب
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+      // استخدام نمط IIFE لعزل المتغيرات وتجنب التصادم
+      (function () {
+        // كائن التطبيق الرئيسي
+        const App = {
+          // الإعدادات
+          config: {
+            supabaseUrl: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+            supabaseAnonKey:
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+          },
+
+          // المتغيرات العامة
+          supabaseClient: null,
+          currentUser: null,
+          lastFailure: null,
+          currentFailure: null,
+
+          // البيانات التجريبية
+          TEST_DATA: {
+            phone: {
+              phoneType: "هاتف أرضي",
+              phoneBrand: "Cisco",
+              problemType: "صوت مشوش",
+              description: "صوت الهاتف مشوش ولا يمكن فهم المكالمات بشكل واضح",
+              urgent: true,
+            },
+            computer: {
+              computerType: "كمبيوتر مكتبي",
+              computerBrand: "Dell",
+              problemType: "بطء شديد",
+              description:
+                "الكمبيوتر يعمل ببطء شديد ويستغرق وقتاً طويلاً في فتح البرامج",
+              urgent: false,
+            },
+            wifi: {
+              wifiType: "واي فاي داخلي",
+              wifiBrand: "TP-Link",
+              problemType: "تقطع في الإشارة",
+              description:
+                "الإشارة تتقطع باستمرار ويتم فقدان الاتصال كل بضع دقائق",
+              urgent: true,
+            },
+            fax: {
+              faxType: "فاكس متعدد الوظائف",
+              faxBrand: "Canon",
+              problemType: "ورق عالق",
+              description: "الورق عالق داخل الفاكس ولا يمكن إزالته",
+              urgent: false,
+            },
+          },
+
+          // دالة لتهيئة Supabase
+          initSupabase: function () {
+            try {
+              if (
+                window.supabase &&
+                this.config.supabaseUrl &&
+                this.config.supabaseAnonKey
+              ) {
+                this.supabaseClient = window.supabase.createClient(
+                  this.config.supabaseUrl,
+                  this.config.supabaseAnonKey,
+                );
+                console.log("✅ Supabase initialized successfully");
+                return true;
+              } else {
+                console.error("❌ Supabase library not loaded");
+                return false;
+              }
+            } catch (error) {
+              console.error("❌ Failed to initialize Supabase:", error);
+              return false;
+            }
+          },
+
+          // التحقق من تسجيل الدخول
+          checkAuthentication: async function () {
+            const userData = localStorage.getItem("currentUser");
+            if (!userData) {
+              window.location.href = "../index.html"; // تصحيح المسار
+              return false;
+            }
+
+            try {
+              this.currentUser = JSON.parse(userData);
+              console.log("👤 المستخدم الحالي:", this.currentUser);
+
+              // إذا لم يكن هناك ID، نستخدم رقم افتراضي للتجربة
+              if (!this.currentUser.id) {
+                this.currentUser.id = Date.now().toString();
+                console.log("⚠️ استخدام ID افتراضي:", this.currentUser.id);
+              }
+
+              return true;
+            } catch (error) {
+              console.error("Error fetching user data:", error);
+              localStorage.removeItem("currentUser");
+              window.location.href = "../index.html"; // تصحيح المسار
+              return false;
+            }
+          },
+
+          // عرض معلومات المستخدم
+          displayUserInfo: function () {
+            const userWelcome = document.getElementById("userWelcomeSection");
+            if (userWelcome && this.currentUser) {
+              const fullName =
+                `${this.currentUser.first_name || ""} ${this.currentUser.father_name || ""} ${this.currentUser.last_name || ""}`.trim();
+              userWelcome.innerHTML = `
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4>مرحباً بك في نظام إدارة أعطالات الاتصالات والتقنية</h4>
+                                    <div class="user-info">
+                                        <span class="badge bg-primary me-2 mb-2">
+                                            <i class="fas fa-user me-1"></i>${fullName}
+                                        </span>
+                                        <span class="badge bg-success me-2 mb-2">
+                                            <i class="fas fa-map-marker-alt me-1"></i>${this.currentUser.station || "-"}
+                                        </span>
+                                        <span class="badge bg-info mb-2">
+                                            <i class="fas fa-briefcase me-1"></i>${this.currentUser.role || "-"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <small class="text-light">آخر دخول: ${this.formatDateToGregorian(new Date(), "d-M-yyyy")}</small>
+                                    <br>
+                                    <button class="btn btn-sm btn-outline-light mt-2" onclick="App.logout()">
+                                        <i class="fas fa-sign-out-alt me-1"></i>تسجيل الخروج
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+            }
+          },
+
+          // تحميل القائمة الجانبية
+          loadSidebarMenu: function () {
+            const sidebarMenu = document.getElementById("sidebarMenu");
+            if (!sidebarMenu || !this.currentUser) return;
+
+            const menuItems = [
+              {
+                icon: "fa-solid fa-chart-line",
+                text: "لوحة التحكم",
+                href: "../../main.html", // تصحيح المسار
+              },
+              {
+                icon: "fa-solid fa-phone-alt",
+                text: "أعطالات الاتصالات",
+                href: "fix-tel.html",
+                active: true,
+              },
+              {
+                icon: "fa-solid fa-microchip",
+                text: "أعطالات أجهزة الرصد",
+                href: "fix.html",
+              },
+              {
+                icon: "fa-solid fa-laptop-code",
+                text: "أعطالات البرامج",
+                href: "it.html",
+              },
+              {
+                icon: "fa-solid fa-clock",
+                text: "التقارير الساعية",
+                href: "../../hourly/hourly_send/hourly_reports.html", // إضافة رابط التقارير الساعية
+              },
+              {
+                icon: "fa-solid fa-calendar-day",
+                text: "التقارير اليومية",
+                href: "../../daily/daily_send/daily.html", // إضافة رابط التقارير اليومية
+              },
+              {
+                icon: "fa-solid fa-cloud-rain",
+                text: "تقرير الأمطار",
+                href: "../../rain/rain_send/rainfall_reports.html", // إضافة رابط تقرير الأمطار
+              },
+              {
+                icon: "fa-solid fa-thermometer-half",
+                text: "المناخ التاريخي",
+                href: "../../h_climate/h_climate_send/h_climate_send.html", // إضافة رابط المناخ التاريخي
+              },
+              {
+                icon: "fa-solid fa-seedling",
+                text: "التربة الزراعية",
+                href: "../../soil/soil_send/soil-send.html", // إضافة رابط التربة الزراعية
+              },
+              {
+                icon: "fa-solid fa-tractor",
+                text: "التقارير الزراعية",
+                href: "../../arg/send-argicultural/agricultural_reports.html", // إضافة رابط التقارير الزراعية
+              },
+              {
+                icon: "fa-solid fa-cloud-sun",
+                text: "الظواهر الجوية",
+                href: "../../weather_phenomena/weather_phenomena.html", // إضافة رابط الظواهر الجوية
+              },
+              {
+                icon: "fa-solid fa-sign-out-alt",
+                text: "تسجيل الخروج",
+                action: "logout",
+              },
+            ];
+
+            const menuHTML = menuItems
+              .map((item) => {
+                if (item.action === "logout") {
+                  return `
+                                <li class="nav-item mt-3">
+                                    <a class="nav-link d-flex align-items-center text-warning logout-btn" href="#" onclick="App.logout()">
+                                        <i class="${item.icon} me-2"></i> ${item.text}
+                                    </a>
+                                </li>
+                            `;
+                }
+
+                const isActive = item.active ? "active" : "";
+                return `
+                            <li class="nav-item mb-2">
+                                <a class="nav-link d-flex align-items-center ${isActive}" href="${item.href}">
+                                    <i class="${item.icon} me-2"></i> ${item.text}
+                                </a>
+                            </li>
+                        `;
+              })
+              .join("");
+
+            sidebarMenu.innerHTML = menuHTML;
+          },
+
+          // تحميل الإحصائيات من جدول telecom_failures
+          loadFailureStats: async function () {
+            if (!this.currentUser || !this.supabaseClient) {
+              console.log(
+                "⚠️ لا يمكن تحميل الإحصائيات: المستخدم أو Supabase غير متوفر",
+              );
+              return;
+            }
+
+            try {
+              console.log(
+                "📊 جاري تحميل الإحصائيات من جدول telecom_failures للمستخدم:",
+                this.currentUser.id,
+              );
+
+              // الاستعلام من جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .select("status, urgent")
+                .eq("reporter_id", this.currentUser.id.toString());
+
+              if (error) {
+                console.error("❌ خطأ في تحميل الإحصائيات:", error);
+                this.showAlert("❌ حدث خطأ في تحميل الإحصائيات", "warning");
+                return;
+              }
+
+              console.log("📊 بيانات الإحصائيات المستلمة:", data);
+
+              let pendingCount = 0;
+              let reviewCount = 0;
+              let resolvedCount = 0;
+              let urgentCount = 0;
+
+              if (data && data.length > 0) {
+                data.forEach((failure) => {
+                  if (failure.status === "معلق") pendingCount++;
+                  if (failure.status === "قيد المراجعة") reviewCount++;
+                  if (failure.status === "تم الإصلاح") resolvedCount++;
+                  if (failure.urgent) urgentCount++;
+                });
+              }
+
+              document.getElementById("pendingCount").textContent =
+                pendingCount;
+              document.getElementById("reviewCount").textContent = reviewCount;
+              document.getElementById("resolvedCount").textContent =
+                resolvedCount;
+              document.getElementById("urgentCount").textContent = urgentCount;
+
+              console.log(
+                `📊 الإحصائيات: معلقة=${pendingCount}, مراجعة=${reviewCount}, مرفوعة=${resolvedCount}, عاجلة=${urgentCount}`,
+              );
+            } catch (error) {
+              console.error("❌ خطأ في تحميل إحصائيات الأعطال:", error);
+              this.showAlert("❌ حدث خطأ في تحميل الإحصائيات", "warning");
+            }
+          },
+
+          // تحميل الأعطال السابقة من جدول telecom_failures
+          loadPreviousFailures: async function () {
+            if (!this.currentUser || !this.supabaseClient) {
+              console.log(
+                "⚠️ لا يمكن تحميل الأعطال: المستخدم أو Supabase غير متوفر",
+              );
+              return;
+            }
+
+            try {
+              console.log(
+                "📋 جاري تحميل الأعطال السابقة من جدول telecom_failures للمستخدم:",
+                this.currentUser.id,
+              );
+
+              // الاستعلام من جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .select("*")
+                .eq("reporter_id", this.currentUser.id.toString())
+                .order("created_at", { ascending: false })
+                .limit(5);
+
+              if (error) {
+                console.error("❌ خطأ في تحميل الأعطال:", error);
+                this.showAlert(
+                  "❌ حدث خطأ في تحميل الأعطال السابقة",
+                  "warning",
+                );
+                return;
+              }
+
+              console.log("📋 الأعطال المستلمة من telecom_failures:", data);
+
+              // حفظ آخر عطل لمشاركته
+              if (data && data.length > 0) {
+                this.lastFailure = data[0];
+                console.log("📋 آخر عطل:", this.lastFailure);
+              } else {
+                console.log("📋 لا توجد أعطال سابقة");
+              }
+
+              this.populateFailuresTable(data || []);
+            } catch (error) {
+              console.error("❌ خطأ في تحميل الأعطال السابقة:", error);
+              this.showAlert("❌ حدث خطأ في تحميل الأعطال السابقة", "warning");
+            }
+          },
+
+          populateFailuresTable: function (failures) {
+            const tbody = document.getElementById("failuresTableBody");
+            if (!tbody) return;
+
+            tbody.innerHTML = "";
+
+            if (!failures || failures.length === 0) {
+              tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">
+                                    <i class="fas fa-inbox me-2"></i>لا توجد أعطال سابقة
+                                </td>
+                            </tr>
+                        `;
+              return;
+            }
+
+            failures.forEach((failure) => {
+              const row = document.createElement("tr");
+              const deviceType = this.getDeviceTypeText(failure.device_type);
+              const statusBadge = this.getStatusBadge(failure.status);
+              const date = this.formatDateToGregorian(
+                failure.created_at,
+                "d-M-yyyy",
+              );
+
+              row.innerHTML = `
+                            <td>${deviceType}</td>
+                            <td>${statusBadge}</td>
+                            <td>${date}</td>
+                            <td>
+                                <button class="btn btn-sm btn-info" onclick="App.viewFailureDetails('${failure.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="App.shareFailureViaWhatsApp('${failure.id}')">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </td>
+                        `;
+              tbody.appendChild(row);
+            });
+          },
+
+          // عرض تفاصيل العطل من جدول telecom_failures
+          viewFailureDetails: async function (failureId) {
+            if (!this.supabaseClient) {
+              this.showAlert("❌ الاتصال بقاعدة البيانات غير متوفر", "danger");
+              return;
+            }
+
+            try {
+              console.log(
+                "🔍 جاري تحميل تفاصيل العطل من telecom_failures:",
+                failureId,
+              );
+
+              // الاستعلام من جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .select("*")
+                .eq("id", failureId)
+                .single();
+
+              if (error) {
+                console.error("❌ خطأ في تحميل تفاصيل العطل:", error);
+                this.showAlert("❌ حدث خطأ في تحميل تفاصيل العطل", "danger");
+                return;
+              }
+
+              console.log(
+                "🔍 تفاصيل العطل المستلمة من telecom_failures:",
+                data,
+              );
+              this.currentFailure = data;
+              this.displayFailureDetails(data);
+            } catch (error) {
+              console.error("❌ خطأ في تحميل تفاصيل العطل:", error);
+              this.showAlert("❌ حدث خطأ في تحميل تفاصيل العطل", "danger");
+            }
+          },
+
+          displayFailureDetails: function (failure) {
+            const modalBody = document.getElementById("failureDetailsBody");
+            if (!modalBody) return;
+
+            const deviceType = this.getDeviceTypeText(failure.device_type);
+            const statusBadge = this.getStatusBadge(failure.status);
+            const date = this.formatDateToGregorian(
+              failure.created_at,
+              "d-M-yyyy",
+            );
+            const urgentText = failure.urgent ? "نعم ⚠️" : "لا";
+
+            // تحضير تفاصيل الجهاز
+            let deviceDetails = "";
+            if (failure.device_data) {
+              Object.keys(failure.device_data).forEach((key) => {
+                deviceDetails += `
+                                <div class="detail-item">
+                                    <span class="detail-label">${this.getFieldLabel(key)}:</span>
+                                    <span class="detail-value">${failure.device_data[key]}</span>
+                                </div>
+                            `;
+              });
+            }
+
+            modalBody.innerHTML = `
+                        <div class="failure-details">
+                            <h6>معلومات العطل</h6>
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">نوع الجهاز:</span>
+                                    <span class="detail-value">${deviceType}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">الحالة:</span>
+                                    <span class="detail-value">${statusBadge}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">تاريخ الإبلاغ:</span>
+                                    <span class="detail-value">${date}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">عاجل:</span>
+                                    <span class="detail-value">${urgentText}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="failure-details mt-3">
+                            <h6>تفاصيل الجهاز</h6>
+                            <div class="details-grid">
+                                ${deviceDetails}
+                            </div>
+                        </div>
+                        
+                        <div class="failure-details mt-3">
+                            <h6>وصف العطل</h6>
+                            <p>${failure.description || "لا يوجد وصف"}</p>
+                        </div>
+                        
+                        <div class="failure-details mt-3">
+                            <h6>معلومات المبلغ</h6>
+                            <div class="details-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">اسم المبلغ:</span>
+                                    <span class="detail-value">${failure.reporter_name || "غير معروف"}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">المحطة:</span>
+                                    <span class="detail-value">${failure.reporter_station || "غير معروفة"}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">الوظيفة:</span>
+                                    <span class="detail-value">${failure.reporter_role || "غير معروفة"}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+            // فتح المودال
+            const modal = new bootstrap.Modal(
+              document.getElementById("failureDetailsModal"),
+            );
+            modal.show();
+          },
+
+          getFieldLabel: function (fieldName) {
+            const labels = {
+              phoneType: "نوع الهاتف",
+              phoneBrand: "العلامة التجارية",
+              faxType: "نوع الفاكس",
+              faxBrand: "العلامة التجارية",
+              computerType: "نوع الكمبيوتر",
+              computerBrand: "العلامة التجارية",
+              wifiType: "نوع الشبكة",
+              wifiBrand: "العلامة التجارية",
+              problemType: "نوع العطل",
+            };
+            return labels[fieldName] || fieldName;
+          },
+
+          getDeviceTypeText: function (type) {
+            const types = {
+              phone: "هاتف",
+              tower: "برج اتصالات",
+              satellite: "قمر صناعي",
+              fax: "فاكس",
+              computer: "كمبيوتر",
+              laptop: "لابتوب",
+              printer: "طابعة",
+              network: "شبكة سلكية",
+              wifi: "شبكة لاسلكية",
+            };
+            return types[type] || type;
+          },
+
+          getStatusBadge: function (status) {
+            const badges = {
+              معلق: '<span class="status-badge status-pending">معلق</span>',
+              "قيد المراجعة":
+                '<span class="status-badge status-in-progress">قيد المعالجة</span>',
+              "تم الإصلاح":
+                '<span class="status-badge status-resolved">تم الإصلاح</span>',
+              ملغي: '<span class="status-badge status-cancelled">ملغي</span>',
+            };
+            return (
+              badges[status] ||
+              '<span class="status-badge status-pending">معلق</span>'
+            );
+          },
+
+          // دالة جديدة لتنسيق التاريخ الميلادي بـ d-M-yyyy
+          formatDateToGregorian: function (dateString, format = "d-M-yyyy") {
+            try {
+              const date = new Date(dateString);
+              const day = date.getDate();
+              const month = date.getMonth() + 1; // الأشهر تبدأ من 0
+              const year = date.getFullYear();
+
+              if (format === "d-M-yyyy") {
+                return `${day}-${month}-${year}`;
+              } else if (format === "yyyy-M-d") {
+                return `${year}-${month}-${day}`;
+              } else {
+                // تنسيق افتراضي
+                return `${day}-${month}-${year}`;
+              }
+            } catch (error) {
+              console.error("❌ خطأ في تنسيق التاريخ:", error);
+              return dateString;
+            }
+          },
+
+          // استخراج بيانات النموذج
+          extractFormData: function (formId, deviceType) {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            data.device_type = deviceType;
+
+            if (data.urgent === "on") {
+              data.urgent = true;
+            } else {
+              data.urgent = false;
+            }
+
+            console.log(`📝 بيانات النموذج ${formId}:`, data);
+            return data;
+          },
+
+          // التحقق من صحة النموذج
+          validateForm: function (formId) {
+            const form = document.getElementById(formId);
+            const requiredFields = form.querySelectorAll("[required]");
+
+            let isValid = true;
+            requiredFields.forEach((field) => {
+              if (!field.value.trim()) {
+                field.classList.add("is-invalid");
+                isValid = false;
+              } else {
+                field.classList.remove("is-invalid");
+              }
+            });
+
+            console.log(
+              `✅ التحقق من النموذج ${formId}:`,
+              isValid ? "صالح" : "غير صالح",
+            );
+            return isValid;
+          },
+
+          // إرسال البيانات إلى جدول telecom_failures
+          submitToDatabase: async function (formData) {
+            if (!this.supabaseClient || !this.currentUser) {
+              console.error("❌ الاتصال غير متوفر");
+              throw new Error("الاتصال بقاعدة البيانات غير متوفر");
+            }
+
+            try {
+              // تحضير البيانات للجدول telecom_failures
+              const deviceType = formData.device_type;
+              const deviceData = {};
+
+              // استخراج بيانات الجهاز المحددة
+              Object.keys(formData).forEach((key) => {
+                if (
+                  key !== "device_type" &&
+                  key !== "urgent" &&
+                  key !== "description"
+                ) {
+                  deviceData[key] = formData[key];
+                }
+              });
+
+              // تحضير البيانات لتتناسب مع جدول telecom_failures
+              const reportData = {
+                device_type: deviceType,
+                device_data: deviceData, // تخزين بيانات الجهاز كـ JSONB
+                reporter_id: this.currentUser.id.toString(),
+                reporter_name:
+                  `${this.currentUser.first_name || ""} ${this.currentUser.father_name || ""} ${this.currentUser.last_name || ""}`.trim(),
+                reporter_station: this.currentUser.station || "",
+                reporter_role: this.currentUser.role || "",
+                status: "معلق",
+                urgent: formData.urgent || false,
+                description: formData.description || "",
+                created_at: new Date().toISOString(),
+              };
+
+              console.log(
+                "📤 جاري إرسال البيانات إلى جدول telecom_failures:",
+                reportData,
+              );
+
+              // إرسال البيانات إلى جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .insert([reportData])
+                .select()
+                .single();
+
+              if (error) {
+                console.error("❌ خطأ في الإرسال إلى قاعدة البيانات:", error);
+                throw new Error(`خطأ في قاعدة البيانات: ${error.message}`);
+              }
+
+              console.log(
+                "✅ تم الإرسال بنجاح إلى جدول telecom_failures:",
+                data,
+              );
+              return {
+                success: true,
+                data: data,
+                message: "تم إرسال البلاغ بنجاح",
+              };
+            } catch (error) {
+              console.error("❌ خطأ في إرسال البيانات:", error);
+              throw error;
+            }
+          },
+
+          // معالجة إرسال النموذج
+          handleFormSubmit: async function (formId, deviceType) {
+            console.log(
+              `🚀 بدء معالجة النموذج: ${formId}, نوع الجهاز: ${deviceType}`,
+            );
+
+            // التحقق من صحة النموذج
+            if (!this.validateForm(formId)) {
+              this.showAlert("⚠️ يرجى ملء جميع الحقول المطلوبة", "warning");
+              return;
+            }
+
+            // استخراج البيانات
+            const formData = this.extractFormData(formId, deviceType);
+
+            // الحصول على زر الإرسال
+            const submitButton = document.querySelector(
+              `#submit${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)}Failure`,
+            );
+            if (!submitButton) {
+              console.error(
+                `❌ زر الإرسال غير موجود: submit${deviceType.charAt(0).toUpperCase() + deviceType.slice(1)}Failure`,
+              );
+              this.showAlert("❌ حدث خطأ في النظام", "danger");
+              return;
+            }
+
+            const originalText = submitButton.innerHTML;
+
+            try {
+              // إظهار حالة التحميل
+              submitButton.innerHTML =
+                '<i class="fas fa-spinner fa-spin me-1"></i>جاري الإرسال...';
+              submitButton.disabled = true;
+
+              // إرسال البيانات
+              const result = await this.submitToDatabase(formData);
+
+              if (result.success) {
+                this.showAlert("✅ تم إرسال البلاغ بنجاح!", "success");
+
+                // إغلاق النموذج
+                const modalElement = document.getElementById(
+                  `${deviceType}Modal`,
+                );
+                if (modalElement) {
+                  const modal = bootstrap.Modal.getInstance(modalElement);
+                  if (modal) modal.hide();
+                }
+
+                // إعادة تعيين النموذج
+                const form = document.getElementById(formId);
+                if (form) form.reset();
+
+                // تحديث البيانات
+                await this.loadFailureStats();
+                await this.loadPreviousFailures();
+              } else {
+                this.showAlert(`❌ ${result.message}`, "danger");
+              }
+            } catch (error) {
+              console.error("❌ خطأ في المعالجة:", error);
+              this.showAlert(
+                `❌ ${error.message || "حدث خطأ في الإرسال"}`,
+                "danger",
+              );
+            } finally {
+              // استعادة حالة الزر
+              submitButton.innerHTML = originalText;
+              submitButton.disabled = false;
+            }
+          },
+
+          // إعداد معالجات النماذج
+          setupFormHandlers: function () {
+            console.log("🔧 جاري إعداد معالجات النماذج...");
+
+            const formHandlers = {
+              submitPhoneFailure: "phoneFailureForm",
+              submitTowerFailure: "towerFailureForm",
+              submitSatelliteFailure: "satelliteFailureForm",
+              submitFaxFailure: "faxFailureForm",
+              submitComputerFailure: "computerFailureForm",
+              submitLaptopFailure: "laptopFailureForm",
+              submitPrinterFailure: "printerFailureForm",
+              submitNetworkFailure: "networkFailureForm",
+              submitWifiFailure: "wifiFailureForm",
+            };
+
+            for (const [buttonId, formId] of Object.entries(formHandlers)) {
+              const button = document.getElementById(buttonId);
+              if (button) {
+                console.log(`✅ إعداد معالج للنموذج: ${formId} -> ${buttonId}`);
+                button.addEventListener("click", () => {
+                  const deviceType = formId.replace("FailureForm", "");
+                  console.log(
+                    `🖱️ تم النقر على زر: ${buttonId}, نوع الجهاز: ${deviceType}`,
+                  );
+                  this.handleFormSubmit(formId, deviceType);
+                });
+              } else {
+                console.warn(`⚠️ الزر غير موجود: ${buttonId}`);
+              }
+            }
+
+            // إضافة معالجات للتحقق من الصحة أثناء الكتابة
+            document.querySelectorAll("form").forEach((form) => {
+              form.querySelectorAll("[required]").forEach((field) => {
+                field.addEventListener("input", function () {
+                  if (this.value.trim()) {
+                    this.classList.remove("is-invalid");
+                  }
+                });
+              });
+            });
+
+            console.log("✅ تم إعداد جميع معالجات النماذج");
+          },
+
+          // إرسال بيانات تجريبية إلى جدول telecom_failures
+          sendTestData: async function (deviceType) {
+            console.log(`🧪 جاري إرسال بيانات تجريبية لنوع: ${deviceType}`);
+
+            if (!this.supabaseClient || !this.currentUser) {
+              this.showAlert("❌ الاتصال غير متوفر", "danger");
+              return;
+            }
+
+            const testData = this.TEST_DATA[deviceType];
+            if (!testData) {
+              this.showAlert("❌ لا توجد بيانات تجريبية لهذا النوع", "danger");
+              return;
+            }
+
+            try {
+              // تحضير البيانات
+              const deviceData = {};
+              Object.keys(testData).forEach((key) => {
+                if (key !== "description" && key !== "urgent") {
+                  deviceData[key] = testData[key];
+                }
+              });
+
+              const reportData = {
+                device_type: deviceType,
+                device_data: deviceData,
+                reporter_id: this.currentUser.id.toString(),
+                reporter_name:
+                  `${this.currentUser.first_name || ""} ${this.currentUser.father_name || ""} ${this.currentUser.last_name || ""}`.trim(),
+                reporter_station: this.currentUser.station || "",
+                reporter_role: this.currentUser.role || "",
+                status: "معلق",
+                urgent: testData.urgent || false,
+                description: testData.description || "",
+                created_at: new Date().toISOString(),
+              };
+
+              console.log("🧪 إرسال بيانات تجريبية:", reportData);
+
+              // إرسال إلى جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .insert([reportData])
+                .select()
+                .single();
+
+              if (error) {
+                console.error("❌ خطأ في إرسال البيانات التجريبية:", error);
+                this.showAlert(`❌ ${error.message}`, "danger");
+                return;
+              }
+
+              this.showAlert(
+                `✅ تم إرسال بيانات ${this.getDeviceTypeText(deviceType)} التجريبية بنجاح!`,
+                "success",
+              );
+
+              // تحديث البيانات
+              await this.loadFailureStats();
+              await this.loadPreviousFailures();
+            } catch (error) {
+              console.error("❌ خطأ في إرسال البيانات التجريبية:", error);
+              this.showAlert(
+                `❌ ${error.message || "حدث خطأ في الإرسال"}`,
+                "danger",
+              );
+            }
+          },
+
+          // إعداد أزرار البيانات التجريبية
+          setupTestDataButtons: function () {
+            const testDataButtons = document.getElementById("testDataButtons");
+            if (!testDataButtons) return;
+
+            const buttons = [
+              { device: "phone", text: "إرسال بيانات هاتف تجريبية" },
+              { device: "computer", text: "إرسال بيانات كمبيوتر تجريبية" },
+              { device: "wifi", text: "إرسال بيانات واي فاي تجريبية" },
+              { device: "fax", text: "إرسال بيانات فاكس تجريبية" },
+            ];
+
+            const buttonsHTML = buttons
+              .map(
+                (button) => `
+                        <button class="btn btn-test-small" onclick="App.sendTestData('${button.device}')">
+                            <i class="fas fa-paper-plane me-1"></i>${button.text}
+                        </button>
+                    `,
+              )
+              .join("");
+
+            testDataButtons.innerHTML = buttonsHTML;
+            console.log("✅ تم إعداد أزرار البيانات التجريبية");
+          },
+
+          // عرض/إخفاء قسم البيانات التجريبية
+          toggleTestDataSection: function () {
+            const testDataSection = document.getElementById("testDataSection");
+            if (testDataSection.style.display === "none") {
+              testDataSection.style.display = "block";
+              this.setupTestDataButtons();
+            } else {
+              testDataSection.style.display = "none";
+            }
+          },
+
+          // مشاركة التقرير عبر واتساب
+          shareFailureViaWhatsApp: function (failureId) {
+            if (!failureId && this.lastFailure) {
+              failureId = this.lastFailure.id;
+            }
+
+            if (!failureId) {
+              this.showAlert("❌ لا توجد أعطال لمشاركتها", "warning");
+              return;
+            }
+
+            this.viewFailureDetails(failureId);
+          },
+
+          shareCurrentReport: function () {
+            if (!this.currentFailure) {
+              this.showAlert("❌ لا يوجد تقرير لمشاركته", "warning");
+              return;
+            }
+
+            const deviceType = this.getDeviceTypeText(
+              this.currentFailure.device_type,
+            );
+            const status = this.currentFailure.status;
+            const date = this.formatDateToGregorian(
+              this.currentFailure.created_at,
+              "d-M-yyyy",
+            );
+            const urgentText = this.currentFailure.urgent
+              ? "⚡ عاجل ⚡"
+              : "عادي";
+
+            let deviceDetails = "";
+            if (this.currentFailure.device_data) {
+              Object.keys(this.currentFailure.device_data).forEach((key) => {
+                deviceDetails += `${this.getFieldLabel(key)}: ${this.currentFailure.device_data[key]}\n`;
+              });
+            }
+
+            const message = `📋 تقرير عطل أجهزة اتصالات
+                            
+📱 نوع الجهاز: ${deviceType}
+📊 الحالة: ${status}
+📅 التاريخ: ${date}
+🚨 الأولوية: ${urgentText}
+
+🔧 تفاصيل الجهاز:
+${deviceDetails}
+
+📝 وصف العطل:
+${this.currentFailure.description || "لا يوجد وصف"}
+
+👤 المبلغ: ${this.currentFailure.reporter_name}
+📍 المحطة: ${this.currentFailure.reporter_station}
+
+🔗 تم الإبلاغ عبر نظام إدارة  البيانات الجوية `;
+
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+
+            window.open(whatsappUrl, "_blank");
+          },
+
+          shareLastReport: function () {
+            if (!this.lastFailure) {
+              this.showAlert("❌ لا توجد أعطال سابقة لمشاركتها", "warning");
+              return;
+            }
+
+            this.shareFailureViaWhatsApp(this.lastFailure.id);
+          },
+
+          // إظهار التنبيه
+          showAlert: function (message, type) {
+            const alertDiv = document.createElement("div");
+            alertDiv.className = `custom-alert alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${type === "success" ? "fa-check-circle" : "fa-exclamation-triangle"} me-2"></i>
+                            <div>${message}</div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    `;
+
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+              if (alertDiv.parentNode) {
+                alertDiv.remove();
+              }
+            }, 5000);
+          },
+
+          // تسجيل الخروج
+          logout: function () {
+            if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
+              localStorage.removeItem("currentUser");
+              window.location.href = "../index.html"; // تصحيح المسار
+            }
+          },
+
+          // إخفاء شاشة التحميل
+          hideLoadingScreen: function () {
+            const loadingContainer =
+              document.getElementById("loadingContainer");
+            const mainContainer = document.getElementById("mainContainer");
+
+            if (loadingContainer) loadingContainer.style.display = "none";
+            if (mainContainer) mainContainer.style.display = "block";
+          },
+
+          showLoadingError: function () {
+            const errorMessage = document.getElementById("errorMessage");
+            const loadingText = document.querySelector(".loading-container p");
+            const spinner = document.querySelector(".spinner");
+
+            if (loadingText) loadingText.style.display = "none";
+            if (spinner) spinner.style.display = "none";
+            if (errorMessage) errorMessage.style.display = "block";
+          },
+
+          // اختبار الاتصال بقاعدة البيانات
+          testDatabaseConnection: async function () {
+            try {
+              if (!this.supabaseClient) {
+                console.error("❌ Supabase غير مهيأ");
+                return false;
+              }
+
+              console.log("🔗 جاري اختبار الاتصال بقاعدة البيانات...");
+
+              // اختبار الاتصال مع جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .select("count", { count: "exact", head: true })
+                .limit(1);
+
+              if (error) {
+                console.error("❌ فشل اختبار الاتصال بقاعدة البيانات:", error);
+                return false;
+              }
+
+              console.log("✅ نجاح اختبار الاتصال بقاعدة البيانات!");
+              return true;
+            } catch (error) {
+              console.error("❌ استثناء في اختبار الاتصال:", error);
+              return false;
+            }
+          },
+
+          // دالة لاختبار الإرسال مباشرة
+          testSend: async function () {
+            console.log("🧪 بدء اختبار الإرسال المباشر...");
+
+            if (!this.currentUser) {
+              this.currentUser = {
+                id: "test-" + Date.now(),
+                first_name: "مستخدم",
+                last_name: "تجريبي",
+                station: "المحطة الرئيسية",
+                role: "فني",
+              };
+              console.log("👤 استخدام مستخدم تجريبي:", this.currentUser);
+            }
+
+            try {
+              const testData = {
+                device_type: "computer",
+                device_data: {
+                  computerType: "كمبيوتر مكتبي",
+                  computerBrand: "Dell",
+                  problemType: "بطء شديد",
+                },
+                reporter_id: this.currentUser.id,
+                reporter_name: "مستخدم تجريبي",
+                reporter_station: "المحطة الرئيسية",
+                reporter_role: "فني",
+                status: "معلق",
+                urgent: false,
+                description: "هذا اختبار للإرسال المباشر",
+                created_at: new Date().toISOString(),
+              };
+
+              console.log("📤 اختبار إرسال البيانات:", testData);
+
+              // إرسال إلى جدول telecom_failures
+              const { data, error } = await this.supabaseClient
+                .from("telecom_failures")
+                .insert([testData])
+                .select()
+                .single();
+
+              if (error) {
+                console.error("❌ فشل اختبار الإرسال:", error);
+                this.showAlert(`❌ فشل الإرسال: ${error.message}`, "danger");
+              } else {
+                console.log("✅ نجاح اختبار الإرسال:", data);
+                this.showAlert("✅ تم اختبار الإرسال بنجاح!", "success");
+                await this.loadFailureStats();
+                await this.loadPreviousFailures();
+              }
+            } catch (error) {
+              console.error("❌ خطأ في اختبار الإرسال:", error);
+              this.showAlert(`❌ خطأ في الاختبار: ${error.message}`, "danger");
+            }
+          },
+
+          // تهيئة التطبيق
+          init: async function () {
+            console.log("🚀 بدء تهيئة التطبيق...");
+
+            try {
+              // التحقق من المصادقة
+              console.log("🔐 جاري التحقق من المصادقة...");
+              const isAuthenticated = await this.checkAuthentication();
+              if (!isAuthenticated) {
+                console.error("❌ فشل المصادقة");
+                return;
+              }
+              console.log("✅ تم التحقق من المصادقة");
+
+              // تهيئة Supabase
+              console.log("🔄 جاري تهيئة Supabase...");
+              const supabaseInitialized = this.initSupabase();
+              if (!supabaseInitialized) {
+                console.error("❌ فشل تهيئة Supabase");
+                this.showLoadingError();
+                return;
+              }
+              console.log("✅ تم تهيئة Supabase");
+
+              // اختبار الاتصال بقاعدة البيانات
+              console.log("🔗 جاري اختبار الاتصال بقاعدة البيانات...");
+              const dbConnected = await this.testDatabaseConnection();
+              if (!dbConnected) {
+                console.warn(
+                  "⚠️ تحذير: فشل اختبار الاتصال بقاعدة البيانات، ولكن سنستمر...",
+                );
+                this.showAlert(
+                  "⚠️ هناك مشكلة في الاتصال بقاعدة البيانات، ولكن يمكنك المحاولة",
+                  "warning",
+                );
+              } else {
+                console.log("✅ نجاح الاتصال بقاعدة البيانات");
+                this.showAlert(
+                  "✅ تم الاتصال بقاعدة البيانات بنجاح",
+                  "success",
+                );
+              }
+
+              // تحميل البيانات
+              console.log("📊 جاري تحميل بيانات المستخدم...");
+              this.displayUserInfo();
+              this.loadSidebarMenu();
+
+              console.log("📈 جاري تحميل الإحصائيات...");
+              await this.loadFailureStats();
+
+              console.log("📋 جاري تحميل الأعطال السابقة...");
+              await this.loadPreviousFailures();
+
+              console.log("🔧 جاري إعداد معالجات النماذج...");
+              this.setupFormHandlers();
+              this.setupTestDataButtons();
+
+              // إخفاء شاشة التحميل
+              console.log("👁️ جاري إخفاء شاشة التحميل...");
+              this.hideLoadingScreen();
+
+              // إعداد زر إعادة المحاولة
+              const retryButton = document.getElementById("retryButton");
+              if (retryButton) {
+                retryButton.addEventListener("click", () => {
+                  console.log("🔄 إعادة تحميل الصفحة...");
+                  location.reload();
+                });
+              }
+
+              console.log("✅ تم تهيئة التطبيق بنجاح!");
+            } catch (error) {
+              console.error("❌ خطأ في تهيئة التطبيق:", error);
+              this.showLoadingError();
+              this.showAlert(
+                "❌ حدث خطأ في تحميل الصفحة. يرجى تحديث الصفحة والمحاولة مرة أخرى.",
+                "danger",
+              );
+            }
+          },
+        };
+
+        // جعل كائن التطبيق متاحاً عالمياً
+        window.App = App;
+
+        // بدء التطبيق عند تحميل الصفحة
+        document.addEventListener("DOMContentLoaded", function () {
+          App.init();
+        });
+      })(); // نهاية IIFE
+
+      console.log("✅ تم تحميل جميع السكربتات بنجاح");
+    </script>
+
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

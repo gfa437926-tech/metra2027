@@ -1,0 +1,179 @@
+import 'dart:convert';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:metra_mobile/core/drafts/observation_draft_store.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('saving before initial load preserves unrelated persisted drafts', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-old',
+      formType: 'hourly',
+      values: const {'temperature': 14},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-old::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.instance;
+    store.save(
+      stationId: 'station-new',
+      formType: 'daily',
+      values: const {'rainfall': 3},
+    );
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    final persisted = jsonDecode(raw!) as Map<String, dynamic>;
+    expect(persisted, contains('station-old::hourly'));
+    expect(persisted, contains('station-new::daily'));
+  });
+  test('clearing before initial load removes the persisted draft', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear',
+      formType: 'hourly',
+      values: const {'temperature': 18},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clear('station-clear', 'hourly');
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.get('station-clear', 'hourly'), isNull);
+  });
+
+  test('clearing a station before initial load removes its persisted drafts', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear-all',
+      formType: 'daily',
+      values: const {'rainfall': 8},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear-all::daily': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clearStation('station-clear-all');
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.draftsForStation('station-clear-all'), isEmpty);
+  });
+
+  test('clear all before initial load removes the persisted snapshot', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear-everything',
+      formType: 'daily',
+      values: const {'rainfall': 8},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear-everything::daily': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clearAll(persist: true);
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.draftCount, 0);
+  });
+
+  test('saving empty values before initial load persists a clear', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-empty-save',
+      formType: 'hourly',
+      values: const {'temperature': 19},
+      savedAt: DateTime.utc(2026, 11, 26),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-empty-save::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.save(
+      stationId: 'station-empty-save',
+      formType: 'hourly',
+      values: const {},
+    );
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    expect(raw, isNotNull);
+    expect(jsonDecode(raw!), isEmpty);
+    expect(store.get('station-empty-save', 'hourly'), isNull);
+  });
+
+  test('a save made after early station clear is preserved', () async {
+    final oldDraft = ObservationDraft(
+      stationId: 'station-clear-then-save',
+      formType: 'hourly',
+      values: const {'temperature': 12},
+      savedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 2)),
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.observation_drafts.v2': jsonEncode({
+        'station-clear-then-save::hourly': oldDraft.toJson(),
+      }),
+    });
+
+    final store = ObservationDraftStore.forTesting();
+    store.clearStation('station-clear-then-save');
+    store.save(
+      stationId: 'station-clear-then-save',
+      formType: 'hourly',
+      values: const {'temperature': 24},
+    );
+    await store.ensureLoaded();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(
+      store.get('station-clear-then-save', 'hourly')?.values['temperature'],
+      24,
+    );
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('metra2027.observation_drafts.v2');
+    final decoded = jsonDecode(raw!) as Map<String, dynamic>;
+    expect(
+      decoded['station-clear-then-save::hourly']['values']['temperature'],
+      24,
+    );
+  });
+
+}

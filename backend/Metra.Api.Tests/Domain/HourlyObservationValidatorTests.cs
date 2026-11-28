@@ -1,0 +1,188 @@
+using Metra.Api.Domain.Observations;
+using Xunit;
+
+namespace Metra.Api.Tests;
+
+public sealed class HourlyObservationValidatorTests
+{
+    private static Dictionary<string, string?> ValidReport(string hour = "01") => new()
+    {
+        ["utcTime"] = hour,
+        ["dryTemp"] = "+25.0",
+        ["wetTemp"] = "+20.0",
+        ["stationPressure"] = "1013.2",
+        ["seaLevelPressure"] = "1013.2",
+        ["windDirection"] = "18",
+        ["windSpeed"] = "12",
+        ["visibility"] = "050",
+        ["totalCloudCover"] = "4",
+        ["relativeHumidity"] = "065",
+        ["dewPoint"] = "+18.5",
+        ["cover12"] = "4",
+        ["cover123"] = "5"
+    };
+
+    [Fact]
+    public void Accepts_valid_hourly_report_at_non_synoptic_hour()
+    {
+        var issues = HourlyObservationValidator.Validate(ValidReport());
+        Assert.Empty(issues);
+    }
+
+    [Theory]
+    [InlineData("00")]
+    [InlineData("06")]
+    [InlineData("12")]
+    [InlineData("18")]
+    public void Requires_precipitation_at_six_hour_synoptic_times(string hour)
+    {
+        var values = ValidReport(hour);
+        values["pressureSlope"] = "2.3";
+        values["pressureShape"] = "5";
+        values["pastWeather"] = "0";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "precipitationAmount");
+    }
+
+    [Theory]
+    [InlineData("03")]
+    [InlineData("09")]
+    [InlineData("15")]
+    [InlineData("21")]
+    public void Requires_pressure_characteristics_and_past_weather_at_three_hour_times(string hour)
+    {
+        var issues = HourlyObservationValidator.Validate(ValidReport(hour));
+
+        Assert.Contains(issues, issue => issue.Field == "pressureSlope");
+        Assert.Contains(issues, issue => issue.Field == "pressureShape");
+        Assert.Contains(issues, issue => issue.Field == "pastWeather");
+    }
+
+    [Fact]
+    public void Rejects_required_fields_missing_from_the_submitted_dictionary()
+    {
+        var values = ValidReport();
+        values.Remove("dryTemp");
+        values.Remove("totalCloudCover");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "dryTemp");
+        Assert.Contains(issues, issue => issue.Field == "totalCloudCover");
+    }
+
+    [Fact]
+    public void Requires_conditional_fields_even_when_the_keys_are_absent()
+    {
+        var values = ValidReport("00");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "precipitationAmount");
+        Assert.Contains(issues, issue => issue.Field == "pressureSlope");
+        Assert.Contains(issues, issue => issue.Field == "pressureShape");
+        Assert.Contains(issues, issue => issue.Field == "pastWeather");
+    }
+
+    [Fact]
+    public void Accepts_explicit_no_data_marker_for_required_hourly_fields()
+    {
+        var values = ValidReport();
+        values["dryTemp"] = "#";
+        values["totalCloudCover"] = "#";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.DoesNotContain(issues, issue => issue.Field == "dryTemp");
+        Assert.DoesNotContain(issues, issue => issue.Field == "totalCloudCover");
+    }
+
+    [Fact]
+    public void Rejects_dry_temperature_lower_than_wet_temperature()
+    {
+        var values = ValidReport();
+        values["dryTemp"] = "+18.0";
+        values["wetTemp"] = "+20.0";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "dryTemp");
+    }
+
+    [Theory]
+    [InlineData("-01")]
+    [InlineData("24")]
+    [InlineData("abc")]
+    public void Rejects_invalid_utc_hours(string hour)
+    {
+        var issues = HourlyObservationValidator.Validate(ValidReport(hour));
+        Assert.Contains(issues, issue => issue.Field == "utcTime");
+    }
+
+    [Fact]
+    public void Accepts_hash_missing_marker_for_hourly_values()
+    {
+        var values = ValidReport();
+        values["dryTemp"] = "#";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.DoesNotContain(issues, issue => issue.Field == "dryTemp");
+    }
+
+    [Fact]
+    public void Rejects_invalid_pressure_and_humidity_ranges()
+    {
+        var values = ValidReport();
+        values["stationPressure"] = "0700.0";
+        values["relativeHumidity"] = "000";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "stationPressure");
+        Assert.Contains(issues, issue => issue.Field == "relativeHumidity");
+    }
+    [Fact]
+    public void Accepts_hash_marker_in_conditional_synoptic_fields()
+    {
+        var values = ValidReport("00");
+        values["pressureSlope"] = "#";
+        values["pressureShape"] = "#";
+        values["pastWeather"] = "#";
+        values["precipitationAmount"] = "#";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Empty(issues);
+    }
+
+    [Fact]
+    public void Rejects_invalid_cloud_amount_and_height_codes()
+    {
+        var values = ValidReport();
+        values["cloud1Amount"] = "9";
+        values["cloud2Height"] = "1000";
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Contains(issues, issue => issue.Field == "cloud1Amount");
+        Assert.Contains(issues, issue => issue.Field == "cloud2Height");
+    }
+
+    [Fact]
+    public void Accepts_missing_optional_average_wind_and_vapor_fields()
+    {
+        var values = ValidReport();
+        values.Remove("avgWindDirection");
+        values.Remove("avgWindSpeed");
+        values.Remove("vaporPressure");
+        values.Remove("vaporPressureDiff");
+
+        var issues = HourlyObservationValidator.Validate(values);
+
+        Assert.Empty(issues);
+    }
+
+}

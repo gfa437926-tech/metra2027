@@ -1,0 +1,2412 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>عرض تقارير أعطال الاتصالات</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+      integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --success-color: #198754;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
+        --info-color: #0dcaf0;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      .header-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-card .icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 15px;
+      }
+
+      .stat-card.pending .icon {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+      }
+      .stat-card.in-progress .icon {
+        background: rgba(13, 202, 240, 0.2);
+        color: #0dcaf0;
+      }
+      .stat-card.resolved .icon {
+        background: rgba(25, 135, 84, 0.2);
+        color: #198754;
+      }
+      .stat-card.urgent .icon {
+        background: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+      }
+      .stat-card.total .icon {
+        background: rgba(13, 110, 253, 0.2);
+        color: #0d6efd;
+      }
+
+      .badge-status {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
+      .badge-pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .badge-in-progress {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+      .badge-resolved {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .badge-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .badge-urgent {
+        background-color: #dc3545;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+      }
+
+      .badge-device {
+        background-color: #6f42c1;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        flex-direction: column;
+      }
+
+      .filter-section {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+
+      .btn-action {
+        width: 35px;
+        height: 35px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* تخصيص DataTables للغة العربية */
+      .dataTables_wrapper .dataTables_filter input {
+        margin-right: 10px;
+        margin-left: 10px;
+      }
+
+      .dataTables_wrapper .dataTables_length select {
+        margin-right: 10px;
+        margin-left: 10px;
+      }
+
+      .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+      }
+
+      .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+      }
+
+      .chart-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .chart-title {
+        font-weight: 600;
+        margin-bottom: 15px;
+        color: #2c3e50;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 10px;
+      }
+
+      /* نماذج التعديل */
+      .modal-xl {
+        max-width: 90%;
+      }
+
+      .status-selector {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .status-option {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .status-option input[type="radio"] {
+        display: none;
+      }
+
+      .status-option label {
+        display: block;
+        padding: 10px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .status-option input[type="radio"]:checked + label {
+        border-color: var(--primary-color);
+        background-color: rgba(13, 110, 253, 0.1);
+        font-weight: bold;
+      }
+
+      .status-option.pending label {
+        border-color: #ffc107;
+        color: #856404;
+      }
+
+      .status-option.in-progress label {
+        border-color: #0dcaf0;
+        color: #0c5460;
+      }
+
+      .status-option.resolved label {
+        border-color: #198754;
+        color: #155724;
+      }
+
+      .status-option.cancelled label {
+        border-color: #dc3545;
+        color: #721c24;
+      }
+
+      .status-option input[type="radio"]:checked + .pending {
+        background-color: rgba(255, 193, 7, 0.2);
+      }
+
+      .status-option input[type="radio"]:checked + .in-progress {
+        background-color: rgba(13, 202, 240, 0.2);
+      }
+
+      .status-option input[type="radio"]:checked + .resolved {
+        background-color: rgba(25, 135, 84, 0.2);
+      }
+
+      .status-option input[type="radio"]:checked + .cancelled {
+        background-color: rgba(220, 53, 69, 0.2);
+      }
+
+      .urgency-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .form-check-input:checked {
+        background-color: #dc3545;
+        border-color: #dc3545;
+      }
+
+      .update-notes {
+        min-height: 100px;
+      }
+
+      /* تحسينات للعرض على الجوال */
+      @media (max-width: 768px) {
+        .action-buttons {
+          flex-direction: column;
+        }
+
+        .btn-action {
+          width: 30px;
+          height: 30px;
+        }
+
+        .status-selector {
+          flex-direction: column;
+        }
+
+        .modal-dialog {
+          margin: 10px;
+        }
+      }
+
+      /* تذييل الصفحة */
+      .page-footer {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 20px;
+        margin-top: 40px;
+        border-radius: 10px;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .copyright,
+      .center-text,
+      .programmer {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+      }
+
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          text-align: center;
+        }
+      }
+
+      /* نمط التنبيهات */
+      .custom-alert {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        direction: rtl;
+      }
+
+      .error-details {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- شاشة التحميل -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div
+        class="spinner-border text-primary"
+        style="width: 3rem; height: 3rem"
+        role="status"
+      >
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-3" id="loadingText">جاري تهيئة النظام...</p>
+    </div>
+
+    <div class="container-fluid py-4">
+      <!-- رأس الصفحة -->
+      <div class="header-section">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <h1>
+              <i class="fas fa-clipboard-list me-2"></i>إدارة تقارير أعطال
+              الاتصالات
+            </h1>
+            <p class="mb-0">
+              نظام متكامل لعرض وإدارة وتحديث جميع تقارير الأعطال المسجلة
+            </p>
+          </div>
+          <div class="col-md-4 text-md-end">
+            <button class="btn btn-light me-2" onclick="refreshData()">
+              <i class="fas fa-sync-alt me-1"></i>تحديث
+            </button>
+            <button class="btn btn-success" onclick="openNewReportModal()">
+              <i class="fas fa-plus me-1"></i>تقرير جديد
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- الإحصائيات -->
+      <div class="row mb-4" id="statsContainer">
+        <!-- سيتم ملؤه بواسطة JavaScript -->
+      </div>
+
+      <!-- فلترة البيانات -->
+      <div class="filter-section">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">بحث</label>
+            <input
+              type="text"
+              class="form-control"
+              id="searchInput"
+              placeholder="ابحث في جميع الحقول..."
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">نوع الجهاز</label>
+            <select class="form-select" id="filterDevice">
+              <option value="">الكل</option>
+              <option value="phone">هاتف</option>
+              <option value="computer">كمبيوتر</option>
+              <option value="printer">طابعة</option>
+              <option value="laptop">لابتوب</option>
+              <option value="network">شبكة سلكية</option>
+              <option value="wifi">واي فاي</option>
+              <option value="tower">برج اتصالات</option>
+              <option value="satellite">قمر صناعي</option>
+              <option value="fax">فاكس</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">الحالة</label>
+            <select class="form-select" id="filterStatus">
+              <option value="">الكل</option>
+              <option value="معلق">معلق</option>
+              <option value="قيد المراجعة">قيد المراجعة</option>
+              <option value="تم الإصلاح">تم الإصلاح</option>
+              <option value="ملغي">ملغي</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">العاجلية</label>
+            <select class="form-select" id="filterUrgent">
+              <option value="">الكل</option>
+              <option value="true">عاجل</option>
+              <option value="false">غير عاجل</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">المحطة</label>
+            <input
+              type="text"
+              class="form-control"
+              id="filterStation"
+              placeholder="اسم المحطة..."
+            />
+          </div>
+          <div class="col-md-1">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" onclick="applyFilters()">
+              <i class="fas fa-filter"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- جدول التقارير -->
+      <div class="table-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5><i class="fas fa-table me-2"></i>جميع التقارير</h5>
+          <div>
+            <button
+              class="btn btn-outline-primary btn-sm me-2"
+              onclick="exportToPDF()"
+            >
+              <i class="fas fa-file-pdf me-1"></i>PDF
+            </button>
+            <button
+              class="btn btn-outline-success btn-sm me-2"
+              onclick="exportToExcel()"
+            >
+              <i class="fas fa-file-excel me-1"></i>Excel
+            </button>
+            <button class="btn btn-outline-info btn-sm" onclick="printTable()">
+              <i class="fas fa-print me-1"></i>طباعة
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover" id="reportsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>التاريخ</th>
+                <th>نوع الجهاز</th>
+                <th>المبلغ</th>
+                <th>المحطة</th>
+                <th>الوصف</th>
+                <th>الحالة</th>
+                <th>النوع</th>
+                <th>الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+              <!-- سيتم ملؤه بواسطة JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- الرسوم البيانية -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="chart-title">
+              <i class="fas fa-chart-pie me-2"></i>توزيع الحالات
+            </div>
+            <canvas id="statusChart" height="250"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="chart-title">
+              <i class="fas fa-chart-bar me-2"></i>التوزيع حسب الجهاز
+            </div>
+            <canvas id="deviceChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- الإحصائيات التفصيلية -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="chart-title">
+              <i class="fas fa-chart-line me-2"></i>التقارير حسب الشهر
+            </div>
+            <canvas id="monthlyChart" height="250"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="chart-card">
+            <div class="chart-title">
+              <i class="fas fa-users me-2"></i>أكثر المستخدمين تقاريراً
+            </div>
+            <canvas id="usersChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نافذة عرض التفاصيل -->
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-info-circle me-2"></i>تفاصيل التقرير
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="reportDetailsContent">
+            <!-- سيتم ملؤه بواسطة JavaScript -->
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إغلاق
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="printDetails()"
+            >
+              <i class="fas fa-print me-1"></i>طباعة التفاصيل
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نافذة تعديل التقرير -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title">
+              <i class="fas fa-edit me-2"></i>تعديل التقرير
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="editReportForm">
+              <input type="hidden" id="editReportId" />
+
+              <div class="row mb-4">
+                <div class="col-md-12">
+                  <h6><i class="fas fa-tasks me-2"></i>تحديث حالة التقرير</h6>
+                  <div class="status-selector">
+                    <div class="status-option pending">
+                      <input
+                        type="radio"
+                        id="statusPending"
+                        name="status"
+                        value="معلق"
+                      />
+                      <label for="statusPending" class="pending">
+                        <i class="fas fa-clock me-1"></i>معلق
+                      </label>
+                    </div>
+                    <div class="status-option in-progress">
+                      <input
+                        type="radio"
+                        id="statusInProgress"
+                        name="status"
+                        value="قيد المراجعة"
+                      />
+                      <label for="statusInProgress" class="in-progress">
+                        <i class="fas fa-sync-alt me-1"></i>قيد المراجعة
+                      </label>
+                    </div>
+                    <div class="status-option resolved">
+                      <input
+                        type="radio"
+                        id="statusResolved"
+                        name="status"
+                        value="تم الإصلاح"
+                      />
+                      <label for="statusResolved" class="resolved">
+                        <i class="fas fa-check-circle me-1"></i>تم الإصلاح
+                      </label>
+                    </div>
+                    <div class="status-option cancelled">
+                      <input
+                        type="radio"
+                        id="statusCancelled"
+                        name="status"
+                        value="ملغي"
+                      />
+                      <label for="statusCancelled" class="cancelled">
+                        <i class="fas fa-times-circle me-1"></i>ملغي
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">نوع الجهاز</label>
+                    <select class="form-select" id="editDeviceType" required>
+                      <option value="">اختر نوع الجهاز</option>
+                      <option value="phone">هاتف</option>
+                      <option value="computer">كمبيوتر</option>
+                      <option value="printer">طابعة</option>
+                      <option value="laptop">لابتوب</option>
+                      <option value="network">شبكة سلكية</option>
+                      <option value="wifi">واي فاي</option>
+                      <option value="tower">برج اتصالات</option>
+                      <option value="satellite">قمر صناعي</option>
+                      <option value="fax">فاكس</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">العاجلية</label>
+                    <div class="urgency-toggle">
+                      <div class="form-check form-switch">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="editUrgent"
+                          style="transform: scale(1.5)"
+                        />
+                        <label class="form-check-label ms-3" for="editUrgent">
+                          <span class="badge-urgent">عاجل</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">وصف العطل</label>
+                    <textarea
+                      class="form-control"
+                      id="editDescription"
+                      rows="4"
+                      required
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">معلومات المبلغ</label>
+                    <div class="card">
+                      <div class="card-body">
+                        <p>
+                          <strong>الاسم:</strong>
+                          <span id="editReporterName"></span>
+                        </p>
+                        <p>
+                          <strong>المحطة:</strong>
+                          <span id="editReporterStation"></span>
+                        </p>
+                        <p>
+                          <strong>الدور:</strong>
+                          <span id="editReporterRole"></span>
+                        </p>
+                        <p>
+                          <strong>المعرف:</strong>
+                          <span id="editReporterId"></span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">تفاصيل الجهاز (JSON)</label>
+                    <textarea
+                      class="form-control"
+                      id="editDeviceData"
+                      rows="4"
+                      placeholder='{"الموديل": "", "الرقم التسلسلي": "", ...}'
+                    ></textarea>
+                    <small class="text-muted"
+                      >أدخل بيانات الجهاز بتنسيق JSON صالح</small
+                    >
+                    <div class="mt-2">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-info"
+                        onclick="validateJSON()"
+                      >
+                        <i class="fas fa-check"></i> التحقق من JSON
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">ملاحظات التحديث</label>
+                    <textarea
+                      class="form-control update-notes"
+                      id="editUpdateNotes"
+                      rows="3"
+                      placeholder="أدخل ملاحظات حول التحديثات التي تم إجراؤها..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-warning"
+              onclick="saveReportChanges()"
+            >
+              <i class="fas fa-save me-1"></i>حفظ التغييرات
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- نافذة تقرير جديد -->
+    <div class="modal fade" id="newReportModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-plus-circle me-2"></i>تقرير أعطال جديد
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="newReportForm">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">نوع الجهاز *</label>
+                    <select class="form-select" id="newDeviceType" required>
+                      <option value="">اختر نوع الجهاز</option>
+                      <option value="phone">هاتف</option>
+                      <option value="computer">كمبيوتر</option>
+                      <option value="printer">طابعة</option>
+                      <option value="laptop">لابتوب</option>
+                      <option value="network">شبكة سلكية</option>
+                      <option value="wifi">واي فاي</option>
+                      <option value="tower">برج اتصالات</option>
+                      <option value="satellite">قمر صناعي</option>
+                      <option value="fax">فاكس</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label">العاجلية</label>
+                    <div class="urgency-toggle">
+                      <div class="form-check form-switch">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="newUrgent"
+                          style="transform: scale(1.5)"
+                        />
+                        <label class="form-check-label ms-3" for="newUrgent">
+                          <span class="badge-urgent">عاجل</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label">وصف العطل *</label>
+                    <textarea
+                      class="form-control"
+                      id="newDescription"
+                      rows="4"
+                      required
+                      placeholder="أدخل وصفاً مفصلاً للعطل..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-4">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label class="form-label"
+                      >تفاصيل الجهاز (JSON اختياري)</label
+                    >
+                    <textarea
+                      class="form-control"
+                      id="newDeviceData"
+                      rows="4"
+                      placeholder='{"الموديل": "", "الرقم التسلسلي": "", "المسؤول": "", "رقم الجوال": ""}'
+                    ></textarea>
+                    <small class="text-muted"
+                      >أدخل بيانات الجهاز بتنسيق JSON (اختياري)</small
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>ملاحظة:</strong> سيتم استخدام بيانات المبلغ المسجلة
+                    في النظام تلقائياً.
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              إلغاء
+            </button>
+            <button
+              type="button"
+              class="btn btn-success"
+              onclick="saveNewReport()"
+            >
+              <i class="fas fa-save me-1"></i>حفظ التقرير
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مكتبات JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <!-- إصدار Chart.js مع دعم BarController -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="js/protect.js"></script>
+
+    <script>
+      "use strict";
+
+      // ============================================
+      // إعدادات Supabase
+      // ============================================
+      const SUPABASE_CONFIG = {
+        url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        anonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      // متغيرات النظام
+      let dbClient = null;
+      let allReports = [];
+      let filteredReports = [];
+      let dataTable = null;
+      let statusChartInstance = null;
+      let deviceChartInstance = null;
+      let monthlyChartInstance = null;
+      let usersChartInstance = null;
+      let currentEditingReport = null;
+
+      // بيانات المستخدم الافتراضية
+      const currentUser = {
+        id: "user_001",
+        name: "أحمد محمد",
+        station: "محطة الرياض",
+        role: "فني اتصالات",
+      };
+
+      // ============================================
+      // دوال التهيئة
+      // ============================================
+
+      // تهيئة Supabase
+      function initSupabase() {
+        try {
+          // إنشاء عميل Supabase
+          dbClient = window.supabase.createClient(
+            SUPABASE_CONFIG.url,
+            SUPABASE_CONFIG.anonKey,
+            {
+              auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+              },
+            },
+          );
+
+          console.log("✅ تم تهيئة Supabase بنجاح");
+          return true;
+        } catch (error) {
+          console.error("❌ خطأ في تهيئة Supabase:", error);
+          showAlert("❌ خطأ في اتصال قاعدة البيانات", "danger");
+          return false;
+        }
+      }
+
+      // تحميل جميع التقارير
+      async function loadAllReports() {
+        try {
+          showLoading("جاري تحميل التقارير...");
+
+          if (!dbClient) {
+            console.log("⚠️ استخدام بيانات تجريبية للعرض");
+            await loadMockData();
+            return;
+          }
+
+          // محاولة تحميل البيانات من قاعدة البيانات
+          const { data, error } = await dbClient
+            .from("telecom_failures")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            console.error("❌ خطأ في تحميل البيانات:", error);
+            // عرض بيانات تجريبية في حالة الخطأ
+            await loadMockData();
+          } else {
+            allReports = data || [];
+            filteredReports = [...allReports];
+            console.log(`✅ تم تحميل ${allReports.length} تقرير`);
+          }
+
+          updateStatistics();
+          renderReportsTable();
+          renderCharts();
+        } catch (error) {
+          console.error("❌ خطأ في تحميل التقارير:", error);
+          showAlert(`❌ خطأ في تحميل البيانات: ${error.message}`, "danger");
+          await loadMockData(); // عرض بيانات تجريبية كبديل
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // تحميل بيانات تجريبية
+      async function loadMockData() {
+        const mockReports = [
+          {
+            id: "1",
+            device_type: "phone",
+            device_data: {
+              الموديل: "Samsung A50",
+              الرقم_التسلسلي: "SN123456",
+              المسؤول: "محمد أحمد",
+              رقم_الجوال: "0501234567",
+            },
+            reporter_id: "user001",
+            reporter_name: "أحمد محمد",
+            reporter_station: "محطة ",
+            reporter_role: "فني اتصالات",
+            status: "معلق",
+            urgent: true,
+            description:
+              "الهاتف لا يعمل بشكل صحيح، الصوت ضعيف ولا يمكن سماع الطرف الآخر",
+            created_at: "2026-01-15T10:30:00Z",
+            updated_at: "2026-01-15T10:30:00Z",
+          },
+          {
+            id: "2",
+            device_type: "computer",
+            device_data: {
+              الموديل: "Dell XPS 15",
+              الرقم_التسلسلي: "SN789012",
+              المسؤول: "سارة علي",
+              رقم_الجوال: "0559876543",
+            },
+            reporter_id: "user002",
+            reporter_name: "سارة علي",
+            reporter_station: "محطة جدة",
+            reporter_role: "مدير النظام",
+            status: "قيد المراجعة",
+            urgent: false,
+            description:
+              "الكمبيوتر لا يبدأ التشغيل، تظهر شاشة سوداء مع صوت إنذار",
+            created_at: "2026-01-14T14:20:00Z",
+            updated_at: "2026-01-14T15:30:00Z",
+          },
+          {
+            id: "3",
+            device_type: "printer",
+            device_data: {
+              الموديل: "HP LaserJet Pro",
+              الرقم_التسلسلي: "SN345678",
+              المسؤول: "خالد حسن",
+              رقم_الجوال: "0545554444",
+            },
+            reporter_id: "user003",
+            reporter_name: "خالد حسن",
+            reporter_station: "محطة الدمام",
+            reporter_role: "مسؤول تقنية",
+            status: "تم الإصلاح",
+            urgent: false,
+            description:
+              "الطابعة تعمل الآن بعد استبدال خرطوشة الحبر وتنظيف الرأس",
+            created_at: "2026-01-13T09:15:00Z",
+            updated_at: "2026-01-13T16:45:00Z",
+          },
+          {
+            id: "4",
+            device_type: "network",
+            device_data: {
+              الموديل: "Cisco Switch",
+              الرقم_التسلسلي: "SN999888",
+              المسؤول: "فهد ناصر",
+              رقم_الجوال: "0531112222",
+            },
+            reporter_id: "user004",
+            reporter_name: "فهد ناصر",
+            reporter_station: "محطة أبها",
+            reporter_role: "مهندس شبكات",
+            status: "معلق",
+            urgent: true,
+            description:
+              "انقطاع في الشبكة السلكية في الطابق الثالث، يحتاج فحص الكابلات",
+            created_at: "2026-01-12T11:45:00Z",
+            updated_at: "2026-01-12T11:45:00Z",
+          },
+          {
+            id: "5",
+            device_type: "wifi",
+            device_data: {
+              الموديل: "TP-Link Archer",
+              الرقم_التسلسلي: "SN777666",
+              المسؤول: "نورة خالد",
+              رقم_الجوال: "0563339999",
+            },
+            reporter_id: "user005",
+            reporter_name: "نورة خالد",
+            reporter_station: "محطة حائل",
+            reporter_role: "فنية اتصالات",
+            status: "قيد المراجعة",
+            urgent: false,
+            description:
+              "ضعف إشارة الواي فاي في القاعة الرئيسية، تحتاج إلى معزز إشارة",
+            created_at: "2026-01-11T08:20:00Z",
+            updated_at: "2026-01-11T09:30:00Z",
+          },
+        ];
+
+        allReports = mockReports;
+        filteredReports = [...mockReports];
+
+        updateStatistics();
+        renderReportsTable();
+        renderCharts();
+
+        // إخفاء رسالة البيانات التجريبية بعد ثانيتين
+        setTimeout(() => {
+          showAlert("⚠️ يتم استخدام بيانات تجريبية للعرض فقط", "warning");
+        }, 2000);
+      }
+
+      // ============================================
+      // دوال العرض
+      // ============================================
+
+      // تحديث الإحصائيات
+      function updateStatistics() {
+        const stats = calculateStatistics(filteredReports);
+
+        const statsHTML = `
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card total">
+              <div class="icon">
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <h3 class="mb-1">${stats.total}</h3>
+              <p class="text-muted mb-0">إجمالي التقارير</p>
+            </div>
+          </div>
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card pending">
+              <div class="icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <h3 class="mb-1">${stats.pending}</h3>
+              <p class="text-muted mb-0">معلق</p>
+            </div>
+          </div>
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card in-progress">
+              <div class="icon">
+                <i class="fas fa-sync-alt"></i>
+              </div>
+              <h3 class="mb-1">${stats.inProgress}</h3>
+              <p class="text-muted mb-0">قيد المراجعة</p>
+            </div>
+          </div>
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card resolved">
+              <div class="icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <h3 class="mb-1">${stats.resolved}</h3>
+              <p class="text-muted mb-0">تم الإصلاح</p>
+            </div>
+          </div>
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card urgent">
+              <div class="icon">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <h3 class="mb-1">${stats.urgent}</h3>
+              <p class="text-muted mb-0">عاجل</p>
+            </div>
+          </div>
+          <div class="col-xl-2 col-md-4 col-sm-6">
+            <div class="stat-card" style="background: white; border: 2px solid #6f42c1;">
+              <div class="icon" style="background: rgba(111, 66, 193, 0.2); color: #6f42c1;">
+                <i class="fas fa-users"></i>
+              </div>
+              <h3 class="mb-1">${stats.uniqueUsers}</h3>
+              <p class="text-muted mb-0">مستخدم</p>
+            </div>
+          </div>
+        `;
+
+        document.getElementById("statsContainer").innerHTML = statsHTML;
+      }
+
+      // حساب الإحصائيات
+      function calculateStatistics(reports) {
+        const stats = {
+          total: reports.length,
+          pending: 0,
+          inProgress: 0,
+          resolved: 0,
+          urgent: 0,
+          uniqueUsers: new Set(),
+        };
+
+        reports.forEach((report) => {
+          if (report.status === "معلق") stats.pending++;
+          if (report.status === "قيد المراجعة") stats.inProgress++;
+          if (report.status === "تم الإصلاح") stats.resolved++;
+          if (report.urgent) stats.urgent++;
+          stats.uniqueUsers.add(report.reporter_name);
+        });
+
+        stats.uniqueUsers = stats.uniqueUsers.size;
+        return stats;
+      }
+
+      // عرض جدول التقارير
+      function renderReportsTable() {
+        const tbody = document.getElementById("reportsTableBody");
+
+        if (filteredReports.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="9" class="text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">لا توجد تقارير لعرضها</p>
+                <button class="btn btn-primary mt-2" onclick="refreshData()">
+                  <i class="fas fa-sync-alt"></i> تحديث
+                </button>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        let html = "";
+        filteredReports.forEach((report, index) => {
+          const deviceTypeText = getDeviceTypeText(report.device_type);
+          const statusBadge = getStatusBadge(report.status);
+          const urgentBadge = report.urgent
+            ? '<span class="badge-urgent">عاجل</span>'
+            : "";
+          const dateFormatted = formatDate(report.created_at);
+          const shortDescription =
+            report.description && report.description.length > 50
+              ? report.description.substring(0, 50) + "..."
+              : report.description || "لا يوجد وصف";
+
+          html += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>
+                <div class="fw-bold">${dateFormatted.date}</div>
+                <small class="text-muted">${dateFormatted.time}</small>
+              </td>
+              <td>
+                <span class="badge-device">${deviceTypeText}</span>
+              </td>
+              <td>
+                <div class="fw-bold">${report.reporter_name}</div>
+                <small class="text-muted">${report.reporter_role || "غير محدد"}</small>
+              </td>
+              <td>${report.reporter_station || "غير محدد"}</td>
+              <td>${shortDescription}</td>
+              <td>${statusBadge}</td>
+              <td>${urgentBadge}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn btn-sm btn-info btn-action" onclick="viewReportDetails('${report.id}')" 
+                    title="عرض التفاصيل">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-warning btn-action" onclick="editReport('${report.id}')" 
+                    title="تعديل التقرير">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn btn-sm btn-danger btn-action" onclick="deleteReport('${report.id}')" 
+                    title="حذف التقرير">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.innerHTML = html;
+
+        if (!dataTable) {
+          initDataTable();
+        }
+      }
+
+      // تهيئة DataTable
+      function initDataTable() {
+        if ($.fn.DataTable.isDataTable("#reportsTable")) {
+          dataTable.destroy();
+        }
+
+        dataTable = $("#reportsTable").DataTable({
+          language: {
+            url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/ar.json",
+          },
+          pageLength: 25,
+          order: [[1, "desc"]],
+          dom: "Bfrtip",
+          buttons: [
+            {
+              extend: "copy",
+              text: '<i class="fas fa-copy"></i> نسخ',
+              className: "btn btn-sm btn-outline-secondary",
+            },
+            {
+              extend: "excel",
+              text: '<i class="fas fa-file-excel"></i> Excel',
+              className: "btn btn-sm btn-outline-success",
+            },
+            {
+              extend: "pdf",
+              text: '<i class="fas fa-file-pdf"></i> PDF',
+              className: "btn btn-sm btn-outline-danger",
+            },
+            {
+              extend: "print",
+              text: '<i class="fas fa-print"></i> طباعة',
+              className: "btn btn-sm btn-outline-info",
+            },
+          ],
+          columnDefs: [
+            { orderable: false, targets: [8] },
+            { searchable: false, targets: [0, 7, 8] },
+          ],
+        });
+
+        $("#searchInput").on("keyup", function () {
+          dataTable.search(this.value).draw();
+        });
+      }
+
+      // تطبيق الفلاتر
+      function applyFilters() {
+        let filtered = [...allReports];
+
+        const deviceFilter = document.getElementById("filterDevice").value;
+        const statusFilter = document.getElementById("filterStatus").value;
+        const urgentFilter = document.getElementById("filterUrgent").value;
+        const stationFilter = document
+          .getElementById("filterStation")
+          .value.toLowerCase();
+
+        if (deviceFilter) {
+          filtered = filtered.filter(
+            (report) => report.device_type === deviceFilter,
+          );
+        }
+
+        if (statusFilter) {
+          filtered = filtered.filter(
+            (report) => report.status === statusFilter,
+          );
+        }
+
+        if (urgentFilter !== "") {
+          const isUrgent = urgentFilter === "true";
+          filtered = filtered.filter((report) => report.urgent === isUrgent);
+        }
+
+        if (stationFilter) {
+          filtered = filtered.filter(
+            (report) =>
+              report.reporter_station &&
+              report.reporter_station.toLowerCase().includes(stationFilter),
+          );
+        }
+
+        filteredReports = filtered;
+
+        updateStatistics();
+        renderReportsTable();
+
+        if (dataTable) {
+          dataTable.destroy();
+          dataTable = null;
+          initDataTable();
+        }
+      }
+
+      // ============================================
+      // الرسوم البيانية
+      // ============================================
+
+      // عرض جميع الرسوم البيانية
+      function renderCharts() {
+        // تدمير المخططات الحالية أولاً
+        destroyCharts();
+
+        // عرض المخططات الجديدة
+        renderStatusChart();
+        renderDeviceChart();
+        renderMonthlyChart();
+        renderUsersChart();
+      }
+
+      // تدمير جميع المخططات
+      function destroyCharts() {
+        try {
+          if (statusChartInstance) {
+            statusChartInstance.destroy();
+            statusChartInstance = null;
+          }
+          if (deviceChartInstance) {
+            deviceChartInstance.destroy();
+            deviceChartInstance = null;
+          }
+          if (monthlyChartInstance) {
+            monthlyChartInstance.destroy();
+            monthlyChartInstance = null;
+          }
+          if (usersChartInstance) {
+            usersChartInstance.destroy();
+            usersChartInstance = null;
+          }
+        } catch (error) {
+          console.warn("⚠️ خطأ في تدمير المخططات:", error);
+        }
+      }
+
+      // رسم بياني للحالات
+      function renderStatusChart() {
+        try {
+          const ctx = document.getElementById("statusChart").getContext("2d");
+
+          const stats = calculateStatistics(filteredReports);
+
+          statusChartInstance = new Chart(ctx, {
+            type: "pie",
+            data: {
+              labels: ["معلق", "قيد المراجعة", "تم الإصلاح"],
+              datasets: [
+                {
+                  data: [stats.pending, stats.inProgress, stats.resolved],
+                  backgroundColor: ["#ffc107", "#0dcaf0", "#198754"],
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  rtl: true,
+                },
+                tooltip: {
+                  rtl: true,
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || "";
+                      const value = context.raw || 0;
+                      const total = context.dataset.data.reduce(
+                        (a, b) => a + b,
+                        0,
+                      );
+                      const percentage =
+                        total > 0 ? Math.round((value / total) * 100) : 0;
+                      return `${label}: ${value} (${percentage}%)`;
+                    },
+                  },
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("❌ خطأ في رسم مخطط الحالات:", error);
+        }
+      }
+
+      // رسم بياني لأنواع الأجهزة
+      function renderDeviceChart() {
+        try {
+          const ctx = document.getElementById("deviceChart").getContext("2d");
+
+          const deviceCounts = {};
+
+          filteredReports.forEach((report) => {
+            const deviceType = getDeviceTypeText(report.device_type);
+            deviceCounts[deviceType] = (deviceCounts[deviceType] || 0) + 1;
+          });
+
+          const labels = Object.keys(deviceCounts);
+          const data = Object.values(deviceCounts);
+
+          const backgroundColors = [
+            "#0d6efd",
+            "#198754",
+            "#ffc107",
+            "#dc3545",
+            "#0dcaf0",
+            "#6f42c1",
+            "#fd7e14",
+            "#20c997",
+            "#6610f2",
+            "#e83e8c",
+          ];
+
+          deviceChartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "عدد التقارير",
+                  data: data,
+                  backgroundColor: backgroundColors.slice(0, labels.length),
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("❌ خطأ في رسم مخطط الأجهزة:", error);
+        }
+      }
+
+      // رسم بياني شهري
+      function renderMonthlyChart() {
+        try {
+          const ctx = document.getElementById("monthlyChart").getContext("2d");
+
+          const monthlyData = {};
+
+          filteredReports.forEach((report) => {
+            const date = new Date(report.created_at);
+            const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}`;
+            monthlyData[monthYear] = (monthlyData[monthYear] || 0) + 1;
+          });
+
+          const sortedMonths = Object.keys(monthlyData).sort();
+          const labels = sortedMonths.map((month) => {
+            const [year, monthNum] = month.split("-");
+            const monthNames = [
+              "يناير",
+              "فبراير",
+              "مارس",
+              "أبريل",
+              "مايو",
+              "يونيو",
+              "يوليو",
+              "أغسطس",
+              "سبتمبر",
+              "أكتوبر",
+              "نوفمبر",
+              "ديسمبر",
+            ];
+            return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+          });
+          const data = sortedMonths.map((month) => monthlyData[month]);
+
+          monthlyChartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "عدد التقارير",
+                  data: data,
+                  borderColor: "#0d6efd",
+                  backgroundColor: "rgba(13, 110, 253, 0.1)",
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.4,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("❌ خطأ في رسم المخطط الشهري:", error);
+        }
+      }
+
+      // رسم بياني للمستخدمين
+      function renderUsersChart() {
+        try {
+          const ctx = document.getElementById("usersChart").getContext("2d");
+
+          const userCounts = {};
+
+          filteredReports.forEach((report) => {
+            userCounts[report.reporter_name] =
+              (userCounts[report.reporter_name] || 0) + 1;
+          });
+
+          const topUsers = Object.entries(userCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+
+          const labels = topUsers.map(([name]) => name);
+          const data = topUsers.map(([, count]) => count);
+
+          // استخدام نوع bar بدلاً من horizontalBar
+          usersChartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "عدد التقارير",
+                  data: data,
+                  backgroundColor: "#20c997",
+                  borderWidth: 1,
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y", // لجعل المخطط أفقياً
+              responsive: true,
+              plugins: {
+                legend: {
+                  display: false,
+                },
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            },
+          });
+        } catch (error) {
+          console.error("❌ خطأ في رسم مخطط المستخدمين:", error);
+        }
+      }
+
+      // ============================================
+      // دوال المساعدة
+      // ============================================
+
+      // الحصول على نص نوع الجهاز
+      function getDeviceTypeText(type) {
+        const types = {
+          phone: "هاتف",
+          tower: "برج اتصالات",
+          satellite: "قمر صناعي",
+          fax: "فاكس",
+          computer: "كمبيوتر",
+          laptop: "لابتوب",
+          printer: "طابعة",
+          network: "شبكة سلكية",
+          wifi: "واي فاي",
+        };
+        return types[type] || type;
+      }
+
+      // الحصول على شارة الحالة
+      function getStatusBadge(status) {
+        const badges = {
+          معلق: '<span class="badge-status badge-pending">معلق</span>',
+          "قيد المراجعة":
+            '<span class="badge-status badge-in-progress">قيد المراجعة</span>',
+          "تم الإصلاح":
+            '<span class="badge-status badge-resolved">تم الإصلاح</span>',
+          ملغي: '<span class="badge-status badge-cancelled">ملغي</span>',
+        };
+        return (
+          badges[status] ||
+          '<span class="badge-status badge-pending">معلق</span>'
+        );
+      }
+
+      // تنسيق التاريخ
+      function formatDate(dateString) {
+        try {
+          const date = new Date(dateString);
+          const options = {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          };
+          const dateFormatted = date.toLocaleDateString("ar-SA", options);
+          const timeFormatted = date.toLocaleTimeString("ar-SA", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          return {
+            date: dateFormatted,
+            time: timeFormatted,
+          };
+        } catch (error) {
+          return {
+            date: dateString,
+            time: "",
+          };
+        }
+      }
+
+      // التحقق من صحة JSON
+      function validateJSON() {
+        try {
+          const deviceDataText =
+            document.getElementById("editDeviceData").value;
+
+          if (!deviceDataText.trim()) {
+            showAlert(
+              "✅ حقل JSON فارغ - سيتم استخدام القيمة الافتراضية {}",
+              "info",
+            );
+            return true;
+          }
+
+          const parsed = JSON.parse(deviceDataText);
+          showAlert("✅ تنسيق JSON صحيح", "success");
+          return true;
+        } catch (error) {
+          showAlert(`❌ خطأ في تنسيق JSON: ${error.message}`, "danger");
+          return false;
+        }
+      }
+
+      // ============================================
+      // إدارة التقارير
+      // ============================================
+
+      // عرض تفاصيل التقرير
+      async function viewReportDetails(reportId) {
+        try {
+          showLoading("جاري تحميل التفاصيل...");
+
+          const report = allReports.find((r) => r.id === reportId);
+          if (!report) {
+            throw new Error("لم يتم العثور على التقرير");
+          }
+
+          const deviceTypeText = getDeviceTypeText(report.device_type);
+          const statusBadge = getStatusBadge(report.status);
+          const dateFormatted = formatDate(report.created_at);
+          const updatedDateFormatted = report.updated_at
+            ? formatDate(report.updated_at)
+            : { date: "لم يتم التحديث", time: "" };
+
+          let deviceDetails = "";
+          if (report.device_data && typeof report.device_data === "object") {
+            const deviceData = report.device_data;
+            for (const [key, value] of Object.entries(deviceData)) {
+              deviceDetails += `<li><strong>${key}:</strong> ${value}</li>`;
+            }
+          }
+
+          const detailsHTML = `
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <h6><i class="fas fa-id-card me-2"></i>معلومات التقرير</h6>
+                  <div class="card">
+                    <div class="card-body">
+                      <p><strong>رقم التقرير:</strong> ${report.id}</p>
+                      <p><strong>الحالة:</strong> ${statusBadge}</p>
+                      <p><strong>التاريخ:</strong> ${dateFormatted.date} ${dateFormatted.time}</p>
+                      <p><strong>آخر تحديث:</strong> ${updatedDateFormatted.date} ${updatedDateFormatted.time}</p>
+                      <p><strong>عاجل:</strong> ${report.urgent ? '<span class="badge-urgent">نعم</span>' : "لا"}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <h6><i class="fas fa-user me-2"></i>معلومات المبلغ</h6>
+                  <div class="card">
+                    <div class="card-body">
+                      <p><strong>الاسم:</strong> ${report.reporter_name}</p>
+                      <p><strong>المحطة:</strong> ${report.reporter_station || "غير محدد"}</p>
+                      <p><strong>الدور:</strong> ${report.reporter_role || "غير محدد"}</p>
+                      <p><strong>المعرف:</strong> ${report.reporter_id || "غير محدد"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <h6><i class="fas fa-cogs me-2"></i>تفاصيل العطل</h6>
+                  <div class="card">
+                    <div class="card-body">
+                      <p><strong>نوع الجهاز:</strong> <span class="badge-device">${deviceTypeText}</span></p>
+                      <p><strong>تفاصيل الجهاز:</strong></p>
+                      <ul class="list-unstyled">
+                        ${deviceDetails || "<li>لا توجد تفاصيل إضافية</li>"}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <h6><i class="fas fa-file-alt me-2"></i>وصف العطل</h6>
+                  <div class="card">
+                    <div class="card-body">
+                      <p>${report.description || "لا يوجد وصف"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+
+          document.getElementById("reportDetailsContent").innerHTML =
+            detailsHTML;
+
+          hideLoading();
+          const modal = new bootstrap.Modal(
+            document.getElementById("detailsModal"),
+          );
+          modal.show();
+        } catch (error) {
+          console.error("❌ خطأ في عرض التفاصيل:", error);
+          showAlert("❌ " + error.message, "danger");
+          hideLoading();
+        }
+      }
+
+      // تعديل التقرير
+      async function editReport(reportId) {
+        try {
+          showLoading("جاري تحميل البيانات...");
+
+          const report = allReports.find((r) => r.id === reportId);
+          if (!report) {
+            throw new Error("لم يتم العثور على التقرير");
+          }
+
+          currentEditingReport = report;
+
+          // تعبئة الحقول
+          document.getElementById("editReportId").value = report.id;
+          document.getElementById("editDeviceType").value = report.device_type;
+          document.getElementById("editDescription").value =
+            report.description || "";
+          document.getElementById("editUrgent").checked = report.urgent;
+
+          // معلومات المبلغ
+          document.getElementById("editReporterName").textContent =
+            report.reporter_name;
+          document.getElementById("editReporterStation").textContent =
+            report.reporter_station || "غير محدد";
+          document.getElementById("editReporterRole").textContent =
+            report.reporter_role || "غير محدد";
+          document.getElementById("editReporterId").textContent =
+            report.reporter_id || "غير محدد";
+
+          // device_data مع قيمة افتراضية
+          const deviceData = report.device_data || {};
+          document.getElementById("editDeviceData").value = JSON.stringify(
+            deviceData,
+            null,
+            2,
+          );
+          document.getElementById("editUpdateNotes").value = "";
+
+          // تحديد الحالة الحالية
+          document.querySelectorAll('input[name="status"]').forEach((radio) => {
+            radio.checked = radio.value === report.status;
+          });
+
+          hideLoading();
+
+          const modal = new bootstrap.Modal(
+            document.getElementById("editModal"),
+          );
+          modal.show();
+        } catch (error) {
+          console.error("❌ خطأ في تحميل التقرير للتعديل:", error);
+          showAlert("❌ " + error.message, "danger");
+          hideLoading();
+        }
+      }
+
+      // حفظ التغييرات
+      async function saveReportChanges() {
+        try {
+          const reportId = document.getElementById("editReportId").value;
+          const deviceType = document.getElementById("editDeviceType").value;
+          const description = document.getElementById("editDescription").value;
+          const urgent = document.getElementById("editUrgent").checked;
+          const deviceDataText =
+            document.getElementById("editDeviceData").value;
+          const updateNotes = document.getElementById("editUpdateNotes").value;
+          const selectedStatus = document.querySelector(
+            'input[name="status"]:checked',
+          ).value;
+
+          // التحقق من البيانات
+          if (!deviceType) {
+            throw new Error("يجب اختيار نوع الجهاز");
+          }
+          if (!description.trim()) {
+            throw new Error("يجب إدخال وصف العطل");
+          }
+
+          // معالجة device_data
+          let deviceData = {};
+          try {
+            if (deviceDataText.trim()) {
+              deviceData = JSON.parse(deviceDataText);
+            }
+          } catch (e) {
+            throw new Error(
+              "تنسيق بيانات الجهاز غير صالح. يجب أن يكون JSON صحيحاً",
+            );
+          }
+
+          showLoading("جاري حفظ التغييرات...");
+
+          // إعداد بيانات التحديث
+          const updates = {
+            device_type: deviceType,
+            description: description.trim(),
+            urgent: urgent,
+            device_data: deviceData || {},
+            status: selectedStatus,
+            updated_at: new Date().toISOString(),
+          };
+
+          // إذا كان متصل بقاعدة البيانات، حاول الحفظ
+          if (dbClient) {
+            const { data, error } = await dbClient
+              .from("telecom_failures")
+              .update(updates)
+              .eq("id", reportId);
+
+            if (error) {
+              throw new Error(`فشل في تحديث التقرير: ${error.message}`);
+            }
+          }
+
+          // تحديث البيانات المحلية
+          const reportIndex = allReports.findIndex((r) => r.id === reportId);
+          if (reportIndex !== -1) {
+            allReports[reportIndex] = {
+              ...allReports[reportIndex],
+              ...updates,
+            };
+            filteredReports = [...allReports];
+          }
+
+          showAlert("✅ تم تحديث التقرير بنجاح", "success");
+
+          hideLoading();
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("editModal"),
+          );
+          modal.hide();
+
+          // تحديث العرض
+          updateStatistics();
+          renderReportsTable();
+          renderCharts();
+        } catch (error) {
+          console.error("❌ خطأ في حفظ التغييرات:", error);
+          showAlert(`❌ ${error.message}`, "danger");
+          hideLoading();
+        }
+      }
+
+      // حذف التقرير
+      async function deleteReport(reportId) {
+        if (
+          !confirm(
+            "هل أنت متأكد من حذف هذا التقرير؟ لا يمكن التراجع عن هذا الإجراء.",
+          )
+        ) {
+          return;
+        }
+
+        try {
+          showLoading("جاري حذف التقرير...");
+
+          // إذا كان متصل بقاعدة البيانات، حاول الحذف
+          if (dbClient) {
+            const { error } = await dbClient
+              .from("telecom_failures")
+              .delete()
+              .eq("id", reportId);
+
+            if (error) {
+              throw new Error("فشل في حذف التقرير من قاعدة البيانات");
+            }
+          }
+
+          // تحديث البيانات المحلية
+          allReports = allReports.filter((r) => r.id !== reportId);
+          filteredReports = [...allReports];
+
+          showAlert("✅ تم حذف التقرير بنجاح", "success");
+
+          // تحديث العرض
+          updateStatistics();
+          renderReportsTable();
+          renderCharts();
+        } catch (error) {
+          console.error("❌ خطأ في حذف التقرير:", error);
+          showAlert("❌ " + error.message, "danger");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ============================================
+      // تقارير جديدة
+      // ============================================
+
+      // فتح نافذة تقرير جديد
+      function openNewReportModal() {
+        document.getElementById("newReportForm").reset();
+        const modal = new bootstrap.Modal(
+          document.getElementById("newReportModal"),
+        );
+        modal.show();
+      }
+
+      // حفظ تقرير جديد
+      async function saveNewReport() {
+        try {
+          const deviceType = document.getElementById("newDeviceType").value;
+          const description = document.getElementById("newDescription").value;
+          const urgent = document.getElementById("newUrgent").checked;
+          const deviceDataText = document.getElementById("newDeviceData").value;
+
+          // التحقق من البيانات
+          if (!deviceType) {
+            throw new Error("يجب اختيار نوع الجهاز");
+          }
+          if (!description.trim()) {
+            throw new Error("يجب إدخال وصف العطل");
+          }
+
+          // معالجة device_data
+          let deviceData = {};
+          if (deviceDataText.trim()) {
+            try {
+              deviceData = JSON.parse(deviceDataText);
+            } catch (e) {
+              throw new Error("تنسيق JSON غير صالح لبيانات الجهاز");
+            }
+          }
+
+          showLoading("جاري حفظ التقرير الجديد...");
+
+          // إنشاء تقرير جديد
+          const newReport = {
+            id: `report_${Date.now()}`,
+            device_type: deviceType,
+            device_data: deviceData,
+            reporter_id: currentUser.id,
+            reporter_name: currentUser.name,
+            reporter_station: currentUser.station,
+            reporter_role: currentUser.role,
+            status: "معلق",
+            urgent: urgent,
+            description: description.trim(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          // إذا كان متصل بقاعدة البيانات، حاول الحفظ
+          if (dbClient) {
+            const { data, error } = await dbClient
+              .from("telecom_failures")
+              .insert([newReport]);
+
+            if (error) {
+              throw new Error(`فشل في حفظ التقرير: ${error.message}`);
+            }
+          }
+
+          // إضافة التقرير للبيانات المحلية
+          allReports.unshift(newReport);
+          filteredReports = [...allReports];
+
+          showAlert("✅ تم حفظ التقرير الجديد بنجاح", "success");
+
+          // إغلاق المودال
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("newReportModal"),
+          );
+          modal.hide();
+
+          // تحديث العرض
+          updateStatistics();
+          renderReportsTable();
+          renderCharts();
+        } catch (error) {
+          console.error("❌ خطأ في حفظ التقرير الجديد:", error);
+          showAlert(`❌ ${error.message}`, "danger");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // ============================================
+      // دوال التحكم
+      // ============================================
+
+      // تحديث البيانات
+      function refreshData() {
+        showLoading("جاري تحديث البيانات...");
+        loadAllReports();
+      }
+
+      // تصدير إلى Excel
+      async function exportToExcel() {
+        try {
+          showLoading("جاري تصدير البيانات إلى Excel...");
+
+          const reports = filteredReports.map((report, index) => ({
+            رقم: index + 1,
+            التاريخ: formatDate(report.created_at).date,
+            الوقت: formatDate(report.created_at).time,
+            "نوع الجهاز": getDeviceTypeText(report.device_type),
+            "اسم المبلغ": report.reporter_name,
+            المحطة: report.reporter_station || "",
+            الدور: report.reporter_role || "",
+            الحالة: report.status,
+            عاجل: report.urgent ? "نعم" : "لا",
+            الوصف: report.description || "",
+            "تفاصيل الجهاز": JSON.stringify(report.device_data || {}, null, 2),
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(reports);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "تقارير الأعطال");
+
+          const fileName = `تقارير_أعطال_الاتصالات_${new Date().toISOString().split("T")[0]}.xlsx`;
+          XLSX.writeFile(wb, fileName);
+
+          showAlert("✅ تم تصدير البيانات بنجاح", "success");
+        } catch (error) {
+          console.error("❌ خطأ في التصدير:", error);
+          showAlert("❌ خطأ في تصدير البيانات", "danger");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // تصدير إلى PDF
+      async function exportToPDF() {
+        try {
+          showLoading("جاري إنشاء تقرير PDF...");
+
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+
+          doc.setFontSize(18);
+          doc.text("تقرير أعطال الاتصالات", 105, 15, { align: "center" });
+          doc.setFontSize(12);
+          doc.text(
+            `تاريخ التقرير: ${new Date().toLocaleDateString("ar-SA")}`,
+            105,
+            25,
+            { align: "center" },
+          );
+          doc.text(`عدد التقارير: ${filteredReports.length}`, 105, 32, {
+            align: "center",
+          });
+
+          const tableData = filteredReports.map((report, index) => [
+            index + 1,
+            formatDate(report.created_at).date,
+            getDeviceTypeText(report.device_type),
+            report.reporter_name,
+            report.reporter_station || "",
+            report.status,
+            report.urgent ? "نعم" : "لا",
+          ]);
+
+          doc.autoTable({
+            head: [
+              [
+                "#",
+                "التاريخ",
+                "نوع الجهاز",
+                "المبلغ",
+                "المحطة",
+                "الحالة",
+                "عاجل",
+              ],
+            ],
+            body: tableData,
+            startY: 40,
+            styles: { font: "arabic", fontSize: 8 },
+            headStyles: { fillColor: [13, 110, 253] },
+          });
+
+          const fileName = `تقرير_أعطال_${new Date().toISOString().split("T")[0]}.pdf`;
+          doc.save(fileName);
+
+          showAlert("✅ تم إنشاء تقرير PDF بنجاح", "success");
+        } catch (error) {
+          console.error("❌ خطأ في إنشاء PDF:", error);
+          showAlert("❌ خطأ في إنشاء التقرير", "danger");
+        } finally {
+          hideLoading();
+        }
+      }
+
+      // طباعة الجدول
+      function printTable() {
+        window.print();
+      }
+
+      // طباعة التفاصيل
+      function printDetails() {
+        const modalContent = document.getElementById(
+          "reportDetailsContent",
+        ).innerHTML;
+        const printWindow = window.open("", "_blank");
+        printWindow.document.write(`
+          <html dir="rtl">
+          <head>
+            <title>طباعة تفاصيل التقرير</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+              body { padding: 20px; }
+              @media print {
+                .no-print { display: none !important; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h2 class="text-center mb-4">تفاصيل التقرير</h2>
+              ${modalContent}
+              <div class="text-center mt-4 no-print">
+                <button class="btn btn-primary" onclick="window.print()">طباعة</button>
+                <button class="btn btn-secondary" onclick="window.close()">إغلاق</button>
+              </div>
+            </div>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+
+      // ============================================
+      // دوال المساعدة العامة
+      // ============================================
+
+      function showLoading(text = "جاري التحميل...") {
+        document.getElementById("loadingOverlay").style.display = "flex";
+        document.getElementById("loadingText").textContent = text;
+      }
+
+      function hideLoading() {
+        document.getElementById("loadingOverlay").style.display = "none";
+      }
+
+      function updateLoadingText(text) {
+        document.getElementById("loadingText").textContent = text;
+      }
+
+      function showAlert(message, type) {
+        const oldAlerts = document.querySelectorAll(".custom-alert");
+        oldAlerts.forEach((alert) => alert.remove());
+
+        const alertDiv = document.createElement("div");
+        alertDiv.className = `custom-alert alert alert-${type} alert-dismissible fade show`;
+        alertDiv.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 9999;
+          min-width: 300px;
+          direction: rtl;
+        `;
+        alertDiv.innerHTML = `
+          <div class="d-flex align-items-center">
+            <i class="fas ${type === "success" ? "fa-check-circle" : "fa-exclamation-triangle"} me-2"></i>
+            <div>${message}</div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+          if (alertDiv.parentNode) {
+            alertDiv.remove();
+          }
+        }, 5000);
+      }
+
+      // ============================================
+      // تهيئة الصفحة
+      // ============================================
+
+      window.addEventListener("load", async function () {
+        console.log("🚀 جميع الملفات محملة، جاري تهيئة النظام...");
+
+        try {
+          // 1. تهيئة Supabase
+          console.log("🔧 جاري تهيئة Supabase...");
+          initSupabase();
+
+          // 2. تحميل البيانات
+          console.log("📥 جاري تحميل البيانات...");
+          await loadAllReports();
+
+          // 3. إعداد الفلاتر
+          console.log("⚙️ جاري إعداد الفلاتر...");
+          document
+            .getElementById("filterDevice")
+            .addEventListener("change", applyFilters);
+          document
+            .getElementById("filterStatus")
+            .addEventListener("change", applyFilters);
+          document
+            .getElementById("filterUrgent")
+            .addEventListener("change", applyFilters);
+          document
+            .getElementById("filterStation")
+            .addEventListener("input", applyFilters);
+
+          console.log("🎉 تم تهيئة النظام بنجاح");
+        } catch (error) {
+          console.error("❌ خطأ في تهيئة النظام:", error);
+          showAlert(`خطأ في النظام: ${error.message}`, "danger");
+        }
+      });
+    </script>
+
+    <!-- تذييل الصفحة -->
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

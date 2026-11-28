@@ -1,0 +1,891 @@
+import 'package:material_ui/material_ui.dart';
+
+import '../../core/api/metra_api_client.dart';
+import '../../core/errors/metra_error_presenter.dart';
+import '../../core/widgets/metra_async_state.dart';
+
+String stationAdminPersonName(Map<String, dynamic> record) {
+  final parts = [
+    record['name_ar'],
+    record['name'],
+    record['full_name'],
+    record['display_name'],
+    record['first_name'],
+    record['father_name'],
+    record['last_name'],
+  ].where((part) => part != null && part.toString().trim().isNotEmpty);
+  final joined = parts.join(' ');
+  if (joined.isNotEmpty) return joined;
+  for (final key in ['email', 'user_id', 'id']) {
+    final value = record[key];
+    if (value != null && value.toString().trim().isNotEmpty) {
+      return value.toString();
+    }
+  }
+  return '—';
+}
+
+bool stationAdminRecordMatchesQuery(
+  Map<String, dynamic> record,
+  String rawQuery,
+) {
+  final q = rawQuery.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  String all(List<String> keys) => keys
+      .map((key) => record[key])
+      .where((value) => value != null && value.toString().trim().isNotEmpty)
+      .map((value) => value.toString())
+      .join(' ');
+
+  final haystack = [
+    stationAdminPersonName(record),
+    all(['role_code', 'requested_role_code', 'role']),
+    all(['status', 'request_status', 'account_status']),
+    all(['phone', 'email', 'user_id', 'id']),
+  ].join(' ').toLowerCase();
+  return haystack.contains(q);
+}
+
+bool stationAdminAuditMatchesQuery(
+  Map<String, dynamic> record,
+  String rawQuery,
+) {
+  final q = rawQuery.trim().toLowerCase();
+  if (q.isEmpty) return true;
+  String first(List<String> keys) {
+    for (final key in keys) {
+      final value = record[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return '';
+  }
+
+  final haystack = [
+    first(['event_type', 'action', 'event', 'id']),
+    first(['created_at', 'occurred_at']),
+    first(['actor_user_id', 'actor_name', 'actor']),
+    first(['target_user_id', 'target', 'details', 'message']),
+  ].join(' ').toLowerCase();
+  return haystack.contains(q);
+}
+
+class StationAdministrationScreen extends StatefulWidget {
+  const StationAdministrationScreen({
+    super.key,
+    required this.api,
+    required this.stationId,
+  });
+
+  final MetraApiClient api;
+  final String stationId;
+
+  @override
+  State<StationAdministrationScreen> createState() =>
+      _StationAdministrationScreenState();
+}
+
+class _StationAdministrationScreenState
+    extends State<StationAdministrationScreen> {
+  late Future<List<Map<String, dynamic>>> _users;
+  late Future<List<Map<String, dynamic>>> _requests;
+  late Future<List<Map<String, dynamic>>> _audit;
+  late Future<List<ObservationQueueItem>> _observations;
+  final Set<String> _processingRequestIds = <String>{};
+  final TextEditingController _userFilterController = TextEditingController();
+  String _userFilterQuery = '';
+  final _assignUserId = TextEditingController();
+  final _assignReason = TextEditingController();
+  String? _assignRoleCode;
+  List<Map<String, dynamic>> _assignableRoles = const [];
+  bool _assignmentBusy = false;
+  bool _rolesLoaded = false;
+  String? _assignmentMessage;
+  bool _assignmentError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _userFilterController.addListener(() {
+      final next = _userFilterController.text.trim();
+      if (next == _userFilterQuery) return;
+      setState(() => _userFilterQuery = next);
+    });
+    _refresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant StationAdministrationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.stationId != widget.stationId ||
+        oldWidget.api != widget.api) {
+      _processingRequestIds.clear();
+      _userFilterController.clear();
+      _userFilterQuery = '';
+      _assignUserId.clear();
+      _assignReason.clear();
+      _assignRoleCode = null;
+      _assignableRoles = const [];
+      _rolesLoaded = false;
+      _assignmentMessage = null;
+      _assignmentError = false;
+      _refresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    _userFilterController.dispose();
+    _assignUserId.dispose();
+    _assignReason.dispose();
+    super.dispose();
+  }
+
+  /// Keeps the original error on the Future for FutureBuilder while preventing
+  /// an unhandled async error when a TabBarView child is not yet mounted.
+  Future<T> _observed<T>(Future<T> future) {
+    future.then((_) {}, onError: (_) {});
+    return future;
+  }
+
+  void _refresh() {
+    _users = _observed(widget.api.getStationUsers(widget.stationId));
+    _requests = _observed(
+      widget.api.getStationRegistrationRequests(widget.stationId),
+    );
+    _audit = _observed(widget.api.getStationAuditLog(widget.stationId));
+    _observations = _observed(widget.api.getReviewQueue(widget.stationId));
+  }
+
+  String _firstValue(Map<String, dynamic> record, List<String> keys) {
+    for (final key in keys) {
+      final value = record[key];
+      if (value != null && value.toString().trim().isNotEmpty) {
+        return value.toString();
+      }
+    }
+    return '—';
+  }
+
+  String _personName(Map<String, dynamic> record) =>
+      stationAdminPersonName(record);
+
+  bool _matchesUserFilter(Map<String, dynamic> record) =>
+      stationAdminRecordMatchesQuery(record, _userFilterQuery);
+
+  Future<void> _decide(Map<String, dynamic> record, String decision) async {
+    // Keep the action bound to the station that supplied this queue row.
+    final stationId = widget.stationId;
+    final requestId = _firstValue(record, ['id', 'request_id']);
+    if (requestId == '—') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('معرّف طلب التسجيل غير موجود في الاستجابة.'),
+        ),
+      );
+      return;
+    }
+
+    final noteController = TextEditingController();
+    bool confirmed = false;
+    try {
+      confirmed =
+          await showDialog<bool>(
+            context: context,
+            builder: (dialogContext) => Directionality(
+              textDirection: TextDirection.rtl,
+              child: AlertDialog(
+                title: Text(
+                  decision == 'approve'
+                      ? 'اعتماد طلب التسجيل'
+                      : 'رفض طلب التسجيل',
+                ),
+                content: TextField(
+                  controller: noteController,
+                  minLines: 2,
+                  maxLines: 4,
+                  textDirection: TextDirection.rtl,
+                  decoration: InputDecoration(
+                    labelText: decision == 'reject'
+                        ? 'سبب الرفض (إلزامي)'
+                        : 'ملاحظة (اختيارية)',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: const Text('إلغاء'),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      if (decision == 'reject' &&
+                          noteController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(content: Text('أدخل سبب الرفض.')),
+                        );
+                        return;
+                      }
+                      Navigator.pop(dialogContext, true);
+                    },
+                    child: const Text('تأكيد'),
+                  ),
+                ],
+              ),
+            ),
+          ) ??
+          false;
+    } finally {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        noteController.dispose();
+      });
+    }
+    if (!confirmed || !mounted || stationId != widget.stationId) return;
+
+    final processingKey = '$stationId::$requestId';
+    if (_processingRequestIds.contains(processingKey)) return;
+    setState(() => _processingRequestIds.add(processingKey));
+
+    final note = noteController.text.trim();
+    try {
+      await widget.api.decideStationRegistrationRequest(
+        stationId: stationId,
+        requestId: requestId,
+        decision: decision,
+        note: note.isEmpty ? null : note,
+      );
+      if (!mounted || stationId != widget.stationId) return;
+      setState(_refresh);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم إرسال قرار المراجعة إلى الخادم.')),
+      );
+    } on MetraApiException catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(MetraErrorPresenter.registrationDecisionMessage(error)),
+        ),
+      );
+    } catch (error) {
+      if (mounted && stationId == widget.stationId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(MetraErrorPresenter.messageFor(error))),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _processingRequestIds.remove(processingKey));
+      }
+    }
+  }
+
+  Future<void> _ensureAssignableRoles() async {
+    if (_rolesLoaded || _assignmentBusy) return;
+    final stationId = widget.stationId;
+    setState(() {
+      _assignmentBusy = true;
+      _assignmentMessage = null;
+      _assignmentError = false;
+    });
+    try {
+      final roles = await widget.api.getStationAssignableRoles(stationId);
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignableRoles = roles;
+        _rolesLoaded = true;
+        if (_assignRoleCode == null && roles.isNotEmpty) {
+          final code = roles.first['role_code'] ?? roles.first['roleCode'];
+          if (code != null) _assignRoleCode = code.toString();
+        }
+      });
+    } catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+        _rolesLoaded = true;
+      });
+    } finally {
+      if (mounted) setState(() => _assignmentBusy = false);
+    }
+  }
+
+  Future<void> _submitAssignmentRequest() async {
+    if (_assignmentBusy) return;
+    final stationId = widget.stationId;
+    final userId = _assignUserId.text.trim();
+    final role = _assignRoleCode?.trim() ?? '';
+    if (userId.isEmpty || role.isEmpty) {
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = 'أدخل معرّف المستخدم واختر دوراً قابلاً للتعيين.';
+      });
+      return;
+    }
+    setState(() {
+      _assignmentBusy = true;
+      _assignmentMessage = null;
+      _assignmentError = false;
+    });
+    try {
+      await widget.api.requestStationAssignment(
+        stationId: stationId,
+        userId: userId,
+        roleCode: role,
+        reason: _assignReason.text.trim().isEmpty
+            ? null
+            : _assignReason.text.trim(),
+      );
+      if (!mounted || stationId != widget.stationId) return;
+      _assignUserId.clear();
+      _assignReason.clear();
+      setState(() {
+        _assignmentMessage =
+            'أُرسل طلب التعيين إلى الخادم. تظهر النتيجة بعد قرار المراجعة.';
+        _assignmentError = false;
+      });
+      setState(_refresh);
+    } on MetraApiException catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.assignmentMessage(error);
+      });
+    } catch (error) {
+      if (!mounted || stationId != widget.stationId) return;
+      setState(() {
+        _assignmentError = true;
+        _assignmentMessage = MetraErrorPresenter.messageFor(error);
+      });
+    } finally {
+      if (mounted) setState(() => _assignmentBusy = false);
+    }
+  }
+
+  Widget _assignmentRequestCard() {
+    return Card(
+      elevation: 0,
+      color: const Color(0xFFF8FAFC),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'طلب تعيين مستخدم على المحطة',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'يستخدم عقود التعيين المعتمدة على الخادم. لا يُنشأ حساب جديد من هنا.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _assignUserId,
+              decoration: const InputDecoration(
+                labelText: 'معرّف المستخدم (UUID)',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              value: _assignRoleCode,
+              decoration: const InputDecoration(
+                labelText: 'الدور',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              items: [
+                for (final role in _assignableRoles)
+                  DropdownMenuItem(
+                    value: (role['role_code'] ?? role['roleCode'] ?? '')
+                        .toString(),
+                    child: Text(
+                      [
+                        role['role_code'] ?? role['roleCode'] ?? '',
+                        if ((role['name_ar'] ?? role['nameAr']) != null)
+                          '— ${role['name_ar'] ?? role['nameAr']}',
+                      ].join(' '),
+                    ),
+                  ),
+              ].where((item) => (item.value ?? '').isNotEmpty).toList(),
+              onChanged: _assignmentBusy
+                  ? null
+                  : (value) => setState(() => _assignRoleCode = value),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _assignReason,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'سبب الطلب (اختياري)',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+            ),
+            if (_assignmentMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _assignmentMessage!,
+                style: TextStyle(
+                  color: _assignmentError
+                      ? const Color(0xFFB91C1C)
+                      : const Color(0xFF166534),
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                TextButton(
+                  onPressed: _assignmentBusy ? null : _ensureAssignableRoles,
+                  child: const Text('تحميل الأدوار'),
+                ),
+                const Spacer(),
+                FilledButton(
+                  onPressed: _assignmentBusy ? null : _submitAssignmentRequest,
+                  child: Text(_assignmentBusy ? 'جارٍ…' : 'إرسال طلب التعيين'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _usersTab(Future<List<Map<String, dynamic>>> future) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل مستخدمي المحطة…',
+          );
+        }
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          final message = error == null
+              ? 'تعذر تحميل البيانات. تحقق من الاتصال ثم أعد المحاولة.'
+              : MetraErrorPresenter.messageFor(error);
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل مستخدمي المحطة',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
+          );
+        }
+        final all = snapshot.data ?? const <Map<String, dynamic>>[];
+        if (all.isEmpty) {
+          if (!_rolesLoaded && !_assignmentBusy) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _ensureAssignableRoles();
+            });
+          }
+          return ListView(
+            padding: const EdgeInsets.all(12),
+            children: [
+              _assignmentRequestCard(),
+              const SizedBox(height: 16),
+              MetraAsyncStatePanel.empty(
+                icon: Icons.group_off_outlined,
+                title: 'لا توجد حسابات ظاهرة لهذه المحطة',
+                subtitle:
+                    'عند ربط مستخدمين بالمحطة ستظهر أسماؤهم وأدوارهم هنا.',
+                action: TextButton(
+                  onPressed: () => setState(_refresh),
+                  child: const Text('تحديث'),
+                ),
+              ),
+            ],
+          );
+        }
+        final records = all.where(_matchesUserFilter).toList(growable: false);
+        return ListView(
+          padding: const EdgeInsets.all(12),
+          children: [
+            TextField(
+              controller: _userFilterController,
+              decoration: InputDecoration(
+                labelText: 'بحث ضمن مستخدمي المحطة',
+                hintText: 'الاسم أو الدور أو الحالة أو الهاتف',
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
+                suffixIcon: _userFilterQuery.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _userFilterController.clear();
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              records.isEmpty
+                  ? 'لا نتائج مطابقة للبحث الحالي.'
+                  : 'المعروض: ${records.length} من ${all.length}',
+              style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            ),
+            const SizedBox(height: 8),
+            for (var index = 0; index < records.length; index++) ...[
+              if (index > 0) const SizedBox(height: 8),
+              _userCard(records[index]),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _userCard(Map<String, dynamic> record) {
+    final title = _personName(record);
+    final subtitle = [
+      _firstValue(record, ['role_code', 'requested_role_code', 'role']),
+      _firstValue(record, ['status', 'request_status', 'account_status']),
+      _firstValue(record, ['phone', 'email']),
+    ].where((value) => value != '—').join(' • ');
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(subtitle, style: const TextStyle(color: Color(0xFF64748B))),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _recordsTab(
+    Future<List<Map<String, dynamic>>> future, {
+    required String emptyMessage,
+    required bool registrationQueue,
+    required bool audit,
+  }) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MetraAsyncStatePanel.loading(message: 'جاري تحميل السجلات…');
+        }
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          final message = error == null
+              ? 'تعذر تحميل البيانات. تحقق من الاتصال ثم أعد المحاولة.'
+              : MetraErrorPresenter.messageFor(error);
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل السجلات',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
+          );
+        }
+        final all = snapshot.data ?? const <Map<String, dynamic>>[];
+        final records = all
+            .where((record) {
+              if (audit) {
+                return stationAdminAuditMatchesQuery(record, _userFilterQuery);
+              }
+              return stationAdminRecordMatchesQuery(record, _userFilterQuery);
+            })
+            .toList(growable: false);
+        if (all.isEmpty) {
+          return MetraAsyncStatePanel.empty(
+            title: emptyMessage,
+            subtitle: 'اسحب للتحديث أو أعد فتح الشاشة بعد توفر بيانات جديدة.',
+            action: TextButton(
+              onPressed: () => setState(_refresh),
+              child: const Text('تحديث'),
+            ),
+          );
+        }
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              child: TextField(
+                controller: _userFilterController,
+                textDirection: TextDirection.rtl,
+                decoration: InputDecoration(
+                  hintText: audit
+                      ? 'بحث محلي في سجل التدقيق…'
+                      : 'بحث محلي في الطلبات…',
+                  border: const OutlineInputBorder(),
+                  isDense: true,
+                  suffixIcon: _userFilterQuery.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            _userFilterController.clear();
+                          },
+                          icon: const Icon(Icons.clear),
+                        ),
+                ),
+              ),
+            ),
+            if (records.isEmpty)
+              Expanded(
+                child: MetraAsyncStatePanel.empty(
+                  title: 'لا توجد نتائج مطابقة',
+                  subtitle: 'البحث محلي على الصفحة المحمّلة من الخادم.',
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: records.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final record = records[index];
+                    final title = audit
+                        ? _firstValue(record, [
+                            'event_type',
+                            'action',
+                            'event',
+                            'id',
+                          ])
+                        : _personName(record);
+                    final subtitle = audit
+                        ? [
+                            _firstValue(record, ['created_at', 'occurred_at']),
+                            _firstValue(record, [
+                              'actor_user_id',
+                              'actor_name',
+                            ]),
+                          ].where((value) => value != '—').join(' • ')
+                        : [
+                            _firstValue(record, [
+                              'role_code',
+                              'requested_role_code',
+                              'role',
+                            ]),
+                            _firstValue(record, ['status', 'request_status']),
+                            _firstValue(record, ['phone', 'email']),
+                          ].where((value) => value != '—').join(' • ');
+                    return Card(
+                      elevation: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            if (subtitle.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                subtitle,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                            if (registrationQueue) ...[
+                              const SizedBox(height: 10),
+                              Builder(
+                                builder: (context) {
+                                  final rid = _firstValue(record, [
+                                    'id',
+                                    'request_id',
+                                  ]);
+                                  final busy = _processingRequestIds.contains(
+                                    '${widget.stationId}::$rid',
+                                  );
+                                  return Wrap(
+                                    spacing: 8,
+                                    children: [
+                                      Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'اعتماد طلب التسجيل',
+                                        child: FilledButton.tonal(
+                                          onPressed: busy
+                                              ? null
+                                              : () =>
+                                                    _decide(record, 'approve'),
+                                          child: Text(
+                                            busy ? 'جارٍ...' : 'اعتماد',
+                                          ),
+                                        ),
+                                      ),
+                                      Semantics(
+                                        button: true,
+                                        enabled: !busy,
+                                        label: 'رفض طلب التسجيل',
+                                        child: OutlinedButton(
+                                          onPressed: busy
+                                              ? null
+                                              : () => _decide(record, 'reject'),
+                                          child: const Text('رفض'),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _observationsTab() {
+    return FutureBuilder<List<ObservationQueueItem>>(
+      future: _observations,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return MetraAsyncStatePanel.loading(
+            message: 'جاري تحميل أرصاد المراجعة…',
+          );
+        }
+        if (snapshot.hasError) {
+          final error = snapshot.error;
+          final message = error == null
+              ? 'تعذر تحميل أرصاد المراجعة.'
+              : MetraErrorPresenter.queueLoadMessage(error);
+          return MetraAsyncStatePanel.error(
+            title: 'تعذر تحميل أرصاد المراجعة',
+            subtitle: message,
+            onRetry: () => setState(_refresh),
+          );
+        }
+        final items = snapshot.data ?? const <ObservationQueueItem>[];
+        if (items.isEmpty) {
+          return MetraAsyncStatePanel.empty(
+            icon: Icons.fact_check_outlined,
+            title: 'لا توجد أرصاد في طابور المراجعة',
+            subtitle: 'لا توجد عناصر بانتظار القرار لهذه المحطة حالياً.',
+            action: TextButton(
+              onPressed: () => setState(_refresh),
+              child: const Text('تحديث'),
+            ),
+          );
+        }
+        return ListView.separated(
+          padding: const EdgeInsets.all(12),
+          itemCount: items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return Card(
+              elevation: 0,
+              child: ListTile(
+                title: Text('${item.observationType} · ${item.status}'),
+                subtitle: Text('${item.observedAt.toLocal()} · ${item.id}'),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _handleRefresh() async {
+    setState(_refresh);
+    await Future.wait([
+      _users.catchError((_) => <Map<String, dynamic>>[]),
+      _requests.catchError((_) => <Map<String, dynamic>>[]),
+      _audit.catchError((_) => <Map<String, dynamic>>[]),
+      _observations.catchError((_) => <ObservationQueueItem>[]),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: DefaultTabController(
+        length: 4,
+        child: Column(
+          children: [
+            Material(
+              color: const Color(0xFFF1F5F9),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                child: Row(
+                  children: [
+                    const Icon(Icons.admin_panel_settings_outlined, size: 16),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'محطة الإدارة: ${widget.stationId}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF475569),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Material(
+              color: Colors.white,
+              child: TabBar(
+                isScrollable: true,
+                tabs: [
+                  Tab(text: 'مستخدمو المحطة'),
+                  Tab(text: 'طلبات التسجيل'),
+                  Tab(text: 'أرصاد للمراجعة'),
+                  Tab(text: 'سجل التدقيق'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _handleRefresh,
+                child: TabBarView(
+                  children: [
+                    _usersTab(_users),
+                    _recordsTab(
+                      _requests,
+                      emptyMessage: 'لا توجد طلبات تسجيل معلقة.',
+                      registrationQueue: true,
+                      audit: false,
+                    ),
+                    _observationsTab(),
+                    _recordsTab(
+                      _audit,
+                      emptyMessage: 'لا توجد أحداث تدقيق معروضة.',
+                      registrationQueue: false,
+                      audit: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

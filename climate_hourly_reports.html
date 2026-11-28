@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>النشرات المناخية - تصنيف حسب المحطة والوقت</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Tajawal", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #f0f8ff;
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 150, 0.1);
+        overflow: hidden;
+        padding: 25px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #3498db;
+      }
+
+      h1 {
+        color: #2c3e50;
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #3498db;
+        font-size: 1.1rem;
+      }
+
+      .connection-info {
+        background-color: #e8f4fc;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 0.95rem;
+        color: #2c3e50;
+      }
+
+      .status-connected {
+        color: #27ae60;
+        font-weight: bold;
+      }
+
+      .status-disconnected {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+
+      .debug-info {
+        background-color: #fff3cd;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        color: #856404;
+        display: none;
+      }
+
+      .filters-panel {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        border: 1px solid #ddd;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .filter-group label {
+        font-weight: 600;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-group select,
+      .filter-group input {
+        padding: 10px 12px;
+        border: 1px solid #bdc3c7;
+        border-radius: 5px;
+        background-color: white;
+        color: #2c3e50;
+        font-size: 1rem;
+      }
+
+      .filter-group select:focus,
+      .filter-group input:focus {
+        outline: none;
+        border-color: #3498db;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        align-items: flex-end;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 1rem;
+      }
+
+      .btn-primary {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #2980b9;
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background-color: #ecf0f1;
+        color: #2c3e50;
+        border: 1px solid #bdc3c7;
+      }
+
+      .btn-secondary:hover {
+        background-color: #d5dbdb;
+      }
+
+      .btn-debug {
+        background-color: #ffc107;
+        color: #212529;
+        font-size: 0.9rem;
+        padding: 8px 15px;
+      }
+
+      .btn-debug:hover {
+        background-color: #e0a800;
+      }
+
+      .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #e8f4fc, #f0f8ff);
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 5px 0;
+      }
+
+      .stat-label {
+        color: #3498db;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .table-section {
+        margin-bottom: 30px;
+      }
+
+      .section-header {
+        background-color: #3498db;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px 8px 0 0;
+        margin-bottom: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .section-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+      }
+
+      .station-info {
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        border-radius: 0 0 8px 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1300px;
+      }
+
+      th {
+        background-color: #2c3e50;
+        color: white;
+        padding: 16px 12px;
+        text-align: center;
+        font-weight: 600;
+        border-right: 1px solid #34495e;
+        position: sticky;
+        top: 0;
+      }
+
+      th:last-child {
+        border-right: none;
+      }
+
+      td {
+        padding: 14px 12px;
+        text-align: center;
+        border-bottom: 1px solid #ecf0f1;
+        color: #2c3e50;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f8f9fa;
+      }
+
+      tr:hover {
+        background-color: #e8f4fc;
+      }
+
+      .time-cell {
+        background-color: #e8f4fc;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      .data-cell {
+        background-color: white;
+      }
+
+      .empty-cell {
+        background-color: #fafafa;
+        color: #bdc3c7;
+        font-style: italic;
+      }
+
+      .units {
+        font-size: 0.75em;
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: normal;
+        display: block;
+        margin-top: 3px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 60px;
+        color: #3498db;
+      }
+
+      .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 50px;
+        color: #7f8c8d;
+      }
+
+      .no-data i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        color: #bdc3c7;
+      }
+
+      .data-types {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: #666;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #ecf0f1;
+        color: #7f8c8d;
+        font-size: 0.9em;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        h1 {
+          font-size: 1.8rem;
+        }
+
+        .filters-panel {
+          grid-template-columns: 1fr;
+        }
+
+        .actions {
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-cloud-sun"></i> النشرات المناخية المصنفة</h1>
+        <p class="subtitle">
+          تصنيف حسب المحطة واليوم/الشهر/السنة - الأوقات: 00, 06, 12, 18 (توقيت
+          عالمي)
+        </p>
+      </header>
+
+      <div class="connection-info">
+        <i class="fas fa-database"></i> حالة الاتصال:
+        <span id="connection-status" class="status-disconnected"
+          >جارِ الاتصال...</span
+        >
+      </div>
+
+      <div class="debug-info" id="debug-info">
+        <i class="fas fa-bug"></i> معلومات التصحيح:
+        <span id="debug-text"></span>
+      </div>
+
+      <div class="filters-panel">
+        <div class="filter-group">
+          <label for="station-filter"
+            ><i class="fas fa-map-marker-alt"></i> المحطة:</label
+          >
+          <select id="station-filter">
+            <option value="">جميع المحطات</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="year-filter"
+            ><i class="fas fa-calendar"></i> السنة:</label
+          >
+          <select id="year-filter">
+            <option value="">جميع السنوات</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="month-filter"
+            ><i class="fas fa-calendar-alt"></i> الشهر:</label
+          >
+          <select id="month-filter">
+            <option value="">جميع الأشهر</option>
+            <option value="01">يناير</option>
+            <option value="02">فبراير</option>
+            <option value="03">مارس</option>
+            <option value="04">أبريل</option>
+            <option value="05">مايو</option>
+            <option value="06">يونيو</option>
+            <option value="07">يوليو</option>
+            <option value="08">أغسطس</option>
+            <option value="09">سبتمبر</option>
+            <option value="10">أكتوبر</option>
+            <option value="11">نوفمبر</option>
+            <option value="12">ديسمبر</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="date-filter"
+            ><i class="fas fa-calendar-day"></i> اليوم:</label
+          >
+          <input type="date" id="date-filter" />
+        </div>
+
+        <div class="actions">
+          <button id="refresh-btn" class="btn btn-primary">
+            <i class="fas fa-sync-alt"></i> تحديث
+          </button>
+          <button id="reset-btn" class="btn btn-secondary">
+            <i class="fas fa-redo"></i> إعادة تعيين
+          </button>
+          <button id="debug-btn" class="btn btn-debug">
+            <i class="fas fa-bug"></i> تصحيح
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-summary">
+        <div class="stat-card">
+          <div class="stat-label">عدد المحطات</div>
+          <div class="stat-value" id="stations-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">عدد النشرات</div>
+          <div class="stat-value" id="reports-count">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">أوقات معروضة</div>
+          <div class="stat-value">4</div>
+          <div class="stat-label">(00, 06, 12, 18 UTC)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">آخر تحديث</div>
+          <div class="stat-value" id="last-update">--:--</div>
+        </div>
+      </div>
+
+      <div id="tables-container">
+        <!-- الجداول ستضاف هنا ديناميكياً -->
+        <div class="loading" id="loading-container">
+          <div class="loading-spinner"></div>
+          <p>جارِ جلب البيانات وتصنيفها...</p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>
+          <i class="fas fa-database"></i> نظام النشرات المناخية - تصنيف حسب
+          المحطة والوقت
+        </p>
+        <p>
+          الأوقات المعروضة: 00:00, 06:00, 12:00, 18:00 حسب التوقيت العالمي (UTC)
+        </p>
+      </div>
+    </div>
+    <script src="js/protect.js"></script>
+
+    <script>
+      // منع إعادة التصريح عن المتغيرات العالمية
+      if (typeof window.supabaseClient === "undefined") {
+        // تحميل Supabase بشكل ديناميكي
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        script.onload = initializeApp;
+        document.head.appendChild(script);
+      } else {
+        initializeApp();
+      }
+
+      async function initializeApp() {
+        // تكوين Supabase
+        const SUPABASE_URL = "https://vktcvkwqszehgmhqjrkb.supabase.co";
+        const SUPABASE_ANON_KEY =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o";
+
+        // تهيئة Supabase مرة واحدة فقط
+        if (!window.supabaseClient) {
+          window.supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+          );
+        }
+
+        const supabase = window.supabaseClient;
+
+        // عناصر DOM
+        const stationFilter = document.getElementById("station-filter");
+        const yearFilter = document.getElementById("year-filter");
+        const monthFilter = document.getElementById("month-filter");
+        const dateFilter = document.getElementById("date-filter");
+        const refreshBtn = document.getElementById("refresh-btn");
+        const resetBtn = document.getElementById("reset-btn");
+        const debugBtn = document.getElementById("debug-btn");
+        const connectionStatus = document.getElementById("connection-status");
+        const stationsCountEl = document.getElementById("stations-count");
+        const reportsCountEl = document.getElementById("reports-count");
+        const lastUpdateEl = document.getElementById("last-update");
+        const tablesContainer = document.getElementById("tables-container");
+        const debugInfo = document.getElementById("debug-info");
+        const debugText = document.getElementById("debug-text");
+
+        // الأوقات العالمية المطلوبة (UTC)
+        const REQUIRED_TIMES = ["00", "06", "12", "18"];
+
+        // متغير للتصحيح
+        let debugMode = false;
+
+        // تحديث الوقت الحالي
+        function updateCurrentTime() {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString("ar-EG", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          lastUpdateEl.textContent = timeString;
+        }
+
+        // اختبار الاتصال بقاعدة البيانات
+        async function testConnection() {
+          try {
+            const { data, error } = await supabase
+              .from("climate_reports")
+              .select("id")
+              .limit(1);
+
+            if (error) throw error;
+
+            connectionStatus.textContent = "متصل بنجاح";
+            connectionStatus.className = "status-connected";
+            return true;
+          } catch (error) {
+            console.error("خطأ في الاتصال:", error);
+            connectionStatus.textContent = `خطأ في الاتصال: ${error.message}`;
+            connectionStatus.className = "status-disconnected";
+            return false;
+          }
+        }
+
+        // بناء استعلام التاريخ بشكل صحيح
+        function buildDateQuery(query, year, month, date) {
+          if (date) {
+            // إذا تم تحديد تاريخ محدد
+            return query.eq("report_date", date);
+          } else if (year && month) {
+            // إذا تم تحديد السنة والشهر
+            return query.like("report_date", `${year}-${month}-%`);
+          } else if (year) {
+            // إذا تم تحديد السنة فقط
+            return query
+              .gte("report_date", `${year}-01-01`)
+              .lte("report_date", `${year}-12-31`);
+          } else if (month) {
+            // إذا تم تحديد الشهر فقط (لا نستخدمه في حالة عدم وجود سنة)
+            return query;
+          }
+
+          return query;
+        }
+
+        // جلب جميع البيانات أولاً ثم تصفيتها محلياً
+        async function fetchClimateData() {
+          try {
+            // عرض حالة التحميل
+            tablesContainer.innerHTML = `
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <p>جارِ جلب البيانات وتصنيفها حسب المحطات...</p>
+                        </div>
+                    `;
+
+            // بناء الاستعلام الأساسي
+            let query = supabase.from("climate_reports").select("*");
+
+            // تطبيق الفلاتر الأساسية
+            const station = stationFilter.value;
+            if (station) {
+              query = query.eq("station", station);
+            }
+
+            const year = yearFilter.value;
+            const month = monthFilter.value;
+            const date = dateFilter.value;
+
+            // تطبيق فلاتر التاريخ
+            query = buildDateQuery(query, year, month, date);
+
+            // إضافة الترتيب
+            query = query
+              .order("station", { ascending: true })
+              .order("report_date", { ascending: false })
+              .order("utc_time", { ascending: true });
+
+            // تنفيذ الاستعلام
+            const { data, error } = await query;
+
+            if (error) {
+              console.error("خطأ في الاستعلام:", error);
+              throw error;
+            }
+
+            if (debugMode) {
+              debugInfo.style.display = "block";
+              debugText.textContent = `تم جلب ${data?.length || 0} سجلاً من قاعدة البيانات`;
+            }
+
+            // تصفية البيانات حسب الأوقات العالمية المطلوبة
+            const filteredData = filterDataByRequiredTimes(data || []);
+
+            if (debugMode && data) {
+              debugText.textContent += ` | بعد التصفية: ${filteredData.length} سجلاً`;
+              console.log("البيانات الخام:", data);
+              console.log("البيانات المصفاة:", filteredData);
+            }
+
+            // تصنيف البيانات حسب المحطة
+            const classifiedData = classifyDataByStation(filteredData);
+
+            // عرض البيانات المصنفة
+            displayClassifiedData(classifiedData, data?.length || 0);
+
+            // تحديث الإحصائيات
+            updateStatistics(classifiedData);
+
+            // تحديث الوقت
+            updateCurrentTime();
+
+            // ملء الفلاتر
+            populateFilters(data || []);
+
+            return true;
+          } catch (error) {
+            console.error("خطأ في جلب البيانات:", error);
+            tablesContainer.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #e74c3c;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                            <h3>حدث خطأ في جلب البيانات</h3>
+                            <p>${error.message}</p>
+                            <p style="color: #666; margin-top: 10px;">حاول تغيير الفلاتر أو المحطة</p>
+                            <button onclick="window.fetchClimateData()" class="btn btn-primary" style="margin-top: 15px;">
+                                <i class="fas fa-redo"></i> إعادة المحاولة
+                            </button>
+                        </div>
+                    `;
+            return false;
+          }
+        }
+
+        // تصفية البيانات حسب الأوقات العالمية المطلوبة (UTC)
+        function filterDataByRequiredTimes(data) {
+          return data.filter((item) => {
+            if (!item.utc_time) return false;
+
+            // تحويل الوقت إلى نص وتنظيفه
+            const timeStr = String(item.utc_time)
+              .trim()
+              .replace(/[^0-9]/g, "");
+
+            // أخذ أول رقمين فقط (الساعة)
+            const hour =
+              timeStr.length >= 2
+                ? timeStr.substring(0, 2)
+                : timeStr.padStart(2, "0");
+
+            // التحقق مما إذا كانت الساعة في الأوقات المطلوبة
+            return REQUIRED_TIMES.includes(hour);
+          });
+        }
+
+        // استخراج الوقت العالمي المنسق
+        function extractFormattedTime(timeStr) {
+          if (!timeStr) return "غير معروف";
+
+          const str = String(timeStr).trim();
+
+          // إزالة النقطتين والفواصل
+          const cleanStr = str.replace(/[^0-9]/g, "");
+
+          // أخذ أول رقمين (الساعة)
+          let hour = cleanStr.substring(0, 2);
+
+          // إذا كان الرقم أقل من 10، نضيف صفراً في البداية
+          if (hour.length === 1) {
+            hour = "0" + hour;
+          }
+
+          return hour;
+        }
+
+        // تصنيف البيانات حسب المحطة
+        function classifyDataByStation(data) {
+          const stationsMap = {};
+
+          data.forEach((item) => {
+            const station = item.station || item.user_station || "غير محدد";
+            const formattedTime = extractFormattedTime(item.utc_time);
+
+            if (!stationsMap[station]) {
+              stationsMap[station] = {
+                name: station,
+                reports: [],
+              };
+            }
+
+            // إضافة الوقت المنسق إلى العنصر
+            const itemWithFormattedTime = {
+              ...item,
+              formatted_time: formattedTime,
+              display_time: formattedTime + ":00 UTC",
+            };
+
+            stationsMap[station].reports.push(itemWithFormattedTime);
+          });
+
+          // ترتيب التقارير داخل كل محطة حسب التاريخ والوقت
+          Object.values(stationsMap).forEach((station) => {
+            station.reports.sort((a, b) => {
+              const dateCompare =
+                new Date(b.report_date) - new Date(a.report_date);
+              if (dateCompare !== 0) return dateCompare;
+              return a.formatted_time.localeCompare(b.formatted_time);
+            });
+          });
+
+          return stationsMap;
+        }
+
+        // عرض البيانات المصنفة حسب المحطة
+        function displayClassifiedData(stationsMap, totalRecords) {
+          if (Object.keys(stationsMap).length === 0) {
+            tablesContainer.innerHTML = `
+                        <div class="no-data">
+                            <i class="fas fa-database"></i>
+                            <h3>لا توجد نشرات مطابقة</h3>
+                            <p>لم يتم العثور على نشرات في الأوقات المطلوبة.</p>
+                            <p class="data-types">الأوقات العالمية المطلوبة: 00:00, 06:00, 12:00, 18:00 UTC</p>
+                            <p class="data-types">إجمالي السجلات في قاعدة البيانات: ${totalRecords}</p>
+                            <p class="data-types">جرب اختيار محطة أو تاريخ أو شهر مختلف.</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          let tablesHTML = "";
+
+          // عرض كل محطة في جدول منفصل
+          Object.values(stationsMap).forEach((station) => {
+            const stationReports = station.reports;
+
+            tablesHTML += `
+                        <div class="table-section">
+                            <div class="section-header">
+                                <div class="section-title">
+                                    <i class="fas fa-map-marker-alt"></i> محطة: ${station.name}
+                                </div>
+                                <div class="station-info">
+                                    عدد النشرات: ${stationReports.length}
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>التاريخ<br><span class="units">(yyyy-mm-dd)</span></th>
+                                            <th>الوقت<br><span class="units">(UTC)</span></th>
+                                            <th>الرطوبة النسبية<br><span class="units">%</span></th>
+                                            <th>ضغط بخار الماء<br><span class="units">(هكتوباسكال)</span></th>
+                                            <th>درجة الندى<br><span class="units">(سْ)</span></th>
+                                            <th>درجة الحرارة الجافة<br><span class="units">(سْ)</span></th>
+                                            <th>درجة الحرارة الرطبة<br><span class="units">(سْ)</span></th>
+                                            <th>اتجاه الرياح<br><span class="units">(درجة)</span></th>
+                                            <th>سرعة الرياح<br><span class="units">(م/ث)</span></th>
+                                            <th>اتجاه متوسط الرياح<br><span class="units">(درجة)</span></th>
+                                            <th>سرعة متوسط الرياح<br><span class="units">(م/ث)</span></th>
+                                            <th>الغطاء السحابي<br><span class="units">(0-8)</span></th>
+                                            <th>الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${generateStationTableRows(stationReports)}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+          });
+
+          tablesContainer.innerHTML = tablesHTML;
+        }
+
+        // توليد صفوف الجدول لمحطة معينة
+        function generateStationTableRows(reports) {
+          let rowsHTML = "";
+
+          reports.forEach((report) => {
+            const statusClass = getStatusClass(report.status);
+            const statusText = getStatusText(report.status);
+
+            rowsHTML += `
+                        <tr>
+                            <td class="time-cell">${report.report_date || "-"}</td>
+                            <td class="time-cell">${report.display_time || report.formatted_time || report.utc_time || "-"}</td>
+                            <td class="data-cell">${formatNumber(report.relative_humidity)}</td>
+                            <td class="data-cell">${formatNumber(report.vapor_pressure)}</td>
+                            <td class="data-cell">${formatNumber(report.dew_point)}</td>
+                            <td class="data-cell">${formatNumber(report.dry_temperature)}</td>
+                            <td class="data-cell">${formatNumber(report.wet_temperature)}</td>
+                            <td class="data-cell">${formatNumber(report.wind_direction)}</td>
+                            <td class="data-cell">${formatNumber(report.wind_speed)}</td>
+                            <td class="data-cell">${formatNumber(report.avg_wind_direction)}</td>
+                            <td class="data-cell">${formatNumber(report.avg_wind_speed)}</td>
+                            <td class="data-cell">${formatNumber(report.total_cloud_cover)}</td>
+                            <td class="data-cell">
+                                <span style="padding: 4px 8px; border-radius: 12px; font-size: 0.85em; ${statusClass.style}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+          });
+
+          return rowsHTML;
+        }
+
+        // تنسيق الأرقام
+        function formatNumber(value) {
+          if (value === null || value === undefined || value === "") {
+            return '<span class="empty-cell">-</span>';
+          }
+
+          const num = Number(value);
+          if (!isNaN(num)) {
+            return num.toFixed(1);
+          }
+
+          return value;
+        }
+
+        // الحصول على فئة الحالة
+        function getStatusClass(status) {
+          switch (status) {
+            case "draft":
+              return { style: "background-color: #fff3cd; color: #856404;" };
+            case "submitted":
+              return { style: "background-color: #d4edda; color: #155724;" };
+            case "approved":
+              return {
+                style:
+                  "background-color: #c3e6cb; color: #155724; border: 1px solid #b1dfbb;",
+              };
+            case "sent":
+              return { style: "background-color: #d1ecf1; color: #0c5460;" };
+            default:
+              return { style: "background-color: #f8d7da; color: #721c24;" };
+          }
+        }
+
+        // الحصول على نص الحالة
+        function getStatusText(status) {
+          const statusMap = {
+            draft: "مسودة",
+            submitted: "مقدمة",
+            approved: "معتمدة",
+            sent: "مرسلة",
+            rejected: "مرفوضة",
+          };
+          return statusMap[status] || status;
+        }
+
+        // تحديث الإحصائيات
+        function updateStatistics(stationsMap) {
+          const stations = Object.keys(stationsMap);
+          let totalReports = 0;
+
+          stations.forEach((station) => {
+            totalReports += stationsMap[station].reports.length;
+          });
+
+          stationsCountEl.textContent = stations.length;
+          reportsCountEl.textContent = totalReports;
+        }
+
+        // ملء الفلاتر بالبيانات المتاحة
+        function populateFilters(data) {
+          // جمع البيانات الفريدة
+          const stations = new Set();
+          const years = new Set();
+
+          data.forEach((item) => {
+            if (item.station) stations.add(item.station);
+            if (item.report_date) {
+              const year = item.report_date.substring(0, 4);
+              years.add(year);
+            }
+          });
+
+          // ملء قائمة المحطات
+          populateSelect(
+            stationFilter,
+            Array.from(stations).sort(),
+            "جميع المحطات",
+          );
+
+          // ملء قائمة السنوات
+          const sortedYears = Array.from(years).sort((a, b) => b - a); // ترتيب تنازلي
+          populateSelect(yearFilter, sortedYears, "جميع السنوات");
+        }
+
+        // دالة مساعدة لملء عناصر select
+        function populateSelect(selectElement, options, defaultText) {
+          const currentValue = selectElement.value;
+
+          selectElement.innerHTML = `<option value="">${defaultText}</option>`;
+
+          options.forEach((option) => {
+            const optionElement = document.createElement("option");
+            optionElement.value = option;
+            optionElement.textContent = option;
+            selectElement.appendChild(optionElement);
+          });
+
+          // استعادة القيمة السابقة إذا كانت موجودة
+          if (currentValue && options.includes(currentValue)) {
+            selectElement.value = currentValue;
+          }
+        }
+
+        // إعادة تعيين الفلاتر
+        function resetFilters() {
+          stationFilter.value = "";
+          yearFilter.value = "";
+          monthFilter.value = "";
+          dateFilter.value = "";
+
+          // تعيين التاريخ الافتراضي ليوم اليوم
+          const today = new Date();
+          const formattedDate = today.toISOString().split("T")[0];
+          dateFilter.value = formattedDate;
+
+          fetchClimateData();
+        }
+
+        // تبديل وضع التصحيح
+        function toggleDebugMode() {
+          debugMode = !debugMode;
+          debugBtn.innerHTML = debugMode
+            ? '<i class="fas fa-bug-slash"></i> إيقاف التصحيح'
+            : '<i class="fas fa-bug"></i> تصحيح';
+
+          if (debugMode) {
+            debugInfo.style.display = "block";
+            debugText.textContent =
+              "وضع التصحيح مفعّل - يتم عرض معلومات إضافية";
+          } else {
+            debugInfo.style.display = "none";
+          }
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+          refreshBtn.addEventListener("click", fetchClimateData);
+          resetBtn.addEventListener("click", resetFilters);
+          debugBtn.addEventListener("click", toggleDebugMode);
+
+          stationFilter.addEventListener("change", fetchClimateData);
+          yearFilter.addEventListener("change", fetchClimateData);
+          monthFilter.addEventListener("change", fetchClimateData);
+          dateFilter.addEventListener("change", fetchClimateData);
+
+          // تحديث الوقت كل دقيقة
+          setInterval(updateCurrentTime, 60000);
+        }
+
+        // جعل الدوال متاحة عالمياً
+        window.fetchClimateData = fetchClimateData;
+        window.resetFilters = resetFilters;
+
+        // تهيئة الصفحة
+        const connected = await testConnection();
+
+        if (connected) {
+          setupEventListeners();
+          resetFilters(); // هذا سيضبط التاريخ الافتراضي ويجلب البيانات
+        } else {
+          tablesContainer.innerHTML = `
+                    <div style="text-align: center; padding: 50px; color: #e74c3c;">
+                        <i class="fas fa-unlink" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                        <h3>تعذر الاتصال بقاعدة البيانات</h3>
+                        <p>يرجى التحقق من اتصال الإنترنت وصحة بيانات الاتصال.</p>
+                        <button onclick="window.location.reload()" class="btn btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-redo"></i> إعادة تحميل الصفحة
+                        </button>
+                    </div>
+                `;
+        }
+      }
+    </script>
+  </body>
+</html>

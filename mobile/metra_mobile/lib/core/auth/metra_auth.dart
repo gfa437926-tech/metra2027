@@ -1,0 +1,391 @@
+import 'dart:async';
+import 'package:material_ui/material_ui.dart';
+import '../theme/metra_theme.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../api/metra_api_client.dart';
+import '../../api_config.dart';
+import '../../features/home/metra_home.dart';
+import '../catalog_integration/local_catalog_record_store.dart';
+import '../drafts/observation_draft_store.dart';
+import '../notifications/local_notification_store.dart';
+
+const metraSupabaseUrl = String.fromEnvironment('METRA_SUPABASE_URL');
+const metraSupabasePublishableKey = String.fromEnvironment('METRA_SUPABASE_PUBLISHABLE_KEY');
+
+class MetraSecureSessionStorage extends LocalStorage {
+  MetraSecureSessionStorage({FlutterSecureStorage? storage})
+      : _storage = storage ?? const FlutterSecureStorage();
+
+  static const _sessionKey = 'metra2027_supabase_auth_session';
+  final FlutterSecureStorage _storage;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<bool> hasAccessToken() async =>
+      await _storage.read(key: _sessionKey) != null;
+
+  @override
+  Future<String?> accessToken() => _storage.read(key: _sessionKey);
+
+  @override
+  Future<void> persistSession(String persistSessionString) =>
+      _storage.write(key: _sessionKey, value: persistSessionString);
+
+  @override
+  Future<void> removePersistedSession() => _storage.delete(key: _sessionKey);
+}
+
+bool get isMetraSupabaseConfigured => metraSupabaseUrl.startsWith('https://') && metraSupabasePublishableKey.isNotEmpty;
+bool get isMetraApiConfigured => ApiConfig.isConfigured;
+
+class MetraAuthGate extends StatefulWidget {
+  const MetraAuthGate({super.key});
+  @override
+  State<MetraAuthGate> createState() => _MetraAuthGateState();
+}
+class _MetraAuthGateState extends State<MetraAuthGate> {
+  late final SupabaseClient _supabase;
+  late final MetraApiClient _api;
+  StreamSubscription<AuthState>? _subscription;
+  bool _signedIn = false;
+  @override
+  void initState() {
+    super.initState();
+    _supabase = Supabase.instance.client;
+    _signedIn = _supabase.auth.currentSession != null;
+    _api = MetraApiClient(accessTokenProvider: () async => _supabase.auth.currentSession?.accessToken);
+    _subscription = _supabase.auth.onAuthStateChange.listen((state) {
+      final session = state.session;
+      if (session == null) {
+        // Fail-closed session end: clear active account scope for UI; keep
+        // other accounts' on-device payloads for when they sign back in.
+        LocalCatalogRecordStore.instance.setActiveAccountKey(null);
+        ObservationDraftStore.instance.setActiveAccountKey(null);
+        LocalNotificationStore.instance.setActiveAccountKey(null);
+      } else {
+        final id = session.user.id;
+        LocalCatalogRecordStore.instance.setActiveAccountKey(id);
+        ObservationDraftStore.instance.setActiveAccountKey(id);
+        LocalNotificationStore.instance.setActiveAccountKey(id);
+      }
+      if (mounted) setState(() => _signedIn = session != null);
+    }, onError: (Object error, StackTrace stackTrace) {});
+  }
+  @override
+  void dispose() { _subscription?.cancel(); _api.close(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    if (!_signedIn) return const MetraLoginScreen();
+    final user = _supabase.auth.currentUser;
+    LocalCatalogRecordStore.instance.setActiveAccountKey(user?.id);
+    ObservationDraftStore.instance.setActiveAccountKey(user?.id);
+    LocalNotificationStore.instance.setActiveAccountKey(user?.id);
+    return MetraHome(
+      key: ValueKey<String>('home-${user?.id ?? 'anon'}'),
+      api: _api,
+      userEmail: user?.email,
+      onSignOut: () async {
+        LocalCatalogRecordStore.instance.setActiveAccountKey(null);
+        ObservationDraftStore.instance.setActiveAccountKey(null);
+        LocalNotificationStore.instance.setActiveAccountKey(null);
+        await _supabase.auth.signOut();
+      },
+    );
+  }
+}
+
+class MetraLoginScreen extends StatefulWidget {
+  const MetraLoginScreen({super.key});
+  @override
+  State<MetraLoginScreen> createState() => _MetraLoginScreenState();
+}
+
+class _MetraLoginScreenState extends State<MetraLoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _busy = false;
+  bool _obscure = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _requestPasswordReset() async {
+    if (_busy) return;
+    final email = _email.text.trim();
+    if (!email.contains('@') || email.length > 254) {
+      setState(
+        () => _error =
+            'أدخل البريد الإلكتروني أولاً لاستلام رابط الاستعادة.',
+      );
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'إذا كان البريد مسجلاً، فسيصلك رابط استعادة كلمة المرور. تحقق من صندوق الوارد والبريد غير المرغوب فيه.',
+            ),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      }
+    } on AuthException {
+      if (mounted) {
+        setState(
+          () => _error =
+              'تعذر إرسال طلب الاستعادة حالياً. تحقق من البريد وحاول لاحقاً.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'تعذر الاتصال بخدمة استعادة كلمة المرور.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _signIn() async {
+    if (!_formKey.currentState!.validate() || _busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+    } on AuthException catch (error) {
+      final message = error.message.toLowerCase();
+      final safe = message.contains('invalid login credentials')
+          ? 'بيانات الدخول غير صحيحة.'
+          : message.contains('email not confirmed')
+              ? 'يجب تأكيد البريد الإلكتروني قبل الدخول.'
+              : message.contains('too many requests')
+                  ? 'محاولات كثيرة. انتظر قليلاً.'
+                  : 'تعذر تسجيل الدخول. تحقق من البيانات أو إعدادات الحساب.';
+      if (mounted) setState(() => _error = safe);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = 'تعذر الاتصال بخدمة تسجيل الدخول.');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        child: Scaffold(
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Icon(
+                            Icons.cloud_outlined,
+                            size: 48,
+                            color: MetraColors.blue,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'METRA 2027',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'تسجيل الدخول',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          if (_error != null) ...[
+                            Text(
+                              _error!,
+                              style: const TextStyle(color: MetraColors.danger),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                          TextFormField(
+                            controller: _email,
+                            keyboardType: TextInputType.emailAddress,
+                            autofillHints: const [AutofillHints.email],
+                            decoration: const InputDecoration(
+                              labelText: 'البريد الإلكتروني',
+                            ),
+                            validator: (value) {
+                              final v = value?.trim() ?? '';
+                              if (v.isEmpty) {
+                                return 'أدخل بريداً إلكترونياً صحيحاً';
+                              }
+                              if (!v.contains('@') || v.length > 254) {
+                                return 'أدخل بريداً إلكترونياً صحيحاً';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: _password,
+                            obscureText: _obscure,
+                            autofillHints: const [AutofillHints.password],
+                            decoration: InputDecoration(
+                              labelText: 'كلمة المرور',
+                              suffixIcon: IconButton(
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                              ),
+                            ),
+                            validator: (value) {
+                              final v = value ?? '';
+                              if (v.isEmpty) return 'أدخل كلمة المرور';
+                              if (v.length > 128) {
+                                return 'كلمة المرور أطول من الحد المسموح';
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) => _signIn(),
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: _busy ? null : _signIn,
+                            child: _busy
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('تسجيل الدخول'),
+                          ),
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: TextButton(
+                              onPressed: _busy ? null : _requestPasswordReset,
+                              child: const Text('نسيت كلمة المرور؟'),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'لا يتم إنشاء حسابات من التطبيق. اطلب تفعيل حسابك من مسؤول النظام.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MetraConfigurationScreen extends StatelessWidget {
+  const MetraConfigurationScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = <String>[];
+    if (!isMetraSupabaseConfigured) {
+      missing.add('METRA_SUPABASE_URL و METRA_SUPABASE_PUBLISHABLE_KEY');
+    }
+    if (!isMetraApiConfigured) {
+      missing.add('METRA_API_BASE_URL (عنوان API منشور يعمل عبر HTTPS)');
+    }
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Material(
+        child: Scaffold(
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(28),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.settings_suggest_outlined, size: 48),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'إعداد تطبيق METRA 2027',
+                          style: TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'لا يمكن تشغيل التطبيق تشغيلياً قبل ضبط إعدادات الاتصال المطلوبة.',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'الإعدادات الناقصة أو غير الصالحة:\n• ${missing.join('\n• ')}',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'استخدم عنوان API الحقيقي المنشور عبر HTTPS. لا تستخدم عنوان المحاكي الافتراضي، ولا تضع مفتاح service_role داخل تطبيق الهاتف.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -1,0 +1,2309 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - النشرات الساعية</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* ========== جميع الأنماط الأساسية ========== */
+      .station-stats {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 12px;
+        margin-top: 10px;
+      }
+      .stat-item {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        padding: 12px 8px;
+        text-align: center;
+        transition: all 0.2s ease;
+      }
+      .stat-item.complete {
+        background: rgba(46, 204, 113, 0.15);
+      }
+      .stat-item.warning {
+        background: rgba(241, 196, 15, 0.15);
+      }
+      .stat-item.danger {
+        background: rgba(231, 76, 60, 0.15);
+      }
+      .stat-icon {
+        font-size: 1.3rem;
+        margin-bottom: 8px;
+      }
+      .stat-count {
+        font-size: 1.6rem;
+        font-weight: bold;
+        display: block;
+      }
+      .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+      }
+      .stat-progress {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 2px;
+        margin-top: 6px;
+        overflow: hidden;
+      }
+      .progress-bar {
+        height: 100%;
+        border-radius: 2px;
+      }
+      .stats-summary {
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 15px;
+        text-align: center;
+      }
+      .summary-percentage {
+        font-size: 1.8rem;
+        font-weight: bold;
+      }
+      .refresh-stats-btn {
+        margin-top: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 5px;
+      }
+      .sidebar-dashboard {
+        background: linear-gradient(
+          180deg,
+          rgba(44, 62, 80, 0.95) 0%,
+          rgba(52, 73, 94, 0.95) 100%
+        );
+        min-height: 100vh;
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 280px;
+        z-index: 1000;
+        overflow-y: auto;
+      }
+      .main-content-with-sidebar {
+        margin-right: 280px;
+        padding: 20px;
+        transition: all 0.3s ease;
+      }
+      @media (max-width: 992px) {
+        .sidebar-dashboard {
+          display: none;
+        }
+        .main-content-with-sidebar {
+          margin-right: 0;
+        }
+      }
+      .mobile-header {
+        display: none;
+        background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+        color: white;
+        padding: 12px 16px;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+      }
+      @media (max-width: 992px) {
+        .mobile-header {
+          display: block;
+        }
+      }
+      .card-field {
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        background-color: #fff;
+      }
+      .form-section {
+        background-color: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e9ecef;
+      }
+      .form-section h4 {
+        color: #2c3e50;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+      }
+      .input-with-icon {
+        position: relative;
+      }
+      .validation-icon {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: none;
+        font-size: 1.2rem;
+      }
+      .valid-icon {
+        color: #28a745;
+      }
+      .error-icon {
+        color: #dc3545;
+      }
+      .form-control.is-valid ~ .valid-icon {
+        display: block;
+      }
+      .form-control.is-invalid ~ .error-icon {
+        display: block;
+      }
+      .error-message {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+      .success-message {
+        color: #28a745;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+      .form-control.is-invalid ~ .error-message {
+        display: block;
+      }
+      .form-control.is-valid ~ .success-message {
+        display: block;
+      }
+      .time-dependent-field {
+        display: none;
+        animation: fadeIn 0.5s ease-in;
+      }
+      .time-dependent-field.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .btn-custom {
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 8px;
+      }
+      .btn-whatsapp {
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        color: white;
+        border: none;
+      }
+      .notification-container {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 9998;
+        width: 350px;
+      }
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.85);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        flex-direction: column;
+      }
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 15px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .is-invalid {
+        border-color: #dc3545 !important;
+      }
+      .is-valid {
+        border-color: #198754 !important;
+      }
+      .has-hash {
+        font-style: italic !important;
+        color: #6c757d !important;
+        background-color: #f8f9fa !important;
+      }
+      .negative-value {
+        color: #dc3545 !important;
+        font-weight: bold !important;
+      }
+      .cloud-layer {
+        margin-bottom: 15px;
+        padding: 12px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border-left: 4px solid #17a2b8;
+      }
+      .cloud-layer h5 {
+        color: #17a2b8;
+        margin-bottom: 10px;
+      }
+      .sign-toggle-group {
+        margin-top: 8px;
+      }
+      .sign-toggle {
+        margin-left: 5px;
+      }
+      .sign-toggle.active {
+        background-color: #3498db;
+        color: white;
+      }
+      .field-hint {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 3px;
+      }
+      @media (max-width: 768px) {
+        .card-field {
+          padding: 10px;
+        }
+        .btn-custom {
+          padding: 8px 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">جاري الإرسال...</div>
+    </div>
+    <div class="notification-container" id="notificationContainer"></div>
+    <div class="mobile-header">
+      <div>
+        <h5 class="mb-0">النشرات الساعية</h5>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- القائمة الجانبية -->
+    <div class="sidebar-dashboard">
+      <div class="sidebar-sticky">
+        <div class="text-center my-4">
+          <h5 class="mt-2 text-white">نظام إدارة البيانات الجوية</h5>
+          <p class="text-light" style="font-size: 0.85rem">النشرات الساعية</p>
+        </div>
+        <ul class="nav flex-column">
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../../main.html"
+              ><i class="fa-solid fa-chart-line me-2" style="color: #009dff"></i
+              >لوحة التحكم</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center active"
+              href="hourly_reports.html"
+              ><i class="fa-regular fa-clock me-2" style="color: #009dff"></i
+              >النشرات الساعية</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../daily/daily_send/daily.html"
+              ><i
+                class="fa-regular fa-calendar-days me-2"
+                style="color: #009dff"
+              ></i
+              >النشرات اليومية</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../rain/rain_send/rainfall_reports.html"
+              ><i class="fa-solid fa-cloud-rain me-2" style="color: #009dff"></i
+              >النشرات المطرية</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../h_climate/h_climate_send/h_climate_send.html"
+              ><i class="fa-solid fa-wind me-2" style="color: #009dff"></i
+              >المناخ الساعي</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../soil/soil_send/soil-send.html"
+              ><i
+                class="fa-solid fa-temperature-half me-2"
+                style="color: #009dff"
+              ></i
+              >حرارة التربة</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../arg/send-argicultural/agricultural_reports.html"
+              ><i class="fa-solid fa-leaf me-2" style="color: #009dff"></i
+              >النشرات الزراعية</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../fix/fix.html"
+              ><i class="fa-solid fa-microchip me-2" style="color: #009dff"></i
+              >أعطال أجهزة الرصد</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../fix/fix-tel.html"
+              ><i class="fa-solid fa-tower-cell me-2" style="color: #009dff"></i
+              >مشاكل أجهزة الإتصالات</a
+            >
+          </li>
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../fix/it.html"
+              ><i class="fa-solid fa-bug me-2" style="color: #009dff"></i>أعطال
+              البرنامج</a
+            >
+          </li>
+          <li class="nav-item mt-3">
+            <a
+              class="nav-link d-flex align-items-center text-danger"
+              href="../../../../index.html"
+              ><i
+                class="fa-solid fa-right-from-bracket me-2"
+                style="color: #ff0000"
+              ></i
+              >تسجيل الخروج</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content-with-sidebar">
+      <div class="main-card">
+        <div class="main-header">
+          <h2><i class="fas fa-clock me-2"></i>النشرات الساعية</h2>
+          <p>إدخال البيانات الجوية الساعية وتتبع التغيرات</p>
+        </div>
+
+        <!-- إحصائيات المحطة -->
+        <div class="station-stats" id="stationStats">
+          <h5>
+            <i class="fas fa-chart-pie me-2"></i>إحصائيات المحطة الشاملة - اليوم
+          </h5>
+          <div class="stats-loading" id="statsLoading">
+            <div class="spinner-border spinner-border-sm text-light"></div>
+            <span>جاري التحديث...</span>
+          </div>
+          <div class="stats-grid" id="statsGrid"></div>
+          <div class="stats-summary" id="statsSummary" style="display: none">
+            <div class="summary-text">إجمالي إنجاز المحطة اليوم</div>
+            <div class="summary-percentage complete" id="totalPercentage">
+              0%
+            </div>
+            <div><small id="statsDetails">0/38 تقرير</small></div>
+            <button class="refresh-stats-btn" id="refreshStatsBtn">
+              <i class="fas fa-sync-alt"></i>تحديث الإحصائيات
+            </button>
+          </div>
+          <div class="stats-message info" id="statsMessage">
+            <i class="fas fa-info-circle me-1"></i
+            ><span>جاري تحميل أحدث الإحصائيات...</span>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <!-- تعريف المستخدم -->
+          <div class="data-form mb-4">
+            <h4 class="section-title">
+              <i class="fas fa-user-tie"></i>التعريف بالمحطة والراصد
+            </h4>
+            <div class="user-welcome">
+              <h4>مرحباً، <span id="userName">جاري تحميل البيانات...</span></h4>
+              <p>
+                محطة: <span id="userStation">جاري التحميل...</span> | صفة العمل:
+                <span id="userRole">جاري التحميل...</span>
+              </p>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <div class="card-field">
+                  <label class="form-label"
+                    ><i class="fas fa-calendar"></i>التاريخ (ميلادي)</label
+                  ><input
+                    type="text"
+                    class="form-control"
+                    id="currentDate"
+                    readonly
+                  />
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card-field">
+                  <label class="form-label"
+                    ><i class="fas fa-clock"></i>الوقت الحالي</label
+                  ><input
+                    type="text"
+                    class="form-control"
+                    id="currentTime"
+                    readonly
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="data-form">
+            <form id="hourlyReportForm">
+              <!-- المعلومات الأساسية -->
+              <div class="form-section">
+                <h4><i class="fas fa-info-circle"></i>المعلومات الأساسية</h4>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="utcTime" class="form-label"
+                        ><i class="fas fa-globe"></i>التوقيت العالمي (UTC) -
+                        الساعة</label
+                      >
+                      <select
+                        class="form-select"
+                        id="utcTime"
+                        name="utcTime"
+                        required
+                      >
+                        <option value="" selected disabled>
+                          اختر ساعة التوقيت العالمي
+                        </option>
+                        <option value="00">00</option>
+                        <option value="01">01</option>
+                        <option value="02">02</option>
+                        <option value="03">03</option>
+                        <option value="04">04</option>
+                        <option value="05">05</option>
+                        <option value="06">06</option>
+                        <option value="07">07</option>
+                        <option value="08">08</option>
+                        <option value="09">09</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option value="13">13</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="20">20</option>
+                        <option value="21">21</option>
+                        <option value="22">22</option>
+                        <option value="23">23</option>
+                      </select>
+                      <div class="field-hint">
+                        اختر ساعة التوقيت العالمي (UTC) للرصد
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- درجات الحرارة -->
+              <div class="form-section">
+                <h4><i class="fas fa-thermometer-half"></i>درجات الحرارة</h4>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card-field">
+                      <label for="dryTemp" class="form-label"
+                        ><i class="fas fa-temperature-high"></i>درجة الحرارة
+                        الجافة (سْ)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control temperature-input input-mask"
+                          id="dryTemp"
+                          name="dryTemp"
+                          placeholder="+25.5"
+                          maxlength="5"
+                          required
+                          pattern="^(#|[+-]?\d{2}\.\d)$"
+                          inputmode="numeric"
+                          title="±dd.d أو #"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="sign-toggle-group">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="dryTemp"
+                          data-sign="+"
+                        >
+                          +</button
+                        ><button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="dryTemp"
+                          data-sign="-"
+                        >
+                          -
+                        </button>
+                      </div>
+                      <div class="field-hint">
+                        تنسيق: ±dd.d (مثل +25.5) أو #
+                      </div>
+                      <div class="error-message" id="dryTempError">
+                        يجب أن تكون بين -50.0 و +60.0 أو #
+                      </div>
+                      <div class="success-message" id="dryTempSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card-field">
+                      <label for="wetTemp" class="form-label"
+                        ><i class="fas fa-temperature-low"></i>درجة الحرارة
+                        الرطبة (سْ)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control temperature-input input-mask"
+                          id="wetTemp"
+                          name="wetTemp"
+                          placeholder="+20.0"
+                          maxlength="5"
+                          required
+                          pattern="^(#|[+-]?\d{2}\.\d)$"
+                          inputmode="numeric"
+                          title="±dd.d أو #"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="sign-toggle-group">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="wetTemp"
+                          data-sign="+"
+                        >
+                          +</button
+                        ><button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="wetTemp"
+                          data-sign="-"
+                        >
+                          -
+                        </button>
+                      </div>
+                      <div class="field-hint">±dd.d (مثل +20.0) أو #</div>
+                      <div class="error-message" id="wetTempError">
+                        يجب أن تكون بين -50.0 و +50.0 أو #
+                      </div>
+                      <div class="success-message" id="wetTempSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12">
+                    <div
+                      class="error-message relationship-error"
+                      id="tempDiffError"
+                      style="display: none"
+                    >
+                      الحرارة الجافة يجب أن تكون ≥ الحرارة الرطبة
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الضغط الجوي -->
+              <div class="form-section">
+                <h4><i class="fas fa-tachometer-alt"></i>الضغط الجوي</h4>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card-field">
+                      <label for="stationPressure" class="form-label"
+                        ><i class="fas fa-compress-alt"></i>ضغط المحطة
+                        (ميلبار)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control pressure-input input-mask"
+                          id="stationPressure"
+                          name="stationPressure"
+                          placeholder="1013.2"
+                          maxlength="6"
+                          required
+                          pattern="^(#|\d{4}\.\d)$"
+                          inputmode="numeric"
+                          title="dddd.d أو #"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">dddd.d (1013.2) أو #</div>
+                      <div class="error-message" id="stationPressureError">
+                        يجب أن تكون بين 0850.0 و 1050.0 أو #
+                      </div>
+                      <div class="success-message" id="stationPressureSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card-field">
+                      <label for="seaLevelPressure" class="form-label"
+                        ><i class="fas fa-water"></i>ضغط سطح البحر
+                        (ميلبار)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control pressure-input input-mask"
+                          id="seaLevelPressure"
+                          name="seaLevelPressure"
+                          placeholder="1013.2"
+                          maxlength="6"
+                          required
+                          pattern="^(#|\d{4}\.\d)$"
+                          inputmode="numeric"
+                          title="dddd.d أو #"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">dddd.d (1013.2) أو #</div>
+                      <div class="error-message" id="seaLevelPressureError">
+                        يجب أن تكون بين 0000.0 و 1050.0 أو #
+                      </div>
+                      <div class="success-message" id="seaLevelPressureSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="time-dependent-field" id="pressureSlopeFields">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="card-field">
+                        <label for="pressureSlope" class="form-label"
+                          ><i class="fas fa-chart-line"></i>ميل الضغط
+                          (د.د)</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control input-mask"
+                            id="pressureSlope"
+                            name="pressureSlope"
+                            placeholder="2.3"
+                            maxlength="4"
+                            pattern="^(#|\d{1,2}\.\d)$"
+                            inputmode="numeric"
+                            title="d.d أو #"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">d.d (2.3) أو #</div>
+                        <div class="error-message" id="pressureSlopeError">
+                          يجب أن تكون بين 0.0 و 99.9 أو #
+                        </div>
+                        <div class="success-message" id="pressureSlopeSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="card-field">
+                        <label for="pressureShape" class="form-label"
+                          ><i class="fas fa-chart-bar"></i>شكل الضغط</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control input-mask"
+                            id="pressureShape"
+                            name="pressureShape"
+                            placeholder="5"
+                            maxlength="1"
+                            pattern="^[0-8#]$"
+                            inputmode="numeric"
+                            title="0-8 أو #"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">رقم واحد (0-8) أو #</div>
+                        <div class="error-message" id="pressureShapeError">
+                          0-8 أو #
+                        </div>
+                        <div class="success-message" id="pressureShapeSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الحسابات المستخرجة -->
+              <div class="form-section">
+                <h4><i class="fas fa-calculator"></i>الحسابات المستخرجة</h4>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="relativeHumidity" class="form-label"
+                        ><i class="fas fa-tint"></i>الرطوبة النسبية (%)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control humidity-input input-mask"
+                          id="relativeHumidity"
+                          name="relativeHumidity"
+                          maxlength="3"
+                          pattern="^(#|\d{1,3})$"
+                          inputmode="numeric"
+                          placeholder="065"
+                          required
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">3 أرقام (065) أو #</div>
+                      <div class="error-message" id="relativeHumidityError">
+                        يجب أن تكون بين 1 و 100 أو #
+                      </div>
+                      <div class="success-message" id="relativeHumiditySuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="vaporPressure" class="form-label"
+                        ><i class="fas fa-wind"></i>ضغط بخار الماء
+                        (ميلبار)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control vapor-pressure-input input-mask"
+                          id="vaporPressure"
+                          name="vaporPressure"
+                          maxlength="4"
+                          pattern="^(#|\d{2}\.\d)$"
+                          inputmode="numeric"
+                          placeholder="16.8"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">dd.d (16.8) أو #</div>
+                      <div class="error-message" id="vaporPressureError">
+                        يجب أن تكون بصيغة dd.d أو #
+                      </div>
+                      <div class="success-message" id="vaporPressureSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="dewPoint" class="form-label"
+                        ><i class="fas fa-dewpoint"></i>درجة الندى (سْ)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control temperature-input input-mask"
+                          id="dewPoint"
+                          name="dewPoint"
+                          maxlength="5"
+                          pattern="^(#|[+-]?\d{2}\.\d)$"
+                          inputmode="numeric"
+                          placeholder="+18.5"
+                          required
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="sign-toggle-group">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="dewPoint"
+                          data-sign="+"
+                        >
+                          +</button
+                        ><button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary sign-toggle"
+                          data-target="dewPoint"
+                          data-sign="-"
+                        >
+                          -
+                        </button>
+                      </div>
+                      <div class="field-hint">±dd.d (+18.5) أو #</div>
+                      <div class="error-message" id="dewPointError">
+                        يجب أن تكون بين -50.0 و +50.0 أو #
+                      </div>
+                      <div class="success-message" id="dewPointSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card-field">
+                      <label for="vaporPressureDiff" class="form-label"
+                        ><i class="fas fa-exchange-alt"></i>فرق ضغط بخار
+                        الماء</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control vapor-pressure-input input-mask"
+                          id="vaporPressureDiff"
+                          name="vaporPressureDiff"
+                          maxlength="4"
+                          pattern="^(#|\d{2}\.\d)$"
+                          inputmode="numeric"
+                          placeholder="12.3"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">dd.d (12.3) أو #</div>
+                      <div class="error-message" id="vaporPressureDiffError">
+                        يجب أن تكون dd.d أو #
+                      </div>
+                      <div
+                        class="success-message"
+                        id="vaporPressureDiffSuccess"
+                      >
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- الرياح والرؤية -->
+              <div class="form-section">
+                <h4><i class="fas fa-wind"></i>الرياح والرؤية</h4>
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="windDirection" class="form-label"
+                        ><i class="fas fa-compass"></i>اتجاه الرياح السطحية
+                        (عشرات)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control wind-direction-input input-mask"
+                          id="windDirection"
+                          name="windDirection"
+                          placeholder="18"
+                          maxlength="2"
+                          required
+                          pattern="^(#|\d{1,2})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقمان (18) أو #</div>
+                      <div class="error-message" id="windDirectionError">
+                        بين 00 و 36 أو #
+                      </div>
+                      <div class="success-message" id="windDirectionSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="windSpeed" class="form-label"
+                        ><i class="fas fa-wind"></i>سرعة الرياح السطحية
+                        (م/ثا)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control wind-speed-input input-mask"
+                          id="windSpeed"
+                          name="windSpeed"
+                          placeholder="12"
+                          maxlength="2"
+                          required
+                          pattern="^(#|\d{1,2})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقمان (12) أو #</div>
+                      <div class="error-message" id="windSpeedError">
+                        بين 00 و 99 أو #
+                      </div>
+                      <div class="success-message" id="windSpeedSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgWindDirection" class="form-label"
+                        ><i class="fas fa-compass"></i>متوسط الاتجاه
+                        (درجة)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control wind-direction-input input-mask"
+                          id="avgWindDirection"
+                          name="avgWindDirection"
+                          placeholder="18"
+                          maxlength="2"
+                          pattern="^(#|\d{1,2})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقمان (18) أو #</div>
+                      <div class="error-message" id="avgWindDirectionError">
+                        بين 00 و 36 أو #
+                      </div>
+                      <div class="success-message" id="avgWindDirectionSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="avgWindSpeed" class="form-label"
+                        ><i class="fas fa-wind"></i>متوسط السرعة (م/ثا)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control wind-speed-input input-mask"
+                          id="avgWindSpeed"
+                          name="avgWindSpeed"
+                          placeholder="10"
+                          maxlength="2"
+                          pattern="^(#|\d{1,2})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقمان (10) أو #</div>
+                      <div class="error-message" id="avgWindSpeedError">
+                        بين 00 و 99 أو #
+                      </div>
+                      <div class="success-message" id="avgWindSpeedSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="visibility" class="form-label"
+                        ><i class="fas fa-eye"></i>الرؤية الأفقية (مئات
+                        الأمتار)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="visibility"
+                          name="visibility"
+                          placeholder="050"
+                          maxlength="3"
+                          required
+                          pattern="^(#|\d{1,3})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">3 أرقام (050) أو #</div>
+                      <div class="error-message" id="visibilityError">
+                        بين 000 و 200 أو #
+                      </div>
+                      <div class="success-message" id="visibilitySuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="currentWeather" class="form-label"
+                        ><i class="fas fa-cloud"></i>الطقس الحاضر (الكود)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="currentWeather"
+                          name="currentWeather"
+                          placeholder="01"
+                          maxlength="2"
+                          pattern="^(#|\d{1,2})$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقمان (01) أو #</div>
+                      <div class="error-message" id="currentWeatherError">
+                        بين 00 و 99 أو #
+                      </div>
+                      <div class="success-message" id="currentWeatherSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label for="pastWeather" class="form-label"
+                        ><i class="fas fa-cloud-sun"></i>الطقس الغابر
+                        (الكود)</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control input-mask"
+                          id="pastWeather"
+                          name="pastWeather"
+                          placeholder="0"
+                          maxlength="1"
+                          pattern="^[0-9#]$"
+                          inputmode="numeric"
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">رقم واحد (0-9) أو #</div>
+                      <div class="error-message" id="pastWeatherError">
+                        0-9 أو #
+                      </div>
+                      <div class="success-message" id="pastWeatherSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="time-dependent-field" id="precipitationFields">
+                  <div class="row">
+                    <div class="col-md-4">
+                      <div class="card-field">
+                        <label for="precipitationAmount" class="form-label"
+                          ><i class="fas fa-cloud-rain"></i>كمية الهطول
+                          (ملم)</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control input-mask"
+                            id="precipitationAmount"
+                            name="precipitationAmount"
+                            placeholder="012.5"
+                            maxlength="5"
+                            pattern="^(#|\d{3}\.\d)$"
+                            inputmode="numeric"
+                            title="ddd.d أو #"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">ddd.d (012.5) أو #</div>
+                        <div
+                          class="error-message"
+                          id="precipitationAmountError"
+                        >
+                          بين 000.0 و 999.9 أو #
+                        </div>
+                        <div
+                          class="success-message"
+                          id="precipitationAmountSuccess"
+                        >
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- السحب والتغطية -->
+              <div class="form-section">
+                <h4><i class="fas fa-cloud"></i>السحب والتغطية</h4>
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="totalCloudCover" class="form-label"
+                        ><i class="fas fa-cloud"></i>التغطية الكلية للسحب</label
+                      >
+                      <select
+                        class="form-select"
+                        id="totalCloudCover"
+                        name="totalCloudCover"
+                        required
+                      >
+                        <option value="" selected disabled>
+                          اختر التغطية الكلية
+                        </option>
+                        <option value="0">0 - السماء صافية</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8 - مغطاة تماماً</option>
+                        <option value="9">9 - السماء محجوبة</option>
+                      </select>
+                      <div class="field-hint">اختر من 0 إلى 9</div>
+                      <div class="error-message" id="totalCloudCoverError">
+                        يجب اختيار قيمة
+                      </div>
+                      <div class="success-message" id="totalCloudCoverSuccess">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- الطبقة 1 -->
+                <div class="cloud-layer">
+                  <h5><i class="fas fa-layer-group"></i>الطبقة الأولى</h5>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud1Amount" class="form-label"
+                          ><i class="fas fa-cloud"></i>كمية السحب</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="cloud1Amount"
+                            name="cloud1Amount"
+                            pattern="^[0-8#]$"
+                            maxlength="1"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">0-8 أو #</div>
+                        <div class="error-message" id="cloud1AmountError">
+                          0-8 أو #
+                        </div>
+                        <div class="success-message" id="cloud1AmountSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud1Type" class="form-label"
+                          ><i class="fas fa-cloud"></i>نوع السحب</label
+                        ><input
+                          type="text"
+                          class="form-control cloud-type-input"
+                          id="cloud1Type"
+                          name="cloud1Type"
+                          placeholder="مثال: Cs1, Ac, Cu"
+                          maxlength="50"
+                        />
+                        <div class="field-hint">إنجليزية أو #</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud1Height" class="form-label"
+                          ><i class="fas fa-mountain"></i>ارتفاع السحب (عشرات
+                          الأمتار)</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control cloud-height-input"
+                            id="cloud1Height"
+                            name="cloud1Height"
+                            pattern="^(#|\d{1,3})$"
+                            maxlength="3"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">1-3 أرقام أو #</div>
+                        <div class="error-message" id="cloud1HeightError">
+                          0-999 أو #
+                        </div>
+                        <div class="success-message" id="cloud1HeightSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- الطبقة 2 -->
+                <div class="cloud-layer">
+                  <h5><i class="fas fa-layer-group"></i>الطبقة الثانية</h5>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud2Amount" class="form-label"
+                          ><i class="fas fa-cloud"></i>كمية السحب</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="cloud2Amount"
+                            name="cloud2Amount"
+                            pattern="^[0-8#]$"
+                            maxlength="1"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">0-8 أو #</div>
+                        <div class="error-message" id="cloud2AmountError">
+                          0-8 أو #
+                        </div>
+                        <div class="success-message" id="cloud2AmountSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud2Type" class="form-label"
+                          ><i class="fas fa-cloud"></i>نوع السحب</label
+                        ><input
+                          type="text"
+                          class="form-control cloud-type-input"
+                          id="cloud2Type"
+                          name="cloud2Type"
+                          placeholder="مثال: Cs1, Ac, Cu"
+                          maxlength="50"
+                        />
+                        <div class="field-hint">إنجليزية أو #</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud2Height" class="form-label"
+                          ><i class="fas fa-mountain"></i>ارتفاع السحب (عشرات
+                          الأمتار)</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control cloud-height-input"
+                            id="cloud2Height"
+                            name="cloud2Height"
+                            pattern="^(#|\d{1,3})$"
+                            maxlength="3"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">1-3 أرقام أو #</div>
+                        <div class="error-message" id="cloud2HeightError">
+                          0-999 أو #
+                        </div>
+                        <div class="success-message" id="cloud2HeightSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- الطبقة 3 -->
+                <div class="cloud-layer">
+                  <h5><i class="fas fa-layer-group"></i>الطبقة الثالثة</h5>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud3Amount" class="form-label"
+                          ><i class="fas fa-cloud"></i>كمية السحب</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="cloud3Amount"
+                            name="cloud3Amount"
+                            pattern="^[0-8#]$"
+                            maxlength="1"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">0-8 أو #</div>
+                        <div class="error-message" id="cloud3AmountError">
+                          0-8 أو #
+                        </div>
+                        <div class="success-message" id="cloud3AmountSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud3Type" class="form-label"
+                          ><i class="fas fa-cloud"></i>نوع السحب</label
+                        ><input
+                          type="text"
+                          class="form-control cloud-type-input"
+                          id="cloud3Type"
+                          name="cloud3Type"
+                          placeholder="مثال: Cs1, Ac, Cu"
+                          maxlength="50"
+                        />
+                        <div class="field-hint">إنجليزية أو #</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud3Height" class="form-label"
+                          ><i class="fas fa-mountain"></i>ارتفاع السحب (عشرات
+                          الأمتار)</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control cloud-height-input"
+                            id="cloud3Height"
+                            name="cloud3Height"
+                            pattern="^(#|\d{1,3})$"
+                            maxlength="3"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">1-3 أرقام أو #</div>
+                        <div class="error-message" id="cloud3HeightError">
+                          0-999 أو #
+                        </div>
+                        <div class="success-message" id="cloud3HeightSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- الطبقة 4 -->
+                <div class="cloud-layer">
+                  <h5><i class="fas fa-layer-group"></i>الطبقة الرابعة</h5>
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="card-field">
+                        <label for="cloud4Amount" class="form-label"
+                          ><i class="fas fa-cloud"></i>كمية السحب</label
+                        >
+                        <div class="input-with-icon">
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="cloud4Amount"
+                            name="cloud4Amount"
+                            pattern="^[0-8#]$"
+                            maxlength="1"
+                          />
+                          <div class="validation-icon valid-icon">
+                            <i class="fas fa-check-circle"></i>
+                          </div>
+                          <div class="validation-icon error-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                          </div>
+                        </div>
+                        <div class="field-hint">0-8 أو #</div>
+                        <div class="error-message" id="cloud4AmountError">
+                          0-8 أو #
+                        </div>
+                        <div class="success-message" id="cloud4AmountSuccess">
+                          صحيح
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="cover12" class="form-label"
+                        ><i class="fas fa-clouds"></i>مجموع التغطية 1+2</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="cover12"
+                          name="cover12"
+                          pattern="^[0-8#]$"
+                          maxlength="1"
+                          required
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">0-8 أو #</div>
+                      <div class="error-message" id="cover12Error">
+                        0-8 أو #
+                      </div>
+                      <div class="success-message" id="cover12Success">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="card-field">
+                      <label for="cover123" class="form-label"
+                        ><i class="fas fa-clouds"></i>مجموع التغطية 1+2+3</label
+                      >
+                      <div class="input-with-icon">
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="cover123"
+                          name="cover123"
+                          pattern="^[0-8#]$"
+                          maxlength="1"
+                          required
+                        />
+                        <div class="validation-icon valid-icon">
+                          <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="validation-icon error-icon">
+                          <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                      </div>
+                      <div class="field-hint">0-8 أو #</div>
+                      <div class="error-message" id="cover123Error">
+                        0-8 أو #
+                      </div>
+                      <div class="success-message" id="cover123Success">
+                        صحيح
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ملاحظات ومسؤولية -->
+              <div class="form-section">
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="card-field">
+                      <label for="observerNotes" class="form-label"
+                        ><i class="fas fa-sticky-note"></i>مقطع السينوب إلى مطار
+                        دمشق الدولي synop </label
+                      ><textarea
+                        class="form-control"
+                        id="observerNotes"
+                        name="observerNotes"
+                        rows="3"
+                        placeholder="المكان المخصص لإدخال مقطع السينوب برجى الحذر أثناء الإدخال "
+                      ></textarea>
+                      <div class="field-hint">
+                        هذه النشرة المطلوبة لمطار دمشق الدولي
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="responsibility-check">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="responsibilityAgreement"
+                      name="responsibilityAgreement"
+                      required
+                    /><label
+                      class="form-check-label"
+                      for="responsibilityAgreement"
+                      ><i class="fas fa-shield-alt me-1"></i>أقر بأنني قمت
+                      بإدخال جميع البيانات بدقة وأتحمل المسؤولية الكاملة عن صحة
+                      المعلومات المقدمة.</label
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-center mt-4">
+                <button
+                  type="button"
+                  class="btn btn-whatsapp btn-custom"
+                  id="shareWhatsappBtn"
+                >
+                  <i class="fab fa-whatsapp me-1"></i>مشاركة عبر واتساب</button
+                ><button
+                  type="button"
+                  class="btn btn-success btn-custom"
+                  id="submitReportBtn"
+                >
+                  <i class="fas fa-paper-plane me-1"></i>إرسال التقرير
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- مودال المعاينة -->
+    <div
+      class="modal fade"
+      id="previewModal"
+      tabindex="-1"
+      aria-labelledby="previewModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-eye me-2"></i>معاينة التقرير الساعي
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body"><div id="previewContent"></div></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              <i class="fas fa-times me-1"></i>إغلاق</button
+            ><button
+              type="button"
+              class="btn btn-whatsapp"
+              id="whatsappPreviewBtn"
+            >
+              <i class="fab fa-whatsapp me-1"></i>مشاركة عبر واتساب</button
+            ><button type="button" class="btn btn-success" id="saveJsonBtn">
+              <i class="fas fa-download me-1"></i>حفظ كملف JSON</button
+            ><button
+              type="button"
+              class="btn btn-primary"
+              id="sendToDatabaseBtn"
+            >
+              <i class="fas fa-database me-1"></i>إرسال إلى قاعدة البيانات
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- السكربتات الأساسية -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="traffic-monitor.js"></script>
+    <script>
+      // تهيئة Supabase
+      document.addEventListener("DOMContentLoaded", function () {
+        const SUPABASE_URL = "https://vktcvkwqszehgmhqjrkb.supabase.co";
+        const SUPABASE_ANON_KEY =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o";
+        if (typeof supabase !== "undefined" && supabase.createClient) {
+          window.supabase = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY,
+            {
+              auth: { persistSession: false },
+              global: {
+                headers: {
+                  "Content-Type": "application/json",
+                  apikey: SUPABASE_ANON_KEY,
+                },
+              },
+            },
+          );
+          console.log("✅ Supabase تم تهيئته بنجاح");
+        } else {
+          console.error("❌ Supabase SDK غير متاح");
+          window.supabase = null;
+        }
+      });
+      function fixCORSHeaders() {
+        if (window.supabase && window.supabase.auth) {
+          const orig = window.supabase.auth.fetch;
+          window.supabase.auth.fetch = function (url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers["Content-Type"] = "application/json";
+            options.headers["apikey"] =
+              "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o";
+            options.mode = "cors";
+            options.credentials = "omit";
+            return orig.call(this, url, options);
+          };
+          console.log("✅ تم إصلاح رؤوس CORS");
+        }
+      }
+      setTimeout(fixCORSHeaders, 1000);
+    </script>
+    <script src="supabase-config.js"></script>
+    <script src="enhanced-validation.js"></script>
+    <script src="cloud-total-cover-validation.js"></script>
+    <script src="hourly-send.js"></script>
+    <script src="data-collector.js"></script>
+    <script src="submit-hourly.js"></script>
+    <script src="whatsapp-sender.js"></script>
+    <script src="js/protect.js"></script>
+
+    <!-- السكربتات الداخلية الأساسية -->
+    <script>
+      function updateDateTime() {
+        const now = new Date();
+        document.getElementById("currentDate").value =
+          now.toLocaleDateString("en-CA");
+        document.getElementById("currentTime").value = now.toLocaleTimeString(
+          "ar-SA",
+          { hour: "2-digit", minute: "2-digit", second: "2-digit" },
+        );
+      }
+      function loadUserData() {
+        try {
+          const ud = localStorage.getItem("currentUser");
+          if (!ud) return;
+          const u = JSON.parse(ud);
+          const name = [u.first_name, u.father_name, u.last_name]
+            .filter((n) => n && n.trim())
+            .join(" ");
+          document.getElementById("userName").textContent =
+            name || u.email || "مستخدم";
+          document.getElementById("userStation").textContent =
+            u.station || "المحطة الرئيسية";
+          document.getElementById("userRole").textContent =
+            u.role || "راصد جوي";
+        } catch (e) {}
+      }
+      function setupSignButtons() {
+        document.querySelectorAll(".sign-toggle").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const target = this.dataset.target,
+              sign = this.dataset.sign;
+            const f = document.getElementById(target);
+            if (!f || f.value === "#") return;
+            let v = f.value.replace(/[^0-9.]/g, "");
+            f.value = (sign === "-" ? "-" : "+") + v;
+            if (f.dispatchEvent) f.dispatchEvent(new Event("blur"));
+          });
+        });
+      }
+      function setupMobileMenu() {
+        document
+          .getElementById("mobileMenuBtn")
+          ?.addEventListener("click", () => {
+            const s = document.querySelector(".sidebar-dashboard");
+            if (s)
+              s.style.display = s.style.display === "none" ? "block" : "none";
+          });
+      }
+      function setupCloudTypeFields() {
+        document.querySelectorAll(".cloud-type-input").forEach((f) => {
+          f.style.direction = "ltr";
+          f.style.textAlign = "left";
+          f.addEventListener("input", function () {
+            this.value = this.value.replace(/[^A-Za-z0-9\s#]/g, "");
+          });
+          f.addEventListener("blur", function () {
+            if (this.value.trim() && this.value !== "#")
+              this.value = this.value.toUpperCase();
+          });
+        });
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        loadUserData();
+        setupSignButtons();
+        setupMobileMenu();
+        setupCloudTypeFields();
+        const utc = document.getElementById("utcTime");
+        if (utc && utc.value && window.updateTimeDependentFields)
+          window.updateTimeDependentFields(utc.value);
+      });
+    </script>
+
+    <!-- نظام إحصائيات المحطة المحسن -->
+    <script>
+      class StationStatistics {
+        constructor() {
+          this.cacheDuration = 5 * 60 * 1000;
+          this.cache = {};
+          this.userStation = null;
+          this.init();
+        }
+        init() {
+          this.loadUserStation();
+          this.setupRefreshButton();
+          this.loadStatistics();
+          this.setupAutoRefresh();
+          console.log("✅ إحصائيات المحطة جاهزة");
+        }
+        loadUserStation() {
+          try {
+            const ud = localStorage.getItem("currentUser");
+            if (ud) {
+              const u = JSON.parse(ud);
+              this.userStation = u.station || "المحطة الرئيسية";
+              const el = document.getElementById("userStation");
+              if (el) el.textContent = this.userStation;
+            } else this.userStation = "المحطة الرئيسية";
+          } catch (e) {
+            this.userStation = "المحطة الرئيسية";
+          }
+        }
+        async loadStatistics() {
+          const loading = document.getElementById("statsLoading"),
+            grid = document.getElementById("statsGrid"),
+            summary = document.getElementById("statsSummary"),
+            msg = document.getElementById("statsMessage");
+          try {
+            if (loading) loading.style.display = "block";
+            if (grid) grid.style.display = "none";
+            if (summary) summary.style.display = "none";
+            if (msg) {
+              msg.className = "stats-message info";
+              msg.innerHTML =
+                '<i class="fas fa-sync-alt fa-spin me-1"></i>جاري تحديث الإحصائيات...';
+            }
+            const today = new Date().toISOString().split("T")[0],
+              cacheKey = `${this.userStation}_${today}`;
+            if (
+              this.cache[cacheKey] &&
+              Date.now() - this.cache[cacheKey].timestamp < this.cacheDuration
+            ) {
+              this.updateUI(this.cache[cacheKey].data);
+              if (loading) loading.style.display = "none";
+              return;
+            }
+            let statsData;
+            try {
+              statsData = await this.fetchAllStatistics();
+            } catch (err) {
+              console.warn(
+                "⚠️ فشل جلب الإحصائيات من Supabase، استخدام بيانات وهمية",
+                err,
+              );
+              statsData = {
+                hourly: 0,
+                soil: 0,
+                agri: 0,
+                climate: 0,
+                daily: 0,
+                rain: 0,
+              };
+              if (msg) {
+                msg.className = "stats-message warning";
+                msg.innerHTML =
+                  '<i class="fas fa-exclamation-triangle me-1"></i>عرض إحصائيات تجريبية (الاتصال بقاعدة البيانات محدود)';
+              }
+            }
+            this.cache[cacheKey] = { timestamp: Date.now(), data: statsData };
+            this.updateUI(statsData);
+          } catch (err) {
+            console.error("❌ خطأ في تحميل الإحصائيات:", err);
+            this.showStatsError(err.message);
+          } finally {
+            if (loading) loading.style.display = "none";
+          }
+        }
+        async fetchAllStatistics() {
+          if (!window.supabase) throw new Error("Supabase غير متاح");
+          const today = new Date().toISOString().split("T")[0],
+            tomorrow = new Date(Date.now() + 86400000)
+              .toISOString()
+              .split("T")[0];
+          const queries = [
+            {
+              table: "hourly_reports",
+              stationField: "station_name",
+              dateField: "created_at",
+              countField: "hourly",
+              max: 24,
+            },
+            {
+              table: "soil_temperatures",
+              stationField: "station",
+              dateField: "observation_date",
+              countField: "soil",
+              max: 4,
+            },
+            {
+              table: "agricultural_reports",
+              stationField: "station",
+              dateField: "report_date",
+              countField: "agri",
+              max: 1,
+            },
+            {
+              table: "climate_reports",
+              stationField: "user_station",
+              dateField: "report_date",
+              countField: "climate",
+              max: 4,
+            },
+            {
+              table: "daily_reports",
+              stationField: "station",
+              dateField: "report_date",
+              countField: "daily",
+              max: 3,
+            },
+            {
+              table: "rainfall_reports",
+              stationField: "observer_station",
+              dateField: "observation_date",
+              countField: "rain",
+              max: 1,
+            },
+          ];
+          const stats = {};
+          for (let q of queries) {
+            try {
+              let query = window.supabase
+                .from(q.table)
+                .select("*", { count: "exact", head: true })
+                .eq(q.stationField, this.userStation);
+              if (q.dateField === "created_at")
+                query = query
+                  .gte(q.dateField, `${today}T00:00:00.000Z`)
+                  .lt(q.dateField, `${tomorrow}T00:00:00.000Z`);
+              else query = query.eq(q.dateField, today);
+              const { count, error } = await query;
+              if (error) throw error;
+              stats[q.countField] = count || 0;
+            } catch (err) {
+              console.warn(`⚠️ فشل في جلب ${q.table}:`, err.message);
+              stats[q.countField] = 0;
+            }
+          }
+          return {
+            hourly: 0,
+            soil: 0,
+            agri: 0,
+            climate: 0,
+            daily: 0,
+            rain: 0,
+            ...stats,
+          };
+        }
+        updateUI(stats) {
+          const max = {
+            hourly: 24,
+            soil: 4,
+            agri: 1,
+            climate: 4,
+            daily: 3,
+            rain: 1,
+          };
+          let total = 0,
+            totalMax = 0;
+          const grid = document.getElementById("statsGrid");
+          if (grid && grid.children.length === 0) {
+            const types = [
+              "hourly",
+              "soil",
+              "agri",
+              "climate",
+              "daily",
+              "rain",
+            ];
+            const labels = {
+              hourly: "النشرات الساعية",
+              soil: "نشرات التربة",
+              agri: "النشرات الزراعية",
+              climate: "النشرات المناخية",
+              daily: "النشرات اليومية",
+              rain: "النشرات المطرية",
+            };
+            const icons = {
+              hourly: "fa-clock",
+              soil: "fa-seedling",
+              agri: "fa-leaf",
+              climate: "fa-cloud-sun",
+              daily: "fa-calendar-day",
+              rain: "fa-cloud-showers-heavy",
+            };
+            for (let t of types) {
+              let div = document.createElement("div");
+              div.className = "stat-item complete";
+              div.id = `stat-${t}`;
+              div.innerHTML = `<div class="stat-icon complete"><i class="fas ${icons[t]}"></i></div><div class="stat-values"><span class="stat-count" id="count-${t}">0</span><span class="stat-limit">من ${max[t]}</span></div><div class="stat-label">${labels[t]}</div><div class="stat-progress"><div class="progress-bar complete" id="progress-${t}" style="width:0%"></div></div>`;
+              grid.appendChild(div);
+            }
+          }
+          for (let t in stats) {
+            let cnt = stats[t],
+              mx = max[t];
+            let cntEl = document.getElementById(`count-${t}`);
+            if (cntEl) cntEl.textContent = cnt;
+            let progEl = document.getElementById(`progress-${t}`);
+            if (progEl)
+              progEl.style.width = `${Math.min((cnt / mx) * 100, 100)}%`;
+            let statDiv = document.getElementById(`stat-${t}`);
+            if (statDiv) {
+              let p = (cnt / mx) * 100;
+              if (p >= 100) statDiv.className = "stat-item complete";
+              else if (p >= 50) statDiv.className = "stat-item warning";
+              else if (cnt > 0) statDiv.className = "stat-item normal";
+              else statDiv.className = "stat-item danger";
+            }
+            total += cnt;
+            totalMax += mx;
+          }
+          let pct = totalMax > 0 ? Math.round((total / totalMax) * 100) : 0;
+          let pctEl = document.getElementById("totalPercentage");
+          if (pctEl) {
+            pctEl.textContent = `${pct}%`;
+            if (pct >= 80) pctEl.className = "summary-percentage complete";
+            else if (pct >= 50) pctEl.className = "summary-percentage warning";
+            else pctEl.className = "summary-percentage danger";
+          }
+          let details = document.getElementById("statsDetails");
+          if (details) details.textContent = `${total}/${totalMax} تقرير`;
+          let gridEl = document.getElementById("statsGrid");
+          if (gridEl) gridEl.style.display = "grid";
+          let sumEl = document.getElementById("statsSummary");
+          if (sumEl) sumEl.style.display = "block";
+          let msgEl = document.getElementById("statsMessage");
+          if (msgEl && !msgEl.innerHTML.includes("تجريبية")) {
+            if (pct >= 90)
+              msgEl.innerHTML =
+                '<i class="fas fa-check-circle me-1"></i>🎉 ممتاز! تم إكمال معظم التقارير';
+            else if (pct > 0)
+              msgEl.innerHTML = `<i class="fas fa-chart-line me-1"></i>تم إنجاز ${pct}% من التقارير اليومية`;
+            else
+              msgEl.innerHTML =
+                '<i class="fas fa-info-circle me-1"></i>لم يتم إرسال أي تقارير بعد لهذا اليوم';
+          }
+        }
+        showStatsError(err) {
+          let l = document.getElementById("statsLoading"),
+            g = document.getElementById("statsGrid"),
+            m = document.getElementById("statsMessage");
+          if (l) l.style.display = "none";
+          if (g) g.style.display = "none";
+          if (m) {
+            m.className = "stats-message danger";
+            m.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i>${err || "حدث خطأ في تحميل الإحصائيات"}`;
+          }
+        }
+        setupRefreshButton() {
+          let btn = document.getElementById("refreshStatsBtn");
+          if (btn)
+            btn.addEventListener("click", () => this.refreshStatistics());
+        }
+        async refreshStatistics() {
+          let btn = document.getElementById("refreshStatsBtn");
+          if (btn) {
+            let orig = btn.innerHTML;
+            btn.innerHTML =
+              '<i class="fas fa-spinner fa-spin me-1"></i>جاري...';
+            btn.disabled = true;
+            await this.loadStatistics();
+            setTimeout(() => {
+              btn.innerHTML = orig;
+              btn.disabled = false;
+            }, 1000);
+          } else await this.loadStatistics();
+        }
+        setupAutoRefresh() {
+          setInterval(
+            () => {
+              if (document.visibilityState === "visible") this.loadStatistics();
+            },
+            5 * 60 * 1000,
+          );
+          document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") this.loadStatistics();
+          });
+        }
+      }
+      document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => {
+          window.stationStats = new StationStatistics();
+        }, 1000);
+      });
+      window.refreshStationStatistics = () => {
+        if (window.stationStats) window.stationStats.refreshStatistics();
+      };
+    </script>
+
+    <!-- الحل النهائي لدعم # وإظهار حقول الضغط عند 00 -->
+    <script>
+      (function () {
+        console.log("🔧 تطبيق الحل النهائي لدعم # وإظهار حقول الضغط عند 00");
+        // إعادة تعريف validateForm
+        window.validateForm = function () {
+          let valid = true;
+          const required = [
+            "utcTime",
+            "dryTemp",
+            "wetTemp",
+            "stationPressure",
+            "seaLevelPressure",
+            "windDirection",
+            "windSpeed",
+            "visibility",
+            "totalCloudCover",
+            "relativeHumidity",
+            "dewPoint",
+          ];
+          for (let id of required) {
+            let f = document.getElementById(id);
+            if (f && f.required) {
+              let val = f.value?.trim() || "";
+              if (val === "") {
+                f.classList.add("is-invalid");
+                valid = false;
+              } else f.classList.remove("is-invalid");
+            }
+          }
+          let utc = document.getElementById("utcTime");
+          if (
+            utc &&
+            utc.value &&
+            ["00", "06", "12", "18"].includes(utc.value.padStart(2, "0"))
+          ) {
+            let p = document.getElementById("precipitationAmount");
+            if (p && p.required && (!p.value || p.value.trim() === "")) {
+              p.classList.add("is-invalid");
+              valid = false;
+            }
+          }
+          // التحقق من ميل الضغط في الساعات التي تظهر فيها (بما فيها 00)
+          if (
+            utc &&
+            utc.value &&
+            ["00", "03", "06", "09", "12", "15", "18", "21"].includes(
+              utc.value.padStart(2, "0"),
+            )
+          ) {
+            let slope = document.getElementById("pressureSlope");
+            let shape = document.getElementById("pressureShape");
+            if (
+              slope &&
+              slope.required &&
+              (!slope.value || slope.value.trim() === "")
+            ) {
+              slope.classList.add("is-invalid");
+              valid = false;
+            }
+            if (
+              shape &&
+              shape.required &&
+              (!shape.value || shape.value.trim() === "")
+            ) {
+              shape.classList.add("is-invalid");
+              valid = false;
+            }
+          }
+          let agree = document.getElementById("responsibilityAgreement");
+          if (agree && !agree.checked) {
+            agree.classList.add("is-invalid");
+            valid = false;
+          }
+          if (!valid && window.showNotification)
+            window.showNotification(
+              "يرجى ملء الحقول المطلوبة (يمكن استخدام #)",
+              "error",
+            );
+          return valid;
+        };
+        // إعادة ربط زر الإرسال
+        setTimeout(() => {
+          let btn = document.getElementById("submitReportBtn");
+          if (btn)
+            btn.onclick = async (e) => {
+              e.preventDefault();
+              if (window.submitHourlyReport) await window.submitHourlyReport();
+            };
+          console.log("✅ تم إعادة ربط زر الإرسال");
+        }, 600);
+        console.log("✅ الحل النهائي تم تطبيقه");
+      })();
+    </script>
+  </body>
+</html>

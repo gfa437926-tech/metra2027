@@ -1,0 +1,3169 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      المركز الوطني للأرصاد الجوية - نظام الإبلاغ عن المشاكل التقنية
+    </title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #1a5276;
+        --secondary: #2980b9;
+        --accent: #3498db;
+        --light: #ecf0f1;
+        --dark: #2c3e50;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --radius: 10px;
+        --transition: all 0.3s ease;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+          url("https://www.marefa.org/w/images/b/bb/%D8%A7%D9%84%D8%A7%D8%B1%D8%B5%D8%A7%D8%AF_%D8%A7%D9%84%D8%B3%D9%88%D8%B1%D9%8A%D8%A9.jpg")
+            no-repeat center center fixed;
+        background-size: cover;
+        color: var(--dark);
+        line-height: 1.6;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* تنسيق القائمة الجانبية */
+      .sidebar-dashboard {
+        background: linear-gradient(
+          180deg,
+          rgba(44, 62, 80, 0.95) 0%,
+          rgba(52, 73, 94, 0.95) 100%
+        );
+        min-height: 100vh;
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 280px;
+        z-index: 1000;
+        overflow-y: auto;
+        backdrop-filter: blur(5px);
+      }
+
+      .main-content-with-sidebar {
+        margin-right: 280px;
+        padding: 20px;
+        transition: all 0.3s ease;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar-dashboard {
+          width: 100%;
+          position: relative;
+          min-height: auto;
+          margin-bottom: 20px;
+        }
+
+        .main-content-with-sidebar {
+          margin-right: 0;
+        }
+      }
+
+      /* تنسيقات إضافية */
+      .logo img {
+        max-width: 80px;
+        height: auto;
+        border-radius: 50%;
+        border: 3px solid var(--light);
+        display: block;
+        margin: 0 auto;
+      }
+
+      .nav-link {
+        color: var(--light) !important;
+        border-radius: var(--radius);
+        padding: 12px 15px;
+        margin-bottom: 8px;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(-5px);
+      }
+
+      .nav-link i {
+        width: 25px;
+        text-align: center;
+        font-size: 1.1rem;
+        margin-left: 10px;
+      }
+
+      /* رأس الصفحة */
+      .main-header {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 25px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      .header-logo img {
+        max-width: 100px;
+        height: auto;
+        border-radius: 50%;
+        border: 3px solid var(--primary);
+        margin-left: 20px;
+      }
+
+      .title-section {
+        text-align: center;
+        flex-grow: 1;
+      }
+
+      .title-section h1 {
+        color: var(--primary);
+        font-size: 1.8rem;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .title-section h2 {
+        color: var(--secondary);
+        font-size: 1.3rem;
+        margin-bottom: 5px;
+      }
+
+      .title-section h3 {
+        color: var(--dark);
+        font-size: 1.1rem;
+        margin-bottom: 0;
+      }
+
+      /* بطاقة معلومات المستخدم */
+      .user-info-card {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 25px;
+      }
+
+      .user-info-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .user-details h4 {
+        margin-bottom: 15px;
+        font-weight: 600;
+      }
+
+      .user-badges {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .user-badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 18px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .user-badge i {
+        margin-left: 8px;
+      }
+
+      .last-login {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 8px 15px;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+      }
+
+      /* شريط التقدم */
+      .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 30px 0;
+        position: relative;
+      }
+
+      .progress-bar {
+        position: absolute;
+        height: 3px;
+        background: var(--primary);
+        top: 20px;
+        right: 10%;
+        left: 10%;
+        z-index: -1;
+      }
+
+      .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+        flex: 1;
+      }
+
+      .step-icon {
+        width: 45px;
+        height: 45px;
+        background: var(--light);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        border: 3px solid var(--primary);
+        margin-bottom: 8px;
+        transition: var(--transition);
+      }
+
+      .step.active .step-icon {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.1);
+      }
+
+      .step-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--dark);
+        text-align: center;
+      }
+
+      /* بطاقات المشاكل */
+      .problem-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-bottom: 35px;
+      }
+
+      .problem-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 30px 25px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+      }
+
+      .problem-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .problem-icon {
+        font-size: 3.5rem;
+        color: var(--primary);
+        margin-bottom: 20px;
+        height: 80px;
+        width: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(26, 82, 118, 0.1);
+      }
+
+      .problem-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 12px;
+      }
+
+      .problem-description {
+        color: #666;
+        margin-bottom: 25px;
+        line-height: 1.6;
+        flex-grow: 1;
+      }
+
+      /* النماذج */
+      .card {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 25px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .card-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 18px 25px;
+        border-radius: var(--radius) var(--radius) 0 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .card-icon {
+        margin-left: 12px;
+        font-size: 1.3rem;
+      }
+
+      .card-title {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+        padding: 0 25px;
+        padding-top: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: var(--dark);
+        font-size: 1rem;
+      }
+
+      .form-control,
+      .form-select {
+        width: 100%;
+        padding: 12px 18px;
+        border: 1px solid #ddd;
+        border-radius: var(--radius);
+        transition: var(--transition);
+        font-size: 1rem;
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(26, 82, 118, 0.1);
+      }
+
+      textarea.form-control {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      /* الأزرار */
+      .btn {
+        padding: 12px 25px;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn i {
+        font-size: 1.1rem;
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--secondary);
+        transform: translateY(-2px);
+      }
+
+      .btn-whatsapp {
+        background-color: #25d366;
+        color: white;
+      }
+
+      .btn-whatsapp:hover {
+        background-color: #128c7e;
+        transform: translateY(-2px);
+      }
+
+      .btn-success {
+        background-color: var(--success);
+        color: white;
+      }
+
+      .btn-success:hover {
+        background-color: #219653;
+        transform: translateY(-2px);
+      }
+
+      .btn-whatsapp:hover,
+      .btn-success:hover {
+        opacity: 0.95;
+      }
+
+      .btn-block {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+      }
+
+      .btn-group-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 30px;
+      }
+
+      @media (max-width: 768px) {
+        .btn-group-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* الإشعارات */
+      .notification {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: var(--success);
+        color: white;
+        padding: 15px 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s ease;
+        min-width: 300px;
+        max-width: 500px;
+      }
+
+      .notification.show {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .notification.error {
+        background: var(--danger);
+      }
+
+      .notification.warning {
+        background: var(--warning);
+      }
+
+      .notification.info {
+        background: var(--accent);
+      }
+
+      .notification i {
+        margin-left: 12px;
+        font-size: 1.2rem;
+      }
+
+      /* حالة قاعدة البيانات */
+      .database-status {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: var(--warning);
+        color: white;
+        padding: 12px 20px;
+        border-radius: var(--radius);
+        display: none;
+        align-items: center;
+        z-index: 1000;
+        box-shadow: var(--shadow);
+      }
+
+      .loading {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+        margin-left: 10px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* صناديق الأخطاء */
+      .error-box {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 18px;
+        border-radius: var(--radius);
+        margin-bottom: 25px;
+      }
+
+      .error-box.hidden {
+        display: none;
+      }
+
+      .error-box h5 {
+        margin-bottom: 12px;
+        color: #721c24;
+        display: flex;
+        align-items: center;
+      }
+
+      .error-box h5 i {
+        margin-left: 10px;
+      }
+
+      .db-structure-check {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        background: var(--warning);
+        color: white;
+        padding: 12px 18px;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        z-index: 1001;
+        display: none;
+        align-items: center;
+        box-shadow: var(--shadow);
+      }
+
+      .db-structure-check.show {
+        display: flex;
+        align-items: center;
+      }
+
+      .db-structure-check i {
+        margin-left: 10px;
+      }
+
+      /* الفوتر */
+      .footer {
+        background-color: var(--dark);
+        color: white;
+        padding: 25px;
+        border-radius: var(--radius);
+        margin-top: 50px;
+        text-align: center;
+      }
+
+      .footer-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+
+      .footer-logo img {
+        max-width: 80px;
+        height: auto;
+        border-radius: 50%;
+        border: 2px solid var(--light);
+      }
+
+      .footer-text {
+        flex-grow: 1;
+        padding: 0 25px;
+      }
+
+      .footer-text h5 {
+        margin-bottom: 10px;
+        color: var(--light);
+      }
+
+      .program-name {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px 20px;
+        border-radius: var(--radius);
+        font-weight: 600;
+      }
+
+      .page-footer {
+        background-color: var(--dark);
+        color: white;
+        padding: 18px 25px;
+        margin-top: 40px;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+      }
+
+      .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 768px) {
+        .footer-content {
+          flex-direction: column;
+          gap: 15px;
+          text-align: center;
+        }
+      }
+
+      /* الخفاء */
+      .hidden {
+        display: none !important;
+      }
+
+      /* حقول النماذج */
+      .fields-container {
+        background: #f8f9fa;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-top: 12px;
+        min-height: 120px;
+        border: 2px dashed #ddd;
+      }
+
+      .fields-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+      }
+
+      .field-group {
+        background: white;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #eee;
+        transition: var(--transition);
+      }
+
+      .field-group:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+      }
+
+      .field-title {
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: var(--primary);
+      }
+
+      .field-code {
+        font-family: "Courier New", monospace;
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      /* إحصائيات سريعة */
+      .stats-card {
+        padding: 15px;
+        text-align: center;
+        border-radius: var(--radius);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .stats-card h5 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--dark);
+      }
+
+      /* قائمة التقارير */
+      .list-group-item {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+        border-radius: var(--radius) !important;
+        transition: var(--transition);
+      }
+
+      .list-group-item:hover {
+        background-color: #f8f9fa;
+        border-color: var(--primary);
+      }
+
+      /* تحسينات إضافية */
+      .is-invalid {
+        border-color: var(--danger) !important;
+      }
+
+      .is-valid {
+        border-color: var(--success) !important;
+      }
+
+      .validation-feedback {
+        color: var(--danger);
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .is-invalid + .validation-feedback {
+        display: block;
+      }
+
+      /* تحسين المودال */
+      .modal-header {
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-footer {
+        border-top: 1px solid #dee2e6;
+        padding: 15px 20px;
+      }
+
+      /* تحسين العناوين */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      /* تحسين الروابط */
+      a {
+        text-decoration: none;
+        color: var(--primary);
+        transition: var(--transition);
+      }
+
+      a:hover {
+        color: var(--secondary);
+      }
+
+      /* تحسين المسافات */
+      .mb-1 {
+        margin-bottom: 0.5rem !important;
+      }
+      .mb-2 {
+        margin-bottom: 1rem !important;
+      }
+      .mb-3 {
+        margin-bottom: 1.5rem !important;
+      }
+      .mb-4 {
+        margin-bottom: 2rem !important;
+      }
+      .mb-5 {
+        margin-bottom: 3rem !important;
+      }
+
+      .mt-1 {
+        margin-top: 0.5rem !important;
+      }
+      .mt-2 {
+        margin-top: 1rem !important;
+      }
+      .mt-3 {
+        margin-top: 1.5rem !important;
+      }
+      .mt-4 {
+        margin-top: 2rem !important;
+      }
+      .mt-5 {
+        margin-top: 3rem !important;
+      }
+
+      .ms-1 {
+        margin-right: 0.5rem !important;
+      }
+      .ms-2 {
+        margin-right: 1rem !important;
+      }
+      .ms-3 {
+        margin-right: 1.5rem !important;
+      }
+
+      .me-1 {
+        margin-left: 0.5rem !important;
+      }
+      .me-2 {
+        margin-left: 1rem !important;
+      }
+      .me-3 {
+        margin-left: 1.5rem !important;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- إشعار حالة هيكل قاعدة البيانات -->
+    <div id="dbStructureCheck" class="db-structure-check">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      <span id="dbStructureMessage">جاري التحقق من هيكل قاعدة البيانات...</span>
+    </div>
+
+    <!-- إشعارات -->
+    <div id="notification" class="notification">
+      <i class="fas fa-check-circle"></i>
+      <span id="notificationText"></span>
+    </div>
+
+    <!-- حالة قاعدة البيانات -->
+    <div id="databaseStatus" class="database-status">
+      <div class="loading me-2"></div>
+      <span id="statusMessage">جاري معالجة طلبك...</span>
+    </div>
+
+    <!-- لوحة التحكم الجانبية -->
+    <div class="sidebar-dashboard">
+      <div class="sidebar-sticky">
+        <div class="text-center my-4">
+          <div class="logo">
+            <img src="../../logo.jpg" alt="شعار المديرية" />
+          </div>
+          <h5 class="mt-2 text-white">نظام إدارة البيانات الجوية</h5>
+          <p class="text-light mb-0" style="font-size: 0.85rem; opacity: 0.8">
+            نظام الإبلاغ عن المشاكل التقنية
+          </p>
+        </div>
+
+        <ul class="nav flex-column" id="sidebarMenu">
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../../main.html"
+            >
+              <i class="fa-solid fa-chart-line me-2" style="color: #27ae60"></i>
+              <span>لوحة التحكم</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../hourly/hourly_send/hourly_reports.html"
+            >
+              <i class="fa-regular fa-clock me-2" style="color: #27ae60"></i>
+              <span>النشرات الساعية</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../daily/daily_send/daily.html"
+            >
+              <i
+                class="fa-regular fa-calendar-days me-2"
+                style="color: #27ae60"
+              ></i>
+              <span>النشرات اليومية</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../rain/rain_send/rainfall_reports.html"
+            >
+              <i class="fa-solid fa-cloud-rain me-2" style="color: #27ae60"></i>
+              <span>النشرات المطرية</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../h_climate/h_climate_send/h_climate_send.html"
+            >
+              <i class="fa-solid fa-wind me-2" style="color: #27ae60"></i>
+              <span>الساعي المناخي</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../soil/soil_send/soil-send.html"
+            >
+              <i
+                class="fa-solid fa-temperature-half me-2"
+                style="color: #27ae60"
+              ></i>
+              <span>حرارة التربة</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../arg/send-argicultural/agricultural_reports.html"
+            >
+              <i class="fa-solid fa-leaf me-2" style="color: #27ae60"></i>
+              <span>النشرات الزراعية</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../../weather_phenomena/weather_phenomena.html"
+            >
+              <i
+                class="fa-solid fa-cloud-meatball me-2"
+                style="color: #27ae60"
+              ></i>
+              <span>الظواهر الجوية</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a class="nav-link d-flex align-items-center" href="../fix.html">
+              <i class="fa-solid fa-microchip me-2" style="color: #27ae60"></i>
+              <span>أعطال أجهزة الرصد</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center"
+              href="../fix-tel.html"
+            >
+              <i class="fa-solid fa-tower-cell me-2" style="color: #27ae60"></i>
+              <span>مشاكل أجهزة الإتصالات</span>
+            </a>
+          </li>
+
+          <li class="nav-item mb-2">
+            <a
+              class="nav-link d-flex align-items-center active"
+              href="../it.html"
+            >
+              <i class="fa-solid fa-bug me-2" style="color: #27ae60"></i>
+              <span>أعطال البرامج (IT)</span>
+            </a>
+          </li>
+
+          <li class="nav-item mt-3">
+            <a
+              class="nav-link d-flex align-items-center text-danger"
+              href="../../index.html"
+              onclick="logout()"
+            >
+              <i
+                class="fa-solid fa-right-from-bracket me-2"
+                style="color: #ff0000"
+              ></i>
+              <span>تسجيل الخروج</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="main-content-with-sidebar">
+      <!-- رسالة خطأ هيكل قاعدة البيانات -->
+      <div id="databaseErrorBox" class="error-box hidden">
+        <h5>
+          <i class="fas fa-database me-2"></i>مشكلة في هيكل قاعدة البيانات
+        </h5>
+        <p id="databaseErrorText">
+          يوجد مشكلة في هيكل جدول تقارير IT. قد تحتاج بعض الأعمدة إلى إضافتها.
+        </p>
+        <div class="mt-2">
+          <small
+            ><strong>الحل:</strong> انتقل إلى Supabase Dashboard وأضف الأعمدة
+            التالية إلى جدول <code>it_problem_reports</code>:</small
+          >
+          <ul class="mt-1" style="font-size: 0.85rem">
+            <li><code>extra_field_details</code> (TEXT - NULL)</li>
+            <li><code>whatsapp_sent</code> (BOOLEAN - DEFAULT false)</li>
+            <li><code>whatsapp_message_id</code> (TEXT - NULL)</li>
+            <li><code>priority</code> (INTEGER)</li>
+            <li><code>status</code> (TEXT - DEFAULT 'pending')</li>
+            <li><code>user_id</code> (UUID - NULL)</li>
+            <li><code>station_name</code> (TEXT - NULL)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- الرأس الرئيسي -->
+      <header class="main-header">
+        <div class="header-content">
+          <div class="header-logo">
+            <img src="../../logo.jpg" alt="شعار المديرية" />
+          </div>
+          <div class="title-section">
+            <h1>الجمهورية العربية السورية</h1>
+            <h2>وزارة الطوارئ وإدارة الكوارث</h2>
+            <h3>المركز الوطني للأرصاد الجوية</h3>
+          </div>
+        </div>
+      </header>
+
+      <!-- معلومات المستخدم -->
+      <div class="user-info-card">
+        <div class="user-info-content">
+          <div class="user-details">
+            <h4>مرحباً بك في نظام الإبلاغ عن المشاكل التقنية</h4>
+            <div class="user-badges">
+              <span class="user-badge" id="userNameBadge">
+                <i class="fas fa-user me-1"></i>جاري التحميل...
+              </span>
+              <span class="user-badge" id="userStationBadge">
+                <i class="fas fa-map-marker-alt me-1"></i>جاري التحميل...
+              </span>
+              <span class="user-badge" id="userRoleBadge">
+                <i class="fas fa-briefcase me-1"></i>جاري التحميل...
+              </span>
+            </div>
+          </div>
+          <div class="last-login">
+            <small>آخر دخول: <span id="lastLogin">جاري التحميل...</span></small>
+          </div>
+        </div>
+      </div>
+
+      <!-- شريط التقدم -->
+      <div class="progress-steps">
+        <div class="progress-bar" style="width: 33%"></div>
+        <div class="step active">
+          <div class="step-icon">1</div>
+          <div class="step-label">معلومات الأساسية</div>
+        </div>
+        <div class="step">
+          <div class="step-icon">2</div>
+          <div class="step-label">تفاصيل المشكلة</div>
+        </div>
+        <div class="step">
+          <div class="step-icon">3</div>
+          <div class="step-label">إرسال التقرير</div>
+        </div>
+      </div>
+
+      <!-- بطاقات المشاكل -->
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="problem-icon">
+            <i class="fas fa-bug"></i>
+          </div>
+          <div class="problem-title">مشاكل في البرنامج</div>
+          <div class="problem-description">
+            الإبلاغ عن أعطال في البرنامج أو مشاكل في الواجهة
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#softwareModal"
+          >
+            <i class="fas fa-paper-plane me-1"></i>الإبلاغ عن مشكلة
+          </button>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <div class="problem-title">مشاكل في البيانات</div>
+          <div class="problem-description">
+            الإبلاغ عن مشاكل في تخزين أو استرجاع البيانات
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#dataModal"
+          >
+            <i class="fas fa-paper-plane me-1"></i>الإبلاغ عن مشكلة
+          </button>
+        </div>
+
+        <div class="problem-card">
+          <div class="problem-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="problem-title">مشاكل أخرى</div>
+          <div class="problem-description">
+            الإبلاغ عن أي مشاكل أخرى في النظام
+          </div>
+          <button
+            class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#otherModal"
+          >
+            <i class="fas fa-paper-plane me-1"></i>الإبلاغ عن مشكلة
+          </button>
+        </div>
+      </div>
+
+      <!-- نموذج الإبلاغ -->
+      <form id="problemReportForm">
+        <!-- معلومات مقدم البلاغ -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-user"></i>
+            </div>
+            <h2 class="card-title">معلومات مقدم البلاغ</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="reporterName" class="form-label"
+              >اسم مقدم البلاغ *</label
+            >
+            <input
+              type="text"
+              id="reporterName"
+              name="reporterName"
+              class="form-control"
+              required
+            />
+            <div class="validation-feedback">يرجى إدخال اسم مقدم البلاغ</div>
+          </div>
+
+          <div class="form-group">
+            <label for="reporterPosition" class="form-label"
+              >الصفة الوظيفية *</label
+            >
+            <input
+              type="text"
+              id="reporterPosition"
+              name="reporterPosition"
+              class="form-control"
+              required
+            />
+            <div class="validation-feedback">يرجى إدخال الصفة الوظيفية</div>
+          </div>
+
+          <div class="form-group">
+            <label for="reporterPhone" class="form-label"
+              >رقم الهاتف للتواصل *</label
+            >
+            <input
+              type="tel"
+              id="reporterPhone"
+              name="reporterPhone"
+              class="form-control"
+              required
+              placeholder="09XXXXXXXX"
+            />
+            <div class="validation-feedback">
+              يرجى إدخال رقم هاتف صحيح (مثال: 0912345678)
+            </div>
+          </div>
+        </div>
+
+        <!-- تفاصيل المشكلة -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2 class="card-title">تفاصيل المشكلة</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="bulletinType" class="form-label">نوع النشرة *</label>
+            <select
+              id="bulletinType"
+              name="bulletinType"
+              class="form-control form-select"
+              required
+            >
+              <option value="">-- اختر نوع النشرة --</option>
+              <option value="ساعي سينوب">ساعي سينوب</option>
+              <option value="ساعي مناخي">ساعي مناخي</option>
+              <option value="يومي مناخي">يومي مناخي</option>
+              <option value="بيانات زراعية">بيانات زراعية</option>
+              <option value="درجات الحرارة التربة">درجات الحرارة التربة</option>
+              <option value="النشرات الزراعية الشهرية">
+                النشرات الزراعية الشهرية
+              </option>
+            </select>
+            <div class="validation-feedback">يرجى اختيار نوع النشرة</div>
+          </div>
+
+          <div class="form-group">
+            <label for="problemField" class="form-label"
+              >الحقل الذي به المشكلة *</label
+            >
+            <select
+              id="problemField"
+              name="problemField"
+              class="form-control form-select"
+              required
+            >
+              <option value="">-- اختر الحقل --</option>
+            </select>
+            <div class="validation-feedback">
+              يرجى اختيار الحقل الذي به المشكلة
+            </div>
+          </div>
+
+          <!-- عرض الحقول المتاحة -->
+          <div class="form-group">
+            <label class="form-label">الحقول المتاحة في النشرة المختارة</label>
+            <div class="fields-container" id="availableFields">
+              <p style="text-align: center; color: #666; padding: 20px">
+                يرجى اختيار نوع النشرة أولاً لعرض الحقول المتاحة
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="problemType" class="form-label">نوع المشكلة *</label>
+            <select
+              id="problemType"
+              name="problemType"
+              class="form-control form-select"
+              required
+            >
+              <option value="">-- اختر نوع المشكلة --</option>
+              <option value="اسم الحقل">اسم الحقل</option>
+              <option value="قيمة الحقل">قيمة الحقل</option>
+              <option value="الوحدة المستخدمة">الوحدة المستخدمة</option>
+              <option value="قناع الإدخال">قناع الإدخال</option>
+              <option value="الشروط الخاصة بالحقل">الشروط الخاصة بالحقل</option>
+              <option value="حقل زائد">حقل زائد</option>
+              <option value="حقل ناقص">حقل ناقص</option>
+              <option value="مشكلة أخرى">مشكلة أخرى</option>
+            </select>
+            <div class="validation-feedback">يرجى اختيار نوع المشكلة</div>
+          </div>
+
+          <div id="problemDetails" class="hidden">
+            <!-- سيتم عرض الحقول المناسبة حسب نوع المشكلة -->
+          </div>
+
+          <div class="form-group">
+            <label for="problemDescription" class="form-label"
+              >وصف المشكلة *</label
+            >
+            <textarea
+              id="problemDescription"
+              name="problemDescription"
+              class="form-control"
+              rows="4"
+              placeholder="صف المشكلة بالتفصيل..."
+              required
+            ></textarea>
+            <div class="validation-feedback">يرجى إدخال وصف للمشكلة</div>
+          </div>
+
+          <div class="form-group">
+            <label for="problemUrgency" class="form-label"
+              >درجة الأهمية *</label
+            >
+            <select
+              id="problemUrgency"
+              name="problemUrgency"
+              class="form-control form-select"
+              required
+            >
+              <option value="منخفضة">منخفضة - لا تؤثر على العمل</option>
+              <option value="متوسطة">متوسطة - تؤثر على بعض المهام</option>
+              <option value="عالية" selected>
+                عالية - تؤثر على العمل الرئيسي
+              </option>
+              <option value="حرجة">حرجة - توقف العمل تماماً</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- أزرار الإرسال -->
+        <div class="btn-group-row">
+          <button type="button" id="sendReport" class="btn btn-whatsapp">
+            <i class="fab fa-whatsapp"></i> إرسال عبر واتساب فقط
+          </button>
+          <button type="button" id="saveToDatabase" class="btn btn-success">
+            <i class="fas fa-database"></i> حفظ في قاعدة البيانات
+          </button>
+          <button type="button" id="saveAndSend" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> حفظ وإرسال معاً
+          </button>
+        </div>
+      </form>
+
+      <!-- قسم التقارير المخزنة -->
+      <div class="card mt-5">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-history"></i>
+          </div>
+          <h2 class="card-title">التقارير السابقة المخزنة</h2>
+          <div class="ms-auto">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary me-2"
+              id="refreshReportsBtn"
+            >
+              <i class="fas fa-sync-alt"></i> تحديث
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              id="toggleReportsBtn"
+            >
+              <i class="fas fa-eye"></i> عرض/إخفاء
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" id="reportsContainer" style="display: none">
+          <!-- فلترة التقارير -->
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <select id="filterStatus" class="form-select">
+                <option value="">جميع الحالات</option>
+                <option value="pending">قيد الانتظار</option>
+                <option value="in_progress">قيد المعالجة</option>
+                <option value="resolved">تم الحل</option>
+                <option value="closed">مغلق</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <select id="filterUrgency" class="form-select">
+                <option value="">جميع درجات الأهمية</option>
+                <option value="منخفضة">منخفضة</option>
+                <option value="متوسطة">متوسطة</option>
+                <option value="عالية">عالية</option>
+                <option value="حرجة">حرجة</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button
+                type="button"
+                class="btn btn-primary w-100"
+                id="applyFiltersBtn"
+              >
+                <i class="fas fa-filter"></i> تطبيق الفلترة
+              </button>
+            </div>
+          </div>
+
+          <!-- إحصائيات سريعة -->
+          <div class="row mb-4" id="quickStats">
+            <div class="col-md-3 col-6">
+              <div class="card bg-light stats-card">
+                <div class="card-body text-center">
+                  <h5 id="totalReports">0</h5>
+                  <small class="text-muted">إجمالي التقارير</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card bg-warning bg-opacity-25 stats-card">
+                <div class="card-body text-center">
+                  <h5 id="pendingReports">0</h5>
+                  <small class="text-muted">قيد الانتظار</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card bg-success bg-opacity-25 stats-card">
+                <div class="card-body text-center">
+                  <h5 id="resolvedReports">0</h5>
+                  <small class="text-muted">تم الحل</small>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 col-6">
+              <div class="card bg-danger bg-opacity-25 stats-card">
+                <div class="card-body text-center">
+                  <h5 id="criticalReports">0</h5>
+                  <small class="text-muted">حرجة</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- قائمة التقارير -->
+          <div id="reportsList" class="mt-3">
+            <div class="text-center py-4">
+              <div class="loading" style="width: 30px; height: 30px"></div>
+              <p class="mt-2">جاري تحميل التقارير...</p>
+            </div>
+          </div>
+
+          <!-- رسالة عدم وجود تقارير -->
+          <div
+            id="noReportsMessage"
+            class="alert alert-info text-center"
+            style="display: none"
+          >
+            <i class="fas fa-info-circle me-2"></i>
+            لا توجد تقارير مخزنة حتى الآن.
+          </div>
+        </div>
+      </div>
+
+      <!-- الفوتر -->
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <img src="../../logo.jpg" alt="شعار المديرية" />
+          </div>
+          <div class="footer-text">
+            <h5>الجمهورية العربية السورية - وزارة الطوارئ وإدارة الكوارث</h5>
+            <p>المركز الوطني للأرصاد الجوية</p>
+            <p>مبرمج الموقع: إبراهيم زينب</p>
+          </div>
+          <div class="program-name">نظام "المرصد الذكي"</div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- مكتبات JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- السكريبتات المخصصة -->
+    <script>
+      // ==============================================
+      // Supabase Client Configuration
+      // ==============================================
+
+      const SUPABASE_CONFIG = {
+        url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        anonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      // ==============================================
+      // Database Handler Class - متوافق مع جدول it_problem_reports
+      // ==============================================
+
+      class ITDatabaseHandler {
+        constructor() {
+          this.isInitialized = false;
+          this.tableName = "it_problem_reports";
+          this.initialize();
+        }
+
+        async initialize() {
+          try {
+            console.log("🔄 بدء تهيئة معالج قاعدة البيانات...");
+            await this.testConnection();
+            this.isInitialized = true;
+            console.log("✅ تم تهيئة معالج قاعدة البيانات بنجاح");
+          } catch (error) {
+            console.error("❌ فشل تهيئة معالج قاعدة البيانات:", error);
+            this.showError("تعذر الاتصال بقاعدة البيانات. يرجى تحديث الصفحة.");
+          }
+        }
+
+        async testConnection() {
+          try {
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+              .from(this.tableName)
+              .select("count", { count: "exact", head: true })
+              .limit(1);
+
+            if (error) {
+              console.warn("⚠️ تحذير في اختبار الاتصال:", error.message);
+              if (error.message.includes("does not exist")) {
+                this.showDatabaseStructureError(
+                  "جدول it_problem_reports غير موجود في قاعدة البيانات",
+                );
+              }
+              throw error;
+            }
+
+            console.log(`✅ الاتصال ناجح. عدد التقارير: ${data?.length || 0}`);
+            return true;
+          } catch (error) {
+            console.warn("⚠️ قد تكون هناك مشكلة في الاتصال أو هيكل الجدول");
+            return false;
+          }
+        }
+
+        showDatabaseStructureError(message) {
+          const errorBox = document.getElementById("databaseErrorBox");
+          const dbCheck = document.getElementById("dbStructureCheck");
+
+          if (errorBox) {
+            errorBox.classList.remove("hidden");
+            document.getElementById("databaseErrorText").textContent = message;
+          }
+
+          if (dbCheck) {
+            dbCheck.classList.add("show");
+            document.getElementById("dbStructureMessage").textContent = message;
+          }
+        }
+
+        hideDatabaseStructureError() {
+          const errorBox = document.getElementById("databaseErrorBox");
+          const dbCheck = document.getElementById("dbStructureCheck");
+
+          if (errorBox) {
+            errorBox.classList.add("hidden");
+          }
+
+          if (dbCheck) {
+            dbCheck.classList.remove("show");
+          }
+        }
+
+        async saveProblemReport(reportData) {
+          try {
+            console.log("💾 محاولة حفظ تقرير جديد...", reportData);
+
+            if (!this.isInitialized) {
+              throw new Error("معالج قاعدة البيانات غير مهيأ");
+            }
+
+            // تنظيف وإثراء البيانات حسب هيكل الجدول
+            const cleanData = this.prepareReportData(reportData);
+
+            console.log("📤 إرسال البيانات إلى Supabase:", cleanData);
+
+            // محاولة الإدراج
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+              .from(this.tableName)
+              .insert([cleanData])
+              .select();
+
+            if (error) {
+              console.error("❌ خطأ في إدراج البيانات:", error);
+              throw new Error(`تعذر حفظ التقرير: ${error.message}`);
+            }
+
+            console.log("✅ تم حفظ التقرير بنجاح:", data[0]);
+            return data[0];
+          } catch (error) {
+            console.error("❌ خطأ في saveProblemReport:", error);
+            throw new Error(`تعذر حفظ التقرير: ${error.message}`);
+          }
+        }
+
+        prepareReportData(reportData) {
+          // إضافة معلومات المستخدم
+          this.enrichReportWithUserData(reportData);
+
+          // حساب الأولوية
+          this.calculatePriority(reportData);
+
+          // إضافة معلومات النظام
+          const cleanData = {
+            reporter_name: reportData.reporter_name || "",
+            reporter_position: reportData.reporter_position || "",
+            reporter_phone: reportData.reporter_phone || "",
+            user_id: reportData.user_id || null,
+            station_name: reportData.station_name || "",
+            bulletin_type: reportData.bulletin_type || "",
+            problem_field: reportData.problem_field || "",
+            problem_type: reportData.problem_type || "",
+            problem_description: reportData.problem_description || "",
+            problem_urgency: reportData.problem_urgency || "متوسطة",
+            priority: reportData.priority || 2,
+            status: reportData.status || "pending",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            whatsapp_sent: reportData.whatsapp_sent || false,
+          };
+
+          // إضافة الحقول الإضافية حسب نوع المشكلة
+          const additionalFields = [
+            "field_name",
+            "suggested_name",
+            "current_value",
+            "expected_value",
+            "current_unit",
+            "correct_unit",
+            "current_mask",
+            "suggested_mask",
+            "field_conditions",
+            "condition_issue",
+            "extra_field_name",
+            "why_extra",
+            "missing_field_name",
+            "field_importance",
+            "extra_details",
+            "software_type",
+            "problem_category",
+            "whatsapp_message_id",
+          ];
+
+          additionalFields.forEach((field) => {
+            if (
+              reportData[field] !== undefined &&
+              reportData[field] !== null &&
+              reportData[field] !== ""
+            ) {
+              cleanData[field] = reportData[field];
+            }
+          });
+
+          return cleanData;
+        }
+
+        enrichReportWithUserData(reportData) {
+          try {
+            const currentUser = localStorage.getItem("currentUser");
+            if (currentUser) {
+              const userData = JSON.parse(currentUser);
+
+              reportData.user_id = userData.id ? userData.id.toString() : null;
+              reportData.station_name = userData.station || "";
+
+              // تعبئة تلقائية للحقول الفارغة
+              if (!reportData.reporter_name && userData.first_name) {
+                reportData.reporter_name =
+                  `${userData.first_name} ${userData.father_name || ""} ${userData.last_name || ""}`.trim();
+              }
+
+              if (!reportData.reporter_position && userData.role) {
+                reportData.reporter_position = userData.role;
+              }
+
+              if (!reportData.reporter_phone && userData.phone) {
+                reportData.reporter_phone = userData.phone;
+              }
+            }
+          } catch (error) {
+            console.warn("⚠️ خطأ في تحليل بيانات المستخدم:", error);
+          }
+        }
+
+        calculatePriority(reportData) {
+          const urgencyMap = {
+            منخفضة: 1,
+            متوسطة: 2,
+            عالية: 3,
+            حرجة: 4,
+          };
+
+          reportData.priority = urgencyMap[reportData.problem_urgency] || 2;
+        }
+
+        async updateReportStatus(reportId, updates) {
+          try {
+            updates.updated_at = new Date().toISOString();
+
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+              .from(this.tableName)
+              .update(updates)
+              .eq("id", reportId)
+              .select();
+
+            if (error) throw error;
+            return data[0];
+          } catch (error) {
+            console.error("❌ خطأ في تحديث حالة التقرير:", error);
+            throw error;
+          }
+        }
+
+        async getReports(filters = {}) {
+          try {
+            const supabase = getSupabaseClient();
+            let query = supabase
+              .from(this.tableName)
+              .select("*")
+              .order("created_at", { ascending: false });
+
+            // تطبيق الفلاتر
+            if (filters.status) {
+              query = query.eq("status", filters.status);
+            }
+
+            if (filters.station_name) {
+              query = query.eq("station_name", filters.station_name);
+            }
+
+            if (filters.user_id) {
+              query = query.eq("user_id", filters.user_id);
+            }
+
+            if (filters.problem_urgency) {
+              query = query.eq("problem_urgency", filters.problem_urgency);
+            }
+
+            if (filters.startDate && filters.endDate) {
+              query = query
+                .gte("created_at", filters.startDate)
+                .lte("created_at", filters.endDate);
+            }
+
+            if (filters.limit) {
+              query = query.limit(filters.limit);
+            }
+
+            const { data, error } = await query;
+
+            if (error) throw error;
+            return data || [];
+          } catch (error) {
+            console.error("❌ خطأ في جلب التقارير:", error);
+            throw error;
+          }
+        }
+
+        async saveWhatsAppMessageId(reportId, messageId) {
+          try {
+            const updates = {
+              whatsapp_sent: true,
+              whatsapp_message_id: messageId,
+              updated_at: new Date().toISOString(),
+            };
+
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+              .from(this.tableName)
+              .update(updates)
+              .eq("id", reportId)
+              .select();
+
+            if (error) {
+              console.warn("⚠️ خطأ في حفظ معرف الواتساب:", error.message);
+              return null;
+            }
+            return data[0];
+          } catch (error) {
+            console.warn("⚠️ خطأ في حفظ معرف الرسالة:", error);
+            return null;
+          }
+        }
+
+        async getReportById(reportId) {
+          try {
+            const supabase = getSupabaseClient();
+            const { data, error } = await supabase
+              .from(this.tableName)
+              .select("*")
+              .eq("id", reportId)
+              .single();
+
+            if (error) throw error;
+            return data;
+          } catch (error) {
+            console.error("❌ خطأ في جلب التقرير:", error);
+            throw error;
+          }
+        }
+
+        showError(message) {
+          showNotification(message, "error");
+        }
+
+        showSuccess(message) {
+          showNotification(message, "success");
+        }
+      }
+
+      // إنشاء نسخة عامة من المعالج
+      let IT_DB_HANDLER = null;
+
+      function initializeDatabaseHandler() {
+        if (!IT_DB_HANDLER) {
+          IT_DB_HANDLER = new ITDatabaseHandler();
+        }
+        return IT_DB_HANDLER;
+      }
+
+      // ==============================================
+      // دوال إدارة المستخدم والجلسة
+      // ==============================================
+
+      function loadUserInfo() {
+        const currentUser = localStorage.getItem("currentUser");
+
+        if (currentUser) {
+          try {
+            const userData = JSON.parse(currentUser);
+
+            // تحديث معلومات المستخدم في البطاقة
+            document.getElementById("userNameBadge").innerHTML =
+              `<i class="fas fa-user me-1"></i>${userData.first_name} ${userData.father_name} ${userData.last_name}`;
+
+            document.getElementById("userStationBadge").innerHTML =
+              `<i class="fas fa-map-marker-alt me-1"></i>${userData.station || "-"}`;
+
+            document.getElementById("userRoleBadge").innerHTML =
+              `<i class="fas fa-briefcase me-1"></i>${userData.role || "-"}`;
+
+            // تحديث آخر دخول
+            document.getElementById("lastLogin").textContent =
+              new Date().toLocaleDateString("ar-SA");
+
+            // تعبئة الحقول التلقائية في النموذج
+            document.getElementById("reporterName").value =
+              `${userData.first_name} ${userData.father_name} ${userData.last_name}`;
+
+            document.getElementById("reporterPosition").value =
+              userData.role || "";
+            document.getElementById("reporterPhone").value =
+              userData.phone || "";
+
+            console.log("✅ تم تحميل معلومات المستخدم بنجاح");
+          } catch (error) {
+            console.error("❌ خطأ في تحليل بيانات المستخدم:", error);
+            showDefaultUserInfo();
+          }
+        } else {
+          console.log("⚠️ لا توجد بيانات مستخدم في localStorage");
+          showDefaultUserInfo();
+        }
+      }
+
+      function showDefaultUserInfo() {
+        document.getElementById("userNameBadge").innerHTML =
+          '<i class="fas fa-user me-1"></i>زائر';
+        document.getElementById("userStationBadge").innerHTML =
+          '<i class="fas fa-map-marker-alt me-1"></i>غير محدد';
+        document.getElementById("userRoleBadge").innerHTML =
+          '<i class="fas fa-briefcase me-1"></i>زائر';
+        document.getElementById("lastLogin").textContent =
+          new Date().toLocaleDateString("ar-SA");
+      }
+
+      function logout() {
+        localStorage.removeItem("currentUser");
+        window.location.href = "../../index.html";
+      }
+
+      function checkSession() {
+        const currentUser = localStorage.getItem("currentUser");
+        if (!currentUser) {
+          window.location.href = "../../index.html";
+          return false;
+        }
+        return true;
+      }
+
+      // ==============================================
+      // دوال النماذج والتحقق
+      // ==============================================
+
+      const bulletinFields = {
+        "ساعي سينوب": [
+          "وقت الرصد",
+          "الرطوبة النسبية %",
+          "ضغط بخار الماء لأقرب عشر الميلبار",
+          "درجة الندى لأقرب عشر (سْ)",
+          "ضـغــط المـحـطـــة",
+          "الضغط المحول لسطح البحر",
+          "درجة الحرارة الجافة",
+          "درجة الحرارة الرطبة",
+          "اتجاه الرياح السطحية بعشرات الدرجات",
+          "سرعة الرياح السطحية لأقرب م/ثا",
+          "اتجاه المتوسط الساعي للرياح السطحية",
+          "سرعة المتوسط الساعي للرياح السطحية",
+          "الرؤية السطحية الأفقية بمئات الأمتار",
+          "الطقس الحاضر",
+          "الطقس الغابر",
+          "التغطية الكلية للسحب",
+          "كمية السحب في الطبقة الأولى",
+          "نوع السحب في الطبقة الأولى",
+          "ارتفاع السحب في الطبقة الأولى",
+          "كمية السحب في الطبقة الثانية",
+          "نوع السحب في الطبقة الثانية",
+          "ارتفاع السحب في الطبقة الثانية",
+          "مجموع التغطية للطبقتين 1+2",
+          "كمية السحب في الطبقة الثالثة",
+          "نوع السحب في الطبقة الثالثة",
+          "ارتفاع السحب في الطبقة الثالثة",
+          "مجموع التغطية للطبقات 1+2+3",
+          "كمية السحب في الطبقة الرابعة",
+          "فرق ضغط بخار الماء عن الإشباع",
+        ],
+
+        "ساعي مناخي": [
+          "أقصى درجة حرارة",
+          "أدنى درجة حرارة",
+          "كمية الأمطار",
+          "ساعات السطوع الشمسي",
+          "التبخر",
+          "سرعة الرياح القصوى",
+        ],
+
+        "يومي مناخي": [
+          "يوم الرصد",
+          "القيمة الصغرى في النهايات",
+          "القيمة العظمى في النهايات",
+          "الهطول لأقرب عشر مم",
+          "الأثـــر",
+          "أكبر سماكة ثلج لأقرب سم",
+          "عواصف رعدية",
+          "برد",
+          "ثلج",
+          "مطر",
+          "صقيع",
+          "ضباب",
+          "شابورة",
+          "عواصف ترابية أو رملية",
+          "غبار متصاعد",
+          "سديم",
+          "رياح عاصفة",
+          "مجموع التبخر اليومي لأقرب عشر مم من المسجل",
+          "مجموع مدة سطوع الشمس الحقيقي",
+          "النسبة المئوية لسطوع الشمس",
+          "أكبر نفحة للرياح",
+          "اتجاه أكبر نفحة للرياح",
+          "وقت حدوث أكبر نفحة",
+          "أكبر كمية رطوبة",
+          "زمن حدوث أكبر رطوبة نسبية",
+          "أصغر كمية رطوبة",
+          "زمن حدوث أصغر رطوبة نسبية",
+        ],
+
+        "بيانات زراعية": [
+          "الرصد",
+          "الرطوبة النسبية %",
+          "ضغط بخار الماء لأقرب عشر الميلبار",
+          "درجة الندى لأقرب عشر (سْ)",
+          "درجة الحرارة الجافة",
+          "درجة الحرارة الرطبة",
+          "اتجاه الرياح السطحية بعشرات الدرجات",
+          "سرعة الرياح السطحية لأقرب م/ثا",
+          "اتجاه المتوسط الساعي للرياح السطحية",
+          "سرعة المتوسط الساعي للرياح السطحية",
+          "التغطية الكلية للسحب",
+        ],
+
+        "درجات الحرارة التربة": [
+          "الرصد",
+          "درجة حرارة التربة على عمق 5سم",
+          "درجة حرارة التربة على عمق 10سم",
+          "درجة حرارة التربة على عمق 20سم",
+          "درجة حرارة التربة على عمق 50سم",
+          "درجة حرارة التربة على عمق 100سم",
+          "درجة حرارة التربة على عمق 2م",
+        ],
+
+        "النشرات الزراعية الشهرية": [
+          "يوم الرصد",
+          "معدل درجة حرارة الهواء",
+          "القيمة العظمى لدرجة حرارة الهواء",
+          "القيمة الصغرى لدرجة حرارة الهواء",
+          "القيمة الصغرى على ارتفاع 2م",
+          "القيمة العظمى لدرجة حرارة سطح التربة",
+          "القيمة الصغرى لدرجة حرارة سطح التربة",
+          "معدل الرطوبة النسبية",
+          "القيمة الصغرى للرطوبة النسبية",
+          "معدل es-e",
+          "القيمة الصغرى ل es-e",
+          "مدة سطوع الشمس ـ ساعة",
+          "معدل التغطية الكلية",
+          "معدل تغطية الغيوم المنخفضة",
+          "الهطول (مم)",
+          "أكبر سرعة رياح من المخطط",
+          "التبخر من CLASS_A",
+          "معدل سرعة الرياح على ارتفاع 2م",
+          "معدل حرارة التربة على عمق 5 سم",
+          "معدل حرارة التربة على عمق 10 سم",
+          "معدل درجة حرارة التربة على عمق 20 سم",
+          "معدل درجة حرارة التربة على عمق 50سم",
+          "درجة حرارة تربة الحقل على عمق 5 سم",
+          "حرارة التربة في الحقل على عمق 10 سم",
+          "التبخر من السجل",
+          "ندى",
+          "ضباب",
+          "برد",
+          "عواصف رملية أو ترابية",
+          "ظواهر طبيعية أخرى",
+        ],
+      };
+
+      // دالة مساعدة للحصول على رمز العنصر
+      function getFieldCode(fieldName) {
+        const fieldCodes = {
+          // ساعي سينوب
+          "وقت الرصد": "بدون رمز",
+          "الرطوبة النسبية %": "105",
+          "ضغط بخار الماء لأقرب عشر الميلبار": "166",
+          "درجة الندى لأقرب عشر (سْ)": "103",
+          "ضـغــط المـحـطـــة": "106",
+          "الضغط المحول لسطح البحر": "107",
+          "درجة الحرارة الجافة": "101",
+          "درجة الحرارة الرطبة": "102",
+          "اتجاه الرياح السطحية بعشرات الدرجات": "112",
+          "سرعة الرياح السطحية لأقرب م/ثا": "111",
+          "اتجاه المتوسط الساعي للرياح السطحية": "182",
+          "سرعة المتوسط الساعي للرياح السطحية": "181",
+          "الرؤية السطحية الأفقية بمئات الأمتار": "110",
+          "الطقس الحاضر": "167",
+          "الطقس الغابر": "183",
+          "التغطية الكلية للسحب": "114",
+          "كمية السحب في الطبقة الأولى": "116",
+          "نوع السحب في الطبقة الأولى": "117",
+          "ارتفاع السحب في الطبقة الأولى": "118",
+          "كمية السحب في الطبقة الثانية": "120",
+          "نوع السحب في الطبقة الثانية": "121",
+          "ارتفاع السحب في الطبقة الثانية": "122",
+          "مجموع التغطية للطبقتين 1+2": "184",
+          "كمية السحب في الطبقة الثالثة": "124",
+          "نوع السحب في الطبقة الثالثة": "125",
+          "ارتفاع السحب في الطبقة الثالثة": "126",
+          "مجموع التغطية للطبقات 1+2+3": "185",
+          "كمية السحب في الطبقة الرابعة": "128",
+          "فرق ضغط بخار الماء عن الإشباع": "186",
+
+          // يومي مناخي
+          "يوم الرصد": "بدون رمز",
+          "القيمة الصغرى في النهايات": "003",
+          "القيمة العظمى في النهايات": "002",
+          "الهطول لأقرب عشر مم": "005",
+          الأثـــر: "717",
+          "أكبر سماكة ثلج لأقرب سم": "049",
+          "عواصف رعدية": "030",
+          برد: "031",
+          ثلج: "035",
+          مطر: "029",
+          صقيع: "039",
+          ضباب: "032",
+          شابورة: "034",
+          "عواصف ترابية أو رملية": "033",
+          "غبار متصاعد": "036",
+          سديم: "037",
+          "رياح عاصفة": "038",
+          "مجموع التبخر اليومي لأقرب عشر مم من المسجل": "092",
+          "مجموع مدة سطوع الشمس الحقيقي": "087",
+          "النسبة المئوية لسطوع الشمس": "045",
+          "أكبر نفحة للرياح": "058",
+          "اتجاه أكبر نفحة للرياح": "059",
+          "وقت حدوث أكبر نفحة": "093",
+          "أكبر كمية رطوبة": "015",
+          "زمن حدوث أكبر رطوبة نسبية": "094",
+          "أصغر كمية رطوبة": "016",
+          "زمن حدوث أصغر رطوبة نسبية": "095",
+
+          // بيانات زراعية
+          الرصد: "بدون رمز",
+          "الرطوبة النسبية %": "105",
+          "ضغط بخار الماء لأقرب عشر الميلبار": "166",
+          "درجة الندى لأقرب عشر (سْ)": "103",
+          "درجة الحرارة الجافة": "101",
+          "درجة الحرارة الرطبة": "102",
+          "اتجاه الرياح السطحية بعشرات الدرجات": "112",
+          "سرعة الرياح السطحية لأقرب م/ثا": "111",
+          "اتجاه المتوسط الساعي للرياح السطحية": "182",
+          "سرعة المتوسط الساعي للرياح السطحية": "181",
+          "التغطية الكلية للسحب": "114",
+
+          // درجات الحرارة التربة
+          الرصد: "بدون رمز",
+          "درجة حرارة التربة على عمق 5سم": "72",
+          "درجة حرارة التربة على عمق 10سم": "73",
+          "درجة حرارة التربة على عمق 20سم": "74",
+          "درجة حرارة التربة على عمق 50سم": "75",
+          "درجة حرارة التربة على عمق 100سم": "76",
+          "درجة حرارة التربة على عمق 2م": "77",
+
+          // النشرات الزراعية الشهرية (كلها بدون رمز)
+          "يوم الرصد": "بدون رمز",
+          "معدل درجة حرارة الهواء": "بدون رمز",
+          "القيمة العظمى لدرجة حرارة الهواء": "بدون رمز",
+          "القيمة الصغرى لدرجة حرارة الهواء": "بدون رمز",
+          "القيمة الصغرى على ارتفاع 2م": "بدون رمز",
+          "القيمة العظمى لدرجة حرارة سطح التربة": "بدون رمز",
+          "القيمة الصغرى لدرجة حرارة سطح التربة": "بدون رمز",
+          "معدل الرطوبة النسبية": "بدون رمز",
+          "القيمة الصغرى للرطوبة النسبية": "بدون رمز",
+          "معدل es-e": "بدون رمز",
+          "القيمة الصغرى ل es-e": "بدون رمز",
+          "مدة سطوع الشمس ـ ساعة": "بدون رمز",
+          "معدل التغطية الكلية": "بدون رمز",
+          "معدل تغطية الغيوم المنخفضة": "بدون رمز",
+          "الهطول (مم)": "بدون رمز",
+          "أكبر سرعة رياح من المخطط": "بدون رمز",
+          "التبخر من CLASS_A": "بدون رمز",
+          "معدل سرعة الرياح على ارتفاع 2م": "بدون رمز",
+          "معدل حرارة التربة على عمق 5 سم": "بدون رمز",
+          "معدل حرارة التربة على عمق 10 سم": "بدون رمز",
+          "معدل درجة حرارة التربة على عمق 20 سم": "بدون رمز",
+          "معدل درجة حرارة التربة على عمق 50سم": "بدون رمز",
+          "درجة حرارة تربة الحقل على عمق 5 سم": "بدون رمز",
+          "حرارة التربة في الحقل على عمق 10 سم": "بدون رمز",
+          "التبخر من السجل": "بدون رمز",
+          ندى: "بدون رمز",
+          ضباب: "بدون رمز",
+          برد: "بدون رمز",
+          "عواصف رملية أو ترابية": "بدون رمز",
+          "ظواهر طبيعية أخرى": "بدون رمز",
+        };
+
+        return fieldCodes[fieldName] || "بدون رمز محدد";
+      }
+
+      // العناصر الرئيسية
+      let bulletinTypeSelect,
+        problemFieldSelect,
+        availableFieldsDiv,
+        problemTypeSelect,
+        problemDetailsDiv;
+      let sendReportBtn, saveToDatabaseBtn, saveAndSendBtn;
+
+      function initFormElements() {
+        bulletinTypeSelect = document.getElementById("bulletinType");
+        problemFieldSelect = document.getElementById("problemField");
+        availableFieldsDiv = document.getElementById("availableFields");
+        problemTypeSelect = document.getElementById("problemType");
+        problemDetailsDiv = document.getElementById("problemDetails");
+        sendReportBtn = document.getElementById("sendReport");
+        saveToDatabaseBtn = document.getElementById("saveToDatabase");
+        saveAndSendBtn = document.getElementById("saveAndSend");
+      }
+
+      function initBulletinFields() {
+        if (!bulletinTypeSelect) {
+          console.error("❌ عنصر bulletinTypeSelect غير موجود");
+          return;
+        }
+
+        bulletinTypeSelect.addEventListener("change", function () {
+          const selectedBulletin = this.value;
+          problemFieldSelect.innerHTML =
+            '<option value="">-- اختر الحقل --</option>';
+          availableFieldsDiv.innerHTML = "";
+
+          if (selectedBulletin && bulletinFields[selectedBulletin]) {
+            console.log("📋 تحميل حقول النشرة:", selectedBulletin);
+
+            // إضافة الحقول إلى القائمة المنسدلة
+            bulletinFields[selectedBulletin].forEach((field) => {
+              const option = document.createElement("option");
+              option.value = field;
+              option.textContent = field;
+              problemFieldSelect.appendChild(option);
+            });
+
+            // عرض الحقول المتاحة
+            const fieldsList = document.createElement("div");
+            fieldsList.className = "fields-list";
+
+            bulletinFields[selectedBulletin].forEach((field) => {
+              const fieldDiv = document.createElement("div");
+              fieldDiv.className = "field-group";
+
+              const titleDiv = document.createElement("div");
+              titleDiv.className = "field-title";
+              titleDiv.textContent = field;
+
+              const codeDiv = document.createElement("div");
+              codeDiv.className = "field-code";
+              codeDiv.textContent = `رمز: ${getFieldCode(field)}`;
+
+              fieldDiv.appendChild(titleDiv);
+              fieldDiv.appendChild(codeDiv);
+              fieldsList.appendChild(fieldDiv);
+            });
+
+            availableFieldsDiv.appendChild(fieldsList);
+
+            console.log(
+              `✅ تم تحميل ${bulletinFields[selectedBulletin].length} حقل`,
+            );
+          } else {
+            availableFieldsDiv.innerHTML =
+              '<p style="text-align: center; color: #666; padding: 20px">لا توجد حقول متاحة لهذه النشرة</p>';
+            console.warn("⚠️ لا توجد حقول لهذه النشرة:", selectedBulletin);
+          }
+        });
+
+        console.log("✅ تم تهيئة نظام حقول النشرات");
+      }
+
+      function initProblemTypes() {
+        if (!problemTypeSelect) {
+          console.error("❌ عنصر problemTypeSelect غير موجود");
+          return;
+        }
+
+        problemTypeSelect.addEventListener("change", function () {
+          const selectedProblem = this.value;
+          problemDetailsDiv.innerHTML = "";
+          problemDetailsDiv.classList.add("hidden");
+
+          if (!selectedProblem) return;
+
+          problemDetailsDiv.classList.remove("hidden");
+
+          let fieldsHTML = "";
+
+          switch (selectedProblem) {
+            case "اسم الحقل":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="fieldName" class="form-label">الاسم الحالي للحقل *</label>
+                                <input type="text" id="fieldName" name="fieldName" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="suggestedName" class="form-label">الاسم المقترح *</label>
+                                <input type="text" id="suggestedName" name="suggestedName" class="form-control" required>
+                            </div>
+                        `;
+              break;
+
+            case "قيمة الحقل":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="currentValue" class="form-label">القيمة الحالية *</label>
+                                <input type="text" id="currentValue" name="currentValue" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expectedValue" class="form-label">القيمة المتوقعة *</label>
+                                <input type="text" id="expectedValue" name="expectedValue" class="form-control" required>
+                            </div>
+                        `;
+              break;
+
+            case "الوحدة المستخدمة":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="currentUnit" class="form-label">الوحدة المستخدمة حالياً *</label>
+                                <input type="text" id="currentUnit" name="currentUnit" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="correctUnit" class="form-label">الوحدة الصحيحة *</label>
+                                <input type="text" id="correctUnit" name="correctUnit" class="form-control" required>
+                            </div>
+                        `;
+              break;
+
+            case "قناع الإدخال":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="currentMask" class="form-label">قناع الإدخال الحالي *</label>
+                                <input type="text" id="currentMask" name="currentMask" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="suggestedMask" class="form-label">القناع المقترح *</label>
+                                <input type="text" id="suggestedMask" name="suggestedMask" class="form-control" required>
+                            </div>
+                        `;
+              break;
+
+            case "الشروط الخاصة بالحقل":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="fieldConditions" class="form-label">الشروط الحالية *</label>
+                                <textarea id="fieldConditions" name="fieldConditions" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="conditionIssue" class="form-label">ما هي المشكلة في الشروط؟ *</label>
+                                <textarea id="conditionIssue" name="conditionIssue" class="form-control" rows="3" required></textarea>
+                            </div>
+                        `;
+              break;
+
+            case "حقل زائد":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="extraFieldName" class="form-label">اسم الحقل الزائد *</label>
+                                <input type="text" id="extraFieldName" name="extraFieldName" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="whyExtra" class="form-label">لماذا تعتقد أنه حقل زائد؟ *</label>
+                                <textarea id="whyExtra" name="whyExtra" class="form-control" rows="3" required></textarea>
+                            </div>
+                        `;
+              break;
+
+            case "حقل ناقص":
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="missingFieldName" class="form-label">اسم الحقل الناقص *</label>
+                                <input type="text" id="missingFieldName" name="missingFieldName" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="fieldImportance" class="form-label">أهمية هذا الحقل *</label>
+                                <textarea id="fieldImportance" name="fieldImportance" class="form-control" rows="3" required></textarea>
+                            </div>
+                        `;
+              break;
+
+            default:
+              fieldsHTML = `
+                            <div class="form-group">
+                                <label for="extraDetails" class="form-label">تفاصيل إضافية</label>
+                                <textarea id="extraDetails" name="extraDetails" class="form-control" rows="3"></textarea>
+                            </div>
+                        `;
+          }
+
+          problemDetailsDiv.innerHTML = fieldsHTML;
+          console.log("✅ تم تحميل حقول نوع المشكلة:", selectedProblem);
+        });
+
+        console.log("✅ تم تهيئة أنواع المشاكل");
+      }
+
+      function collectFormData() {
+        const formData = {
+          reporter_name: document.getElementById("reporterName").value.trim(),
+          reporter_position: document
+            .getElementById("reporterPosition")
+            .value.trim(),
+          reporter_phone: document.getElementById("reporterPhone").value.trim(),
+          bulletin_type: document.getElementById("bulletinType").value,
+          problem_field: document.getElementById("problemField").value,
+          problem_type: document.getElementById("problemType").value,
+          problem_description: document
+            .getElementById("problemDescription")
+            .value.trim(),
+          problem_urgency: document.getElementById("problemUrgency").value,
+        };
+
+        // جمع الحقول الإضافية حسب نوع المشكلة
+        const problemType = formData.problem_type;
+
+        switch (problemType) {
+          case "اسم الحقل":
+            formData.field_name =
+              document.getElementById("fieldName")?.value || null;
+            formData.suggested_name =
+              document.getElementById("suggestedName")?.value || null;
+            break;
+
+          case "قيمة الحقل":
+            formData.current_value =
+              document.getElementById("currentValue")?.value || null;
+            formData.expected_value =
+              document.getElementById("expectedValue")?.value || null;
+            break;
+
+          case "الوحدة المستخدمة":
+            formData.current_unit =
+              document.getElementById("currentUnit")?.value || null;
+            formData.correct_unit =
+              document.getElementById("correctUnit")?.value || null;
+            break;
+
+          case "قناع الإدخال":
+            formData.current_mask =
+              document.getElementById("currentMask")?.value || null;
+            formData.suggested_mask =
+              document.getElementById("suggestedMask")?.value || null;
+            break;
+
+          case "الشروط الخاصة بالحقل":
+            formData.field_conditions =
+              document.getElementById("fieldConditions")?.value || null;
+            formData.condition_issue =
+              document.getElementById("conditionIssue")?.value || null;
+            break;
+
+          case "حقل زائد":
+            formData.extra_field_name =
+              document.getElementById("extraFieldName")?.value || null;
+            formData.why_extra =
+              document.getElementById("whyExtra")?.value || null;
+            break;
+
+          case "حقل ناقص":
+            formData.missing_field_name =
+              document.getElementById("missingFieldName")?.value || null;
+            formData.field_importance =
+              document.getElementById("fieldImportance")?.value || null;
+            break;
+
+          default:
+            formData.extra_details =
+              document.getElementById("extraDetails")?.value || null;
+        }
+
+        return formData;
+      }
+
+      function validateForm() {
+        const requiredFields = [
+          "reporterName",
+          "reporterPosition",
+          "reporterPhone",
+          "bulletinType",
+          "problemField",
+          "problemType",
+          "problemDescription",
+        ];
+
+        let isValid = true;
+
+        requiredFields.forEach((fieldId) => {
+          const field = document.getElementById(fieldId);
+          const value = field.value.trim();
+
+          if (!value) {
+            isValid = false;
+            field.classList.add("is-invalid");
+            field.classList.remove("is-valid");
+          } else {
+            field.classList.add("is-valid");
+            field.classList.remove("is-invalid");
+          }
+        });
+
+        const phoneField = document.getElementById("reporterPhone");
+        const phoneRegex = /^09\d{8}$/;
+        if (phoneField.value && !phoneRegex.test(phoneField.value)) {
+          isValid = false;
+          phoneField.classList.add("is-invalid");
+          phoneField.classList.remove("is-valid");
+        }
+
+        return isValid;
+      }
+
+      function formatWhatsAppMessage(formData, reportId) {
+        const date = new Date().toLocaleDateString("ar-SA");
+        const time = new Date().toLocaleTimeString("ar-SA");
+
+        let message = `🚨 *تقرير مشكلة IT جديد* 🚨
+
+📋 *معلومات التقرير:*
+رقم التقرير: ${reportId}
+التاريخ: ${date}
+الوقت: ${time}
+
+👤 *مقدم البلاغ:*
+الاسم: ${formData.reporter_name}
+الصفة: ${formData.reporter_position}
+الهاتف: ${formData.reporter_phone}
+
+🔧 *تفاصيل المشكلة:*
+نوع النشرة: ${formData.bulletin_type}
+الحقل: ${formData.problem_field}
+نوع المشكلة: ${formData.problem_type}
+درجة الأهمية: ${formData.problem_urgency}
+
+📝 *وصف المشكلة:*
+${formData.problem_description}
+
+📍 *معلومات إضافية:*\n`;
+
+        // إضافة المعلومات الإضافية حسب نوع المشكلة
+        if (formData.field_name)
+          message += `اسم الحقل: ${formData.field_name}\n`;
+        if (formData.suggested_name)
+          message += `الاسم المقترح: ${formData.suggested_name}\n`;
+        if (formData.current_value)
+          message += `القيمة الحالية: ${formData.current_value}\n`;
+        if (formData.expected_value)
+          message += `القيمة المتوقعة: ${formData.expected_value}\n`;
+        if (formData.current_unit)
+          message += `الوحدة الحالية: ${formData.current_unit}\n`;
+        if (formData.correct_unit)
+          message += `الوحدة الصحيحة: ${formData.correct_unit}\n`;
+        if (formData.extra_field_name)
+          message += `الحقل الزائد: ${formData.extra_field_name}\n`;
+        if (formData.missing_field_name)
+          message += `الحقل الناقص: ${formData.missing_field_name}\n`;
+
+        message += `\n📊 *حالة النظام:*
+✅ تم حفظ التقرير في قاعدة البيانات
+⏳ بانتظار المراجعة الفنية
+
+⚡ *درجة العجلة: ${formData.problem_urgency.toUpperCase()}*
+${
+  formData.problem_urgency === "حرجة"
+    ? "🔴 تحتاج إلى تدخل فوري"
+    : formData.problem_urgency === "عالية"
+      ? "🟠 تحتاج إلى معالجة سريعة"
+      : formData.problem_urgency === "متوسطة"
+        ? "🟡 يمكن المعالجة خلال 24 ساعة"
+        : "🟢 يمكن المعالجة خلال 72 ساعة"
+}`;
+
+        return message;
+      }
+
+      function showNotification(message, type = "success") {
+        const notification = document.getElementById("notification");
+        const notificationText = document.getElementById("notificationText");
+
+        if (!notification || !notificationText) {
+          console.error("❌ عناصر الإشعار غير موجودة");
+          return;
+        }
+
+        notification.className = `notification ${type}`;
+        notificationText.textContent = message;
+
+        notification.classList.add("show");
+
+        setTimeout(() => {
+          notification.classList.remove("show");
+        }, 5000);
+      }
+
+      // ==============================================
+      // دوال إدارة التقارير
+      // ==============================================
+
+      async function loadSavedReports() {
+        try {
+          const reportsList = document.getElementById("reportsList");
+          const noReportsMessage = document.getElementById("noReportsMessage");
+          const quickStats = document.getElementById("quickStats");
+
+          if (!reportsList) {
+            console.error("❌ عنصر reportsList غير موجود");
+            return;
+          }
+
+          reportsList.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="loading" style="width: 30px; height: 30px;"></div>
+                        <p class="mt-2">جاري تحميل التقارير...</p>
+                    </div>
+                `;
+
+          const dbHandler = initializeDatabaseHandler();
+
+          if (!dbHandler || !dbHandler.isInitialized) {
+            throw new Error("معالج قاعدة البيانات غير متوفر");
+          }
+
+          const filters = {};
+          const filterStatus = document.getElementById("filterStatus");
+          const filterUrgency = document.getElementById("filterUrgency");
+
+          if (filterStatus && filterStatus.value)
+            filters.status = filterStatus.value;
+          if (filterUrgency && filterUrgency.value)
+            filters.problem_urgency = filterUrgency.value;
+
+          const currentUser = localStorage.getItem("currentUser");
+          if (currentUser) {
+            try {
+              const userData = JSON.parse(currentUser);
+              if (userData.id) {
+                filters.user_id = userData.id.toString();
+              }
+            } catch (e) {
+              console.warn("⚠️ خطأ في تحليل بيانات المستخدم:", e);
+            }
+          }
+
+          const reports = await dbHandler.getReports(filters);
+
+          if (reports.length === 0) {
+            reportsList.style.display = "none";
+            if (noReportsMessage) noReportsMessage.style.display = "block";
+            if (quickStats) quickStats.style.display = "none";
+            return;
+          }
+
+          if (noReportsMessage) noReportsMessage.style.display = "none";
+          if (quickStats) quickStats.style.display = "flex";
+
+          updateQuickStats(reports);
+
+          let reportsHTML = '<div class="list-group">';
+
+          reports.forEach((report) => {
+            const statusInfo = getStatusInfo(report.status);
+            const priorityInfo = getPriorityInfo(report.priority);
+            const date = new Date(report.created_at).toLocaleDateString(
+              "ar-SA",
+            );
+            const time = new Date(report.created_at).toLocaleTimeString(
+              "ar-SA",
+              {
+                hour: "2-digit",
+                minute: "2-digit",
+              },
+            );
+
+            reportsHTML += `
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <h6 class="mb-0">
+                                            <i class="${statusInfo.icon} me-2" style="color: ${statusInfo.color}"></i>
+                                            ${report.bulletin_type}
+                                        </h6>
+                                        <div>
+                                            <span class="badge ${statusInfo.badge} me-1">
+                                                ${statusInfo.text}
+                                            </span>
+                                            <span class="badge ${priorityInfo.badge}">
+                                                ${report.problem_urgency}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p class="mb-1">
+                                        <strong>المشكلة:</strong> ${report.problem_type}<br>
+                                        <strong>الحقل:</strong> ${report.problem_field}
+                                    </p>
+                                    <p class="mb-1 text-muted" style="font-size: 0.9rem;">
+                                        ${report.problem_description.substring(0, 100)}${report.problem_description.length > 100 ? "..." : ""}
+                                    </p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar-alt me-1"></i>${date} 
+                                        <i class="fas fa-clock ms-2 me-1"></i>${time}
+                                        ${report.station_name ? `<i class="fas fa-map-marker-alt ms-2 me-1"></i>${report.station_name}` : ""}
+                                        ${report.whatsapp_sent ? '<i class="fab fa-whatsapp text-success ms-2" title="تم الإرسال عبر واتساب"></i>' : ""}
+                                    </small>
+                                </div>
+                                <div class="ms-3 text-nowrap">
+                                    <button class="btn btn-sm btn-outline-info view-report-btn" data-id="${report.id}" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+          });
+
+          reportsHTML += "</div>";
+          reportsList.innerHTML = reportsHTML;
+          reportsList.style.display = "block";
+
+          addReportButtonsEvents();
+        } catch (error) {
+          console.error("❌ خطأ في تحميل التقارير:", error);
+          const reportsList = document.getElementById("reportsList");
+          if (reportsList) {
+            reportsList.innerHTML = `
+                        <div class="alert alert-danger text-center">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            خطأ في تحميل التقارير: ${error.message}
+                        </div>
+                    `;
+          }
+        }
+      }
+
+      function updateQuickStats(reports) {
+        const total = reports.length;
+        const pending = reports.filter((r) => r.status === "pending").length;
+        const resolved = reports.filter(
+          (r) => r.status === "resolved" || r.status === "closed",
+        ).length;
+        const critical = reports.filter((r) => r.priority === 4).length;
+
+        const totalEl = document.getElementById("totalReports");
+        const pendingEl = document.getElementById("pendingReports");
+        const resolvedEl = document.getElementById("resolvedReports");
+        const criticalEl = document.getElementById("criticalReports");
+
+        if (totalEl) totalEl.textContent = total;
+        if (pendingEl) pendingEl.textContent = pending;
+        if (resolvedEl) resolvedEl.textContent = resolved;
+        if (criticalEl) criticalEl.textContent = critical;
+      }
+
+      function getStatusInfo(status) {
+        const statusMap = {
+          pending: {
+            text: "قيد الانتظار",
+            color: "#f39c12",
+            badge: "bg-warning",
+            icon: "fas fa-clock",
+          },
+          in_progress: {
+            text: "قيد المعالجة",
+            color: "#3498db",
+            badge: "bg-info",
+            icon: "fas fa-cogs",
+          },
+          resolved: {
+            text: "تم الحل",
+            color: "#27ae60",
+            badge: "bg-success",
+            icon: "fas fa-check-circle",
+          },
+          closed: {
+            text: "مغلق",
+            color: "#7f8c8d",
+            badge: "bg-secondary",
+            icon: "fas fa-archive",
+          },
+        };
+
+        return statusMap[status] || statusMap.pending;
+      }
+
+      function getPriorityInfo(priority) {
+        const priorityMap = {
+          1: { badge: "bg-success" },
+          2: { badge: "bg-info" },
+          3: { badge: "bg-warning" },
+          4: { badge: "bg-danger" },
+        };
+
+        return priorityMap[priority] || priorityMap[2];
+      }
+
+      function addReportButtonsEvents() {
+        document.querySelectorAll(".view-report-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            const reportId = this.getAttribute("data-id");
+            viewReportDetails(reportId);
+          });
+        });
+      }
+
+      async function viewReportDetails(reportId) {
+        try {
+          const dbHandler = initializeDatabaseHandler();
+          const report = await dbHandler.getReportById(reportId);
+
+          const modalHTML = `
+                    <div class="modal fade" id="reportDetailsModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header" style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white;">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-file-alt me-2"></i>
+                                        تفاصيل التقرير #${report.id}
+                                    </h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6><i class="fas fa-user me-2"></i>مقدم البلاغ</h6>
+                                            <p><strong>الاسم:</strong> ${report.reporter_name}</p>
+                                            <p><strong>الصفة:</strong> ${report.reporter_position}</p>
+                                            <p><strong>الهاتف:</strong> ${report.reporter_phone}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6><i class="fas fa-info-circle me-2"></i>معلومات التقرير</h6>
+                                            <p><strong>المحطة:</strong> ${report.station_name || "-"}</p>
+                                            <p><strong>التاريخ:</strong> ${new Date(report.created_at).toLocaleString("ar-SA")}</p>
+                                            <p><strong>الحالة:</strong> <span class="badge ${getStatusInfo(report.status).badge}">${getStatusInfo(report.status).text}</span></p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h6><i class="fas fa-bug me-2"></i>تفاصيل المشكلة</h6>
+                                            <p><strong>نوع النشرة:</strong> ${report.bulletin_type}</p>
+                                            <p><strong>الحقل:</strong> ${report.problem_field}</p>
+                                            <p><strong>نوع المشكلة:</strong> ${report.problem_type}</p>
+                                            <p><strong>درجة الأهمية:</strong> ${report.problem_urgency}</p>
+                                            <p><strong>الأولوية:</strong> ${report.priority}</p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h6><i class="fas fa-align-left me-2"></i>وصف المشكلة</h6>
+                                            <div class="p-3 bg-light rounded">
+                                                ${report.problem_description}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                                    ${report.whatsapp_sent ? '<button type="button" class="btn btn-success" disabled><i class="fab fa-whatsapp me-2"></i>تم الإرسال عبر واتساب</button>' : ""}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+          // إضافة المودال إلى DOM إذا لم يكن موجوداً
+          if (!document.getElementById("reportDetailsModal")) {
+            const modalDiv = document.createElement("div");
+            modalDiv.innerHTML = modalHTML;
+            document.body.appendChild(modalDiv.firstElementChild);
+          }
+
+          // عرض المودال
+          const modal = new bootstrap.Modal(
+            document.getElementById("reportDetailsModal"),
+          );
+          modal.show();
+        } catch (error) {
+          console.error("❌ خطأ في عرض تفاصيل التقرير:", error);
+          showNotification("تعذر تحميل تفاصيل التقرير", "error");
+        }
+      }
+
+      // ==============================================
+      // دوال الإرسال الرئيسية
+      // ==============================================
+
+      async function saveToDatabaseOnly() {
+        try {
+          console.log("💾 محاولة حفظ التقرير في قاعدة البيانات فقط...");
+
+          if (!validateForm()) {
+            showNotification(
+              "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+              "error",
+            );
+            return;
+          }
+
+          const formData = collectFormData();
+
+          showDatabaseStatus("جاري حفظ التقرير في قاعدة البيانات...");
+
+          const dbHandler = initializeDatabaseHandler();
+
+          if (!dbHandler || !dbHandler.isInitialized) {
+            hideDatabaseStatus();
+            throw new Error(
+              "تعذر الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى.",
+            );
+          }
+
+          const savedReport = await dbHandler.saveProblemReport(formData);
+
+          resetForm();
+
+          await loadSavedReports();
+
+          hideDatabaseStatus();
+          showNotification(
+            `تم حفظ التقرير بنجاح برقم #${savedReport.id}`,
+            "success",
+          );
+
+          const reportsContainer = document.getElementById("reportsContainer");
+          if (reportsContainer) {
+            reportsContainer.style.display = "block";
+          }
+        } catch (error) {
+          console.error("❌ خطأ في حفظ التقرير:", error);
+          hideDatabaseStatus();
+          showNotification(`خطأ في الحفظ: ${error.message}`, "error");
+        }
+      }
+
+      async function saveAndSendWhatsApp() {
+        try {
+          console.log("📤 محاولة حفظ وإرسال التقرير...");
+
+          if (!validateForm()) {
+            showNotification(
+              "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+              "error",
+            );
+            return;
+          }
+
+          const formData = collectFormData();
+
+          showDatabaseStatus("جاري حفظ التقرير وإرساله...");
+
+          const dbHandler = initializeDatabaseHandler();
+
+          if (!dbHandler || !dbHandler.isInitialized) {
+            hideDatabaseStatus();
+            throw new Error(
+              "تعذر الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى.",
+            );
+          }
+
+          const savedReport = await dbHandler.saveProblemReport(formData);
+
+          const whatsappMessage = formatWhatsAppMessage(
+            formData,
+            savedReport.id,
+          );
+
+          await dbHandler.saveWhatsAppMessageId(
+            savedReport.id,
+            `combined_${Date.now()}`,
+          );
+
+          resetForm();
+
+          await loadSavedReports();
+
+          hideDatabaseStatus();
+          showNotification(
+            `تم حفظ وإرسال التقرير #${savedReport.id} بنجاح`,
+            "success",
+          );
+
+          setTimeout(() => {
+            const phoneNumber = "0934884157";
+            const encodedMessage = encodeURIComponent(whatsappMessage);
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+            window.open(whatsappUrl, "_blank");
+          }, 500);
+        } catch (error) {
+          console.error("❌ خطأ في حفظ وإرسال التقرير:", error);
+          hideDatabaseStatus();
+          showNotification(`خطأ في الإرسال: ${error.message}`, "error");
+        }
+      }
+
+      async function sendReportOnly() {
+        try {
+          console.log("📱 محاولة إرسال التقرير عبر واتساب فقط...");
+
+          if (!validateForm()) {
+            showNotification(
+              "يرجى ملء جميع الحقول المطلوبة بشكل صحيح",
+              "error",
+            );
+            return;
+          }
+
+          const formData = collectFormData();
+
+          const dbHandler = initializeDatabaseHandler();
+
+          if (!dbHandler || !dbHandler.isInitialized) {
+            throw new Error(
+              "تعذر الاتصال بقاعدة البيانات. يرجى المحاولة مرة أخرى.",
+            );
+          }
+
+          // حفظ التقرير أولاً
+          const savedReport = await dbHandler.saveProblemReport(formData);
+
+          const whatsappMessage = formatWhatsAppMessage(
+            formData,
+            savedReport.id,
+          );
+
+          await dbHandler.saveWhatsAppMessageId(
+            savedReport.id,
+            `whatsapp_only_${Date.now()}`,
+          );
+
+          resetForm();
+
+          await loadSavedReports();
+
+          showNotification(
+            `تم إعداد التقرير #${savedReport.id} للإرسال عبر واتساب`,
+            "success",
+          );
+
+          // فتح واتساب
+          const phoneNumber = "0934884157";
+          const encodedMessage = encodeURIComponent(whatsappMessage);
+          const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+          window.open(whatsappUrl, "_blank");
+        } catch (error) {
+          console.error("❌ خطأ في إرسال التقرير:", error);
+          showNotification(`خطأ في الإرسال: ${error.message}`, "error");
+        }
+      }
+
+      function showDatabaseStatus(message) {
+        const statusElement = document.getElementById("databaseStatus");
+        const messageElement = document.getElementById("statusMessage");
+
+        if (statusElement && messageElement) {
+          messageElement.textContent = message;
+          statusElement.style.display = "flex";
+        }
+      }
+
+      function hideDatabaseStatus() {
+        const statusElement = document.getElementById("databaseStatus");
+        if (statusElement) {
+          statusElement.style.display = "none";
+        }
+      }
+
+      function resetForm() {
+        const form = document.getElementById("problemReportForm");
+        if (form) {
+          form.reset();
+        }
+
+        if (problemDetailsDiv) {
+          problemDetailsDiv.classList.add("hidden");
+          problemDetailsDiv.innerHTML = "";
+        }
+
+        if (availableFieldsDiv) {
+          availableFieldsDiv.innerHTML =
+            '<p style="text-align: center; color: #666; padding: 20px">يرجى اختيار نوع النشرة أولاً لعرض الحقول المتاحة</p>';
+        }
+
+        if (problemFieldSelect) {
+          problemFieldSelect.innerHTML =
+            '<option value="">-- اختر الحقل --</option>';
+        }
+
+        // إزالة classes التحقق
+        document.querySelectorAll(".is-invalid, .is-valid").forEach((el) => {
+          el.classList.remove("is-invalid", "is-valid");
+        });
+      }
+
+      // ==============================================
+      // تهيئة الأحداث
+      // ==============================================
+
+      function initEvents() {
+        // زر الإرسال عبر واتساب فقط
+        if (sendReportBtn) {
+          sendReportBtn.addEventListener("click", sendReportOnly);
+        }
+
+        // زر الحفظ في قاعدة البيانات فقط
+        if (saveToDatabaseBtn) {
+          saveToDatabaseBtn.addEventListener("click", saveToDatabaseOnly);
+        }
+
+        // زر الحفظ والإرسال معاً
+        if (saveAndSendBtn) {
+          saveAndSendBtn.addEventListener("click", saveAndSendWhatsApp);
+        }
+
+        // أزرار التقارير المخزنة
+        const refreshBtn = document.getElementById("refreshReportsBtn");
+        if (refreshBtn) {
+          refreshBtn.addEventListener("click", loadSavedReports);
+        }
+
+        const toggleBtn = document.getElementById("toggleReportsBtn");
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", function () {
+            const container = document.getElementById("reportsContainer");
+            const icon = this.querySelector("i");
+
+            if (container.style.display === "none") {
+              container.style.display = "block";
+              icon.className = "fas fa-eye-slash";
+              loadSavedReports();
+            } else {
+              container.style.display = "none";
+              icon.className = "fas fa-eye";
+            }
+          });
+        }
+
+        const applyFiltersBtn = document.getElementById("applyFiltersBtn");
+        if (applyFiltersBtn) {
+          applyFiltersBtn.addEventListener("click", loadSavedReports);
+        }
+
+        console.log("✅ تم تهيئة أحداث النموذج");
+      }
+
+      // ==============================================
+      // Supabase Helper Functions
+      // ==============================================
+
+      let supabaseClient = null;
+
+      function getSupabaseClient() {
+        if (!supabaseClient) {
+          // تحميل Supabase بشكل ديناميكي
+          if (typeof supabase === "undefined") {
+            throw new Error("مكتبة Supabase غير محملة");
+          }
+          supabaseClient = supabase.createClient(
+            SUPABASE_CONFIG.url,
+            SUPABASE_CONFIG.anonKey,
+          );
+        }
+        return supabaseClient;
+      }
+
+      // ==============================================
+      // التهيئة الرئيسية للصفحة
+      // ==============================================
+
+      function initializePage() {
+        console.log("🚀 تهيئة صفحة الإبلاغ عن مشاكل IT...");
+
+        if (!checkSession()) {
+          return;
+        }
+
+        loadUserInfo();
+
+        initFormElements();
+
+        initializeDatabaseHandler();
+
+        initBulletinFields();
+        initProblemTypes();
+        initEvents();
+
+        console.log("✅ تم تهيئة الصفحة بنجاح");
+      }
+
+      // تحميل Supabase أولاً ثم تهيئة الصفحة
+      function loadSupabaseAndInitialize() {
+        if (typeof supabase === "undefined") {
+          const script = document.createElement("script");
+          script.src = "https://unpkg.com/@supabase/supabase-js@2";
+          script.onload = initializePage;
+          script.onerror = function () {
+            console.error("❌ فشل تحميل مكتبة Supabase");
+            showNotification("فشل تحميل المكتبات المطلوبة", "error");
+          };
+          document.head.appendChild(script);
+        } else {
+          initializePage();
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", loadSupabaseAndInitialize);
+
+      // ==============================================
+      // جعل الدوال متاحة عالمياً
+      // ==============================================
+      window.saveToDatabaseOnly = saveToDatabaseOnly;
+      window.saveAndSendWhatsApp = saveAndSendWhatsApp;
+      window.sendReportOnly = sendReportOnly;
+      window.loadSavedReports = loadSavedReports;
+      window.initializeDatabaseHandler = initializeDatabaseHandler;
+      window.viewReportDetails = viewReportDetails;
+      window.logout = logout;
+    </script>
+
+    <footer class="page-footer">
+      <div class="footer-content">
+        <div class="copyright">
+          © 2026 جميع الحقوق محفوظة للمركز الوطني للأرصاد الجوية
+        </div>
+        <div class="center-text">نظام إدارة البيانات الجوية - النسخة 1.0</div>
+        <div class="programmer">
+          <i class="fas fa-code me-1"></i> المبرمج: إبراهيم أحمد زينب
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

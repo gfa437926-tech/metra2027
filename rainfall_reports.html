@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نظام إدارة البيانات الجوية - النشرات المطرية</title>
+
+    <!-- المكتبات الخارجية -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css"
+    />
+
+    <!-- التنسيقات الخاصة -->
+    <link rel="stylesheet" href="css/rainfall_reports.css" />
+
+    <style>
+      /* تنسيقات إضافية */
+      .logo-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: white;
+        padding: 6px;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .logo-circle img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      .calculation-info {
+        background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+        border-right: 3px solid #28a745;
+        font-size: 0.85rem;
+      }
+
+      .responsibility-check {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-top: 25px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .form-check-input:checked {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      /* تحسينات للبحث */
+      .search-info {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+      }
+
+      .station-count {
+        background-color: #e9ecef;
+        border-radius: 5px;
+        padding: 3px 8px;
+        font-size: 0.75rem;
+        display: inline-block;
+        margin-left: 5px;
+      }
+
+      /* ملاحظة النشرة */
+      .report-note {
+        background-color: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 0.9rem;
+      }
+
+      .report-note i {
+        color: #0c5460;
+      }
+
+      /* تحذير توقيت النشرة */
+      .time-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 0.9rem;
+        color: #856404;
+      }
+
+      .time-warning i {
+        color: #856404;
+      }
+
+      .time-success {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        border-radius: 8px;
+        padding: 12px;
+        margin: 10px 0;
+        font-size: 0.9rem;
+        color: #155724;
+      }
+
+      /* نموذج مبسط */
+      .simplified-form .form-section {
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .important-field {
+        border-left: 4px solid #007bff;
+        padding-left: 10px;
+      }
+
+      /* تصميم النموذج النهائي */
+      .final-form {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .final-form .form-control {
+        font-size: 1.1rem;
+        padding: 12px;
+      }
+
+      .final-form .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #2c3e50;
+      }
+
+      /* أزرار الواتساب */
+      .whatsapp-btn {
+        background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 30px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 10px auto;
+      }
+
+      .whatsapp-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+        color: white;
+      }
+
+      /* حقل مع # */
+      .no-data-field .form-control {
+        background-color: #fff8e1;
+        border-color: #ffd54f;
+        color: #e65100;
+        font-style: italic;
+      }
+
+      .no-data-field .form-control:focus {
+        background-color: white;
+        border-color: var(--secondary-color);
+        color: #333;
+        font-style: normal;
+      }
+
+      /* زر الساعة */
+      .time-display {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+      }
+
+      /* تنسيقات القائمة الجانبية */
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      .sidebar-container {
+        width: 250px;
+        background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.06);
+        position: relative;
+        z-index: 100;
+      }
+
+      .sidebar-frame {
+        width: 100%;
+        height: 100vh;
+        border: none;
+      }
+
+      .main-content-container {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      /* زر عرض/إخفاء القائمة على الجوال */
+      .sidebar-toggle-btn {
+        position: fixed;
+        top: 15px;
+        right: 15px;
+        z-index: 1000;
+        background: #2c3e50;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .sidebar-toggle-btn:hover {
+        background: #34495e;
+        transform: scale(1.1);
+      }
+
+      /* طبقة التعتيم للقائمة الجوال */
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+        display: none;
+      }
+
+      /* مؤشر التنسيق التلقائي */
+      .auto-format-indicator {
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        color: #28a745;
+        font-size: 0.8rem;
+        background: rgba(40, 167, 69, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: none;
+      }
+
+      /* تحسينات للشاشات الصغيرة */
+      @media (max-width: 991px) {
+        .sidebar-container {
+          position: fixed;
+          left: -250px;
+          top: 0;
+          height: 100vh;
+          z-index: 999;
+          transition: left 0.3s ease;
+        }
+
+        .sidebar-container.active {
+          left: 0;
+        }
+
+        .sidebar-toggle-btn {
+          display: flex;
+        }
+
+        .sidebar-overlay.active {
+          display: block;
+        }
+
+        .main-content-container {
+          margin-left: 0;
+        }
+      }
+
+      /* تحسينات لأزرار الإرسال */
+      .submit-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+      }
+
+      .submit-buttons .btn {
+        min-width: 180px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- زر عرض/إخفاء القائمة على الجوال -->
+    <button class="sidebar-toggle-btn" id="sidebarToggleBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- طبقة التعتيم للقائمة الجوال -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- حاوية التطبيق الرئيسية -->
+    <div class="app-container">
+      <!-- القائمة الجانبية -->
+      <div class="sidebar-container" id="sidebarContainer">
+        <iframe
+          src="sidebar.html"
+          class="sidebar-frame"
+          id="sidebarFrame"
+          title="القائمة الجانبية"
+        ></iframe>
+      </div>
+
+      <!-- المحتوى الرئيسي -->
+      <div class="main-content-container">
+        <!-- شاشة التحميل -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none">
+          <div
+            class="spinner-border text-light"
+            role="status"
+            style="width: 3rem; height: 3rem"
+          >
+            <span class="visually-hidden">جاري الإرسال...</span>
+          </div>
+          <div class="text-light mt-3" style="font-size: 1.2rem">
+            جاري إرسال البيانات...
+          </div>
+        </div>
+
+        <!-- نظام الإشعارات -->
+        <div class="notification-container" id="notificationContainer"></div>
+
+        <!-- المحتوى -->
+        <div class="main-content">
+          <div class="main-card">
+            <div class="main-header">
+              <h2>
+                <i class="fas fa-cloud-rain me-2"></i>النشرة المطرية اليومية
+              </h2>
+              <p>
+                إرسال النشرة المطرية من الساعة 8:30 إلى 9:30 صباحاً (توقيت
+                سورية)
+              </p>
+            </div>
+
+            <div class="main-content">
+              <!-- قسم التعريف بالراصد -->
+              <div class="data-form mb-4">
+                <h4 class="section-title">
+                  <i class="fas fa-user-tie"></i>معلومات الراصد
+                </h4>
+                <div class="user-welcome">
+                  <h4>مرحباً، <span id="userName">اسم المستخدم</span></h4>
+                  <p>
+                    محطة: <span id="userStation">اسم المحطة</span> | صفة العمل:
+                    <span id="userRole">الراصد الجوي</span>
+                  </p>
+                </div>
+
+                <!-- عرض الوقت الحالي -->
+                <div class="time-display">
+                  <i class="fas fa-clock me-2"></i>
+                  <span id="currentTimeDisplay">جاري تحميل الوقت...</span>
+                </div>
+
+                <!-- ملاحظة مهمة -->
+                <div class="report-note" id="timeNote">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>ملاحظة هامة:</strong> هذه النشرة ترسل فقط بين الساعة
+                  <strong>08:30 و 09:30 صباحاً</strong> (توقيت سورية)
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label class="form-label"
+                        ><i class="fas fa-calendar"></i>تاريخ الإرسال</label
+                      >
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="currentDate"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label class="form-label"
+                        ><i class="fas fa-clock"></i>وقت النشرة (توقيت
+                        سورية)</label
+                      >
+                      <div class="input-group">
+                        <input
+                          type="time"
+                          id="localTime"
+                          class="form-control"
+                          value="09:00"
+                          step="300"
+                        />
+                        <span class="input-group-text">صباحاً</span>
+                      </div>
+                      <div class="time-conversion mt-2">
+                        <small
+                          >التوقيت العالمي المكافئ:
+                          <span id="utcTimePreview">06:00</span></small
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="card-field">
+                      <label class="form-label"
+                        ><i class="fas fa-globe"></i>الوقت العالمي (UTC)</label
+                      >
+                      <input
+                        type="text"
+                        id="utcTime"
+                        class="form-control"
+                        readonly
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- نموذج إدخال البيانات النهائي -->
+              <div class="data-form final-form">
+                <form id="rainfallReportForm">
+                  <!-- بيانات الهطول المطري -->
+                  <div class="form-section">
+                    <h4 class="section-title">
+                      <i class="fas fa-cloud-rain"></i>بيانات الهطول المطري
+                    </h4>
+
+                    <div class="row mb-4">
+                      <div class="col-md-6">
+                        <div
+                          class="card-field important-field"
+                          id="rainAmountField"
+                        >
+                          <label class="form-label"
+                            ><i class="fas fa-tint"></i>كمية الهطول المطري
+                            (مم)</label
+                          >
+                          <input
+                            type="text"
+                            id="rainAmount"
+                            class="form-control no-data-field"
+                            placeholder="أدخل ###.# أو # لعدم توفر البيانات"
+                            value="#"
+                            onfocus="clearNoDataField(this, 'rainAmount')"
+                            onblur="autoFormatField(this, 'rainAmount')"
+                          />
+                          <div class="calculation-info">
+                            <small
+                              ><strong>تنسيق الإدخال:</strong> ###.# (3 خانات
+                              صحيحة + فاصلة + خانة عشرية واحدة)</small
+                            >
+                            <br />
+                            <small
+                              ><strong>المدى:</strong> من 000.0 إلى 999.9
+                              مليمتر</small
+                            >
+                            <br />
+                            <small
+                              ><strong>ملاحظة:</strong> استخدم # إذا لم تكن
+                              البيانات متوفرة</small
+                            >
+                          </div>
+                          <div class="invalid-feedback" id="rainAmountError">
+                            يرجى إدخال كمية الهطول بالتنسيق ###.# (0 - 999.9
+                            ملم) أو #
+                          </div>
+                          <div
+                            class="auto-format-indicator"
+                            id="rainAmountIndicator"
+                          >
+                            تم التنسيق
+                          </div>
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <div
+                          class="card-field important-field"
+                          id="snowDepthField"
+                        >
+                          <label class="form-label"
+                            ><i class="fas fa-snowflake"></i>سماكة الثلوج
+                            (سم)</label
+                          >
+                          <input
+                            type="text"
+                            id="snowDepth"
+                            class="form-control no-data-field"
+                            placeholder="أدخل ### أو # لعدم توفر البيانات"
+                            value="#"
+                            onfocus="clearNoDataField(this, 'snowDepth')"
+                            onblur="autoFormatField(this, 'snowDepth')"
+                          />
+                          <div class="calculation-info">
+                            <small
+                              ><strong>تنسيق الإدخال:</strong> ### (3 خانات
+                              صحيحة فقط)</small
+                            >
+                            <br />
+                            <small
+                              ><strong>المدى:</strong> من 000 إلى 999
+                              سنتيمتر</small
+                            >
+                            <br />
+                            <small
+                              ><strong>ملاحظة:</strong> استخدم # إذا لم تكن
+                              البيانات متوفرة</small
+                            >
+                          </div>
+                          <div class="invalid-feedback" id="snowDepthError">
+                            يرجى إدخال سماكة الثلوج بالتنسيق ### (0 - 999 سم) أو
+                            #
+                          </div>
+                          <div
+                            class="auto-format-indicator"
+                            id="snowDepthIndicator"
+                          >
+                            تم التنسيق
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row mb-3">
+                      <div class="col-md-12">
+                        <div class="card-field">
+                          <label class="form-label"
+                            ><i class="fas fa-calendar-alt"></i>تاريخ
+                            الرصد</label
+                          >
+                          <input
+                            type="date"
+                            id="observationDate"
+                            class="form-control"
+                            required
+                          />
+                          <div
+                            class="invalid-feedback"
+                            id="observationDateError"
+                          >
+                            يرجى تحديد تاريخ الرصد
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- المسؤولية -->
+                  <div class="form-section">
+                    <div class="responsibility-check">
+                      <div class="form-check">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          id="responsibilityAgreement"
+                          required
+                        />
+                        <label
+                          class="form-check-label"
+                          for="responsibilityAgreement"
+                        >
+                          <i class="fas fa-shield-alt me-1"></i>
+                          أقر بأن هذه النشرة ترسل بين الساعة 8:30 و 9:30 صباحاً
+                          وأتحمل المسؤولية الكاملة عن صحة المعلومات المقدمة.
+                        </label>
+                        <div class="invalid-feedback" id="responsibilityError">
+                          يجب الموافقة على بيان المسؤولية قبل الإرسال
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- أزرار الإرسال -->
+                  <div class="submit-buttons">
+                    <button
+                      type="button"
+                      class="btn btn-warning btn-custom"
+                      id="testDataBtn"
+                    >
+                      <i class="fas fa-vial me-1"></i>إدخال بيانات تجريبية
+                    </button>
+
+                    <button
+                      type="submit"
+                      class="btn btn-primary btn-custom"
+                      id="submitBtn"
+                    >
+                      <i class="fas fa-paper-plane me-1"></i>إرسال النشرة
+                    </button>
+
+                    <button
+                      type="button"
+                      class="btn btn-success whatsapp-btn"
+                      id="shareWhatsAppBtn"
+                    >
+                      <i class="fab fa-whatsapp me-1"></i>مشاركة عبر واتساب
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- المكتبات والملفات الخارجية -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- ملفات النظام -->
+    <script src="js/supabase-config.js"></script>
+    <script src="js/rainfall-send.js"></script>
+    <script src="js/traffic-monitor.js"></script>
+    <script src="js/protect.js"></script>
+
+    <!-- المراقب -->
+    <!-- الكود الرئيسي للصفحة -->
+    <script>
+      // تهيئة الصفحة عند التحميل
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🌧️ بدء تهيئة نظام النشرات المطرية...");
+        initPage();
+        startClock();
+      });
+
+      function initPage() {
+        initSidebar();
+        initSystem();
+        loadUserInfo();
+        checkSubmissionTime();
+        setupAutoFormatFields();
+        console.log("✅ تم تهيئة الصفحة بنجاح");
+      }
+
+      // عرض الساعة الحالية
+      function startClock() {
+        function updateClock() {
+          const now = new Date();
+          const options = {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: true,
+          };
+          const timeString = now.toLocaleTimeString("en-US", options);
+          document.getElementById("currentTimeDisplay").textContent =
+            `الوقت الحالي: ${timeString}`;
+        }
+
+        updateClock();
+        setInterval(updateClock, 1000);
+      }
+
+      // إدارة القائمة الجانبية
+      function initSidebar() {
+        const sidebarToggleBtn = document.getElementById("sidebarToggleBtn");
+        const sidebarContainer = document.getElementById("sidebarContainer");
+        const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+        if (!sidebarToggleBtn || !sidebarContainer) return;
+
+        sidebarToggleBtn.addEventListener("click", function () {
+          sidebarContainer.classList.toggle("active");
+          sidebarOverlay.classList.toggle("active");
+          document.body.style.overflow = sidebarContainer.classList.contains(
+            "active",
+          )
+            ? "hidden"
+            : "";
+        });
+
+        sidebarOverlay.addEventListener("click", function () {
+          sidebarContainer.classList.remove("active");
+          sidebarOverlay.classList.remove("active");
+          document.body.style.overflow = "";
+        });
+      }
+
+      // التحقق من توقيت الإرسال
+      function checkSubmissionTime() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const submitBtn = document.getElementById("submitBtn");
+        const timeNote = document.getElementById("timeNote");
+
+        // حساب الدقائق الكلية منذ منتصف الليل
+        const totalMinutes = currentHour * 60 + currentMinute;
+
+        // النشرة ترسل بين 8:30 و 9:30 صباحاً (510 إلى 570 دقيقة)
+        const minTime = 8 * 60 + 30; // 8:30
+        const maxTime = 9 * 60 + 30; // 9:30
+
+        const isCorrectTime =
+          totalMinutes >= minTime && totalMinutes <= maxTime;
+
+        if (isCorrectTime) {
+          submitBtn.disabled = false;
+          submitBtn.title = "يمكنك إرسال النشرة الآن";
+          timeNote.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>جاهز للإرسال:</strong> يمكنك إرسال النشرة بين الساعة <strong>08:30 و 09:30 صباحاً</strong> (توقيت سورية)
+                    <br><small>الوقت الحالي مناسب للإرسال</small>
+                `;
+          timeNote.className = "time-success";
+        } else {
+          submitBtn.disabled = true;
+          submitBtn.title =
+            "النشرات المطرية ترسل فقط بين الساعة 8:30 و 9:30 صباحاً";
+
+          if (totalMinutes < minTime) {
+            timeNote.innerHTML = `
+                        <i class="fas fa-clock me-2"></i>
+                        <strong>في انتظار وقت الإرسال:</strong> النشرة ترسل بين الساعة <strong>08:30 و 09:30 صباحاً</strong>. 
+                        <br><small>الوقت الحالي: ${String(currentHour).padStart(2, "0")}:${String(currentMinute).padStart(2, "0")} - وقت الإرسال يبدأ بعد ${Math.ceil((minTime - totalMinutes) / 60)} ساعة</small>
+                    `;
+          } else {
+            timeNote.innerHTML = `
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>وقت الإرسال انتهى:</strong> النشرة ترسل بين الساعة <strong>08:30 و 09:30 صباحاً</strong>. 
+                        <br><small>يمكنك إدخال البيانات الآن وإرسالها غداً في الوقت المحدد</small>
+                    `;
+          }
+          timeNote.className = "time-warning";
+        }
+      }
+
+      // تهيئة النظام
+      function initSystem() {
+        // تعيين التاريخ الحالي بالأرقام الميلادية
+        const now = new Date();
+        const currentDate = document.getElementById("currentDate");
+        const observationDate = document.getElementById("observationDate");
+        const localTime = document.getElementById("localTime");
+        const utcTime = document.getElementById("utcTime");
+
+        if (currentDate) {
+          // تنسيق التاريخ بالأرقام الميلادية: YYYY-MM-DD
+          currentDate.value = now.toISOString().split("T")[0];
+        }
+
+        if (observationDate) {
+          observationDate.value = now.toISOString().split("T")[0];
+          observationDate.max = now.toISOString().split("T")[0];
+          observationDate.min = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0];
+        }
+
+        if (localTime) {
+          localTime.addEventListener("change", function () {
+            updateUTCTime();
+          });
+        }
+
+        // حساب التوقيت العالمي
+        updateUTCTime();
+
+        // إعداد الأحداث
+        setupEvents();
+      }
+
+      // تحديث التوقيت العالمي
+      function updateUTCTime() {
+        const localTimeInput = document.getElementById("localTime");
+        const utcTimeInput = document.getElementById("utcTime");
+        const utcPreview = document.getElementById("utcTimePreview");
+
+        if (!localTimeInput.value) return;
+
+        const [hours, minutes] = localTimeInput.value.split(":");
+        let utcHours = parseInt(hours) - 3; // سوريا +3 من UTC
+
+        if (utcHours < 0) {
+          utcHours += 24;
+        }
+
+        const utcTimeString = `${String(utcHours).padStart(2, "0")}:${minutes}`;
+
+        if (utcTimeInput) {
+          utcTimeInput.value = utcTimeString;
+        }
+
+        if (utcPreview) {
+          utcPreview.textContent = utcTimeString;
+        }
+      }
+
+      // إعداد الحقول للتنسيق التلقائي
+      function setupAutoFormatFields() {
+        const fields = [
+          {
+            id: "rainAmount",
+            pattern: /^\d{1,3}(\.\d)?$/,
+            format: formatRainAmount,
+          },
+          { id: "snowDepth", pattern: /^\d{1,3}$/, format: formatSnowDepth },
+        ];
+
+        fields.forEach((field) => {
+          const element = document.getElementById(field.id);
+          if (element) {
+            element.addEventListener("blur", function () {
+              autoFormatField(this, field.id);
+            });
+            element.addEventListener("focus", function () {
+              clearNoDataField(this, field.id);
+            });
+          }
+        });
+      }
+
+      // مسح البيانات عند الدخول للحقل
+      window.clearNoDataField = function (field, fieldId) {
+        if (field.value === "#") {
+          field.value = "";
+          field.classList.remove("no-data-field");
+        }
+      };
+
+      // التنسيق التلقائي بعد الخروج من الحقل
+      window.autoFormatField = function (field, fieldId) {
+        let value = field.value.trim();
+
+        if (value === "" || value === "#") {
+          field.value = "#";
+          field.classList.add("no-data-field");
+          hideIndicator(fieldId);
+          return;
+        }
+
+        switch (fieldId) {
+          case "rainAmount":
+            formatRainAmount(field);
+            break;
+          case "snowDepth":
+            formatSnowDepth(field);
+            break;
+        }
+
+        // إظهار مؤشر التنسيق
+        showIndicator(fieldId);
+
+        // إخفاء المؤشر بعد 2 ثانية
+        setTimeout(() => {
+          hideIndicator(fieldId);
+        }, 2000);
+      };
+
+      function formatRainAmount(field) {
+        let value = field.value.replace(/[^0-9.]/g, "");
+
+        if (value && /^\d{1,3}(\.\d)?$/.test(value)) {
+          const parts = value.split(".");
+          const integerPart = parts[0].padStart(3, "0");
+          const decimalPart = parts[1] ? parts[1].charAt(0) : "0";
+          field.value = `${integerPart}.${decimalPart}`;
+          field.classList.remove("is-invalid");
+          field.classList.add("is-valid");
+          return true;
+        }
+
+        field.classList.remove("is-valid");
+        return false;
+      }
+
+      function formatSnowDepth(field) {
+        let value = field.value.replace(/[^0-9]/g, "");
+
+        if (value && /^\d{1,3}$/.test(value)) {
+          field.value = value.padStart(3, "0");
+          field.classList.remove("is-invalid");
+          field.classList.add("is-valid");
+          return true;
+        }
+
+        field.classList.remove("is-valid");
+        return false;
+      }
+
+      function showIndicator(fieldId) {
+        const indicator = document.getElementById(`${fieldId}Indicator`);
+        if (indicator) {
+          indicator.style.display = "block";
+        }
+      }
+
+      function hideIndicator(fieldId) {
+        const indicator = document.getElementById(`${fieldId}Indicator`);
+        if (indicator) {
+          indicator.style.display = "none";
+        }
+      }
+
+      // إعداد الأحداث
+      function setupEvents() {
+        // زر البيانات التجريبية
+        const testDataBtn = document.getElementById("testDataBtn");
+        if (testDataBtn) {
+          testDataBtn.addEventListener("click", function () {
+            fillTestData();
+          });
+        }
+
+        // زر مشاركة الواتساب
+        const whatsappBtn = document.getElementById("shareWhatsAppBtn");
+        if (whatsappBtn) {
+          whatsappBtn.addEventListener("click", function () {
+            shareViaWhatsApp();
+          });
+        }
+
+        // إرسال النموذج
+        const rainfallForm = document.getElementById("rainfallReportForm");
+        if (rainfallForm) {
+          rainfallForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            submitForm();
+          });
+        }
+      }
+
+      // التحقق من صحة الحقل
+      function validateField(field, fieldType) {
+        let value = field.value.trim();
+        let isValid = true;
+        let errorMessage = "";
+
+        if (value === "#") {
+          field.classList.remove("is-valid", "is-invalid");
+          return true;
+        }
+
+        switch (fieldType) {
+          case "rainAmount":
+            isValid = /^\d{3}\.\d$/.test(value);
+            if (isValid) {
+              const numValue = parseFloat(value);
+              isValid = numValue >= 0 && numValue <= 999.9;
+            }
+            errorMessage =
+              "يجب إدخال كمية الهطول بالتنسيق ###.# (0 - 999.9 ملم) أو #";
+            break;
+
+          case "snowDepth":
+            isValid = /^\d{3}$/.test(value);
+            if (isValid) {
+              const numValue = parseInt(value);
+              isValid = numValue >= 0 && numValue <= 999;
+            }
+            errorMessage =
+              "يجب إدخال سماكة الثلوج بالتنسيق ### (0 - 999 سم) أو #";
+            break;
+
+          case "observationDate":
+            isValid = value !== "";
+            errorMessage = "يرجى تحديد تاريخ الرصد";
+            break;
+
+          case "responsibility":
+            isValid = field.checked === true;
+            errorMessage = "يجب الموافقة على بيان المسؤولية";
+            break;
+
+          default:
+            isValid = value !== "";
+            errorMessage = "هذا الحقل مطلوب";
+        }
+
+        field.classList.remove("is-valid", "is-invalid");
+
+        if (isValid) {
+          field.classList.add("is-valid");
+          hideFeedback(fieldType);
+        } else {
+          field.classList.add("is-invalid");
+          showErrorFeedback(fieldType, errorMessage);
+        }
+
+        return isValid;
+      }
+
+      // إظهار رسالة الخطأ
+      function showErrorFeedback(fieldType, message) {
+        const errorElement = document.getElementById(`${fieldType}Error`);
+        if (errorElement) {
+          errorElement.textContent = message;
+          errorElement.style.display = "block";
+        }
+      }
+
+      // إخفاء رسائل التحقق
+      function hideFeedback(fieldType) {
+        const errorElement = document.getElementById(`${fieldType}Error`);
+        if (errorElement) {
+          errorElement.style.display = "none";
+        }
+      }
+
+      // التحقق من كامل النموذج
+      function validateForm() {
+        const fields = [
+          { id: "observationDate", type: "observationDate" },
+          { id: "rainAmount", type: "rainAmount" },
+          { id: "snowDepth", type: "snowDepth" },
+        ];
+
+        let isValid = true;
+
+        fields.forEach((field) => {
+          const element = document.getElementById(field.id);
+          if (element && !validateField(element, field.type)) {
+            isValid = false;
+          }
+        });
+
+        // التحقق من اتفاقية المسؤولية
+        const responsibilityCheckbox = document.getElementById(
+          "responsibilityAgreement",
+        );
+        if (
+          responsibilityCheckbox &&
+          !validateField(responsibilityCheckbox, "responsibility")
+        ) {
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      // جمع بيانات النموذج
+      function collectFormData() {
+        const now = new Date();
+        const submissionDate = now.toISOString().split("T")[0]; // YYYY-MM-DD
+        const observationDate =
+          document.getElementById("observationDate").value; // بالفعل YYYY-MM-DD
+        const userName = document.getElementById("userName").textContent;
+        const userStation = document.getElementById("userStation").textContent;
+        const userRole = document.getElementById("userRole").textContent;
+        const localTime = document.getElementById("localTime").value;
+
+        return {
+          rain_amount: document.getElementById("rainAmount").value,
+          snow_depth: document.getElementById("snowDepth").value,
+          observation_date: observationDate,
+          submission_date: submissionDate,
+          local_time: localTime,
+          utc_time: document.getElementById("utcTime").value,
+          observer_name: userName,
+          station_name: userStation,
+          observer_role: userRole,
+          submission_note: "هذه النشرة ترسل بين الساعة 8:30 و 9:30 صباحاً",
+        };
+      }
+
+      // إرسال النموذج
+      async function submitForm() {
+        // التحقق من الوقت أولاً
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const totalMinutes = currentHour * 60 + currentMinute;
+        const minTime = 8 * 60 + 30;
+        const maxTime = 9 * 60 + 30;
+
+        if (totalMinutes < minTime || totalMinutes > maxTime) {
+          showNotification(
+            "النشرات المطرية ترسل فقط بين الساعة 8:30 و 9:30 صباحاً",
+            "error",
+          );
+          return;
+        }
+
+        if (!validateForm()) {
+          showNotification(
+            "يرجى تصحيح الأخطاء في النموذج قبل الإرسال",
+            "error",
+          );
+          return;
+        }
+
+        const formData = collectFormData();
+        console.log("📊 البيانات المرسلة:", formData);
+
+        showNotification("جاري إرسال البيانات...", "info");
+
+        try {
+          if (window.rainfallDataSender) {
+            const result =
+              await window.rainfallDataSender.sendRainfallData(formData);
+
+            if (result.success) {
+              showNotification(result.message, "success");
+
+              // عرض خيار مشاركة عبر واتساب
+              setTimeout(() => {
+                shareReport(formData);
+              }, 1000);
+
+              // إعادة تعيين النموذج
+              document.getElementById("rainfallReportForm").reset();
+              initSystem();
+              setupAutoFormatFields();
+            } else {
+              showNotification(result.message, "error");
+            }
+          } else {
+            throw new Error("نظام الإرسال غير متوفر");
+          }
+        } catch (error) {
+          console.error("❌ خطأ في الإرسال:", error);
+          showNotification("حدث خطأ أثناء إرسال البيانات", "error");
+        }
+      }
+
+      // مشاركة التقرير
+      function shareReport(formData) {
+        Swal.fire({
+          title: "تم الإرسال بنجاح!",
+          text: "هل تريد مشاركة التقرير عبر واتساب؟",
+          icon: "success",
+          showCancelButton: true,
+          confirmButtonText: "نعم، مشاركة",
+          cancelButtonText: "لاحقاً",
+          confirmButtonColor: "#25D366",
+          cancelButtonColor: "#6c757d",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            shareViaWhatsApp();
+          }
+        });
+      }
+
+      // مشاركة عبر الواتساب
+      function shareViaWhatsApp() {
+        const rainAmount = document.getElementById("rainAmount").value;
+        const snowDepth = document.getElementById("snowDepth").value;
+        const observationDate =
+          document.getElementById("observationDate").value;
+        const userName = document.getElementById("userName").textContent;
+        const userStation = document.getElementById("userStation").textContent;
+        const localTime = document.getElementById("localTime").value;
+
+        // تنسيق التاريخ بالأرقام الميلادية
+        let formattedDate = observationDate; // بالفعل YYYY-MM-DD
+
+        // إذا أردت تنسيق مختلف مثل DD/MM/YYYY
+        // try {
+        //     const dateObj = new Date(observationDate);
+        //     formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth() + 1).toString().padStart(2, '0')}/${dateObj.getFullYear()}`;
+        // } catch (error) {
+        //     formattedDate = observationDate;
+        // }
+
+        // بناء رسالة الواتساب
+        let message = `*📊 النشرة المطرية*\n\n`;
+        message += `*👤 الراصد:* ${userName}\n`;
+        message += `*📍 المحطة:* ${userStation}\n`;
+        message += `*📅 تاريخ الرصد:* ${formattedDate}\n`;
+        message += `*⏰ وقت النشرة:* ${localTime}\n\n`;
+        message += `*🌧️ كمية الهطول:* ${rainAmount === "#" ? "غير متوفرة" : rainAmount + " مم"}\n`;
+        message += `*❄️ سماكة الثلوج:* ${snowDepth === "#" ? "غير متوفرة" : snowDepth + " سم"}\n\n`;
+        message += `*📋 ملاحظة:* تم إرسال النشرة بنجاح\n`;
+        message += `*⏱️ وقت الإرسال:* ${new Date().toLocaleTimeString("en-US")}\n`;
+        message += `_نظام إدارة البيانات الجوية_`;
+
+        // ترميز الرسالة للرابط
+        const encodedMessage = encodeURIComponent(message);
+        const whatsappURL = `https://wa.me/?text=${encodedMessage}`;
+
+        // فتح واتساب
+        window.open(whatsappURL, "_blank");
+
+        showNotification("تم فتح واتساب للمشاركة", "info");
+      }
+
+      // دالة مساعدة لتحويل التاريخ إلى تنسيقات مختلفة
+      function formatDate(dateString, format = "iso") {
+        try {
+          const dateObj = new Date(dateString);
+
+          switch (format) {
+            case "iso": // YYYY-MM-DD (التنسيق القياسي)
+              return dateObj.toISOString().split("T")[0];
+
+            case "slash": // DD/MM/YYYY
+              return `${dateObj.getDate().toString().padStart(2, "0")}/${(dateObj.getMonth() + 1).toString().padStart(2, "0")}/${dateObj.getFullYear()}`;
+
+            case "dash": // DD-MM-YYYY
+              return `${dateObj.getDate().toString().padStart(2, "0")}-${(dateObj.getMonth() + 1).toString().padStart(2, "0")}-${dateObj.getFullYear()}`;
+
+            case "full": // يوم، شهر، سنة بالكلمات
+              return dateObj.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              });
+
+            default:
+              return dateString;
+          }
+        } catch (error) {
+          return dateString;
+        }
+      }
+
+      // تعبئة بيانات تجريبية
+      function fillTestData() {
+        // بيانات الهطول
+        document.getElementById("rainAmount").value = "012.4";
+        document.getElementById("rainAmount").classList.remove("no-data-field");
+
+        document.getElementById("snowDepth").value = "015";
+        document.getElementById("snowDepth").classList.remove("no-data-field");
+
+        // الوقت والتاريخ
+        const now = new Date();
+        document.getElementById("observationDate").value = now
+          .toISOString()
+          .split("T")[0];
+        document.getElementById("localTime").value = "09:00";
+        updateUTCTime();
+
+        // اتفاقية المسؤولية
+        document.getElementById("responsibilityAgreement").checked = true;
+
+        // التحقق من الصحة
+        const fieldsToValidate = [
+          "rainAmount",
+          "snowDepth",
+          "observationDate",
+          "responsibility",
+        ];
+
+        fieldsToValidate.forEach((fieldId) => {
+          const field = document.getElementById(fieldId);
+          if (field) validateField(field, fieldId);
+        });
+
+        showNotification("تم إدخال بيانات تجريبية", "info");
+      }
+
+      // تحميل معلومات المستخدم
+      function loadUserInfo() {
+        try {
+          const userData = localStorage.getItem("currentUser");
+
+          if (userData) {
+            const user = JSON.parse(userData);
+
+            let userName = "غير معروف";
+            if (user.first_name && user.last_name) {
+              userName = `${user.first_name} ${user.last_name}`;
+            } else if (user.name) {
+              userName = user.name;
+            } else if (user.username) {
+              userName = user.username;
+            }
+
+            document.getElementById("userName").textContent = userName;
+            document.getElementById("userStation").textContent =
+              user.station || "غير معروف";
+            document.getElementById("userRole").textContent =
+              user.role || user.jobTitle || "الراصد الجوي";
+          } else {
+            document.getElementById("userName").textContent = "مستخدم النظام";
+            document.getElementById("userStation").textContent =
+              "المحطة الرئيسية";
+            document.getElementById("userRole").textContent = "الراصد الجوي";
+          }
+        } catch (error) {
+          console.error("❌ خطأ في تحميل معلومات المستخدم:", error);
+          document.getElementById("userName").textContent = "مستخدم النظام";
+          document.getElementById("userStation").textContent =
+            "المحطة الرئيسية";
+          document.getElementById("userRole").textContent = "الراصد الجوي";
+        }
+      }
+
+      // دالة لعرض الإشعارات
+      window.showNotification = function (message, type = "info") {
+        try {
+          const notificationContainer = document.getElementById(
+            "notificationContainer",
+          );
+          if (!notificationContainer) {
+            const container = document.createElement("div");
+            container.id = "notificationContainer";
+            container.className = "notification-container";
+            document.body.appendChild(container);
+          }
+
+          const notification = document.createElement("div");
+
+          let alertClass = "alert-info";
+          let icon = "fa-info-circle";
+
+          switch (type) {
+            case "success":
+              alertClass = "alert-success";
+              icon = "fa-check-circle";
+              break;
+            case "error":
+              alertClass = "alert-danger";
+              icon = "fa-times-circle";
+              break;
+            case "warning":
+              alertClass = "alert-warning";
+              icon = "fa-exclamation-triangle";
+              break;
+          }
+
+          notification.className = `alert ${alertClass} alert-dismissible fade show`;
+          notification.innerHTML = `
+                    <i class="fas ${icon} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+          document
+            .getElementById("notificationContainer")
+            .appendChild(notification);
+
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.remove();
+            }
+          }, 5000);
+        } catch (error) {
+          console.error("❌ خطأ في عرض الإشعار:", error);
+        }
+      };
+      // في ملف rainfall_reports.js أو داخل <script> في rainfall_reports.html
+      // إضافة مستمع للرسائل من القائمة الجانبية
+      window.addEventListener("message", function (event) {
+        console.log("📨 رسالة من القائمة الجانبية:", event.data);
+
+        if (event.data && event.data.type === "NAVIGATE") {
+          console.log("🧭 التوجيه إلى:", event.data.url);
+
+          // تحقق من أن الرسالة تأتي من القائمة الجانبية
+          if (
+            event.origin === window.location.origin ||
+            event.origin === "null"
+          ) {
+            window.location.href = event.data.url;
+          }
+        }
+
+        if (event.data && event.data.type === "LOGOUT") {
+          console.log("🚪 تسجيل الخروج...");
+          localStorage.removeItem("currentUser");
+          window.location.href = "../../../index.html";
+        }
+      });
+
+      // أرسل بيانات المستخدم للقائمة الجانبية
+      function sendUserDataToSidebar() {
+        const sidebarFrame = document.getElementById("sidebarFrame");
+        if (sidebarFrame && sidebarFrame.contentWindow) {
+          try {
+            const userData = localStorage.getItem("currentUser");
+            if (userData) {
+              sidebarFrame.contentWindow.postMessage(
+                {
+                  type: "USER_DATA",
+                  data: JSON.parse(userData),
+                },
+                "*",
+              );
+            }
+          } catch (error) {
+            console.error("❌ خطأ في إرسال بيانات المستخدم:", error);
+          }
+        }
+      }
+
+      // استدعاء الدالة عند تحميل الصفحة
+      document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(sendUserDataToSidebar, 1000);
+      });
+    </script>
+  </body>
+</html>

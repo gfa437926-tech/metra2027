@@ -1,0 +1,107 @@
+name: Build configured METRA Flutter Web release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "metra-web-v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: metra-flutter-web-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Validate, test, and package Flutter Web
+    runs-on: ubuntu-latest
+    env:
+      METRA_API_BASE_URL: ${{ secrets.METRA_API_BASE_URL }}
+      METRA_SUPABASE_URL: ${{ secrets.METRA_SUPABASE_URL }}
+      METRA_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.METRA_SUPABASE_PUBLISHABLE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate production configuration without printing secrets
+        run: |
+          node <<'NODE'
+          function requireHttpsOrigin(name, value) {
+            if (!value) throw new Error(name + ' is required in GitHub Actions secrets.');
+            let url;
+            try { url = new URL(value); } catch { throw new Error(name + ' must be a valid absolute URL.'); }
+            if (url.protocol !== 'https:' || !url.hostname || url.username || url.password ||
+                (url.pathname !== '' && url.pathname !== '/') || url.search || url.hash) {
+              throw new Error(name + ' must be a clean HTTPS origin (scheme + host only).');
+            }
+          }
+          requireHttpsOrigin('METRA_API_BASE_URL', process.env.METRA_API_BASE_URL);
+          requireHttpsOrigin('METRA_SUPABASE_URL', process.env.METRA_SUPABASE_URL);
+          const key = (process.env.METRA_SUPABASE_PUBLISHABLE_KEY || '').trim();
+          if (!key) throw new Error('METRA_SUPABASE_PUBLISHABLE_KEY is required.');
+          if (key.startsWith('sb_secret_') || /service[_-]?role/i.test(key)) {
+            throw new Error('A service-role/secret key must never be used in Flutter.');
+          }
+          if (!key.startsWith('sb_publishable_')) {
+            const segments = key.split('.');
+            if (segments.length !== 3) {
+              throw new Error('Use a Supabase publishable key or a legacy anon JWT key.');
+            }
+            let payload;
+            try {
+              payload = JSON.parse(Buffer.from(segments[1], 'base64url').toString('utf8'));
+            } catch {
+              throw new Error('The Supabase client key is not a valid publishable or anon key.');
+            }
+            if (payload.role !== 'anon') {
+              throw new Error('The Supabase JWT client key must have the anon role.');
+            }
+          }
+          console.log('Production configuration is present and passed structural checks.');
+          NODE
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        working-directory: mobile/metra_mobile
+        run: flutter pub get
+
+      - name: Analyze
+        working-directory: mobile/metra_mobile
+        run: flutter analyze
+
+      - name: Test
+        working-directory: mobile/metra_mobile
+        run: flutter test
+
+      - name: Build configured release
+        working-directory: mobile/metra_mobile
+        env:
+          METRA_API_BASE_URL: ${{ secrets.METRA_API_BASE_URL }}
+          METRA_SUPABASE_URL: ${{ secrets.METRA_SUPABASE_URL }}
+          METRA_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.METRA_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          flutter build web --release \
+            --base-href / \
+            --dart-define=METRA_API_BASE_URL="$METRA_API_BASE_URL" \
+            --dart-define=METRA_SUPABASE_URL="$METRA_SUPABASE_URL" \
+            --dart-define=METRA_SUPABASE_PUBLISHABLE_KEY="$METRA_SUPABASE_PUBLISHABLE_KEY"
+
+      - name: Package release
+        run: |
+          cd mobile/metra_mobile
+          zip -qr ../../metra-flutter-web-release.zip build/web
+
+      - name: Upload configured release
+        uses: actions/upload-artifact@v4
+        with:
+          name: metra-flutter-web-release
+          path: metra-flutter-web-release.zip
+          if-no-files-found: error
+          retention-days: 30

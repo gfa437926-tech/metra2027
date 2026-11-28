@@ -1,0 +1,1865 @@
+<!doctype html>
+<html lang="ar" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌤️ نظام استعلام بيانات الأرصاد الجوية</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary: #3498db;
+        --primary-dark: #2980b9;
+        --secondary: #2c3e50;
+        --success: #27ae60;
+        --warning: #f39c12;
+        --danger: #e74c3c;
+        --light: #ecf0f1;
+        --dark: #34495e;
+        --card-bg: #ffffff;
+        --hover-bg: #f8f9fa;
+        --shadow: rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+      }
+
+      * {
+        box-sizing: border-box;
+        font-family: "Segoe UI", "Tahoma", "Geneva", "Verdana", sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: var(--dark);
+        direction: ltr;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 100%;
+        margin: 0 auto;
+        background-color: var(--card-bg);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px var(--shadow);
+        padding: 30px;
+        animation: fadeIn 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(
+          to right,
+          var(--primary),
+          var(--success),
+          var(--warning)
+        );
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+      }
+
+      h1 {
+        color: var(--secondary);
+        margin-bottom: 10px;
+        padding-bottom: 15px;
+        position: relative;
+        display: inline-block;
+        font-size: 2.2rem;
+        background: linear-gradient(45deg, var(--primary), var(--success));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: slideInDown 0.8s ease-out;
+      }
+
+      h1::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--success));
+        border-radius: 2px;
+      }
+
+      .subtitle {
+        color: var(--dark);
+        font-size: 1.1rem;
+        opacity: 0.8;
+        margin-top: 10px;
+        animation: fadeIn 1s ease-out 0.3s both;
+      }
+
+      .controls-panel {
+        background: linear-gradient(145deg, #ffffff, #f0f4f8);
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        border-left: 5px solid var(--primary);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+        transform: translateY(0);
+        transition: var(--transition);
+        animation: slideInUp 0.8s ease-out 0.2s both;
+      }
+
+      .controls-panel:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 25px;
+        margin-bottom: 20px;
+        align-items: flex-end;
+      }
+
+      .filter-group {
+        flex: 1;
+        min-width: 220px;
+      }
+
+      .filter-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: var(--transition);
+        height: 100%;
+      }
+
+      .filter-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: var(--secondary);
+        font-size: 0.95rem;
+      }
+
+      label i {
+        margin-right: 8px;
+        color: var(--primary);
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e1e8ed;
+        border-radius: 8px;
+        font-size: 14px;
+        background-color: white;
+        transition: var(--transition);
+        color: var(--dark);
+      }
+
+      select:focus,
+      input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      .buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 25px;
+        justify-content: center;
+      }
+
+      button {
+        padding: 14px 28px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+      }
+
+      button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: 0.5s;
+        z-index: -1;
+      }
+
+      button:hover::before {
+        left: 100%;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+        color: white;
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+      }
+
+      .btn-primary:hover {
+        background: linear-gradient(45deg, var(--primary-dark), var(--primary));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.4);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #7f8c8d, #6c7b7d);
+        color: white;
+        box-shadow: 0 5px 15px rgba(127, 140, 141, 0.3);
+      }
+
+      .btn-secondary:hover {
+        background: linear-gradient(45deg, #6c7b7d, #7f8c8d);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(127, 140, 141, 0.4);
+      }
+
+      .btn-success {
+        background: linear-gradient(45deg, var(--success), #219653);
+        color: white;
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+      }
+
+      .btn-success:hover {
+        background: linear-gradient(45deg, #219653, var(--success));
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(39, 174, 96, 0.4);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        padding: 30px;
+        font-size: 16px;
+        color: var(--primary);
+        animation: pulse 1.5s infinite;
+      }
+
+      .loading.active {
+        display: block;
+      }
+
+      .error-message {
+        display: none;
+        background: linear-gradient(45deg, #ffcdd2, #ffebee);
+        color: var(--danger);
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border-left: 5px solid var(--danger);
+        animation: shake 0.5s ease-in-out;
+      }
+
+      .error-message.active {
+        display: block;
+      }
+
+      .stats-cards {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+        animation: fadeIn 0.8s ease-out 0.5s both;
+      }
+
+      .stat-card {
+        flex: 1;
+        min-width: 200px;
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        transition: var(--transition);
+        text-align: center;
+        border-top: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card:nth-child(2) {
+        border-top-color: var(--success);
+      }
+
+      .stat-card:nth-child(3) {
+        border-top-color: var(--warning);
+      }
+
+      .stat-card:nth-child(4) {
+        border-top-color: var(--danger);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-card i {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: var(--primary);
+      }
+
+      .stat-card:nth-child(2) i {
+        color: var(--success);
+      }
+
+      .stat-card:nth-child(3) i {
+        color: var(--warning);
+      }
+
+      .stat-card:nth-child(4) i {
+        color: var(--danger);
+      }
+
+      .stat-value {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: var(--secondary);
+        margin: 10px 0;
+      }
+
+      .stat-label {
+        font-size: 0.95rem;
+        color: #7f8c8d;
+        font-weight: 500;
+      }
+
+      .data-table-container {
+        max-width: 100%;
+        overflow-x: auto;
+        margin-top: 20px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e1e8ed;
+        animation: fadeIn 0.8s ease-out 0.7s both;
+        position: relative;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+        min-width: 1800px;
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+      }
+
+      th {
+        background: linear-gradient(45deg, var(--secondary), var(--dark));
+        color: white;
+        font-weight: 600;
+        padding: 16px 10px;
+        text-align: center;
+        border: none;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        transition: var(--transition);
+      }
+
+      th:hover {
+        background: linear-gradient(45deg, var(--dark), var(--secondary));
+      }
+
+      td {
+        padding: 12px 10px;
+        text-align: center;
+        border-bottom: 1px solid #e1e8ed;
+        border-right: 1px solid #e1e8ed;
+        min-width: 50px;
+        transition: var(--transition);
+        position: relative;
+      }
+
+      td:last-child {
+        border-right: none;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      tr:hover {
+        background-color: #f1f8ff;
+      }
+
+      .symbol-row {
+        background: linear-gradient(45deg, #e3f2fd, #bbdefb) !important;
+        font-weight: bold;
+        color: var(--secondary);
+      }
+
+      .day-col {
+        font-weight: bold;
+        background-color: #e8f4fc;
+        font-size: 1.1rem;
+        color: var(--primary-dark);
+      }
+
+      .has-data {
+        background-color: #e8f5e9;
+      }
+
+      .no-data {
+        background-color: #ffebee;
+        color: var(--danger);
+      }
+
+      .other-report-type {
+        background-color: #fff3e0 !important;
+        color: #e65100 !important;
+        position: relative;
+      }
+
+      .other-report-type::before {
+        content: "⏰";
+        position: absolute;
+        left: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
+      }
+
+      /* تأثير تكبير الخلية عند تمرير الماوس */
+      .zoom-cell {
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease,
+          background-color 0.2s ease;
+        position: relative;
+        z-index: 1;
+        transform-origin: center;
+        cursor: default;
+      }
+
+      .zoom-cell.zoomed {
+        transform: scale(1.8);
+        z-index: 100;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.25);
+        background-color: white !important;
+        font-weight: bold;
+        border-radius: 5px;
+        border: 2px solid var(--primary);
+      }
+
+      /* تأثير خاص للأرقام */
+      .number-cell {
+        font-weight: bold;
+        color: #2c3e50;
+        position: relative;
+      }
+
+      .export-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeIn 0.8s ease-out 0.9s both;
+      }
+
+      @media (max-width: 768px) {
+        .filter-row {
+          flex-direction: column;
+        }
+
+        .filter-group {
+          min-width: 100%;
+        }
+
+        .buttons {
+          flex-direction: column;
+        }
+
+        button {
+          width: 100%;
+        }
+
+        .export-buttons {
+          flex-direction: column;
+        }
+
+        .stats-cards {
+          flex-direction: column;
+        }
+
+        .container {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 1.8rem;
+        }
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideInDown {
+        from {
+          opacity: 0;
+          transform: translateY(-30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.6;
+        }
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+          transform: translateX(-5px);
+        }
+        20%,
+        40%,
+        60%,
+        80% {
+          transform: translateX(5px);
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      /* Floating elements */
+      .floating {
+        animation: float 3s ease-in-out infinite;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-dark);
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #e1e8ed;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+      }
+
+      /* Boolean cell styling */
+      .boolean-cell {
+        font-weight: bold;
+        font-family: "Courier New", monospace;
+      }
+
+      .boolean-true {
+        color: var(--success);
+      }
+
+      .boolean-false {
+        color: var(--danger);
+      }
+
+      /* Table container hover detection */
+      .table-hover-area {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 50;
+        pointer-events: none;
+      }
+
+      .table-hover-area.active {
+        pointer-events: all;
+      }
+
+      .report-type-info {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        margin-left: 8px;
+        font-weight: normal;
+      }
+
+      .type-24h {
+        background-color: #e8f5e9;
+        color: #27ae60;
+      }
+
+      .type-other {
+        background-color: #fff3e0;
+        color: #e65100;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>
+          <i class="fas fa-cloud-sun weather-icon floating"></i> نظام استعلام
+          بيانات الأرصاد الجوية
+        </h1>
+        <p class="subtitle">
+          استعلام وعرض بيانات الأرصاد الجوية اليومية - التقارير اليومية (الملخص
+          ) فقط
+        </p>
+      </div>
+
+      <div class="controls-panel">
+        <div class="filter-row">
+          <div class="filter-group">
+            <div class="filter-card">
+              <label for="station"
+                ><i class="fas fa-map-marker-alt"></i> اسم المحطة:</label
+              >
+              <select id="station" class="station-select">
+                <option value="">-- اختر المحطة --</option>
+                <!-- سيتم ملء المحطات من قاعدة البيانات -->
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-card">
+              <label for="month"
+                ><i class="fas fa-calendar-alt"></i> الشهر:</label
+              >
+              <select id="month">
+                <option value="1">يناير</option>
+                <option value="2">فبراير</option>
+                <option value="3">مارس</option>
+                <option value="4">أبريل</option>
+                <option value="5">مايو</option>
+                <option value="6">يونيو</option>
+                <option value="7">يوليو</option>
+                <option value="8">أغسطس</option>
+                <option value="9">سبتمبر</option>
+                <option value="10">أكتوبر</option>
+                <option value="11">نوفمبر</option>
+                <option value="12">ديسمبر</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="filter-card">
+              <label for="year"><i class="fas fa-calendar"></i> السنة:</label>
+              <select id="year">
+                <!-- سيتم ملء السنوات ديناميكيًا -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button id="loadDataBtn" class="btn-primary">
+            <i class="fas fa-cloud-download-alt"></i> تحميل البيانات (24 ساعة
+            فقط)
+          </button>
+          <button id="clearFiltersBtn" class="btn-secondary">
+            <i class="fas fa-broom"></i> مسح الفلاتر
+          </button>
+          <button id="refreshStationsBtn" class="btn-success">
+            <i class="fas fa-sync-alt"></i> تحديث قائمة المحطات
+          </button>
+        </div>
+      </div>
+
+      <div class="loading" id="loading">
+        <div>
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+        </div>
+        <div style="margin-top: 15px; font-size: 1.1rem">
+          جاري تحميل البيانات... الرجاء الانتظار
+        </div>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+
+      <div class="stats-cards" id="stats" style="display: none">
+        <div class="stat-card">
+          <i class="fas fa-calendar-day"></i>
+          <div class="stat-value" id="statDays">0</div>
+          <div class="stat-label">عدد الأيام</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-file-contract"></i>
+          <div class="stat-value" id="statReports">0</div>
+          <div class="stat-label">عدد التقارير (24h)</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-chart-line"></i>
+          <div class="stat-value" id="statComplete">0%</div>
+          <div class="stat-label">نسبة اكتمال البيانات</div>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-clock"></i>
+          <div class="stat-value" id="statPeriod">-</div>
+          <div class="stat-label">الفترة الزمنية</div>
+        </div>
+      </div>
+
+      <div
+        class="data-table-container"
+        id="tableContainer"
+        style="display: none"
+      >
+        <!-- سيتم عرض الجدول هنا ديناميكيًا -->
+      </div>
+
+      <div class="export-buttons" id="exportButtons" style="display: none">
+        <button id="exportExcelBtn" class="btn-primary">
+          <i class="fas fa-file-excel"></i> تصدير إلى Excel مع الرموز
+        </button>
+        <button id="exportExcelSimpleBtn" class="btn-secondary">
+          <i class="fas fa-file-export"></i> تصدير إلى Excel (بدون رموز)
+        </button>
+        <button id="printTableBtn" class="btn-success">
+          <i class="fas fa-print"></i> طباعة الجدول
+        </button>
+      </div>
+
+      <div class="footer">
+        <p>
+          <i class="fas fa-info-circle"></i> نظام استعلام بيانات الأرصاد الجوية
+          - التقارير اليومية (ملخص يومي ) فقط &copy; 2026
+        </p>
+        <p>
+          يتم عرض التقارير من النوع 24h فقط. التقارير الأخرى مميزة باللون
+          البرتقالي ⏰
+        </p>
+      </div>
+    </div>
+
+    <!-- تحميل jQuery أولاً ثم Select2 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- تحديث مكتبة xlsx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="js/protect.js"></script>
+
+    <script>
+      // رموز العناصر كما في الجدول الأصلي
+      const ELEMENT_SYMBOLS = [
+        "الرمز",
+        "003",
+        "002",
+        "005",
+        "717",
+        "049",
+        "030",
+        "031",
+        "035",
+        "029",
+        "039",
+        "032",
+        "034",
+        "033",
+        "036",
+        "037",
+        "038",
+        "092",
+        "087",
+        "045",
+        "058",
+        "059",
+        "093",
+        "015",
+        "094",
+        "016",
+        "095",
+      ];
+
+      // إعدادات Supabase
+      const SUPABASE_CONFIG = {
+        url: "https://vktcvkwqszehgmhqjrkb.supabase.co",
+        anonKey:
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZrdGN2a3dxc3plaGdtaHFqcmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE3NTEsImV4cCI6MjA3Nzc0Nzc1MX0.KTX1c8BAJpy1Jp3-IDXFRqb4Jo7SLabiwICBtn_mR5o",
+      };
+
+      // تهيئة Supabase
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_CONFIG.url,
+        SUPABASE_CONFIG.anonKey,
+      );
+
+      // متغيرات للتحكم في تأثير التكبير
+      let currentZoomedCell = null;
+      let zoomTimeout = null;
+      let isMouseOverTable = false;
+
+      // DOM جاهز
+      document.addEventListener("DOMContentLoaded", function () {
+        console.log("🚀 تطبيق استعلام البيانات جاهز للعمل");
+
+        // تهيئة Select2 للمحطات
+        $("#station").select2({
+          placeholder: "-- اختر المحطة --",
+          allowClear: true,
+          width: "100%",
+        });
+
+        // ملء سنوات الاختيار
+        fillYearOptions();
+
+        // تحميل قائمة المحطات
+        loadStations();
+
+        // تعيين الشهر الحالي افتراضيًا
+        const currentMonth = new Date().getMonth() + 1;
+        document.getElementById("month").value = currentMonth;
+
+        // إضافة معالجات الأحداث
+        document
+          .getElementById("loadDataBtn")
+          .addEventListener("click", loadData);
+        document
+          .getElementById("clearFiltersBtn")
+          .addEventListener("click", clearFilters);
+        document
+          .getElementById("refreshStationsBtn")
+          .addEventListener("click", loadStations);
+        document
+          .getElementById("exportExcelBtn")
+          .addEventListener("click", () => exportToExcel(true));
+        document
+          .getElementById("exportExcelSimpleBtn")
+          .addEventListener("click", () => exportToExcel(false));
+        document
+          .getElementById("printTableBtn")
+          .addEventListener("click", printTable);
+
+        // إضافة تأثيرات تفاعلية للبطاقات
+        addCardHoverEffects();
+
+        // اختبار الاتصال بقاعدة البيانات
+        testDatabaseConnection();
+      });
+
+      // اختبار الاتصال بقاعدة البيانات
+      async function testDatabaseConnection() {
+        try {
+          console.log("🔗 اختبار الاتصال بقاعدة البيانات...");
+          const { data, error } = await supabaseClient
+            .from("daily_reports")
+            .select("station")
+            .limit(1);
+
+          if (error) {
+            console.error("❌ خطأ في الاتصال بقاعدة البيانات:", error);
+            showError(
+              "خطأ في الاتصال بقاعدة البيانات. تأكد من اتصالك بالإنترنت.",
+            );
+          } else {
+            console.log("✅ الاتصال بقاعدة البيانات ناجح");
+          }
+        } catch (error) {
+          console.error("❌ خطأ في اختبار الاتصال:", error);
+        }
+      }
+
+      // إضافة تأثيرات تفاعلية للبطاقات
+      function addCardHoverEffects() {
+        const cards = document.querySelectorAll(".stat-card, .filter-card");
+        cards.forEach((card) => {
+          card.addEventListener("mouseenter", function () {
+            this.style.transform = "translateY(-10px)";
+          });
+
+          card.addEventListener("mouseleave", function () {
+            this.style.transform = "translateY(0)";
+          });
+        });
+      }
+
+      // ملء خيارات السنوات
+      function fillYearOptions() {
+        const yearSelect = document.getElementById("year");
+        const currentYear = new Date().getFullYear();
+
+        // إضافة السنوات من 2020 إلى السنة الحالية + 1
+        for (let year = 2020; year <= currentYear + 1; year++) {
+          const option = document.createElement("option");
+          option.value = year;
+          option.textContent = year;
+
+          if (year === currentYear) {
+            option.selected = true;
+          }
+
+          yearSelect.appendChild(option);
+        }
+      }
+
+      // تحميل قائمة المحطات من قاعدة البيانات
+      async function loadStations() {
+        try {
+          showLoading(true);
+          console.log("🔄 جاري تحميل قائمة المحطات...");
+
+          // استعلام مباشر من جدول daily_reports للمحطات التي لديها تقارير 24h
+          console.log("📊 استعلام المحطات مع تقارير 24h...");
+          const { data: stationsData, error } = await supabaseClient
+            .from("daily_reports")
+            .select("station")
+            .eq("report_type", "24h")
+            .not("station", "is", null)
+            .order("station");
+
+          if (error) {
+            console.error("❌ خطأ في استعلام المحطات:", error);
+            throw new Error(`خطأ في الاتصال بقاعدة البيانات: ${error.message}`);
+          }
+
+          console.log("✅ تم استلام بيانات المحطات:", stationsData);
+
+          // معالجة البيانات
+          const allStations = [];
+
+          if (stationsData && stationsData.length > 0) {
+            stationsData.forEach((item) => {
+              if (item.station && !allStations.includes(item.station)) {
+                allStations.push(item.station);
+              }
+            });
+
+            // ترتيب المحطات أبجديًا
+            allStations.sort();
+
+            // تحديث قائمة المحطات
+            updateStationSelect(allStations);
+
+            console.log(`✅ تم تحميل ${allStations.length} محطة`);
+          } else {
+            console.log(
+              "⚠️ لم يتم العثور على محطات مع تقارير 24h، استعلام جميع المحطات...",
+            );
+            await loadAllStations();
+          }
+
+          showLoading(false);
+        } catch (error) {
+          console.error("❌ خطأ في تحميل المحطات:", error);
+          showError(
+            `خطأ في تحميل المحطات: ${error.message}. جاري استخدام بيانات تجريبية...`,
+          );
+          useSampleStations();
+          showLoading(false);
+        }
+      }
+
+      // تحميل جميع المحطات (للاحتياط)
+      async function loadAllStations() {
+        try {
+          const { data: stationsData, error } = await supabaseClient
+            .from("daily_reports")
+            .select("station")
+            .not("station", "is", null)
+            .order("station");
+
+          if (!error && stationsData && stationsData.length > 0) {
+            const allStations = [];
+            stationsData.forEach((item) => {
+              if (item.station && !allStations.includes(item.station)) {
+                allStations.push(item.station);
+              }
+            });
+
+            allStations.sort();
+            updateStationSelect(allStations);
+            console.log(
+              `✅ تم تحميل ${allStations.length} محطة (جميع المحطات)`,
+            );
+          } else {
+            console.log("⚠️ لم يتم العثور على محطات، استخدام بيانات تجريبية");
+            useSampleStations();
+          }
+        } catch (error) {
+          console.error("❌ خطأ في تحميل جميع المحطات:", error);
+          useSampleStations();
+        }
+      }
+
+      // استخدام بيانات تجريبية للمحطات
+      function useSampleStations() {
+        const sampleStations = [
+          "الرياض",
+          "جدة",
+          "مكة المكرمة",
+          "المدينة المنورة",
+          "الدمام",
+          "الطائف",
+          "تبوك",
+          "أبها",
+          "حائل",
+          "القصيم",
+          "الجوف",
+          "نجران",
+          "جازان",
+          "الباحة",
+          "عرعر",
+        ];
+
+        updateStationSelect(sampleStations);
+        console.log(`📋 استخدام ${sampleStations.length} محطة تجريبية`);
+      }
+
+      // تحديث قائمة المحطات في select2
+      function updateStationSelect(stations) {
+        const stationSelect = document.getElementById("station");
+        stationSelect.innerHTML = '<option value="">-- اختر المحطة --</option>';
+
+        stations.forEach((station) => {
+          const option = document.createElement("option");
+          option.value = station;
+          option.textContent = station;
+          stationSelect.appendChild(option);
+        });
+
+        // تحديث select2
+        $("#station").trigger("change");
+        $("#station").select2({
+          placeholder: "-- اختر المحطة --",
+          allowClear: true,
+          width: "100%",
+          data: stations.map((station) => ({ id: station, text: station })),
+        });
+      }
+
+      // تحميل البيانات بناءً على الفلاتر - مع فلترة تقارير 24h فقط
+      async function loadData() {
+        const station = document.getElementById("station").value;
+        const month = parseInt(document.getElementById("month").value);
+        const year = parseInt(document.getElementById("year").value);
+
+        if (!station) {
+          showError("الرجاء اختيار محطة");
+          return;
+        }
+
+        if (!month || !year) {
+          showError("الرجاء اختيار الشهر والسنة");
+          return;
+        }
+
+        try {
+          showLoading(true);
+          showError("");
+          document.getElementById("stats").style.display = "none";
+          document.getElementById("tableContainer").style.display = "none";
+          document.getElementById("exportButtons").style.display = "none";
+
+          console.log(
+            `🔄 جاري تحميل بيانات ${station} لشهر ${month}/${year} (24h فقط)`,
+          );
+
+          // تحديد عدد أيام الشهر
+          const daysInMonth = getDaysInMonth(month, year);
+
+          // الحصول على البيانات من قاعدة البيانات - تقارير 24h فقط
+          const data = await loadDailyReports24h(station, month, year);
+
+          // عرض البيانات في الجدول
+          displayData(data, daysInMonth, month, year, station);
+
+          // تحديث الإحصائيات
+          updateStats(data, daysInMonth, month, year);
+
+          showLoading(false);
+        } catch (error) {
+          console.error("❌ خطأ في تحميل البيانات:", error);
+          showError(`خطأ في تحميل البيانات: ${error.message}`);
+          showLoading(false);
+        }
+      }
+
+      // تحميل التقارير اليومية - تقارير 24h فقط
+      async function loadDailyReports24h(station, month, year) {
+        const startDate = `${year}-${month.toString().padStart(2, "0")}-01`;
+        const endDate = `${year}-${month.toString().padStart(2, "0")}-${getDaysInMonth(month, year).toString().padStart(2, "0")}`;
+
+        console.log(
+          `📊 جاري تحميل التقارير اليومية (24h) من ${startDate} إلى ${endDate}`,
+        );
+
+        // استعلام للحصول على تقارير 24h فقط
+        const { data, error } = await supabaseClient
+          .from("daily_reports")
+          .select("*")
+          .eq("station", station)
+          .eq("report_type", "24h") // فلترة حسب report_type == '24h'
+          .gte("report_date", startDate)
+          .lte("report_date", endDate)
+          .order("report_date", { ascending: true });
+
+        if (error) {
+          console.error("❌ خطأ في تحميل التقارير اليومية:", error);
+          throw error;
+        }
+
+        console.log(`✅ تم تحميل ${data?.length || 0} تقرير (24h فقط)`);
+        return data || [];
+      }
+
+      // عرض البيانات في جدول
+      function displayData(data, daysInMonth, month, year, station) {
+        const tableContainer = document.getElementById("tableContainer");
+
+        // إنشاء الجدول
+        let tableHTML = `
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>يوم الرصد</th>
+                            <th>القيمة الصغرى في النهايات</th>
+                            <th>القيمة العظمى في النهايات</th>
+                            <th>الهطول لأقرب عشر مم</th>
+                            <th>الأثـــر</th>
+                            <th>أكبر سماكة ثلج لأقرب سم</th>
+                            <th>عواصف رعدية</th>
+                            <th>برد</th>
+                            <th>ثلج</th>
+                            <th>مطر</th>
+                            <th>صقيع</th>
+                            <th>ضباب</th>
+                            <th>شابورة</th>
+                            <th>عواصف ترابية أو رملية</th>
+                            <th>غبار متصاعد</th>
+                            <th>سديم</th>
+                            <th>رياح عاصفة</th>
+                            <th>مجموع التبخر اليومي لأقرب عشر مم من المسجل</th>
+                            <th>مجموع مدة سطوع الشمس الحقيقي</th>
+                            <th>النسبة المئوية لسطوع الشمس</th>
+                            <th>أكبر نفحة للرياح</th>
+                            <th>اتجاه أكبر نفحة للرياح</th>
+                            <th>وقت حدوث أكبر نفحة</th>
+                            <th>أكبر كمية رطوبة</th>
+                            <th>زمن حدوث أكبر رطوبة نسبية</th>
+                            <th>أصغر كمية رطوبة</th>
+                            <th>زمن حدوث أصغر رطوبة نسبية</th>
+                        </tr>
+                        <tr class="symbol-row">
+            `;
+
+        // إضافة سطر الرموز
+        ELEMENT_SYMBOLS.forEach((symbol) => {
+          tableHTML += `<td class="zoom-cell">${symbol}</td>`;
+        });
+
+        tableHTML += `
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+        // تحويل البيانات إلى خريطة لتسهيل الوصول حسب التاريخ
+        const dataMap = {};
+        data.forEach((item) => {
+          if (item.report_date) {
+            const day = new Date(item.report_date).getDate();
+            dataMap[day] = item;
+          }
+        });
+
+        // إنشاء صف لكل يوم من أيام الشهر
+        for (let day = 1; day <= daysInMonth; day++) {
+          const report = dataMap[day];
+          const hasData = !!report;
+
+          // كل التقارير هنا هي من نوع 24h (تم تصفيتها مسبقاً)
+          const reportType = report ? report.report_type : null;
+
+          tableHTML += `
+                    <tr class="${hasData ? "has-data" : "no-data"}">
+                        <td class="day-col zoom-cell">${day}${reportType && reportType !== "24h" ? " ⏰" : ""}</td>
+                `;
+
+          // إضافة البيانات أو الخلايا الفارغة
+          if (hasData) {
+            // عرض البيانات حسب نوع التقرير
+            tableHTML += getReportCells(report, day);
+          } else {
+            // خلايا فارغة
+            for (let i = 0; i < 26; i++) {
+              tableHTML += `<td class="zoom-cell"></td>`;
+            }
+          }
+
+          tableHTML += `</tr>`;
+        }
+
+        tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+        tableContainer.innerHTML = tableHTML;
+        tableContainer.style.display = "block";
+        document.getElementById("exportButtons").style.display = "flex";
+
+        // إضافة معلومات الرأس للجدول
+        const totalReports = data.length;
+        const otherTypesCount = data.filter(
+          (report) => report.report_type && report.report_type !== "24h",
+        ).length;
+
+        const headerInfo = `
+                <div style="margin-bottom: 20px; padding: 20px; background: linear-gradient(45deg, #e8f4fc, #d4e6f1); border-radius: 12px; border-left: 5px solid var(--primary);">
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong><i class="fas fa-map-marker-alt"></i> المحطة:</strong> ${station}
+                        </div>
+                        <div>
+                            <strong><i class="fas fa-calendar-alt"></i> الشهر:</strong> ${getMonthName(month)} ${year}
+                        </div>
+                        <div>
+                            <strong><i class="fas fa-chart-bar"></i> عدد الأيام:</strong> ${daysInMonth}
+                        </div>
+                        <div>
+                            <strong><i class="fas fa-file-contract"></i> عدد التقارير:</strong> ${totalReports}
+                            <span class="report-type-info type-24h">24h فقط</span>
+                            ${otherTypesCount > 0 ? `<span class="report-type-info type-other">${otherTypesCount} غير 24h</span>` : ""}
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                        <i class="fas fa-info-circle"></i> يتم عرض التقارير من النوع 24h فقط. التقارير الأخرى مميزة باللون البرتقالي ⏰
+                    </div>
+                </div>
+                <div class="table-hover-area" id="tableHoverArea"></div>
+            `;
+
+        tableContainer.insertAdjacentHTML("afterbegin", headerInfo);
+
+        // إضافة تأثير التكبير للخلايا بعد إنشاء الجدول
+        addZoomEffectToCells();
+
+        // إضافة منطقة كشف خروج الماوس من الجدول
+        setupTableHoverDetection();
+      }
+
+      // إعداد كشف خروج الماوس من الجدول
+      function setupTableHoverDetection() {
+        const tableHoverArea = document.getElementById("tableHoverArea");
+        const tableContainer = document.getElementById("tableContainer");
+
+        if (!tableHoverArea || !tableContainer) return;
+
+        // عند دخول الماوس إلى منطقة الجدول
+        tableContainer.addEventListener("mouseenter", function () {
+          isMouseOverTable = true;
+          tableHoverArea.classList.add("active");
+        });
+
+        // عند خروج الماوس من منطقة الجدول
+        tableContainer.addEventListener("mouseleave", function (e) {
+          // تأكد أن الماوس خرج فعلاً من الجدول
+          const relatedTarget = e.relatedTarget;
+          if (!relatedTarget || !tableContainer.contains(relatedTarget)) {
+            isMouseOverTable = false;
+            tableHoverArea.classList.remove("active");
+            // إيقاف أي تأثير تكبير نشط
+            removeAllZoomEffects();
+          }
+        });
+
+        // عند النقر على منطقة الكشف (لإيقاف التأثيرات)
+        tableHoverArea.addEventListener("click", function () {
+          removeAllZoomEffects();
+        });
+      }
+
+      // إزالة جميع تأثيرات التكبير
+      function removeAllZoomEffects() {
+        if (currentZoomedCell) {
+          currentZoomedCell.classList.remove("zoomed");
+          currentZoomedCell = null;
+        }
+
+        if (zoomTimeout) {
+          clearTimeout(zoomTimeout);
+          zoomTimeout = null;
+        }
+      }
+
+      // الحصول على خلايا التقرير
+      function getReportCells(report, day) {
+        let cells = "";
+
+        // معالجة البيانات المنطقية (t/f) إلى 0/1
+        const thunderstorm =
+          report.thunderstorm === true || report.thunderstorm === "t"
+            ? "1"
+            : "0";
+        const hail = report.hail === true || report.hail === "t" ? "1" : "0";
+        const snow_phenomena =
+          report.snow_phenomena === true || report.snow_phenomena === "t"
+            ? "1"
+            : "0";
+        const rain = report.rain === true || report.rain === "t" ? "1" : "0";
+        const frost = report.frost === true || report.frost === "t" ? "1" : "0";
+        const fog = report.fog === true || report.fog === "t" ? "1" : "0";
+        const mist = report.mist === true || report.mist === "t" ? "1" : "0";
+        const dust_storm =
+          report.dust_storm === true || report.dust_storm === "t" ? "1" : "0";
+        const blowing_dust =
+          report.blowing_dust === true || report.blowing_dust === "t"
+            ? "1"
+            : "0";
+        const haze = report.haze === true || report.haze === "t" ? "1" : "0";
+        const stormy_wind =
+          report.stormy_wind === true || report.stormy_wind === "t" ? "1" : "0";
+
+        cells = `
+                <td class="zoom-cell number-cell" data-value="${report.min_temperature || ""}">${report.min_temperature || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.max_temperature || ""}">${report.max_temperature || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.precipitation || ""}">${report.precipitation || ""}</td>
+                <td class="zoom-cell" data-value="${report.precipitation_trace || ""}">${report.precipitation_trace || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.snow_thickness || ""}">${report.snow_thickness || ""}</td>
+                <td class="zoom-cell boolean-cell ${thunderstorm === "1" ? "boolean-true" : "boolean-false"}">${thunderstorm}</td>
+                <td class="zoom-cell boolean-cell ${hail === "1" ? "boolean-true" : "boolean-false"}">${hail}</td>
+                <td class="zoom-cell boolean-cell ${snow_phenomena === "1" ? "boolean-true" : "boolean-false"}">${snow_phenomena}</td>
+                <td class="zoom-cell boolean-cell ${rain === "1" ? "boolean-true" : "boolean-false"}">${rain}</td>
+                <td class="zoom-cell boolean-cell ${frost === "1" ? "boolean-true" : "boolean-false"}">${frost}</td>
+                <td class="zoom-cell boolean-cell ${fog === "1" ? "boolean-true" : "boolean-false"}">${fog}</td>
+                <td class="zoom-cell boolean-cell ${mist === "1" ? "boolean-true" : "boolean-false"}">${mist}</td>
+                <td class="zoom-cell boolean-cell ${dust_storm === "1" ? "boolean-true" : "boolean-false"}">${dust_storm}</td>
+                <td class="zoom-cell boolean-cell ${blowing_dust === "1" ? "boolean-true" : "boolean-false"}">${blowing_dust}</td>
+                <td class="zoom-cell boolean-cell ${haze === "1" ? "boolean-true" : "boolean-false"}">${haze}</td>
+                <td class="zoom-cell boolean-cell ${stormy_wind === "1" ? "boolean-true" : "boolean-false"}">${stormy_wind}</td>
+                <td class="zoom-cell number-cell" data-value="${report.evaporation || ""}">${report.evaporation || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.sunshine_duration || ""}">${report.sunshine_duration || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.sunshine_percentage || ""}">${report.sunshine_percentage || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.max_gust_speed || ""}">${report.max_gust_speed || ""}</td>
+                <td class="zoom-cell" data-value="${report.max_gust_direction || ""}">${report.max_gust_direction || ""}</td>
+                <td class="zoom-cell" data-value="${report.max_gust_time || ""}">${report.max_gust_time || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.max_humidity || ""}">${report.max_humidity || ""}</td>
+                <td class="zoom-cell" data-value="${report.max_humidity_time || ""}">${report.max_humidity_time || ""}</td>
+                <td class="zoom-cell number-cell" data-value="${report.min_humidity || ""}">${report.min_humidity || ""}</td>
+                <td class="zoom-cell" data-value="${report.min_humidity_time || ""}">${report.min_humidity_time || ""}</td>
+            `;
+
+        return cells;
+      }
+
+      // إضافة تأثير التكبير للخلايا
+      function addZoomEffectToCells() {
+        const cells = document.querySelectorAll(".zoom-cell");
+
+        cells.forEach((cell) => {
+          // إلغاء أي معالجات سابقة
+          cell.removeEventListener("mouseenter", handleCellMouseEnter);
+          cell.removeEventListener("mouseleave", handleCellMouseLeave);
+
+          // إضافة معالجات جديدة
+          cell.addEventListener("mouseenter", handleCellMouseEnter);
+          cell.addEventListener("mouseleave", handleCellMouseLeave);
+        });
+
+        // تأثير خاص للخلايا ذات الأرقام
+        const numberCells = document.querySelectorAll(".number-cell");
+        numberCells.forEach((cell) => {
+          if (cell.textContent.trim() && !isNaN(cell.textContent.trim())) {
+            cell.style.color = "#2c3e50";
+            cell.style.fontWeight = "bold";
+          }
+        });
+      }
+
+      // معالج دخول الماوس للخلية
+      function handleCellMouseEnter(e) {
+        // إلغاء أي timeout سابق
+        if (zoomTimeout) {
+          clearTimeout(zoomTimeout);
+          zoomTimeout = null;
+        }
+
+        // إذا كان هناك خلية مكبّرة حالياً، إزالة التكبير منها
+        if (currentZoomedCell && currentZoomedCell !== this) {
+          currentZoomedCell.classList.remove("zoomed");
+        }
+
+        // تحديد الخلية الحالية
+        const cell = this;
+
+        // تأخير بسيط قبل التكبير
+        zoomTimeout = setTimeout(() => {
+          cell.classList.add("zoomed");
+          currentZoomedCell = cell;
+          zoomTimeout = null;
+        }, 50);
+      }
+
+      // معالج خروج الماوس من الخلية
+      function handleCellMouseLeave(e) {
+        // إلغاء أي timeout سابق
+        if (zoomTimeout) {
+          clearTimeout(zoomTimeout);
+          zoomTimeout = null;
+        }
+
+        const cell = this;
+
+        // تأخير بسيط قبل إزالة التكبير (للسماح بالانتقال بين الخلايا)
+        zoomTimeout = setTimeout(() => {
+          cell.classList.remove("zoomed");
+          if (currentZoomedCell === cell) {
+            currentZoomedCell = null;
+          }
+          zoomTimeout = null;
+        }, 100);
+      }
+
+      // تحديث الإحصائيات
+      function updateStats(data, daysInMonth, month, year) {
+        const statsDiv = document.getElementById("stats");
+        const completePercent =
+          daysInMonth > 0 ? Math.round((data.length / daysInMonth) * 100) : 0;
+
+        document.getElementById("statDays").textContent = daysInMonth;
+        document.getElementById("statReports").textContent = data.length;
+        document.getElementById("statComplete").textContent =
+          `${completePercent}%`;
+        document.getElementById("statPeriod").textContent =
+          `${getMonthName(month)} ${year}`;
+
+        statsDiv.style.display = "flex";
+
+        // إضافة تأثير للبطاقات الإحصائية
+        const statCards = document.querySelectorAll(".stat-card");
+        statCards.forEach((card, index) => {
+          card.style.animationDelay = `${index * 0.1}s`;
+        });
+      }
+
+      // تصدير إلى Excel مع أو بدون الرموز
+      async function exportToExcel(withSymbols = true) {
+        try {
+          const station = document.getElementById("station").value;
+          const month = document.getElementById("month").value;
+          const year = document.getElementById("year").value;
+
+          if (!station) {
+            showError("الرجاء تحميل البيانات أولاً قبل التصدير");
+            return;
+          }
+
+          // الحصول على البيانات من قاعدة البيانات - تقارير 24h فقط
+          const daysInMonth = getDaysInMonth(parseInt(month), parseInt(year));
+          const startDate = `${year}-${month.toString().padStart(2, "0")}-01`;
+          const endDate = `${year}-${month.toString().padStart(2, "0")}-${daysInMonth.toString().padStart(2, "0")}`;
+
+          showLoading(true);
+
+          // الحصول على البيانات من قاعدة البيانات - تقارير 24h فقط
+          const { data, error } = await supabaseClient
+            .from("daily_reports")
+            .select("*")
+            .eq("station", station)
+            .eq("report_type", "24h") // تقارير 24h فقط
+            .gte("report_date", startDate)
+            .lte("report_date", endDate)
+            .order("report_date", { ascending: true });
+
+          if (error) {
+            throw error;
+          }
+
+          showLoading(false);
+
+          // تحويل البيانات إلى خريطة
+          const dataMap = {};
+          data.forEach((item) => {
+            if (item.report_date) {
+              const day = new Date(item.report_date).getDate();
+              dataMap[day] = item;
+            }
+          });
+
+          // إنشاء مصنف Excel جديد
+          const wb = XLSX.utils.book_new();
+
+          // إنشاء بيانات للورقة
+          const wsData = [];
+
+          // معلومات الرأس
+          wsData.push([
+            `نظام استعلام بيانات الأرصاد الجوية - التقارير اليومية (ملخص )`,
+          ]);
+          wsData.push([`المحطة: ${station}`]);
+          wsData.push([`الشهر: ${getMonthName(month)} ${year}`]);
+          wsData.push([`عدد الأيام: ${daysInMonth}`]);
+          wsData.push([`عدد التقارير (24h): ${data.length}`]);
+          wsData.push([
+            `تاريخ التصدير: ${new Date().toLocaleDateString("ar-SA")}`,
+          ]);
+          wsData.push([""]); // سطر فارغ
+
+          // العناوين العربية
+          const arabicHeaders = [
+            "يوم الرصد",
+            "القيمة الصغرى في النهايات",
+            "القيمة العظمى في النهايات",
+            "الهطول لأقرب عشر مم",
+            "الأثـــر",
+            "أكبر سماكة ثلج لأقرب سم",
+            "عواصف رعدية",
+            "برد",
+            "ثلج",
+            "مطر",
+            "صقيع",
+            "ضباب",
+            "شابورة",
+            "عواصف ترابية أو رملية",
+            "غبار متصاعد",
+            "سديم",
+            "رياح عاصفة",
+            "مجموع التبخر اليومي لأقرب عشر مم من المسجل",
+            "مجموع مدة سطوع الشمس الحقيقي",
+            "النسبة المئوية لسطوع الشمس",
+            "أكبر نفحة للرياح",
+            "اتجاه أكبر نفحة للرياح",
+            "وقت حدوث أكبر نفحة",
+            "أكبر كمية رطوبة",
+            "زمن حدوث أكبر رطوبة نسبية",
+            "أصغر كمية رطوبة",
+            "زمن حدوث أصغر رطوبة نسبية",
+          ];
+          wsData.push(arabicHeaders);
+
+          // رموز العناصر (إذا تم طلبها)
+          if (withSymbols) {
+            wsData.push(ELEMENT_SYMBOLS);
+          }
+
+          // إضافة بيانات الأيام
+          for (let day = 1; day <= daysInMonth; day++) {
+            const report = dataMap[day];
+            const rowData = [day];
+
+            if (report) {
+              // معالجة البيانات المنطقية
+              const thunderstorm =
+                report.thunderstorm === true || report.thunderstorm === "t"
+                  ? "1"
+                  : "0";
+              const hail =
+                report.hail === true || report.hail === "t" ? "1" : "0";
+              const snow_phenomena =
+                report.snow_phenomena === true || report.snow_phenomena === "t"
+                  ? "1"
+                  : "0";
+              const rain =
+                report.rain === true || report.rain === "t" ? "1" : "0";
+              const frost =
+                report.frost === true || report.frost === "t" ? "1" : "0";
+              const fog =
+                report.frog === true || report.frog === "t" ? "1" : "0";
+              const mist =
+                report.mist === true || report.mist === "t" ? "1" : "0";
+              const dust_storm =
+                report.dust_storm === true || report.dust_storm === "t"
+                  ? "1"
+                  : "0";
+              const blowing_dust =
+                report.blowing_dust === true || report.blowing_dust === "t"
+                  ? "1"
+                  : "0";
+              const haze =
+                report.haze === true || report.haze === "t" ? "1" : "0";
+              const stormy_wind =
+                report.stormy_wind === true || report.stormy_wind === "t"
+                  ? "1"
+                  : "0";
+
+              rowData.push(
+                report.min_temperature || "",
+                report.max_temperature || "",
+                report.precipitation || "",
+                report.precipitation_trace || "",
+                report.snow_thickness || "",
+                thunderstorm,
+                hail,
+                snow_phenomena,
+                rain,
+                frost,
+                fog,
+                mist,
+                dust_storm,
+                blowing_dust,
+                haze,
+                stormy_wind,
+                report.evaporation || "",
+                report.sunshine_duration || "",
+                report.sunshine_percentage || "",
+                report.max_gust_speed || "",
+                report.max_gust_direction || "",
+                report.max_gust_time || "",
+                report.max_humidity || "",
+                report.max_humidity_time || "",
+                report.min_humidity || "",
+                report.min_humidity_time || "",
+              );
+            } else {
+              // خلايا فارغة
+              for (let i = 0; i < 26; i++) {
+                rowData.push("");
+              }
+            }
+
+            wsData.push(rowData);
+          }
+
+          // تحويل البيانات إلى ورقة عمل
+          const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+          // ضبط عرض الأعمدة
+          const colWidths = [];
+          for (let i = 0; i < arabicHeaders.length; i++) {
+            colWidths.push({ wch: 20 });
+          }
+          ws["!cols"] = colWidths;
+
+          // دمج الخلايا للمعلومات في الأعلى
+          ws["!merges"] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: arabicHeaders.length - 1 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: arabicHeaders.length - 1 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: arabicHeaders.length - 1 } },
+            { s: { r: 3, c: 0 }, e: { r: 3, c: arabicHeaders.length - 1 } },
+            { s: { r: 4, c: 0 }, e: { r: 4, c: arabicHeaders.length - 1 } },
+            { s: { r: 5, c: 0 }, e: { r: 5, c: arabicHeaders.length - 1 } },
+          ];
+
+          // إضافة الورقة إلى المصنف
+          XLSX.utils.book_append_sheet(wb, ws, "بيانات الأرصاد (24h)");
+
+          // إنشاء اسم الملف
+          const suffix = withSymbols ? "مع_الرموز" : "بدون_رموز";
+          const fileName = `${station}_${getMonthName(month)}_${year}_24h_${suffix}.xlsx`;
+
+          // حفظ الملف
+          XLSX.writeFile(wb, fileName);
+
+          console.log(`✅ تم تصدير الملف: ${fileName} (24h only)`);
+          showError("");
+        } catch (error) {
+          console.error("❌ خطأ في التصدير إلى Excel:", error);
+          showError(`خطأ في التصدير: ${error.message}`);
+          showLoading(false);
+        }
+      }
+
+      // طباعة الجدول
+      function printTable() {
+        try {
+          // إزالة تأثير التكبير قبل الطباعة
+          removeAllZoomEffects();
+
+          const printContents =
+            document.getElementById("tableContainer").innerHTML;
+
+          const printWindow = window.open("", "_blank");
+          printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>طباعة بيانات الأرصاد الجوية - تقارير 24 ساعة ملخص يومي</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; margin: 20px; direction: ltr; }
+                                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                                th, td { border: 1px solid #000; padding: 6px; text-align: center; }
+                                th { background-color: #f0f0f0; }
+                                .symbol-row { background-color: #e0e0e0 !important; font-weight: bold; }
+                                .day-col { font-weight: bold; background-color: #e0e0e0; }
+                                .has-data { background-color: #e8f5e9; }
+                                .no-data { background-color: #ffebee; }
+                                .other-report-type { background-color: #fff3e0 !important; color: #e65100; }
+                                .boolean-true { color: #27ae60; font-weight: bold; }
+                                .boolean-false { color: #e74c3c; font-weight: bold; }
+                                @media print {
+                                    body { margin: 0; padding: 10px; }
+                                    table { font-size: 10px; }
+                                    .no-print { display: none; }
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="no-print" style="text-align: center; margin-bottom: 20px; font-size: 18px; font-weight: bold;">
+                                طباعة بيانات الأرصاد الجوية - التقارير اليومية (ملخص يومي ) فقط
+                            </div>
+                            ${printContents}
+                        </body>
+                    </html>
+                `);
+
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 250);
+        } catch (error) {
+          console.error("❌ خطأ في الطباعة:", error);
+          showError(`خطأ في الطباعة: ${error.message}`);
+        }
+      }
+
+      // مسح الفلاتر
+      function clearFilters() {
+        $("#station").val("").trigger("change");
+        document.getElementById("month").value = new Date().getMonth() + 1;
+        document.getElementById("year").value = new Date().getFullYear();
+        document.getElementById("stats").style.display = "none";
+        document.getElementById("tableContainer").style.display = "none";
+        document.getElementById("exportButtons").style.display = "none";
+        showError("");
+        console.log("🗑️ تم مسح الفلاتر");
+      }
+
+      // عرض/إخفاء مؤشر التحميل
+      function showLoading(show) {
+        document.getElementById("loading").classList.toggle("active", show);
+      }
+
+      // عرض رسالة خطأ
+      function showError(message) {
+        const errorDiv = document.getElementById("errorMessage");
+        errorDiv.textContent = message;
+        errorDiv.classList.toggle("active", !!message);
+      }
+
+      // ===== دوال مساعدة =====
+
+      // الحصول على عدد أيام الشهر
+      function getDaysInMonth(month, year) {
+        return new Date(year, month, 0).getDate();
+      }
+
+      // الحصول على اسم الشهر
+      function getMonthName(monthNumber) {
+        const months = [
+          "يناير",
+          "فبراير",
+          "مارس",
+          "أبريل",
+          "مايو",
+          "يونيو",
+          "يوليو",
+          "أغسطس",
+          "سبتمبر",
+          "أكتوبر",
+          "نوفمبر",
+          "ديسمبر",
+        ];
+        return months[monthNumber - 1] || "";
+      }
+    </script>
+  </body>
+</html>
