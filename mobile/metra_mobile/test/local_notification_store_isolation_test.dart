@@ -312,4 +312,43 @@ void main() {
     expect(rows.single['titleAr'], 'إشعار جديد');
   });
 
-}
+
+  test('mark all read before initial load leaves later notifications unread', () async {
+    final existing = LocalNotificationItem(
+      id: 'mark-before-load-existing',
+      titleAr: 'إشعار سابق',
+      bodyAr: 'يجب تعليمه كمقروء',
+      createdAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+      category: 'system',
+      accountKey: 'account-a',
+    );
+    SharedPreferences.setMockInitialValues({
+      'metra2027.local_notifications.v1': jsonEncode([existing.toJson()]),
+    });
+
+    final store = LocalNotificationStore.forTesting();
+    store.setActiveAccountKey('account-a');
+    store.markAllRead();
+    store.add(
+      titleAr: 'إشعار جديد',
+      bodyAr: 'أُضيف بعد طلب التعليم',
+      category: 'system',
+    );
+
+    await store.ensureLoaded();
+    await store.flushForTesting();
+
+    expect(store.items, hasLength(2));
+    final oldItem = store.items.singleWhere((item) => item.id == existing.id);
+    final newItem = store.items.singleWhere((item) => item.id != existing.id);
+    expect(oldItem.read, isTrue);
+    expect(newItem.read, isFalse);
+
+    final prefs = await SharedPreferences.getInstance();
+    final rows = (jsonDecode(
+      prefs.getString('metra2027.local_notifications.v1')!,
+    ) as List).cast<Map<String, dynamic>>();
+    expect(rows.singleWhere((row) => row['id'] == existing.id)['read'], isTrue);
+    expect(rows.singleWhere((row) => row['id'] == newItem.id)['read'], isFalse);
+  });
+\n}\n
