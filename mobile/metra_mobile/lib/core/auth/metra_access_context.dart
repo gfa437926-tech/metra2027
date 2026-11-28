@@ -85,19 +85,20 @@ class MetraAccessContext {
   final Map<String, String> authorityRoles;
 
   bool hasAuthorityPermission(String authorityId, String permissionCode) {
-    if (!isResolved) return false;
+    if (!isResolved || !hasKnownActiveAccount) return false;
     final id = authorityId.trim();
     final code = permissionCode.trim();
     if (id.isEmpty || code.isEmpty) return false;
     return authorityPermissions[id]?.contains(code) ?? false;
   }
 
-  /// accountState is informational only; never treat "unknown" as active.
+  /// Only an explicit server-reported active account is treated as operational.
+  /// unknown / inactive / null never unlock observations, review, or admin.
   bool get hasKnownActiveAccount =>
       isResolved && accountState != null && accountState == 'active';
 
   bool hasStationPermission(String stationId, String permissionCode) {
-    if (!isResolved) return false;
+    if (!isResolved || !hasKnownActiveAccount) return false;
     final station = stationId.trim();
     final code = permissionCode.trim();
     if (station.isEmpty || code.isEmpty) return false;
@@ -125,7 +126,7 @@ class MetraAccessContext {
       canEnterObservations(stationId) || canReviewObservations(stationId);
 
   bool get canAccessAnyObservationWorkspace {
-    if (!isResolved) return false;
+    if (!isResolved || !hasKnownActiveAccount) return false;
     for (final stationId in stationPermissions.keys) {
       if (canAccessObservationWorkspace(stationId)) return true;
     }
@@ -133,19 +134,20 @@ class MetraAccessContext {
   }
 
   bool get canAccessAnyStationAdministration {
-    if (!isResolved) return false;
+    if (!isResolved || !hasKnownActiveAccount) return false;
     for (final stationId in stationPermissions.keys) {
       if (canAdministerStation(stationId)) return true;
     }
     return false;
   }
 
-  /// Destination visibility from permission codes only (no role names).
+  /// Destination visibility from permission codes + known-active account.
   ///
   /// - Always for signed-in users: home, stations, settings
   /// - Placeholders without backend contracts stay visible (informational only)
   /// - observations / admin require at least one station with matching codes
-  /// - When context is unresolved: operational destinations are hidden (fail-closed)
+  ///   and a known-active account (fail-closed for unknown/inactive)
+  /// - When context is unresolved: operational destinations are hidden
   bool isDestinationVisible(MetraDestinationId id) {
     switch (id) {
       case MetraDestinationId.home:
@@ -202,4 +204,7 @@ class MetraPermissionDeniedMessages {
 
   static const destinationHidden =
       'هذه الوجهة غير متاحة لحسابك حسب صلاحيات الخادم.';
+
+  static const accountNotActive =
+      'حسابك غير نشط أو حالته غير معروفة. لا تُمنح صلاحيات تشغيلية حتى يصبح الحساب نشطاً على الخادم.';
 }

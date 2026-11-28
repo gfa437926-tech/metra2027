@@ -39,7 +39,7 @@ void main() {
   group('MetraAccessContext.resolved permission fixtures', () {
     final observer = MetraAccessContext.resolved(
       userId: 'user-observer',
-      accountState: 'unknown',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.create',
@@ -52,6 +52,7 @@ void main() {
 
     final stationHead = MetraAccessContext.resolved(
       userId: 'user-head',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {
           'observation.review',
@@ -66,6 +67,7 @@ void main() {
 
     final multi = MetraAccessContext.resolved(
       userId: 'user-multi',
+      accountState: 'active',
       stationPermissions: {
         'station-a': {'observation.create', 'observation.submit'},
         'station-b': {'observation.review', 'users.station.view'},
@@ -74,6 +76,7 @@ void main() {
 
     test('observer may enter observations only on assigned station', () {
       expect(observer.isResolved, isTrue);
+      expect(observer.hasKnownActiveAccount, isTrue);
       expect(observer.canEnterObservations('station-a'), isTrue);
       expect(observer.canReviewObservations('station-a'), isFalse);
       expect(observer.canAdministerStation('station-a'), isFalse);
@@ -85,7 +88,6 @@ void main() {
         isTrue,
       );
       expect(observer.isDestinationVisible(MetraDestinationId.admin), isFalse);
-      expect(observer.hasKnownActiveAccount, isFalse);
     });
 
     test('station_head may review and administer on assigned station', () {
@@ -114,6 +116,7 @@ void main() {
     test('edit_own_draft alone allows observation workspace entry', () {
       final draftOnly = MetraAccessContext.resolved(
         userId: 'draft',
+        accountState: 'active',
         stationPermissions: {
           'station-a': {'observation.edit_own_draft'},
         },
@@ -125,7 +128,6 @@ void main() {
         isTrue,
       );
     });
-
 
     test('resolved context rejects a blank user identity', () {
       expect(
@@ -147,6 +149,7 @@ void main() {
     test('authority permissions remain isolated from station permissions', () {
       final context = MetraAccessContext.resolved(
         userId: 'director',
+        accountState: 'active',
         stationPermissions: {'station-a': {'observation.create'}},
         authorityPermissions: {'authority-a': {'stations.catalogue.review'}},
         authorityRoles: {'authority-a': 'network_director'},
@@ -162,25 +165,61 @@ void main() {
     });
   });
 
-  group('accountState informational only', () {
-    test(
-      'inactive account still resolves permissions but is not known-active',
-      () {
-        final inactive = MetraAccessContext.resolved(
-          userId: 'user-inactive',
-          accountState: 'inactive',
-          stationPermissions: {
-            'station-a': {'observation.create', 'observation.submit'},
+  group('accountState gates operational access', () {
+    test('unknown accountState does not grant operational permissions', () {
+      final unknown = MetraAccessContext.resolved(
+        userId: 'user-unknown',
+        accountState: 'unknown',
+        stationPermissions: {
+          'station-a': {
+            'observation.create',
+            'observation.submit',
+            'observation.review',
+            'users.station.manage',
           },
-        );
-        expect(inactive.isResolved, isTrue);
-        expect(inactive.hasKnownActiveAccount, isFalse);
-        // Permission codes still apply; UI may show account notices separately.
-        expect(inactive.canEnterObservations('station-a'), isTrue);
-      },
-    );
+        },
+      );
+      expect(unknown.isResolved, isTrue);
+      expect(unknown.hasKnownActiveAccount, isFalse);
+      expect(unknown.canEnterObservations('station-a'), isFalse);
+      expect(unknown.canReviewObservations('station-a'), isFalse);
+      expect(unknown.canAdministerStation('station-a'), isFalse);
+      expect(unknown.canAccessAnyObservationWorkspace, isFalse);
+      expect(unknown.canAccessAnyStationAdministration, isFalse);
+      expect(
+        unknown.isDestinationVisible(MetraDestinationId.observations),
+        isFalse,
+      );
+      expect(unknown.isDestinationVisible(MetraDestinationId.admin), isFalse);
+    });
 
-    test('active account reports known-active', () {
+    test('inactive account does not grant operational permissions', () {
+      final inactive = MetraAccessContext.resolved(
+        userId: 'user-inactive',
+        accountState: 'inactive',
+        stationPermissions: {
+          'station-a': {'observation.create', 'observation.submit'},
+        },
+      );
+      expect(inactive.isResolved, isTrue);
+      expect(inactive.hasKnownActiveAccount, isFalse);
+      expect(inactive.canEnterObservations('station-a'), isFalse);
+      expect(inactive.canAccessAnyObservationWorkspace, isFalse);
+    });
+
+    test('null accountState does not grant operational permissions', () {
+      final noState = MetraAccessContext.resolved(
+        userId: 'user-null-state',
+        accountState: null,
+        stationPermissions: {
+          'station-a': {'observation.create'},
+        },
+      );
+      expect(noState.hasKnownActiveAccount, isFalse);
+      expect(noState.canEnterObservations('station-a'), isFalse);
+    });
+
+    test('active account reports known-active and grants codes', () {
       final active = MetraAccessContext.resolved(
         userId: 'user-active',
         accountState: 'active',
@@ -189,6 +228,7 @@ void main() {
         },
       );
       expect(active.hasKnownActiveAccount, isTrue);
+      expect(active.canEnterObservations('station-a'), isTrue);
     });
   });
 
