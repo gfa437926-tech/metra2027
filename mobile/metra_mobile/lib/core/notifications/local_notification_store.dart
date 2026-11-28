@@ -24,7 +24,7 @@ class LocalNotificationStore extends ChangeNotifier {
   Future<void>? _loadFuture;
   Future<void> _persistTail = Future<void>.value();
   final Set<String> _dirtyIds = <String>{};
-  final List<({String? accountKey, DateTime requestedAt})>\n  _pendingClearRequests = [];
+  final List<({String? accountKey, DateTime requestedAt})> _pendingClearRequests = [];
   final List<({String? accountKey, DateTime requestedAt})>
   _pendingMarkAllReadRequests = [];
   int _writeGeneration = 0;
